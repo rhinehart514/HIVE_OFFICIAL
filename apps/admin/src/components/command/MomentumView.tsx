@@ -63,13 +63,13 @@ function GrowthCard({ metric }: { metric: GrowthMetric }) {
       ? "text-green-400"
       : metric.trend === "down"
       ? "text-red-400"
-      : "text-gray-400";
+      : "text-white/50";
 
   return (
     <HiveCard className="bg-[#111] border-white/10">
       <CardContent className="pt-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-400">{metric.metric}</span>
+          <span className="text-sm text-white/50">{metric.metric}</span>
           <div className={`flex items-center gap-1 text-sm ${trendColor}`}>
             {metric.trend === "up" ? (
               <ArrowTrendingUpIcon className="h-4 w-4" />
@@ -82,7 +82,7 @@ function GrowthCard({ metric }: { metric: GrowthMetric }) {
         <div className="text-2xl font-bold text-white">
           {metric.current.toLocaleString()}
         </div>
-        <div className="text-xs text-gray-500 mt-1">
+        <div className="text-xs text-white/40 mt-1">
           vs {metric.previous.toLocaleString()} last period
         </div>
       </CardContent>
@@ -108,11 +108,11 @@ function MilestoneItem({ milestone }: { milestone: Milestone }) {
       <div className="w-2 h-2 rounded-full bg-[#FFD700]" />
       <div className="flex-1">
         <div className="text-sm text-white">{milestone.title}</div>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-white/40">
           {new Date(milestone.date).toLocaleDateString()}
         </div>
       </div>
-      <Badge className={typeColors[milestone.type] || "bg-gray-500/20"}>
+      <Badge className={typeColors[milestone.type] || "bg-white/[0.20]/20"}>
         {milestone.value.toLocaleString()}
       </Badge>
     </motion.div>
@@ -132,7 +132,7 @@ const CustomTooltip = ({
 
   return (
     <div className="bg-[#111] border border-white/10 rounded-lg p-3 shadow-xl">
-      <p className="text-sm text-gray-400 mb-2">{label}</p>
+      <p className="text-sm text-white/50 mb-2">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-4 text-sm">
           <span style={{ color: entry.color }}>{entry.name}</span>
@@ -210,7 +210,7 @@ export function MomentumView() {
   if (loading && timeline.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-gray-400">Loading momentum data...</div>
+        <div className="animate-pulse text-white/50">Loading momentum data...</div>
       </div>
     );
   }
@@ -265,7 +265,7 @@ export function MomentumView() {
                   variant={selectedMetric === m ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setSelectedMetric(m)}
-                  className={selectedMetric === m ? "bg-[#FFD700] text-black" : "text-gray-400"}
+                  className={selectedMetric === m ? "bg-[#FFD700] text-black" : "text-white/50"}
                 >
                   {m.charAt(0).toUpperCase() + m.slice(1)}
                 </Button>

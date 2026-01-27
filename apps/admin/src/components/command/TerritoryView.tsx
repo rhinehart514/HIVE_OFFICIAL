@@ -88,13 +88,13 @@ function CategoryPanel({ cluster }: { cluster: CategoryCluster }) {
           className="w-3 h-3 rounded-full"
           style={{ backgroundColor: cluster.color }}
         />
-        <span className="text-sm text-gray-300">{cluster.label}</span>
+        <span className="text-sm text-white/70">{cluster.label}</span>
       </div>
       <div className="flex items-center gap-2">
         <Badge variant="outline" className="text-xs">
           {cluster.spaceCount} spaces
         </Badge>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-white/40">
           {cluster.totalMembers.toLocaleString()} members
         </span>
       </div>
@@ -112,7 +112,7 @@ function SpaceDetail({ node, onClose }: { node: TerritoryNode; onClose: () => vo
     >
       <button
         onClick={onClose}
-        className="absolute top-2 right-2 text-gray-400 hover:text-white"
+        className="absolute top-2 right-2 text-white/50 hover:text-white"
       >
         &times;
       </button>
@@ -126,25 +126,25 @@ function SpaceDetail({ node, onClose }: { node: TerritoryNode; onClose: () => vo
         </div>
         <div>
           <h3 className="font-semibold text-white">{node.name}</h3>
-          <p className="text-sm text-gray-400">@{node.handle}</p>
+          <p className="text-sm text-white/50">@{node.handle}</p>
         </div>
       </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">Members</span>
+          <span className="text-sm text-white/50">Members</span>
           <span className="text-sm text-white">{node.memberCount.toLocaleString()}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">Posts</span>
+          <span className="text-sm text-white/50">Posts</span>
           <span className="text-sm text-white">{node.postCount.toLocaleString()}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">Events</span>
+          <span className="text-sm text-white/50">Events</span>
           <span className="text-sm text-white">{node.eventCount.toLocaleString()}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">Status</span>
+          <span className="text-sm text-white/50">Status</span>
           <Badge
             variant={node.status === "at_risk" ? "destructive" : "outline"}
             className={
@@ -200,7 +200,7 @@ export function TerritoryView() {
   if (loading && nodes.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-gray-400">Loading territory data...</div>
+        <div className="animate-pulse text-white/50">Loading territory data...</div>
       </div>
     );
   }
@@ -220,14 +220,14 @@ export function TerritoryView() {
         <div className="flex items-center gap-2">
           <BuildingOffice2Icon className="h-5 w-5 text-[#FFD700]" />
           <span className="text-xl font-bold text-white">{nodes.length}</span>
-          <span className="text-gray-400">spaces</span>
+          <span className="text-white/50">spaces</span>
         </div>
         <div className="flex items-center gap-2">
           <UsersIcon className="h-5 w-5 text-blue-400" />
           <span className="text-xl font-bold text-white">
             {nodes.reduce((sum, n) => sum + n.memberCount, 0).toLocaleString()}
           </span>
-          <span className="text-gray-400">total members</span>
+          <span className="text-white/50">total members</span>
         </div>
         <div className="flex items-center gap-2 text-amber-400">
           <ExclamationTriangleIcon className="h-5 w-5" />
@@ -250,7 +250,7 @@ export function TerritoryView() {
               className={`w-full text-left py-2 px-3 rounded-lg text-sm transition ${
                 filterCategory === null
                   ? "bg-[#FFD700]/10 text-[#FFD700]"
-                  : "text-gray-400 hover:bg-white/5"
+                  : "text-white/50 hover:bg-white/5"
               }`}
             >
               All Categories ({nodes.length})
@@ -262,7 +262,7 @@ export function TerritoryView() {
                 className={`w-full text-left py-2 px-3 rounded-lg text-sm transition ${
                   filterCategory === cluster.category
                     ? "bg-[#FFD700]/10 text-[#FFD700]"
-                    : "text-gray-400 hover:bg-white/5"
+                    : "text-white/50 hover:bg-white/5"
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export function TerritoryView() {
                   />
                   <span>{cluster.label}</span>
                 </div>
-                <span className="text-xs text-gray-500 ml-4">
+                <span className="text-xs text-white/40 ml-4">
                   {cluster.spaceCount} spaces
                 </span>
               </button>
@@ -316,7 +316,7 @@ export function TerritoryView() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-6 text-sm text-gray-400">
+      <div className="flex items-center gap-6 text-sm text-white/50">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full border-2 border-[#FFD700]" />
           <span>Bubble size = member count</span>

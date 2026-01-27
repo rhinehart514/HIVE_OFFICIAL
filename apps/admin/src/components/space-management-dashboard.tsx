@@ -310,9 +310,9 @@ export function SpaceManagementDashboard() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'activated': return 'bg-green-500';
-      case 'dormant': return 'bg-gray-500';
+      case 'dormant': return 'bg-white/[0.20]';
       case 'frozen': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      default: return 'bg-white/[0.20]';
     }
   };
 
@@ -323,14 +323,14 @@ export function SpaceManagementDashboard() {
       case 'hive_exclusive': return 'text-amber-400';
       case 'student_organizations': return 'text-green-400';
       case 'university_organizations': return 'text-red-400';
-      default: return 'text-gray-400';
+      default: return 'text-white/50';
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Search and Filters */}
-      <Card className="border-gray-700 bg-gray-900/50">
+      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
         <CardHeader>
           <CardTitle className="text-white">Space Management</CardTitle>
         </CardHeader>
@@ -343,7 +343,7 @@ export function SpaceManagementDashboard() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && searchSpaces(currentPage)}
-                className="flex-1 rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="flex-1 rounded-md border border-white/[0.12] bg-[var(--bg-ground)] px-3 py-2 text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               />
               <Button
                 onClick={() => searchSpaces(currentPage)}
@@ -358,7 +358,7 @@ export function SpaceManagementDashboard() {
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="rounded-md border border-white/[0.12] bg-[var(--bg-ground)] px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               >
                 <option value="all">All Types</option>
                 {spaceTypes.map(type => (
@@ -369,7 +369,7 @@ export function SpaceManagementDashboard() {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="rounded-md border border-white/[0.12] bg-[var(--bg-ground)] px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               >
                 <option value="all">All Statuses</option>
                 <option value="activated">Activated</option>
@@ -395,7 +395,7 @@ export function SpaceManagementDashboard() {
 
       {/* Space Results */}
       {spaces && (
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <CardTitle className="text-white">
               Spaces ({spaces.total} found)
@@ -406,19 +406,19 @@ export function SpaceManagementDashboard() {
               {spaces.spaces.map((space) => (
                 <div
                   key={space.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 p-4"
+                  className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-[var(--bg-ground)] p-4"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${getStatusColor(space.status)}`}></div>
                       <div>
                         <h3 className="font-semibold text-white">{space.name}</h3>
-                        <p className="text-sm text-gray-400">{space.description}</p>
+                        <p className="text-sm text-white/50">{space.description}</p>
                         <div className="flex items-center gap-4 mt-1">
                           <span className={`text-sm ${getTypeColor(space.type)}`}>
                             {spaceTypes.find(t => t.value === space.type)?.label}
                           </span>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-white/40">
                             {(space.memberCount || 0)} members
                           </span>
                           {space.hasBuilders && (
@@ -444,7 +444,7 @@ export function SpaceManagementDashboard() {
                       variant="outline"
                       size="sm"
                       onClick={() => setSelectedSpace(space)}
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                      className="border-white/[0.12] text-white/70 hover:bg-white/[0.08]"
                     >
                       View
                     </Button>
@@ -473,8 +473,8 @@ export function SpaceManagementDashboard() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t border-gray-700 mt-4">
-                  <span className="text-sm text-gray-400">
+                <div className="flex items-center justify-between pt-4 border-t border-white/[0.08] mt-4">
+                  <span className="text-sm text-white/50">
                     Showing {((currentPage - 1) * PAGE_SIZE) + 1}-{Math.min(currentPage * PAGE_SIZE, spaces.total)} of {spaces.total}
                   </span>
                   <div className="flex items-center gap-2">
@@ -483,7 +483,7 @@ export function SpaceManagementDashboard() {
                       size="sm"
                       disabled={currentPage === 1}
                       onClick={() => goToPage(currentPage - 1)}
-                      className="text-gray-400 hover:text-white disabled:opacity-50"
+                      className="text-white/50 hover:text-white disabled:opacity-50"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -495,7 +495,7 @@ export function SpaceManagementDashboard() {
                       size="sm"
                       disabled={currentPage >= totalPages}
                       onClick={() => goToPage(currentPage + 1)}
-                      className="text-gray-400 hover:text-white disabled:opacity-50"
+                      className="text-white/50 hover:text-white disabled:opacity-50"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -509,7 +509,7 @@ export function SpaceManagementDashboard() {
 
       {/* Space Details Modal */}
       {selectedSpace && (
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-white">Space Details</CardTitle>
@@ -517,7 +517,7 @@ export function SpaceManagementDashboard() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedSpace(null)}
-                className="text-gray-400 hover:text-white"
+                className="text-white/50 hover:text-white"
               >
                 Close
               </Button>
@@ -529,28 +529,28 @@ export function SpaceManagementDashboard() {
                 <h4 className="font-semibold text-white mb-3">Basic Information</h4>
                 <div className="space-y-2 text-sm">
                   <div>
-                    <span className="text-gray-400">Name: </span>
+                    <span className="text-white/50">Name: </span>
                     <span className="text-white">{selectedSpace.name}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400">Type: </span>
+                    <span className="text-white/50">Type: </span>
                     <span className={getTypeColor(selectedSpace.type)}>
                       {spaceTypes.find(t => t.value === selectedSpace.type)?.label}
                     </span>
                   </div>
                   <div>
-                    <span className="text-gray-400">Status: </span>
+                    <span className="text-white/50">Status: </span>
                     <div className="inline-flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${getStatusColor(selectedSpace.status)}`}></div>
                       <span className="text-white capitalize">{selectedSpace.status}</span>
                     </div>
                   </div>
                   <div>
-                    <span className="text-gray-400">Members: </span>
+                    <span className="text-white/50">Members: </span>
                     <span className="text-white">{(selectedSpace.memberCount || 0)}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400">Has Builders: </span>
+                    <span className="text-white/50">Has Builders: </span>
                     <span className="text-white">{selectedSpace.hasBuilders ? 'Yes' : 'No'}</span>
                   </div>
                 </div>
@@ -560,9 +560,9 @@ export function SpaceManagementDashboard() {
                 <div className="space-y-2 text-sm">
                   {Object.entries(selectedSpace.surfaces).map(([surface, enabled]) => (
                     <div key={surface} className="flex justify-between">
-                      <span className="text-gray-400 capitalize">{surface}: </span>
+                      <span className="text-white/50 capitalize">{surface}: </span>
                       <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-green-500' : 'bg-gray-500'}`}></div>
+                        <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-green-500' : 'bg-white/[0.20]'}`}></div>
                         <span className="text-white">{enabled ? 'Enabled' : 'Disabled'}</span>
                       </div>
                     </div>
@@ -571,7 +571,7 @@ export function SpaceManagementDashboard() {
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-700">
+            <div className="mt-6 pt-4 border-t border-white/[0.08]">
               <h4 className="font-semibold text-white mb-3">Admin Actions</h4>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -614,7 +614,7 @@ export function SpaceManagementDashboard() {
                   variant="outline"
                   size="sm"
                   onClick={() => setConfirmAction({ action: 'archive', spaceId: selectedSpace.id, spaceName: selectedSpace.name })}
-                  className="border-gray-600 text-gray-400 hover:bg-gray-600/10"
+                  className="border-white/[0.12] text-white/50 hover:bg-white/[0.12]/10"
                 >
                   Archive Space
                 </Button>
@@ -626,45 +626,45 @@ export function SpaceManagementDashboard() {
 
       {/* Edit Space Modal */}
       <Dialog open={!!editingSpace} onOpenChange={() => setEditingSpace(null)}>
-        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-lg">
+        <DialogContent className="bg-[var(--bg-void)] border-white/[0.08] text-white max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Space</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-white/50">
               Update space details and settings
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Name</label>
+              <label className="text-sm font-medium text-white/70">Name</label>
               <Input
                 value={editForm.name}
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                className="bg-gray-800 border-gray-600 text-white"
+                className="bg-[var(--bg-ground)] border-white/[0.12] text-white"
                 placeholder="Space name"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Description</label>
+              <label className="text-sm font-medium text-white/70">Description</label>
               <Textarea
                 value={editForm.description}
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                className="bg-gray-800 border-gray-600 text-white min-h-[100px]"
+                className="bg-[var(--bg-ground)] border-white/[0.12] text-white min-h-[100px]"
                 placeholder="Space description"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Category</label>
+              <label className="text-sm font-medium text-white/70">Category</label>
               <Select
                 value={editForm.type}
                 onValueChange={(value: Space['type']) => setEditForm({ ...editForm, type: value })}
               >
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                <SelectTrigger className="bg-[var(--bg-ground)] border-white/[0.12] text-white">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
+                <SelectContent className="bg-[var(--bg-ground)] border-white/[0.12]">
                   {spaceTypes.map(type => (
                     <SelectItem key={type.value} value={type.value} className="text-white">
                       {type.label}
@@ -675,17 +675,17 @@ export function SpaceManagementDashboard() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Visibility</label>
+              <label className="text-sm font-medium text-white/70">Visibility</label>
               <Select
                 value={editForm.visibility}
                 onValueChange={(value: 'public' | 'private' | 'members_only') =>
                   setEditForm({ ...editForm, visibility: value })
                 }
               >
-                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                <SelectTrigger className="bg-[var(--bg-ground)] border-white/[0.12] text-white">
                   <SelectValue placeholder="Select visibility" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-600">
+                <SelectContent className="bg-[var(--bg-ground)] border-white/[0.12]">
                   <SelectItem value="public" className="text-white">Public</SelectItem>
                   <SelectItem value="private" className="text-white">Private</SelectItem>
                   <SelectItem value="members_only" className="text-white">Members Only</SelectItem>
@@ -695,8 +695,8 @@ export function SpaceManagementDashboard() {
 
             <div className="flex items-center justify-between py-2">
               <div>
-                <label className="text-sm font-medium text-gray-300">Featured Space</label>
-                <p className="text-xs text-gray-500">Show in featured section on browse page</p>
+                <label className="text-sm font-medium text-white/70">Featured Space</label>
+                <p className="text-xs text-white/40">Show in featured section on browse page</p>
               </div>
               <Switch
                 checked={editForm.featured}
@@ -709,7 +709,7 @@ export function SpaceManagementDashboard() {
             <Button
               variant="outline"
               onClick={() => setEditingSpace(null)}
-              className="border-gray-600 text-gray-300"
+              className="border-white/[0.12] text-white/70"
             >
               Cancel
             </Button>
@@ -726,13 +726,13 @@ export function SpaceManagementDashboard() {
 
       {/* Confirmation Dialog */}
       <Dialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
-        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
+        <DialogContent className="bg-[var(--bg-void)] border-white/[0.08] text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
               Confirm Action
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-white/50">
               {confirmAction?.action === 'archive' && (
                 <>
                   Are you sure you want to archive <strong className="text-white">{confirmAction.spaceName}</strong>?
@@ -757,7 +757,7 @@ export function SpaceManagementDashboard() {
             <Button
               variant="outline"
               onClick={() => setConfirmAction(null)}
-              className="border-gray-600 text-gray-300"
+              className="border-white/[0.12] text-white/70"
             >
               Cancel
             </Button>
@@ -766,7 +766,7 @@ export function SpaceManagementDashboard() {
               disabled={loading}
               className={
                 confirmAction?.action === 'archive'
-                  ? 'bg-gray-600 hover:bg-gray-700'
+                  ? 'bg-white/[0.12] hover:bg-white/[0.08]'
                   : confirmAction?.action === 'freeze'
                   ? 'bg-yellow-600 hover:bg-yellow-700'
                   : 'bg-red-600 hover:bg-red-700'

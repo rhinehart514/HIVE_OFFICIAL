@@ -303,7 +303,7 @@ export default function RitualDetailPage() {
                       entry.rank === 1
                         ? "bg-[var(--hive-brand-primary)] text-black"
                         : entry.rank === 2
-                          ? "bg-gray-300 text-gray-900"
+                          ? "bg-white/[0.30] text-white"
                           : entry.rank === 3
                             ? "bg-amber-600 text-white"
                             : "bg-[var(--hive-background-tertiary)] text-[var(--hive-text-primary)]"

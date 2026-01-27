@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@hive/auth-logic';
+import { logger } from '@/lib/logger';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { EASE_PREMIUM } from '@hive/ui';
@@ -113,7 +114,7 @@ export default function NewToolPage() {
         // Navigate to IDE
         router.replace(`/tools/${toolId}?${params.toString()}`);
       } catch (error) {
-        console.error('Failed to create tool:', error);
+        logger.error('Failed to create tool', { component: 'NewToolPage' }, error instanceof Error ? error : undefined);
         setStatus('error');
         setErrorMessage(error instanceof Error ? error.message : 'Failed to create tool');
         toast.error('Failed to create tool');

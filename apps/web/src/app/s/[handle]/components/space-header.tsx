@@ -98,201 +98,124 @@ export function SpaceHeader({
   onCreateEventClick,
   className,
 }: SpaceHeaderProps) {
+  const energyLevel = getEnergyLevel(space.recentMessageCount);
+
   return (
     <motion.header
       className={cn(
-        'flex items-center justify-between py-4',
+        'flex items-center justify-between py-3',
         'border-b border-white/[0.06]',
         className
       )}
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: durationSeconds.gentle, ease: MOTION.ease.premium }}
+      transition={{ duration: durationSeconds.quick, ease: MOTION.ease.premium }}
     >
-      {/* Left: Identity */}
+      {/* Left: Compressed Identity */}
       <button
         onClick={onSpaceInfoClick}
-        className="flex items-center gap-3 group"
+        className="flex items-center gap-3 group min-w-0"
       >
-        {/* Avatar with entrance animation */}
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: durationSeconds.smooth, delay: 0.1, ease: MOTION.ease.premium }}
-        >
-          <Avatar size="default" className="group-hover:ring-2 ring-white/10 transition-all">
-            {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-            <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
-          </Avatar>
-        </motion.div>
+        {/* Smaller avatar (40px = size="default") */}
+        <Avatar size="default" className="flex-shrink-0 group-hover:ring-2 ring-white/10 transition-all">
+          {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
+          <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
+        </Avatar>
 
-        {/* Name and handle */}
-        <div className="flex flex-col items-start">
+        {/* Name + Handle + Stats - Compressed */}
+        <div className="flex flex-col items-start min-w-0">
+          {/* Row 1: Name + Verified + Dropdown */}
           <div className="flex items-center gap-2">
-            {/* Space name - Clash Display */}
-            <motion.h1
-              className="text-title-sm md:text-title font-semibold text-white tracking-tight"
+            <h1
+              className="text-body font-semibold text-white truncate max-w-[200px] md:max-w-none"
               style={{ fontFamily: 'var(--font-display)' }}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: durationSeconds.smooth, delay: 0.15, ease: MOTION.ease.premium }}
             >
               {space.name}
-            </motion.h1>
-
-            {/* Verified/Leader badge */}
+            </h1>
             {space.isVerified && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: durationSeconds.quick, delay: 0.3, ease: MOTION.ease.premium }}
-                title="Verified Organization"
-              >
-                <Crown className="h-3.5 w-3.5 text-[var(--color-gold)]" />
-              </motion.div>
+              <Crown className="h-3 w-3 text-[var(--color-gold)] flex-shrink-0" />
             )}
-
-            {/* Dropdown indicator */}
-            <ChevronDown className="h-3.5 w-3.5 text-white/30 group-hover:text-white/50 transition-colors" />
+            <ChevronDown className="h-3 w-3 text-white/30 group-hover:text-white/50 transition-colors flex-shrink-0" />
           </div>
 
-          {/* Handle and online count */}
-          <motion.div
-            className="flex items-center gap-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: durationSeconds.smooth, delay: 0.2, ease: MOTION.ease.premium }}
-          >
-            <Text size="xs" tone="muted" className="font-mono">
-              @{space.handle}
-            </Text>
-
-            {/* Energy indicator - shows activity level and presence */}
-            {(() => {
-              const energyLevel = getEnergyLevel(space.recentMessageCount);
-              return (
-                <div className="flex items-center gap-2">
-                  {/* Energy dots */}
-                  {energyLevel !== 'none' && (
-                    <div className="flex items-center gap-1">
-                      <EnergyDots level={energyLevel} />
-                      <Text size="xs" className="text-white/40">
-                        {energyLevel}
-                      </Text>
-                    </div>
-                  )}
-
-                  {/* Presence count - "here now" instead of "online" */}
-                  {space.onlineCount > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)] animate-pulse" />
-                      <Text size="xs" className="text-[var(--color-gold)]/70">
-                        {space.onlineCount} here now
-                      </Text>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* Social Links (P2.2) */}
-            {space.socialLinks && Object.values(space.socialLinks).some(Boolean) && (
-              <div className="flex items-center gap-2 ml-2 border-l border-white/[0.06] pl-3">
-                {space.socialLinks.website && (
-                  <a
-                    href={space.socialLinks.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/40 hover:text-white/60 transition-colors"
-                    title="Website"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Globe className="h-3.5 w-3.5" />
-                  </a>
-                )}
-                {space.socialLinks.instagram && (
-                  <a
-                    href={space.socialLinks.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/40 hover:text-white/60 transition-colors"
-                    title="Instagram"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Instagram className="h-3.5 w-3.5" />
-                  </a>
-                )}
-                {space.socialLinks.twitter && (
-                  <a
-                    href={space.socialLinks.twitter}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/40 hover:text-white/60 transition-colors"
-                    title="Twitter/X"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Twitter className="h-3.5 w-3.5" />
-                  </a>
-                )}
-                {space.socialLinks.facebook && (
-                  <a
-                    href={space.socialLinks.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/40 hover:text-white/60 transition-colors"
-                    title="Facebook"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Facebook className="h-3.5 w-3.5" />
-                  </a>
-                )}
-                {space.socialLinks.linkedin && (
-                  <a
-                    href={space.socialLinks.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/40 hover:text-white/60 transition-colors"
-                    title="LinkedIn"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Linkedin className="h-3.5 w-3.5" />
-                  </a>
-                )}
-                {space.socialLinks.youtube && (
-                  <a
-                    href={space.socialLinks.youtube}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/40 hover:text-white/60 transition-colors"
-                    title="YouTube"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Youtube className="h-3.5 w-3.5" />
-                  </a>
-                )}
-              </div>
+          {/* Row 2: Handle · Members · Online (inline stats) */}
+          <div className="flex items-center gap-2 text-label text-white/40">
+            <span className="font-mono">@{space.handle}</span>
+            <span className="text-white/20">·</span>
+            <span>{space.memberCount} members</span>
+            {space.onlineCount > 0 && (
+              <>
+                <span className="text-white/20">·</span>
+                <span className="flex items-center gap-1 text-emerald-400/70">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {space.onlineCount} online
+                </span>
+              </>
             )}
-          </motion.div>
+            {energyLevel !== 'none' && space.onlineCount === 0 && (
+              <>
+                <span className="text-white/20">·</span>
+                <EnergyDots level={energyLevel} />
+              </>
+            )}
+          </div>
         </div>
       </button>
 
-      {/* Right: Actions */}
-      <motion.div
-        className="flex items-center gap-2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: durationSeconds.smooth, delay: 0.25, ease: MOTION.ease.premium }}
-      >
+      {/* Right: Actions - More compact */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {/* Social links - only show on larger screens */}
+        {space.socialLinks && Object.values(space.socialLinks).some(Boolean) && (
+          <div className="hidden md:flex items-center gap-1.5 mr-2 pr-2 border-r border-white/[0.06]">
+            {space.socialLinks.website && (
+              <a
+                href={space.socialLinks.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 text-white/30 hover:text-white/50 transition-colors"
+                title="Website"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Globe className="h-3.5 w-3.5" />
+              </a>
+            )}
+            {space.socialLinks.instagram && (
+              <a
+                href={space.socialLinks.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 text-white/30 hover:text-white/50 transition-colors"
+                title="Instagram"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Instagram className="h-3.5 w-3.5" />
+              </a>
+            )}
+            {space.socialLinks.twitter && (
+              <a
+                href={space.socialLinks.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 text-white/30 hover:text-white/50 transition-colors"
+                title="Twitter/X"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Twitter className="h-3.5 w-3.5" />
+              </a>
+            )}
+          </div>
+        )}
+
         {/* Members button */}
         {onMembersClick && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onMembersClick}
-            className="text-white/50 hover:text-white/70"
+            className="text-white/50 hover:text-white/70 px-2"
           >
-            <span className="hidden sm:inline">Members</span>
-            <span className="text-xs ml-1.5 opacity-60">
+            <span className="hidden sm:inline text-xs">Members</span>
+            <span className="text-xs sm:ml-1 opacity-60">
               {space.memberCount}
             </span>
           </Button>
@@ -304,11 +227,10 @@ export function SpaceHeader({
             variant="ghost"
             size="sm"
             onClick={onBuildToolClick}
-            className="text-[var(--hive-brand-primary)]/60 hover:text-[var(--hive-brand-primary)]"
+            className="text-[var(--hive-brand-primary)]/60 hover:text-[var(--hive-brand-primary)] px-2"
             title="Build a tool for this space"
           >
             <Hammer className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2 text-xs">Build</span>
           </Button>
         )}
 
@@ -318,27 +240,26 @@ export function SpaceHeader({
             variant="ghost"
             size="sm"
             onClick={onCreateEventClick}
-            className="text-[var(--color-gold)]/60 hover:text-[var(--color-gold)]"
+            className="text-[var(--color-gold)]/60 hover:text-[var(--color-gold)] px-2"
             title="Create an event for this space"
           >
             <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2 text-xs">Event</span>
           </Button>
         )}
 
-        {/* Settings - Available to all members (leaders get full access, members get leave option) */}
+        {/* Settings */}
         {isMember && onSettingsClick && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onSettingsClick}
-            className="text-white/40 hover:text-white/60"
+            className="text-white/40 hover:text-white/60 px-2"
             title={isLeader ? "Space settings" : "Leave space"}
           >
             <Settings className="h-4 w-4" />
           </Button>
         )}
-      </motion.div>
+      </div>
     </motion.header>
   );
 }

@@ -231,7 +231,7 @@ export function AdminSidebar({
 
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+          className="p-1.5 rounded-md hover:bg-white/10 text-white/50 hover:text-white transition-colors"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? (
@@ -247,7 +247,7 @@ export function AdminSidebar({
         <div className="px-3 py-2 border-b border-white/10">
           {!isCollapsed ? (
             <div className="space-y-2">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <span className="text-xs font-medium text-white/40 uppercase tracking-wider">
                 Mode
               </span>
               <div className="flex gap-1">
@@ -256,7 +256,7 @@ export function AdminSidebar({
                   className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                     currentMode === "command"
                       ? "bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/30"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                      : "text-white/50 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <PresentationChartBarIcon className="h-4 w-4" />
@@ -267,7 +267,7 @@ export function AdminSidebar({
                   className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                     currentMode === "operations"
                       ? "bg-white/10 text-white border border-white/30"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                      : "text-white/50 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <InboxStackIcon className="h-4 w-4" />
@@ -289,7 +289,7 @@ export function AdminSidebar({
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         <div className="mb-2">
           {!isCollapsed && (
-            <span className="px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <span className="px-3 text-xs font-medium text-white/40 uppercase tracking-wider">
               Main
             </span>
           )}
@@ -310,7 +310,7 @@ export function AdminSidebar({
                 ${
                   isActive
                     ? "bg-[#FFD700]/10 text-[#FFD700]"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    : "text-white/50 hover:text-white hover:bg-white/5"
                 }
               `}
               title={isCollapsed ? item.label : undefined}
@@ -339,7 +339,7 @@ export function AdminSidebar({
 
               {/* Tooltip for collapsed state */}
               {isCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 border border-white/10 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--bg-void)] border border-white/10 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
                   <span className="text-sm text-white">{item.label}</span>
                   {badge > 0 && (
                     <span className="ml-2 text-xs text-red-400">({badge})</span>
@@ -353,7 +353,7 @@ export function AdminSidebar({
         {/* Cross-Slice Integration */}
         <div className="mt-6 pt-4 border-t border-white/10">
           {!isCollapsed && (
-            <span className="px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <span className="px-3 text-xs font-medium text-white/40 uppercase tracking-wider">
               Cross-Slice
             </span>
           )}
@@ -373,7 +373,7 @@ export function AdminSidebar({
                     ${
                       isActive
                         ? "bg-[#FFD700]/10 text-[#FFD700]"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                        : "text-white/50 hover:text-white hover:bg-white/5"
                     }
                   `}
                   title={isCollapsed ? item.label : undefined}
@@ -402,7 +402,7 @@ export function AdminSidebar({
 
                   {/* Tooltip for collapsed state */}
                   {isCollapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 border border-white/10 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--bg-void)] border border-white/10 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
                       <span className="text-sm text-white">{item.label}</span>
                       {badge > 0 && (
                         <span className="ml-2 text-xs text-[#FFD700]">({badge})</span>
@@ -418,7 +418,7 @@ export function AdminSidebar({
         {/* Secondary Navigation */}
         <div className="mt-6 pt-4 border-t border-white/10">
           {!isCollapsed && (
-            <span className="px-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <span className="px-3 text-xs font-medium text-white/40 uppercase tracking-wider">
               System
             </span>
           )}
@@ -438,7 +438,7 @@ export function AdminSidebar({
                     ${
                       isActive
                         ? "bg-[#FFD700]/10 text-[#FFD700]"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                        : "text-white/50 hover:text-white hover:bg-white/5"
                     }
                   `}
                   title={isCollapsed ? item.label : undefined}
@@ -467,7 +467,7 @@ export function AdminSidebar({
 
                   {/* Tooltip for collapsed state */}
                   {isCollapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 border border-white/10 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--bg-void)] border border-white/10 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
                       <span className="text-sm text-white">{item.label}</span>
                     </div>
                   )}
@@ -483,7 +483,7 @@ export function AdminSidebar({
         {!isCollapsed ? (
           <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white/5">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs text-gray-400">System Healthy</span>
+            <span className="text-xs text-white/50">System Healthy</span>
           </div>
         ) : (
           <div className="flex justify-center">

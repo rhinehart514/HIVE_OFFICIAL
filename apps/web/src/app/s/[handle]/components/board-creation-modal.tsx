@@ -123,8 +123,9 @@ export function BoardCreationModal({
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+              aria-label="Close modal"
             >
-              <XMarkIcon className="w-5 h-5 text-white/40" />
+              <XMarkIcon className="w-5 h-5 text-white/40" aria-hidden="true" />
             </button>
           </div>
 

@@ -147,7 +147,7 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
         }}
         onCreateEvent={() => router.push('/events/create')}
         onCreateTool={() => router.push('/tools/create')}
-        onCreateSpace={() => router.push('/spaces/create')}
+        onCreateSpace={() => router.push('/spaces/new')}
         isBuilder={user.isBuilder}
         isQuickCreateOpen={isQuickCreateOpen}
         onQuickCreateOpenChange={setQuickCreateOpen}
@@ -224,7 +224,7 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
             { id: 'tools', label: 'HiveLab', category: 'Navigation', shortcut: ['G', 'H'], onSelect: () => router.push('/tools') },
           ] : []),
           // Actions
-          { id: 'create-space', label: 'Create Space', category: 'Actions', featured: true, onSelect: () => router.push('/spaces/create') },
+          { id: 'create-space', label: 'Create Space', category: 'Actions', featured: true, onSelect: () => router.push('/spaces/new') },
           // User's spaces
           ...dockSpaces.slice(0, 10).map((space) => ({
             id: `space-${space.id}`,

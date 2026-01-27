@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { ChevronDown, ChevronRight, GraduationCap, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import {
   motion,
   MOTION,
@@ -74,7 +75,7 @@ export function MajorBrowse({ searchQuery }: MajorBrowseProps) {
           setExpandedSchools(new Set([json.sections[0].name]));
         }
       } catch (error) {
-        console.error('Failed to fetch major browse data:', error);
+        logger.error('Failed to fetch major browse data', { component: 'MajorBrowse' }, error instanceof Error ? error : undefined);
       } finally {
         setLoading(false);
       }

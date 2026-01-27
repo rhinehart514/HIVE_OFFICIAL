@@ -13,3 +13,5 @@ export type { Member } from './members-list';
 export { SpaceSettings } from './space-settings';
 export { SpaceInfoDrawer } from './space-info-drawer';
 export { MemberManagement } from './member-management';
+export { BoardEmptyState, getBoardType } from './BoardEmptyState';
+export type { BoardType } from './BoardEmptyState';

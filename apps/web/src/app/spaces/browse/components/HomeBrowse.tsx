@@ -8,6 +8,7 @@
 import * as React from 'react';
 import { Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import {
   motion,
   MOTION,
@@ -62,7 +63,7 @@ export function HomeBrowse({ searchQuery }: HomeBrowseProps) {
         const json = await res.json();
         setData(json);
       } catch (error) {
-        console.error('Failed to fetch home browse data:', error);
+        logger.error('Failed to fetch home browse data', { component: 'HomeBrowse' }, error instanceof Error ? error : undefined);
       } finally {
         setLoading(false);
       }
@@ -90,7 +91,7 @@ export function HomeBrowse({ searchQuery }: HomeBrowseProps) {
         spaces: [...(prev?.spaces || []), ...json.spaces],
       }));
     } catch (error) {
-      console.error('Failed to load more:', error);
+      logger.error('Failed to load more', { component: 'HomeBrowse' }, error instanceof Error ? error : undefined);
     } finally {
       setLoadingMore(false);
     }

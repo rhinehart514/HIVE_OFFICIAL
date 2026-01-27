@@ -41,7 +41,7 @@ export function BarChart({
   return (
     <div className="w-full">
       {title && (
-        <h4 className="mb-3 text-sm font-medium text-gray-400">{title}</h4>
+        <h4 className="mb-3 text-sm font-medium text-white/50">{title}</h4>
       )}
       <ResponsiveContainer width="100%" height={height}>
         <RechartsBarChart

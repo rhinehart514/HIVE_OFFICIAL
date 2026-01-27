@@ -108,11 +108,11 @@ function QueueCard({ config, count, loading }: { config: QueueConfig; count: num
 
           <div className="space-y-2">
             <h3 className="text-lg font-semibold text-white">{config.label}</h3>
-            <p className="text-sm text-gray-400">{config.description}</p>
+            <p className="text-sm text-white/50">{config.description}</p>
           </div>
 
           <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-2 text-sm text-white/40">
               <ClockIcon className="h-4 w-4" />
               <span>Updated now</span>
             </div>
@@ -160,7 +160,7 @@ function TotalQueueSummary({
           >
             {total}
           </motion.div>
-          <p className="text-sm text-gray-400 mt-1">total items requiring attention</p>
+          <p className="text-sm text-white/50 mt-1">total items requiring attention</p>
         </div>
 
         <div className="space-y-4">
@@ -171,7 +171,7 @@ function TotalQueueSummary({
             return (
               <div key={config.id} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">{config.label}</span>
+                  <span className="text-white/50">{config.label}</span>
                   <span className={config.color}>{count}</span>
                 </div>
                 <div className="h-2 bg-white/5 rounded-full overflow-hidden">
@@ -220,7 +220,7 @@ export function QueueDashboard() {
   if (loading && total === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="flex items-center gap-2 text-gray-400">
+        <div className="flex items-center gap-2 text-white/50">
           <ArrowPathIcon className="h-5 w-5 animate-spin" />
           Loading queues...
         </div>
@@ -242,7 +242,7 @@ export function QueueDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Action Queues</h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-white/50 mt-1">
             Items requiring admin attention
           </p>
         </div>
@@ -268,7 +268,7 @@ export function QueueDashboard() {
             <CardContent className="py-8 text-center">
               <CheckCircleIcon className="h-12 w-12 text-green-400 mx-auto mb-3" />
               <h3 className="text-lg font-semibold text-green-400">All Queues Clear</h3>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-white/50 mt-1">
                 No items requiring attention. Great job!
               </p>
             </CardContent>

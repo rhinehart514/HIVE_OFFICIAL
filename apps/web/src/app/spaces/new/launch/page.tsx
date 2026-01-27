@@ -18,6 +18,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
+import { logger } from '@/lib/logger';
 import {
   BuilderShell,
   type PrivacyLevel,
@@ -87,7 +88,7 @@ export default function LaunchPage() {
         // Hide confetti after animation
         setTimeout(() => setShowConfetti(false), 3000);
       } catch (err) {
-        console.error('Failed to create space:', err);
+        logger.error('Failed to create space', { component: 'LaunchPage' }, err instanceof Error ? err : undefined);
         setError('Failed to create space. Please try again.');
       } finally {
         setIsCreating(false);

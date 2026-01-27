@@ -88,7 +88,7 @@ function MetricCard({
                   ? "text-green-400"
                   : trend === "down"
                   ? "text-red-400"
-                  : "text-gray-400"
+                  : "text-white/50"
               }`}
             >
               {trend === "up" ? (
@@ -104,7 +104,7 @@ function MetricCard({
           <div className="text-3xl font-bold text-white">
             <AnimatedNumber value={value} />
           </div>
-          <div className="text-sm text-gray-400 mt-1">{label}</div>
+          <div className="text-sm text-white/50 mt-1">{label}</div>
         </div>
       </CardContent>
     </HiveCard>
@@ -129,7 +129,7 @@ function QueueBadge({
 
   return (
     <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/5">
-      <span className="text-sm text-gray-300">{label}</span>
+      <span className="text-sm text-white/70">{label}</span>
       <Badge className={colorClasses[color]}>{count}</Badge>
     </div>
   );
@@ -149,11 +149,11 @@ function ActivityItem({
     user_signup: { icon: UsersIcon, label: "New user", color: "text-green-400" },
     space_created: { icon: BuildingOffice2Icon, label: "Space created", color: "text-blue-400" },
     event_created: { icon: CalendarDaysIcon, label: "Event created", color: "text-purple-400" },
-    post_created: { icon: DocumentTextIcon, label: "Post", color: "text-gray-400" },
+    post_created: { icon: DocumentTextIcon, label: "Post", color: "text-white/50" },
     tool_deployed: { icon: SignalIcon, label: "Tool deployed", color: "text-[#FFD700]" },
   };
 
-  const config = typeConfig[type] || { icon: ClockIcon, label: type, color: "text-gray-400" };
+  const config = typeConfig[type] || { icon: ClockIcon, label: type, color: "text-white/50" };
   const Icon = config.icon;
 
   const timeAgo = getTimeAgo(timestamp);
@@ -169,9 +169,9 @@ function ActivityItem({
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm text-white truncate">{entityName}</div>
-        <div className="text-xs text-gray-500">{config.label}</div>
+        <div className="text-xs text-white/40">{config.label}</div>
       </div>
-      <div className="text-xs text-gray-500">{timeAgo}</div>
+      <div className="text-xs text-white/40">{timeAgo}</div>
     </motion.div>
   );
 }
@@ -208,7 +208,7 @@ export function PulseView() {
   if (pulseLoading && !pulse) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-gray-400">Loading pulse data...</div>
+        <div className="animate-pulse text-white/50">Loading pulse data...</div>
       </div>
     );
   }
@@ -222,11 +222,11 @@ export function PulseView() {
             isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
           }`}
         />
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-white/40">
           {isConnected ? "Live" : "Reconnecting..."}
         </span>
         {pulse?.updatedAt && (
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-white/30">
             Last update: {getTimeAgo(pulse.updatedAt)}
           </span>
         )}
@@ -309,7 +309,7 @@ export function PulseView() {
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-gray-400">Users</span>
+                <span className="text-sm text-white/50">Users</span>
                 <span className={`text-sm ${(pulse?.weeklyGrowth.users || 0) > 0 ? "text-green-400" : "text-red-400"}`}>
                   {(pulse?.weeklyGrowth.users || 0) > 0 ? "+" : ""}{pulse?.weeklyGrowth.users || 0}%
                 </span>
@@ -318,7 +318,7 @@ export function PulseView() {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-gray-400">Spaces</span>
+                <span className="text-sm text-white/50">Spaces</span>
                 <span className={`text-sm ${(pulse?.weeklyGrowth.spaces || 0) > 0 ? "text-green-400" : "text-red-400"}`}>
                   {(pulse?.weeklyGrowth.spaces || 0) > 0 ? "+" : ""}{pulse?.weeklyGrowth.spaces || 0}%
                 </span>
@@ -327,7 +327,7 @@ export function PulseView() {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-gray-400">Engagement</span>
+                <span className="text-sm text-white/50">Engagement</span>
                 <span className={`text-sm ${(pulse?.weeklyGrowth.engagement || 0) > 0 ? "text-green-400" : "text-red-400"}`}>
                   {(pulse?.weeklyGrowth.engagement || 0) > 0 ? "+" : ""}{pulse?.weeklyGrowth.engagement || 0}%
                 </span>
@@ -358,7 +358,7 @@ export function PulseView() {
                     />
                   ))
                 ) : (
-                  <div className="text-center text-gray-500 py-8">
+                  <div className="text-center text-white/40 py-8">
                     No recent activity
                   </div>
                 )}

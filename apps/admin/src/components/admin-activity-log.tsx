@@ -129,7 +129,7 @@ export function AdminActivityLogDashboard() {
     if (action.includes('approve') || action.includes('login')) return 'text-green-400';
     if (action.includes('reject') || action.includes('suspend') || action.includes('remove')) return 'text-red-400';
     if (action.includes('create') || action.includes('grant')) return 'text-blue-400';
-    return 'text-gray-400';
+    return 'text-white/50';
   };
 
   const getTimeAgo = (timestamp: string) => {
@@ -152,36 +152,36 @@ export function AdminActivityLogDashboard() {
       {/* Statistics Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
             <CardContent className="p-4">
               <div className="text-center">
-                <p className="text-sm text-gray-400">Total Actions</p>
+                <p className="text-sm text-white/50">Total Actions</p>
                 <p className="text-2xl font-bold text-white">{stats.totalActions}</p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
             <CardContent className="p-4">
               <div className="text-center">
-                <p className="text-sm text-gray-400">Success Rate</p>
+                <p className="text-sm text-white/50">Success Rate</p>
                 <p className="text-2xl font-bold text-green-400">
                   {stats.totalActions > 0 ? Math.round((stats.successfulActions / stats.totalActions) * 100) : 0}%
                 </p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
             <CardContent className="p-4">
               <div className="text-center">
-                <p className="text-sm text-gray-400">Failed Actions</p>
+                <p className="text-sm text-white/50">Failed Actions</p>
                 <p className="text-2xl font-bold text-red-400">{stats.failedActions}</p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
             <CardContent className="p-4">
               <div className="text-center">
-                <p className="text-sm text-gray-400">Active Admins</p>
+                <p className="text-sm text-white/50">Active Admins</p>
                 <p className="text-2xl font-bold text-blue-400">{stats.uniqueAdmins}</p>
               </div>
             </CardContent>
@@ -190,7 +190,7 @@ export function AdminActivityLogDashboard() {
       )}
 
       {/* Filters */}
-      <Card className="border-gray-700 bg-gray-900/50">
+      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
         <CardHeader>
           <CardTitle className="text-white">Activity Log Filters</CardTitle>
         </CardHeader>
@@ -199,7 +199,7 @@ export function AdminActivityLogDashboard() {
             <select
               value={filters.action}
               onChange={(e) => setFilters({ ...filters, action: e.target.value })}
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="rounded-md border border-white/[0.12] bg-[var(--bg-ground)] px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             >
               <option value="">All Actions</option>
               <option value="login">Login</option>
@@ -213,7 +213,7 @@ export function AdminActivityLogDashboard() {
             <select
               value={filters.success}
               onChange={(e) => setFilters({ ...filters, success: e.target.value })}
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="rounded-md border border-white/[0.12] bg-[var(--bg-ground)] px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             >
               <option value="">All Results</option>
               <option value="true">Success</option>
@@ -224,14 +224,14 @@ export function AdminActivityLogDashboard() {
               type="date"
               value={filters.dateFrom}
               onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="rounded-md border border-white/[0.12] bg-[var(--bg-ground)] px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
 
             <input
               type="date"
               value={filters.dateTo}
               onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="rounded-md border border-white/[0.12] bg-[var(--bg-ground)] px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
 
             <div className="flex gap-2">
@@ -255,7 +255,7 @@ export function AdminActivityLogDashboard() {
       </Card>
 
       {/* Activity Logs */}
-      <Card className="border-gray-700 bg-gray-900/50">
+      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-white">Activity Logs ({logs.length})</CardTitle>
@@ -278,14 +278,14 @@ export function AdminActivityLogDashboard() {
 
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {logs.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-white/50">
                 No activity logs found
               </div>
             ) : (
               logs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 p-3"
+                  className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-[var(--bg-ground)] p-3"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${
@@ -307,7 +307,7 @@ export function AdminActivityLogDashboard() {
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-400">
+                      <div className="flex items-center gap-4 text-sm text-white/50">
                         <span>{log.adminEmail}</span>
                         <span>{getTimeAgo(log.timestamp)}</span>
                         {log.resourceId && (
@@ -320,11 +320,11 @@ export function AdminActivityLogDashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-white/40">
                       {new Date(log.timestamp).toLocaleString()}
                     </p>
                     {log.ipAddress && (
-                      <p className="text-xs text-gray-500 font-mono">
+                      <p className="text-xs text-white/40 font-mono">
                         {log.ipAddress}
                       </p>
                     )}
@@ -338,7 +338,7 @@ export function AdminActivityLogDashboard() {
 
       {/* Top Actions */}
       {stats && stats.mostCommonActions.length > 0 && (
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <CardTitle className="text-white">Most Common Actions</CardTitle>
           </CardHeader>
@@ -352,7 +352,7 @@ export function AdminActivityLogDashboard() {
                     </span>
                     <span className="text-white">{item.action.replace(/_/g, ' ')}</span>
                   </div>
-                  <span className="text-gray-400">{item.count} times</span>
+                  <span className="text-white/50">{item.count} times</span>
                 </div>
               ))}
             </div>

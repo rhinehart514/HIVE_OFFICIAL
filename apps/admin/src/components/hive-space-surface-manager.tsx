@@ -99,8 +99,8 @@ const SurfaceCard: React.FC<{
       case 'events': return 'text-green-400';
       case 'members': return 'text-purple-400';
       case 'resources': return 'text-orange-400';
-      case 'about': return 'text-gray-400';
-      default: return 'text-gray-400';
+      case 'about': return 'text-white/50';
+      default: return 'text-white/50';
     }
   };
 
@@ -117,16 +117,16 @@ const SurfaceCard: React.FC<{
   };
 
   return (
-    <Card className={`border transition-all ${surface.isEnabled ? 'border-green-500/30 bg-green-500/5' : 'border-gray-600 bg-gray-800/50'}`}>
+    <Card className={`border transition-all ${surface.isEnabled ? 'border-green-500/30 bg-green-500/5' : 'border-white/[0.12] bg-[var(--bg-ground)]/50'}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg bg-gray-800 ${getSurfaceColor(surface.type)}`}>
+            <div className={`p-2 rounded-lg bg-[var(--bg-ground)] ${getSurfaceColor(surface.type)}`}>
               {getSurfaceIcon(surface.type)}
             </div>
             <div>
               <h3 className="font-semibold text-white capitalize">{surface.name.replace('_', ' ')}</h3>
-              <p className="text-sm text-gray-400">{getSurfaceDescription(surface.type)}</p>
+              <p className="text-sm text-white/50">{getSurfaceDescription(surface.type)}</p>
             </div>
           </div>
           
@@ -147,7 +147,7 @@ const SurfaceCard: React.FC<{
                   onChange={onToggle}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-white/[0.12] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white/[0.08] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
           </div>
@@ -157,15 +157,15 @@ const SurfaceCard: React.FC<{
           <div className="space-y-3">
             {/* Analytics */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="text-center p-2 bg-gray-800/50 rounded">
+              <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
                 <div className="text-sm font-semibold text-white">{surface.analytics.totalPosts}</div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-white/50">
                   {surface.type === 'tools' ? 'Tools' : surface.type === 'events' ? 'Events' : 'Posts'}
                 </div>
               </div>
-              <div className="text-center p-2 bg-gray-800/50 rounded">
+              <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
                 <div className="text-sm font-semibold text-green-400">{surface.analytics.activeUsers}</div>
-                <div className="text-xs text-gray-400">Active UsersIcon</div>
+                <div className="text-xs text-white/50">Active UsersIcon</div>
               </div>
             </div>
 
@@ -186,7 +186,7 @@ const SurfaceCard: React.FC<{
             </div>
 
             {/* Last Activity */}
-            <div className="text-xs text-gray-400 flex items-center space-x-1">
+            <div className="text-xs text-white/50 flex items-center space-x-1">
               <ClockIcon className="w-3 h-3" />
               <span>Last activity: {new Date(surface.analytics.lastActivity).toLocaleDateString()}</span>
             </div>
@@ -211,7 +211,7 @@ const ToolSlotCard: React.FC<{
       case 'community_tools': return 'text-green-400';
       case 'social_features': return 'text-purple-400';
       case 'utility': return 'text-orange-400';
-      default: return 'text-gray-400';
+      default: return 'text-white/50';
     }
   };
 
@@ -244,7 +244,7 @@ const ToolSlotCard: React.FC<{
   const recommendedTools = getRecommendedTools(spaceType, spaceSubType);
 
   return (
-    <Card className={`border transition-all ${slot.isOccupied ? 'border-amber-500/30 bg-amber-500/5' : 'border-dashed border-gray-600 bg-gray-800/30'}`}>
+    <Card className={`border transition-all ${slot.isOccupied ? 'border-amber-500/30 bg-amber-500/5' : 'border-dashed border-white/[0.12] bg-[var(--bg-ground)]/30'}`}>
       <CardContent className="p-4">
         {slot.isOccupied && slot.tool ? (
           // Occupied Slot
@@ -252,12 +252,12 @@ const ToolSlotCard: React.FC<{
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h3 className="font-semibold text-white">{slot.tool.name}</h3>
-                <p className="text-sm text-gray-400">{slot.tool.description}</p>
+                <p className="text-sm text-white/50">{slot.tool.description}</p>
                 <div className="flex items-center space-x-2 mt-1">
                   <Badge size="sm" className={getCategoryColor(slot.category)}>
                     {slot.category.replace('_', ' ')}
                   </Badge>
-                  <span className="text-xs text-gray-500">by {slot.tool.creator}</span>
+                  <span className="text-xs text-white/40">by {slot.tool.creator}</span>
                 </div>
               </div>
               
@@ -272,26 +272,26 @@ const ToolSlotCard: React.FC<{
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="text-center p-2 bg-gray-800/50 rounded">
+              <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
                 <div className="text-sm font-semibold text-white">{slot.tool.usageCount}</div>
-                <div className="text-xs text-gray-400">Uses</div>
+                <div className="text-xs text-white/50">Uses</div>
               </div>
-              <div className="text-center p-2 bg-gray-800/50 rounded">
-                <div className={`text-sm font-semibold ${slot.tool.isActive ? 'text-green-400' : 'text-gray-400'}`}>
+              <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
+                <div className={`text-sm font-semibold ${slot.tool.isActive ? 'text-green-400' : 'text-white/50'}`}>
                   {slot.tool.isActive ? 'Active' : 'Inactive'}
                 </div>
-                <div className="text-xs text-gray-400">Status</div>
+                <div className="text-xs text-white/50">Status</div>
               </div>
             </div>
           </div>
         ) : (
           // Empty Slot
           <div className="text-center">
-            <div className="w-12 h-12 mx-auto mb-3 border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center">
-              <PlusIcon className="w-6 h-6 text-gray-600" />
+            <div className="w-12 h-12 mx-auto mb-3 border-2 border-dashed border-white/[0.12] rounded-lg flex items-center justify-center">
+              <PlusIcon className="w-6 h-6 text-white/30" />
             </div>
-            <h3 className="font-medium text-gray-400 mb-2">Tool Slot {slot.position}</h3>
-            <p className="text-sm text-gray-500 mb-3">Install a tool for your community</p>
+            <h3 className="font-medium text-white/50 mb-2">Tool Slot {slot.position}</h3>
+            <p className="text-sm text-white/40 mb-3">Install a tool for your community</p>
             
             <Button size="sm" onClick={onInstall} className="bg-amber-500 hover:bg-amber-600 text-black">
               <PlusIcon className="w-4 h-4 mr-1" />
@@ -299,8 +299,8 @@ const ToolSlotCard: React.FC<{
             </Button>
             
             {/* Recommended Tools */}
-            <div className="mt-3 pt-3 border-t border-gray-700">
-              <p className="text-xs text-gray-500 mb-2">Recommended for {spaceSubType.replace('_', ' ')}:</p>
+            <div className="mt-3 pt-3 border-t border-white/[0.08]">
+              <p className="text-xs text-white/40 mb-2">Recommended for {spaceSubType.replace('_', ' ')}:</p>
               <div className="flex flex-wrap gap-1">
                 {recommendedTools.slice(0, 3).map((tool) => (
                   <Badge key={tool} size="sm" variant="outline" className="text-xs">
@@ -367,8 +367,8 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <Cog6ToothIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Space surface management is not available</p>
+        <Cog6ToothIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
+        <p className="text-white/50">Space surface management is not available</p>
       </div>
     );
   }
@@ -381,12 +381,12 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center space-x-3 mb-2">
-            <div className={`p-2 rounded-lg bg-gray-800 ${typeInfo.color}`}>
+            <div className={`p-2 rounded-lg bg-[var(--bg-ground)] ${typeInfo.color}`}>
               {typeInfo.icon}
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">{space.name}</h2>
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
+              <div className="flex items-center space-x-2 text-sm text-white/50">
                 <span className="capitalize">{typeInfo.subLabel}</span>
                 <span>•</span>
                 <span>{space.memberCount} members</span>
@@ -400,7 +400,7 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
-            className="border-gray-600 text-gray-300"
+            className="border-white/[0.12] text-white/70"
           >
             <EyeIcon className="w-4 h-4 mr-2" />
             Preview Space
@@ -409,18 +409,18 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center bg-gray-800/50 rounded-lg p-1">
+      <div className="flex items-center bg-[var(--bg-ground)]/50 rounded-lg p-1">
         <button
           onClick={() => setActiveTab('surfaces')}
           className={`flex-1 px-4 py-2 text-sm rounded-md transition-colors flex items-center justify-center gap-2 ${
             activeTab === 'surfaces'
               ? 'bg-blue-600 text-white'
-              : 'text-gray-400 hover:text-white'
+              : 'text-white/50 hover:text-white'
           }`}
         >
           <Layers className="w-4 h-4" />
           <span>Six Surfaces</span>
-          <Badge size="sm" className={activeTab === 'surfaces' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={activeTab === 'surfaces' ? 'bg-white/20' : 'bg-white/[0.08]'}>
             {space.surfaces.filter(s => s.isEnabled).length}/6
           </Badge>
         </button>
@@ -429,12 +429,12 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
           className={`flex-1 px-4 py-2 text-sm rounded-md transition-colors flex items-center justify-center gap-2 ${
             activeTab === 'tools'
               ? 'bg-amber-600 text-white'
-              : 'text-gray-400 hover:text-white'
+              : 'text-white/50 hover:text-white'
           }`}
         >
           <BoltIcon className="w-4 h-4" />
           <span>Tool Slots</span>
-          <Badge size="sm" className={activeTab === 'tools' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={activeTab === 'tools' ? 'bg-white/20' : 'bg-white/[0.08]'}>
             {space.toolSlots.filter(s => s.isOccupied).length}/{space.maxToolSlots}
           </Badge>
         </button>
@@ -445,7 +445,7 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
         <div>
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-white mb-2">The Six Surfaces</h3>
-            <p className="text-gray-400 text-sm">
+            <p className="text-white/50 text-sm">
               Every HIVE space has six consistent surfaces. Enable and configure each surface for your community.
             </p>
           </div>
@@ -465,7 +465,7 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
         <div>
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-white mb-2">Tool Slots ({space.toolSlots.filter(s => s.isOccupied).length}/{space.maxToolSlots})</h3>
-            <p className="text-gray-400 text-sm">
+            <p className="text-white/50 text-sm">
               Tools provide all functional capabilities within your space. Install tools that help your community coordinate and collaborate.
             </p>
           </div>

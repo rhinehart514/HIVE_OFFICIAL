@@ -43,7 +43,7 @@ export default function EventsLoading() {
 
 function EventCardSkeleton() {
   return (
-    <div className="rounded-xl border border-neutral-800/50 bg-neutral-900/30 overflow-hidden">
+    <div className="rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30 overflow-hidden">
       {/* Cover image */}
       <Skeleton className="h-40 w-full" />
 
@@ -70,7 +70,7 @@ function EventCardSkeleton() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-neutral-800/30">
+        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]/30">
           <Skeleton className="h-5 w-24" />
           <div className="flex gap-2">
             <Skeleton className="h-9 w-24" />

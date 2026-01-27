@@ -48,7 +48,7 @@ interface CategoryConfig {
 const categoryConfigs: CategoryConfig[] = [
   { id: "core", label: "Core", icon: BoltIcon, color: "text-blue-400", bgColor: "bg-blue-500/10" },
   { id: "experimental", label: "Experimental", icon: BeakerIcon, color: "text-purple-400", bgColor: "bg-purple-500/10" },
-  { id: "infrastructure", label: "Infrastructure", icon: ServerIcon, color: "text-gray-400", bgColor: "bg-gray-500/10" },
+  { id: "infrastructure", label: "Infrastructure", icon: ServerIcon, color: "text-white/50", bgColor: "bg-white/[0.20]/10" },
   { id: "ui_ux", label: "UI/UX", icon: PaintBrushIcon, color: "text-pink-400", bgColor: "bg-pink-500/10" },
   { id: "tools", label: "Tools", icon: WrenchIcon, color: "text-orange-400", bgColor: "bg-orange-500/10" },
   { id: "spaces", label: "Spaces", icon: BuildingOffice2Icon, color: "text-cyan-400", bgColor: "bg-cyan-500/10" },
@@ -81,7 +81,7 @@ function FlagToggle({
         )}
         <div className="min-w-0">
           <div className="font-medium text-white text-sm truncate">{flag.name}</div>
-          <div className="text-xs text-gray-500 font-mono truncate">{flag.id}</div>
+          <div className="text-xs text-white/40 font-mono truncate">{flag.id}</div>
         </div>
       </div>
       <div className="ml-4">
@@ -198,7 +198,7 @@ export function ControlPanel() {
   if (loading && flags.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="flex items-center gap-2 text-gray-400">
+        <div className="flex items-center gap-2 text-white/50">
           <ArrowPathIcon className="h-5 w-5 animate-spin" />
           Loading feature flags...
         </div>
@@ -224,7 +224,7 @@ export function ControlPanel() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Control Panel</h2>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-white/50">
               Feature flags and system controls
             </p>
           </div>
@@ -246,25 +246,25 @@ export function ControlPanel() {
         <HiveCard className="bg-[#111] border-white/10">
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-white">{totalFlags}</div>
-            <div className="text-sm text-gray-400">Total Flags</div>
+            <div className="text-sm text-white/50">Total Flags</div>
           </CardContent>
         </HiveCard>
         <HiveCard className="bg-[#111] border-white/10">
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-green-400">{enabledFlags}</div>
-            <div className="text-sm text-gray-400">Enabled</div>
+            <div className="text-sm text-white/50">Enabled</div>
           </CardContent>
         </HiveCard>
         <HiveCard className="bg-[#111] border-white/10">
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-gray-400">{totalFlags - enabledFlags}</div>
-            <div className="text-sm text-gray-400">Disabled</div>
+            <div className="text-2xl font-bold text-white/50">{totalFlags - enabledFlags}</div>
+            <div className="text-sm text-white/50">Disabled</div>
           </CardContent>
         </HiveCard>
         <HiveCard className="bg-[#111] border-white/10">
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-purple-400">{experimentalEnabled}</div>
-            <div className="text-sm text-gray-400">Experimental</div>
+            <div className="text-sm text-white/50">Experimental</div>
           </CardContent>
         </HiveCard>
       </div>
@@ -272,7 +272,7 @@ export function ControlPanel() {
       {/* Search and filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
           <Input
             placeholder="Search flags..."
             value={searchQuery}
@@ -313,8 +313,8 @@ export function ControlPanel() {
       {Object.keys(flagsByCategory).length === 0 ? (
         <HiveCard className="bg-[#111] border-white/10">
           <CardContent className="py-12 text-center">
-            <FlagIcon className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">No flags match your search</p>
+            <FlagIcon className="h-12 w-12 text-white/30 mx-auto mb-4" />
+            <p className="text-white/50">No flags match your search</p>
           </CardContent>
         </HiveCard>
       ) : (
@@ -350,7 +350,7 @@ export function ControlPanel() {
                   <p className="text-sm text-amber-400 font-medium">
                     {experimentalEnabled} experimental feature{experimentalEnabled !== 1 ? "s" : ""} enabled
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-white/50 mt-1">
                     Experimental features may be unstable. Monitor for issues.
                   </p>
                 </div>

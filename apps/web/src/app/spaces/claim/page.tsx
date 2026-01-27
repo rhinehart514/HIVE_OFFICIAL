@@ -624,7 +624,7 @@ export default function ClaimSpacePage() {
           {/* Create alternative */}
           <div className="pt-4 border-t border-white/[0.04]">
             <Link
-              href="/spaces/create"
+              href="/spaces/new"
               className="flex items-center gap-3 p-3 rounded-lg border border-dashed border-white/[0.08] hover:border-white/[0.15] transition-colors"
             >
               <div className="w-1 h-10 rounded-full bg-teal-500/40 flex-shrink-0" />

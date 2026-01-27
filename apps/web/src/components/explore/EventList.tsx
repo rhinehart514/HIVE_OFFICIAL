@@ -10,6 +10,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { GlassSurface, Badge, Button, MOTION } from '@hive/ui/design-system/primitives';
+import { toast } from '@hive/ui';
 import { cn } from '@/lib/utils';
 
 export interface EventData {
@@ -21,6 +22,7 @@ export interface EventData {
   location?: string;
   spaceName?: string;
   spaceHandle?: string;
+  spaceId?: string;
   rsvpCount: number;
   isLive?: boolean;
   userRsvp?: 'going' | 'maybe' | 'not_going';
@@ -30,9 +32,10 @@ export interface EventListProps {
   events: EventData[];
   loading?: boolean;
   searchQuery?: string;
+  onRSVP?: (eventId: string, spaceId: string, status: 'going' | 'maybe' | 'not_going') => Promise<void>;
 }
 
-export function EventList({ events, loading, searchQuery }: EventListProps) {
+export function EventList({ events, loading, searchQuery, onRSVP }: EventListProps) {
   // Loading state
   if (loading) {
     return (
@@ -88,7 +91,7 @@ export function EventList({ events, loading, searchQuery }: EventListProps) {
           </h3>
           <div className="space-y-3">
             {dateEvents.map((event, i) => (
-              <EventCard key={event.id} event={event} index={i} />
+              <EventCard key={event.id} event={event} index={i} onRSVP={onRSVP} />
             ))}
           </div>
         </div>
@@ -104,14 +107,35 @@ export function EventList({ events, loading, searchQuery }: EventListProps) {
 interface EventCardProps {
   event: EventData;
   index: number;
+  onRSVP?: (eventId: string, spaceId: string, status: 'going' | 'maybe' | 'not_going') => Promise<void>;
 }
 
-function EventCard({ event, index }: EventCardProps) {
+function EventCard({ event, index, onRSVP }: EventCardProps) {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [localRsvp, setLocalRsvp] = React.useState(event.userRsvp);
   const timeString = formatEventTime(event.startTime, event.endTime);
 
   // Determine RSVP button state
-  const isGoing = event.userRsvp === 'going';
+  const isGoing = localRsvp === 'going';
   const rsvpLabel = isGoing ? 'Going ✓' : 'RSVP';
+
+  const handleRSVP = async () => {
+    if (!event.spaceId || !onRSVP) {
+      toast.error('Cannot RSVP', 'Event is missing space information.');
+      return;
+    }
+    const newStatus = isGoing ? 'not_going' : 'going';
+    setIsSubmitting(true);
+    try {
+      await onRSVP(event.id, event.spaceId, newStatus);
+      setLocalRsvp(newStatus);
+      toast.success(newStatus === 'going' ? "You're going!" : 'RSVP removed');
+    } catch (err) {
+      toast.error('RSVP failed', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <motion.div
@@ -184,13 +208,14 @@ function EventCard({ event, index }: EventCardProps) {
                 className={cn(
                   isGoing && 'text-[var(--life-gold)] border-[var(--life-gold)]/30'
                 )}
+                disabled={isSubmitting || !event.spaceId}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  // RSVP action would go here once API is wired
+                  handleRSVP();
                 }}
               >
-                {rsvpLabel}
+                {isSubmitting ? '...' : rsvpLabel}
               </Button>
             </div>
           </div>

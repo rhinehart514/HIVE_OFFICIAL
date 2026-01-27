@@ -20,7 +20,7 @@ export default function ProfileEditError({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--bg-void)] flex items-center justify-center px-4">
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-amber-500/10 p-4">
@@ -32,10 +32,10 @@ export default function ProfileEditError({
           Unable to Load Editor
         </h2>
 
-        <p className="mb-2 text-sm text-neutral-400">
+        <p className="mb-2 text-sm text-white/50">
           We had trouble loading the profile editor.
         </p>
-        <p className="mb-6 text-xs text-neutral-500">
+        <p className="mb-6 text-xs text-white/40">
           Don't worry - any changes you made before this error have been saved.
         </p>
 
@@ -43,7 +43,7 @@ export default function ProfileEditError({
           <Button
             onClick={() => reset()}
             aria-label="Retry loading the editor"
-            className="gap-2 bg-amber-500 text-neutral-950 hover:bg-amber-400"
+            className="gap-2 bg-[var(--life-gold)] text-[var(--bg-ground)] hover:bg-[var(--life-gold)]/90"
           >
             <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
             Retry
@@ -52,7 +52,7 @@ export default function ProfileEditError({
             variant="secondary"
             onClick={() => window.location.href = '/profile'}
             aria-label="Return to your profile"
-            className="gap-2 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+            className="gap-2 border-white/[0.08] text-white/70 hover:bg-[var(--bg-ground)]"
           >
             <UserIcon className="h-4 w-4" aria-hidden="true" />
             My Profile
@@ -61,7 +61,7 @@ export default function ProfileEditError({
             variant="secondary"
             onClick={() => window.location.href = '/settings'}
             aria-label="Go to settings"
-            className="gap-2 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+            className="gap-2 border-white/[0.08] text-white/70 hover:bg-[var(--bg-ground)]"
           >
             <Cog6ToothIcon className="h-4 w-4" aria-hidden="true" />
             Cog6ToothIcon
@@ -69,9 +69,9 @@ export default function ProfileEditError({
         </div>
 
         {process.env.NODE_ENV === 'development' && error.message && (
-          <div className="mt-6 rounded-md bg-neutral-900 border border-neutral-800 p-3 text-left">
-            <p className="text-xs text-neutral-500 mb-1">Error details:</p>
-            <p className="text-xs font-mono text-neutral-400 break-all">
+          <div className="mt-6 rounded-md bg-[var(--bg-void)] border border-white/[0.06] p-3 text-left">
+            <p className="text-xs text-white/40 mb-1">Error details:</p>
+            <p className="text-xs font-mono text-white/50 break-all">
               {error.message}
             </p>
           </div>

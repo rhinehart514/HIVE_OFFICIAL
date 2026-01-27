@@ -131,15 +131,15 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
                         <h4 className="font-semibold text-white mb-2">Platform Settings</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-gray-400">Registration:</span>
+                            <span className="text-white/50">Registration:</span>
                             <span className="text-green-400">Open</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-400">Content Moderation:</span>
+                            <span className="text-white/50">Content Moderation:</span>
                             <span className="text-green-400">Enabled</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-400">Auto-Approval:</span>
+                            <span className="text-white/50">Auto-Approval:</span>
                             <span className="text-red-400">Disabled</span>
                           </div>
                         </div>
@@ -148,15 +148,15 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
                         <h4 className="font-semibold text-white mb-2">Feature Flags</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-gray-400">Rituals System:</span>
+                            <span className="text-white/50">Rituals System:</span>
                             <span className="text-yellow-400">Beta</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-400">Tool Marketplace:</span>
+                            <span className="text-white/50">Tool Marketplace:</span>
                             <span className="text-green-400">Live</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-400">Real-time Chat:</span>
+                            <span className="text-white/50">Real-time Chat:</span>
                             <span className="text-green-400">Live</span>
                           </div>
                         </div>
@@ -183,7 +183,7 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
               <CardTitle className="text-white">Security Settings</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-400">Security settings coming soon...</p>
+              <p className="text-white/50">Security settings coming soon...</p>
             </CardContent>
           </Card>
         );
@@ -200,7 +200,7 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
       default:
         return (
           <div className="text-center py-8">
-            <p className="text-gray-400">Select a section from the sidebar</p>
+            <p className="text-white/50">Select a section from the sidebar</p>
           </div>
         );
     }
@@ -254,11 +254,11 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
           <div className="flex items-center gap-4">
             {/* Search */}
             <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
               <input
                 type="text"
                 placeholder="Search..."
-                className="w-64 pl-10 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/50"
+                className="w-64 pl-10 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/50"
               />
             </div>
 
@@ -267,7 +267,7 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
               <button
                 ref={notificationBellRef}
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                className="relative p-2 text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
               >
                 <Bell className="h-5 w-5" />
                 {(pendingCounts.builderRequests + pendingCounts.flaggedContent + pendingCounts.pendingClaims) > 0 && (
@@ -285,11 +285,11 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
             <div className="flex items-center gap-3 pl-4 border-l border-white/10">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-white">{admin.email}</p>
-                <p className="text-xs text-gray-500 capitalize">{admin.role}</p>
+                <p className="text-xs text-white/40 capitalize">{admin.role}</p>
               </div>
               <button
                 onClick={() => window.location.href = '/auth/login'}
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                className="p-2 text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                 title="Sign out"
               >
                 <LogOut className="h-4 w-4" />

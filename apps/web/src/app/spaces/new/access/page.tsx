@@ -14,6 +14,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { logger } from '@/lib/logger';
 import {
   BuilderShell,
   BuilderHeading,
@@ -77,7 +78,7 @@ export default function AccessPage() {
 
       router.push(`/spaces/new/launch?${params.toString()}`);
     } catch (error) {
-      console.error('Failed to continue:', error);
+      logger.error('Failed to continue', { component: 'AccessPage' }, error instanceof Error ? error : undefined);
     } finally {
       setIsLoading(false);
     }

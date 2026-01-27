@@ -148,10 +148,11 @@ export function FeedbackToast() {
                 
                 <button
                   onClick={handleDismiss}
-                  className="text-[var(--hive-text-muted)] hover:text-[var(--hive-text-primary)] 
+                  className="text-[var(--hive-text-muted)] hover:text-[var(--hive-text-primary)]
                            transition-colors p-1 rounded-lg hover:bg-[var(--hive-background-secondary)]"
+                  aria-label="Close feedback"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -213,6 +214,7 @@ export function FeedbackToast() {
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)}
                       rows={4}
                       maxLength={500}
+                      aria-label="Your feedback"
                       className="w-full px-4 py-3 bg-[var(--hive-background-secondary)] 
                                border border-[var(--hive-border-subtle)] rounded-xl
                                text-sm text-[var(--hive-text-primary)]

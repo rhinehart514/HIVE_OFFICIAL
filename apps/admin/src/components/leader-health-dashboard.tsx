@@ -128,8 +128,8 @@ export function LeaderHealthDashboard() {
   if (loading && !metrics) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-3" />
-        <span className="text-gray-400">Loading leader health metrics...</span>
+        <Loader2 className="w-6 h-6 animate-spin text-white/50 mr-3" />
+        <span className="text-white/50">Loading leader health metrics...</span>
       </div>
     );
   }
@@ -139,7 +139,7 @@ export function LeaderHealthDashboard() {
       <Card className="border-white/10 bg-[#141414]">
         <CardContent className="py-8 text-center">
           <AlertTriangle className="w-10 h-10 mx-auto text-red-400 mb-3" />
-          <p className="text-gray-400 mb-4">Error: {error}</p>
+          <p className="text-white/50 mb-4">Error: {error}</p>
           <Button onClick={fetchMetrics} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
             Retry
@@ -196,7 +196,7 @@ export function LeaderHealthDashboard() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white">Leader Health</h2>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-white/50">
               {metrics.totalVerified} verified leaders · {metrics.verifiedThisWeek} this week
             </p>
           </div>
@@ -205,8 +205,8 @@ export function LeaderHealthDashboard() {
         <div className="flex items-center gap-3">
           {metrics.avgSetupTimeHours > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-400">
+              <Clock className="w-4 h-4 text-white/50" />
+              <span className="text-sm text-white/50">
                 Avg setup: <span className="text-white">{metrics.avgSetupTimeHours}h</span>
               </span>
             </div>
@@ -234,13 +234,13 @@ export function LeaderHealthDashboard() {
                   <div className={`w-8 h-8 rounded-lg ${metric.bgColor} flex items-center justify-center`}>
                     <Icon className={`w-4 h-4 ${metric.color}`} />
                   </div>
-                  <span className="text-sm text-gray-400">{metric.label}</span>
+                  <span className="text-sm text-white/50">{metric.label}</span>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-bold text-white">{metric.count}</span>
-                    <span className="text-sm text-gray-500">({metric.percentage}%)</span>
+                    <span className="text-sm text-white/40">({metric.percentage}%)</span>
                   </div>
 
                   <Progress
@@ -276,8 +276,8 @@ export function LeaderHealthDashboard() {
           {metrics.atRiskLeaders.length === 0 ? (
             <div className="py-12 text-center">
               <TrendingUp className="w-10 h-10 mx-auto text-green-400 mb-3" />
-              <p className="text-gray-400">All leaders are active!</p>
-              <p className="text-sm text-gray-500 mt-1">No leaders have been inactive for 7+ days</p>
+              <p className="text-white/50">All leaders are active!</p>
+              <p className="text-sm text-white/40 mt-1">No leaders have been inactive for 7+ days</p>
             </div>
           ) : (
             <div className="divide-y divide-white/5">
@@ -300,9 +300,9 @@ export function LeaderHealthDashboard() {
                           {leader.daysSinceActive}d inactive
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-400">
+                      <div className="flex items-center gap-3 text-sm text-white/50">
                         <span>@{leader.userName}</span>
-                        <span className="text-gray-600">·</span>
+                        <span className="text-white/30">·</span>
                         <span>{leader.userEmail}</span>
                       </div>
                     </div>
@@ -318,7 +318,7 @@ export function LeaderHealthDashboard() {
                           <MessageSquare className={`w-3 h-3 ${
                             leader.setupProgress.welcomeMessage
                               ? 'text-green-400'
-                              : 'text-gray-500'
+                              : 'text-white/40'
                           }`} />
                         </div>
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
@@ -329,7 +329,7 @@ export function LeaderHealthDashboard() {
                           <Wrench className={`w-3 h-3 ${
                             leader.setupProgress.toolDeployed
                               ? 'text-green-400'
-                              : 'text-gray-500'
+                              : 'text-white/40'
                           }`} />
                         </div>
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
@@ -340,10 +340,10 @@ export function LeaderHealthDashboard() {
                           <Users className={`w-3 h-3 ${
                             leader.setupProgress.memberCount >= 5
                               ? 'text-green-400'
-                              : 'text-gray-500'
+                              : 'text-white/40'
                           }`} />
                         </div>
-                        <span className="text-gray-500 text-xs">
+                        <span className="text-white/40 text-xs">
                           {leader.setupProgress.memberCount} members
                         </span>
                       </div>
@@ -370,7 +370,7 @@ export function LeaderHealthDashboard() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-gray-400 hover:text-white"
+                          className="text-white/50 hover:text-white"
                           onClick={() => window.open(`/spaces/${leader.spaceId}`, '_blank')}
                         >
                           <ExternalLink className="w-4 h-4" />

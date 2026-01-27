@@ -458,7 +458,7 @@ interface TemplateCardProps {
 
 function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
   const Icon = CATEGORY_ICONS[template.category] || Grid3X3;
-  const colorClass = CATEGORY_COLORS[template.category] || 'from-neutral-500/20 to-neutral-600/10 border-neutral-500/30';
+  const colorClass = CATEGORY_COLORS[template.category] || 'from-neutral-500/20 to-neutral-600/10 border-white/[0.12]/30';
 
   return (
     <motion.div

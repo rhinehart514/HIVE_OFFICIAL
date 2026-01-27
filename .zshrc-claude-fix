@@ -1,0 +1,7 @@
+# Claude CLI Memory Fix
+# Add this to your ~/.zshrc file
+
+# Override claude command to use increased heap size
+claude() {
+  NODE_OPTIONS="--max-old-space-size=4096 --expose-gc" command claude "$@"
+}

@@ -225,8 +225,9 @@ export function OnboardingOverlay({
               <button
                 onClick={handleSkip}
                 className="absolute top-4 right-4 p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                aria-label="Skip onboarding"
               >
-                <XMarkIcon className="w-4 h-4 text-white/40" />
+                <XMarkIcon className="w-4 h-4 text-white/40" aria-hidden="true" />
               </button>
 
               {/* Welcome Step */}

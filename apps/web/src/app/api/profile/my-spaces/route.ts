@@ -135,18 +135,69 @@ export const GET = withAuth(async (request, authContext) => {
     }
 
     // Batch get space details from flat spaces collection
-    const spacePromises = spaceIds.map(spaceId => 
+    const spacePromises = spaceIds.map(spaceId =>
       dbAdmin.collection('spaces').doc(spaceId).get()
     );
-    
+
     const spaceSnapshots = await Promise.all(spacePromises);
-    
+
+    // Fetch online counts and unread counts in parallel for each space
+    const onlineThreshold = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 min threshold
+    const enrichmentPromises = spaceIds.map(async (spaceId) => {
+      // Query presence collection for online users
+      const presenceQuery = dbAdmin
+        .collection('presence')
+        .where('spaceId', '==', spaceId)
+        .where('lastSeen', '>', onlineThreshold)
+        .select(); // Only need count, not data
+
+      // Query user's read marker for this space
+      const readMarkerQuery = dbAdmin
+        .collection('readMarkers')
+        .where('userId', '==', userId)
+        .where('spaceId', '==', spaceId)
+        .limit(1);
+
+      const [presenceSnap, readMarkerSnap] = await Promise.all([
+        presenceQuery.get().catch(() => ({ size: 0 })),
+        readMarkerQuery.get().catch(() => ({ docs: [] })),
+      ]);
+
+      let unreadCount = 0;
+      if (readMarkerSnap.docs && readMarkerSnap.docs.length > 0) {
+        const marker = readMarkerSnap.docs[0].data();
+        const lastReadAt = marker.lastReadAt;
+        if (lastReadAt) {
+          // Count posts after lastReadAt
+          const unreadSnap = await dbAdmin
+            .collection('spaces')
+            .doc(spaceId)
+            .collection('posts')
+            .where('createdAt', '>', lastReadAt)
+            .select()
+            .get()
+            .catch(() => ({ size: 0 }));
+          unreadCount = unreadSnap.size;
+        }
+      }
+
+      return {
+        spaceId,
+        onlineCount: presenceSnap.size || 0,
+        unreadCount,
+      };
+    });
+
+    const enrichmentResults = await Promise.all(enrichmentPromises);
+    const enrichmentMap = new Map(enrichmentResults.map(r => [r.spaceId, r]));
+
     const spaces = spaceSnapshots
       .filter(snap => snap.exists)
       .map(snap => {
         const spaceData = snap.data()!;
         const membership = membershipData[snap.id];
-        
+        const enrichment = enrichmentMap.get(snap.id) || { onlineCount: 0, unreadCount: 0 };
+
         return {
           id: snap.id,
           name: spaceData.name,
@@ -159,6 +210,9 @@ export const GET = withAuth(async (request, authContext) => {
           createdAt: spaceData.createdAt,
           updatedAt: spaceData.updatedAt,
           tags: spaceData.tags || [],
+          handle: spaceData.slug || spaceData.handle || snap.id,
+          onlineCount: enrichment.onlineCount,
+          unreadCount: enrichment.unreadCount,
           // Include membership info
           membership: {
             role: membership.role,

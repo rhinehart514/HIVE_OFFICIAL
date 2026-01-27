@@ -89,7 +89,7 @@ const FOCUS_FLOW_ROUTES = [
   '/profile/edit',            // Profile editing
 
   // Spaces
-  '/spaces/create',           // Create space wizard
+  '/spaces/new',              // Create space wizard
   '/spaces/claim',            // Claim space flow
   '/spaces/join/*',           // Join via invite code
   '/spaces/*/post',           // Create post in space

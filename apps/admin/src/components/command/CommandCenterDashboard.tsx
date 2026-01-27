@@ -99,7 +99,7 @@ function CommandNav({
             onClick={() => onViewChange(item.id)}
             className={`
               relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
-              ${isActive ? "text-[#FFD700]" : "text-gray-400 hover:text-white hover:bg-white/5"}
+              ${isActive ? "text-[#FFD700]" : "text-white/50 hover:text-white hover:bg-white/5"}
             `}
           >
             {isActive && (
@@ -164,7 +164,7 @@ export function CommandCenterDashboard() {
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-white">Command Center</h1>
-                <p className="text-xs text-gray-500">Executive Dashboard</p>
+                <p className="text-xs text-white/40">Executive Dashboard</p>
               </div>
             </div>
 

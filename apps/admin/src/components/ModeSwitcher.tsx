@@ -58,7 +58,7 @@ export function ModeSwitcher({ currentMode, onModeChange, className = "" }: Mode
             onClick={() => onModeChange(mode.id)}
             className={`
               relative flex items-center gap-2 px-3 py-1.5 rounded-md transition-all duration-200
-              ${isActive ? mode.color : "text-gray-500 hover:text-gray-300"}
+              ${isActive ? mode.color : "text-white/40 hover:text-white/70"}
             `}
             title={mode.description}
           >
@@ -98,7 +98,7 @@ export function CompactModeSwitcher({ currentMode, onModeChange, className = "" 
             onClick={() => onModeChange(mode.id)}
             className={`
               relative p-1.5 rounded transition-all duration-200
-              ${isActive ? mode.color : "text-gray-500 hover:text-gray-300"}
+              ${isActive ? mode.color : "text-white/40 hover:text-white/70"}
               ${isActive ? mode.bgColor : ""}
             `}
             title={`${mode.label}: ${mode.description}`}

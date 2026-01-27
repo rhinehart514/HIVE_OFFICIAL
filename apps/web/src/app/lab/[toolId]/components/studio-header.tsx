@@ -106,14 +106,14 @@ export function StudioHeader({
   };
 
   return (
-    <header className="flex items-center justify-between h-14 px-4 bg-[#0A0A09] border-b border-white/[0.06]">
+    <header className="flex items-center justify-between h-14 px-4 bg-[var(--bg-ground)] border-b border-[var(--border-subtle)]">
       {/* Left: Back + Name */}
       <div className="flex items-center gap-4">
         {/* Back button */}
         <button
           onClick={handleBack}
           className="flex items-center justify-center w-8 h-8 rounded-lg
-            text-[#6B6B70] hover:text-[#A3A19E] hover:bg-white/[0.04]
+            text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]
             transition-colors duration-150"
         >
           <ArrowLeftIcon className="w-5 h-5" />
@@ -130,21 +130,21 @@ export function StudioHeader({
                 onChange={(e) => setEditValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onBlur={handleSave}
-                className="px-2 py-1 rounded-lg bg-white/[0.06] border border-white/[0.12]
-                  text-[#FAF9F7] text-lg font-semibold
-                  outline-none focus:border-white/[0.24]
+                className="px-2 py-1 rounded-lg bg-[var(--surface-elevated)] border border-[var(--border-default)]
+                  text-[var(--text-primary)] text-lg font-semibold
+                  outline-none focus:border-[var(--border-focus)]
                   min-w-[200px]"
                 placeholder="Tool name"
               />
               <button
                 onClick={handleSave}
-                className="p-1 rounded text-green-500 hover:bg-green-500/10"
+                className="p-1 rounded text-[var(--hive-status-success)] hover:bg-[var(--hive-status-success)]/10"
               >
                 <CheckIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={handleCancel}
-                className="p-1 rounded text-[#6B6B70] hover:bg-white/[0.04]"
+                className="p-1 rounded text-[var(--text-tertiary)] hover:bg-[var(--surface-hover)]"
               >
                 <XMarkIcon className="w-4 h-4" />
               </button>
@@ -153,12 +153,12 @@ export function StudioHeader({
             <button
               onClick={handleStartEdit}
               className="group flex items-center gap-2 px-2 py-1 rounded-lg
-                hover:bg-white/[0.04] transition-colors duration-150"
+                hover:bg-[var(--surface-hover)] transition-colors duration-150"
             >
-              <span className="text-[#FAF9F7] text-lg font-semibold">
+              <span className="text-[var(--text-primary)] text-lg font-semibold">
                 {toolName || 'Untitled Tool'}
               </span>
-              <PencilIcon className="w-3.5 h-3.5 text-[#3D3D42] group-hover:text-[#6B6B70]" />
+              <PencilIcon className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--text-tertiary)]" />
             </button>
           )}
 
@@ -167,13 +167,13 @@ export function StudioHeader({
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-xs text-[#6B6B70]"
+              className="text-xs text-[var(--text-tertiary)]"
             >
               Saving...
             </motion.span>
           )}
           {hasUnsavedChanges && !isSaving && (
-            <span className="w-2 h-2 rounded-full bg-[var(--life-gold)]" title="Unsaved changes" />
+            <span className="w-2 h-2 rounded-full bg-life-gold" title="Unsaved changes" />
           )}
         </div>
       </div>
@@ -184,9 +184,9 @@ export function StudioHeader({
         <button
           onClick={onPreview}
           className="flex items-center gap-2 px-3 py-2 rounded-lg
-            text-[#A3A19E] text-sm font-medium
+            text-[var(--text-secondary)] text-sm font-medium
             transition-colors duration-200
-            hover:text-[#FAF9F7] hover:bg-white/[0.04]"
+            hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
         >
           <EyeIcon className="w-4 h-4" />
           <span className="hidden sm:inline">Preview</span>

@@ -147,12 +147,12 @@ export function BuilderQueue() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="text-sm text-gray-400">Loading pending tools...</div>
+        <div className="text-sm text-white/50">Loading pending tools...</div>
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-16 animate-pulse rounded-md border border-gray-700 bg-gray-800/50"
+              className="h-16 animate-pulse rounded-md border border-white/[0.08] bg-[var(--bg-ground)]/50"
             />
           ))}
         </div>
@@ -174,9 +174,9 @@ export function BuilderQueue() {
   if (tools.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="text-sm text-gray-400">No pending builder applications</div>
+        <div className="text-sm text-white/50">No pending builder applications</div>
         {stats && stats.total === 0 && (
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-white/40">
             All tools have been reviewed. Check back later.
           </div>
         )}
@@ -187,7 +187,7 @@ export function BuilderQueue() {
   return (
     <div className="space-y-4">
       {stats && (
-        <div className="flex gap-4 text-xs text-gray-400">
+        <div className="flex gap-4 text-xs text-white/50">
           <span>{stats.total} pending</span>
           {stats.withFlags > 0 && (
             <span className="text-amber-400">{stats.withFlags} flagged</span>
@@ -202,7 +202,7 @@ export function BuilderQueue() {
         {tools.map((tool) => (
           <div
             key={tool.id}
-            className="rounded-md border border-gray-600 bg-gray-800/50 p-3"
+            className="rounded-md border border-white/[0.12] bg-[var(--bg-ground)]/50 p-3"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -229,18 +229,18 @@ export function BuilderQueue() {
                     </span>
                   )}
                 </div>
-                <div className="mt-0.5 text-sm text-gray-400">
+                <div className="mt-0.5 text-sm text-white/50">
                   {tool.creatorHandle ? `@${tool.creatorHandle}` : tool.creatorName || "Unknown"}
                   {tool.targetSpaceName && (
-                    <span className="text-gray-500"> → {tool.targetSpaceName}</span>
+                    <span className="text-white/40"> → {tool.targetSpaceName}</span>
                   )}
                 </div>
                 {tool.toolDescription && (
-                  <div className="mt-1 line-clamp-2 text-xs text-gray-500">
+                  <div className="mt-1 line-clamp-2 text-xs text-white/40">
                     {tool.toolDescription}
                   </div>
                 )}
-                <div className="mt-1 flex gap-3 text-xs text-gray-500">
+                <div className="mt-1 flex gap-3 text-xs text-white/40">
                   <span>{tool.elementCount} elements</span>
                   <span>{new Date(tool.createdAt).toLocaleDateString()}</span>
                 </div>
@@ -272,16 +272,16 @@ export function BuilderQueue() {
 
       {rejectDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg border border-gray-700 bg-gray-900 p-4">
+          <div className="w-full max-w-md rounded-lg border border-white/[0.08] bg-[var(--bg-void)] p-4">
             <h3 className="mb-4 text-lg font-medium text-white">
               {rejectDialog.action === "reject" ? "Reject Tool" : "Request Changes"}
             </h3>
             <div className="mb-4">
-              <label className="mb-1 block text-sm text-gray-400">
+              <label className="mb-1 block text-sm text-white/50">
                 Reason (min 10 characters)
               </label>
               <textarea
-                className="w-full rounded-md border border-gray-600 bg-gray-800 p-2 text-sm text-white placeholder-gray-500 focus:border-white focus:outline-none"
+                className="w-full rounded-md border border-white/[0.12] bg-[var(--bg-ground)] p-2 text-sm text-white placeholder:text-white/30 focus:border-white focus:outline-none"
                 rows={4}
                 placeholder="Explain why this tool is being rejected..."
                 value={rejectDialog.reason}
@@ -291,10 +291,10 @@ export function BuilderQueue() {
               />
             </div>
             <div className="mb-4">
-              <label className="flex items-center gap-2 text-sm text-gray-400">
+              <label className="flex items-center gap-2 text-sm text-white/50">
                 <input
                   type="checkbox"
-                  className="rounded border-gray-600 bg-gray-800"
+                  className="rounded border-white/[0.12] bg-[var(--bg-ground)]"
                   checked={rejectDialog.action === "request_changes"}
                   onChange={(e) =>
                     setRejectDialog({

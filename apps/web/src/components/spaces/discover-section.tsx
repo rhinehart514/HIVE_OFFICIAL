@@ -189,8 +189,9 @@ function SearchInput({ value, onChange, onClear, placeholder }: SearchInputProps
         <button
           onClick={onClear}
           className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+          aria-label="Clear search"
         >
-          <XMarkIcon className="w-3 h-3 text-white/40" />
+          <XMarkIcon className="w-3 h-3 text-white/40" aria-hidden="true" />
         </button>
       )}
     </div>

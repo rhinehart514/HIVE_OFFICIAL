@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import {
   ArrowLeft,
   Search,
@@ -352,7 +353,7 @@ export default function ToolTemplatesPage() {
       // Navigate directly to IDE with the new tool
       router.push(`/lab/${toolId}`);
     } catch (error) {
-      console.error('Failed to create tool from template:', error);
+      logger.error('Failed to create tool from template', { component: 'ToolTemplatesPage' }, error instanceof Error ? error : undefined);
       toast.error('Failed to create tool from template');
       setIsNavigating(false);
       setSelectedTemplate(null);

@@ -64,7 +64,7 @@ interface FeatureFlag {
 const CATEGORY_COLORS: Record<string, string> = {
   core: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   experimental: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  infrastructure: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+  infrastructure: "bg-white/[0.20]/20 text-white/50 border-white/[0.12]/30",
   ui_ux: "bg-pink-500/20 text-pink-400 border-pink-500/30",
   tools: "bg-orange-500/20 text-orange-400 border-orange-500/30",
   spaces: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
@@ -183,7 +183,7 @@ export function FeatureFlagManagement() {
             <Flag className="w-5 h-5 text-amber-500" />
             Feature Flags
           </h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-white/50 mt-1">
             Control feature rollouts and A/B tests
           </p>
         </div>
@@ -210,23 +210,23 @@ export function FeatureFlagManagement() {
       )}
 
       {/* Filters */}
-      <Card className="border-gray-700 bg-gray-900/50">
+      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
         <CardContent className="py-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
               <Input
                 placeholder="Search flags..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-gray-800 border-gray-700 text-white"
+                className="pl-10 bg-[var(--bg-ground)] border-white/[0.08] text-white"
               />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full sm:w-48 bg-gray-800 border-gray-700 text-white">
+              <SelectTrigger className="w-full sm:w-48 bg-[var(--bg-ground)] border-white/[0.08] text-white">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectContent className="bg-[var(--bg-ground)] border-white/[0.08]">
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat} value={cat}>
@@ -241,40 +241,40 @@ export function FeatureFlagManagement() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-white">{flags.length}</div>
-            <div className="text-sm text-gray-400">Total Flags</div>
+            <div className="text-sm text-white/50">Total Flags</div>
           </CardContent>
         </Card>
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-green-400">
               {flags.filter((f) => f.enabled).length}
             </div>
-            <div className="text-sm text-gray-400">Enabled</div>
+            <div className="text-sm text-white/50">Enabled</div>
           </CardContent>
         </Card>
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-red-400">
               {flags.filter((f) => !f.enabled).length}
             </div>
-            <div className="text-sm text-gray-400">Disabled</div>
+            <div className="text-sm text-white/50">Disabled</div>
           </CardContent>
         </Card>
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-purple-400">
               {flags.filter((f) => f.category === "experimental").length}
             </div>
-            <div className="text-sm text-gray-400">Experimental</div>
+            <div className="text-sm text-white/50">Experimental</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Flags List */}
-      <Card className="border-gray-700 bg-gray-900/50">
+      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
         <CardHeader>
           <CardTitle className="text-white">
             {filteredFlags.length} Feature Flag{filteredFlags.length !== 1 ? "s" : ""}
@@ -283,9 +283,9 @@ export function FeatureFlagManagement() {
         <CardContent>
           {filteredFlags.length === 0 ? (
             <div className="text-center py-8">
-              <Flag className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400">No feature flags found</p>
-              <p className="text-sm text-gray-500 mt-1">
+              <Flag className="w-12 h-12 text-white/30 mx-auto mb-4" />
+              <p className="text-white/50">No feature flags found</p>
+              <p className="text-sm text-white/40 mt-1">
                 {searchQuery || categoryFilter !== "all"
                   ? "Try adjusting your filters"
                   : "Create your first feature flag to get started"}
@@ -300,7 +300,7 @@ export function FeatureFlagManagement() {
                 return (
                   <div
                     key={flag.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-gray-800/50 border border-gray-700 hover:border-gray-600 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-lg bg-[var(--bg-ground)]/50 border border-white/[0.08] hover:border-white/[0.12] transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-1">
@@ -312,18 +312,18 @@ export function FeatureFlagManagement() {
                         >
                           {flag.category}
                         </Badge>
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-1 text-xs text-white/40">
                           <RolloutIcon className="w-3 h-3" />
                           <span className="capitalize">{flag.rollout.type.replace("_", " ")}</span>
                           {flag.rollout.type === "percentage" && flag.rollout.percentage !== undefined && (
-                            <span className="text-gray-400">({flag.rollout.percentage}%)</span>
+                            <span className="text-white/50">({flag.rollout.percentage}%)</span>
                           )}
                         </div>
                       </div>
-                      <p className="text-sm text-gray-400 truncate">
+                      <p className="text-sm text-white/50 truncate">
                         {flag.description}
                       </p>
-                      <p className="text-xs text-gray-600 mt-1 font-mono">
+                      <p className="text-xs text-white/30 mt-1 font-mono">
                         {flag.id}
                       </p>
                     </div>
@@ -355,7 +355,7 @@ export function FeatureFlagManagement() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-400 mb-4">
+          <p className="text-sm text-white/50 mb-4">
             Quick access to profile-related feature flags for controlling user experience.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -364,11 +364,11 @@ export function FeatureFlagManagement() {
               .map((flag) => (
                 <div
                   key={flag.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-gray-800/30 border border-gray-700"
+                  className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-ground)]/30 border border-white/[0.08]"
                 >
                   <div>
                     <div className="font-medium text-white text-sm">{flag.name}</div>
-                    <div className="text-xs text-gray-500">{flag.id}</div>
+                    <div className="text-xs text-white/40">{flag.id}</div>
                   </div>
                   <Switch
                     checked={flag.enabled}

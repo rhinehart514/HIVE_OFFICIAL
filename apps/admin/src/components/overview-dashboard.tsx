@@ -267,14 +267,14 @@ export function OverviewDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">Platform Overview</h2>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-white/50">
             Last updated: {lastRefresh.toLocaleTimeString()}
           </p>
         </div>
         <button
           onClick={fetchData}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -395,7 +395,7 @@ export function OverviewDashboard() {
         <Card className="border-white/10 bg-[#141414]">
           <CardHeader className="pb-2">
             <CardTitle className="text-white flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gray-400" />
+              <Clock className="h-4 w-4 text-white/50" />
               Recent Activity
             </CardTitle>
           </CardHeader>
@@ -410,16 +410,16 @@ export function OverviewDashboard() {
                     <div className="w-2 h-2 rounded-full bg-[#FFD700]" />
                     <div>
                       <p className="text-sm text-white">{item.action}</p>
-                      <p className="text-xs text-gray-400">{item.target}</p>
+                      <p className="text-xs text-white/50">{item.target}</p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-white/40">
                     {formatTimeAgo(item.timestamp)}
                   </span>
                 </div>
               ))}
               {recentActivity.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">
+                <p className="text-sm text-white/50 text-center py-4">
                   No recent activity
                 </p>
               )}
@@ -459,12 +459,12 @@ export function OverviewDashboard() {
                     />
                     <div>
                       <p className="text-sm text-white">{action.title}</p>
-                      <p className="text-xs text-gray-400 capitalize">
+                      <p className="text-xs text-white/50 capitalize">
                         {action.type.replace("_", " ")}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-white/40">
                     {formatTimeAgo(action.timestamp)}
                   </span>
                 </div>
@@ -472,7 +472,7 @@ export function OverviewDashboard() {
               {pendingActions.length === 0 && (
                 <div className="flex items-center justify-center gap-2 py-4">
                   <CheckCircle2 className="h-4 w-4 text-green-400" />
-                  <p className="text-sm text-gray-400">All caught up!</p>
+                  <p className="text-sm text-white/50">All caught up!</p>
                 </div>
               )}
             </div>
@@ -487,18 +487,18 @@ export function OverviewDashboard() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-sm text-gray-400">All systems operational</span>
+                <span className="text-sm text-white/50">All systems operational</span>
               </div>
-              <span className="text-xs text-gray-500">|</span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-white/40">|</span>
+              <span className="text-xs text-white/40">
                 {metrics?.totalUsers?.toLocaleString() || 0} total users
               </span>
-              <span className="text-xs text-gray-500">|</span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-white/40">|</span>
+              <span className="text-xs text-white/40">
                 {metrics?.totalMessages?.toLocaleString() || 0} messages sent
               </span>
             </div>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-white/40">
               Auto-refreshes every 30s
             </span>
           </div>

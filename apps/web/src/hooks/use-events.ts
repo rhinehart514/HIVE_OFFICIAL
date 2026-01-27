@@ -99,7 +99,7 @@ export const getEventTypeColor = (type: EventData['type']) => {
     case 'professional': return 'bg-green-500';
     case 'recreational': return 'bg-life-gold';
     case 'official': return 'bg-purple-500';
-    default: return 'bg-gray-500';
+    default: return 'bg-white/[0.20]';
   }
 };
 

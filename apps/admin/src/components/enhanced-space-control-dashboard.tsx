@@ -303,10 +303,10 @@ export function EnhancedSpaceControlDashboard() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'activated': return <CheckCircle className="h-4 w-4 text-green-400" />;
-      case 'dormant': return <Clock className="h-4 w-4 text-gray-400" />;
+      case 'dormant': return <Clock className="h-4 w-4 text-white/50" />;
       case 'frozen': return <XCircle className="h-4 w-4 text-red-400" />;
       case 'archived': return <Archive className="h-4 w-4 text-yellow-400" />;
-      default: return <Clock className="h-4 w-4 text-gray-400" />;
+      default: return <Clock className="h-4 w-4 text-white/50" />;
     }
   };
 
@@ -333,7 +333,7 @@ export function EnhancedSpaceControlDashboard() {
               <Shield className="h-8 w-8 text-amber-400" />
               Space Control Center
             </h1>
-            <p className="text-gray-400 mt-1">Complete administrative control over all campus spaces</p>
+            <p className="text-white/50 mt-1">Complete administrative control over all campus spaces</p>
           </div>
           <div className="flex gap-3">
             <Button
@@ -358,72 +358,72 @@ export function EnhancedSpaceControlDashboard() {
         {/* Real-Time Statistics Dashboard */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <Card className="border-gray-700 bg-gray-900/50">
+            <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <Globe className="h-8 w-8 text-blue-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Total Spaces</p>
+                    <p className="text-sm text-white/50">Total Spaces</p>
                     <p className="text-2xl font-bold text-white">{stats.totalSpaces}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-gray-700 bg-gray-900/50">
+            <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <Zap className="h-8 w-8 text-green-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Active</p>
+                    <p className="text-sm text-white/50">Active</p>
                     <p className="text-2xl font-bold text-green-400">{stats.activeSpaces}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-gray-700 bg-gray-900/50">
+            <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Clock className="h-8 w-8 text-gray-400" />
+                  <Clock className="h-8 w-8 text-white/50" />
                   <div>
-                    <p className="text-sm text-gray-400">Dormant</p>
-                    <p className="text-2xl font-bold text-gray-400">{stats.dormantSpaces}</p>
+                    <p className="text-sm text-white/50">Dormant</p>
+                    <p className="text-2xl font-bold text-white/50">{stats.dormantSpaces}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-gray-700 bg-gray-900/50">
+            <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <Users className="h-8 w-8 text-purple-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Total Members</p>
+                    <p className="text-sm text-white/50">Total Members</p>
                     <p className="text-2xl font-bold text-purple-400">{stats.totalMembers}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-gray-700 bg-gray-900/50">
+            <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <BarChart3 className="h-8 w-8 text-amber-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Avg Members</p>
+                    <p className="text-sm text-white/50">Avg Members</p>
                     <p className="text-2xl font-bold text-amber-400">{stats.averageMembers}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-gray-700 bg-gray-900/50">
+            <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <Target className="h-8 w-8 text-red-400" />
                   <div>
-                    <p className="text-sm text-gray-400">Health Score</p>
+                    <p className="text-sm text-white/50">Health Score</p>
                     <p className="text-2xl font-bold text-red-400">
                       {Math.round(filteredSpaces.reduce((sum, s) => sum + s.healthScore, 0) / filteredSpaces.length || 0)}
                     </p>
@@ -435,7 +435,7 @@ export function EnhancedSpaceControlDashboard() {
         )}
 
         {/* Advanced Filters and Search */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Filter className="h-5 w-5" />
@@ -447,13 +447,13 @@ export function EnhancedSpaceControlDashboard() {
               {/* Search Bar */}
               <div className="flex gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/50" />
                   <input
                     type="text"
                     placeholder="Search spaces by name, description, or tags..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none"
+                    className="w-full pl-10 pr-4 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
                 <Button
@@ -464,7 +464,7 @@ export function EnhancedSpaceControlDashboard() {
                     setSelectedHealth("all");
                   }}
                   variant="outline"
-                  className="border-gray-600 text-gray-400"
+                  className="border-white/[0.12] text-white/50"
                 >
                   Clear
                 </Button>
@@ -475,7 +475,7 @@ export function EnhancedSpaceControlDashboard() {
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
+                  className="bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
                 >
                   <option value="all">All Types</option>
                   {spaceTypes.map(type => (
@@ -488,7 +488,7 @@ export function EnhancedSpaceControlDashboard() {
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
+                  className="bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
                 >
                   <option value="all">All Statuses</option>
                   <option value="activated">✅ Activated</option>
@@ -500,7 +500,7 @@ export function EnhancedSpaceControlDashboard() {
                 <select
                   value={selectedHealth}
                   onChange={(e) => setSelectedHealth(e.target.value)}
-                  className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
+                  className="bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
                 >
                   <option value="all">All Health</option>
                   <option value="healthy">🟢 Healthy (70+)</option>
@@ -511,7 +511,7 @@ export function EnhancedSpaceControlDashboard() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
+                  className="bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
                 >
                   <option value="updated">Last Updated</option>
                   <option value="name">Name</option>
@@ -522,7 +522,7 @@ export function EnhancedSpaceControlDashboard() {
                 <Button
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                   variant="outline"
-                  className="border-gray-600 text-gray-400"
+                  className="border-white/[0.12] text-white/50"
                 >
                   {sortOrder === 'asc' ? '↑' : '↓'} {sortOrder.toUpperCase()}
                 </Button>
@@ -535,7 +535,7 @@ export function EnhancedSpaceControlDashboard() {
                     onClick={() => setViewMode('table')}
                     size="sm"
                     variant={viewMode === 'table' ? 'default' : 'outline'}
-                    className={viewMode === 'table' ? 'bg-amber-500' : 'border-gray-600 text-gray-400'}
+                    className={viewMode === 'table' ? 'bg-amber-500' : 'border-white/[0.12] text-white/50'}
                   >
                     Table
                   </Button>
@@ -543,7 +543,7 @@ export function EnhancedSpaceControlDashboard() {
                     onClick={() => setViewMode('grid')}
                     size="sm"
                     variant={viewMode === 'grid' ? 'default' : 'outline'}
-                    className={viewMode === 'grid' ? 'bg-amber-500' : 'border-gray-600 text-gray-400'}
+                    className={viewMode === 'grid' ? 'bg-amber-500' : 'border-white/[0.12] text-white/50'}
                   >
                     Grid
                   </Button>
@@ -551,12 +551,12 @@ export function EnhancedSpaceControlDashboard() {
                     onClick={() => setViewMode('analytics')}
                     size="sm"
                     variant={viewMode === 'analytics' ? 'default' : 'outline'}
-                    className={viewMode === 'analytics' ? 'bg-amber-500' : 'border-gray-600 text-gray-400'}
+                    className={viewMode === 'analytics' ? 'bg-amber-500' : 'border-white/[0.12] text-white/50'}
                   >
                     Analytics
                   </Button>
                 </div>
-                <div className="text-sm text-gray-400">
+                <div className="text-sm text-white/50">
                   Showing {filteredSpaces.length} of {spaces.length} spaces
                   {selectedSpaces.size > 0 && ` (${selectedSpaces.size} selected)`}
                 </div>
@@ -594,7 +594,7 @@ export function EnhancedSpaceControlDashboard() {
                   })}
                   size="sm"
                   variant="outline"
-                  className="border-gray-600 text-gray-400"
+                  className="border-white/[0.12] text-white/50"
                 >
                   <Pause className="h-4 w-4 mr-2" />
                   Deactivate All
@@ -647,7 +647,7 @@ export function EnhancedSpaceControlDashboard() {
 
         {/* Spaces Display - Table View */}
         {viewMode === 'table' && (
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
             <CardHeader>
               <CardTitle className="text-white">
                 Spaces Management Table
@@ -657,8 +657,8 @@ export function EnhancedSpaceControlDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="text-left p-3 text-gray-400">
+                    <tr className="border-b border-white/[0.08]">
+                      <th className="text-left p-3 text-white/50">
                         <input
                           type="checkbox"
                           checked={filteredSpaces.length > 0 && selectedSpaces.size === filteredSpaces.length}
@@ -672,17 +672,17 @@ export function EnhancedSpaceControlDashboard() {
                           className="rounded"
                         />
                       </th>
-                      <th className="text-left p-3 text-gray-400">Space</th>
-                      <th className="text-left p-3 text-gray-400">Type</th>
-                      <th className="text-left p-3 text-gray-400">Status</th>
-                      <th className="text-left p-3 text-gray-400">Members</th>
-                      <th className="text-left p-3 text-gray-400">Health</th>
-                      <th className="text-left p-3 text-gray-400">Actions</th>
+                      <th className="text-left p-3 text-white/50">Space</th>
+                      <th className="text-left p-3 text-white/50">Type</th>
+                      <th className="text-left p-3 text-white/50">Status</th>
+                      <th className="text-left p-3 text-white/50">Members</th>
+                      <th className="text-left p-3 text-white/50">Health</th>
+                      <th className="text-left p-3 text-white/50">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredSpaces.map((space) => (
-                      <tr key={space.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                      <tr key={space.id} className="border-b border-white/[0.06] hover:bg-[var(--bg-ground)]/50">
                         <td className="p-3">
                           <input
                             type="checkbox"
@@ -702,7 +702,7 @@ export function EnhancedSpaceControlDashboard() {
                         <td className="p-3">
                           <div>
                             <div className="font-semibold text-white">{space.name}</div>
-                            <div className="text-sm text-gray-400 truncate max-w-xs">
+                            <div className="text-sm text-white/50 truncate max-w-xs">
                               {space.description}
                             </div>
                           </div>
@@ -726,7 +726,7 @@ export function EnhancedSpaceControlDashboard() {
                         <td className="p-3">
                           <div>
                             <div className="text-white">{space.actualMemberCount}</div>
-                            <div className="text-xs text-gray-400">
+                            <div className="text-xs text-white/50">
                               {space.builderCount} builders
                             </div>
                           </div>
@@ -745,7 +745,7 @@ export function EnhancedSpaceControlDashboard() {
                               size="sm"
                               variant="outline"
                               onClick={() => setSelectedSpace(space)}
-                              className="border-gray-600 text-gray-400"
+                              className="border-white/[0.12] text-white/50"
                             >
                               <Eye className="h-3 w-3" />
                             </Button>
@@ -779,21 +779,21 @@ export function EnhancedSpaceControlDashboard() {
 
         {/* Loading State */}
         {loading && (
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
             <CardContent className="p-8 text-center">
               <RefreshCw className="h-8 w-8 animate-spin text-amber-400 mx-auto mb-4" />
-              <p className="text-gray-400">Loading spaces data...</p>
+              <p className="text-white/50">Loading spaces data...</p>
             </CardContent>
           </Card>
         )}
 
         {/* Empty State */}
         {!loading && filteredSpaces.length === 0 && (
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
             <CardContent className="p-8 text-center">
-              <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <Search className="h-12 w-12 text-white/50 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-white mb-2">No Spaces Found</h3>
-              <p className="text-gray-400 mb-4">
+              <p className="text-white/50 mb-4">
                 {searchTerm || selectedType !== 'all' || selectedStatus !== 'all' 
                   ? 'Try adjusting your search criteria or filters.'
                   : 'No spaces have been created yet.'}
@@ -815,7 +815,7 @@ export function EnhancedSpaceControlDashboard() {
 
         {/* Space Detail Modal */}
         {selectedSpace && (
-          <Card className="border-amber-500/30 bg-gray-900/95 fixed inset-4 z-50 overflow-y-auto">
+          <Card className="border-amber-500/30 bg-[var(--bg-void)]/95 fixed inset-4 z-50 overflow-y-auto">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-white flex items-center gap-3">
@@ -827,7 +827,7 @@ export function EnhancedSpaceControlDashboard() {
                 <Button
                   onClick={() => setSelectedSpace(null)}
                   variant="ghost"
-                  className="text-gray-400 hover:text-white"
+                  className="text-white/50 hover:text-white"
                 >
                   <XCircle className="h-5 w-5" />
                 </Button>
@@ -840,30 +840,30 @@ export function EnhancedSpaceControlDashboard() {
                   <h4 className="font-semibold text-white mb-3">Basic Information</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-400">ID:</span>
+                      <span className="text-white/50">ID:</span>
                       <span className="text-white font-mono">{selectedSpace.id}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Type:</span>
+                      <span className="text-white/50">Type:</span>
                       <span className={spaceTypes.find(t => t.value === selectedSpace.type)?.color}>
                         {spaceTypes.find(t => t.value === selectedSpace.type)?.label}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Status:</span>
+                      <span className="text-white/50">Status:</span>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(selectedSpace.status)}
                         <span className="text-white capitalize">{selectedSpace.status}</span>
                       </div>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Created:</span>
+                      <span className="text-white/50">Created:</span>
                       <span className="text-white">
                         {new Date(selectedSpace.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Updated:</span>
+                      <span className="text-white/50">Updated:</span>
                       <span className="text-white">
                         {new Date(selectedSpace.updatedAt).toLocaleDateString()}
                       </span>
@@ -875,26 +875,26 @@ export function EnhancedSpaceControlDashboard() {
                   <h4 className="font-semibold text-white mb-3">Community Metrics</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Total Members:</span>
+                      <span className="text-white/50">Total Members:</span>
                       <span className="text-white">{selectedSpace.actualMemberCount}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Builders:</span>
+                      <span className="text-white/50">Builders:</span>
                       <span className="text-green-400">{selectedSpace.builderCount}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Admins:</span>
+                      <span className="text-white/50">Admins:</span>
                       <span className="text-purple-400">{selectedSpace.adminCount}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Health Score:</span>
+                      <span className="text-white/50">Health Score:</span>
                       <span className={getHealthColor(selectedSpace.healthScore)}>
                         {selectedSpace.healthScore}/100
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Has Builders:</span>
-                      <span className={selectedSpace.hasBuilders ? 'text-green-400' : 'text-gray-400'}>
+                      <span className="text-white/50">Has Builders:</span>
+                      <span className={selectedSpace.hasBuilders ? 'text-green-400' : 'text-white/50'}>
                         {selectedSpace.hasBuilders ? 'Yes' : 'No'}
                       </span>
                     </div>
@@ -906,7 +906,7 @@ export function EnhancedSpaceControlDashboard() {
                   <div className="space-y-2 text-sm">
                     {Object.entries(selectedSpace.surfaces).map(([surface, enabled]) => (
                       <div key={surface} className="flex justify-between">
-                        <span className="text-gray-400 capitalize flex items-center gap-2">
+                        <span className="text-white/50 capitalize flex items-center gap-2">
                           {surface === 'posts' && <MessageSquare className="h-3 w-3" />}
                           {surface === 'events' && <Calendar className="h-3 w-3" />}
                           {surface === 'tools' && <Wrench className="h-3 w-3" />}
@@ -914,8 +914,8 @@ export function EnhancedSpaceControlDashboard() {
                           {surface}:
                         </span>
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-green-500' : 'bg-gray-500'}`}></div>
-                          <span className={enabled ? 'text-green-400' : 'text-gray-400'}>
+                          <div className={`w-2 h-2 rounded-full ${enabled ? 'bg-green-500' : 'bg-white/[0.20]'}`}></div>
+                          <span className={enabled ? 'text-green-400' : 'text-white/50'}>
                             {enabled ? 'Enabled' : 'Disabled'}
                           </span>
                         </div>
@@ -928,7 +928,7 @@ export function EnhancedSpaceControlDashboard() {
               {/* Description */}
               <div>
                 <h4 className="font-semibold text-white mb-3">Description</h4>
-                <p className="text-gray-300 bg-gray-800/50 p-3 rounded-lg">
+                <p className="text-white/70 bg-[var(--bg-ground)]/50 p-3 rounded-lg">
                   {selectedSpace.description || 'No description provided.'}
                 </p>
               </div>
@@ -939,19 +939,19 @@ export function EnhancedSpaceControlDashboard() {
                   <h4 className="font-semibold text-white mb-3">Recent Members</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {selectedSpace.members.map((member, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-800/50 p-2 rounded">
+                      <div key={index} className="flex items-center justify-between bg-[var(--bg-ground)]/50 p-2 rounded">
                         <span className="text-white">{member.id}</span>
                         <div className="flex items-center gap-2">
                           <Badge 
                             className={
                               member.role === 'admin' ? 'bg-purple-500/20 text-purple-400' :
                               member.role === 'builder' ? 'bg-green-500/20 text-green-400' :
-                              'bg-gray-500/20 text-gray-400'
+                              'bg-white/[0.20]/20 text-white/50'
                             }
                           >
                             {member.role}
                           </Badge>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-white/50">
                             {new Date(member.joinedAt).toLocaleDateString()}
                           </span>
                         </div>
@@ -962,7 +962,7 @@ export function EnhancedSpaceControlDashboard() {
               )}
 
               {/* Admin Actions */}
-              <div className="border-t border-gray-700 pt-6">
+              <div className="border-t border-white/[0.08] pt-6">
                 <h4 className="font-semibold text-white mb-3">Administrative Actions</h4>
                 <div className="flex flex-wrap gap-3">
                   {selectedSpace.status === 'activated' ? (
@@ -995,7 +995,7 @@ export function EnhancedSpaceControlDashboard() {
                   <Button
                     onClick={() => handleSpaceAction('archive', selectedSpace.id)}
                     variant="outline"
-                    className="border-gray-600 text-gray-400 hover:bg-gray-600/10"
+                    className="border-white/[0.12] text-white/50 hover:bg-white/[0.12]/10"
                   >
                     <Archive className="h-4 w-4 mr-2" />
                     Archive Space

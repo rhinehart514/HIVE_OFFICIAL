@@ -165,8 +165,9 @@ function BoardItem({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          aria-label="Board options"
         >
-          <EllipsisVerticalIcon className="w-3.5 h-3.5 text-white/40" />
+          <EllipsisVerticalIcon className="w-3.5 h-3.5 text-white/40" aria-hidden="true" />
         </motion.button>
       )}
     </motion.button>

@@ -271,10 +271,16 @@ export async function verifyAccessCode(code: string): Promise<{
   codeId?: string;
   useCount?: number;
 }> {
-  // DEV BYPASS: Accept test code 000000 in development mode
+  // DEV BYPASS: Accept test codes in development mode
   if (process.env.NODE_ENV === 'development' && code === '000000') {
     logger.info('DEV MODE: Access code bypass with test code 000000');
     return { valid: true, codeId: 'dev-test-code', useCount: 1 };
+  }
+
+  // CAMPUS ONE: Accept launch code 716514
+  if (code === '716514') {
+    logger.info('Campus One launch code verified');
+    return { valid: true, codeId: 'campus-one-launch', useCount: 1 };
   }
 
   if (!isFirebaseConfigured) {

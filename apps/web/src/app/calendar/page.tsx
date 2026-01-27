@@ -4,7 +4,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useMemo } from "react";
-import { Button, Card, HiveModal } from "@hive/ui";
+import { Button, Card, HiveModal, Input, Label, toast } from "@hive/ui";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@hive/auth-logic";
 import {
@@ -42,6 +42,159 @@ const Filter = FunnelIcon;
 const Download = ArrowDownTrayIcon;
 const Settings = Cog6ToothIcon;
 
+// Edit Event Form Component
+function EditEventForm({
+  event,
+  onSave,
+  onCancel,
+}: {
+  event: CalendarEvent;
+  onSave: (updates: Partial<CalendarEvent>) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [title, setTitle] = useState(event.title);
+  const [description, setDescription] = useState(event.description || '');
+  const [location, setLocation] = useState(event.location || '');
+  const [startDate, setStartDate] = useState(
+    event.startTime ? new Date(event.startTime).toISOString().slice(0, 10) : ''
+  );
+  const [startTime, setStartTime] = useState(
+    event.startTime ? new Date(event.startTime).toTimeString().slice(0, 5) : ''
+  );
+  const [endDate, setEndDate] = useState(
+    event.endTime ? new Date(event.endTime).toISOString().slice(0, 10) : ''
+  );
+  const [endTime, setEndTime] = useState(
+    event.endTime ? new Date(event.endTime).toTimeString().slice(0, 5) : ''
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) {
+      toast.error("Title required", "Please enter an event title.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const startDateTime = startDate && startTime
+        ? new Date(`${startDate}T${startTime}`).toISOString()
+        : event.startTime;
+      const endDateTime = endDate && endTime
+        ? new Date(`${endDate}T${endTime}`).toISOString()
+        : event.endTime;
+
+      await onSave({
+        title: title.trim(),
+        description: description.trim(),
+        location: location.trim(),
+        startTime: startDateTime,
+        endTime: endDateTime,
+      });
+    } catch (err) {
+      toast.error("Update failed", err instanceof Error ? err.message : "Could not update event.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <h2 className="text-heading-sm text-[var(--text-primary)] mb-1">Edit Event</h2>
+        <p className="text-body-sm text-[var(--text-tertiary)]">Update your event details</p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="edit-title" className="text-label text-[var(--text-secondary)]">
+            Event Title *
+          </Label>
+          <Input
+            id="edit-title"
+            value={title}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
+            placeholder="Event title"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="edit-description" className="text-label text-[var(--text-secondary)]">
+            Description
+          </Label>
+          <textarea
+            id="edit-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Event description"
+            rows={3}
+            className="w-full px-4 py-3 rounded-xl bg-[var(--surface-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] resize-none"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="edit-location" className="text-label text-[var(--text-secondary)]">
+            Location
+          </Label>
+          <Input
+            id="edit-location"
+            value={location}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocation(e.target.value)}
+            placeholder="Event location"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-label text-[var(--text-secondary)]">Start</Label>
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
+                className="flex-1"
+              />
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartTime(e.target.value)}
+                className="w-28"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-label text-[var(--text-secondary)]">End</Label>
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
+                className="flex-1"
+              />
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndTime(e.target.value)}
+                className="w-28"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-subtle)]">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" variant="brand" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export default function CalendarPage() {
   const { user } = useAuth();
 
@@ -63,6 +216,8 @@ export default function CalendarPage() {
     goToToday,
     addEvent,
     updateEventRSVP,
+    updateEvent,
+    deleteEvent,
   } = useCalendar();
 
   // Local UI state for modals
@@ -70,6 +225,7 @@ export default function CalendarPage() {
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
   const [showConflicts, setShowConflicts] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   // Memoize selected event data for modal
   const selectedEventData = useMemo(() => {
@@ -151,14 +307,14 @@ export default function CalendarPage() {
             )}
             
             {/* View Mode Toggle */}
-            <div className="flex items-center bg-white/[0.04] rounded-lg p-1">
+            <div className="flex items-center bg-[var(--surface-elevated)] rounded-lg p-1">
               {['day', 'week', 'month'].map((mode) => (
                 <Button
                   key={mode}
                   variant={viewMode === mode ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode(mode as 'month' | 'week' | 'day')}
-                  className="text-xs capitalize"
+                  className="text-label capitalize transition-all duration-200"
                 >
                   {mode}
                 </Button>
@@ -199,7 +355,7 @@ export default function CalendarPage() {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               
-              <h2 className="text-2xl font-bold text-white min-w-[200px] text-center">
+              <h2 className="text-heading-lg text-[var(--text-primary)] min-w-[200px] text-center">
                 {viewTitle}
               </h2>
               
@@ -223,11 +379,11 @@ export default function CalendarPage() {
 
           {/* Event Type Filter */}
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-white/40" />
+            <Filter className="h-4 w-4 text-[var(--text-tertiary)]" />
             <select
               value={eventTypeFilter}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEventTypeFilter(e.target.value as CalendarEvent['type'] | 'all')}
-              className="bg-surface border border-white/[0.06] rounded-lg px-3 py-1 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="bg-[var(--surface-elevated)] border border-[var(--border-subtle)] rounded-lg px-3 py-1 text-[var(--text-primary)] text-body-sm focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
             >
               <option value="all">All Events</option>
               <option value="event">Campus Events</option>
@@ -243,18 +399,18 @@ export default function CalendarPage() {
         {integrations.some(i => i.isConnected && (i.eventCount ?? 0) > 0) && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {integrations.filter(i => i.isConnected && (i.eventCount ?? 0) > 0).map((integration) => (
-              <Card key={integration.id} className="p-4 bg-white/[0.02] border-white/[0.06]">
+              <Card key={integration.id} className="p-4 bg-[var(--surface-subtle)] border-[var(--border-subtle)]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <div className="w-2 h-2 bg-[var(--hive-status-success)] rounded-full"></div>
                     <div>
-                      <div className="font-medium text-white text-sm">{integration.name}</div>
-                      <div className="text-xs text-white/40">
+                      <div className="text-label text-[var(--text-primary)]">{integration.name}</div>
+                      <div className="text-label text-[var(--text-tertiary)]">
                         {integration.eventCount} events • Last sync: {integration.lastSync && new Date(integration.lastSync).toLocaleTimeString()}
                       </div>
                     </div>
                   </div>
-                  <Check className="h-4 w-4 text-green-400" />
+                  <Check className="h-4 w-4 text-[var(--hive-status-success)]" />
                 </div>
               </Card>
             ))}
@@ -265,10 +421,10 @@ export default function CalendarPage() {
         <div className="space-y-4">
           {viewEvents.length === 0 ? (
             <div className="text-center py-12">
-              <Calendar className="h-16 w-16 text-white/20 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">No events scheduled</h3>
-              <p className="text-white/40 mb-6">
-                {eventTypeFilter !== 'all' 
+              <Calendar className="h-16 w-16 text-[var(--text-muted)] mx-auto mb-4" />
+              <h3 className="text-heading-sm text-[var(--text-primary)] mb-2">No events scheduled</h3>
+              <p className="text-body text-[var(--text-tertiary)] mb-6">
+                {eventTypeFilter !== 'all'
                   ? `No ${eventTypeFilter} events found for this ${viewMode}`
                   : `No events scheduled for this ${viewMode}`
                 }
@@ -283,11 +439,12 @@ export default function CalendarPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {viewEvents.map((event) => (
+              {viewEvents.map((event, index) => (
                 <EventCard
                   key={event.id}
                   event={event}
                   onClick={() => setSelectedEvent(event.id)}
+                  index={index}
                 />
               ))}
             </div>
@@ -298,10 +455,10 @@ export default function CalendarPage() {
         <CreateEventModal
           isOpen={showAddEvent}
           onClose={() => setShowAddEvent(false)}
-          onCreateEvent={(eventData: CreateEventData) => {
-            // Convert CreateEventData to CalendarEvent format and add via hook
+          onCreateEvent={async (eventData: CreateEventData) => {
+            // Convert CreateEventData to CalendarEvent format and add via API
             const newEvent: CalendarEvent = {
-              id: `event-${Date.now()}`,
+              id: '', // Will be assigned by API
               title: eventData.title,
               description: eventData.description,
               startTime: eventData.datetime.start,
@@ -321,7 +478,12 @@ export default function CalendarPage() {
               tools: [],
               space: undefined
             };
-            addEvent(newEvent);
+            try {
+              await addEvent(newEvent);
+            } catch (err) {
+              toast.error('Failed to create event', err instanceof Error ? err.message : 'Please try again.');
+              throw err; // Re-throw so modal knows it failed
+            }
           }}
         />
 
@@ -333,8 +495,8 @@ export default function CalendarPage() {
         >
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold text-white mb-1">Calendar Integrations</h2>
-              <p className="text-sm text-white/40">External calendar sync is coming soon</p>
+              <h2 className="text-heading-sm text-[var(--text-primary)] mb-1">Calendar Integrations</h2>
+              <p className="text-body-sm text-[var(--text-tertiary)]">External calendar sync is coming soon</p>
             </div>
 
             {/* Coming Soon Banner */}
@@ -344,10 +506,10 @@ export default function CalendarPage() {
                   <CalendarIcon className="w-4 h-4 text-life-gold" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white mb-1">
+                  <p className="text-label text-[var(--text-primary)] mb-1">
                     Integrations launching soon
                   </p>
-                  <p className="text-sm text-white/40">
+                  <p className="text-body-sm text-[var(--text-tertiary)]">
                     We're building connections to Google Calendar, Canvas LMS, and Outlook. For now, create events directly in HIVE.
                   </p>
                 </div>
@@ -356,12 +518,12 @@ export default function CalendarPage() {
 
             {/* Planned Integrations */}
             <div>
-              <p className="text-xs font-medium text-white/30 uppercase tracking-wider mb-3">Planned Integrations</p>
+              <p className="text-label text-[var(--text-muted)] uppercase tracking-wider mb-3">Planned Integrations</p>
               <div className="space-y-3">
                 {integrations.map((integration) => (
-                  <div key={integration.id} className="flex items-center justify-between p-4 bg-white/[0.02] rounded-lg border border-white/[0.04] opacity-60">
+                  <div key={integration.id} className="flex items-center justify-between p-4 bg-[var(--surface-subtle)] rounded-lg border border-[var(--border-subtle)] opacity-60">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-lg bg-[var(--surface-elevated)] flex items-center justify-center">
                         {integration.type === 'google' && (
                           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -382,11 +544,11 @@ export default function CalendarPage() {
                         )}
                       </div>
                       <div>
-                        <div className="font-medium text-white">{integration.name}</div>
-                        <div className="text-xs text-white/30">Not connected</div>
+                        <div className="text-label text-[var(--text-primary)]">{integration.name}</div>
+                        <div className="text-label text-[var(--text-muted)]">Not connected</div>
                       </div>
                     </div>
-                    <span className="text-xs font-medium text-white/30 bg-white/[0.04] px-2 py-1 rounded">
+                    <span className="text-label text-[var(--text-muted)] bg-[var(--surface-elevated)] px-2 py-1 rounded">
                       Coming Soon
                     </span>
                   </div>
@@ -394,7 +556,7 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-white/[0.06]">
+            <div className="pt-4 border-t border-[var(--border-subtle)]">
               <Button
                 className="w-full"
                 variant="secondary"
@@ -402,7 +564,7 @@ export default function CalendarPage() {
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export Calendar
-                <span className="ml-2 text-xs text-white/30">(Coming Soon)</span>
+                <span className="ml-2 text-label text-[var(--text-muted)]">(Coming Soon)</span>
               </Button>
             </div>
           </div>
@@ -411,24 +573,49 @@ export default function CalendarPage() {
         {/* Conflicts Modal */}
         <HiveModal open={showConflicts} onOpenChange={setShowConflicts} size="lg">
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-white mb-4">Schedule Conflicts</h2>
-            {conflictEvents.map((event) => (
-              <div key={event.id} className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-white">{event.title}</h3>
-                  <AlertTriangle className="h-5 w-5 text-red-400" />
-                </div>
-                <p className="text-sm text-white/40 mb-3">
-                  {formatDate(event.startTime)} • {formatTime(event.startTime)} - {formatTime(event.endTime)}
-                </p>
-                <div className="flex items-center space-x-2">
-                  <Button variant="secondary" size="sm"><X className="h-3 w-3 mr-1" />Remove</Button>
-                  <Button variant="secondary" size="sm">Reschedule</Button>
-                  <Button variant="secondary" size="sm">Keep Both</Button>
-                </div>
+            <h2 className="text-heading-sm text-[var(--text-primary)] mb-4">Schedule Conflicts</h2>
+            {conflictEvents.length === 0 ? (
+              <div className="text-center py-8">
+                <Check className="h-12 w-12 text-[var(--hive-status-success)] mx-auto mb-3" />
+                <p className="text-body text-[var(--text-secondary)]">No conflicts detected</p>
+                <p className="text-body-sm text-[var(--text-muted)] mt-1">Your schedule is clear</p>
               </div>
-            ))}
+            ) : (
+              conflictEvents.map((event) => (
+                <div key={event.id} className="p-4 bg-[var(--hive-status-error)]/10 border border-[var(--hive-status-error)]/30 rounded-lg">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-label font-semibold text-[var(--text-primary)]">{event.title}</h3>
+                    <AlertTriangle className="h-5 w-5 text-[var(--hive-status-error)]" />
+                  </div>
+                  <p className="text-body-sm text-[var(--text-tertiary)] mb-3">
+                    {formatDate(event.startTime)} • {formatTime(event.startTime)} - {formatTime(event.endTime)}
+                  </p>
+                  <p className="text-label text-[var(--text-muted)]">
+                    Conflict resolution coming soon
+                  </p>
+                </div>
+              ))
+            )}
           </div>
+        </HiveModal>
+
+        {/* Edit Event Modal */}
+        <HiveModal
+          open={!!editingEvent}
+          onOpenChange={(open) => !open && setEditingEvent(null)}
+          size="lg"
+        >
+          {editingEvent && (
+            <EditEventForm
+              event={editingEvent}
+              onSave={async (updates) => {
+                await updateEvent(editingEvent.id, updates);
+                toast.success("Event updated", "Your changes have been saved.");
+                setEditingEvent(null);
+              }}
+              onCancel={() => setEditingEvent(null)}
+            />
+          )}
         </HiveModal>
 
         {/* Event Details Modal */}
@@ -440,8 +627,18 @@ export default function CalendarPage() {
           onRSVP={(eventId: string, status: CalendarEvent["rsvpStatus"]) => {
             updateEventRSVP(eventId, status);
           }}
-          onBookmark={(eventId: string) => {
-            logger.debug('Bookmark event', { id: eventId });
+          onBookmark={() => {
+            toast.info('Bookmarks coming soon', 'Event bookmarking will be available in a future update.');
+          }}
+          onEdit={(eventId: string) => {
+            const event = events.find(e => e.id === eventId);
+            if (event) {
+              setEditingEvent(event);
+              setSelectedEvent(null);
+            }
+          }}
+          onDelete={async (eventId: string) => {
+            await deleteEvent(eventId);
           }}
         />
       </PageContainer>

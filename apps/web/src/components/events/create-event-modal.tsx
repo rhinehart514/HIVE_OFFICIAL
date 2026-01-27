@@ -41,7 +41,7 @@ export interface CreateEventData {
 export interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateEvent?: (data: CreateEventData) => void;
+  onCreateEvent?: (data: CreateEventData) => void | Promise<void>;
   spaceId?: string;
   spaceName?: string;
 }
@@ -175,7 +175,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         },
       };
 
-      onCreateEvent?.(eventData);
+      await onCreateEvent?.(eventData);
       toast.success("Event created!", "Your event has been scheduled.");
 
       // Reset form

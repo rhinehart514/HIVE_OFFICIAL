@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-white">HIVE Admin</h1>
-          <p className="text-gray-500 mt-2">Sign in with your admin account</p>
+          <p className="text-white/40 mt-2">Sign in with your admin account</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">
+            <label htmlFor="email" className="block text-sm text-white/50 mb-1">
               Email
             </label>
             <input
@@ -73,14 +73,14 @@ export default function AdminLoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-gray-700"
+              className="w-full px-4 py-3 bg-[var(--bg-void)] border border-white/[0.06] rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-white/[0.08]"
               placeholder="admin@example.com"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm text-gray-400 mb-1">
+            <label htmlFor="password" className="block text-sm text-white/50 mb-1">
               Password
             </label>
             <input
@@ -88,7 +88,7 @@ export default function AdminLoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-gray-700"
+              className="w-full px-4 py-3 bg-[var(--bg-void)] border border-white/[0.06] rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-white/[0.08]"
               placeholder="••••••••"
               required
             />
@@ -97,13 +97,13 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-white text-black font-medium rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-white text-black font-medium rounded-lg hover:bg-white/[0.04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
-        <p className="text-center text-gray-600 text-sm mt-6">
+        <p className="text-center text-white/30 text-sm mt-6">
           Admin access required. Contact support if you need access.
         </p>
       </div>

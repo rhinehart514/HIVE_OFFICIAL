@@ -233,7 +233,7 @@ const SpaceCard: React.FC<{
       case 'active': return 'bg-green-500';
       case 'dormant': return 'bg-yellow-500'; 
       case 'system_managed': return 'bg-blue-500';
-      default: return 'bg-gray-500';
+      default: return 'bg-white/[0.20]';
     }
   };
 
@@ -252,13 +252,13 @@ const SpaceCard: React.FC<{
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-4 bg-gray-900/50 border border-gray-700 rounded-xl hover:bg-gray-800/50 transition-all cursor-pointer group"
+      className="p-4 bg-[var(--bg-void)]/50 border border-white/[0.08] rounded-xl hover:bg-[var(--bg-ground)]/50 transition-all cursor-pointer group"
       onClick={onViewDetails}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start space-x-3 flex-1">
-          <div className={`p-2 rounded-lg bg-gray-800 ${categoryRule.color}`}>
+          <div className={`p-2 rounded-lg bg-[var(--bg-ground)] ${categoryRule.color}`}>
             <SubtypeIcon className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -272,7 +272,7 @@ const SpaceCard: React.FC<{
                   />
                 )}
               </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-400">
+            <div className="flex items-center space-x-2 text-sm text-white/50">
               <span className="capitalize">{space.subtype.replace('_', ' ')}</span>
               <span>•</span>
               <span className={categoryRule.color}>{categoryRule.label}</span>
@@ -299,7 +299,7 @@ const SpaceCard: React.FC<{
                 initial={{ opacity: 0, scale: 0.95, y: -10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                className="absolute top-full right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg py-1 z-20 min-w-[140px]"
+                className="absolute top-full right-0 mt-1 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg shadow-lg py-1 z-20 min-w-[140px]"
               >
                 <button
                   onClick={(e) => {
@@ -307,7 +307,7 @@ const SpaceCard: React.FC<{
                     onViewDetails();
                     setShowMenu(false);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left text-sm text-white/70 hover:bg-white/[0.08] flex items-center gap-2"
                 >
                   <EyeIcon className="w-4 h-4" />
                   View Details
@@ -318,7 +318,7 @@ const SpaceCard: React.FC<{
                     onEdit();
                     setShowMenu(false);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left text-sm text-white/70 hover:bg-white/[0.08] flex items-center gap-2"
                 >
                   <Cog6ToothIcon className="w-4 h-4" />
                   Manage Surfaces
@@ -329,7 +329,7 @@ const SpaceCard: React.FC<{
                     onAudit();
                     setShowMenu(false);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
+                  className="w-full px-3 py-2 text-left text-sm text-white/70 hover:bg-white/[0.08] flex items-center gap-2"
                 >
                   <ShieldCheckIcon className="w-4 h-4" />
                   Audit Space
@@ -342,27 +342,27 @@ const SpaceCard: React.FC<{
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-        <div className="text-center p-2 bg-gray-800/50 rounded">
+        <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
           <div className="text-sm font-semibold text-white">{space.memberCount}</div>
-          <div className="text-xs text-gray-400">Members</div>
+          <div className="text-xs text-white/50">Members</div>
         </div>
-        <div className="text-center p-2 bg-gray-800/50 rounded">
+        <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
           <div className="text-sm font-semibold text-green-400">{space.activeMembers}</div>
-          <div className="text-xs text-gray-400">Active</div>
+          <div className="text-xs text-white/50">Active</div>
         </div>
-        <div className="text-center p-2 bg-gray-800/50 rounded">
+        <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
           <div className="text-sm font-semibold text-amber-400">{space.toolsInstalled}/{space.maxToolSlots}</div>
-          <div className="text-xs text-gray-400">Tools</div>
+          <div className="text-xs text-white/50">Tools</div>
         </div>
-        <div className="text-center p-2 bg-gray-800/50 rounded">
+        <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
           <div className="text-sm font-semibold text-blue-400">{getSurfaceEnabledCount()}/6</div>
-          <div className="text-xs text-gray-400">Surfaces</div>
+          <div className="text-xs text-white/50">Surfaces</div>
         </div>
       </div>
 
       {/* Six Surfaces Status */}
       <div className="mb-3">
-        <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+        <div className="flex items-center justify-between text-xs text-white/50 mb-1">
           <span>Six Surfaces Status</span>
           <span>{getSurfaceEnabledCount()}/6 enabled</span>
         </div>
@@ -370,7 +370,7 @@ const SpaceCard: React.FC<{
           {Object.entries(space.surfaces).map(([surface, data]) => (
             <div
               key={surface}
-              className={`h-2 rounded-full ${data.enabled ? 'bg-green-500' : 'bg-gray-600'}`}
+              className={`h-2 rounded-full ${data.enabled ? 'bg-green-500' : 'bg-white/[0.12]'}`}
               title={`${surface.replace('_', ' ')}: ${data.enabled ? 'enabled' : 'disabled'}`}
             />
           ))}
@@ -381,31 +381,31 @@ const SpaceCard: React.FC<{
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-1">
-            <ChartBarIcon className="w-3 h-3 text-gray-400" />
+            <ChartBarIcon className="w-3 h-3 text-white/50" />
             <span className={getEngagementColor(space.analytics.engagementScore)}>
               {space.analytics.engagementScore}% engagement
             </span>
           </div>
           <div className="flex items-center space-x-1">
-            <ArrowTrendingUpIcon className="w-3 h-3 text-gray-400" />
-            <span className="text-gray-300">{space.analytics.weeklyActiveUsers} weekly</span>
+            <ArrowTrendingUpIcon className="w-3 h-3 text-white/50" />
+            <span className="text-white/70">{space.analytics.weeklyActiveUsers} weekly</span>
           </div>
         </div>
-        <div className="text-gray-400">
+        <div className="text-white/50">
           {new Date(space.lastActivity).toLocaleDateString()}
         </div>
       </div>
 
       {/* Leadership */}
-      <div className="mt-3 pt-3 border-t border-gray-700">
+      <div className="mt-3 pt-3 border-t border-white/[0.08]">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-2">
-            <span className="text-gray-400">Leader:</span>
+            <span className="text-white/50">Leader:</span>
             <span className="text-white">{space.leadership.primary.name}</span>
           </div>
           {space.leadership.secondary && (
             <div className="flex items-center space-x-2">
-              <span className="text-gray-400">Co-Leader:</span>
+              <span className="text-white/50">Co-Leader:</span>
               <span className="text-white">{space.leadership.secondary.name}</span>
             </div>
           )}
@@ -488,8 +488,8 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <CircleStackIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Space system management is not available</p>
+        <CircleStackIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
+        <p className="text-white/50">Space system management is not available</p>
       </div>
     );
   }
@@ -500,7 +500,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">HIVE Space System</h2>
-          <p className="text-gray-400 mt-1">
+          <p className="text-white/50 mt-1">
             Strict four-category space management - Community containers only
           </p>
         </div>
@@ -510,7 +510,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
             onClick={loadSpaces}
             disabled={loading}
             variant="outline"
-            className="border-gray-600 text-gray-300"
+            className="border-white/[0.12] text-white/70"
           >
             {loading ? (
               <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
@@ -524,23 +524,23 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Total Spaces</p>
+                <p className="text-sm font-medium text-white/50">Total Spaces</p>
                 <p className="text-2xl font-bold text-white">{stats.total}</p>
               </div>
-              <CircleStackIcon className="w-8 h-8 text-gray-400" />
+              <CircleStackIcon className="w-8 h-8 text-white/50" />
             </div>
           </CardContent>
         </Card>
         
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Active</p>
+                <p className="text-sm font-medium text-white/50">Active</p>
                 <p className="text-2xl font-bold text-green-400">{stats.active}</p>
               </div>
               <CheckCircleIcon className="w-8 h-8 text-green-400" />
@@ -548,11 +548,11 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">System Managed</p>
+                <p className="text-sm font-medium text-white/50">System Managed</p>
                 <p className="text-2xl font-bold text-blue-400">{stats.systemManaged}</p>
               </div>
               <ShieldCheckIcon className="w-8 h-8 text-blue-400" />
@@ -560,11 +560,11 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Categories</p>
+                <p className="text-sm font-medium text-white/50">Categories</p>
                 <p className="text-2xl font-bold text-purple-400">4</p>
               </div>
               <Cog6ToothIcon className="w-8 h-8 text-purple-400" />
@@ -585,21 +585,21 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
               className={`border transition-all cursor-pointer ${
                 selectedCategory === category 
                   ? 'border-amber-500 bg-amber-500/5' 
-                  : 'border-gray-700 bg-gray-900/50 hover:bg-gray-800/50'
+                  : 'border-white/[0.08] bg-[var(--bg-void)]/50 hover:bg-[var(--bg-ground)]/50'
               }`}
               onClick={() => setSelectedCategory(selectedCategory === category ? 'all' : category as ValidSpaceCategory)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3 mb-2">
-                  <div className={`p-2 rounded-lg bg-gray-800 ${rule.color}`}>
+                  <div className={`p-2 rounded-lg bg-[var(--bg-ground)] ${rule.color}`}>
                     <IconComponent className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">{rule.label}</h3>
-                    <p className="text-sm text-gray-400">{count} spaces</p>
+                    <p className="text-sm text-white/50">{count} spaces</p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">{rule.description}</p>
+                <p className="text-xs text-white/40">{rule.description}</p>
                 
                 <div className="mt-2 flex flex-wrap gap-1">
                   {rule.allowedSubtypes.slice(0, 2).map((subtype) => (
@@ -620,24 +620,24 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
       </div>
 
       {/* MagnifyingGlassIcon and Filters */}
-      <Card className="border-gray-700 bg-gray-900/50">
+      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
         <CardContent className="p-4">
           <div className="flex items-center space-x-4">
             <div className="flex-1 relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
               <input
                 type="text"
                 placeholder="MagnifyingGlassIcon spaces by name or type..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               />
             </div>
             
             <Button
               onClick={() => setSelectedCategory('all')}
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
-              className={selectedCategory === 'all' ? 'bg-amber-500 text-black' : 'border-gray-600 text-gray-300'}
+              className={selectedCategory === 'all' ? 'bg-amber-500 text-black' : 'border-white/[0.12] text-white/70'}
             >
               All Categories ({stats.total})
             </Button>
@@ -646,7 +646,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
       </Card>
 
       {/* Spaces List */}
-      <Card className="border-gray-700 bg-gray-900/50">
+      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
         <CardHeader>
           <CardTitle className="text-white">
             {selectedCategory === 'all' 
@@ -659,13 +659,13 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
           {loading ? (
             <div className="text-center py-8">
               <ArrowPathIcon className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
-              <p className="text-gray-400">Loading spaces...</p>
+              <p className="text-white/50">Loading spaces...</p>
             </div>
           ) : filteredSpaces.length === 0 ? (
             <div className="text-center py-12">
-              <CircleStackIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <CircleStackIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">No spaces found</h3>
-              <p className="text-gray-400">
+              <p className="text-white/50">
                 {searchTerm ? 'Try adjusting your search' : 'No spaces in this category'}
               </p>
             </div>
@@ -697,17 +697,17 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
           <div className="space-y-4">
             <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
               <h4 className="font-semibold text-green-400 mb-2">✅ SPACES ARE COMMUNITY CONTAINERS</h4>
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-white/70">
                 Spaces exist only to contain communities. All functionality happens through tools within spaces.
               </p>
             </div>
             
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
               <h4 className="font-semibold text-red-400 mb-2">❌ FORBIDDEN AS SPACES</h4>
-              <p className="text-sm text-gray-300 mb-2">
+              <p className="text-sm text-white/70 mb-2">
                 These must be tools within proper community spaces, NOT separate spaces:
               </p>
-              <div className="grid grid-cols-2 gap-1 text-xs text-gray-400">
+              <div className="grid grid-cols-2 gap-1 text-xs text-white/50">
                 <span>• Study Groups → Study Group Matcher Tool</span>
                 <span>• Project Teams → Project Coordinator Tool</span>
                 <span>• Floor Communities → Floor Coordination Tool</span>
@@ -719,10 +719,10 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
 
             <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
               <h4 className="font-semibold text-blue-400 mb-2">🔧 SIX SURFACES CONSISTENCY</h4>
-              <p className="text-sm text-gray-300 mb-2">
+              <p className="text-sm text-white/70 mb-2">
                 Every space has exactly six surfaces:
               </p>
-              <div className="grid grid-cols-3 gap-2 text-xs text-gray-400">
+              <div className="grid grid-cols-3 gap-2 text-xs text-white/50">
                 <span>• Post Board (social layer)</span>
                 <span>• Tools (functionality)</span>
                 <span>• Events (calendar view)</span>

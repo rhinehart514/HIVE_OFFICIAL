@@ -2,7 +2,7 @@ import { Skeleton } from '@hive/ui';
 
 export default function ProfileLoading() {
   return (
-    <div className="min-h-screen bg-hive-background p-6">
+    <div className="min-h-screen bg-[var(--bg-ground)] p-6">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Profile header skeleton */}
         <div className="space-y-4">

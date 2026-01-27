@@ -13,6 +13,7 @@ import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { Button, Text, Card, MOTION } from '@hive/ui/design-system/primitives';
 import { StatCard, StatCardGroup, StatCardSkeleton } from '@hive/ui';
 import {
@@ -94,7 +95,7 @@ async function fetchAnalytics(spaceId: string, period: string): Promise<SpaceAna
     const data = await response.json();
     return data.data || data;
   } catch (error) {
-    console.error('Failed to fetch analytics:', error);
+    logger.error('Failed to fetch analytics', { component: 'SpaceAnalyticsPage' }, error instanceof Error ? error : undefined);
     return null;
   }
 }

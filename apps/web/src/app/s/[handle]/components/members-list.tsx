@@ -19,7 +19,7 @@ export interface Member {
   name: string;
   handle: string;
   avatarUrl?: string;
-  role?: 'leader' | 'moderator' | 'member';
+  role?: 'owner' | 'admin' | 'leader' | 'moderator' | 'member';
   isOnline?: boolean;
   joinedAt?: string;
 }
@@ -53,9 +53,11 @@ export function MembersList({
     );
   }, [members, searchQuery]);
 
-  // Group by role
+  // Group by role - Leaders = owners + admins + leaders
   const groupedMembers = React.useMemo(() => {
-    const leaders = filteredMembers.filter((m) => m.role === 'leader');
+    const leaders = filteredMembers.filter(
+      (m) => m.role === 'owner' || m.role === 'admin' || m.role === 'leader'
+    );
     const moderators = filteredMembers.filter((m) => m.role === 'moderator');
     const regularMembers = filteredMembers.filter((m) => !m.role || m.role === 'member');
 
@@ -181,9 +183,39 @@ interface MemberRowProps {
 }
 
 function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
-  const getRoleIcon = () => {
-    if (member.role === 'leader') return <Crown className="w-3.5 h-3.5 text-[var(--color-gold)]" />;
-    if (member.role === 'moderator') return <Shield className="w-3.5 h-3.5 text-blue-400" />;
+  const getRoleBadge = () => {
+    if (member.role === 'owner') {
+      return (
+        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--color-gold)]/10">
+          <Crown className="w-3 h-3 text-[var(--color-gold)]" />
+          <span className="text-[10px] font-medium text-[var(--color-gold)]">Owner</span>
+        </span>
+      );
+    }
+    if (member.role === 'admin') {
+      return (
+        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--color-gold)]/10">
+          <Crown className="w-3 h-3 text-[var(--color-gold)]/70" />
+          <span className="text-[10px] font-medium text-[var(--color-gold)]/70">Admin</span>
+        </span>
+      );
+    }
+    if (member.role === 'leader') {
+      return (
+        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.04]">
+          <Crown className="w-3 h-3 text-white/50" />
+          <span className="text-[10px] font-medium text-white/50">Leader</span>
+        </span>
+      );
+    }
+    if (member.role === 'moderator') {
+      return (
+        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10">
+          <Shield className="w-3 h-3 text-blue-400" />
+          <span className="text-[10px] font-medium text-blue-400">Mod</span>
+        </span>
+      );
+    }
     return null;
   };
 
@@ -210,19 +242,22 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
           {member.avatarUrl && <AvatarImage src={member.avatarUrl} />}
           <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
         </Avatar>
-        {member.isOnline && (
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[var(--color-gold)] rounded-full border-2 border-[#0A0A09]" />
+        {/* Online indicator - green for online, no indicator for offline */}
+        {member.isOnline ? (
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0A0A09]" />
+        ) : (
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-white/10 rounded-full border-2 border-[#0A0A09]" />
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Text size="sm" weight="medium" className="truncate">
             {member.name}
             {isCurrentUser && <span className="text-white/40 ml-1">(you)</span>}
           </Text>
-          {getRoleIcon()}
+          {getRoleBadge()}
         </div>
         <Text size="xs" tone="muted" className="font-mono truncate">
           @{member.handle}
@@ -231,7 +266,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
 
       {/* Online status text */}
       {member.isOnline && (
-        <Text size="xs" className="text-[var(--color-gold)]/70 flex-shrink-0">
+        <Text size="xs" className="text-emerald-400/70 flex-shrink-0">
           Online
         </Text>
       )}

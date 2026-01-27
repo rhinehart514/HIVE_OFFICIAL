@@ -110,7 +110,7 @@ export function BuilderQueueEnhanced() {
   if (loading && requests.length === 0) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-400">Loading builder requests...</div>
+        <div className="text-white/50">Loading builder requests...</div>
       </div>
     );
   }
@@ -148,14 +148,14 @@ export function BuilderQueueEnhanced() {
           disabled={loading}
           variant="ghost"
           size="sm"
-          className="text-gray-400 hover:text-white"
+          className="text-white/50 hover:text-white"
         >
           {loading ? 'Refreshing...' : 'Refresh'}
         </Button>
       </div>
 
       {pendingRequests.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">
+        <div className="text-center py-8 text-white/50">
           No pending builder requests
         </div>
       ) : (
@@ -166,7 +166,7 @@ export function BuilderQueueEnhanced() {
               className={`rounded-lg border p-4 ${
                 request.urgency === 'urgent' 
                   ? 'border-red-500 bg-red-900/20' 
-                  : 'border-gray-700 bg-gray-800'
+                  : 'border-white/[0.08] bg-[var(--bg-ground)]'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -179,19 +179,19 @@ export function BuilderQueueEnhanced() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-gray-400 mb-1">{request.userEmail}</p>
-                  <p className="text-sm text-gray-300 mb-2">
+                  <p className="text-sm text-white/50 mb-1">{request.userEmail}</p>
+                  <p className="text-sm text-white/70 mb-2">
                     Space: <span className="font-medium">{request.spaceName}</span>
                   </p>
                   <div className="mb-2">
-                    <p className="text-sm font-medium text-gray-300">Reason:</p>
-                    <p className="text-sm text-gray-400">{request.reason}</p>
+                    <p className="text-sm font-medium text-white/70">Reason:</p>
+                    <p className="text-sm text-white/50">{request.reason}</p>
                   </div>
                   <div className="mb-3">
-                    <p className="text-sm font-medium text-gray-300">Experience:</p>
-                    <p className="text-sm text-gray-400">{request.experience}</p>
+                    <p className="text-sm font-medium text-white/70">Experience:</p>
+                    <p className="text-sm text-white/50">{request.experience}</p>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-white/40">
                     Submitted {getTimeAgo(request.submittedAt)}
                   </p>
                 </div>

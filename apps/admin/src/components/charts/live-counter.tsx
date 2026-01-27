@@ -85,7 +85,7 @@ export function LiveCounter({
   const TrendIcon =
     trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus;
   const trendColor =
-    trend > 0 ? "text-green-400" : trend < 0 ? "text-red-400" : "text-gray-400";
+    trend > 0 ? "text-green-400" : trend < 0 ? "text-red-400" : "text-white/50";
 
   return (
     <div className="flex flex-col gap-1">
@@ -107,7 +107,7 @@ export function LiveCounter({
       </AnimatePresence>
 
       <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-400">{label}</span>
+        <span className="text-sm text-white/50">{label}</span>
         {showTrend && previousValue !== undefined && (
           <div className={`flex items-center gap-1 text-xs ${trendColor}`}>
             <TrendIcon className="h-3 w-3" />

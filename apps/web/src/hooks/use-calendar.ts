@@ -46,12 +46,12 @@ export type EventTypeFilter = CalendarEvent['type'] | 'all';
 
 export const getTypeColor = (type: CalendarEvent['type']) => {
   switch (type) {
-    case 'event': return 'bg-blue-500';
-    case 'class': return 'bg-green-500';
-    case 'assignment': return 'bg-yellow-500';
-    case 'meeting': return 'bg-purple-500';
-    case 'personal': return 'bg-pink-500';
-    default: return 'bg-gray-500';
+    case 'event': return 'bg-[var(--hive-status-info)]';
+    case 'class': return 'bg-[var(--hive-status-success)]';
+    case 'assignment': return 'bg-[var(--hive-status-warning)]';
+    case 'meeting': return 'bg-[var(--hive-status-purple)]';
+    case 'personal': return 'bg-[var(--hive-status-pink)]';
+    default: return 'bg-[var(--surface-elevated)]';
   }
 };
 
@@ -236,9 +236,32 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     setCurrentDate(new Date());
   }, []);
 
-  // Event mutations
-  const addEvent = useCallback((event: CalendarEvent) => {
-    setEvents(prev => [event, ...prev]);
+  // Event mutations - API-backed create
+  const addEvent = useCallback(async (event: CalendarEvent): Promise<CalendarEvent> => {
+    const response = await fetch('/api/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: event.title,
+        description: event.description,
+        startDate: event.startTime,
+        endDate: event.endTime,
+        location: event.location,
+        isAllDay: false,
+      }),
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to create event');
+    }
+    const data = await response.json();
+    const createdEvent: CalendarEvent = {
+      ...event,
+      id: data.event.id,
+    };
+    setEvents(prev => [createdEvent, ...prev]);
+    return createdEvent;
   }, []);
 
   const updateEventRSVP = useCallback((eventId: string, status: CalendarEvent['rsvpStatus']) => {
@@ -251,6 +274,40 @@ export function useCalendar(options: UseCalendarOptions = {}) {
 
   const removeEvent = useCallback((eventId: string) => {
     setEvents(prev => prev.filter(event => event.id !== eventId));
+  }, []);
+
+  // API-backed update event
+  const updateEvent = useCallback(async (eventId: string, updates: Partial<CalendarEvent>) => {
+    const response = await fetch(`/api/calendar/${eventId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: updates.title,
+        description: updates.description,
+        startDate: updates.startTime,
+        endDate: updates.endTime,
+        location: updates.location,
+      }),
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to update event');
+    }
+    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, ...updates } : e));
+  }, []);
+
+  // API-backed delete event
+  const deleteEvent = useCallback(async (eventId: string) => {
+    const response = await fetch(`/api/calendar/${eventId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to delete event');
+    }
+    setEvents(prev => prev.filter(e => e.id !== eventId));
   }, []);
 
   // View title
@@ -290,5 +347,7 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     addEvent,
     updateEventRSVP,
     removeEvent,
+    updateEvent,
+    deleteEvent,
   };
 }

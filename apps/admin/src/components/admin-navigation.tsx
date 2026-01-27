@@ -76,7 +76,7 @@ export function AdminNavigation({ activeTab, onTabChange, pendingCounts }: Admin
 
   return (
     <div className="mb-8">
-      <div className="flex flex-wrap gap-2 bg-gray-900 p-1 rounded-lg">
+      <div className="flex flex-wrap gap-2 bg-[var(--bg-void)] p-1 rounded-lg">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -85,7 +85,7 @@ export function AdminNavigation({ activeTab, onTabChange, pendingCounts }: Admin
               flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors
               ${activeTab === tab.id
                 ? 'text-white bg-amber-500'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                : 'text-white/50 hover:text-white hover:bg-[var(--bg-ground)]'
               }
             `}
             title={tab.description}

@@ -26,6 +26,8 @@ import {
   ShareIcon,
   CheckCircleIcon,
   StarIcon,
+  PencilIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import {
   BookmarkIcon as BookmarkSolidIcon,
@@ -41,6 +43,8 @@ export interface EventDetailsModalProps {
   currentUserId?: string;
   onRSVP?: (eventId: string, status: "going" | "interested" | "not_going") => void;
   onBookmark?: (eventId: string) => void;
+  onEdit?: (eventId: string) => void;
+  onDelete?: (eventId: string) => Promise<void>;
 }
 
 export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
@@ -50,7 +54,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   currentUserId,
   onRSVP,
   onBookmark,
+  onEdit,
+  onDelete,
 }) => {
+  const [isDeleting, setIsDeleting] = React.useState(false);
   if (!event) return null;
 
   const isOrganizer = currentUserId === event.organizer.id;
@@ -256,6 +263,43 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         </ModalBody>
 
         <ModalFooter className="flex-col sm:flex-row gap-3">
+          {/* Organizer Actions */}
+          {isOrganizer && (onEdit || onDelete) && (
+            <div className="flex gap-2 flex-1">
+              {onEdit && (
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => onEdit(event.id)}
+                >
+                  <PencilIcon className="w-4 h-4 mr-2" />
+                  Edit Event
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="outline"
+                  className="text-red-400 border-red-500/30 hover:bg-red-500/10"
+                  onClick={async () => {
+                    if (window.confirm('Are you sure you want to delete this event?')) {
+                      setIsDeleting(true);
+                      try {
+                        await onDelete(event.id);
+                        onClose();
+                      } finally {
+                        setIsDeleting(false);
+                      }
+                    }
+                  }}
+                  disabled={isDeleting}
+                >
+                  <TrashIcon className="w-4 h-4 mr-2" />
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </Button>
+              )}
+            </div>
+          )}
+
           {/* RSVP Actions */}
           {!isOrganizer && (
             <div className="flex gap-2 flex-1">

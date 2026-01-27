@@ -173,8 +173,8 @@ export function ClaimsQueue() {
   if (loading && claims.length === 0) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400 mr-2" />
-        <span className="text-gray-400">Loading claims...</span>
+        <Loader2 className="w-5 h-5 animate-spin text-white/50 mr-2" />
+        <span className="text-white/50">Loading claims...</span>
       </div>
     );
   }
@@ -203,7 +203,7 @@ export function ClaimsQueue() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white">Leader Claims</h2>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-white/50">
               {summary?.pending || 0} pending · Avg verification: {summary?.avgVerificationTimeHours || 0}h
             </p>
           </div>
@@ -219,7 +219,7 @@ export function ClaimsQueue() {
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                   statusFilter === status
                     ? 'bg-white/10 text-white'
-                    : 'text-gray-400 hover:text-white'
+                    : 'text-white/50 hover:text-white'
                 }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -242,8 +242,8 @@ export function ClaimsQueue() {
       {claims.length === 0 ? (
         <Card className="border-white/10 bg-[#141414]">
           <CardContent className="py-12 text-center">
-            <Crown className="w-12 h-12 mx-auto text-gray-600 mb-4" />
-            <p className="text-gray-400">
+            <Crown className="w-12 h-12 mx-auto text-white/30 mb-4" />
+            <p className="text-white/50">
               No {statusFilter} claims
             </p>
           </CardContent>
@@ -264,7 +264,7 @@ export function ClaimsQueue() {
                         {claim.spaceCategory}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-400">
+                    <div className="flex items-center gap-3 text-sm text-white/50">
                       <span>@{claim.userName}</span>
                       <span>·</span>
                       <span>{claim.role}</span>
@@ -291,7 +291,7 @@ export function ClaimsQueue() {
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       ) : (
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-white/40">
                           {claim.proofType} proof
                         </span>
                       )}
@@ -307,7 +307,7 @@ export function ClaimsQueue() {
                         placeholder="Notes (optional)"
                         value={notes[claim.id] || ''}
                         onChange={(e) => setNotes({ ...notes, [claim.id]: e.target.value })}
-                        className="w-32 lg:w-40 px-2 py-1.5 text-sm bg-white/5 border border-white/10 rounded-md text-white placeholder:text-gray-500 focus:outline-none focus:border-white/20"
+                        className="w-32 lg:w-40 px-2 py-1.5 text-sm bg-white/5 border border-white/10 rounded-md text-white placeholder:text-white/40 focus:outline-none focus:border-white/20"
                       />
 
                       {/* Approve button */}
@@ -360,8 +360,8 @@ export function ClaimsQueue() {
                 {/* Review notes if any */}
                 {claim.reviewNotes && (
                   <div className="mt-3 pt-3 border-t border-white/5">
-                    <p className="text-sm text-gray-500">
-                      <span className="text-gray-400">Notes:</span> {claim.reviewNotes}
+                    <p className="text-sm text-white/40">
+                      <span className="text-white/50">Notes:</span> {claim.reviewNotes}
                     </p>
                   </div>
                 )}

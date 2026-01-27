@@ -245,7 +245,7 @@ export default function RitualsPage() {
           <h2 className="mb-3 text-2xl font-bold text-white">
             Founding Leader Rituals
           </h2>
-          <p className="mb-6 text-neutral-400 leading-relaxed">
+          <p className="mb-6 text-white/50 leading-relaxed">
             Rituals are currently exclusive to space leaders during our January launch.
             Claim a space to unlock special founding leader challenges and rewards.
           </p>

@@ -222,6 +222,9 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
 
         return eventsSnapshot.docs.map(eventDoc => {
           const eventData = eventDoc.data();
+          const spaceData = spaceDoc.data();
+          const startDate = new Date(eventData.startDate);
+          const endDate = eventData.endDate ? new Date(eventData.endDate) : null;
           return {
             id: eventDoc.id,
             title: eventData.title,
@@ -230,7 +233,9 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
             endDate: eventData.endDate,
             type: eventData.type || 'event',
             spaceId: spaceDoc.id,
-            spaceName: spaceDoc.data().name,
+            spaceName: spaceData.name,
+            spaceHandle: spaceData.slug || spaceData.handle || spaceDoc.id,
+            isLive: startDate <= now && (!endDate || endDate > now),
           };
         });
       });

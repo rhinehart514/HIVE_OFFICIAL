@@ -151,11 +151,11 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
   const getStatusColor = (status: AdminSpace['status']) => {
     switch (status) {
       case 'activated': return 'bg-green-500';
-      case 'dormant': return 'bg-gray-500';
+      case 'dormant': return 'bg-white/[0.20]';
       case 'frozen': return 'bg-blue-500';
       case 'archived': return 'bg-yellow-500';
       case 'suspended': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      default: return 'bg-white/[0.20]';
     }
   };
 
@@ -212,8 +212,8 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
 
   return (
     <div
-      className={`relative p-4 bg-gray-900/50 border rounded-xl hover:bg-gray-800/50 transition-all cursor-pointer group ${
-        isSelected ? 'border-amber-500 bg-amber-500/5' : 'border-gray-700'
+      className={`relative p-4 bg-[var(--bg-void)]/50 border rounded-xl hover:bg-[var(--bg-ground)]/50 transition-all cursor-pointer group ${
+        isSelected ? 'border-amber-500 bg-amber-500/5' : 'border-white/[0.08]'
       }`}
       onClick={onSelect}
     >
@@ -223,7 +223,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
           type="checkbox"
           checked={isSelected}
           onChange={() => {}}
-          className="w-4 h-4 text-amber-500 bg-gray-800 border-gray-600 rounded focus:ring-amber-500"
+          className="w-4 h-4 text-amber-500 bg-[var(--bg-ground)] border-white/[0.12] rounded focus:ring-amber-500"
         />
       </div>
 
@@ -240,18 +240,18 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
             </div>
             
             <div className="flex items-center space-x-3 mb-2">
-              <div className="flex items-center space-x-1 text-gray-400">
+              <div className="flex items-center space-x-1 text-white/50">
                 {getTypeIcon(space.type, space.subType)}
                 <span className="text-xs capitalize">{space.subType.replace('_', ' ')}</span>
               </div>
               {getVisibilityIcon(space.visibility)}
-              <span className="text-xs text-gray-400 capitalize">{space.visibility.replace('_', ' ')}</span>
-              <div className="text-xs text-gray-500">
+              <span className="text-xs text-white/50 capitalize">{space.visibility.replace('_', ' ')}</span>
+              <div className="text-xs text-white/40">
                 {space.type.replace('_', ' ')}
               </div>
             </div>
 
-            <p className="text-sm text-gray-300 line-clamp-2 mb-3">{space.description}</p>
+            <p className="text-sm text-white/70 line-clamp-2 mb-3">{space.description}</p>
 
             {/* Tags */}
             {space.tags.length > 0 && (
@@ -285,14 +285,14 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
             </Button>
 
             {showMenu && (
-              <div className="absolute top-full right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg py-1 z-20 min-w-[180px]">
+              <div className="absolute top-full right-0 mt-1 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg shadow-lg py-1 z-20 min-w-[180px]">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onViewDetails();
                       setShowMenu(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-left text-sm text-white/70 hover:bg-white/[0.08] flex items-center gap-2"
                   >
                     <EyeIcon className="w-4 h-4" />
                     View Details
@@ -303,7 +303,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                       onEdit();
                       setShowMenu(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-left text-sm text-white/70 hover:bg-white/[0.08] flex items-center gap-2"
                   >
                     <PencilSquareIcon className="w-4 h-4" />
                     Edit Space
@@ -314,12 +314,12 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                       navigator.clipboard.writeText(`${window.location.origin}/spaces/${space.slug}`);
                       setShowMenu(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-left text-sm text-white/70 hover:bg-white/[0.08] flex items-center gap-2"
                   >
                     <ClipboardDocumentIcon className="w-4 h-4" />
                     ClipboardDocumentIcon Link
                   </button>
-                  <div className="border-t border-gray-600 my-1" />
+                  <div className="border-t border-white/[0.12] my-1" />
                   {space.status === 'activated' ? (
                     <button
                       onClick={(e) => {
@@ -327,7 +327,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                         onAction('deactivate');
                         setShowMenu(false);
                       }}
-                      className="w-full px-3 py-2 text-left text-sm text-yellow-400 hover:bg-gray-700 flex items-center gap-2"
+                      className="w-full px-3 py-2 text-left text-sm text-yellow-400 hover:bg-white/[0.08] flex items-center gap-2"
                     >
                       <PauseCircle className="w-4 h-4" />
                       Deactivate
@@ -339,7 +339,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                         onAction('activate');
                         setShowMenu(false);
                       }}
-                      className="w-full px-3 py-2 text-left text-sm text-green-400 hover:bg-gray-700 flex items-center gap-2"
+                      className="w-full px-3 py-2 text-left text-sm text-green-400 hover:bg-white/[0.08] flex items-center gap-2"
                     >
                       <PlayCircle className="w-4 h-4" />
                       Activate
@@ -351,7 +351,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                       onAction('freeze');
                       setShowMenu(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm text-blue-400 hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-left text-sm text-blue-400 hover:bg-white/[0.08] flex items-center gap-2"
                   >
                     <StopCircle className="w-4 h-4" />
                     Freeze
@@ -362,7 +362,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                       onAction('archive');
                       setShowMenu(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-left text-sm text-white/50 hover:bg-white/[0.08] flex items-center gap-2"
                   >
                     <Archive className="w-4 h-4" />
                     Archive
@@ -373,7 +373,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                       onAction('delete');
                       setShowMenu(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-white/[0.08] flex items-center gap-2"
                   >
                     <TrashIcon className="w-4 h-4" />
                     Delete
@@ -388,19 +388,19 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
       <div className="ml-8 grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
         <div className="text-center">
           <div className="text-lg font-semibold text-white">{formatNumber(space.memberCount)}</div>
-          <div className="text-xs text-gray-400">Members</div>
+          <div className="text-xs text-white/50">Members</div>
         </div>
         <div className="text-center">
           <div className="text-lg font-semibold text-green-400">{space.activeMembers}</div>
-          <div className="text-xs text-gray-400">Active</div>
+          <div className="text-xs text-white/50">Active</div>
         </div>
         <div className="text-center">
           <div className="text-lg font-semibold text-blue-400">{space.toolsCount}</div>
-          <div className="text-xs text-gray-400">Tools</div>
+          <div className="text-xs text-white/50">Tools</div>
         </div>
         <div className="text-center">
           <div className="text-lg font-semibold text-purple-400">{space.postsCount}</div>
-          <div className="text-xs text-gray-400">Posts</div>
+          <div className="text-xs text-white/50">Posts</div>
         </div>
       </div>
 
@@ -409,19 +409,19 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-1">
-              <ChartBarIcon className="w-3 h-3 text-gray-400" />
+              <ChartBarIcon className="w-3 h-3 text-white/50" />
               <span className={`${getEngagementColor(space.analytics.engagementRate)}`}>
                 {space.analytics.engagementRate.toFixed(1)}% engagement
               </span>
             </div>
             <div className="flex items-center space-x-1">
-              <ArrowTrendingUpIcon className="w-3 h-3 text-gray-400" />
-              <span className="text-gray-300">
+              <ArrowTrendingUpIcon className="w-3 h-3 text-white/50" />
+              <span className="text-white/70">
                 {space.analytics.growthRate > 0 ? '+' : ''}{space.analytics.growthRate.toFixed(1)}% growth
               </span>
             </div>
           </div>
-          <div className="text-gray-400">
+          <div className="text-white/50">
             Active: {formatDate(space.lastActivity)}
           </div>
         </div>
@@ -456,7 +456,7 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
   return (
     <>
       {selectedSpaces.length > 0 && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-gray-800 border border-gray-600 rounded-lg shadow-lg p-4">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg shadow-lg p-4">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <CheckSquare className="w-5 h-5 text-amber-500" />
@@ -491,7 +491,7 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
               <Button
                 size="sm"
                 onClick={() => onAction('archive')}
-                className="bg-gray-600 hover:bg-gray-700 text-white"
+                className="bg-white/[0.12] hover:bg-white/[0.08] text-white"
               >
                 <Archive className="w-4 h-4 mr-1" />
                 Archive
@@ -500,7 +500,7 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
                 size="sm"
                 variant="outline"
                 onClick={onClearSelection}
-                className="border-gray-600 text-gray-300"
+                className="border-white/[0.12] text-white/70"
               >
                 <XMarkIcon className="w-4 h-4 mr-1" />
                 Clear
@@ -669,13 +669,13 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Space Management</h2>
-          <p className="text-gray-400 mt-1">Monitor and manage all community spaces</p>
+          <p className="text-white/50 mt-1">Monitor and manage all community spaces</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button
             variant="outline"
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-            className="border-gray-600 text-gray-300"
+            className="border-white/[0.12] text-white/70"
           >
             {viewMode === 'grid' ? <ChartBarIcon className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
           </Button>
@@ -691,23 +691,23 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Total Spaces</p>
+                <p className="text-sm font-medium text-white/50">Total Spaces</p>
                 <p className="text-2xl font-bold text-white">{stats.total}</p>
               </div>
-              <CircleStackIcon className="w-8 h-8 text-gray-400" />
+              <CircleStackIcon className="w-8 h-8 text-white/50" />
             </div>
           </CardContent>
         </Card>
         
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Active</p>
+                <p className="text-sm font-medium text-white/50">Active</p>
                 <p className="text-2xl font-bold text-green-400">{stats.active}</p>
               </div>
               <CheckCircleIcon className="w-8 h-8 text-green-400" />
@@ -715,11 +715,11 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
           </CardContent>
         </Card>
 
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Pending</p>
+                <p className="text-sm font-medium text-white/50">Pending</p>
                 <p className="text-2xl font-bold text-yellow-400">{stats.pending}</p>
               </div>
               <ClockIcon className="w-8 h-8 text-yellow-400" />
@@ -727,11 +727,11 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
           </CardContent>
         </Card>
 
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Issues</p>
+                <p className="text-sm font-medium text-white/50">Issues</p>
                 <p className="text-2xl font-bold text-red-400">{stats.issues}</p>
               </div>
               <ExclamationTriangleIcon className="w-8 h-8 text-red-400" />
@@ -741,20 +741,20 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
       </div>
 
       {/* MagnifyingGlassIcon and Filters */}
-      <Card className="border-gray-700 bg-gray-900/50">
+      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
         <CardContent className="p-4">
           <div className="space-y-4">
             {/* Main MagnifyingGlassIcon */}
             <div className="flex items-center space-x-4">
               <div className="flex-1 relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
                 <input
                   type="text"
                   placeholder="MagnifyingGlassIcon spaces by name, description, or creator..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && searchSpaces()}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="w-full pl-10 pr-4 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 />
               </div>
               <Button 
@@ -767,7 +767,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
-                className="border-gray-600 text-gray-300"
+                className="border-white/[0.12] text-white/70"
               >
                 <FunnelIcon className="w-4 h-4 mr-2" />
                 Filters
@@ -777,11 +777,11 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
 
             {/* Advanced Filters */}
             {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-white/[0.08]">
                   <select
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value)}
-                    className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
                     <option value="all">All Types</option>
                     {spaceTypes.map(type => (
@@ -792,7 +792,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                   <select
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
                     <option value="all">All Statuses</option>
                     <option value="activated">Activated</option>
@@ -805,7 +805,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                   <select
                     value={selectedVisibility}
                     onChange={(e) => setSelectedVisibility(e.target.value)}
-                    className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
                     <option value="all">All Visibility</option>
                     <option value="public">Public</option>
@@ -821,7 +821,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                       setSortBy(field as 'name' | 'members' | 'activity' | 'created');
                       setSortOrder(order as 'asc' | 'desc');
                     }}
-                    className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
                     <option value="activity-desc">Latest ChartBarIcon</option>
                     <option value="created-desc">Newest First</option>
@@ -845,7 +845,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
 
       {/* Spaces List */}
       {spaces && (
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-white">
@@ -856,7 +856,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                   size="sm"
                   variant="outline"
                   onClick={handleSelectAll}
-                  className="border-gray-600 text-gray-300"
+                  className="border-white/[0.12] text-white/70"
                 >
                   {selectedSpaces.length === spaces.spaces.length ? 'Deselect All' : 'Select All'}
                 </Button>
@@ -867,13 +867,13 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
             {loading ? (
               <div className="text-center py-8">
                 <ArrowPathIcon className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
-                <p className="text-gray-400">Loading spaces...</p>
+                <p className="text-white/50">Loading spaces...</p>
               </div>
             ) : filteredSpaces.length === 0 ? (
               <div className="text-center py-12">
-                <CircleStackIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <CircleStackIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">No spaces found</h3>
-                <p className="text-gray-400">Try adjusting your search or filters</p>
+                <p className="text-white/50">Try adjusting your search or filters</p>
               </div>
             ) : (
               <div className={`space-y-4 ${viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}`}>
@@ -917,8 +917,8 @@ export const EnhancedAdminSpaceManagement: React.FC<EnhancedAdminSpaceManagement
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <Cog6ToothIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Enhanced space management is not available</p>
+        <Cog6ToothIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
+        <p className="text-white/50">Enhanced space management is not available</p>
       </div>
     );
   }

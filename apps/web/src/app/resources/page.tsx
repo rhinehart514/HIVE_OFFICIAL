@@ -79,7 +79,7 @@ export default function ResourcesPage() {
   if (!mounted) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0A0A09]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50" />
       </div>
     );
   }
@@ -178,7 +178,7 @@ export default function ResourcesPage() {
 
             <Card
               className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
-              onClick={() => router.push('/spaces/create')}
+              onClick={() => router.push('/spaces/new')}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

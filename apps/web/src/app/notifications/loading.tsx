@@ -21,7 +21,7 @@ export default function NotificationsLoading() {
         {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <div
             key={i}
-            className="flex items-start gap-4 p-4 rounded-xl border border-neutral-800/50 bg-neutral-900/30"
+            className="flex items-start gap-4 p-4 rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30"
           >
             {/* Avatar */}
             <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />

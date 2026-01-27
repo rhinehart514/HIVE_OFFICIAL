@@ -90,13 +90,14 @@ export function ImageCropper({
       style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-black border-b border-neutral-800">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-black border-b border-white/[0.06]">
         <button
           type="button"
           onClick={onCancel}
-          className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+          className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-[var(--bg-ground)] transition-colors"
+          aria-label="Cancel cropping"
         >
-          <XMarkIcon className="w-5 h-5" />
+          <XMarkIcon className="w-5 h-5" aria-hidden="true" />
         </button>
         <span className="text-sm font-medium text-white">Adjust photo</span>
         <button
@@ -104,11 +105,12 @@ export function ImageCropper({
           onClick={handleConfirm}
           disabled={isProcessing}
           className="p-2 rounded-lg text-gold-500 hover:bg-gold-500/10 transition-colors disabled:opacity-50"
+          aria-label={isProcessing ? "Processing image" : "Confirm crop"}
         >
           {isProcessing ? (
-            <div className="w-5 h-5 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin" aria-hidden="true" />
           ) : (
-            <CheckIcon className="w-5 h-5" />
+            <CheckIcon className="w-5 h-5" aria-hidden="true" />
           )}
         </button>
       </div>
@@ -139,15 +141,16 @@ export function ImageCropper({
       </div>
 
       {/* Controls */}
-      <div className="flex-shrink-0 px-6 py-4 bg-black border-t border-neutral-800 space-y-4">
+      <div className="flex-shrink-0 px-6 py-4 bg-black border-t border-white/[0.06] space-y-4">
         {/* Zoom slider */}
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleZoomOut}
-            className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+            className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-[var(--bg-ground)] transition-colors"
+            aria-label="Zoom out"
           >
-            <ZoomOut className="w-4 h-4" />
+            <ZoomOut className="w-4 h-4" aria-hidden="true" />
           </button>
           <input
             type="range"
@@ -156,14 +159,16 @@ export function ImageCropper({
             step={0.01}
             value={zoom}
             onChange={(e) => setZoom(Number(e.target.value))}
-            className="flex-1 h-1 bg-neutral-800 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:cursor-pointer"
+            aria-label="Zoom level"
+            className="flex-1 h-1 bg-[var(--bg-ground)] rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:cursor-pointer"
           />
           <button
             type="button"
             onClick={handleZoomIn}
-            className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+            className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-[var(--bg-ground)] transition-colors"
+            aria-label="Zoom in"
           >
-            <ZoomIn className="w-4 h-4" />
+            <ZoomIn className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -172,9 +177,9 @@ export function ImageCropper({
           <button
             type="button"
             onClick={handleRotate}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white/50 hover:text-white hover:bg-[var(--bg-ground)] transition-colors"
           >
-            <ArrowUturnLeftIcon className="w-4 h-4" />
+            <ArrowUturnLeftIcon className="w-4 h-4" aria-hidden="true" />
             Rotate
           </button>
         </div>
@@ -189,7 +194,7 @@ export function ImageCropper({
           whileHover={{ opacity: 0.9 }}
           whileTap={{ opacity: 0.8 }}
           transition={transitionSpring}
-          className="w-full h-12 bg-white text-black font-semibold rounded-lg hover:bg-neutral-200 transition-colors disabled:opacity-50"
+          className="w-full h-12 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-colors disabled:opacity-50"
         >
           {isProcessing ? 'Processing...' : 'Use this photo'}
         </motion.button>

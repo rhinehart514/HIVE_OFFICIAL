@@ -118,7 +118,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
       case 'high': return 'bg-orange-500 text-white';
       case 'medium': return 'bg-yellow-500 text-black';
       case 'low': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
+      default: return 'bg-white/[0.20] text-white';
     }
   };
 
@@ -152,7 +152,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
   };
 
   return (
-    <Card className="border-gray-700 bg-gray-900/50">
+    <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -169,7 +169,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
               disabled={loading}
               variant="ghost"
               size="sm"
-              className="text-gray-400 hover:text-white"
+              className="text-white/50 hover:text-white"
             >
               {loading ? 'Refreshing...' : 'Refresh'}
             </Button>
@@ -178,7 +178,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
                 onClick={markAllAsRead}
                 variant="ghost"
                 size="sm"
-                className="text-gray-400 hover:text-white"
+                className="text-white/50 hover:text-white"
               >
                 Mark All Read
               </Button>
@@ -195,7 +195,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
 
         <div className="space-y-3" style={{ maxHeight, overflowY: 'auto' }}>
           {notifications.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-white/50">
               No notifications
             </div>
           ) : (
@@ -206,7 +206,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
                 className={`
                   p-3 rounded-lg border cursor-pointer transition-colors
                   ${notification.readAt 
-                    ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-800' 
+                    ? 'border-white/[0.08] bg-[var(--bg-ground)]/50 hover:bg-[var(--bg-ground)]' 
                     : 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10'
                   }
                 `}
@@ -219,7 +219,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className={`font-medium text-sm ${
-                          notification.readAt ? 'text-gray-300' : 'text-white'
+                          notification.readAt ? 'text-white/70' : 'text-white'
                         }`}>
                           {notification.title}
                         </h4>
@@ -236,12 +236,12 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
                         )}
                       </div>
                       <p className={`text-xs ${
-                        notification.readAt ? 'text-gray-400' : 'text-gray-300'
+                        notification.readAt ? 'text-white/50' : 'text-white/70'
                       }`}>
                         {notification.message}
                       </p>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-white/40">
                           {getTimeAgo(notification.createdAt)}
                         </span>
                         {notification.actionText && (

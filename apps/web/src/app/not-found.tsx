@@ -16,7 +16,7 @@ export default function NotFound() {
           Did Jacob forget another page?
         </h2>
 
-        <p className="mb-6 text-sm text-neutral-400">
+        <p className="mb-6 text-sm text-white/50">
           Classic. The page you're looking for doesn't exist yet. We'll yell at him.
         </p>
 

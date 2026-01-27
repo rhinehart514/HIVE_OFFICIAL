@@ -151,22 +151,24 @@ function InviteLinkRow({
               ? 'bg-[var(--status-success-subtle)] text-[var(--status-success)]'
               : 'bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white/80'
           )}
+          aria-label={copied ? 'Link copied' : 'Copy invite link'}
         >
           {copied ? (
-            <CheckIcon className="w-4 h-4" />
+            <CheckIcon className="w-4 h-4" aria-hidden="true" />
           ) : (
-            <ClipboardDocumentIcon className="w-4 h-4" />
+            <ClipboardDocumentIcon className="w-4 h-4" aria-hidden="true" />
           )}
         </button>
         <button
           onClick={onRevoke}
           disabled={isRevoking}
           className="p-2 rounded-lg bg-white/[0.04] text-white/60 hover:bg-red-500/20 hover:text-red-400 transition-colors disabled:opacity-50"
+          aria-label={isRevoking ? 'Revoking link' : 'Revoke invite link'}
         >
           {isRevoking ? (
-            <ArrowPathIcon className="w-4 h-4 animate-spin" />
+            <ArrowPathIcon className="w-4 h-4 animate-spin" aria-hidden="true" />
           ) : (
-            <TrashIcon className="w-4 h-4" />
+            <TrashIcon className="w-4 h-4" aria-hidden="true" />
           )}
         </button>
       </div>

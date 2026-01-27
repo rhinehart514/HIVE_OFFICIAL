@@ -22,40 +22,138 @@ import { OrganizationsPanel } from './OrganizationsPanel';
 import { SpaceCreationModal } from '@/components/spaces/SpaceCreationModal';
 
 // ============================================================
-// Empty State
+// Empty State — Manifesto-style with identity quadrants
 // ============================================================
 
 function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
   return (
     <motion.div
-      className="flex-1 flex flex-col items-center justify-center px-6"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      className="flex-1 flex flex-col px-6 py-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
     >
-      <div className="text-center max-w-md">
-        <h2 className="text-heading font-medium text-white/90 tracking-tight mb-4">
-          Your campus awaits
-        </h2>
-        <p className="text-body text-white/40 leading-relaxed mb-8">
-          Join spaces to connect with your major, residence, Greek life, and campus organizations.
+      {/* Your Territory section */}
+      <section className="mb-8">
+        <motion.h2
+          className="text-label text-white/40 uppercase tracking-wider mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: MOTION.duration.fast, delay: 0.1, ease: MOTION.ease.premium }}
+        >
+          Your Identity
+        </motion.h2>
+
+        {/* Manifesto + Identity Quadrants Card */}
+        <motion.div
+          className="rounded-2xl p-6 md:p-8"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
+          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: MOTION.duration.base, delay: 0.15, ease: MOTION.ease.premium }}
+        >
+          {/* Manifesto copy */}
+          <div className="text-center mb-8">
+            <p className="text-body-lg text-white/60 leading-relaxed italic">
+              "Every student has a shape on campus.
+              <br />
+              Yours is waiting to be drawn."
+            </p>
+          </div>
+
+          {/* Identity Quadrant Placeholders */}
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <IdentityQuadrantPlaceholder type="major" delay={0.2} />
+            <IdentityQuadrantPlaceholder type="home" delay={0.25} />
+            <IdentityQuadrantPlaceholder type="greek" delay={0.3} />
+          </div>
+
+          {/* Primary CTA */}
+          <div className="text-center">
+            <Link href="/spaces/browse">
+              <Button className="bg-white/[0.08] hover:bg-white/[0.12] text-white/90 px-6">
+                Discover Your Spaces
+                <ArrowRight size={16} className="ml-2" />
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Divider */}
+      <div className="border-t border-white/[0.06] my-4" />
+
+      {/* Create section */}
+      <motion.section
+        className="pt-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: MOTION.duration.fast, delay: 0.4, ease: MOTION.ease.premium }}
+      >
+        <p className="text-body text-white/40 mb-4">
+          Or create something new
         </p>
-        <div className="flex gap-3 justify-center">
-          <Link href="/spaces/browse">
-            <Button className="bg-white/[0.08] hover:bg-white/[0.12] text-white/90">
-              Browse Spaces
-            </Button>
-          </Link>
-          <Button
-            variant="ghost"
-            onClick={onCreateSpace}
-            className="text-white/50 hover:text-white/80"
-          >
-            <Plus size={16} className="mr-2" />
-            Create Space
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          onClick={onCreateSpace}
+          className="text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
+        >
+          <Plus size={16} className="mr-2" />
+          Create a Space
+        </Button>
+      </motion.section>
+    </motion.div>
+  );
+}
+
+// Identity Quadrant Placeholder for empty state
+function IdentityQuadrantPlaceholder({ type, delay }: { type: 'major' | 'home' | 'greek'; delay: number }) {
+  const config = {
+    major: {
+      label: 'Major',
+      emptyText: 'Choose your major',
+      gradient: 'from-blue-500/10 via-blue-500/5 to-transparent',
+      accent: 'text-blue-400',
+    },
+    home: {
+      label: 'Home',
+      emptyText: 'Find your residence',
+      gradient: 'from-emerald-500/10 via-emerald-500/5 to-transparent',
+      accent: 'text-emerald-400',
+    },
+    greek: {
+      label: 'Greek',
+      emptyText: 'Join your letters',
+      gradient: 'from-rose-500/10 via-rose-500/5 to-transparent',
+      accent: 'text-rose-400',
+    },
+  }[type];
+
+  return (
+    <motion.div
+      className="rounded-xl p-4 text-center"
+      style={{
+        background: 'rgba(255,255,255,0.02)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03), 0 0 0 1px rgba(255,255,255,0.02)',
+      }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: MOTION.duration.fast, delay, ease: MOTION.ease.premium }}
+    >
+      <span className={`text-label-sm font-medium uppercase tracking-wider ${config.accent}`}>
+        {config.label}
+      </span>
+      <div className="flex justify-center gap-1 mt-3 mb-2">
+        <span className="w-1 h-1 rounded-full bg-white/20" />
+        <span className="w-1 h-1 rounded-full bg-white/20" />
+        <span className="w-1 h-1 rounded-full bg-white/20" />
       </div>
+      <p className="text-label text-white/30 italic">
+        {config.emptyText}
+      </p>
     </motion.div>
   );
 }
@@ -239,10 +337,29 @@ export function SpacesHQ() {
     refresh,
   } = useSpacesHQ();
 
+  // Quick action handlers
+  const handleMuteSpace = async (spaceId: string) => {
+    try {
+      await fetch(`/api/spaces/${spaceId}/mute`, { method: 'POST' });
+      refresh();
+    } catch {
+      // Error handling via toast is done in OrganizationsPanel
+    }
+  };
+
+  const handleLeaveSpace = async (spaceId: string) => {
+    try {
+      await fetch(`/api/spaces/${spaceId}/leave`, { method: 'POST' });
+      refresh();
+    } catch {
+      // Error handling via toast is done in OrganizationsPanel
+    }
+  };
+
   // Error state
   if (error) {
     return (
-      <div className="h-screen bg-[#0A0A0A] flex flex-col overflow-hidden">
+      <div className="h-screen bg-black flex flex-col overflow-hidden">
         <Header onCreateSpace={() => setShowCreateModal(true)} />
         <ErrorState error={error} onRetry={refresh} />
       </div>
@@ -251,7 +368,7 @@ export function SpacesHQ() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-[#0A0A0A] flex flex-col overflow-hidden">
+      <div className="h-screen bg-black flex flex-col overflow-hidden">
         <Header onCreateSpace={() => setShowCreateModal(true)} />
         <LoadingState />
       </div>
@@ -261,7 +378,7 @@ export function SpacesHQ() {
   // Empty state
   if (state === 'empty') {
     return (
-      <div className="h-screen bg-[#0A0A0A] flex flex-col overflow-hidden">
+      <div className="h-screen bg-black flex flex-col overflow-hidden">
         <Header onCreateSpace={() => setShowCreateModal(true)} />
         <EmptyState onCreateSpace={() => setShowCreateModal(true)} />
         <SpaceCreationModal
@@ -273,7 +390,7 @@ export function SpacesHQ() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex flex-col">
+    <div className="min-h-screen bg-black flex flex-col">
       <Header onCreateSpace={() => setShowCreateModal(true)} />
 
       {/* Onboarding banner */}
@@ -298,12 +415,17 @@ export function SpacesHQ() {
           />
         </section>
 
-        {/* Your Spaces - full width */}
+        {/* Your Organizations - full width */}
         <section className="flex-1">
           <h2 className="text-label text-white/40 uppercase tracking-wider mb-4">
-            Your Spaces
+            Your Organizations
           </h2>
-          <OrganizationsPanel spaces={organizations} maxVisible={12} />
+          <OrganizationsPanel
+            spaces={organizations}
+            maxVisible={12}
+            onMuteSpace={handleMuteSpace}
+            onLeaveSpace={handleLeaveSpace}
+          />
         </section>
 
         {/* Browse link */}

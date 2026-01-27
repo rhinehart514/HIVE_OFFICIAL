@@ -6,8 +6,8 @@
 function AvatarSkeleton() {
   return (
     <div className="relative">
-      <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-neutral-800 animate-pulse" />
-      <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-neutral-700 animate-pulse" />
+      <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[var(--bg-ground)] animate-pulse" />
+      <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white/[0.08] animate-pulse" />
     </div>
   );
 }
@@ -15,19 +15,19 @@ function AvatarSkeleton() {
 function StatSkeleton() {
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="h-6 w-8 bg-neutral-800 rounded animate-pulse" />
-      <div className="h-3 w-12 bg-neutral-800/60 rounded animate-pulse" />
+      <div className="h-6 w-8 bg-[var(--bg-ground)] rounded animate-pulse" />
+      <div className="h-3 w-12 bg-[var(--bg-ground)]/60 rounded animate-pulse" />
     </div>
   );
 }
 
 function BentoCardSkeleton({ className = '' }: { className?: string }) {
   return (
-    <div className={`bg-neutral-900/50 border border-neutral-800/50 rounded-2xl p-5 animate-pulse ${className}`}>
-      <div className="h-4 w-24 bg-neutral-800 rounded mb-4" />
+    <div className={`bg-[var(--bg-void)]/50 border border-white/[0.06]/50 rounded-2xl p-5 animate-pulse ${className}`}>
+      <div className="h-4 w-24 bg-[var(--bg-ground)] rounded mb-4" />
       <div className="space-y-2">
-        <div className="h-3 w-full bg-neutral-800/60 rounded" />
-        <div className="h-3 w-3/4 bg-neutral-800/60 rounded" />
+        <div className="h-3 w-full bg-[var(--bg-ground)]/60 rounded" />
+        <div className="h-3 w-3/4 bg-[var(--bg-ground)]/60 rounded" />
       </div>
     </div>
   );
@@ -43,11 +43,11 @@ export default function ProfileLoading() {
 
           <div className="flex-1 text-center md:text-left">
             {/* Name */}
-            <div className="h-8 w-48 bg-neutral-800 rounded mb-2 mx-auto md:mx-0" />
+            <div className="h-8 w-48 bg-[var(--bg-ground)] rounded mb-2 mx-auto md:mx-0" />
             {/* Handle */}
-            <div className="h-4 w-32 bg-neutral-800/60 rounded mb-4 mx-auto md:mx-0" />
+            <div className="h-4 w-32 bg-[var(--bg-ground)]/60 rounded mb-4 mx-auto md:mx-0" />
             {/* Bio */}
-            <div className="h-4 w-64 bg-neutral-800/50 rounded mb-4 mx-auto md:mx-0" />
+            <div className="h-4 w-64 bg-[var(--bg-ground)]/50 rounded mb-4 mx-auto md:mx-0" />
 
             {/* Stats Row */}
             <div className="flex justify-center md:justify-start gap-8 mt-4">
@@ -58,7 +58,7 @@ export default function ProfileLoading() {
           </div>
 
           {/* Edit Button */}
-          <div className="h-10 w-24 bg-neutral-800 rounded-lg animate-pulse" />
+          <div className="h-10 w-24 bg-[var(--bg-ground)] rounded-lg animate-pulse" />
         </div>
 
         {/* Bento Grid */}

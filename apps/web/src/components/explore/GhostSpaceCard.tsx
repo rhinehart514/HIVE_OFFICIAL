@@ -18,7 +18,9 @@ import {
   GradientText,
   MOTION,
 } from '@hive/ui/design-system/primitives';
+import { toast } from '@hive/ui';
 import { cn } from '@/lib/utils';
+import { BellIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 export interface GhostSpaceData {
   id: string;
@@ -34,6 +36,35 @@ export interface GhostSpaceCardProps {
 }
 
 export function GhostSpaceCard({ space, index = 0 }: GhostSpaceCardProps) {
+  const [isOnWaitlist, setIsOnWaitlist] = React.useState(false);
+  const [isJoining, setIsJoining] = React.useState(false);
+
+  const handleJoinWaitlist = async () => {
+    setIsJoining(true);
+    try {
+      const response = await fetch('/api/spaces/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spaceId: space.id }),
+        credentials: 'include',
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setIsOnWaitlist(true);
+        toast.success(
+          data.alreadyOnWaitlist ? 'Already on waitlist' : 'Joined waitlist',
+          "We'll notify you when this space is claimed."
+        );
+      } else {
+        toast.error('Could not join waitlist', data.error || 'Please try again.');
+      }
+    } catch {
+      toast.error('Network error', 'Please check your connection.');
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -87,11 +118,32 @@ export function GhostSpaceCard({ space, index = 0 }: GhostSpaceCardProps) {
                 </Badge>
               )}
 
-              <Link href={`/spaces/claim?handle=${space.handle}`}>
-                <Button variant="ghost" size="sm" className="text-[var(--life-gold)]">
-                  Claim This Space
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleJoinWaitlist}
+                  disabled={isJoining || isOnWaitlist}
+                  className={isOnWaitlist ? 'text-green-400' : 'text-white/50 hover:text-white/70'}
+                >
+                  {isOnWaitlist ? (
+                    <>
+                      <CheckIcon className="w-4 h-4 mr-1" />
+                      On Waitlist
+                    </>
+                  ) : (
+                    <>
+                      <BellIcon className="w-4 h-4 mr-1" />
+                      {isJoining ? 'Joining...' : 'Notify Me'}
+                    </>
+                  )}
                 </Button>
-              </Link>
+                <Link href={`/spaces/claim?handle=${space.handle}`}>
+                  <Button variant="ghost" size="sm" className="text-[var(--life-gold)]">
+                    Claim This Space
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </GlassSurface>

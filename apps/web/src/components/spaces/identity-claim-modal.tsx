@@ -329,8 +329,9 @@ export function IdentityClaimModal({
               <button
                 onClick={onClose}
                 className="p-2 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-colors"
+                aria-label="Close modal"
               >
-                <XMarkIcon className="w-5 h-5" />
+                <XMarkIcon className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 

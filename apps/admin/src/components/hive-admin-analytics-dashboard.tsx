@@ -147,31 +147,31 @@ const MetricCard: React.FC<{
   icon: React.ComponentType<{ className?: string }>;
   color?: string;
   subtitle?: string;
-}> = ({ title, value, change, trend, icon: Icon, color = 'text-gray-400', subtitle }) => {
+}> = ({ title, value, change, trend, icon: Icon, color = 'text-white/50', subtitle }) => {
   const getTrendIcon = () => {
     if (!change) return null;
     
     if (trend === 'up') return <ArrowUpIcon className="w-3 h-3 text-green-400" />;
     if (trend === 'down') return <ArrowDownIcon className="w-3 h-3 text-red-400" />;
-    return <MinusIcon className="w-3 h-3 text-gray-400" />;
+    return <MinusIcon className="w-3 h-3 text-white/50" />;
   };
 
   const getTrendColor = () => {
-    if (!change) return 'text-gray-400';
+    if (!change) return 'text-white/50';
     if (trend === 'up') return 'text-green-400';
     if (trend === 'down') return 'text-red-400';
-    return 'text-gray-400';
+    return 'text-white/50';
   };
 
   return (
-    <Card className="border-gray-700 bg-gray-900/50">
+    <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-400">{title}</p>
+            <p className="text-sm font-medium text-white/50">{title}</p>
             <p className="text-2xl font-bold text-white">{typeof value === 'number' ? value.toLocaleString() : value}</p>
             {subtitle && (
-              <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+              <p className="text-xs text-white/40 mt-1">{subtitle}</p>
             )}
             {change !== undefined && (
               <div className={`flex items-center space-x-1 text-sm ${getTrendColor()} mt-1`}>
@@ -180,7 +180,7 @@ const MetricCard: React.FC<{
               </div>
             )}
           </div>
-          <div className={`p-2 rounded-lg bg-gray-800 ${color}`}>
+          <div className={`p-2 rounded-lg bg-[var(--bg-ground)] ${color}`}>
             <Icon className="w-6 h-6" />
           </div>
         </div>
@@ -211,7 +211,7 @@ const SpaceCategoryCard: React.FC<{
       case 'greek_life': return 'text-purple-400';
       case 'campus_living': return 'text-orange-400';
       case 'hive_exclusive': return 'text-amber-400';
-      default: return 'text-gray-400';
+      default: return 'text-white/50';
     }
   };
 
@@ -223,18 +223,18 @@ const SpaceCategoryCard: React.FC<{
   };
 
   return (
-    <Card className="border-gray-700 bg-gray-900/50 hover:bg-gray-800/50 transition-all cursor-pointer" onClick={onViewDetails}>
+    <Card className="border-white/[0.08] bg-[var(--bg-void)]/50 hover:bg-[var(--bg-ground)]/50 transition-all cursor-pointer" onClick={onViewDetails}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg bg-gray-800 ${getCategoryColor(category.category)}`}>
+            <div className={`p-2 rounded-lg bg-[var(--bg-ground)] ${getCategoryColor(category.category)}`}>
               {getCategoryIcon(category.category)}
             </div>
             <div>
               <h3 className="font-semibold text-white capitalize">
                 {category.category.replace('_', ' ')}
               </h3>
-              <p className="text-sm text-gray-400">{category.totalSpaces} spaces</p>
+              <p className="text-sm text-white/50">{category.totalSpaces} spaces</p>
             </div>
           </div>
           
@@ -242,24 +242,24 @@ const SpaceCategoryCard: React.FC<{
             <div className={`text-lg font-bold ${getComplianceColor(category.complianceScore)}`}>
               {category.complianceScore}%
             </div>
-            <div className="text-xs text-gray-400">Compliance</div>
+            <div className="text-xs text-white/50">Compliance</div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <div className="text-center p-2 bg-gray-800/50 rounded">
+          <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
             <div className="text-sm font-semibold text-green-400">{category.activeMembers}</div>
-            <div className="text-xs text-gray-400">Active Members</div>
+            <div className="text-xs text-white/50">Active Members</div>
           </div>
-          <div className="text-center p-2 bg-gray-800/50 rounded">
+          <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
             <div className="text-sm font-semibold text-amber-400">{category.toolsInstalled}</div>
-            <div className="text-xs text-gray-400">Tools</div>
+            <div className="text-xs text-white/50">Tools</div>
           </div>
         </div>
 
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-2">
-            <span className="text-gray-400">Engagement:</span>
+            <span className="text-white/50">Engagement:</span>
             <span className="text-white">{category.engagementRate}%</span>
           </div>
           {category.violationsCount > 0 && (
@@ -286,7 +286,7 @@ const ViolationAlert: React.FC<{
             <CheckCircleIcon className="w-8 h-8 text-green-400" />
             <div>
               <h3 className="font-semibold text-green-400">No Pending Violations</h3>
-              <p className="text-sm text-gray-300">All space system violations have been resolved</p>
+              <p className="text-sm text-white/70">All space system violations have been resolved</p>
             </div>
           </div>
         </CardContent>
@@ -304,7 +304,7 @@ const ViolationAlert: React.FC<{
               <h3 className="font-semibold text-red-400">
                 {violations.pendingViolations} Pending Violations
               </h3>
-              <p className="text-sm text-gray-300 mb-2">
+              <p className="text-sm text-white/70 mb-2">
                 Space system violations requiring immediate attention
               </p>
               <div className="flex flex-wrap gap-2">
@@ -429,8 +429,8 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <ChartBarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Analytics dashboard is not available</p>
+        <ChartBarIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
+        <p className="text-white/50">Analytics dashboard is not available</p>
       </div>
     );
   }
@@ -448,19 +448,19 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Analytics Dashboard</h2>
-          <p className="text-gray-400 mt-1">
+          <p className="text-white/50 mt-1">
             Comprehensive platform insights with space system compliance tracking
           </p>
         </div>
         
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            <label className="flex items-center text-sm text-gray-400">
+            <label className="flex items-center text-sm text-white/50">
               <input
                 type="checkbox"
                 checked={realTimeEnabled}
                 onChange={(e) => setRealTimeEnabled(e.target.checked)}
-                className="mr-2 w-4 h-4 rounded border-gray-600 bg-gray-800 text-amber-500 focus:ring-amber-500"
+                className="mr-2 w-4 h-4 rounded border-white/[0.12] bg-[var(--bg-ground)] text-amber-500 focus:ring-amber-500"
               />
               Real-time updates
             </label>
@@ -469,7 +469,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
           <select
             value={selectedTimeRange}
             onChange={(e) => setSelectedTimeRange(e.target.value as TimeRange)}
-            className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
           >
             <option value="1h">Last Hour</option>
             <option value="24h">Last 24 Hours</option>
@@ -483,7 +483,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             onClick={handleRefresh}
             disabled={loading}
             variant="outline"
-            className="border-gray-600 text-gray-300"
+            className="border-white/[0.12] text-white/70"
           >
             {loading ? (
               <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
@@ -516,35 +516,35 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-400">{realTimeMetrics.onlineUsers}</div>
-                <div className="text-xs text-gray-400">Online Now</div>
+                <div className="text-xs text-white/50">Online Now</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-400">{realTimeMetrics.activeSessions}</div>
-                <div className="text-xs text-gray-400">Active Sessions</div>
+                <div className="text-xs text-white/50">Active Sessions</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-400">{realTimeMetrics.currentPosts}</div>
-                <div className="text-xs text-gray-400">Posts/Hour</div>
+                <div className="text-xs text-white/50">Posts/Hour</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-amber-400">{realTimeMetrics.liveEvents}</div>
-                <div className="text-xs text-gray-400">Live Events</div>
+                <div className="text-xs text-white/50">Live Events</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-400">{realTimeMetrics.activeTools}</div>
-                <div className="text-xs text-gray-400">Tools in Use</div>
+                <div className="text-xs text-white/50">Tools in Use</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-pink-400">{realTimeMetrics.realTimeEngagement}%</div>
-                <div className="text-xs text-gray-400">Engagement</div>
+                <div className="text-xs text-white/50">Engagement</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-400">{realTimeMetrics.serverLoad}%</div>
-                <div className="text-xs text-gray-400">Server Load</div>
+                <div className="text-xs text-white/50">Server Load</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-cyan-400">{realTimeMetrics.responseTime}ms</div>
-                <div className="text-xs text-gray-400">Response Time</div>
+                <div className="text-xs text-white/50">Response Time</div>
               </div>
             </div>
           </CardContent>
@@ -638,7 +638,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Device Analytics */}
         {deviceData && (
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
                 <DevicePhoneMobileIcon className="w-5 h-5" />
@@ -650,33 +650,33 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <DevicePhoneMobileIcon className="w-4 h-4 text-blue-400" />
-                    <span className="text-gray-300">Mobile</span>
+                    <span className="text-white/70">Mobile</span>
                   </div>
                   <div className="text-white font-semibold">{deviceData.mobile}%</div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <ComputerDesktopIcon className="w-4 h-4 text-green-400" />
-                    <span className="text-gray-300">Desktop</span>
+                    <span className="text-white/70">Desktop</span>
                   </div>
                   <div className="text-white font-semibold">{deviceData.desktop}%</div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <DeviceTabletIcon className="w-4 h-4 text-purple-400" />
-                    <span className="text-gray-300">DeviceTabletIcon</span>
+                    <span className="text-white/70">DeviceTabletIcon</span>
                   </div>
                   <div className="text-white font-semibold">{deviceData.tablet}%</div>
                 </div>
                 
-                <div className="pt-3 border-t border-gray-700">
+                <div className="pt-3 border-t border-white/[0.08]">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <div className="text-gray-400">Avg Session</div>
+                      <div className="text-white/50">Avg Session</div>
                       <div className="text-white font-semibold">{deviceData.averageSessionDuration}m</div>
                     </div>
                     <div>
-                      <div className="text-gray-400">Bounce Rate</div>
+                      <div className="text-white/50">Bounce Rate</div>
                       <div className="text-white font-semibold">{deviceData.bounceRate}%</div>
                     </div>
                   </div>
@@ -687,7 +687,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
         )}
 
         {/* Geographic Data */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
               <MapPinIcon className="w-5 h-5" />
@@ -697,16 +697,16 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
           <CardContent>
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {geographicData.slice(0, 8).map((location) => (
-                <div key={location.location} className="flex items-center justify-between p-2 bg-gray-800/50 rounded">
+                <div key={location.location} className="flex items-center justify-between p-2 bg-[var(--bg-ground)]/50 rounded">
                   <div>
                     <div className="text-white font-medium">{location.location}</div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-white/50">
                       {location.activeUsers} active • {location.engagementRate}% engagement
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-white font-semibold">{location.userCount}</div>
-                    <div className="text-xs text-gray-400">users</div>
+                    <div className="text-xs text-white/50">users</div>
                   </div>
                 </div>
               ))}
@@ -727,7 +727,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
               <h4 className="font-semibold text-green-400 mb-2">✅ COMPLIANCE METRICS</h4>
-              <div className="space-y-2 text-sm text-gray-300">
+              <div className="space-y-2 text-sm text-white/70">
                 <div className="flex justify-between">
                   <span>Compliant Spaces:</span>
                   <span className="text-green-400">{platformMetrics?.compliantSpaces || 0}</span>
@@ -747,7 +747,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             
             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
               <h4 className="font-semibold text-red-400 mb-2">❌ VIOLATION TRACKING</h4>
-              <div className="space-y-2 text-sm text-gray-300">
+              <div className="space-y-2 text-sm text-white/70">
                 <div className="flex justify-between">
                   <span>Active Violations:</span>
                   <span className="text-red-400">{violationData?.pendingViolations || 0}</span>
@@ -767,7 +767,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
 
             <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
               <h4 className="font-semibold text-blue-400 mb-2">🔧 ENFORCEMENT ACTIONS</h4>
-              <div className="space-y-2 text-sm text-gray-300">
+              <div className="space-y-2 text-sm text-white/70">
                 <div className="flex justify-between">
                   <span>Auto-Corrections:</span>
                   <span className="text-blue-400">{violationData?.resolvedViolations || 0}</span>
@@ -782,7 +782,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
                 </div>
               </div>
               {(!violationData || violationData.totalViolations === 0) && (
-                <p className="text-xs text-gray-500 mt-2">No enforcement actions required</p>
+                <p className="text-xs text-white/40 mt-2">No enforcement actions required</p>
               )}
             </div>
           </div>

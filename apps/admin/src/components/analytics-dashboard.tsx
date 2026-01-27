@@ -114,7 +114,7 @@ export function AnalyticsDashboard() {
   if (loading && !stats) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-400">Loading analytics...</div>
+        <div className="text-white/50">Loading analytics...</div>
       </div>
     );
   }
@@ -130,7 +130,7 @@ export function AnalyticsDashboard() {
   if (!stats) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-400">No analytics data available</div>
+        <div className="text-white/50">No analytics data available</div>
       </div>
     );
   }
@@ -141,7 +141,7 @@ export function AnalyticsDashboard() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">Platform Analytics</h2>
         <div className="flex items-center gap-4">
-          <Badge variant="outline" className="text-gray-400">
+          <Badge variant="outline" className="text-white/50">
             Last updated: {lastUpdated?.toLocaleTimeString()}
           </Badge>
           <button
@@ -156,11 +156,11 @@ export function AnalyticsDashboard() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Total Users</p>
+                <p className="text-sm text-white/50">Total Users</p>
                 <p className="text-2xl font-bold text-white">{stats.users.total}</p>
               </div>
               <div className="text-right">
@@ -171,11 +171,11 @@ export function AnalyticsDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Total Spaces</p>
+                <p className="text-sm text-white/50">Total Spaces</p>
                 <p className="text-2xl font-bold text-white">{stats.spaces.total}</p>
               </div>
               <div className="text-right">
@@ -186,11 +186,11 @@ export function AnalyticsDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Builder Requests</p>
+                <p className="text-sm text-white/50">Builder Requests</p>
                 <p className="text-2xl font-bold text-white">{stats.builderRequests.total}</p>
               </div>
               <div className="text-right">
@@ -201,17 +201,17 @@ export function AnalyticsDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">System Status</p>
+                <p className="text-sm text-white/50">System Status</p>
                 <Badge variant={stats.system.status === 'healthy' ? 'secondary' : 'destructive'}>
                   {stats.system.status}
                 </Badge>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-400">Uptime</p>
+                <p className="text-sm text-white/50">Uptime</p>
                 <p className="text-sm text-white">{formatUptime(stats.system.uptime)}</p>
               </div>
             </div>
@@ -222,26 +222,26 @@ export function AnalyticsDashboard() {
       {/* Detailed Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Analytics */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <CardTitle className="text-white">User Analytics</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Active Users</span>
+                <span className="text-white/50">Active Users</span>
                 <span className="text-green-400">{stats.users.active}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Inactive Users</span>
+                <span className="text-white/50">Inactive Users</span>
                 <span className="text-red-400">{stats.users.inactive}</span>
               </div>
-              <div className="pt-2 border-t border-gray-700">
+              <div className="pt-2 border-t border-white/[0.08]">
                 <h4 className="text-sm font-semibold text-white mb-2">Top Majors</h4>
                 <div className="space-y-1">
                   {Object.entries(stats.users.byMajor).slice(0, 5).map(([major, count]) => (
                     <div key={major} className="flex justify-between text-sm">
-                      <span className="text-gray-400">{major}</span>
+                      <span className="text-white/50">{major}</span>
                       <span className="text-white">{count}</span>
                     </div>
                   ))}
@@ -252,30 +252,30 @@ export function AnalyticsDashboard() {
         </Card>
 
         {/* Space Analytics */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <CardTitle className="text-white">Space Analytics</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Activation Rate</span>
+                <span className="text-white/50">Activation Rate</span>
                 <span className="text-blue-400">{stats.spaces.activationRate}%</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Average Members</span>
+                <span className="text-white/50">Average Members</span>
                 <span className="text-white">{stats.spaces.averageMembers}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Total Members</span>
+                <span className="text-white/50">Total Members</span>
                 <span className="text-white">{stats.spaces.totalMembers}</span>
               </div>
-              <div className="pt-2 border-t border-gray-700">
+              <div className="pt-2 border-t border-white/[0.08]">
                 <h4 className="text-sm font-semibold text-white mb-2">By Type</h4>
                 <div className="space-y-1">
                   {Object.entries(stats.spaces.byType).map(([type, data]) => (
                     <div key={type} className="flex justify-between text-sm">
-                      <span className="text-gray-400">{type.replace(/_/g, ' ')}</span>
+                      <span className="text-white/50">{type.replace(/_/g, ' ')}</span>
                       <span className="text-white">{data.active}/{data.total}</span>
                     </div>
                   ))}
@@ -286,36 +286,36 @@ export function AnalyticsDashboard() {
         </Card>
 
         {/* Builder Requests */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <CardTitle className="text-white">Builder Requests</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Approval Rate</span>
+                <span className="text-white/50">Approval Rate</span>
                 <span className="text-green-400">{stats.builderRequests.approvalRate}%</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Avg Response Time</span>
+                <span className="text-white/50">Avg Response Time</span>
                 <span className="text-white">{stats.builderRequests.averageResponseTime}h</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Urgent Requests</span>
+                <span className="text-white/50">Urgent Requests</span>
                 <span className="text-red-400">{stats.builderRequests.urgent}</span>
               </div>
-              <div className="pt-2 border-t border-gray-700">
+              <div className="pt-2 border-t border-white/[0.08]">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-sm text-gray-400">Pending</p>
+                    <p className="text-sm text-white/50">Pending</p>
                     <p className="text-lg text-yellow-400">{stats.builderRequests.pending}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Approved</p>
+                    <p className="text-sm text-white/50">Approved</p>
                     <p className="text-lg text-green-400">{stats.builderRequests.approved}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Rejected</p>
+                    <p className="text-sm text-white/50">Rejected</p>
                     <p className="text-lg text-red-400">{stats.builderRequests.rejected}</p>
                   </div>
                 </div>
@@ -325,39 +325,39 @@ export function AnalyticsDashboard() {
         </Card>
 
         {/* System Health */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader>
             <CardTitle className="text-white">System Health</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Status</span>
+                <span className="text-white/50">Status</span>
                 <Badge variant={stats.system.status === 'healthy' ? 'secondary' : 'destructive'}>
                   {stats.system.status}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Memory Usage</span>
+                <span className="text-white/50">Memory Usage</span>
                 <span className="text-white">{formatMemory(stats.system.memory.heapUsed)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Total Memory</span>
+                <span className="text-white/50">Total Memory</span>
                 <span className="text-white">{formatMemory(stats.system.memory.heapTotal)}</span>
               </div>
-              <div className="pt-2 border-t border-gray-700">
+              <div className="pt-2 border-t border-white/[0.08]">
                 <h4 className="text-sm font-semibold text-white mb-2">Collections</h4>
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Users</span>
+                    <span className="text-white/50">Users</span>
                     <span className="text-white">{stats.system.collections.users}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Spaces</span>
+                    <span className="text-white/50">Spaces</span>
                     <span className="text-white">{stats.system.collections.spaces}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Builder Requests</span>
+                    <span className="text-white/50">Builder Requests</span>
                     <span className="text-white">{stats.system.collections.builderRequests}</span>
                   </div>
                 </div>

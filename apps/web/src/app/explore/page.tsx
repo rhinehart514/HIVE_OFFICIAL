@@ -35,6 +35,7 @@ import {
   type ToolData,
 } from '@/components/explore';
 import { MOTION } from '@hive/ui/design-system/primitives';
+import { logger } from '@/lib/logger';
 
 // ============================================
 // HOOKS
@@ -144,13 +145,16 @@ async function fetchPeople(search: string): Promise<PersonData[]> {
     userType?: string;
     mutualSpacesCount?: number;
     lastActive?: string;
+    connectionStatus?: string;
   }) => ({
     id: u.id,
     name: u.fullName || u.handle || 'Unknown',
+    handle: u.handle,
     avatarUrl: u.photoURL,
     role: u.academic?.major || u.userType || 'Student',
     mutualSpaces: u.mutualSpacesCount || 0,
     isOnline: u.lastActive ? new Date(u.lastActive).getTime() > Date.now() - 5 * 60 * 1000 : false,
+    isConnected: u.connectionStatus === 'connected',
   }));
 }
 
@@ -166,29 +170,36 @@ async function fetchEvents(): Promise<EventData[]> {
   const data = await response.json();
   const events = data.data?.events || data.events || [];
 
+  const now = new Date();
   return events.map((e: {
     id: string;
     title: string;
     description?: string;
     startTime?: string;
+    endTime?: string;
     locationName?: string;
     location?: string;
     space?: { name?: string; id?: string };
     goingCount?: number;
     currentCapacity?: number;
     rsvpStatus?: string;
-  }) => ({
-    id: e.id,
-    title: e.title,
-    description: e.description,
-    startTime: e.startTime ? new Date(e.startTime) : new Date(),
-    location: e.locationName || e.location || 'TBD',
-    spaceName: e.space?.name || 'Campus',
-    spaceHandle: e.space?.id,
-    rsvpCount: e.goingCount || e.currentCapacity || 0,
-    isLive: false, // Would need real-time check
-    userRsvp: e.rsvpStatus as 'going' | 'maybe' | 'not_going' | undefined,
-  }));
+  }) => {
+    const startTime = e.startTime ? new Date(e.startTime) : new Date();
+    const endTime = e.endTime ? new Date(e.endTime) : null;
+    return {
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      startTime,
+      location: e.locationName || e.location || 'TBD',
+      spaceName: e.space?.name || 'Campus',
+      spaceHandle: e.space?.id,
+      spaceId: e.space?.id,
+      rsvpCount: e.goingCount || e.currentCapacity || 0,
+      isLive: startTime <= now && (!endTime || endTime > now),
+      userRsvp: e.rsvpStatus as 'going' | 'maybe' | 'not_going' | undefined,
+    };
+  });
 }
 
 async function fetchTools(search?: string): Promise<ToolData[]> {
@@ -303,7 +314,7 @@ function ExploreContent() {
           }
         }
       } catch (err) {
-        console.error('Failed to fetch explore data:', err);
+        logger.error('Failed to fetch explore data', { component: 'ExplorePage' }, err instanceof Error ? err : undefined);
         setError('Something went wrong. Please try again.');
       } finally {
         setIsLoading(false);
@@ -414,6 +425,22 @@ function ExploreContent() {
                 events={events}
                 loading={isLoading}
                 searchQuery={debouncedQuery}
+                onRSVP={async (eventId, spaceId, status) => {
+                  const response = await fetch(`/api/spaces/${spaceId}/events/${eventId}/rsvp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status }),
+                    credentials: 'include',
+                  });
+                  if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error?.message || 'RSVP failed');
+                  }
+                  // Update local event state
+                  setEvents(prev => prev.map(e =>
+                    e.id === eventId ? { ...e, userRsvp: status } : e
+                  ));
+                }}
               />
             )}
 

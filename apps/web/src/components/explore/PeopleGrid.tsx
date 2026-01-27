@@ -22,6 +22,7 @@ export interface PersonData {
   role?: string;
   mutualSpaces?: number;
   isOnline?: boolean;
+  isConnected?: boolean;
 }
 
 export interface PeopleGridProps {
@@ -126,10 +127,22 @@ function PersonCard({ person, index }: PersonCardProps) {
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              {/* Name */}
-              <h3 className="text-body font-medium text-white truncate group-hover:text-white/90">
-                {person.name}
-              </h3>
+              {/* Name + Connection Badge */}
+              <div className="flex items-center gap-2">
+                <h3 className="text-body font-medium text-white truncate group-hover:text-white/90">
+                  {person.name}
+                </h3>
+                {person.isConnected && (
+                  <Badge variant="success" size="sm" className="shrink-0 text-[10px] px-1.5 py-0.5">
+                    Connected
+                  </Badge>
+                )}
+                {!person.isConnected && person.mutualSpaces && person.mutualSpaces > 0 && (
+                  <Badge variant="neutral" size="sm" className="shrink-0 text-[10px] px-1.5 py-0.5 bg-[var(--life-gold)]/10 text-[var(--life-gold)]">
+                    Mutual
+                  </Badge>
+                )}
+              </div>
 
               {/* Handle if available */}
               {person.handle && (

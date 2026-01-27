@@ -237,7 +237,7 @@ const NotificationCard: React.FC<{
       case 'compliance_alert': return 'text-red-500';
       case 'security_warning': return 'text-red-600';
       case 'platform_announcement': return 'text-cyan-400';
-      default: return 'text-gray-400';
+      default: return 'text-white/50';
     }
   };
 
@@ -247,8 +247,8 @@ const NotificationCard: React.FC<{
       case 'urgent': return 'bg-orange-500';
       case 'high': return 'bg-yellow-500';
       case 'medium': return 'bg-blue-500';
-      case 'low': return 'bg-gray-500';
-      default: return 'bg-gray-500';
+      case 'low': return 'bg-white/[0.20]';
+      default: return 'bg-white/[0.20]';
     }
   };
 
@@ -258,9 +258,9 @@ const NotificationCard: React.FC<{
       case 'delivered': return 'text-blue-400';
       case 'failed': return 'text-red-400';
       case 'scheduled': return 'text-yellow-400';
-      case 'cancelled': return 'text-gray-400';
+      case 'cancelled': return 'text-white/50';
       case 'draft': return 'text-purple-400';
-      default: return 'text-gray-400';
+      default: return 'text-white/50';
     }
   };
 
@@ -270,12 +270,12 @@ const NotificationCard: React.FC<{
   };
 
   return (
-    <Card className="border-gray-700 bg-gray-900/50 hover:bg-gray-800/50 transition-all">
+    <Card className="border-white/[0.08] bg-[var(--bg-void)]/50 hover:bg-[var(--bg-ground)]/50 transition-all">
       <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start space-x-3 flex-1">
-            <div className={`p-2 rounded-lg bg-gray-800 ${getTypeColor(notification.type)}`}>
+            <div className={`p-2 rounded-lg bg-[var(--bg-ground)] ${getTypeColor(notification.type)}`}>
               {getTypeIcon(notification.type)}
             </div>
             <div className="flex-1 min-w-0">
@@ -286,8 +286,8 @@ const NotificationCard: React.FC<{
                   <ExclamationTriangleIcon className="w-4 h-4 text-red-400" />
                 )}
               </div>
-              <p className="text-sm text-gray-400 line-clamp-2">{notification.message}</p>
-              <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1">
+              <p className="text-sm text-white/50 line-clamp-2">{notification.message}</p>
+              <div className="flex items-center space-x-2 text-xs text-white/40 mt-1">
                 <span className="capitalize">{notification.type.replace('_', ' ')}</span>
                 <span>•</span>
                 <span className={getStatusColor(notification.status)}>{notification.status}</span>
@@ -350,7 +350,7 @@ const NotificationCard: React.FC<{
           <div>
             <button
               onClick={() => setShowMetrics(!showMetrics)}
-              className="flex items-center justify-between w-full text-xs text-gray-400 hover:text-white transition-colors mb-2"
+              className="flex items-center justify-between w-full text-xs text-white/50 hover:text-white transition-colors mb-2"
             >
               <span>Performance Metrics</span>
               {showMetrics ? <ChevronUpIcon className="w-3 h-3" /> : <ChevronDownIcon className="w-3 h-3" />}
@@ -358,28 +358,28 @@ const NotificationCard: React.FC<{
             
             {showMetrics && (
               <div className="grid grid-cols-4 gap-2">
-                  <div className="text-center p-2 bg-gray-800/50 rounded">
+                  <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
                     <div className="text-sm font-semibold text-green-400">{notification.metrics.delivered}</div>
-                    <div className="text-xs text-gray-400">Delivered</div>
+                    <div className="text-xs text-white/50">Delivered</div>
                   </div>
-                  <div className="text-center p-2 bg-gray-800/50 rounded">
+                  <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
                     <div className="text-sm font-semibold text-blue-400">{notification.metrics.opened}</div>
-                    <div className="text-xs text-gray-400">Opened</div>
+                    <div className="text-xs text-white/50">Opened</div>
                   </div>
-                  <div className="text-center p-2 bg-gray-800/50 rounded">
+                  <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
                     <div className="text-sm font-semibold text-purple-400">{notification.metrics.clicked}</div>
-                    <div className="text-xs text-gray-400">Clicked</div>
+                    <div className="text-xs text-white/50">Clicked</div>
                   </div>
-                  <div className="text-center p-2 bg-gray-800/50 rounded">
+                  <div className="text-center p-2 bg-[var(--bg-ground)]/50 rounded">
                     <div className="text-sm font-semibold text-amber-400">{getEngagementRate()}%</div>
-                    <div className="text-xs text-gray-400">Engagement</div>
+                    <div className="text-xs text-white/50">Engagement</div>
                   </div>
               </div>
             )}
           </div>
         ) : (
           <div className="flex items-center justify-between text-xs">
-            <div className="text-gray-400">
+            <div className="text-white/50">
               {notification.scheduledFor ? (
                 <>Scheduled: {new Date(notification.scheduledFor).toLocaleDateString()}</>
               ) : (
@@ -396,13 +396,13 @@ const NotificationCard: React.FC<{
 
         {/* Space System Context */}
         {notification.spaceCategory && (
-          <div className="mt-3 pt-3 border-t border-gray-700">
+          <div className="mt-3 pt-3 border-t border-white/[0.08]">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center space-x-2">
                 <ShieldCheckIcon className="w-3 h-3 text-blue-400" />
                 <span className="text-blue-400">Space System Context</span>
               </div>
-              <div className="text-gray-300 capitalize">
+              <div className="text-white/70 capitalize">
                 {notification.spaceCategory.replace('_', ' ')}
               </div>
             </div>
@@ -420,22 +420,22 @@ const QuickStatsCard: React.FC<{
   trend?: { value: number; direction: 'up' | 'down' | 'stable' };
   icon: React.ComponentType<{ className?: string }>;
   color?: string;
-}> = ({ title, value, subtitle, trend, icon: Icon, color = 'text-gray-400' }) => {
+}> = ({ title, value, subtitle, trend, icon: Icon, color = 'text-white/50' }) => {
   return (
-    <Card className="border-gray-700 bg-gray-900/50">
+    <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-400">{title}</p>
+            <p className="text-sm font-medium text-white/50">{title}</p>
             <p className="text-2xl font-bold text-white">{typeof value === 'number' ? value.toLocaleString() : value}</p>
             {subtitle && (
-              <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+              <p className="text-xs text-white/40 mt-1">{subtitle}</p>
             )}
             {trend && (
               <div className={`flex items-center space-x-1 text-sm mt-1 ${
                 trend.direction === 'up' ? 'text-green-400' :
                 trend.direction === 'down' ? 'text-red-400' :
-                'text-gray-400'
+                'text-white/50'
               }`}>
                 {trend.direction === 'up' ? <ArrowUpIcon className="w-3 h-3" /> :
                  trend.direction === 'down' ? <ArrowDownIcon className="w-3 h-3" /> :
@@ -444,7 +444,7 @@ const QuickStatsCard: React.FC<{
               </div>
             )}
           </div>
-          <div className={`p-2 rounded-lg bg-gray-800 ${color}`}>
+          <div className={`p-2 rounded-lg bg-[var(--bg-ground)] ${color}`}>
             <Icon className="w-6 h-6" />
           </div>
         </div>
@@ -507,8 +507,8 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <BellIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Notification management system is not available</p>
+        <BellIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
+        <p className="text-white/50">Notification management system is not available</p>
       </div>
     );
   }
@@ -546,7 +546,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Notification Management</h2>
-          <p className="text-gray-400 mt-1">
+          <p className="text-white/50 mt-1">
             Comprehensive platform communications with space system compliance enforcement
           </p>
         </div>
@@ -556,7 +556,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
             onClick={loadNotifications}
             disabled={loading}
             variant="outline"
-            className="border-gray-600 text-gray-300"
+            className="border-white/[0.12] text-white/70"
           >
             {loading ? (
               <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
@@ -622,18 +622,18 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center bg-gray-800/50 rounded-lg p-1">
+      <div className="flex items-center bg-[var(--bg-ground)]/50 rounded-lg p-1">
         <button
           onClick={() => setSelectedTab('notifications')}
           className={`flex-1 px-4 py-2 text-sm rounded-md transition-colors flex items-center justify-center gap-2 ${
             selectedTab === 'notifications'
               ? 'bg-blue-600 text-white'
-              : 'text-gray-400 hover:text-white'
+              : 'text-white/50 hover:text-white'
           }`}
         >
           <BellIcon className="w-4 h-4" />
           <span>Notifications</span>
-          <Badge size="sm" className={selectedTab === 'notifications' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={selectedTab === 'notifications' ? 'bg-white/20' : 'bg-white/[0.08]'}>
             {stats.total}
           </Badge>
         </button>
@@ -643,12 +643,12 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
           className={`flex-1 px-4 py-2 text-sm rounded-md transition-colors flex items-center justify-center gap-2 ${
             selectedTab === 'campaigns'
               ? 'bg-purple-600 text-white'
-              : 'text-gray-400 hover:text-white'
+              : 'text-white/50 hover:text-white'
           }`}
         >
           <Megaphone className="w-4 h-4" />
           <span>Campaigns</span>
-          <Badge size="sm" className={selectedTab === 'campaigns' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={selectedTab === 'campaigns' ? 'bg-white/20' : 'bg-white/[0.08]'}>
             {campaigns.length}
           </Badge>
         </button>
@@ -658,12 +658,12 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
           className={`flex-1 px-4 py-2 text-sm rounded-md transition-colors flex items-center justify-center gap-2 ${
             selectedTab === 'templates'
               ? 'bg-green-600 text-white'
-              : 'text-gray-400 hover:text-white'
+              : 'text-white/50 hover:text-white'
           }`}
         >
           <DocumentTextIcon className="w-4 h-4" />
           <span>Templates</span>
-          <Badge size="sm" className={selectedTab === 'templates' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={selectedTab === 'templates' ? 'bg-white/20' : 'bg-white/[0.08]'}>
             {templates.length}
           </Badge>
         </button>
@@ -673,7 +673,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
           className={`flex-1 px-4 py-2 text-sm rounded-md transition-colors flex items-center justify-center gap-2 ${
             selectedTab === 'analytics'
               ? 'bg-amber-600 text-white'
-              : 'text-gray-400 hover:text-white'
+              : 'text-white/50 hover:text-white'
           }`}
         >
           <ChartBarIcon className="w-4 h-4" />
@@ -685,24 +685,24 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
       {selectedTab === 'notifications' && (
         <div className="space-y-4">
           {/* Filters */}
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
             <CardContent className="p-4">
               <div className="flex items-center space-x-4">
                 <div className="flex-1 relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
                   <input
                     type="text"
                     placeholder="MagnifyingGlassIcon notifications..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="w-full pl-10 pr-4 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
                 
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value as NotificationType | 'all')}
-                  className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 >
                   <option value="all">All Types</option>
                   <option value="system_alert">System Alert</option>
@@ -718,7 +718,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as NotificationStatus | 'all')}
-                  className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 >
                   <option value="all">All Status</option>
                   <option value="draft">Draft</option>
@@ -737,13 +737,13 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
             {loading ? (
               <div className="text-center py-8">
                 <ArrowPathIcon className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
-                <p className="text-gray-400">Loading notifications...</p>
+                <p className="text-white/50">Loading notifications...</p>
               </div>
             ) : filteredNotifications.length === 0 ? (
               <div className="text-center py-12">
-                <BellIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <BellIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">No notifications found</h3>
-                <p className="text-gray-400">
+                <p className="text-white/50">
                   {searchTerm ? 'Try adjusting your search' : 'No notifications match the current filters'}
                 </p>
               </div>
@@ -777,7 +777,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
               <h4 className="font-semibold text-green-400 mb-2">✅ COMPLIANCE NOTIFICATIONS</h4>
-              <ul className="text-sm text-gray-300 space-y-1">
+              <ul className="text-sm text-white/70 space-y-1">
                 <li>• Automatic space violation alerts</li>
                 <li>• Compliance score updates</li>
                 <li>• Space approval notifications</li>
@@ -787,7 +787,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
             
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
               <h4 className="font-semibold text-red-400 mb-2">❌ VIOLATION ALERTS</h4>
-              <ul className="text-sm text-gray-300 space-y-1">
+              <ul className="text-sm text-white/70 space-y-1">
                 <li>• Forbidden space creation attempts</li>
                 <li>• Space system misuse warnings</li>
                 <li>• Immediate violation notifications</li>
@@ -797,7 +797,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
 
             <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
               <h4 className="font-semibold text-blue-400 mb-2">🔧 SYSTEM INTEGRATION</h4>
-              <ul className="text-sm text-gray-300 space-y-1">
+              <ul className="text-sm text-white/70 space-y-1">
                 <li>• Real-time space monitoring</li>
                 <li>• Automated enforcement actions</li>
                 <li>• Cross-platform notification sync</li>

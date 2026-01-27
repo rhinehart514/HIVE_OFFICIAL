@@ -16,6 +16,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
+import { logger } from '@/lib/logger';
 import {
   BuilderShell,
   BuilderHeading,
@@ -98,7 +99,7 @@ export default function IdentityPage() {
 
         setHandleStatus(available ? 'available' : 'taken');
       } catch (error) {
-        console.error('Handle check failed:', error);
+        logger.error('Handle check failed', { component: 'IdentityPage' }, error instanceof Error ? error : undefined);
         setHandleStatus('idle');
       }
     };
@@ -122,7 +123,7 @@ export default function IdentityPage() {
 
       router.push(`/spaces/new/access?${params.toString()}`);
     } catch (error) {
-      console.error('Failed to continue:', error);
+      logger.error('Failed to continue', { component: 'IdentityPage' }, error instanceof Error ? error : undefined);
     } finally {
       setIsCreating(false);
     }

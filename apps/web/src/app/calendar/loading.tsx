@@ -24,7 +24,7 @@ export default function CalendarLoading() {
       </div>
 
       {/* Calendar grid */}
-      <div className="rounded-xl border border-neutral-800/50 bg-neutral-900/30 p-4">
+      <div className="rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30 p-4">
         {/* Week header */}
         <div className="grid grid-cols-7 gap-2 mb-4">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
@@ -37,7 +37,7 @@ export default function CalendarLoading() {
           {Array.from({ length: 35 }).map((_, i) => (
             <div
               key={i}
-              className="aspect-square rounded-lg border border-neutral-800/30 p-2"
+              className="aspect-square rounded-lg border border-white/[0.06]/30 p-2"
             >
               <Skeleton className="h-5 w-5 mb-2" />
               {i % 4 === 0 && <Skeleton className="h-3 w-full rounded" />}

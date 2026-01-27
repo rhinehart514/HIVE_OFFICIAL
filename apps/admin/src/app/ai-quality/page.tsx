@@ -91,7 +91,7 @@ function StatCard({ label, value, subtext, color = 'blue' }: {
 // Score distribution bar
 function ScoreBar({ distribution }: { distribution: { excellent: number; good: number; acceptable: number; poor: number } }) {
   const total = distribution.excellent + distribution.good + distribution.acceptable + distribution.poor;
-  if (total === 0) return <div className="text-gray-400 text-sm">No data</div>;
+  if (total === 0) return <div className="text-white/50 text-sm">No data</div>;
 
   const pct = (n: number) => Math.round((n / total) * 100);
 
@@ -173,13 +173,13 @@ export default function AIQualityDashboard() {
   }, [period]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-white/[0.02] p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">AI Quality Dashboard</h1>
-            <p className="text-gray-600 mt-1">Monitor HiveLab AI generation quality in real-time</p>
+            <h1 className="text-3xl font-bold text-white">AI Quality Dashboard</h1>
+            <p className="text-white/30 mt-1">Monitor HiveLab AI generation quality in real-time</p>
           </div>
           <div className="flex gap-2">
             {(['hour', 'day', 'week', 'month'] as const).map((p) => (
@@ -189,7 +189,7 @@ export default function AIQualityDashboard() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   period === p
                     ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                    : 'bg-white text-white/30 hover:bg-white/[0.04] border border-white/[0.06]'
                 }`}
               >
                 {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -253,19 +253,19 @@ export default function AIQualityDashboard() {
                 <h2 className="text-lg font-semibold mb-4">Performance</h2>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Avg Latency</span>
+                    <span className="text-white/30">Avg Latency</span>
                     <span className="font-medium">{metrics.performance.avgLatencyMs}ms</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">P50 Latency</span>
+                    <span className="text-white/30">P50 Latency</span>
                     <span className="font-medium">{metrics.performance.p50LatencyMs}ms</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">P95 Latency</span>
+                    <span className="text-white/30">P95 Latency</span>
                     <span className="font-medium">{metrics.performance.p95LatencyMs}ms</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">P99 Latency</span>
+                    <span className="text-white/30">P99 Latency</span>
                     <span className="font-medium">{metrics.performance.p99LatencyMs}ms</span>
                   </div>
                 </div>
@@ -276,19 +276,19 @@ export default function AIQualityDashboard() {
                 <h2 className="text-lg font-semibold mb-4">User Corrections <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded ml-2">Gold Signal</span></h2>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Edit Sessions</span>
+                    <span className="text-white/30">Edit Sessions</span>
                     <span className="font-medium">{metrics.edits.totalSessions}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Avg Edits/Session</span>
+                    <span className="text-white/30">Avg Edits/Session</span>
                     <span className="font-medium">{metrics.edits.avgEditsPerSession}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Elements Added</span>
+                    <span className="text-white/30">Elements Added</span>
                     <span className="font-medium text-green-600">+{metrics.edits.avgElementsAdded}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Elements Removed</span>
+                    <span className="text-white/30">Elements Removed</span>
                     <span className="font-medium text-red-600">-{metrics.edits.avgElementsRemoved}</span>
                   </div>
                 </div>
@@ -301,7 +301,7 @@ export default function AIQualityDashboard() {
               <div className="bg-white rounded-lg border p-6">
                 <h2 className="text-lg font-semibold mb-4 text-red-600">Most Removed Elements</h2>
                 {metrics.edits.mostRemovedElements.length === 0 ? (
-                  <p className="text-gray-400 text-sm">No data yet</p>
+                  <p className="text-white/50 text-sm">No data yet</p>
                 ) : (
                   <div className="space-y-2">
                     {metrics.edits.mostRemovedElements.map((el, i) => (
@@ -318,7 +318,7 @@ export default function AIQualityDashboard() {
               <div className="bg-white rounded-lg border p-6">
                 <h2 className="text-lg font-semibold mb-4 text-green-600">Most Added Elements</h2>
                 {metrics.edits.mostAddedElements.length === 0 ? (
-                  <p className="text-gray-400 text-sm">No data yet</p>
+                  <p className="text-white/50 text-sm">No data yet</p>
                 ) : (
                   <div className="space-y-2">
                     {metrics.edits.mostAddedElements.map((el, i) => (
@@ -336,7 +336,7 @@ export default function AIQualityDashboard() {
             <div className="bg-white rounded-lg border p-6 mb-8">
               <h2 className="text-lg font-semibold mb-4">Top Validation Errors</h2>
               {metrics.topValidationErrors.length === 0 ? (
-                <p className="text-gray-400 text-sm">No validation errors recorded</p>
+                <p className="text-white/50 text-sm">No validation errors recorded</p>
               ) : (
                 <div className="space-y-2">
                   {metrics.topValidationErrors.map((err, i) => (
@@ -353,14 +353,14 @@ export default function AIQualityDashboard() {
             <div className="bg-white rounded-lg border p-6">
               <h2 className="text-lg font-semibold mb-4">Element Usage</h2>
               {Object.keys(metrics.elementUsage).length === 0 ? (
-                <p className="text-gray-400 text-sm">No element usage data yet</p>
+                <p className="text-white/50 text-sm">No element usage data yet</p>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {Object.entries(metrics.elementUsage)
                     .sort(([, a], [, b]) => b - a)
                     .map(([element, count]) => (
-                      <div key={element} className="bg-gray-50 rounded px-3 py-2">
-                        <div className="font-mono text-xs text-gray-600">{element}</div>
+                      <div key={element} className="bg-white/[0.02] rounded px-3 py-2">
+                        <div className="font-mono text-xs text-white/30">{element}</div>
                         <div className="font-bold">{count}</div>
                       </div>
                     ))}

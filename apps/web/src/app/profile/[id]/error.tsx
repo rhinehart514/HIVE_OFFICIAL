@@ -23,11 +23,11 @@ export default function ProfileViewError({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--bg-void)] flex items-center justify-center px-4">
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
-          <div className="rounded-full bg-amber-500/10 p-4">
-            <ExclamationTriangleIcon className="h-8 w-8 text-amber-500" aria-hidden="true" />
+          <div className="rounded-full bg-[var(--life-gold)]/10 p-4">
+            <ExclamationTriangleIcon className="h-8 w-8 text-[var(--life-gold)]" aria-hidden="true" />
           </div>
         </div>
 
@@ -35,7 +35,7 @@ export default function ProfileViewError({
           Unable to Load Profile
         </h2>
 
-        <p className="mb-6 text-sm text-neutral-400">
+        <p className="mb-6 text-sm text-white/50">
           We had trouble loading this profile. This might be a temporary issue.
         </p>
 
@@ -43,7 +43,7 @@ export default function ProfileViewError({
           <Button
             onClick={() => reset()}
             aria-label="Retry loading the profile"
-            className="gap-2 bg-amber-500 text-neutral-950 hover:bg-amber-400"
+            className="gap-2 bg-[var(--life-gold)] text-[var(--bg-ground)] hover:bg-[var(--life-gold)]/90"
           >
             <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
             Try again
@@ -52,7 +52,7 @@ export default function ProfileViewError({
             variant="secondary"
             onClick={() => router.back()}
             aria-label="Go back to previous page"
-            className="gap-2 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+            className="gap-2 border-white/[0.08] text-white/70 hover:bg-white/[0.04]"
           >
             <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
             Go back
@@ -61,7 +61,7 @@ export default function ProfileViewError({
             variant="secondary"
             onClick={() => window.location.href = '/feed'}
             aria-label="Go to feed page"
-            className="gap-2 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+            className="gap-2 border-white/[0.08] text-white/70 hover:bg-white/[0.04]"
           >
             <HomeIcon className="h-4 w-4" aria-hidden="true" />
             Feed
@@ -69,9 +69,9 @@ export default function ProfileViewError({
         </div>
 
         {process.env.NODE_ENV === 'development' && error.message && (
-          <div className="mt-6 rounded-md bg-neutral-900 border border-neutral-800 p-3 text-left">
-            <p className="text-xs text-neutral-500 mb-1">Error details:</p>
-            <p className="text-xs font-mono text-neutral-400 break-all">
+          <div className="mt-6 rounded-md bg-white/[0.02] border border-white/[0.08] p-3 text-left">
+            <p className="text-xs text-white/40 mb-1">Error details:</p>
+            <p className="text-xs font-mono text-white/50 break-all">
               {error.message}
             </p>
           </div>

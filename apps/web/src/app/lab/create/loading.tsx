@@ -10,7 +10,7 @@ export default function CreateToolLoading() {
       </div>
 
       {/* Form card */}
-      <div className="rounded-xl border border-neutral-800/50 bg-neutral-900/30 p-8 space-y-6">
+      <div className="rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30 p-8 space-y-6">
         {/* Name field */}
         <div className="space-y-2">
           <Skeleton className="h-4 w-24" />

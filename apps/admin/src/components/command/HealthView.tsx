@@ -50,7 +50,7 @@ function HealthGauge({ score, status }: { score: number; status: string }) {
           >
             {score}
           </motion.div>
-          <div className="text-xs text-gray-400 uppercase">{status}</div>
+          <div className="text-xs text-white/50 uppercase">{status}</div>
         </div>
       </div>
     </div>
@@ -101,13 +101,13 @@ function IndicatorCard({ indicator }: { indicator: HealthIndicator }) {
           className="h-2 mb-3"
         />
 
-        <p className="text-sm text-gray-400">{indicator.message}</p>
+        <p className="text-sm text-white/50">{indicator.message}</p>
 
         {indicator.details && (
           <div className="mt-3 pt-3 border-t border-white/10">
             <div className="flex flex-wrap gap-2">
               {Object.entries(indicator.details).map(([key, value]) => (
-                <span key={key} className="text-xs text-gray-500">
+                <span key={key} className="text-xs text-white/40">
                   {key}: {typeof value === "number" ? value.toLocaleString() : String(value)}
                 </span>
               ))}
@@ -121,13 +121,13 @@ function IndicatorCard({ indicator }: { indicator: HealthIndicator }) {
 
 function AtRiskCard({ item }: { item: AtRiskItem }) {
   const severityColors = {
-    low: "border-gray-500/30 bg-gray-500/10",
+    low: "border-white/[0.12]/30 bg-white/[0.20]/10",
     medium: "border-amber-500/30 bg-amber-500/10",
     high: "border-red-500/30 bg-red-500/10",
   };
 
   const severityBadges = {
-    low: "bg-gray-500/20 text-gray-400",
+    low: "bg-white/[0.20]/20 text-white/50",
     medium: "bg-amber-500/20 text-amber-400",
     high: "bg-red-500/20 text-red-400",
   };
@@ -141,16 +141,16 @@ function AtRiskCard({ item }: { item: AtRiskItem }) {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           {item.type === "space" ? (
-            <BuildingOffice2Icon className="h-4 w-4 text-gray-400" />
+            <BuildingOffice2Icon className="h-4 w-4 text-white/50" />
           ) : (
-            <ClockIcon className="h-4 w-4 text-gray-400" />
+            <ClockIcon className="h-4 w-4 text-white/50" />
           )}
           <span className="text-sm font-medium text-white">{item.name}</span>
         </div>
         <Badge className={severityBadges[item.severity]}>{item.severity}</Badge>
       </div>
-      <p className="text-xs text-gray-400 mt-1">{item.risk}</p>
-      <p className="text-xs text-gray-500 mt-1">
+      <p className="text-xs text-white/50 mt-1">{item.risk}</p>
+      <p className="text-xs text-white/40 mt-1">
         Last active: {new Date(item.lastActivity).toLocaleDateString()}
       </p>
     </motion.div>
@@ -181,8 +181,8 @@ function AlertCard({ alert }: { alert: TrendAlert }) {
           {alert.severity}
         </Badge>
       </div>
-      <p className="text-sm text-gray-400">{alert.message}</p>
-      <p className="text-xs text-gray-500 mt-1">
+      <p className="text-sm text-white/50">{alert.message}</p>
+      <p className="text-xs text-white/40 mt-1">
         Detected: {new Date(alert.detectedAt).toLocaleString()}
       </p>
     </motion.div>
@@ -210,7 +210,7 @@ export function HealthView() {
   if (loading && indicators.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-gray-400">Loading health data...</div>
+        <div className="animate-pulse text-white/50">Loading health data...</div>
       </div>
     );
   }
@@ -231,7 +231,7 @@ export function HealthView() {
           <ShieldCheckIcon className="h-6 w-6 text-[#FFD700]" />
           <div>
             <h2 className="text-xl font-bold text-white">Platform Health</h2>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-white/50">
               Last checked: {new Date().toLocaleTimeString()}
             </p>
           </div>
@@ -288,7 +288,7 @@ export function HealthView() {
           <CardContent className="py-8 text-center">
             <CheckCircleIcon className="h-12 w-12 text-green-400 mx-auto mb-3" />
             <h3 className="text-lg font-semibold text-green-400">All Systems Healthy</h3>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-sm text-white/50 mt-1">
               No issues detected. Platform is operating normally.
             </p>
           </CardContent>

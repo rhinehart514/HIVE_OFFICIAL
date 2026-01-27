@@ -137,9 +137,9 @@ export default function SpacesBrowsePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A]">
+    <div className="min-h-screen bg-[var(--bg-ground)]">
       {/* Header */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-[#0A0A0A]/80 border-b border-white/[0.04]">
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-[var(--bg-ground)]/80 border-b border-white/[0.04]">
         <div className="px-6 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button

@@ -113,6 +113,81 @@ pnpm build && pnpm typecheck  # Quality gate
 
 ---
 
+## Task Completion Taxonomy
+
+**Use precise language when reporting task status.** These terms have specific meanings:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   STUBBED        Handler exists but doesn't do real work                    │
+│                  (toast, console.log, mock data, "coming soon")             │
+│                  ❌ Not shippable without explanation                       │
+│                                                                             │
+│   WIRED          UI connected to API, data flows end-to-end                 │
+│                  May have upstream stubs (API exists but feature doesn't)   │
+│                  ⚠️  Shippable if stubs are documented                      │
+│                                                                             │
+│   COMPLETE       Feature works end-to-end, user can accomplish the goal    │
+│                  All handlers execute real actions                          │
+│                  ✅ Shippable                                               │
+│                                                                             │
+│   PRODUCTION-    Complete + all states handled                              │
+│   READY          (loading, error, empty, edge cases, permissions)           │
+│                  ✅ Ready for Campus One                                    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Session Log Language
+
+| Status | How to Report |
+|--------|---------------|
+| Everything works | `**FEATURE COMPLETE**: All handlers wired, all states handled.` |
+| UI done, some stubs | `**FEATURE WIRED**: 95% complete. [X] stubbed (needs [dependency]).` |
+| UI done, backend pending | `**FEATURE UI COMPLETE**: Components built. Pending: [API endpoint].` |
+| Partial progress | `**FEATURE IN PROGRESS**: [X]% complete. Blocked by [blocker].` |
+
+### Exit Criteria Templates
+
+**For "no stubs" work:**
+```markdown
+**Exit Criteria:**
+- [ ] All handlers execute real actions (no console.log, no "coming soon" toasts)
+- [ ] All data from live APIs (no mock data)
+- [ ] All error states from real error responses
+- [ ] Zero TODO comments in shipped code
+```
+
+**For "stubs acceptable" work (upstream dependency missing):**
+```markdown
+**Exit Criteria:**
+- [ ] UI complete with all states
+- [ ] Handlers wired to APIs where APIs exist
+- [ ] Stubbed features show user-facing feedback (toast, not silent)
+- [ ] Documented: what's stubbed and why
+```
+
+### What "Done" Means
+
+```
+NEVER say "done" if:
+├── Handlers log to console instead of taking action
+├── Buttons show "coming soon" without explanation in docs
+├── Data is hardcoded or mocked
+├── Error states show generic messages
+├── Loading states are missing
+└── TODO comments remain in the code
+
+ALWAYS document when stubbed:
+├── What's stubbed
+├── Why (what upstream dependency is missing)
+├── What API/feature would unwire it
+└── Session log entry reflects accurate status
+```
+
+---
+
 ## Development Philosophy
 
 ### Code Decisions: No Options

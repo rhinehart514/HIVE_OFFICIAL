@@ -21,6 +21,7 @@ import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import {
   Text,
   Button,
@@ -40,6 +41,8 @@ import {
   MembersList,
   SpaceSettings,
   SpaceInfoDrawer,
+  BoardEmptyState,
+  getBoardType,
   type Member,
 } from './components';
 import {
@@ -175,7 +178,7 @@ export default function SpacePageUnified() {
       await joinSpace();
       toast.success('Welcome to the space!');
     } catch (error) {
-      console.error('Join failed:', error);
+      logger.error('Join failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
       toast.error(error instanceof Error ? error.message : 'Failed to join space');
       // Don't re-throw - error is handled via toast
     } finally {
@@ -218,7 +221,7 @@ export default function SpacePageUnified() {
 
       toast.success('Board created');
     } catch (error) {
-      console.error('Failed to create board:', error);
+      logger.error('Failed to create board', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
       toast.error(error instanceof Error ? error.message : 'Failed to create board');
     } finally {
       setIsCreatingBoard(false);
@@ -235,7 +238,7 @@ export default function SpacePageUnified() {
         body: JSON.stringify({ boardIds }),
       });
     } catch (error) {
-      console.error('Failed to reorder boards:', error);
+      logger.error('Failed to reorder boards', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
     }
   };
 
@@ -269,7 +272,7 @@ export default function SpacePageUnified() {
 
       // The event will appear in the feed after next data refresh
     } catch (error) {
-      console.error('Event creation failed:', error);
+      logger.error('Event creation failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
       toast.error(error instanceof Error ? error.message : 'Failed to create event');
     }
   };
@@ -386,53 +389,69 @@ export default function SpacePageUnified() {
           <div className="flex-1 flex px-6 gap-4">
             {/* Content Area (60%) - Feed on LEFT */}
             <ArrivalZone zone="content" className="flex-1 flex flex-col min-w-0">
-              {/* Feed */}
+              {/* Feed with board transition */}
               <div className="flex-1 overflow-y-auto">
-                {feedItems.length === 0 && !isLoadingMessages ? (
-                  <EmptyCanvas
-                    message="Start the conversation"
-                    hint="Be the first to say something"
-                    size="lg"
-                  />
-                ) : (
-                  <UnifiedActivityFeed
-                    items={feedItems}
-                    loading={isLoadingMessages}
-                    currentUserId={user?.id}
-                    onEventRsvp={async (eventId, status) => {
-                      try {
-                        await rsvpToEvent(eventId, status as 'going' | 'maybe' | 'not_going');
-                      } catch (error) {
-                        console.error('RSVP failed:', error);
-                      }
-                    }}
-                    onRunTool={(toolId, placementId) => {
-                      // Open tool in modal or navigate to HiveLab
-                      const params = new URLSearchParams({
-                        toolId,
-                        ...(placementId && { placementId }),
-                        spaceId: space?.id || '',
-                      });
-                      router.push(`/lab/${toolId}?${params.toString()}`);
-                    }}
-                    onReact={async (messageId, emoji) => {
-                      if (!space?.id) return;
-                      try {
-                        await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ emoji }),
-                        });
-                      } catch (error) {
-                        console.error('React failed:', error);
-                      }
-                    }}
-                    onOpenThread={(messageId) => {
-                      // Navigate to thread view
-                      router.push(`/s/${handle}?board=${activeBoard}&thread=${messageId}`);
-                    }}
-                  />
-                )}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeBoard || 'default'}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
+                    className="h-full"
+                  >
+                    {feedItems.length === 0 && !isLoadingMessages ? (
+                      <BoardEmptyState
+                        boardType={getBoardType(boards.find(b => b.id === activeBoard)?.name || 'general')}
+                        boardName={boards.find(b => b.id === activeBoard)?.name}
+                        isLeader={space.isLeader}
+                        onAction={() => {
+                          // Focus the chat input
+                          const input = document.querySelector('textarea[placeholder^="Message #"]') as HTMLTextAreaElement;
+                          input?.focus();
+                        }}
+                      />
+                    ) : (
+                      <UnifiedActivityFeed
+                        items={feedItems}
+                        loading={isLoadingMessages}
+                        currentUserId={user?.id}
+                        onEventRsvp={async (eventId, status) => {
+                          try {
+                            await rsvpToEvent(eventId, status as 'going' | 'maybe' | 'not_going');
+                          } catch (error) {
+                            logger.error('RSVP failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+                          }
+                        }}
+                        onRunTool={(toolId, placementId) => {
+                          // Open tool in modal or navigate to HiveLab
+                          const params = new URLSearchParams({
+                            toolId,
+                            ...(placementId && { placementId }),
+                            spaceId: space?.id || '',
+                          });
+                          router.push(`/lab/${toolId}?${params.toString()}`);
+                        }}
+                        onReact={async (messageId, emoji) => {
+                          if (!space?.id) return;
+                          try {
+                            await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ emoji }),
+                            });
+                          } catch (error) {
+                            logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+                          }
+                        }}
+                        onOpenThread={(messageId) => {
+                          // Navigate to thread view
+                          router.push(`/s/${handle}?board=${activeBoard}&thread=${messageId}`);
+                        }}
+                      />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
               {/* Chat Input - Fixed at bottom */}
@@ -657,7 +676,7 @@ export default function SpacePageUnified() {
                         await refreshSpace();
                         toast.success('Space updated');
                       } catch (error) {
-                        console.error('Failed to update space:', error);
+                        logger.error('Failed to update space', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
                         toast.error('Failed to update space');
                       }
                     } : undefined}
@@ -675,7 +694,7 @@ export default function SpacePageUnified() {
                         setShowSettingsModal(false);
                         router.push('/spaces');
                       } catch (error) {
-                        console.error('Failed to leave space:', error);
+                        logger.error('Failed to leave space', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
                       }
                     }}
                   />
@@ -707,7 +726,7 @@ export default function SpacePageUnified() {
               toast.success('Space deleted');
               router.push('/spaces');
             } catch (error) {
-              console.error('Failed to delete space:', error);
+              logger.error('Failed to delete space', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
               toast.error('Failed to delete space');
             } finally {
               setIsDeletingSpace(false);
@@ -741,7 +760,7 @@ export default function SpacePageUnified() {
               await refreshSpace();
               toast.success('Board deleted');
             } catch (error) {
-              console.error('Failed to delete board:', error);
+              logger.error('Failed to delete board', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
               toast.error(error instanceof Error ? error.message : 'Failed to delete board');
             } finally {
               setIsDeletingBoard(false);

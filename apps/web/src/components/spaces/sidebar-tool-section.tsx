@@ -157,23 +157,35 @@ function EmptyState({
       <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mx-auto mb-3">
         <WrenchScrewdriverIcon className="w-5 h-5 text-white/30" />
       </div>
-      <Text size="sm" className="text-white/40 mb-3">
-        No tools pinned yet
-      </Text>
-      {isLeader && onAddTool && (
-        <button
-          onClick={onAddTool}
-          className={cn(
-            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md',
-            'text-xs font-medium',
-            'bg-white/[0.04] hover:bg-white/[0.08]',
-            'text-white/60 hover:text-white/80',
-            'transition-colors duration-150'
+      {isLeader ? (
+        <>
+          <Text size="sm" className="text-white/50 mb-1">
+            Add tools for your space
+          </Text>
+          <Text size="xs" className="text-white/30 mb-3">
+            Polls, RSVPs, countdowns, and more
+          </Text>
+          {onAddTool && (
+            <button
+              onClick={onAddTool}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md',
+                'text-xs font-medium',
+                'bg-[var(--color-accent-gold,#FFD700)]/10 hover:bg-[var(--color-accent-gold,#FFD700)]/20',
+                'text-[var(--color-accent-gold,#FFD700)]/80 hover:text-[var(--color-accent-gold,#FFD700)]',
+                'border border-[var(--color-accent-gold,#FFD700)]/20',
+                'transition-colors duration-150'
+              )}
+            >
+              <PlusIcon className="w-3.5 h-3.5" />
+              Build a tool
+            </button>
           )}
-        >
-          <PlusIcon className="w-3.5 h-3.5" />
-          Add from HiveLab
-        </button>
+        </>
+      ) : (
+        <Text size="sm" className="text-white/40">
+          No tools yet
+        </Text>
       )}
     </div>
   );

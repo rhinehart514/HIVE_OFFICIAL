@@ -17,7 +17,7 @@ export default function SchoolsLoading() {
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="flex items-center gap-4 p-4 rounded-xl border border-neutral-800/50 bg-neutral-900/30"
+            className="flex items-center gap-4 p-4 rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30"
           >
             {/* School logo */}
             <Skeleton className="h-14 w-14 rounded-lg flex-shrink-0" />

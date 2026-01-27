@@ -132,8 +132,9 @@ export function SpacePreviewModal({
           <button
             onClick={onClose}
             className="absolute top-3 right-3 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors"
+            aria-label="Close preview"
           >
-            <XMarkIcon className="w-4 h-4 text-white/70" />
+            <XMarkIcon className="w-4 h-4 text-white/70" aria-hidden="true" />
           </button>
 
           {/* Avatar positioned at bottom, overlapping */}

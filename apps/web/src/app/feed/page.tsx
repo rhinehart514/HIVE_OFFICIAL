@@ -31,6 +31,7 @@ import {
   MOTION,
 } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 // Feed-specific components
 import { FeedEmptyState } from './components/FeedEmptyState';
@@ -781,44 +782,53 @@ export default function FeedPage() {
   const [recommendations, setRecommendations] = useState<RecommendedSpace[]>([]);
   const [unreadSpaces, setUnreadSpaces] = useState<SpaceData[]>([]);
   const [feedUpdate, setFeedUpdate] = useState<FeedUpdateData | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch all feed data
+  // Partial loading states - each section loads independently
+  const [loadingStates, setLoadingStates] = useState({
+    spaces: true,
+    events: true,
+    tools: true,
+    feedUpdate: true,
+  });
+
+  // Derived loading state for backwards compatibility
+  const loading = loadingStates.spaces || loadingStates.events;
+
+  // Fetch feed data with partial/progressive loading
+  // Each section loads independently and renders as data arrives
   useEffect(() => {
     if (authLoading || !user) return;
 
-    async function fetchFeedData() {
-      setLoading(true);
+    // Reset loading states
+    setLoadingStates({
+      spaces: true,
+      events: true,
+      tools: true,
+      feedUpdate: true,
+    });
 
-      try {
-        // Parallel fetch all data sources
-        const [spacesRes, dashboardRes, toolsRes, feedUpdateRes] = await Promise.all([
-          fetch('/api/profile/my-spaces', { credentials: 'include' }),
-          fetch('/api/profile/dashboard?includeRecommendations=true', {
-            credentials: 'include',
-          }),
-          fetch('/api/tools?limit=10', { credentials: 'include' }),
-          fetch('/api/feed/updates?action=check', { credentials: 'include' }),
-        ]);
-
-        // Process spaces
-        if (spacesRes.ok) {
-          const spacesData = await spacesRes.json();
-          const allSpaces = (spacesData.spaces || []) as SpaceData[];
+    // Fetch spaces independently
+    fetch('/api/profile/my-spaces', { credentials: 'include' })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          const allSpaces = (data.spaces || []) as SpaceData[];
           setSpaces(allSpaces);
-
-          // Extract spaces with unread messages
           setUnreadSpaces(
             allSpaces.filter((s: SpaceData) => (s.unreadCount ?? 0) > 0)
           );
         }
+      })
+      .catch((error) => logger.error('Failed to fetch spaces', { component: 'FeedPage' }, error instanceof Error ? error : undefined))
+      .finally(() => setLoadingStates((prev) => ({ ...prev, spaces: false })));
 
-        // Process dashboard (events + recommendations)
-        if (dashboardRes.ok) {
-          const dashboardData = await dashboardRes.json();
+    // Fetch dashboard (events + recommendations) independently
+    fetch('/api/profile/dashboard?includeRecommendations=true', { credentials: 'include' })
+      .then(async (res) => {
+        if (res.ok) {
+          const dashboardData = await res.json();
           const dashboard = dashboardData.dashboard || {};
 
-          // Split events into today and this week
           const allEvents: EventData[] = (dashboard.upcomingEvents || []).map(
             (e: Record<string, unknown>) => ({
               id: e.id as string,
@@ -839,60 +849,67 @@ export default function FeedPage() {
             allEvents.filter((e) => !isToday(e.startDate) && isThisWeek(e.startDate))
           );
 
-          // Recommendations
           if (dashboard.recommendations?.spaces) {
             setRecommendations(dashboard.recommendations.spaces);
           }
         }
+      })
+      .catch((error) => logger.error('Failed to fetch dashboard', { component: 'FeedPage' }, error instanceof Error ? error : undefined))
+      .finally(() => setLoadingStates((prev) => ({ ...prev, events: false })));
 
-        // Process tools
-        if (toolsRes.ok) {
-          const toolsData = await toolsRes.json();
-          setTools(toolsData.tools || []);
+    // Fetch tools independently
+    fetch('/api/tools?limit=10', { credentials: 'include' })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setTools(data.tools || []);
         }
+      })
+      .catch((error) => logger.error('Failed to fetch tools', { component: 'FeedPage' }, error instanceof Error ? error : undefined))
+      .finally(() => setLoadingStates((prev) => ({ ...prev, tools: false })));
 
-        // Process feed updates ("since you left")
-        if (feedUpdateRes.ok) {
-          const feedUpdateData = await feedUpdateRes.json();
-          if (feedUpdateData.data?.update) {
+    // Fetch feed updates independently
+    fetch('/api/feed/updates?action=check', { credentials: 'include' })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data?.update) {
             setFeedUpdate({
-              hasNewPosts: feedUpdateData.data.update.hasNewPosts,
-              newPostCount: feedUpdateData.data.update.newPostCount,
-              lastViewedAt: feedUpdateData.data.update.lastCheckedAt,
-              lastPostAt: feedUpdateData.data.update.lastPostAt,
+              hasNewPosts: data.data.update.hasNewPosts,
+              newPostCount: data.data.update.newPostCount,
+              lastViewedAt: data.data.update.lastCheckedAt,
+              lastPostAt: data.data.update.lastPostAt,
             });
           }
         }
-      } catch (error) {
-        console.error('Failed to fetch feed data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchFeedData();
+      })
+      .catch((error) => logger.error('Failed to fetch feed updates', { component: 'FeedPage' }, error instanceof Error ? error : undefined))
+      .finally(() => setLoadingStates((prev) => ({ ...prev, feedUpdate: false })));
 
     // Mark feed as viewed after 5 seconds on the page
     const markViewedTimeout = setTimeout(() => {
       fetch('/api/feed/updates?action=mark_viewed&itemIds=feed_view', {
         method: 'POST',
         credentials: 'include',
-      }).catch(console.error);
+      }).catch((error) => logger.error('Failed to mark feed as viewed', { component: 'FeedPage' }, error instanceof Error ? error : undefined));
     }, 5000);
 
     return () => clearTimeout(markViewedTimeout);
   }, [authLoading, user]);
 
-  // Check if all sections are empty
+  // Check if all data finished loading
+  const allDataLoaded = !loadingStates.spaces && !loadingStates.events && !loadingStates.tools;
+
+  // Check if all sections are empty (only after all data loaded)
   const isAllEmpty = useMemo(() => {
-    if (loading) return false;
+    if (!allDataLoaded) return false;
     const hasToday = todayEvents.length > 0 || unreadSpaces.length > 0;
     const hasSpaces = spaces.length > 0;
     const hasWeek = weekEvents.length > 0;
     const hasCreations = (user?.isBuilder ?? false) && tools.length > 0;
     const hasDiscover = recommendations.length > 0;
     return !hasToday && !hasSpaces && !hasWeek && !hasCreations && !hasDiscover;
-  }, [loading, todayEvents, unreadSpaces, spaces, weekEvents, tools, recommendations, user?.isBuilder]);
+  }, [allDataLoaded, todayEvents, unreadSpaces, spaces, weekEvents, tools, recommendations, user?.isBuilder]);
 
   // Loading state
   if (authLoading || !densityLoaded) {
@@ -1019,32 +1036,32 @@ export default function FeedPage() {
             <TodaySection
               events={todayEvents}
               unreadSpaces={unreadSpaces}
-              loading={loading}
+              loading={loadingStates.events}
               density={densityConfig}
             />
 
             <YourSpacesSection
               spaces={spaces}
-              loading={loading}
+              loading={loadingStates.spaces}
               density={densityConfig}
             />
 
             <ThisWeekSection
               events={weekEvents}
-              loading={loading}
+              loading={loadingStates.events}
               density={densityConfig}
             />
 
             <YourCreationsSection
               tools={tools}
-              loading={loading}
+              loading={loadingStates.tools}
               isBuilder={user?.isBuilder ?? false}
               density={densityConfig}
             />
 
             <DiscoverSection
               recommendations={recommendations}
-              loading={loading}
+              loading={loadingStates.events}
               density={densityConfig}
             />
           </div>

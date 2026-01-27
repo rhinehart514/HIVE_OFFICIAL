@@ -91,7 +91,7 @@ export const MetricCards = () => {
     <div className="space-y-4">
       {/* Last Updated */}
       <div className="text-right">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-white/40">
           Last updated: {formatLastUpdated(metrics.lastUpdated)}
         </p>
       </div>
@@ -99,9 +99,9 @@ export const MetricCards = () => {
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total UsersIcon */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">
+            <CardTitle className="text-sm font-medium text-white/70">
               Total UsersIcon
             </CardTitle>
             <UsersIcon className="h-4 w-4 text-gold" />
@@ -110,16 +110,16 @@ export const MetricCards = () => {
             <div className="text-2xl font-bold text-white">
               {metrics.totalUsers.toLocaleString()}
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-white/40">
               Registered accounts
             </p>
           </CardContent>
         </Card>
 
         {/* Conversion Rate */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">
+            <CardTitle className="text-sm font-medium text-white/70">
               Conversion Rate
             </CardTitle>
             <ArrowTrendingUpIcon className="h-4 w-4 text-green-500" />
@@ -128,16 +128,16 @@ export const MetricCards = () => {
             <div className="text-2xl font-bold text-white">
               {metrics.conversionRate}%
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-white/40">
               Onboarding completion
             </p>
           </CardContent>
         </Card>
 
         {/* Drop-off Rate */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">
+            <CardTitle className="text-sm font-medium text-white/70">
               Drop-off Rate
             </CardTitle>
             <ExclamationTriangleIcon className="h-4 w-4 text-yellow-500" />
@@ -146,16 +146,16 @@ export const MetricCards = () => {
             <div className="text-2xl font-bold text-white">
               {metrics.onboardingDropOff}%
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-white/40">
               Onboarding abandonment
             </p>
           </CardContent>
         </Card>
 
         {/* Active Builders */}
-        <Card className="border-gray-700 bg-gray-900/50">
+        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">
+            <CardTitle className="text-sm font-medium text-white/70">
               Active Tools
             </CardTitle>
             <WrenchIcon className="h-4 w-4 text-gold" />
@@ -164,7 +164,7 @@ export const MetricCards = () => {
             <div className="text-2xl font-bold text-white">
               {metrics.activeBuilders}
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-white/40">
               Deployed HiveLab tools
             </p>
           </CardContent>

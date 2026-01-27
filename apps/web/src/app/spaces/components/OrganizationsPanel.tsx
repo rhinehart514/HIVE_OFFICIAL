@@ -14,6 +14,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { MoreHorizontal, BellOff, LogOut, Settings, Link2 } from 'lucide-react';
 import {
   motion,
   MOTION,
@@ -22,6 +23,14 @@ import {
   AvatarFallback,
   getInitials,
 } from '@hive/ui/design-system/primitives';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  toast,
+} from '@hive/ui';
 import { cn } from '@/lib/utils';
 import { getEnergyLevel, getEnergyDotCount } from '@/lib/energy-utils';
 import type { Space } from '../hooks/useSpacesHQ';
@@ -33,6 +42,8 @@ import type { Space } from '../hooks/useSpacesHQ';
 interface OrganizationsPanelProps {
   spaces: Space[];
   maxVisible?: number;
+  onMuteSpace?: (spaceId: string) => void;
+  onLeaveSpace?: (spaceId: string) => void;
 }
 
 // ============================================================
@@ -61,25 +72,60 @@ function EnergyDots({ count }: { count: number }) {
 function SpaceCard({
   space,
   index,
+  onMute,
+  onLeave,
 }: {
   space: Space;
   index: number;
+  onMute?: (spaceId: string) => void;
+  onLeave?: (spaceId: string) => void;
 }) {
   const router = useRouter();
+  const [menuOpen, setMenuOpen] = React.useState(false);
 
   // Calculate energy level for this space
   const energyLevel = getEnergyLevel(space.recentMessageCount);
   const energyDotCount = getEnergyDotCount(energyLevel);
+  const hasOnline = (space.onlineCount ?? 0) > 0;
+
+  const handleCopyInvite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/s/${space.handle || space.id}`;
+    await navigator.clipboard.writeText(url);
+    toast.success('Link copied');
+    setMenuOpen(false);
+  };
+
+  const handleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onMute?.(space.id);
+    toast.success('Space muted');
+    setMenuOpen(false);
+  };
+
+  const handleLeave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onLeave?.(space.id);
+    toast.success('Left space');
+    setMenuOpen(false);
+  };
+
+  const handleSettings = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/s/${space.handle || space.id}?settings=true`);
+    setMenuOpen(false);
+  };
 
   return (
-    <motion.button
-      onClick={() => router.push(`/s/${space.handle || space.id}`)}
+    <motion.div
       className={cn(
-        'flex flex-col items-center gap-3 p-4 rounded-xl text-center',
+        'group relative flex flex-col items-center gap-3 p-4 rounded-xl text-center',
         'transition-all duration-200',
         'bg-white/[0.02] hover:bg-white/[0.05]',
-        'ring-1 ring-white/[0.04] hover:ring-white/[0.08]'
+        'ring-1 ring-white/[0.04] hover:ring-white/[0.08]',
+        'cursor-pointer'
       )}
+      onClick={() => router.push(`/s/${space.handle || space.id}`)}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -88,6 +134,45 @@ function SpaceCard({
         ease: MOTION.ease.premium,
       }}
     >
+      {/* Quick Actions Menu */}
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <button
+              onClick={(e) => e.stopPropagation()}
+              className="p-1.5 rounded-md bg-black/40 hover:bg-black/60 transition-colors"
+            >
+              <MoreHorizontal className="w-3.5 h-3.5 text-white/60" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={handleCopyInvite}>
+              <Link2 className="w-4 h-4 mr-2" />
+              Copy link
+            </DropdownMenuItem>
+            {onMute && (
+              <DropdownMenuItem onClick={handleMute}>
+                <BellOff className="w-4 h-4 mr-2" />
+                Mute
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={handleSettings}>
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </DropdownMenuItem>
+            {onLeave && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLeave} className="text-red-400 focus:text-red-400">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Leave
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Avatar */}
       <div className="relative">
         <Avatar size="lg" className="ring-1 ring-white/[0.06]">
@@ -99,14 +184,19 @@ function SpaceCard({
 
         {/* Unread badge - takes priority position */}
         {space.unreadCount && space.unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-amber-500 text-[10px] font-semibold text-black">
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-[var(--color-gold,#C9A227)] text-[10px] font-semibold text-black">
             {space.unreadCount > 9 ? '9+' : space.unreadCount}
           </span>
         )}
 
-        {/* Energy dots - bottom right of avatar */}
-        {energyDotCount > 0 && !space.unreadCount && (
-          <div className="absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full bg-[#0A0A0A]">
+        {/* Online indicator - green dot when members online */}
+        {hasOnline && !space.unreadCount && (
+          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-black" />
+        )}
+
+        {/* Energy dots - bottom right of avatar (when no online, no unreads) */}
+        {energyDotCount > 0 && !space.unreadCount && !hasOnline && (
+          <div className="absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full bg-black">
             <EnergyDots count={energyDotCount} />
           </div>
         )}
@@ -117,17 +207,23 @@ function SpaceCard({
         {space.name}
       </span>
 
-      {/* Member count + energy indicator */}
-      <div className="flex items-center gap-2">
-        <span className="text-label text-white/30">
-          {space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}
-        </span>
+      {/* Member count + presence */}
+      <div className="flex items-center gap-2 flex-wrap justify-center">
+        {hasOnline ? (
+          <span className="text-label text-emerald-400/70">
+            {space.onlineCount} here
+          </span>
+        ) : (
+          <span className="text-label text-white/30">
+            {space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}
+          </span>
+        )}
         {/* Show energy dots inline if there are unreads (since badge takes position) */}
         {energyDotCount > 0 && space.unreadCount && space.unreadCount > 0 && (
           <EnergyDots count={energyDotCount} />
         )}
       </div>
-    </motion.button>
+    </motion.div>
   );
 }
 
@@ -160,6 +256,8 @@ function EmptySpaces() {
 export function OrganizationsPanel({
   spaces,
   maxVisible = 12,
+  onMuteSpace,
+  onLeaveSpace,
 }: OrganizationsPanelProps) {
   const router = useRouter();
   const visibleSpaces = spaces.slice(0, maxVisible);
@@ -172,7 +270,13 @@ export function OrganizationsPanel({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
       {visibleSpaces.map((space, i) => (
-        <SpaceCard key={space.id} space={space} index={i} />
+        <SpaceCard
+          key={space.id}
+          space={space}
+          index={i}
+          onMute={onMuteSpace}
+          onLeave={onLeaveSpace}
+        />
       ))}
 
       {/* More card */}

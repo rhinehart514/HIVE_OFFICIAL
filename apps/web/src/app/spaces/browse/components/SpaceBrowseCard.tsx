@@ -7,7 +7,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Calendar, Mail } from 'lucide-react';
+import { Users, Calendar, Mail, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Avatar,
@@ -17,6 +17,21 @@ import {
   motion,
   MOTION,
 } from '@hive/ui/design-system/primitives';
+
+// Format last active timestamp to human-readable
+function formatLastActive(timestamp: string): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 export interface SpaceBrowseCardProps {
   space: {
@@ -40,6 +55,13 @@ export interface SpaceBrowseCardProps {
     email?: string;
     source?: 'ublinked' | 'user-created';
     hasLeader?: boolean;
+    // Card state signals
+    isInvited?: boolean;
+    isLocked?: boolean;
+    lockReason?: string;
+    onlineCount?: number;
+    recentMessageCount?: number;
+    lastActiveAt?: string;
   };
   index?: number;
   variant?: 'default' | 'featured';
@@ -56,32 +78,41 @@ export function SpaceBrowseCard({
   const handle = space.handle || space.slug || space.id;
 
   const isFeatured = variant === 'featured';
+  const isLocked = space.isLocked;
+  const isInvited = space.isInvited;
+  const hasOnline = (space.onlineCount ?? 0) > 0;
 
   return (
     <motion.button
-      onClick={() => router.push(`/s/${handle}`)}
+      onClick={() => !isLocked && router.push(`/s/${handle}`)}
+      disabled={isLocked}
       className={cn(
         'group relative text-left w-full rounded-2xl overflow-hidden transition-all duration-300',
         isFeatured
           ? 'p-6 md:p-8'
           : 'p-4',
+        isLocked && 'opacity-50 cursor-not-allowed',
+        isInvited && 'border border-dashed border-white/20',
+        space.isMember && 'ring-1 ring-[var(--life-gold)]/30',
         className
       )}
       style={{
         background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
+        boxShadow: isInvited
+          ? 'none'
+          : 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
       }}
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: isLocked ? 0.5 : 1, y: 0 }}
       transition={{
         duration: MOTION.duration.base,
         delay: index * MOTION.stagger.tight,
         ease: MOTION.ease.premium,
       }}
-      whileHover={{
+      whileHover={!isLocked ? {
         scale: 1.01,
         transition: { duration: MOTION.duration.instant },
-      }}
+      } : undefined}
     >
       {/* Hover glow effect */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
@@ -147,7 +178,7 @@ export function SpaceBrowseCard({
               <span>{space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-[var(--color-gold,#C9A227)]/70">
+            <div className="flex items-center gap-1.5 text-[var(--life-gold)]/70">
               <Users size={12} />
               <span className="font-medium">Be the first to join</span>
             </div>
@@ -171,7 +202,7 @@ export function SpaceBrowseCard({
                       key={i}
                       src={url}
                       alt=""
-                      className="w-4 h-4 rounded-full ring-1 ring-[#0A0A0A]"
+                      className="w-4 h-4 rounded-full ring-1 ring-black"
                     />
                   ))}
                 </div>
@@ -191,19 +222,40 @@ export function SpaceBrowseCard({
               <span>Contact</span>
             </a>
           )}
+
+          {/* Last active - for quiet spaces without online members */}
+          {!hasOnline && space.lastActiveAt && (
+            <div className="flex items-center gap-1.5 text-white/20">
+              <span>Last active: {formatLastActive(space.lastActiveAt)}</span>
+            </div>
+          )}
         </div>
 
-        {/* Member badge */}
-        {space.isMember && (
-          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-white/[0.06] text-label-xs text-white/40 font-medium">
+        {/* Status badges - priority order */}
+        {isLocked ? (
+          <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-white/[0.04] text-label-xs text-white/40 font-medium flex items-center gap-1.5">
+            <Lock size={10} />
+            {space.lockReason || 'Locked'}
+          </div>
+        ) : isInvited ? (
+          <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-[var(--life-gold)]/10 text-label-xs text-[var(--life-gold)] font-medium">
+            Invited
+          </div>
+        ) : space.isMember ? (
+          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-[var(--life-gold)]/10 text-label-xs text-[var(--life-gold)]/70 font-medium">
             Joined
           </div>
-        )}
-
-        {/* Claim status badge (P1.3) - for imported spaces with no active leadership */}
-        {!space.isMember && space.source === 'ublinked' && ((space.memberCount ?? 0) === 0 || space.hasLeader === false) && (
+        ) : space.source === 'ublinked' && ((space.memberCount ?? 0) === 0 || space.hasLeader === false) ? (
           <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-blue-500/10 text-xs text-blue-300 font-medium">
             Ready to claim
+          </div>
+        ) : null}
+
+        {/* Online indicator - bottom right for active spaces */}
+        {hasOnline && !isLocked && (
+          <div className="absolute bottom-4 left-4 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-label-xs text-emerald-400/70">{space.onlineCount} online</span>
           </div>
         )}
 
@@ -237,28 +289,28 @@ export function FeaturedSpaceCard({
       {/* Gold border animation */}
       <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-gold,#C9A227)]/40 to-transparent"
+          className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--life-gold)]/40 to-transparent"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: MOTION.duration.slow, delay: 0.2, ease: MOTION.ease.premium }}
           style={{ transformOrigin: 'left' }}
         />
         <motion.div
-          className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-gold,#C9A227)]/40 to-transparent"
+          className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--life-gold)]/40 to-transparent"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: MOTION.duration.slow, delay: 0.3, ease: MOTION.ease.premium }}
           style={{ transformOrigin: 'right' }}
         />
         <motion.div
-          className="absolute top-0 bottom-0 left-0 w-px bg-gradient-to-b from-transparent via-[var(--color-gold,#C9A227)]/40 to-transparent"
+          className="absolute top-0 bottom-0 left-0 w-px bg-gradient-to-b from-transparent via-[var(--life-gold)]/40 to-transparent"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: 1 }}
           transition={{ duration: MOTION.duration.slow, delay: 0.4, ease: MOTION.ease.premium }}
           style={{ transformOrigin: 'top' }}
         />
         <motion.div
-          className="absolute top-0 bottom-0 right-0 w-px bg-gradient-to-b from-transparent via-[var(--color-gold,#C9A227)]/40 to-transparent"
+          className="absolute top-0 bottom-0 right-0 w-px bg-gradient-to-b from-transparent via-[var(--life-gold)]/40 to-transparent"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: 1 }}
           transition={{ duration: MOTION.duration.slow, delay: 0.5, ease: MOTION.ease.premium }}
@@ -281,7 +333,7 @@ export function FeaturedSpaceCard({
         {/* Label */}
         {label && (
           <div className="mb-4">
-            <span className="text-label-sm font-medium text-[var(--color-gold,#C9A227)]/60 uppercase tracking-wider">
+            <span className="text-label-sm font-medium text-[var(--life-gold)]/60 uppercase tracking-wider">
               {label}
             </span>
           </div>
@@ -289,9 +341,9 @@ export function FeaturedSpaceCard({
 
         {/* Header */}
         <div className="flex items-start gap-4 mb-4">
-          <Avatar size="xl" className="ring-2 ring-[var(--color-gold,#C9A227)]/20">
+          <Avatar size="xl" className="ring-2 ring-[var(--life-gold)]/20">
             {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-            <AvatarFallback className="text-xl bg-[var(--color-gold,#C9A227)]/10 text-[var(--color-gold,#C9A227)]">
+            <AvatarFallback className="text-xl bg-[var(--life-gold)]/10 text-[var(--life-gold)]">
               {getInitials(space.name)}
             </AvatarFallback>
           </Avatar>
@@ -316,7 +368,7 @@ export function FeaturedSpaceCard({
               <span>{space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-[var(--color-gold,#C9A227)]/70">
+            <div className="flex items-center gap-1.5 text-[var(--life-gold)]/70">
               <Users size={14} />
               <span className="font-medium">Be the first to join</span>
             </div>
@@ -331,7 +383,7 @@ export function FeaturedSpaceCard({
 
         {/* Hover arrow */}
         <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <span className="text-[var(--color-gold,#C9A227)]/40 text-xl">→</span>
+          <span className="text-[var(--life-gold)]/40 text-xl">→</span>
         </div>
       </motion.button>
     </motion.div>

@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { Sparkles, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import {
   motion,
   MOTION,
@@ -63,7 +64,7 @@ export function InterestsBrowse({ searchQuery }: InterestsBrowseProps) {
         const json = await res.json();
         setData(json);
       } catch (error) {
-        console.error('Failed to fetch interests browse data:', error);
+        logger.error('Failed to fetch interests browse data', { component: 'InterestsBrowse' }, error instanceof Error ? error : undefined);
       } finally {
         setLoading(false);
       }
@@ -91,7 +92,7 @@ export function InterestsBrowse({ searchQuery }: InterestsBrowseProps) {
         spaces: [...(prev?.spaces || []), ...json.spaces],
       }));
     } catch (error) {
-      console.error('Failed to load more:', error);
+      logger.error('Failed to load more', { component: 'InterestsBrowse' }, error instanceof Error ? error : undefined);
     } finally {
       setLoadingMore(false);
     }

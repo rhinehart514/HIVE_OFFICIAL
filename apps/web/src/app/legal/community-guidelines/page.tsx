@@ -32,7 +32,7 @@ const CURRENT_GUIDELINES: LegalDocument = {
         <h2 className="mt-0 text-xl font-semibold text-[var(--hive-brand-primary)]">
           TL;DR - Be Human, Be Kind
         </h2>
-        <p className="mb-0 text-gray-300">
+        <p className="mb-0 text-white/70">
           HIVE is built on respect, authenticity, and collaboration. Treat
           others as you'd want to be treated, contribute meaningfully to your
           communities, and help us create a space where everyone can thrive.
@@ -415,9 +415,9 @@ const CURRENT_GUIDELINES: LegalDocument = {
         </li>
       </ul>
 
-      <div className="mt-12 border-t border-gray-800 pt-8">
+      <div className="mt-12 border-t border-white/[0.06] pt-8">
         <h3 className="text-lg font-semibold text-[var(--hive-brand-primary)]">Version History</h3>
-        <div className="mt-4 space-y-2 text-sm text-gray-400">
+        <div className="mt-4 space-y-2 text-sm text-white/50">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span>
@@ -441,21 +441,21 @@ export default function CommunityGuidelinesPage() {
     <Suspense fallback={<div>Loading...</div>}>
       <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-950/50">
+      <div className="border-b border-white/[0.06] bg-[var(--bg-void)]/50">
         <div className="mx-auto max-w-4xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/" className="inline-flex items-center gap-2 px-3 py-1 text-sm text-gray-400 hover:text-white transition-colors">
+              <Link href="/" className="inline-flex items-center gap-2 px-3 py-1 text-sm text-white/50 hover:text-white transition-colors">
                 <ArrowLeft className="h-4 w-4" />
                 Back to HIVE
               </Link>
-              <div className="h-6 w-px bg-gray-700" />
-              <div className="flex items-center gap-2 text-gray-400">
+              <div className="h-6 w-px bg-white/[0.08]" />
+              <div className="flex items-center gap-2 text-white/50">
                 <Heart className="h-4 w-4" />
                 <span className="text-sm">Community Standards</span>
               </div>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-white/40">
               Effective: {CURRENT_GUIDELINES.effectiveDate}
             </div>
           </div>
@@ -468,13 +468,13 @@ export default function CommunityGuidelinesPage() {
           <h1 className="mb-2 text-4xl font-bold text-white">
             {CURRENT_GUIDELINES.title}
           </h1>
-          <p className="text-gray-400">
+          <p className="text-white/50">
             Version {CURRENT_GUIDELINES.version} • Effective{" "}
             {CURRENT_GUIDELINES.effectiveDate}
           </p>
         </div>
 
-        <div className="text-gray-300">{CURRENT_GUIDELINES.content}</div>
+        <div className="text-white/70">{CURRENT_GUIDELINES.content}</div>
       </div>
       </div>
     </Suspense>

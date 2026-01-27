@@ -72,7 +72,7 @@ const EMPTY_CONFIG: Record<EmptyStateVariant, EmptyStateConfig> = {
     icon: Compass,
     title: 'Your campus is quiet',
     message: 'Be the first to start something.',
-    action: { label: 'Create a space', href: '/spaces/create' },
+    action: { label: 'Create a space', href: '/spaces/new' },
   },
 };
 

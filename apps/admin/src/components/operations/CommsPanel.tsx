@@ -179,7 +179,7 @@ export function CommsPanel() {
       case 'scheduled':
         return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Scheduled</Badge>;
       case 'draft':
-        return <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">Draft</Badge>;
+        return <Badge className="bg-white/[0.20]/20 text-white/50 border-white/[0.12]/30">Draft</Badge>;
       case 'failed':
         return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Failed</Badge>;
       default:

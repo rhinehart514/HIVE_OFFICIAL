@@ -79,7 +79,7 @@ function ImpactMetricCard({ metric }: { metric: ImpactMetric }) {
             {metric.trend && metric.changePercent !== undefined && (
               <div
                 className={`flex items-center gap-1 text-sm ${
-                  metric.trend === "up" ? "text-green-400" : "text-gray-400"
+                  metric.trend === "up" ? "text-green-400" : "text-white/50"
                 }`}
               >
                 <ArrowTrendingUpIcon className="h-4 w-4" />
@@ -93,7 +93,7 @@ function ImpactMetricCard({ metric }: { metric: ImpactMetric }) {
               {metric.value.toLocaleString()}
             </div>
             <div className="text-lg text-[#FFD700]">{metric.label}</div>
-            <div className="text-sm text-gray-400">{metric.context}</div>
+            <div className="text-sm text-white/50">{metric.context}</div>
           </div>
         </CardContent>
       </HiveCard>
@@ -112,21 +112,21 @@ function SuccessStoryCard({ story }: { story: SuccessStory }) {
         <Badge className="bg-[#FFD700]/20 text-[#FFD700] border-[#FFD700]/30">
           {story.type}
         </Badge>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-white/40">
           {new Date(story.date).toLocaleDateString()}
         </span>
       </div>
 
       <h3 className="text-lg font-semibold text-white mb-2">{story.title}</h3>
-      <p className="text-sm text-gray-400 mb-3">{story.description}</p>
+      <p className="text-sm text-white/50 mb-3">{story.description}</p>
 
       <div className="flex items-center justify-between pt-3 border-t border-white/10">
-        <span className="text-sm text-gray-500">{story.entityName}</span>
+        <span className="text-sm text-white/40">{story.entityName}</span>
         <div className="text-right">
           <div className="text-xl font-bold text-[#FFD700]">
             {story.metricValue.toLocaleString()}
           </div>
-          <div className="text-xs text-gray-500">{story.metric}</div>
+          <div className="text-xs text-white/40">{story.metric}</div>
         </div>
       </div>
     </motion.div>
@@ -137,7 +137,7 @@ function CategoryBar({ category }: { category: CategoryBreakdown }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-400">{category.label}</span>
+        <span className="text-white/50">{category.label}</span>
         <span className="text-white">{category.count} spaces</span>
       </div>
       <div className="h-2 bg-white/5 rounded-full overflow-hidden">
@@ -199,7 +199,7 @@ export function ImpactView() {
   if (loading && metrics.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-gray-400">Loading impact data...</div>
+        <div className="animate-pulse text-white/50">Loading impact data...</div>
       </div>
     );
   }
@@ -238,7 +238,7 @@ export function ImpactView() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-xl text-gray-400"
+          className="text-xl text-white/50"
         >
           {subheadline}
         </motion.p>
@@ -298,7 +298,7 @@ export function ImpactView() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-white/40">
                   No success stories yet. Keep building!
                 </div>
               )}
@@ -328,7 +328,7 @@ export function ImpactView() {
                   </motion.div>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-white/40">
                   No category data available
                 </div>
               )}

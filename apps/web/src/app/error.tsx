@@ -32,12 +32,12 @@ export default function Error({
           Something broke.
         </h2>
 
-        <p className="mb-6 text-sm text-neutral-400">
+        <p className="mb-6 text-sm text-white/50">
           Fixing it. Try again in a sec.
         </p>
 
         {error.digest && (
-          <p className="mb-6 text-xs text-neutral-500">
+          <p className="mb-6 text-xs text-white/40">
             Error ID: {error.digest}
           </p>
         )}
@@ -58,8 +58,8 @@ export default function Error({
         </div>
 
         {process.env.NODE_ENV === 'development' && error.message && (
-          <div className="mt-6 rounded-md bg-neutral-900 border border-neutral-800 p-3 text-left">
-            <p className="text-xs font-mono text-neutral-400 break-all">
+          <div className="mt-6 rounded-md bg-[var(--bg-void)] border border-white/[0.06] p-3 text-left">
+            <p className="text-xs font-mono text-white/50 break-all">
               {error.message}
             </p>
           </div>
