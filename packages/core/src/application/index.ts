@@ -151,3 +151,6 @@ export type {
 } from './rituals/ritual-presenter';
 
 // Service Factory temporarily removed - will be rebuilt with proper DDD structure
+
+// Webhook services
+export * from './webhooks';

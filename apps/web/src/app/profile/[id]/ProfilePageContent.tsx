@@ -35,6 +35,7 @@ import {
   ProfileErrorState,
   ProfileNotFoundState,
 } from './components';
+import { useDM } from '@/contexts/dm-context';
 
 // ============================================================================
 // Constants
@@ -44,6 +45,10 @@ const MAX_TOOLS_VISIBLE = 3;
 const MAX_LEADERSHIP_VISIBLE = 3;
 const MAX_EVENTS_VISIBLE = 2;
 const MAX_SPACES_VISIBLE = 6;
+
+// Inline expansion thresholds
+const TOOLS_EXPANSION_THRESHOLD = MAX_TOOLS_VISIBLE;
+const SPACES_EXPANSION_THRESHOLD = MAX_SPACES_VISIBLE;
 
 const EASE_PREMIUM: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -81,6 +86,11 @@ const zoneVariants = {
 export default function ProfilePageContent() {
   const router = useRouter();
   const state = useProfilePageState();
+  const { openConversation } = useDM();
+
+  // Inline expansion state
+  const [showAllTools, setShowAllTools] = React.useState(false);
+  const [showAllSpaces, setShowAllSpaces] = React.useState(false);
 
   const {
     profileId,
@@ -105,8 +115,20 @@ export default function ProfilePageContent() {
     handleSpaceClick,
     handleToolClick,
     handleConnect,
-    handleMessage,
+    handleAcceptRequest,
+    handleRejectRequest,
+    handleUnfriend,
+    connectionState,
+    pendingRequestId,
+    isConnectionLoading,
   } = state;
+
+  // DM handler - opens conversation with this user
+  const handleMessage = React.useCallback(() => {
+    if (profileId && !isOwnProfile) {
+      openConversation(profileId);
+    }
+  }, [profileId, isOwnProfile, openConversation]);
 
   // ============================================================================
   // Loading/Error States
@@ -179,14 +201,16 @@ export default function ProfilePageContent() {
   // Computed Display Logic
   // ============================================================================
 
-  const visibleTools = activityTools.slice(0, MAX_TOOLS_VISIBLE);
-  const overflowToolsCount = activityTools.length - MAX_TOOLS_VISIBLE;
+  // Tools: expand inline when showAllTools is true
+  const visibleTools = showAllTools ? activityTools : activityTools.slice(0, MAX_TOOLS_VISIBLE);
+  const overflowToolsCount = showAllTools ? 0 : activityTools.length - MAX_TOOLS_VISIBLE;
 
   const visibleLeadership = leadershipSpaces.slice(0, MAX_LEADERSHIP_VISIBLE);
   const visibleEvents = profileOrganizingEvents.slice(0, MAX_EVENTS_VISIBLE);
 
-  const visibleSpaces = spacePills.slice(0, MAX_SPACES_VISIBLE);
-  const overflowSpacesCount = spacePills.length - MAX_SPACES_VISIBLE;
+  // Spaces: expand inline when showAllSpaces is true
+  const visibleSpaces = showAllSpaces ? spacePills : spacePills.slice(0, MAX_SPACES_VISIBLE);
+  const overflowSpacesCount = showAllSpaces ? 0 : spacePills.length - MAX_SPACES_VISIBLE;
 
   const hasActivity = activityTools.length > 0 || leadershipSpaces.length > 0 || profileOrganizingEvents.length > 0;
   const hasSpaces = spacePills.length > 0;
@@ -215,8 +239,14 @@ export default function ProfilePageContent() {
             isOwnProfile={isOwnProfile}
             isOnline={heroPresence.isOnline}
             profileIncomplete={profileIncomplete}
+            connectionState={connectionState}
+            pendingRequestId={pendingRequestId}
+            isConnectionLoading={isConnectionLoading}
             onEdit={handleEditProfile}
             onConnect={handleConnect}
+            onAcceptRequest={handleAcceptRequest}
+            onRejectRequest={handleRejectRequest}
+            onUnfriend={handleUnfriend}
             onMessage={handleMessage}
           />
         </motion.section>
@@ -256,7 +286,7 @@ export default function ProfilePageContent() {
                         <ProfileOverflowChip
                           count={overflowToolsCount}
                           label="more"
-                          onClick={() => router.push(`/tools?userId=${heroUser.id}`)}
+                          onClick={() => setShowAllTools(true)}
                           className="h-full min-h-[100px] flex items-center justify-center"
                         />
                       )}
@@ -358,7 +388,7 @@ export default function ProfilePageContent() {
                   {overflowSpacesCount > 0 && (
                     <ProfileOverflowChip
                       count={overflowSpacesCount}
-                      onClick={() => router.push('/spaces')}
+                      onClick={() => setShowAllSpaces(true)}
                     />
                   )}
                 </div>

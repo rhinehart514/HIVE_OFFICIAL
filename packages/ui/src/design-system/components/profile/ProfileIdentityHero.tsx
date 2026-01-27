@@ -16,6 +16,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
+import { ConnectButton, type ConnectionState } from './ConnectButton';
 
 // ============================================================================
 // Types
@@ -37,8 +38,17 @@ export interface ProfileIdentityHeroProps {
   isOwnProfile: boolean;
   isOnline?: boolean;
   profileIncomplete?: boolean;
+  /** Connection state with this user (ignored for own profile) */
+  connectionState?: ConnectionState;
+  /** Request ID for pending friend requests */
+  pendingRequestId?: string | null;
+  /** Whether connection state is still loading */
+  isConnectionLoading?: boolean;
   onEdit?: () => void;
-  onConnect?: () => void;
+  onConnect?: () => Promise<void>;
+  onAcceptRequest?: (requestId: string) => Promise<void>;
+  onRejectRequest?: (requestId: string) => Promise<void>;
+  onUnfriend?: () => Promise<void>;
   onMessage?: () => void;
   className?: string;
 }
@@ -63,8 +73,14 @@ export function ProfileIdentityHero({
   isOwnProfile,
   isOnline = false,
   profileIncomplete = false,
+  connectionState = 'none',
+  pendingRequestId,
+  isConnectionLoading = false,
   onEdit,
   onConnect,
+  onAcceptRequest,
+  onRejectRequest,
+  onUnfriend,
   onMessage,
   className,
 }: ProfileIdentityHeroProps) {
@@ -224,24 +240,28 @@ export function ProfileIdentityHero({
                 </motion.button>
               ) : (
                 <>
-                  {/* Connect - Primary action */}
-                  <motion.button
-                    onClick={onConnect}
-                    className="px-5 py-2.5 rounded-full text-sm font-semibold transition-all"
-                    style={{
-                      backgroundColor: 'rgba(255,215,0,0.1)',
-                      color: 'var(--life-gold)',
-                      border: '1px solid rgba(255,215,0,0.4)',
-                      boxShadow: '0 0 20px rgba(255,215,0,0.15)',
-                    }}
-                    whileHover={{
-                      backgroundColor: 'rgba(255,215,0,0.15)',
-                      boxShadow: '0 0 30px rgba(255,215,0,0.25)',
-                    }}
-                    whileTap={{ opacity: 0.8 }}
-                  >
-                    Connect
-                  </motion.button>
+                  {/* Connect Button */}
+                  {!isConnectionLoading && onConnect && (
+                    <ConnectButton
+                      targetUserId={user.id}
+                      connectionState={connectionState}
+                      pendingRequestId={pendingRequestId ?? undefined}
+                      onConnect={onConnect}
+                      onAccept={onAcceptRequest}
+                      onReject={onRejectRequest}
+                      onUnfriend={onUnfriend}
+                    />
+                  )}
+                  {isConnectionLoading && (
+                    <div
+                      className="px-5 py-2.5 rounded-full text-sm font-medium animate-pulse"
+                      style={{
+                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        width: 100,
+                        height: 40,
+                      }}
+                    />
+                  )}
 
                   {/* Message - Secondary action */}
                   <motion.button
@@ -266,6 +286,73 @@ export function ProfileIdentityHero({
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// ============================================================================
+// Skeleton Component
+// ============================================================================
+
+export function ProfileIdentityHeroSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn('relative w-full', className)}>
+      <div
+        className="relative overflow-hidden p-8 animate-pulse"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: '24px',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+        }}
+      >
+        <div className="relative flex flex-col sm:flex-row gap-6 sm:gap-8">
+          {/* Avatar skeleton */}
+          <div className="flex-shrink-0">
+            <div
+              className="w-20 h-20"
+              style={{
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              }}
+            />
+          </div>
+
+          {/* Identity info skeleton */}
+          <div className="flex-1 min-w-0 space-y-3">
+            {/* Name */}
+            <div
+              className="h-7 w-48 rounded"
+              style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+            />
+            {/* Handle */}
+            <div
+              className="h-4 w-32 rounded"
+              style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+            />
+            {/* Credentials */}
+            <div
+              className="h-3 w-40 rounded"
+              style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+            />
+            {/* Bio */}
+            <div className="space-y-2 mt-4">
+              <div
+                className="h-4 w-full rounded"
+                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+              />
+              <div
+                className="h-4 w-3/4 rounded"
+                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+              />
+            </div>
+            {/* Button */}
+            <div
+              className="h-10 w-28 rounded-full mt-6"
+              style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -21,6 +21,7 @@ export {
 // Zone 1: Identity Hero
 export {
   ProfileIdentityHero,
+  ProfileIdentityHeroSkeleton,
   type ProfileIdentityHeroUser,
   type ProfileIdentityHeroProps,
 } from './ProfileIdentityHero';
@@ -28,12 +29,14 @@ export {
 // Zone 2: Activity Cards (Building, Leading, Organizing)
 export {
   ProfileActivityCard,
+  ProfileActivityCardSkeleton,
   type ProfileActivityTool,
   type ProfileActivityCardProps,
 } from './ProfileActivityCard';
 
 export {
   ProfileLeadershipCard,
+  ProfileLeadershipCardSkeleton,
   type ProfileLeadershipSpace,
   type ProfileLeadershipCardProps,
 } from './ProfileLeadershipCard';
@@ -47,6 +50,7 @@ export {
 // Zone 3: Campus Presence
 export {
   ProfileSpacePill,
+  ProfileSpacePillSkeleton,
   type ProfileSpacePillSpace,
   type ProfileSpacePillProps,
 } from './ProfileSpacePill';
@@ -121,6 +125,16 @@ export {
   type ProfileActivityHeatmapProps,
   type ActivityContribution,
 } from './ProfileActivityHeatmap';
+
+// ============================================
+// CONNECTION COMPONENTS
+// ============================================
+
+export {
+  ConnectButton,
+  type ConnectButtonProps,
+  type ConnectionState,
+} from './ConnectButton';
 
 // ============================================
 // BENTO GRID WIDGETS (New - Phase 2)

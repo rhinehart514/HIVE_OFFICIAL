@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
@@ -48,10 +49,24 @@ const BatchRemoveSchema = z.object({
   reason: z.string().optional(),
 });
 
+const BatchApproveRequestsSchema = z.object({
+  action: z.literal("approveRequests"),
+  requestIds: z.array(z.string()).min(1).max(50),
+});
+
+const BatchCreateInvitesSchema = z.object({
+  action: z.literal("createInvites"),
+  count: z.number().int().min(1).max(20),
+  expiresInHours: z.number().int().min(1).max(720).optional(), // Max 30 days
+  maxUses: z.number().int().min(1).max(100).optional(),
+});
+
 const BatchOperationSchema = z.discriminatedUnion("action", [
   BatchInviteSchema,
   BatchUpdateRolesSchema,
   BatchRemoveSchema,
+  BatchApproveRequestsSchema,
+  BatchCreateInvitesSchema,
 ]);
 
 type BatchOperationInput = z.infer<typeof BatchOperationSchema>;
@@ -312,6 +327,193 @@ export const POST = withAuthValidationAndErrors(
           failureCount++;
         }
       }
+    } else if (body.action === "approveRequests") {
+      // Batch approve join requests
+      for (const requestId of body.requestIds) {
+        try {
+          // Get the join request
+          const requestRef = dbAdmin.collection("spaceJoinRequests").doc(requestId);
+          const requestDoc = await requestRef.get();
+
+          if (!requestDoc.exists) {
+            results.push({ success: false, userId: requestId, error: "Request not found" });
+            failureCount++;
+            continue;
+          }
+
+          const requestData = requestDoc.data();
+
+          // Validate request belongs to this space
+          if (requestData?.spaceId !== spaceId || requestData?.campusId !== campusId) {
+            results.push({ success: false, userId: requestId, error: "Request not found" });
+            failureCount++;
+            continue;
+          }
+
+          // Check if already reviewed
+          if (requestData?.status !== "pending") {
+            results.push({ success: false, userId: requestId, error: `Already ${requestData?.status}` });
+            failureCount++;
+            continue;
+          }
+
+          const targetUserId = requestData.userId as string;
+          const now = admin.firestore.FieldValue.serverTimestamp();
+
+          // Use batch write for atomicity
+          const batch = dbAdmin.batch();
+
+          // Update request status
+          batch.update(requestRef, {
+            status: "approved",
+            reviewedAt: now,
+            reviewedBy: requesterId,
+            updatedAt: now,
+          });
+
+          // Create membership
+          const compositeId = `${spaceId}_${targetUserId}`;
+          const memberRef = dbAdmin.collection("spaceMembers").doc(compositeId);
+
+          batch.set(memberRef, addSecureCampusMetadata({
+            spaceId,
+            userId: targetUserId,
+            role: "member",
+            joinedAt: now,
+            isActive: true,
+            permissions: ["post", "comment", "react"],
+            joinMethod: "approval",
+            joinMetadata: {
+              requestId,
+              approvedBy: requesterId,
+              batchApproval: true,
+            },
+          }), { merge: true });
+
+          // Update space member count
+          const spaceRef = dbAdmin.collection("spaces").doc(spaceId);
+          batch.update(spaceRef, {
+            memberCount: admin.firestore.FieldValue.increment(1),
+            updatedAt: now,
+          });
+
+          await batch.commit();
+
+          results.push({ success: true, userId: targetUserId });
+          successCount++;
+        } catch (error) {
+          results.push({ success: false, userId: requestId, error: error instanceof Error ? error.message : "Unknown error" });
+          failureCount++;
+        }
+      }
+    } else if (body.action === "createInvites") {
+      // Batch create invite codes
+      const inviteResults: Array<{
+        success: boolean;
+        code?: string;
+        url?: string;
+        expiresAt?: string;
+        error?: string;
+      }> = [];
+
+      // Check existing active invites count
+      const existingCount = await dbAdmin
+        .collection("spaceInvites")
+        .where("spaceId", "==", spaceId)
+        .where("campusId", "==", campusId)
+        .where("isActive", "==", true)
+        .count()
+        .get();
+
+      const maxInvites = 20;
+      const currentCount = existingCount.data().count;
+      const availableSlots = Math.max(0, maxInvites - currentCount);
+
+      if (availableSlots === 0) {
+        return respond.error(
+          `Maximum active invite links reached (${maxInvites}). Please revoke some existing links first.`,
+          "LIMIT_EXCEEDED",
+          { status: HttpStatus.BAD_REQUEST }
+        );
+      }
+
+      const invitesToCreate = Math.min(body.count, availableSlots);
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + (body.expiresInHours || 168)); // Default 7 days
+
+      for (let i = 0; i < invitesToCreate; i++) {
+        try {
+          const code = randomUUID();
+
+          const inviteData = {
+            code,
+            spaceId,
+            campusId,
+            createdBy: requesterId,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+            maxUses: body.maxUses,
+            uses: 0,
+            isActive: true,
+            batchCreated: true,
+          };
+
+          await dbAdmin.collection("spaceInvites").add(inviteData);
+
+          inviteResults.push({
+            success: true,
+            code,
+            url: `https://hive.college/spaces/join/${code}`,
+            expiresAt: expiresAt.toISOString(),
+          });
+          successCount++;
+        } catch (error) {
+          inviteResults.push({
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+          failureCount++;
+        }
+      }
+
+      // Log and return early with invite-specific response
+      await dbAdmin
+        .collection("spaces")
+        .doc(spaceId)
+        .collection("activity")
+        .add({
+          type: "batch_createInvites",
+          performedBy: requesterId,
+          details: {
+            action: "createInvites",
+            requested: body.count,
+            created: successCount,
+            failed: failureCount,
+            expiresInHours: body.expiresInHours || 168,
+            maxUses: body.maxUses,
+          },
+          timestamp: new Date(),
+        });
+
+      logger.info("Batch invite creation completed", {
+        requesterId,
+        spaceId,
+        requested: body.count,
+        created: successCount,
+        failed: failureCount,
+        endpoint: "/api/spaces/[spaceId]/members/batch",
+      });
+
+      return respond.success({
+        action: body.action,
+        invites: inviteResults.filter(r => r.success),
+        summary: {
+          requested: body.count,
+          created: successCount,
+          failed: failureCount,
+          limitReached: body.count > invitesToCreate,
+        },
+      });
     }
 
     // Log the batch operation

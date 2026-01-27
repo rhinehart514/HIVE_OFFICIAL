@@ -1596,6 +1596,10 @@ export { ProfileToolsCard as ProfileHiveLabWidget } from "./design-system/compon
 export type { ProfileToolsCardProps as ProfileHiveLabWidgetProps } from "./design-system/components/profile";
 export type { ProfileTool as ProfileToolItem } from "./design-system/components/profile";
 
+// ConnectButton - Friend request button with state machine
+export { ConnectButton } from "./design-system/components/profile";
+export type { ConnectButtonProps, ConnectionState } from "./design-system/components/profile";
+
 // ============================================
 // PROFILE: COMING SOON (REMOVED)
 // NOTE: ProfileComingSoonSection was in atomic/ (now deleted).

@@ -4,6 +4,8 @@ import { type ReactNode, useState, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AtmosphereProvider, PageTransitionProvider, Toaster, useToast } from "@hive/ui";
+import { DMProvider } from "@/contexts/dm-context";
+import { DMPanel } from "@/components/dm";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -73,9 +75,12 @@ export function Providers({ children }: ProvidersProps) {
       >
         <AtmosphereProvider defaultAtmosphere="spaces">
           <PageTransitionProvider defaultMode="fade">
-            {children}
-            <Toaster />
-            <ToastBridge />
+            <DMProvider>
+              {children}
+              <DMPanel />
+              <Toaster />
+              <ToastBridge />
+            </DMProvider>
           </PageTransitionProvider>
         </AtmosphereProvider>
       </ThemeProvider>

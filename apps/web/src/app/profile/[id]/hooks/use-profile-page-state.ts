@@ -15,6 +15,7 @@ import { useAuth } from '@hive/auth-logic';
 import { db } from '@hive/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { logger } from '@/lib/logger';
+import { useToast } from '@hive/ui';
 import { profileApiResponseToProfileSystem, type ProfileV2ApiResponse } from '@/components/profile/profile-adapter';
 import type { ProfileSystem, BentoGridLayout, PresenceData } from '@hive/core';
 import type {
@@ -28,6 +29,7 @@ import type {
   ProfileTool,
   ProfileConnection,
   ActivityContribution,
+  ConnectionState,
 } from '@hive/ui';
 
 // ============================================================================
@@ -118,6 +120,17 @@ export interface UseProfilePageStateReturn {
   organizingEvents: ProfileOrganizingEvent[];
 
   // ============================================================================
+  // Connection State
+  // ============================================================================
+
+  /** Friend connection state with the profile user */
+  connectionState: ConnectionState;
+  /** Request ID if there's a pending incoming/outgoing request */
+  pendingRequestId: string | null;
+  /** Whether connection state is loading */
+  isConnectionLoading: boolean;
+
+  // ============================================================================
   // Handlers
   // ============================================================================
 
@@ -131,7 +144,10 @@ export interface UseProfilePageStateReturn {
   handleNotifyFeature: (feature: FeatureKey) => Promise<void>;
   handleSpaceClick: (spaceId: string) => void;
   handleToolClick: (toolId: string) => void;
-  handleConnect: () => void;
+  handleConnect: () => Promise<void>;
+  handleAcceptRequest: (requestId: string) => Promise<void>;
+  handleRejectRequest: (requestId: string) => Promise<void>;
+  handleUnfriend: () => Promise<void>;
   handleMessage: () => void;
 }
 
@@ -172,6 +188,7 @@ export function useProfilePageState(): UseProfilePageStateReturn {
   const params = useParams();
   const router = useRouter();
   const { user: currentUser } = useAuth();
+  const { toast } = useToast();
   const rawProfileId = params.id as string;
   // Handle "me" route by substituting current user's ID
   const profileId = rawProfileId === 'me' && currentUser?.id ? currentUser.id : rawProfileId;
@@ -199,6 +216,11 @@ export function useProfilePageState(): UseProfilePageStateReturn {
     connections: Array<{ id: string; name: string; avatarUrl?: string }>;
     count: number;
   }>({ connections: [], count: 0 });
+
+  // Connection state (friend request system)
+  const [connectionState, setConnectionState] = React.useState<ConnectionState>('none');
+  const [pendingRequestId, setPendingRequestId] = React.useState<string | null>(null);
+  const [isConnectionLoading, setIsConnectionLoading] = React.useState(false);
 
   const isOwnProfile = currentUser?.id === profileId;
   const hasProfileData = profileData !== null;
@@ -443,6 +465,71 @@ export function useProfilePageState(): UseProfilePageStateReturn {
 
     fetchMutualConnections();
   }, [profileId, isOwnProfile]);
+
+  // Fetch connection state (friend request status)
+  React.useEffect(() => {
+    if (!profileId || isOwnProfile || !currentUser?.id) {
+      setConnectionState('none');
+      setPendingRequestId(null);
+      return;
+    }
+
+    const fetchConnectionState = async () => {
+      setIsConnectionLoading(true);
+      try {
+        const response = await fetch('/api/friends?include_requests=true', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          setConnectionState('none');
+          return;
+        }
+
+        const data = await response.json();
+
+        // Check if already friends
+        const isFriend = data.friends?.some((f: { id: string }) => f.id === profileId);
+        if (isFriend) {
+          setConnectionState('friends');
+          setPendingRequestId(null);
+          return;
+        }
+
+        // Check for outgoing pending request
+        const sentRequest = data.sentRequests?.find(
+          (r: { toUserId: string }) => r.toUserId === profileId
+        );
+        if (sentRequest) {
+          setConnectionState('pending_outgoing');
+          setPendingRequestId(sentRequest.requestId);
+          return;
+        }
+
+        // Check for incoming pending request
+        const receivedRequest = data.receivedRequests?.find(
+          (r: { fromUserId: string }) => r.fromUserId === profileId
+        );
+        if (receivedRequest) {
+          setConnectionState('pending_incoming');
+          setPendingRequestId(receivedRequest.requestId);
+          return;
+        }
+
+        // No connection
+        setConnectionState('none');
+        setPendingRequestId(null);
+      } catch (err) {
+        logger.error('Failed to fetch connection state', { component: 'ProfilePageContent' }, err instanceof Error ? err : undefined);
+        setConnectionState('none');
+        setPendingRequestId(null);
+      } finally {
+        setIsConnectionLoading(false);
+      }
+    };
+
+    fetchConnectionState();
+  }, [profileId, isOwnProfile, currentUser?.id]);
 
   // ============================================================================
   // Computed Values
@@ -725,17 +812,123 @@ export function useProfilePageState(): UseProfilePageStateReturn {
     router.push(`/tools/${toolId}`);
   }, [router]);
 
-  // NOTE: Connection system requires backend API (/api/profile/[id]/connect).
-  // For now, logs intent - will be wired when social graph is implemented.
-  const handleConnect = React.useCallback(() => {
-    logger.info('Connect clicked - social graph not yet implemented', { component: 'ProfilePageContent', profileId });
-  }, [profileId]);
+  // Send friend request
+  const handleConnect = React.useCallback(async () => {
+    if (!profileId || isOwnProfile) return;
 
-  // NOTE: Direct messaging requires chat infrastructure. Users can message via space chat.
-  // For now, logs intent - will be wired when DM feature is implemented.
+    try {
+      const response = await fetch('/api/friends', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toUserId: profileId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error('Failed to connect', data.error || 'Something went wrong');
+        return;
+      }
+
+      // Handle different response types
+      if (data.type === 'accepted') {
+        // They had sent us a request, now we're friends
+        setConnectionState('friends');
+        setPendingRequestId(null);
+        toast.success('Connected!', data.message || 'You are now friends');
+      } else if (data.type === 'pending') {
+        // Request sent
+        setConnectionState('pending_outgoing');
+        setPendingRequestId(data.requestId);
+        toast.success('Request sent!', 'They will be notified');
+      }
+    } catch (err) {
+      logger.error('Failed to send friend request', { component: 'ProfilePageContent' }, err instanceof Error ? err : undefined);
+      toast.error('Failed to connect', 'Please try again');
+    }
+  }, [profileId, isOwnProfile, toast]);
+
+  // Accept incoming friend request
+  const handleAcceptRequest = React.useCallback(async (requestId: string) => {
+    try {
+      const response = await fetch('/api/friends', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, action: 'accept' }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error('Failed to accept', data.error || 'Something went wrong');
+        return;
+      }
+
+      setConnectionState('friends');
+      setPendingRequestId(null);
+      toast.success('Connected!', 'You are now friends');
+    } catch (err) {
+      logger.error('Failed to accept friend request', { component: 'ProfilePageContent' }, err instanceof Error ? err : undefined);
+      toast.error('Failed to accept', 'Please try again');
+    }
+  }, [toast]);
+
+  // Reject incoming friend request
+  const handleRejectRequest = React.useCallback(async (requestId: string) => {
+    try {
+      const response = await fetch('/api/friends', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, action: 'reject' }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error('Failed to decline', data.error || 'Something went wrong');
+        return;
+      }
+
+      setConnectionState('none');
+      setPendingRequestId(null);
+    } catch (err) {
+      logger.error('Failed to reject friend request', { component: 'ProfilePageContent' }, err instanceof Error ? err : undefined);
+      toast.error('Failed to decline', 'Please try again');
+    }
+  }, [toast]);
+
+  // Unfriend
+  const handleUnfriend = React.useCallback(async () => {
+    if (!profileId) return;
+
+    try {
+      const response = await fetch(`/api/friends?friendId=${profileId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error('Failed to unfriend', data.error || 'Something went wrong');
+        return;
+      }
+
+      setConnectionState('none');
+      setPendingRequestId(null);
+    } catch (err) {
+      logger.error('Failed to unfriend', { component: 'ProfilePageContent' }, err instanceof Error ? err : undefined);
+      toast.error('Failed to unfriend', 'Please try again');
+    }
+  }, [profileId, toast]);
+
+  // Direct messaging - will open DM panel when wired
   const handleMessage = React.useCallback(() => {
-    logger.info('Message clicked - DM not yet implemented', { component: 'ProfilePageContent', profileId });
-  }, [profileId]);
+    toast.info('Coming soon', 'Direct messages coming in a future update');
+  }, [toast]);
 
   return {
     // Navigation
@@ -788,6 +981,11 @@ export function useProfilePageState(): UseProfilePageStateReturn {
     currentStreak,
     organizingEvents,
 
+    // Connection State
+    connectionState,
+    pendingRequestId,
+    isConnectionLoading,
+
     // Handlers
     handleEditProfile,
     handleViewConnections,
@@ -800,6 +998,9 @@ export function useProfilePageState(): UseProfilePageStateReturn {
     handleSpaceClick,
     handleToolClick,
     handleConnect,
+    handleAcceptRequest,
+    handleRejectRequest,
+    handleUnfriend,
     handleMessage,
   };
 }
