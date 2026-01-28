@@ -46,14 +46,40 @@ export default function LaunchPage() {
   const [isCreating, setIsCreating] = useState(true);
   const [isCreated, setIsCreated] = useState(false);
   const [spaceId, setSpaceId] = useState<string | null>(null);
+  const [spaceSlug, setSpaceSlug] = useState<string>(handle); // Default to handle, updated from API
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  const spaceUrl = `hive.so/s/${handle}`;
-  const fullUrl = `https://hive.so/s/${handle}`;
+  // Use the slug from API response (set after creation)
+  const spaceUrl = `hive.so/s/${spaceSlug}`;
+  const fullUrl = `https://hive.so/s/${spaceSlug}`;
 
-  // Create the space on mount
+  // Map template to category (API requires category)
+  const getCategory = (template: string): string => {
+    const templateCategories: Record<string, string> = {
+      org: 'student_organizations',
+      club: 'student_organizations',
+      study: 'student_organizations',
+      project: 'student_organizations',
+      residential: 'campus_living',
+      greek: 'greek_life',
+      blank: 'student_organizations',
+    };
+    return templateCategories[template] || 'student_organizations';
+  };
+
+  // Map privacy to joinPolicy (API terminology)
+  const getJoinPolicy = (privacyLevel: string): string => {
+    const policyMap: Record<string, string> = {
+      open: 'open',
+      approval: 'approval',
+      invite: 'invite_only',
+    };
+    return policyMap[privacyLevel] || 'approval';
+  };
+
+  // Create the space on mount via real API
   useEffect(() => {
     const createSpace = async () => {
       if (!name || !handle || !user) {
@@ -63,25 +89,37 @@ export default function LaunchPage() {
       }
 
       try {
-        // TODO: Replace with real API call
-        // const response = await fetch('/api/spaces', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({
-        //     name,
-        //     handle,
-        //     description,
-        //     privacy,
-        //     templateId,
-        //   }),
-        // });
-        // const data = await response.json();
+        const response = await fetch('/api/spaces', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            description: description || `Welcome to ${name}`,
+            category: getCategory(templateId),
+            joinPolicy: getJoinPolicy(privacy),
+            tags: [],
+            agreedToGuidelines: true, // User implicitly agrees by creating
+          }),
+        });
 
-        // Mock: simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        const mockSpaceId = `space_${Date.now()}`;
+        const data = await response.json();
 
-        setSpaceId(mockSpaceId);
+        if (!response.ok) {
+          // Handle specific error cases
+          if (response.status === 403) {
+            setError(data.error || 'You do not have permission to create spaces yet.');
+          } else if (response.status === 409) {
+            setError('A space with this name already exists. Please go back and choose a different name.');
+          } else if (response.status === 429) {
+            setError('You have reached the daily limit for creating spaces. Please try again tomorrow.');
+          } else {
+            setError(data.error || 'Failed to create space. Please try again.');
+          }
+          return;
+        }
+
+        setSpaceId(data.space.id);
+        setSpaceSlug(data.space.slug);
         setIsCreated(true);
         setShowConfetti(true);
 
@@ -105,7 +143,7 @@ export default function LaunchPage() {
   }, [fullUrl]);
 
   const handleEnterSpace = () => {
-    router.push(`/s/${handle}`);
+    router.push(`/s/${spaceSlug}`);
   };
 
   // Loading state

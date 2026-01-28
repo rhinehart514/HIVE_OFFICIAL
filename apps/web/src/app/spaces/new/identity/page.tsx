@@ -84,20 +84,24 @@ export default function IdentityPage() {
       return;
     }
 
-    // Check availability
+    // Check availability via real API
     const checkAvailability = async () => {
       setHandleStatus('checking');
 
       try {
-        // TODO: Replace with real API call
-        // const available = await checkHandleAvailable(debouncedHandle);
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        const response = await fetch(`/api/spaces/check-handle?handle=${encodeURIComponent(debouncedHandle)}`);
+        const data = await response.json();
 
-        // Mock: some handles are "taken"
-        const takenHandles = ['test', 'admin', 'hive', 'space'];
-        const available = !takenHandles.includes(debouncedHandle);
+        if (!response.ok) {
+          // Handle validation errors (invalid format)
+          if (response.status === 400) {
+            setHandleStatus('invalid');
+            return;
+          }
+          throw new Error(data.error || 'Check failed');
+        }
 
-        setHandleStatus(available ? 'available' : 'taken');
+        setHandleStatus(data.available ? 'available' : 'taken');
       } catch (error) {
         logger.error('Handle check failed', { component: 'IdentityPage' }, error instanceof Error ? error : undefined);
         setHandleStatus('idle');
