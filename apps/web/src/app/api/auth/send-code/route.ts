@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createHash, randomInt } from 'crypto';
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
 import { validateEmailDomain } from "@hive/core";
-import { CampusEmail } from '@hive/core/server';
+import { getSchoolFromEmailAsync, type SchoolLookupResult } from "@/lib/campus-context";
 import { auditAuthEvent } from "@/lib/production-auth";
 import { currentEnvironment } from "@/lib/env";
 import { validateWithSecurity, ApiSchemas } from "@/lib/secure-input-validation";
@@ -55,9 +55,9 @@ function getClientDb() {
 const sendCodeSchema = z.object({
   email: ApiSchemas.magicLinkRequest.shape.email,
   schoolId: z.string()
-    .min(1, "School ID is required")
     .max(50, "School ID too long")
-    .regex(/^[a-zA-Z0-9_-]+$/, "Invalid school ID format")
+    .regex(/^[a-zA-Z0-9_-]*$/, "Invalid school ID format")
+    .optional()
 });
 
 interface SchoolData {
@@ -510,48 +510,96 @@ export const POST = withValidation(
         return respond.error("Request validation failed", "INVALID_INPUT", { status: 400 });
       }
 
-      // Validate school
-      const schoolData = await validateSchool(schoolId);
-      if (!schoolData) {
-        await auditAuthEvent('failure', request as unknown as NextRequest, {
-          operation: 'send_code',
-          error: 'invalid_school'
-        });
-        return NextResponse.json(
-          ApiResponseHelper.error("School not found or inactive", "RESOURCE_NOT_FOUND"),
-          { status: HttpStatus.NOT_FOUND }
-        );
+      // First: Validate school from email domain (authoritative source)
+      let schoolLookup: SchoolLookupResult;
+      try {
+        schoolLookup = await getSchoolFromEmailAsync(email);
+      } catch (err) {
+        const errorCode = (err as Error & { code?: string }).code;
+
+        if (errorCode === 'UNSUPPORTED_DOMAIN') {
+          await auditAuthEvent('forbidden', request as unknown as NextRequest, {
+            operation: 'send_code',
+            error: 'unsupported_domain'
+          });
+          return NextResponse.json(
+            ApiResponseHelper.error(
+              "This email domain is not supported. Use your school email.",
+              "UNSUPPORTED_DOMAIN"
+            ),
+            { status: HttpStatus.FORBIDDEN }
+          );
+        }
+
+        // Fallback: Try validating with provided schoolId if email lookup fails
+        if (schoolId) {
+          const schoolData = await validateSchool(schoolId);
+          if (schoolData) {
+            // Validate email domain matches school
+            if (!validateEmailDomain(email, [schoolData.domain])) {
+              await auditAuthEvent('failure', request as unknown as NextRequest, {
+                operation: 'send_code',
+                error: 'domain_mismatch'
+              });
+              return NextResponse.json(
+                { error: `Email must be from ${schoolData.domain} domain` },
+                { status: HttpStatus.BAD_REQUEST }
+              );
+            }
+            // Create a mock SchoolLookupResult from schoolData
+            schoolLookup = {
+              campusId: schoolData.id,
+              status: schoolData.active ? 'active' : 'waitlist',
+              schoolName: schoolData.name,
+              domain: schoolData.domain,
+            };
+          } else {
+            await auditAuthEvent('failure', request as unknown as NextRequest, {
+              operation: 'send_code',
+              error: 'invalid_school'
+            });
+            return NextResponse.json(
+              ApiResponseHelper.error("School not found or inactive", "RESOURCE_NOT_FOUND"),
+              { status: HttpStatus.NOT_FOUND }
+            );
+          }
+        } else {
+          // No schoolId provided and email lookup failed
+          await auditAuthEvent('failure', request as unknown as NextRequest, {
+            operation: 'send_code',
+            error: 'unsupported_domain'
+          });
+          return NextResponse.json(
+            ApiResponseHelper.error(
+              "This email domain is not supported. Use your school email.",
+              "UNSUPPORTED_DOMAIN"
+            ),
+            { status: HttpStatus.FORBIDDEN }
+          );
+        }
       }
 
-      // Validate email domain
-      if (!validateEmailDomain(email, [schoolData.domain])) {
-        await auditAuthEvent('failure', request as unknown as NextRequest, {
-          operation: 'send_code',
-          error: 'domain_mismatch'
-        });
-        return NextResponse.json(
-          { error: `Email must be from ${schoolData.domain} domain` },
-          { status: HttpStatus.BAD_REQUEST }
-        );
-      }
-
-      // Validate campus email
-      const campusEmailResult = CampusEmail.create(email);
-      if (campusEmailResult.isFailure) {
+      // Check if school is active
+      if (schoolLookup.status === 'waitlist') {
         await auditAuthEvent('forbidden', request as unknown as NextRequest, {
           operation: 'send_code',
-          error: `invalid_campus_email: ${campusEmailResult.error}`
+          error: 'school_not_active',
+          schoolId: schoolLookup.campusId,
+          schoolName: schoolLookup.schoolName
         });
         return NextResponse.json(
-          ApiResponseHelper.error(
-            campusEmailResult.error || "Only supported campus emails are allowed",
-            "INVALID_EMAIL_DOMAIN"
-          ),
+          {
+            success: false,
+            error: 'SCHOOL_NOT_ACTIVE',
+            code: 'SCHOOL_NOT_ACTIVE',
+            schoolName: schoolLookup.schoolName,
+            schoolId: schoolLookup.campusId,
+            message: `${schoolLookup.schoolName} isn't on HIVE yet.`
+          },
           { status: HttpStatus.FORBIDDEN }
         );
       }
 
-      const campusEmail = campusEmailResult.getValue();
       const normalizedEmail = email.toLowerCase().trim();
 
       // Check access whitelist (gated launch)
@@ -606,7 +654,7 @@ export const POST = withValidation(
           email: normalizedEmail,
           codeHash,
           schoolId,
-          campusId: campusEmail.campusId,
+          campusId: schoolLookup.campusId,
           status: 'pending',
           attempts: 0,
           createdAt: now,
@@ -615,7 +663,7 @@ export const POST = withValidation(
       }
 
       // Send email
-      const emailSent = await sendVerificationCodeEmail(normalizedEmail, code, schoolData.name);
+      const emailSent = await sendVerificationCodeEmail(normalizedEmail, code, schoolLookup.schoolName);
 
       if (!emailSent && currentEnvironment === 'production') {
         await auditAuthEvent('failure', request as unknown as NextRequest, {
@@ -633,11 +681,13 @@ export const POST = withValidation(
         operation: 'send_code'
       });
 
+      // Mask email for logging
+      const maskedEmail = normalizedEmail.replace(/(.{3}).*@/, '$1***@');
+
       logger.info('Verification code sent', {
-        email: campusEmail.getMasked(),
-        emailType: campusEmail.emailType,
-        campusId: campusEmail.campusId,
-        schoolName: schoolData.name
+        email: maskedEmail,
+        campusId: schoolLookup.campusId,
+        schoolName: schoolLookup.schoolName
       });
 
       return respond.success({
