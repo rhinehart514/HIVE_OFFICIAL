@@ -361,10 +361,11 @@
   html {
     scroll-behavior: smooth;
     color-scheme: dark;
+    background-color: #FFD700; /* Overscroll background - HIVE gold */
   }
 
   body {
-    background-color: var(--hive-bg-base);
+    background-color: #030303; /* Page background */
     color: var(--hive-text-primary);
     font-family: var(--hive-font-sans);
     font-feature-settings: "rlig" 1, "calt" 1;

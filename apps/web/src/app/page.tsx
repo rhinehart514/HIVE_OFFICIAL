@@ -2,7 +2,7 @@
 
 /**
  * HIVE Landing Page
- * Editorial layout with Clash Display + distinctive motion
+ * Editorial layout + worldview-aligned copy + subtle gold narrative
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -25,12 +25,10 @@ const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)
 // MOTION COMPONENTS
 // ============================================
 
-// Parallax hook
 function useParallax(scrollProgress: ReturnType<typeof useScroll>['scrollYProgress'], distance: number) {
   return useTransform(scrollProgress, [0, 1], [-distance, distance]);
 }
 
-// Counter that animates when in view
 function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: '-50px' });
@@ -53,38 +51,6 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
   return <span ref={ref}>{count}{suffix}</span>;
 }
 
-// Magnetic button
-function MagneticButton({ children, className, onClick }: {
-  children: React.ReactNode;
-  className?: string;
-  onClick?: () => void;
-}) {
-  const ref = useRef<HTMLButtonElement>(null);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-
-  return (
-    <motion.button
-      ref={ref}
-      className={className}
-      onClick={onClick}
-      onMouseMove={(e) => {
-        if (!ref.current) return;
-        const rect = ref.current.getBoundingClientRect();
-        setPos({
-          x: (e.clientX - rect.left - rect.width / 2) * 0.15,
-          y: (e.clientY - rect.top - rect.height / 2) * 0.15,
-        });
-      }}
-      onMouseLeave={() => setPos({ x: 0, y: 0 })}
-      animate={{ x: pos.x, y: pos.y }}
-      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-    >
-      {children}
-    </motion.button>
-  );
-}
-
-// Text with word-by-word stagger
 function StaggerText({ children, delay = 0 }: { children: string; delay?: number }) {
   return (
     <>
@@ -92,10 +58,9 @@ function StaggerText({ children, delay = 0 }: { children: string; delay?: number
         <motion.span
           key={i}
           className="inline-block mr-[0.25em]"
-          initial={{ opacity: 0, y: 30, rotateX: -45 }}
-          animate={{ opacity: 1, y: 0, rotateX: 0 }}
-          transition={{ duration: 0.7, delay: delay + i * 0.1, ease: EASE }}
-          style={{ transformOrigin: 'bottom' }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: delay + i * 0.08, ease: EASE }}
         >
           {word}
         </motion.span>
@@ -177,20 +142,20 @@ function WaitlistModal({ school, onClose }: { school: School | null; onClose: ()
         {submitted ? (
           <div className="text-center py-4">
             <motion.div
-              className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-5"
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
+              className="w-12 h-12 rounded-full border border-[#FFD700]/30 flex items-center justify-center mx-auto mb-5"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             >
-              <Check className="w-5 h-5 text-white" />
+              <Check className="w-5 h-5 text-[#FFD700]" />
             </motion.div>
             <p className={`text-lg font-medium text-white mb-2 ${clashDisplay}`}>You&apos;re on the list</p>
-            <p className="text-sm text-white/40">We&apos;ll email you when we launch.</p>
+            <p className="text-sm text-white/40">We&apos;ll let you know when we expand.</p>
           </div>
         ) : (
           <>
             <p className={`text-lg font-medium text-white mb-1 ${clashDisplay}`}>Get notified</p>
-            <p className="text-sm text-white/40 mb-6">We&apos;ll let you know when we expand.</p>
+            <p className="text-sm text-white/40 mb-6">We&apos;ll let you know when your campus is ready.</p>
             <form onSubmit={handleSubmit}>
               <input
                 type="email"
@@ -198,7 +163,7 @@ function WaitlistModal({ school, onClose }: { school: School | null; onClose: ()
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
-                className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-white/20 transition-colors mb-4"
+                className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-[#FFD700]/30 transition-colors mb-4"
               />
               {error && <p className="text-sm text-red-400/80 mb-4">{error}</p>}
               <button
@@ -226,11 +191,10 @@ export default function LandingPage() {
   const [requestSchool, setRequestSchool] = useState<School | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  // Scroll-based parallax
   const { scrollYProgress } = useScroll();
   const smoothScroll = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
-  const parallax1 = useParallax(smoothScroll, 80);
-  const parallax2 = useParallax(smoothScroll, 120);
+  const parallax1 = useParallax(smoothScroll, 60);
+  const parallax2 = useParallax(smoothScroll, 80);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -286,27 +250,30 @@ export default function LandingPage() {
       <section className="min-h-screen relative flex flex-col">
         <div className="max-w-7xl mx-auto px-6 pt-32 pb-24 flex-1 flex flex-col">
 
-          {/* Top tag */}
-          <motion.p
-            className="text-[11px] uppercase tracking-[0.3em] text-white/25 mb-auto"
+          {/* Top tag with gold accent */}
+          <motion.div
+            className="mb-auto flex items-center gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
-            Now live at University at Buffalo
-          </motion.p>
+            <span className="w-2 h-2 rounded-full bg-[#FFD700]" />
+            <p className="text-[11px] uppercase tracking-[0.3em] text-white/30">
+              Live at UB
+            </p>
+          </motion.div>
 
           {/* Giant headline */}
           <div className="flex-1 flex items-center py-12">
             <div className="relative">
               <h1 className={`${clashDisplay} text-[clamp(52px,13vw,150px)] font-semibold leading-[0.88] tracking-[-0.03em]`}>
-                <span className="text-white block"><StaggerText delay={0.2}>Student</StaggerText></span>
-                <span className="text-white/20 block"><StaggerText delay={0.35}>infrastructure.</StaggerText></span>
+                <span className="text-white block"><StaggerText delay={0.2}>Build</StaggerText></span>
+                <span className="text-white/20 block"><StaggerText delay={0.35}>together.</StaggerText></span>
               </h1>
 
-              {/* Accent line */}
+              {/* Gold accent line */}
               <motion.div
-                className="absolute -left-6 top-1/2 -translate-y-1/2 w-px h-20 bg-gradient-to-b from-transparent via-white/20 to-transparent"
+                className="absolute -left-6 top-1/2 -translate-y-1/2 w-px h-16 bg-gradient-to-b from-transparent via-[#FFD700]/40 to-transparent"
                 initial={{ scaleY: 0 }}
                 animate={{ scaleY: 1 }}
                 transition={{ duration: 1, delay: 0.8 }}
@@ -323,29 +290,29 @@ export default function LandingPage() {
           >
             <div className="md:max-w-md">
               <p className="text-base text-white/40 leading-relaxed mb-8">
-                One place for campus communities to exist, organize, and persist.
-                No more GroupMe chaos. No more scattered spreadsheets.
+                Infrastructure for students who build. Spaces to organize.
+                Tools to create. Community that persists.
               </p>
               <div className="flex flex-wrap gap-4">
-                <MagneticButton
+                <button
                   onClick={handleEnter}
                   className="group px-6 py-3 bg-white text-black rounded-full text-sm font-medium hover:bg-white/90 transition-colors flex items-center gap-2"
                 >
                   Enter HIVE
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </MagneticButton>
-                <MagneticButton
+                </button>
+                <button
                   onClick={handleWaitlist}
                   className="px-6 py-3 border border-white/10 text-white/50 rounded-full text-sm hover:border-white/20 hover:text-white/70 transition-all"
                 >
-                  Other school
-                </MagneticButton>
+                  Other campus
+                </button>
               </div>
             </div>
 
-            {/* Parallax number */}
+            {/* Parallax number with gold tint */}
             <motion.p
-              className={`${clashDisplay} hidden md:block text-[100px] font-semibold leading-none text-white/[0.03] select-none`}
+              className={`${clashDisplay} hidden md:block text-[100px] font-semibold leading-none text-[#FFD700]/[0.04] select-none`}
               style={{ y: parallax1 }}
             >
               01
@@ -361,19 +328,18 @@ export default function LandingPage() {
           transition={{ delay: 1.2 }}
         >
           <motion.div
-            className="w-px h-10 bg-white/10"
-            animate={{ scaleY: [1, 1.3, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            className="w-px h-8 bg-[#FFD700]/20"
+            animate={{ scaleY: [1, 1.2, 1] }}
+            transition={{ duration: 2.5, repeat: Infinity }}
           />
           <span className="text-[10px] uppercase tracking-[0.2em] text-white/20">Scroll</span>
         </motion.div>
       </section>
 
-      {/* ===== PROBLEM ===== */}
+      {/* ===== THE GAP ===== */}
       <section className="py-32 md:py-40 border-t border-white/[0.04] relative overflow-hidden">
-        {/* Background parallax */}
         <motion.span
-          className={`${clashDisplay} absolute -right-10 top-10 text-[250px] font-bold text-white/[0.015] select-none pointer-events-none`}
+          className={`${clashDisplay} absolute -right-10 top-10 text-[200px] font-bold text-white/[0.015] select-none pointer-events-none`}
           style={{ y: parallax2 }}
         >
           ?
@@ -383,23 +349,26 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-12 gap-12 md:gap-20">
             {/* Left */}
             <div className="md:col-span-7">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-white/25 mb-8">The problem</p>
-              <h2 className={`${clashDisplay} text-[clamp(32px,5.5vw,60px)] font-semibold leading-[1.05] tracking-[-0.02em]`}>
-                <span className="text-white">400+ organizations.</span>
+              <div className="flex items-center gap-3 mb-8">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/30">The gap</p>
+              </div>
+              <h2 className={`${clashDisplay} text-[clamp(32px,5.5vw,56px)] font-semibold leading-[1.05] tracking-[-0.02em]`}>
+                <span className="text-white">Institutions can&apos;t build</span>
                 <br />
-                <span className="text-white/20">Zero shared infrastructure.</span>
+                <span className="text-white/20">what students need.</span>
               </h2>
             </div>
 
             {/* Right */}
             <div className="md:col-span-5 md:pt-16 space-y-8">
               {[
-                { label: 'Communication', desc: 'Fragmented across GroupMe, Discord, Slack, email. No single source of truth.' },
-                { label: 'Coordination', desc: 'Google Forms, spreadsheets, manual tracking. Leaders spend more time on logistics than mission.' },
-                { label: 'Continuity', desc: 'Knowledge evaporates when leaders graduate. Every year starts from scratch.' },
+                { label: 'Too slow', desc: 'Enterprise software takes years. Students need tools now.' },
+                { label: 'Too rigid', desc: 'One-size-fits-all platforms. Every community is different.' },
+                { label: 'Too extractive', desc: 'Platforms optimize for engagement, not outcomes.' },
               ].map((item) => (
                 <div key={item.label}>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/30 mb-2">{item.label}</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-[#FFD700]/50 mb-2">{item.label}</p>
                   <p className="text-sm text-white/50 leading-relaxed">{item.desc}</p>
                 </div>
               ))}
@@ -408,79 +377,90 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ===== SOLUTION ===== */}
+      {/* ===== THE PATTERN ===== */}
       <section className="py-32 md:py-40 border-t border-white/[0.04]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-16">
-            <p className="text-[11px] uppercase tracking-[0.3em] text-white/25 mb-8">The solution</p>
-            <h2 className={`${clashDisplay} text-[clamp(32px,5.5vw,60px)] font-semibold leading-[1.05] tracking-[-0.02em] max-w-3xl`}>
-              <span className="text-white">Infrastructure that persists.</span>
+            <div className="flex items-center gap-3 mb-8">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+              <p className="text-[11px] uppercase tracking-[0.3em] text-white/30">The pattern</p>
+            </div>
+            <h2 className={`${clashDisplay} text-[clamp(32px,5.5vw,56px)] font-semibold leading-[1.05] tracking-[-0.02em] max-w-3xl`}>
+              <span className="text-white">Students build what&apos;s missing.</span>
               <br />
-              <span className="text-white/20">Built for students.</span>
+              <span className="text-white/20">Institutions adopt what works.</span>
             </h2>
+            <p className="text-base text-white/30 mt-6 max-w-xl leading-relaxed">
+              Facebook started in a dorm. So did most things that matter. The pattern isn&apos;t random—it&apos;s structural. We&apos;re just the infrastructure.
+            </p>
           </div>
 
           {/* Staggered cards */}
           <div className="grid md:grid-cols-12 gap-6 md:gap-10">
             {/* Card 1 */}
             <motion.div
-              className="md:col-span-6 p-8 md:p-10 border border-white/[0.06] rounded-2xl group hover:border-white/10 hover:bg-white/[0.01] transition-all"
-              whileHover={{ y: -4 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="md:col-span-6 p-8 md:p-10 border border-white/[0.06] rounded-2xl group hover:border-[#FFD700]/10 transition-all"
+              whileHover={{ y: -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
-              <p className={`${clashDisplay} text-[56px] font-semibold text-white/[0.05] leading-none mb-4 group-hover:text-white/[0.08] transition-colors`}>01</p>
+              <p className={`${clashDisplay} text-[48px] font-semibold text-[#FFD700]/[0.08] leading-none mb-4`}>01</p>
               <h3 className={`${clashDisplay} text-xl font-medium text-white mb-2`}>Spaces</h3>
               <p className="text-sm text-white/40 leading-relaxed">
-                Permanent homes for every organization. Real-time chat, member management, shared resources.
+                Permanent homes for every org. Chat, members, resources—infrastructure that persists when leaders graduate.
               </p>
             </motion.div>
 
-            {/* Card 2 - offset */}
+            {/* Card 2 */}
             <motion.div
-              className="md:col-span-6 md:mt-20 p-8 md:p-10 border border-white/[0.06] rounded-2xl group hover:border-white/10 hover:bg-white/[0.01] transition-all"
-              whileHover={{ y: -4 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="md:col-span-6 md:mt-16 p-8 md:p-10 border border-white/[0.06] rounded-2xl group hover:border-[#FFD700]/10 transition-all"
+              whileHover={{ y: -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
-              <p className={`${clashDisplay} text-[56px] font-semibold text-white/[0.05] leading-none mb-4 group-hover:text-white/[0.08] transition-colors`}>02</p>
-              <h3 className={`${clashDisplay} text-xl font-medium text-white mb-2`}>Real Identity</h3>
+              <p className={`${clashDisplay} text-[48px] font-semibold text-[#FFD700]/[0.08] leading-none mb-4`}>02</p>
+              <h3 className={`${clashDisplay} text-xl font-medium text-white mb-2`}>Identity</h3>
               <p className="text-sm text-white/40 leading-relaxed">
-                Campus-verified profiles. Real names, real trust. You know who you&apos;re working with.
+                Campus-verified profiles. Real names, real trust. You know who you&apos;re building with.
               </p>
             </motion.div>
 
-            {/* Card 3 - centered */}
+            {/* Card 3 */}
             <motion.div
-              className="md:col-span-8 md:col-start-3 p-8 md:p-10 border border-white/[0.06] rounded-2xl group hover:border-white/10 hover:bg-white/[0.01] transition-all"
-              whileHover={{ y: -4 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="md:col-span-7 md:col-start-3 p-8 md:p-10 border border-white/[0.06] rounded-2xl group hover:border-[#FFD700]/10 transition-all"
+              whileHover={{ y: -2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
-              <p className={`${clashDisplay} text-[56px] font-semibold text-white/[0.05] leading-none mb-4 group-hover:text-white/[0.08] transition-colors`}>03</p>
+              <p className={`${clashDisplay} text-[48px] font-semibold text-[#FFD700]/[0.08] leading-none mb-4`}>03</p>
               <h3 className={`${clashDisplay} text-xl font-medium text-white mb-2`}>Tools</h3>
               <p className="text-sm text-white/40 leading-relaxed max-w-md">
-                Build custom tools for your community. Polls, forms, schedules. No code required.
+                Build what your community needs. Polls, forms, schedules—no code required. Ship in minutes.
               </p>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ===== STATS + CTA ===== */}
+      {/* ===== MOMENTUM ===== */}
       <section className="py-32 md:py-40 border-t border-white/[0.04]">
         <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center gap-3 mb-16">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+            <p className="text-[11px] uppercase tracking-[0.3em] text-white/30">Momentum</p>
+          </div>
+
           {/* Stats */}
           <div className="grid md:grid-cols-3 gap-12 md:gap-20 mb-24">
             <div>
-              <p className={`${clashDisplay} text-[clamp(48px,9vw,88px)] font-semibold text-white leading-none`}>
+              <p className={`${clashDisplay} text-[clamp(48px,9vw,80px)] font-semibold text-white leading-none`}>
                 <AnimatedCounter value={400} suffix="+" />
               </p>
               <p className="text-sm text-white/30 mt-3">Organizations ready</p>
             </div>
             <div>
-              <p className={`${clashDisplay} text-[clamp(48px,9vw,88px)] font-semibold text-white leading-none`}>UB</p>
-              <p className="text-sm text-white/30 mt-3">First campus live</p>
+              <p className={`${clashDisplay} text-[clamp(48px,9vw,80px)] font-semibold text-white leading-none`}>UB</p>
+              <p className="text-sm text-white/30 mt-3">First campus</p>
             </div>
             <div>
-              <p className={`${clashDisplay} text-[clamp(48px,9vw,88px)] font-semibold text-white leading-none`}>
+              <p className={`${clashDisplay} text-[clamp(48px,9vw,80px)] font-semibold text-white leading-none`}>
                 &apos;<AnimatedCounter value={26} />
               </p>
               <p className="text-sm text-white/30 mt-3">Expanding</p>
@@ -489,25 +469,25 @@ export default function LandingPage() {
 
           {/* CTA */}
           <div className="pt-12 border-t border-white/[0.04] flex flex-col md:flex-row md:items-end md:justify-between gap-10">
-            <h2 className={`${clashDisplay} text-[clamp(28px,4.5vw,44px)] font-semibold leading-[1.1] tracking-[-0.02em]`}>
+            <h2 className={`${clashDisplay} text-[clamp(28px,4.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em]`}>
               <span className="text-white">Ready to build</span>
               <br />
               <span className="text-white/20">something real?</span>
             </h2>
             <div className="flex flex-wrap gap-4">
-              <MagneticButton
+              <button
                 onClick={handleEnter}
                 className="group px-8 py-4 bg-white text-black rounded-full text-sm font-medium hover:bg-white/90 transition-colors flex items-center gap-2"
               >
                 Enter HIVE
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </MagneticButton>
-              <MagneticButton
+              </button>
+              <button
                 onClick={handleWaitlist}
                 className="px-8 py-4 border border-white/10 text-white/50 rounded-full text-sm hover:border-white/20 hover:text-white/70 transition-all"
               >
                 Get notified
-              </MagneticButton>
+              </button>
             </div>
           </div>
         </div>
