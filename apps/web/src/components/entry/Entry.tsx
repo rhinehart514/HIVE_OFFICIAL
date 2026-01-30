@@ -1,14 +1,16 @@
 'use client';
 
 /**
- * Entry - Editorial entry flow
+ * Entry - The Threshold
  *
- * 3 screens:
- * 1. Prove - email + code verification
- * 2. Claim - name, handle, year, major
- * 3. Enter - interests selection
+ * 4 phases (same URL):
+ * 1. Gate     → Email + code verification
+ * 2. Naming   → First/last name (THE WEDGE)
+ * 3. Field    → Year + major (morphing screen)
+ * 4. Crossing → Interests selection
  *
- * Design: Clash Display typography, subtle gold accents, worldview-aligned copy
+ * Narrative Arc: Outsider → Proven → Named → Claimed → Arrived
+ * Design: Clash Display typography, gold accents, editorial feel
  */
 
 import * as React from 'react';
@@ -17,13 +19,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
-import { useEntry, type EntryScreen } from './hooks/useEntry';
+import { useEntry, type EntryPhase } from './hooks/useEntry';
 import { DURATION, EASE_PREMIUM } from './motion/entry-motion';
 
 // Screens
-import { ProveScreen } from './screens/ProveScreen';
-import { ClaimScreen } from './screens/ClaimScreen';
-import { EnterScreen } from './screens/EnterScreen';
+import { GateScreen } from './screens/GateScreen';
+import { NamingScreen } from './screens/NamingScreen';
+import { FieldScreen } from './screens/FieldScreen';
+import { CrossingScreen } from './screens/CrossingScreen';
 
 // Clash Display font
 const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
@@ -77,71 +80,85 @@ export function Entry() {
         <main className="flex-1 flex items-center justify-center px-6 md:px-12 lg:px-24 pb-12">
           <div className={cn(
             'w-full',
-            entry.screen === 'claim' ? 'max-w-2xl' : 'max-w-md'
+            entry.phase === 'field' ? 'max-w-2xl' : 'max-w-md'
           )}>
             <AnimatePresence mode="wait">
-              {entry.screen === 'prove' && (
+              {entry.phase === 'gate' && (
                 <motion.div
-                  key="prove"
+                  key="gate"
                   initial={{ opacity: 0, y: 24, filter: 'blur(4px)' }}
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                   exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }}
                   transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
                 >
-                  <ProveScreen entry={entry} />
+                  <GateScreen entry={entry} />
                 </motion.div>
               )}
 
-              {entry.screen === 'claim' && (
+              {entry.phase === 'naming' && (
                 <motion.div
-                  key="claim"
+                  key="naming"
                   initial={{ opacity: 0, y: 24, filter: 'blur(4px)' }}
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                   exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }}
                   transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
                 >
-                  <ClaimScreen entry={entry} />
+                  <NamingScreen entry={entry} />
                 </motion.div>
               )}
 
-              {entry.screen === 'enter' && (
+              {entry.phase === 'field' && (
                 <motion.div
-                  key="enter"
+                  key="field"
                   initial={{ opacity: 0, y: 24, filter: 'blur(4px)' }}
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                   exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }}
                   transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
                 >
-                  <EnterScreen entry={entry} />
+                  <FieldScreen entry={entry} />
+                </motion.div>
+              )}
+
+              {entry.phase === 'crossing' && (
+                <motion.div
+                  key="crossing"
+                  initial={{ opacity: 0, y: 24, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }}
+                  transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
+                >
+                  <CrossingScreen entry={entry} />
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </main>
 
-        {/* Progress indicator with gold accents */}
+        {/* 4-dot progress indicator */}
         <footer className="p-6">
           <div className="flex justify-center gap-2">
-            {(['prove', 'claim', 'enter'] as EntryScreen[]).map((screen, i) => {
-              const isActive = entry.screen === screen;
-              const isComplete =
-                (screen === 'prove' && (entry.screen === 'claim' || entry.screen === 'enter')) ||
-                (screen === 'claim' && entry.screen === 'enter');
+            {(['gate', 'naming', 'field', 'crossing'] as EntryPhase[]).map((phase, i) => {
+              const phaseOrder = ['gate', 'naming', 'field', 'crossing'];
+              const currentIndex = phaseOrder.indexOf(entry.phase);
+              const thisIndex = phaseOrder.indexOf(phase);
+
+              const isActive = entry.phase === phase;
+              const isComplete = thisIndex < currentIndex;
 
               return (
                 <motion.div
-                  key={screen}
-                  className={cn(
-                    'h-1.5 rounded-full transition-all duration-500',
-                    isActive ? 'w-8' : 'w-1.5'
-                  )}
+                  key={phase}
+                  className="h-1.5 w-1.5 rounded-full transition-all duration-500"
                   initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  animate={{
+                    opacity: 1,
+                    scale: isActive ? 1.2 : 1,
+                  }}
                   transition={{ delay: 0.3 + i * 0.1, duration: 0.4, ease: EASE_PREMIUM }}
                   style={{
-                    backgroundColor: isActive
+                    backgroundColor: isComplete
                       ? '#FFD700'
-                      : isComplete
+                      : isActive
                         ? 'rgba(255, 215, 0, 0.4)'
                         : 'rgba(255, 255, 255, 0.15)',
                   }}

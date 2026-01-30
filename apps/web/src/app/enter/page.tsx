@@ -1,92 +1,34 @@
 'use client';
 
 /**
- * /enter - Single-Page Evolving Entry Flow
- * REDESIGNED: Jan 20, 2026
+ * /enter - The Threshold
  *
- * One page that evolves as the user progresses through entry.
- * No navigation, no page swaps — sections appear and lock to chips.
+ * 4-phase entry flow (same URL):
+ * 1. Gate     → Email + code verification
+ * 2. Naming   → First/last name (THE WEDGE)
+ * 3. Field    → Year + major selection
+ * 4. Crossing → Interests selection
  *
- * Flow (gate enabled):  accessCode → school → email → code → role → identity → arrival
- * Flow (gate disabled): school → email → code → role → identity → arrival
- *
- * Key changes from previous:
- * - All sections on one page that transforms
- * - Completed sections collapse to locked chips
- * - Role selection is an "earned moment" after code verification
- * - No progress indicator (visual progress through locked chips)
- * - Gated by access code if NEXT_PUBLIC_ACCESS_GATE_ENABLED=true
- * - Access code state persists in localStorage (hive_access_gate_passed)
+ * Narrative Arc: Outsider → Proven → Named → Claimed → Arrived
  */
 
-import { Suspense, useState, useCallback } from 'react';
-import {
-  EntryShell,
-  EntryShellStatic,
-  EvolvingEntry,
-  type EmotionalState,
-} from '@/components/entry';
+import { Suspense } from 'react';
+import { Entry } from '@/components/entry/Entry';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Static loading fallback
- */
-function EntryPageFallback() {
+function EntryFallback() {
   return (
-    <EntryShellStatic>
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-title-lg font-semibold tracking-tight text-white">
-            Get in
-          </h1>
-          <div className="flex items-center gap-2 text-white/50">
-            <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-            <span className="text-body">Loading</span>
-          </div>
-        </div>
-      </div>
-    </EntryShellStatic>
+    <div className="min-h-dvh bg-void flex items-center justify-center">
+      <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+    </div>
   );
 }
 
-/**
- * Main entry content with evolving flow
- */
-function EntryContent() {
-  const [emotionalState, setEmotionalState] = useState<EmotionalState>('neutral');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleEmotionalStateChange = useCallback((state: EmotionalState) => {
-    setEmotionalState(state);
-  }, []);
-
-  const handleLoadingStateChange = useCallback((loading: boolean) => {
-    setIsLoading(loading);
-  }, []);
-
-  return (
-    <EntryShell
-      emotionalState={emotionalState}
-      showProgress={false}
-      scrollable={true}
-      isLoading={isLoading}
-    >
-      <EvolvingEntry
-        onEmotionalStateChange={handleEmotionalStateChange}
-        onLoadingStateChange={handleLoadingStateChange}
-      />
-    </EntryShell>
-  );
-}
-
-/**
- * Entry page with Suspense boundary
- */
 export default function EnterPage() {
   return (
-    <Suspense fallback={<EntryPageFallback />}>
-      <EntryContent />
+    <Suspense fallback={<EntryFallback />}>
+      <Entry />
     </Suspense>
   );
 }

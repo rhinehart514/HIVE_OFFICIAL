@@ -1,7 +1,19 @@
 import * as React from 'react';
 
-export type EntryScreen = 'prove' | 'claim' | 'enter';
-export type ProveStep = 'email' | 'code' | 'waitlist';
+/**
+ * Entry Flow State Machine
+ *
+ * 4-phase flow: Gate → Naming → Field → Crossing
+ *
+ * Gate: Email verification (email → code → waitlist)
+ * Naming: THE WEDGE - Real identity claim (first/last name)
+ * Field: Year (required) + Major (optional)
+ * Crossing: Interests selection (2-5 required)
+ */
+
+export type EntryPhase = 'gate' | 'naming' | 'field' | 'crossing';
+export type GateStep = 'email' | 'code' | 'waitlist';
+export type FieldStep = 'year' | 'major';
 
 export interface WaitlistSchoolInfo {
   id: string;
@@ -9,31 +21,29 @@ export interface WaitlistSchoolInfo {
 }
 
 export interface EntryData {
-  // Prove
+  // Gate
   email: string;
   code: string[];
 
-  // Claim
+  // Naming
   firstName: string;
   lastName: string;
-  handle: string;
+
+  // Field
   graduationYear: number | null;
   major: string;
 
-  // Enter
+  // Crossing
   interests: string[];
 }
 
 export interface EntryState {
-  screen: EntryScreen;
-  proveStep: ProveStep;
+  phase: EntryPhase;
+  gateStep: GateStep;
+  fieldStep: FieldStep;
   data: EntryData;
   isLoading: boolean;
   error: string | null;
-
-  // Handle validation
-  handleStatus: 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
-  handleSuggestions: string[];
 
   // Waitlist
   waitlistSchool: WaitlistSchoolInfo | null;
@@ -48,7 +58,7 @@ export interface UseEntryOptions {
 }
 
 export interface UseEntryReturn extends EntryState {
-  // Prove actions
+  // Gate actions
   setEmail: (email: string) => void;
   sendCode: () => Promise<void>;
   setCode: (code: string[]) => void;
@@ -58,15 +68,22 @@ export interface UseEntryReturn extends EntryState {
   // Waitlist actions
   joinWaitlist: () => Promise<void>;
 
-  // Claim actions
+  // Naming actions
   setFirstName: (name: string) => void;
   setLastName: (name: string) => void;
-  setHandle: (handle: string) => void;
+  submitNaming: () => void;
+
+  // Field actions
   setGraduationYear: (year: number | null) => void;
   setMajor: (major: string) => void;
+  submitYear: () => void;
+  submitField: () => void;
+
+  // Legacy aliases (for backward compatibility)
+  /** @deprecated Use submitField instead */
   submitClaim: () => void;
 
-  // Enter actions
+  // Crossing actions
   toggleInterest: (interest: string) => void;
   completeEntry: () => Promise<void>;
 
@@ -80,17 +97,17 @@ const initialData: EntryData = {
   code: ['', '', '', '', '', ''],
   firstName: '',
   lastName: '',
-  handle: '',
   graduationYear: null,
   major: '',
   interests: [],
 };
 
 export function useEntry(options: UseEntryOptions): UseEntryReturn {
-  const { onComplete, campusId = 'ub-buffalo', schoolId: initialSchoolId, domain: initialDomain } = options;
+  const { onComplete, campusId = 'ub-buffalo', schoolId: initialSchoolId } = options;
 
-  const [screen, setScreen] = React.useState<EntryScreen>('prove');
-  const [proveStep, setProveStep] = React.useState<ProveStep>('email');
+  const [phase, setPhase] = React.useState<EntryPhase>('gate');
+  const [gateStep, setGateStep] = React.useState<GateStep>('email');
+  const [fieldStep, setFieldStep] = React.useState<FieldStep>('year');
   const [data, setData] = React.useState<EntryData>(initialData);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -98,18 +115,9 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
   // School ID detection (from URL params or email domain)
   const [detectedSchoolId, setDetectedSchoolId] = React.useState<string | null>(initialSchoolId || null);
 
-  const [handleStatus, setHandleStatus] = React.useState<
-    'idle' | 'checking' | 'available' | 'taken' | 'invalid'
-  >('idle');
-  const [handleSuggestions, setHandleSuggestions] = React.useState<string[]>([]);
-
   // Waitlist state
   const [waitlistSchool, setWaitlistSchool] = React.useState<WaitlistSchoolInfo | null>(null);
   const [waitlistSuccess, setWaitlistSuccess] = React.useState(false);
-
-  // Debounced handle check with abort controller for race condition prevention
-  const handleCheckTimeout = React.useRef<NodeJS.Timeout | null>(null);
-  const handleCheckAbort = React.useRef<AbortController | null>(null);
 
   // Main request abort controller (for canceling in-flight API calls)
   const requestAbort = React.useRef<AbortController | null>(null);
@@ -140,57 +148,6 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
 
   const setLastName = (lastName: string) => {
     setData((d) => ({ ...d, lastName }));
-  };
-
-  const setHandle = (handle: string) => {
-    const normalized = handle.toLowerCase().replace(/[^a-z0-9_]/g, '');
-    setData((d) => ({ ...d, handle: normalized }));
-
-    // Cancel pending requests and timeouts
-    if (handleCheckTimeout.current) {
-      clearTimeout(handleCheckTimeout.current);
-    }
-    if (handleCheckAbort.current) {
-      handleCheckAbort.current.abort();
-    }
-
-    if (normalized.length < 3) {
-      setHandleStatus('idle');
-      return;
-    }
-
-    setHandleStatus('checking');
-    handleCheckTimeout.current = setTimeout(async () => {
-      // Create new abort controller for this request
-      const abortController = new AbortController();
-      handleCheckAbort.current = abortController;
-
-      try {
-        const res = await fetch(`/api/auth/check-handle?handle=${normalized}`, {
-          signal: abortController.signal,
-        });
-        const result = await res.json();
-
-        // Only update if this request wasn't aborted
-        if (!abortController.signal.aborted) {
-          if (result.status === 'available') {
-            setHandleStatus('available');
-            setHandleSuggestions([]);
-          } else if (result.status === 'taken') {
-            setHandleStatus('taken');
-            setHandleSuggestions(result.suggestions || []);
-          } else {
-            setHandleStatus('invalid');
-            setHandleSuggestions([]);
-          }
-        }
-      } catch (err) {
-        // Ignore abort errors, reset to idle for other errors
-        if (err instanceof Error && err.name !== 'AbortError') {
-          setHandleStatus('idle');
-        }
-      }
-    }, 300);
   };
 
   const setGraduationYear = (graduationYear: number | null) => {
@@ -262,7 +219,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
             name: result.schoolName,
           });
           setDetectedSchoolId(result.schoolId);
-          setProveStep('waitlist');
+          setGateStep('waitlist');
           return;
         }
 
@@ -274,7 +231,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
         setDetectedSchoolId(result.schoolId);
       }
 
-      setProveStep('code');
+      setGateStep('code');
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         return; // Request was cancelled, don't show error
@@ -321,8 +278,8 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
         throw new Error(result.error || result.message || 'Invalid code');
       }
 
-      // Move to claim screen
-      setScreen('claim');
+      // Move to naming phase (the wedge moment)
+      setPhase('naming');
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         return; // Request was cancelled, don't show error
@@ -339,15 +296,49 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     await sendCode();
   };
 
-  const submitClaim = () => {
-    // Validate
+  // Naming phase: Submit first/last name
+  const submitNaming = () => {
     if (!data.firstName.trim() || !data.lastName.trim()) {
       setError('Enter your name');
       return;
     }
 
     setError(null);
-    setScreen('enter');
+    setPhase('field');
+    setFieldStep('year');
+  };
+
+  // Field phase: Submit year (required), advance to major
+  const submitYear = () => {
+    if (data.graduationYear === null) {
+      setError('Select your graduation year');
+      return;
+    }
+
+    setError(null);
+    setFieldStep('major');
+  };
+
+  // Field phase: Submit field (major optional), advance to crossing
+  const submitField = () => {
+    // Year is required, major is optional
+    if (data.graduationYear === null) {
+      setError('Select your graduation year');
+      return;
+    }
+
+    setError(null);
+    setPhase('crossing');
+  };
+
+  // Legacy alias: submitClaim advances to crossing (used by legacy ClaimScreen)
+  const submitClaim = () => {
+    if (!data.firstName.trim() || !data.lastName.trim()) {
+      setError('Enter your name');
+      return;
+    }
+    setError(null);
+    setPhase('crossing');
   };
 
   const completeEntry = async () => {
@@ -403,17 +394,30 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     // Cancel any in-flight request when navigating back
     cancelRequest();
 
-    if (screen === 'enter') {
-      setScreen('claim');
-    } else if (screen === 'claim') {
-      setScreen('prove');
-      setProveStep('email');
-    } else if (proveStep === 'code') {
-      setProveStep('email');
-    } else if (proveStep === 'waitlist') {
-      setProveStep('email');
-      setWaitlistSchool(null);
-      setWaitlistSuccess(false);
+    if (phase === 'crossing') {
+      // Back to field (major step)
+      setPhase('field');
+      setFieldStep('major');
+    } else if (phase === 'field') {
+      if (fieldStep === 'major') {
+        // Back to year step
+        setFieldStep('year');
+      } else {
+        // Back to naming
+        setPhase('naming');
+      }
+    } else if (phase === 'naming') {
+      // Back to gate (email step)
+      setPhase('gate');
+      setGateStep('email');
+    } else if (phase === 'gate') {
+      if (gateStep === 'code') {
+        setGateStep('email');
+      } else if (gateStep === 'waitlist') {
+        setGateStep('email');
+        setWaitlistSchool(null);
+        setWaitlistSuccess(false);
+      }
     }
     setError(null);
   };
@@ -463,16 +467,16 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
   };
 
   return {
-    screen,
-    proveStep,
+    phase,
+    gateStep,
+    fieldStep,
     data,
     isLoading,
     error,
-    handleStatus,
-    handleSuggestions,
     waitlistSchool,
     waitlistSuccess,
 
+    // Gate actions
     setEmail,
     sendCode,
     setCode,
@@ -480,17 +484,26 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     resendCode,
     joinWaitlist,
 
+    // Naming actions
     setFirstName,
     setLastName,
-    setHandle,
+    submitNaming,
+
+    // Field actions
     setGraduationYear,
     setMajor,
-    submitClaim,
+    submitYear,
+    submitField,
 
+    // Crossing actions
     toggleInterest,
     completeEntry,
 
+    // Navigation
     goBack,
     cancelRequest,
+
+    // Legacy aliases
+    submitClaim,
   };
 }

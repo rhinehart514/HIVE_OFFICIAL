@@ -41,15 +41,18 @@ const SENSITIVE_RATE_LIMIT = {
 // Routes that are always public (no auth required)
 // SECURITY: Keep this list minimal - everything else requires authentication
 const PUBLIC_ROUTES = [
-  '/',              // Landing page (entry code input)
+  '/',              // Landing page
+  '/enter',         // Entry flow (creates session during verification)
   '/about',         // Marketing/info page
   '/legal',         // Legal pages (/legal/privacy, /legal/terms, etc.)
+  '/login',         // Login page
+  '/schools',       // School selection page
 ];
 
 // Routes that require session but NOT completed onboarding
 // (user has entered code but hasn't finished profile)
-const PARTIAL_AUTH_ROUTES = [
-  '/enter',         // Onboarding flow
+const PARTIAL_AUTH_ROUTES: string[] = [
+  // /enter is now fully public - session created during flow
 ];
 
 // Admin-only routes
@@ -69,6 +72,14 @@ const ROUTE_REDIRECTS: Record<string, string> = {
   // Legacy routes
   '/privacy': '/legal/privacy',
   '/terms': '/legal/terms',
+  // IA Consolidation: Convert pages to modals
+  '/spaces/browse': '/explore?tab=spaces',
+  '/spaces/claim': '/spaces?claim=true',
+  '/spaces/new': '/spaces?create=true',
+  '/spaces/create': '/spaces?create=true',
+  '/people': '/explore?tab=people',
+  '/events': '/explore?tab=events',
+  '/leaders': '/spaces?claim=true',
 };
 
 function getClientIdentifier(request: NextRequest): string {
@@ -247,6 +258,18 @@ export async function middleware(request: NextRequest) {
   const redirectTarget = ROUTE_REDIRECTS[pathname];
   if (redirectTarget) {
     return NextResponse.redirect(new URL(redirectTarget, request.url));
+  }
+
+  // Handle dynamic route redirects: /spaces/join/:code -> /spaces?join=:code
+  const joinMatch = pathname.match(/^\/spaces\/join\/([^/]+)$/);
+  if (joinMatch) {
+    const code = joinMatch[1];
+    return NextResponse.redirect(new URL(`/spaces?join=${encodeURIComponent(code)}`, request.url));
+  }
+
+  // Handle /spaces/new/* paths -> /spaces?create=true (pages are now modals)
+  if (pathname.startsWith('/spaces/new/')) {
+    return NextResponse.redirect(new URL('/spaces?create=true', request.url));
   }
 
   // Public routes - no auth required

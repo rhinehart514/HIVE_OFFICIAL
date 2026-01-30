@@ -1,24 +1,26 @@
 'use client';
 
 /**
- * ProveScreen - Email + Code verification + Waitlist
- * Editorial design with Clash Display and subtle gold accents
+ * GateScreen - Email + Code verification + Waitlist
+ *
+ * Phase 1 of Entry: "We don't let everyone in."
+ * Purpose: Establish exclusivity, verify campus membership
  */
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Loader2, Bell, Check, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Bell, Check, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { OTPInput, Button } from '@hive/ui/design-system/primitives';
+import { OTPInput } from '@hive/ui/design-system/primitives';
 import type { UseEntryReturn } from '../hooks/useEntry';
 import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
 import { clashDisplay } from '../Entry';
 
-interface ProveScreenProps {
+interface GateScreenProps {
   entry: UseEntryReturn;
 }
 
-export function ProveScreen({ entry }: ProveScreenProps) {
+export function GateScreen({ entry }: GateScreenProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [countdown, setCountdown] = React.useState(0);
 
@@ -35,7 +37,6 @@ export function ProveScreen({ entry }: ProveScreenProps) {
   }, [entry.gateStep]);
 
   React.useEffect(() => {
-    // Don't count down while loading
     if (entry.isLoading || countdown === 0) return;
 
     const interval = setInterval(() => {
@@ -45,19 +46,17 @@ export function ProveScreen({ entry }: ProveScreenProps) {
     return () => clearInterval(interval);
   }, [entry.isLoading, countdown]);
 
-  // Auto-verify when code is complete (with debounce for intentional feel)
+  // Auto-verify when code is complete
   const verifyTimeout = React.useRef<NodeJS.Timeout | null>(null);
   React.useEffect(() => {
     const codeString = entry.data.code.join('');
 
-    // Clear any pending verify
     if (verifyTimeout.current) {
       clearTimeout(verifyTimeout.current);
       verifyTimeout.current = null;
     }
 
     if (codeString.length === 6 && !entry.isLoading) {
-      // 300ms delay before auto-verify for intentional feel
       verifyTimeout.current = setTimeout(() => {
         entry.verifyCode();
       }, 300);
@@ -182,12 +181,10 @@ export function ProveScreen({ entry }: ProveScreenProps) {
               )}
             />
 
-            {/* Error */}
             {entry.error && (
               <p className="text-[13px] text-red-400">{entry.error}</p>
             )}
 
-            {/* Continue button */}
             <button
               onClick={entry.sendCode}
               disabled={entry.isLoading || !entry.data.email.trim()}
@@ -216,7 +213,6 @@ export function ProveScreen({ entry }: ProveScreenProps) {
             transition={{ duration: DURATION.quick, ease: EASE_PREMIUM }}
             className="space-y-8"
           >
-            {/* OTP Input */}
             <OTPInput
               value={entry.data.code}
               onChange={entry.setCode}
@@ -225,14 +221,12 @@ export function ProveScreen({ entry }: ProveScreenProps) {
               autoFocus
             />
 
-            {/* Error */}
             {entry.error && (
               <p className="text-[13px] text-red-400 text-center">
                 {entry.error}
               </p>
             )}
 
-            {/* Loading state */}
             {entry.isLoading && (
               <div className="flex items-center justify-center gap-2 text-[13px] text-white/40">
                 <div
@@ -243,7 +237,6 @@ export function ProveScreen({ entry }: ProveScreenProps) {
               </div>
             )}
 
-            {/* Resend */}
             {!entry.isLoading && (
               <p className="text-[13px] text-white/30 text-center">
                 {countdown > 0 ? (
@@ -271,7 +264,6 @@ export function ProveScreen({ entry }: ProveScreenProps) {
             className="space-y-8"
           >
             {entry.waitlistSuccess ? (
-              // Success state
               <div className="space-y-6">
                 <motion.div
                   initial={{ scale: 0 }}
@@ -299,9 +291,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
                 </button>
               </div>
             ) : (
-              // Form state
               <>
-                {/* Section label */}
                 <div className="flex items-center gap-2 justify-center">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
                   <span className="text-[11px] uppercase tracking-[0.3em] text-white/30">
@@ -321,7 +311,6 @@ export function ProveScreen({ entry }: ProveScreenProps) {
                   </p>
                 </div>
 
-                {/* Error */}
                 {entry.error && (
                   <p className="text-[13px] text-red-400 text-center">
                     {entry.error}
@@ -342,7 +331,10 @@ export function ProveScreen({ entry }: ProveScreenProps) {
                   >
                     {entry.isLoading ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <div
+                          className="w-4 h-4 rounded-full border-2 border-black/20 animate-spin"
+                          style={{ borderTopColor: '#030303' }}
+                        />
                         <span>Joining...</span>
                       </>
                     ) : (
