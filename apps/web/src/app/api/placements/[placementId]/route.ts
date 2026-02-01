@@ -373,6 +373,30 @@ export const DELETE = withAuthAndErrors(async (request, context: RouteContext, r
       );
     }
 
+    // CASCADE DELETE: Delete connections referencing this deployment
+    const spaceId = result.contextId;
+    if (result.contextType === 'space' && spaceId) {
+      const [connectionsAsSource, connectionsAsTarget] = await Promise.all([
+        dbAdmin
+          .collection(`spaces/${spaceId}/toolConnections`)
+          .where('source.deploymentId', '==', placementId)
+          .get(),
+        dbAdmin
+          .collection(`spaces/${spaceId}/toolConnections`)
+          .where('target.deploymentId', '==', placementId)
+          .get(),
+      ]);
+
+      const connectionBatch = dbAdmin.batch();
+      [...connectionsAsSource.docs, ...connectionsAsTarget.docs].forEach(conn => {
+        connectionBatch.delete(conn.ref);
+      });
+
+      if (connectionsAsSource.size > 0 || connectionsAsTarget.size > 0) {
+        await connectionBatch.commit();
+      }
+    }
+
     // Run deletion in a transaction
     await dbAdmin.runTransaction(async (transaction) => {
       // 1. Delete placement document

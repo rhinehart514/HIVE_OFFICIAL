@@ -21,19 +21,15 @@ export async function GET() {
       (doc) => ({ id: doc.id, ...doc.data() } as SchoolSummary)
     );
     
-    // In development, always include test university at the top
-    if (currentEnvironment === 'development') {
-      const testUniversity: SchoolSummary = {
-        id: "test-university",
-        name: "Test University (Development)",
-        domain: "test.edu",
-        status: "active",
-        waitlistCount: 0,
-      };
-      
-      // Remove any existing test university and add it at the beginning
-      const filteredSchools = schools.filter(school => school.id !== 'test-university');
-      return NextResponse.json([testUniversity, ...filteredSchools]);
+    // Ensure UB is always present and active (it's our launch school)
+    const hasUB = schools.some(s => s.id === 'ub-buffalo');
+    if (!hasUB) {
+      schools.unshift({
+        id: 'ub-buffalo',
+        name: 'University at Buffalo',
+        domain: 'buffalo.edu',
+        status: 'active',
+      });
     }
     
     return NextResponse.json(schools);
@@ -43,22 +39,16 @@ export async function GET() {
       { error: error instanceof Error ? error.message : String(error) }
     );
     
-    // SECURITY: Never return mock data in production
-    if (currentEnvironment === 'production') {
-      return NextResponse.json(ApiResponseHelper.error("Service temporarily unavailable", "UNKNOWN_ERROR"), { status: 503 });
-    }
-
-    // Development fallback only
-    const devSchools: SchoolSummary[] = [
+    // Fallback: return UB as the launch school
+    const fallbackSchools: SchoolSummary[] = [
       {
-        id: "test-university",
-        name: "Test University (Development)",
-        domain: "test.edu",
-        status: "active",
-        waitlistCount: 0,
-      }
+        id: 'ub-buffalo',
+        name: 'University at Buffalo',
+        domain: 'buffalo.edu',
+        status: 'active',
+      },
     ];
-    
-    return NextResponse.json(devSchools);
+
+    return NextResponse.json(fallbackSchools);
   }
 }

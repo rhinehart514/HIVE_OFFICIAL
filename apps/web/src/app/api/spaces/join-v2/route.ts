@@ -17,6 +17,7 @@ import {
   isShardedMemberCountEnabled
 } from "@/lib/services/sharded-member-counter.service";
 import { checkMajorSpaceUnlock } from "@/lib/services/space-unlock.service";
+import { DEFAULT_ACTIVATION_THRESHOLD } from "@hive/core/domain";
 
 /**
  * Space Join API v2
@@ -39,7 +40,19 @@ export const POST = withAuthValidationAndErrors(
     const userId = getUserId(request as AuthenticatedRequest);
     const campusId = getCampusId(request as AuthenticatedRequest);
 
-    // SECURITY: Validate ability to join with campus isolation
+    // CHECK 1: Validate user is not banned/suspended
+    const userDoc = await dbAdmin.collection('users').doc(userId).get();
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      if (userData?.banned === true) {
+        return respond.error('Your account has been suspended', "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+      }
+      if (userData?.spaceBanned === true) {
+        return respond.error('You have been banned from joining spaces', "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+      }
+    }
+
+    // CHECK 2: Validate ability to join with campus isolation
     const joinValidation = await validateSpaceJoinability(userId, spaceId);
     if (!joinValidation.canJoin) {
       const status = joinValidation.error === 'Space not found' ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
@@ -48,6 +61,26 @@ export const POST = withAuthValidationAndErrors(
     }
 
     const space = joinValidation.space!;
+
+    // CHECK 3: Validate user is not banned from this specific space
+    const spaceBanDoc = await dbAdmin.collection('spaceBans')
+      .where('spaceId', '==', spaceId)
+      .where('userId', '==', userId)
+      .where('isActive', '==', true)
+      .limit(1)
+      .get();
+
+    if (!spaceBanDoc.empty) {
+      return respond.error('You have been banned from this space', "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+    }
+
+    // CHECK 4: Validate space is not full (if member limit is set)
+    if (space.memberLimit && space.memberLimit > 0) {
+      const currentMemberCount = space.metrics?.memberCount || space.memberCount || 0;
+      if (currentMemberCount >= space.memberLimit) {
+        return respond.error('This space has reached its member limit', "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+      }
+    }
 
     // Create callbacks for DDD service
     const callbacks: SpaceServiceCallbacks = {
@@ -58,6 +91,11 @@ export const POST = withAuthValidationAndErrors(
           const compositeId = `${member.spaceId}_${member.userId}`;
           const memberRef = dbAdmin.collection('spaceMembers').doc(compositeId);
 
+          // Determine if this is a founding member (joined before threshold reached)
+          const currentCount = space.metrics?.memberCount || space.memberCount || 0;
+          const threshold = space.activationThreshold ?? DEFAULT_ACTIVATION_THRESHOLD;
+          const isFoundingMember = currentCount < threshold;
+
           // Use set with merge to handle both create and reactivation atomically
           await memberRef.set(addSecureCampusMetadata({
             spaceId: member.spaceId,
@@ -67,7 +105,8 @@ export const POST = withAuthValidationAndErrors(
             isActive: member.isActive,
             permissions: member.permissions,
             joinMethod: member.joinMethod,
-            joinMetadata: { inviteCode: inviteCode || null, ...(metadata || {}) }
+            joinMetadata: { inviteCode: inviteCode || null, ...(metadata || {}) },
+            isFoundingMember, // Track founding members who joined before threshold
           }), { merge: true });
 
           logger.info('[join-v2] Member saved successfully', {
@@ -254,7 +293,93 @@ export const POST = withAuthValidationAndErrors(
 
     // Check if this join triggers a major space unlock
     let unlockResult = null;
+    // Check if this join triggers quorum-based space activation
+    let activationResult: {
+      justActivated: boolean;
+      activationStatus: 'ghost' | 'gathering' | 'open';
+      memberCount: number;
+      threshold: number;
+      membersNeeded: number;
+    } | null = null;
+
     if (!result.isReactivation) {
+      // === QUORUM-BASED ACTIVATION CHECK ===
+      try {
+        const spaceRef = dbAdmin.collection('spaces').doc(spaceId);
+        const spaceDoc = await spaceRef.get();
+        const spaceData = spaceDoc.data();
+
+        if (spaceData) {
+          const currentMemberCount = (spaceData.memberCount || 0) + 1; // +1 for the join we just processed
+          const threshold = spaceData.activationThreshold ?? DEFAULT_ACTIVATION_THRESHOLD;
+          const previousStatus = spaceData.activationStatus || 'ghost';
+          const isClaimed = Boolean(spaceData.createdBy || spaceData.creatorId);
+
+          // Calculate new activation status
+          let newStatus: 'ghost' | 'gathering' | 'open';
+          if (isClaimed) {
+            // Claimed spaces are always open
+            newStatus = 'open';
+          } else if (currentMemberCount === 0) {
+            newStatus = 'ghost';
+          } else if (currentMemberCount < threshold) {
+            newStatus = 'gathering';
+          } else {
+            newStatus = 'open';
+          }
+
+          const justActivated = previousStatus !== 'open' && newStatus === 'open';
+
+          // Update space if activation status changed
+          if (previousStatus !== newStatus) {
+            const updates: Record<string, unknown> = {
+              activationStatus: newStatus,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            };
+            if (justActivated) {
+              updates.activatedAt = admin.firestore.FieldValue.serverTimestamp();
+            }
+            await spaceRef.update(updates);
+
+            logger.info('[join-v2] Space activation status updated', {
+              spaceId,
+              previousStatus,
+              newStatus,
+              memberCount: currentMemberCount,
+              threshold,
+              justActivated,
+            });
+          }
+
+          // Build activation result for response
+          activationResult = {
+            justActivated,
+            activationStatus: newStatus,
+            memberCount: currentMemberCount,
+            threshold,
+            membersNeeded: Math.max(0, threshold - currentMemberCount),
+          };
+
+          if (justActivated) {
+            logger.info('🎉 Space activated via quorum!', {
+              spaceId,
+              spaceName: space.name,
+              memberCount: currentMemberCount,
+              threshold,
+              activatedBy: userId,
+            });
+          }
+        }
+      } catch (activationError) {
+        // Don't fail the join if activation check fails
+        logger.warn('[join-v2] Failed to check space activation', {
+          error: activationError instanceof Error ? activationError.message : String(activationError),
+          spaceId,
+          userId,
+        });
+      }
+
+      // === MAJOR SPACE UNLOCK CHECK ===
       try {
         // Check if space should unlock (only for major spaces)
         const unlockCheck = await checkMajorSpaceUnlock(spaceId);
@@ -401,7 +526,8 @@ export const POST = withAuthValidationAndErrors(
     return respond.success({
       space: { id: spaceId, name: space.name, type: space.type, description: space.description },
       membership: { userId, role: result.role, isActive: true, joinMethod },
-      unlock: unlockResult // Include unlock data if space was unlocked
+      unlock: unlockResult, // Include unlock data if space was unlocked
+      activation: activationResult // Include quorum activation info
     }, { message: 'Successfully joined the space' });
   }
 );

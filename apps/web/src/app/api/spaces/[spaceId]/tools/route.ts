@@ -494,6 +494,34 @@ export const POST = withAuthValidationAndErrors(
         });
       }
 
+      // Validate tool capabilities against space governance
+      const { validatePlacementCapabilities } = await import("@hive/core");
+      const spaceDoc = await dbAdmin.collection("spaces").doc(spaceId).get();
+      const spaceData = spaceDoc.exists ? spaceDoc.data() : null;
+
+      const placementValidation = validatePlacementCapabilities(
+        (toolData?.capabilities as Record<string, unknown>) || {},
+        spaceData?.governance as { allowedLanes?: ('safe' | 'scoped' | 'power')[] } | undefined
+      );
+
+      if (!placementValidation.canPlace) {
+        return respond.error(
+          `Cannot place tool: ${placementValidation.errors.join(', ')}`,
+          "FORBIDDEN",
+          { status: HttpStatus.FORBIDDEN }
+        );
+      }
+
+      // Log warnings (tool can still be placed)
+      if (placementValidation.warnings.length > 0) {
+        logger.info("Tool placement warnings", {
+          spaceId,
+          toolId: body.toolId,
+          requiredLane: placementValidation.requiredLane,
+          warnings: placementValidation.warnings,
+        });
+      }
+
       // Create deployment service and place tool
       const callbacks = createDeploymentCallbacks(spaceId, campusId);
       const deploymentService = createServerSpaceDeploymentService(

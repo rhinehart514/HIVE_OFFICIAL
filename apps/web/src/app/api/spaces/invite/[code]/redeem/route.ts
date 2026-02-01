@@ -148,6 +148,15 @@ export const POST = withAuthAndErrors(async (
       endpoint: '/api/spaces/invite/[code]/redeem',
     });
 
+    // Trigger member_join automations (non-blocking)
+    triggerMemberJoinAutomations(spaceId, campusId, userId).catch(err => {
+      logger.warn('Failed to trigger member_join automations', {
+        error: err instanceof Error ? err.message : String(err),
+        spaceId,
+        userId,
+      });
+    });
+
     return respond.success({
       success: true,
       message: 'Successfully joined the space',
@@ -163,3 +172,141 @@ export const POST = withAuthAndErrors(async (
     return respond.error('Failed to join space', 'INTERNAL_ERROR', { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
 });
+
+/**
+ * Trigger member_join automations for the new member
+ * Non-blocking - runs in background
+ */
+async function triggerMemberJoinAutomations(
+  spaceId: string,
+  campusId: string,
+  userId: string
+): Promise<void> {
+  // Get user info for interpolation
+  const userDoc = await dbAdmin.collection('users').doc(userId).get();
+  const userData = userDoc.data();
+  const memberName = userData?.fullName || userData?.displayName || 'Member';
+
+  // Find member_join automations
+  const automationsSnapshot = await dbAdmin
+    .collection('spaces')
+    .doc(spaceId)
+    .collection('automations')
+    .where('trigger.type', '==', 'member_join')
+    .where('enabled', '==', true)
+    .get();
+
+  if (automationsSnapshot.empty) return;
+
+  logger.info('Triggering member_join automations from invite redeem', {
+    spaceId,
+    userId,
+    automationCount: automationsSnapshot.size,
+  });
+
+  for (const doc of automationsSnapshot.docs) {
+    const automation = doc.data();
+    try {
+      await executeWelcomeAutomation(automation, doc.id, spaceId, campusId, userId, memberName);
+
+      await doc.ref.update({
+        'stats.timesTriggered': admin.firestore.FieldValue.increment(1),
+        'stats.successCount': admin.firestore.FieldValue.increment(1),
+        'stats.lastTriggered': admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      logger.info('Welcome automation executed from invite', {
+        automationId: doc.id,
+        automationName: automation.name,
+        spaceId,
+        newMemberId: userId,
+      });
+    } catch (error) {
+      await doc.ref.update({
+        'stats.timesTriggered': admin.firestore.FieldValue.increment(1),
+        'stats.failureCount': admin.firestore.FieldValue.increment(1),
+        'stats.lastTriggered': admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      logger.error('Welcome automation failed', {
+        automationId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}
+
+/**
+ * Execute a welcome message automation
+ */
+async function executeWelcomeAutomation(
+  automation: admin.firestore.DocumentData,
+  automationId: string,
+  spaceId: string,
+  campusId: string,
+  newMemberId: string,
+  memberName: string
+): Promise<void> {
+  const action = automation.action;
+
+  if (action?.type !== 'send_message') {
+    return;
+  }
+
+  const config = action.config || {};
+  let boardId = config.boardId || 'general';
+  let content = config.content || 'Welcome to our space!';
+
+  // Interpolate member variables
+  content = content
+    .replace(/\{member\}/g, memberName)
+    .replace(/\{member\.name\}/g, memberName)
+    .replace(/\{member\.id\}/g, newMemberId);
+
+  // Find the target board
+  const boardsRef = dbAdmin
+    .collection('spaces')
+    .doc(spaceId)
+    .collection('boards');
+
+  if (boardId === 'general') {
+    const generalBoard = await boardsRef
+      .where('name', '==', 'General')
+      .limit(1)
+      .get();
+
+    if (!generalBoard.empty) {
+      boardId = generalBoard.docs[0].id;
+    } else {
+      const anyBoard = await boardsRef.limit(1).get();
+      if (!anyBoard.empty) {
+        boardId = anyBoard.docs[0].id;
+      } else {
+        return;
+      }
+    }
+  }
+
+  // Create the welcome message
+  const messageRef = boardsRef.doc(boardId).collection('messages').doc();
+
+  await messageRef.set({
+    id: messageRef.id,
+    spaceId,
+    boardId,
+    content,
+    authorId: 'system',
+    authorName: '🤖 HIVE Bot',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    type: 'system',
+    metadata: {
+      isAutomation: true,
+      automationId,
+      automationName: automation.name,
+      triggerType: 'member_join',
+      triggeredBy: newMemberId,
+    },
+    campusId,
+  });
+}

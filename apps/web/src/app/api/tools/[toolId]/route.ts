@@ -221,6 +221,48 @@ export const DELETE = withAuthAndErrors(async (
     return respond.error("Access denied", "FORBIDDEN", { status: 403 });
   }
 
+  // CASCADE DELETE: Find and delete all PlacedTools referencing this tool across all spaces
+  const placedToolsQuery = await dbAdmin.collectionGroup('placed_tools')
+    .where('toolId', '==', toolId)
+    .where('campusId', '==', campusId)
+    .get();
+
+  const cascadeBatch = dbAdmin.batch();
+  const deletedPlacements: string[] = [];
+  const deletedConnections: string[] = [];
+
+  for (const placementDoc of placedToolsQuery.docs) {
+    const placement = placementDoc.data();
+    const spaceId = placement.spaceId || placementDoc.ref.parent.parent?.id;
+
+    if (spaceId) {
+      // Find connections where this deployment is source or target
+      const [connectionsAsSource, connectionsAsTarget] = await Promise.all([
+        dbAdmin
+          .collection(`spaces/${spaceId}/toolConnections`)
+          .where('source.deploymentId', '==', placementDoc.id)
+          .get(),
+        dbAdmin
+          .collection(`spaces/${spaceId}/toolConnections`)
+          .where('target.deploymentId', '==', placementDoc.id)
+          .get(),
+      ]);
+
+      [...connectionsAsSource.docs, ...connectionsAsTarget.docs].forEach(conn => {
+        cascadeBatch.delete(conn.ref);
+        deletedConnections.push(conn.id);
+      });
+    }
+
+    cascadeBatch.delete(placementDoc.ref);
+    deletedPlacements.push(placementDoc.id);
+  }
+
+  // Commit cascade deletions if any
+  if (deletedPlacements.length > 0 || deletedConnections.length > 0) {
+    await cascadeBatch.commit();
+  }
+
   // Check if tool is being used in any posts
   const postsSnapshot = await db
     .collectionGroup("posts")

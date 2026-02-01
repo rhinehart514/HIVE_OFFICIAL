@@ -23,6 +23,7 @@ import { SecurityScanner } from "@/lib/secure-input-validation";
 
 const UpdateTabSchema = z.object({
   name: z.string().min(1).max(50).optional(),
+  description: z.string().max(500).optional(),
   order: z.number().min(0).optional(),
   isVisible: z.boolean().optional()
 });
@@ -117,6 +118,17 @@ export const PATCH = withAuthValidationAndErrors(
       }
     }
 
+    // SECURITY: Scan description for XSS/injection attacks
+    if (updates.description) {
+      const descScan = SecurityScanner.scanInput(updates.description);
+      if (descScan.level === 'dangerous') {
+        logger.warn("XSS attempt blocked in tab description update", {
+          userId, spaceId, tabId, threats: descScan.threats
+        });
+        return respond.error("Tab description contains invalid content", "INVALID_INPUT", { status: 400 });
+      }
+    }
+
     // Use DDD SpaceManagementService
     const spaceService = createServerSpaceManagementService(
       { userId, campusId }
@@ -126,6 +138,7 @@ export const PATCH = withAuthValidationAndErrors(
       spaceId,
       tabId,
       name: updates.name,
+      description: updates.description,
       order: updates.order,
       isVisible: updates.isVisible
     });

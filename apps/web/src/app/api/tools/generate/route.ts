@@ -177,8 +177,12 @@ export async function POST(request: NextRequest) {
               existingComposition: validated.existingComposition as any,
               isIteration: validated.isIteration,
             }) as AsyncGenerator<StreamingChunk>;
-            providerName = gooseBackend === 'ollama' ? 'Goose (Ollama)' : 'Goose (Groq)';
-            costEstimate = gooseBackend === 'ollama' ? '$0' : '~$0.0001';
+            const groqModel = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+            const is70b = groqModel.includes('70b');
+            providerName = gooseBackend === 'ollama'
+              ? 'Goose (Ollama)'
+              : `Goose (Groq ${is70b ? '70b' : '8b'})`;
+            costEstimate = gooseBackend === 'ollama' ? '$0' : (is70b ? '~$0.001' : '~$0.0001');
           } else if (useFirebaseAI) {
             generator = firebaseGenerateToolStreaming(validated, generationContext);
             providerName = 'Firebase AI (Gemini 2.0 Flash)';
@@ -304,10 +308,12 @@ export async function GET() {
     costPerGeneration = '$0 (self-hosted)';
     latency = '~500ms';
   } else if (gooseBackend === 'groq') {
+    const groqModel = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+    const is70b = groqModel.includes('70b');
     activeBackend = 'goose-groq';
-    model = 'llama-3.1-8b-instant';
-    costPerGeneration = '~$0.0001';
-    latency = '~300ms';
+    model = groqModel;
+    costPerGeneration = is70b ? '~$0.001' : '~$0.0001';
+    latency = is70b ? '~800ms' : '~300ms';
   } else if (!USE_RULES_BASED_GENERATION && firebaseAvailable) {
     activeBackend = 'firebase-ai';
     model = 'gemini-2.0-flash';

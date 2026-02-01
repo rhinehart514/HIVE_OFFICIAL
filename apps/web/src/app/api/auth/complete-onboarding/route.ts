@@ -1,3 +1,8 @@
+/**
+ * @deprecated Use /api/auth/complete-entry instead
+ * This endpoint is maintained for backward compatibility.
+ * New integrations should use /api/auth/complete-entry.
+ */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -13,6 +18,9 @@ import {
   incrementMemberCount,
   isShardedMemberCountEnabled
 } from '@/lib/services/sharded-member-counter.service';
+
+// DEPRECATION: This endpoint is deprecated in favor of /api/auth/complete-entry
+const DEPRECATION_MESSAGE = 'This endpoint is deprecated. Use /api/auth/complete-entry instead.';
 
 // Development mode guard - ONLY allow dev bypass when ALL conditions are met:
 // 1. NODE_ENV is explicitly 'development'
@@ -94,6 +102,13 @@ function inferAcademicLevel(major?: string, graduationYear?: number | null): 'un
 
 // Cast schema to match inferred type - the default() transforms make the Zod type inference tricky
 export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBody>, async (request, _ctx: Record<string, string | string[]>, body: OnboardingBody, _respondFmt: typeof ResponseFormatter) => {
+  // Log deprecation warning
+  logger.warn('Deprecated endpoint called: /api/auth/complete-onboarding', {
+    component: 'complete-onboarding',
+    deprecation: DEPRECATION_MESSAGE,
+    suggestedEndpoint: '/api/auth/complete-entry',
+  });
+
   // Rate limit: 5 onboarding attempts per hour per IP
   const rateLimitResult = await enforceRateLimit('authStrict', request as NextRequest);
   if (!rateLimitResult.allowed) {
@@ -261,10 +276,9 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
         // Campus isolation
         campusId,
         schoolId: campusId, // Keep both for compatibility
-        // State
-        onboardingCompleted: true,
-        onboardingComplete: true, // Both formats for compatibility
-        onboardingCompletedAt: new Date().toISOString(), // Timestamp for consistency
+        // Entry completion - single source of truth
+        // JWT still uses onboardingCompleted for backward compat (derived from entryCompletedAt)
+        entryCompletedAt: new Date().toISOString(),
         isActive: true,
         // Timestamps
         updatedAt: new Date().toISOString(),
@@ -359,7 +373,14 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
     const response = NextResponse.json({
       success: true,
       user: { id: userId, email, onboardingCompleted: true },
+      deprecated: true,
+      deprecationMessage: DEPRECATION_MESSAGE,
     });
+
+    // Add deprecation header
+    response.headers.set('X-Deprecated', 'Use /api/auth/complete-entry');
+    response.headers.set('Deprecation', 'true');
+    response.headers.set('Link', '</api/auth/complete-entry>; rel="successor-version"');
 
     setSessionCookie(response, newToken, { isAdmin });
     return response;

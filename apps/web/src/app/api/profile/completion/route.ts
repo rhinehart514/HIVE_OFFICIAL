@@ -2,47 +2,36 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/logger";
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { getServerProfileRepository } from '@hive/core/server';
+import {
+  COMPLETION_REQUIREMENTS,
+  isEntryComplete,
+  isProfileCompletionComplete as checkProfileComplete,
+  getCompletionPercentage,
+  getMissingFields,
+  getNextSteps,
+  type ProfileUserData as UserData,
+} from '@hive/core';
 
 interface ProfileCompletionCheck {
   isComplete: boolean;
+  entryComplete: boolean;
+  profileComplete: boolean;
   completionPercentage: number;
   missingFields: string[];
+  missingRequired: string[];
+  missingRecommended: string[];
   completedFields: string[];
-  requiredFields: string[];
-  optionalFields: string[];
+  requiredFields: readonly string[];
+  recommendedFields: readonly string[];
+  optionalFields: readonly string[];
   nextSteps: string[];
 }
-
-// Required fields for basic profile completion
-const REQUIRED_FIELDS = [
-  'fullName',
-  'handle',
-  'email',
-  'major',
-  'schoolId',
-  'consentGiven'
-];
-
-// Optional fields that improve profile completeness
-const OPTIONAL_FIELDS = [
-  'avatarUrl',
-  'bio',
-  'graduationYear',
-  'isPublic',
-  'builderOptIn',
-  'housing',
-  'pronouns',
-  'statusMessage',
-  'interests',
-  'academicYear'
-];
 
 /**
  * Check profile completion status
  * GET /api/profile/completion
  *
- * Uses DDD EnhancedProfile.getCompletionPercentage() when available,
- * falls back to legacy field checking for additional detail.
+ * Uses centralized COMPLETION_REQUIREMENTS from @hive/core
  */
 export const GET = withAuthAndErrors(async (
   request,
@@ -64,54 +53,72 @@ export const GET = withAuthAndErrors(async (
       return respond.error("User profile not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
 
-    // Use DDD aggregate method for completion percentage
-    const dddCompletionPercentage = profile.getCompletionPercentage();
-    const isProfileComplete = profile.isProfileComplete();
+    // Build UserData for completion checks
+    const userData: UserData = {
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      handle: profile.handle.value,
+      email: profile.email.value,
+      campusId: profile.campusId.id,
+      role: profile.userType.value,
+      major: profile.major,
+      graduationYear: profile.graduationYear,
+      bio: profile.bio,
+      avatarUrl: profile.personalInfo.profilePhoto,
+      interests: profile.interests,
+      isOnboarded: profile.isOnboarded,
+    };
 
-    // Build detailed completion info from domain model
+    // Use centralized completion checks
+    const entryComplete = isEntryComplete(userData);
+    const profileComplete = checkProfileComplete(userData);
+    const completionPercentage = getCompletionPercentage(userData);
+    const { required: missingRequired, recommended: missingRecommended } = getMissingFields(userData);
+    const nextSteps = getNextSteps(userData);
+
+    // Build completed/missing fields for backward compatibility
     const completedFields: string[] = [];
-    const missingFields: string[] = [];
+    const missingFields: string[] = [...missingRequired];
 
-    // Check required fields from domain model
-    if (profile.firstName && profile.lastName) completedFields.push('fullName');
-    else missingFields.push('fullName');
+    // Check all profile required fields
+    for (const field of COMPLETION_REQUIREMENTS.profile.required) {
+      if (!missingRequired.includes(field)) {
+        completedFields.push(field);
+      }
+    }
 
-    if (profile.handle.value) completedFields.push('handle');
-    else missingFields.push('handle');
+    // Check recommended fields
+    for (const field of COMPLETION_REQUIREMENTS.profile.recommended) {
+      if (!missingRecommended.includes(field)) {
+        completedFields.push(field);
+      }
+    }
 
-    if (profile.email.value) completedFields.push('email');
-    else missingFields.push('email');
-
-    if (profile.major) completedFields.push('major');
-    else missingFields.push('major');
-
-    if (profile.campusId.id) completedFields.push('schoolId');
-    else missingFields.push('schoolId');
-
-    // Consent is implied by onboarded status
-    if (profile.isOnboarded) completedFields.push('consentGiven');
-    else missingFields.push('consentGiven');
-
-    // Check optional fields
-    if (profile.personalInfo.profilePhoto) completedFields.push('avatarUrl');
-    if (profile.bio) completedFields.push('bio');
-    if (profile.graduationYear) completedFields.push('graduationYear');
-    if (profile.interests.length > 0) completedFields.push('interests');
+    // Interests check
+    if ((userData.interests?.length || 0) >= COMPLETION_REQUIREMENTS.profile.minimums.interests) {
+      completedFields.push('interests');
+    }
 
     const completion: ProfileCompletionCheck = {
-      isComplete: isProfileComplete,
-      completionPercentage: dddCompletionPercentage,
+      isComplete: profileComplete,
+      entryComplete,
+      profileComplete,
+      completionPercentage,
       missingFields,
+      missingRequired,
+      missingRecommended,
       completedFields,
-      requiredFields: REQUIRED_FIELDS,
-      optionalFields: OPTIONAL_FIELDS,
-      nextSteps: generateNextSteps(missingFields, completedFields.filter(f => OPTIONAL_FIELDS.includes(f))),
+      requiredFields: COMPLETION_REQUIREMENTS.profile.required,
+      recommendedFields: COMPLETION_REQUIREMENTS.profile.recommended,
+      optionalFields: COMPLETION_REQUIREMENTS.profile.optional,
+      nextSteps,
     };
 
     logger.debug('Profile completion via DDD', {
       userId,
-      percentage: dddCompletionPercentage,
-      isComplete: isProfileComplete,
+      percentage: completionPercentage,
+      entryComplete,
+      profileComplete,
     });
 
     return respond.success({ completion });
@@ -131,165 +138,64 @@ export const GET = withAuthAndErrors(async (
     return respond.error("User profile not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
-  // Check completion status using legacy method
-  const completion = checkProfileCompletion(userData, userData?.email || '');
+  // Build UserData from Firestore document
+  const firestoreUserData: UserData = {
+    firstName: userData?.firstName,
+    lastName: userData?.lastName,
+    handle: userData?.handle,
+    email: userData?.email,
+    campusId: userData?.campusId || userData?.schoolId,
+    role: userData?.role || userData?.userType,
+    major: userData?.major,
+    graduationYear: userData?.graduationYear,
+    bio: userData?.bio,
+    avatarUrl: userData?.avatarUrl || userData?.profileImageUrl,
+    interests: userData?.interests,
+    entryCompletedAt: userData?.entryCompletedAt,
+    onboardingCompleted: userData?.onboardingCompleted,
+  };
+
+  // Use centralized completion checks
+  const entryComplete = isEntryComplete(firestoreUserData);
+  const profileComplete = checkProfileComplete(firestoreUserData);
+  const completionPercentage = getCompletionPercentage(firestoreUserData);
+  const { required: missingRequired, recommended: missingRecommended } = getMissingFields(firestoreUserData);
+  const nextSteps = getNextSteps(firestoreUserData);
+
+  // Build completed/missing fields
+  const completedFields: string[] = [];
+  const missingFields: string[] = [...missingRequired];
+
+  for (const field of COMPLETION_REQUIREMENTS.profile.required) {
+    if (!missingRequired.includes(field)) {
+      completedFields.push(field);
+    }
+  }
+
+  for (const field of COMPLETION_REQUIREMENTS.profile.recommended) {
+    if (!missingRecommended.includes(field)) {
+      completedFields.push(field);
+    }
+  }
+
+  if ((firestoreUserData.interests?.length || 0) >= COMPLETION_REQUIREMENTS.profile.minimums.interests) {
+    completedFields.push('interests');
+  }
+
+  const completion: ProfileCompletionCheck = {
+    isComplete: profileComplete,
+    entryComplete,
+    profileComplete,
+    completionPercentage,
+    missingFields,
+    missingRequired,
+    missingRecommended,
+    completedFields,
+    requiredFields: COMPLETION_REQUIREMENTS.profile.required,
+    recommendedFields: COMPLETION_REQUIREMENTS.profile.recommended,
+    optionalFields: COMPLETION_REQUIREMENTS.profile.optional,
+    nextSteps,
+  };
 
   return respond.success({ completion });
 });
-
-/**
- * Helper function to check profile completion
- */
-function checkProfileCompletion(userData: Record<string, unknown> | undefined, userEmail?: string): ProfileCompletionCheck {
-  const completedFields: string[] = [];
-  const missingFields: string[] = [];
-
-  // Check required fields
-  REQUIRED_FIELDS.forEach(field => {
-    let value: unknown;
-
-    // Special handling for email - can come from auth token
-    if (field === 'email') {
-      value = userData?.email || userEmail;
-    } else {
-      value = userData?.[field];
-    }
-
-    // Check if field has a meaningful value
-    const isCompleted = checkFieldCompletion(field, value);
-
-    if (isCompleted) {
-      completedFields.push(field);
-    } else {
-      missingFields.push(field);
-    }
-  });
-
-  // Check optional fields
-  const completedOptionalFields: string[] = [];
-  OPTIONAL_FIELDS.forEach(field => {
-    const value = userData?.[field];
-    const isCompleted = checkFieldCompletion(field, value);
-    
-    if (isCompleted) {
-      completedFields.push(field);
-      completedOptionalFields.push(field);
-    }
-  });
-
-  // Calculate completion percentage
-  const totalFields = REQUIRED_FIELDS.length + OPTIONAL_FIELDS.length;
-  const completionPercentage = Math.round((completedFields.length / totalFields) * 100);
-  
-  // Profile is complete if all required fields are filled
-  const isComplete = missingFields.length === 0;
-  
-  // Generate next steps
-  const nextSteps = generateNextSteps(missingFields, completedOptionalFields);
-
-  return {
-    isComplete,
-    completionPercentage,
-    missingFields,
-    completedFields,
-    requiredFields: REQUIRED_FIELDS,
-    optionalFields: OPTIONAL_FIELDS,
-    nextSteps,
-  };
-}
-
-/**
- * Check if a specific field is completed
- */
-function checkFieldCompletion(field: string, value: unknown): boolean {
-  if (value === null || value === undefined) {
-    return false;
-  }
-
-  // String fields
-  if (typeof value === 'string') {
-    return value.trim().length > 0;
-  }
-
-  // Boolean fields (considered complete if explicitly set)
-  if (typeof value === 'boolean') {
-    return true; // Both true and false are valid completion states
-  }
-
-  // Number fields
-  if (typeof value === 'number') {
-    return !isNaN(value) && value > 0;
-  }
-
-  // Array fields (like interests)
-  if (Array.isArray(value)) {
-    return value.length > 0;
-  }
-
-  // Object fields (like ghostMode)
-  if (typeof value === 'object' && value !== null) {
-    return Object.keys(value).length > 0;
-  }
-
-  return false;
-}
-
-/**
- * Generate helpful next steps for profile completion
- */
-function generateNextSteps(missingFields: string[], completedOptionalFields: string[]): string[] {
-  const steps: string[] = [];
-  
-  if (missingFields.length === 0) {
-    steps.push('Your profile is complete!');
-    
-    // Suggest additional improvements
-    if (!completedOptionalFields.includes('avatarUrl')) {
-      steps.push('Consider adding a profile photo to personalize your account');
-    }
-    if (!completedOptionalFields.includes('bio')) {
-      steps.push('Add a bio to tell others about yourself');
-    }
-    if (!completedOptionalFields.includes('builderOptIn')) {
-      steps.push('Consider joining the HIVE Builder Program');
-    }
-    
-    return steps;
-  }
-
-  // Prioritize missing required fields
-  const fieldLabels: Record<string, string> = {
-    fullName: 'Add your full name',
-    handle: 'Choose a unique handle',
-    email: 'Verify your email address',
-    major: 'Select your major',
-    schoolId: 'Confirm your school',
-    consentGiven: 'Accept the terms and privacy policy',
-    avatarUrl: 'Upload a profile photo',
-    bio: 'Write a brief bio about yourself',
-    graduationYear: 'Add your graduation year',
-    isPublic: 'Set your profile visibility',
-    builderOptIn: 'Consider joining the Builder Program',
-    housing: 'Add your housing information',
-    pronouns: 'Add your pronouns',
-    statusMessage: 'Set a status message',
-    interests: 'Add your interests',
-    academicYear: 'Select your academic year'
-  };
-
-  // Add steps for missing required fields first
-  missingFields.forEach(field => {
-    if (fieldLabels[field]) {
-      steps.push(fieldLabels[field]);
-    }
-  });
-
-  // Add encouragement
-  if (missingFields.length <= 2) {
-    steps.push('You\'re almost done! Just a few more steps to complete your profile.');
-  } else {
-    steps.push('Complete these steps to unlock all HIVE features.');
-  }
-
-  return steps;
-}

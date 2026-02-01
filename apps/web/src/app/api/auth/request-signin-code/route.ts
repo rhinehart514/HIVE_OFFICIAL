@@ -5,6 +5,7 @@ import { validateOrigin } from '@/lib/security-middleware';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { enforceRateLimit, getSecureClientId } from '@/lib/secure-rate-limiter';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
+import { sendSigninCodeEmail } from '@/lib/email-service';
 import crypto from 'crypto';
 
 const requestCodeSchema = z.object({
@@ -138,14 +139,17 @@ export async function POST(request: NextRequest) {
     });
 
     // Send email with code
-    // For now, log to console in dev, use email service in prod
     if (process.env.NODE_ENV === 'development') {
       console.log(`\n📧 SIGNIN CODE for @${normalizedHandle}: ${code}\n`);
-    } else {
-      // TODO: Use email service to send code
-      // await sendSigninCodeEmail(userEmail, code);
-      console.log(`📧 Would send signin code to ${maskEmail(userEmail)}`);
     }
+
+    // Send via email service (in parallel, don't block response)
+    sendSigninCodeEmail(userEmail, code, campusDomain).catch(err => {
+      logger.warn('Failed to send signin code email', {
+        handle: normalizedHandle,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
 
     logger.info('Signin code sent', {
       ip: clientIp,

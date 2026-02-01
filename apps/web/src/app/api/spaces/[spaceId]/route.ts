@@ -1,4 +1,5 @@
 import { z } from "zod";
+import * as admin from 'firebase-admin';
 import {
   getServerSpaceRepository,
   createServerSpaceManagementService,
@@ -10,6 +11,7 @@ import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId,
 import { SecurityScanner } from "@/lib/secure-input-validation";
 import { checkSpacePermission, type SpaceRole } from "@/lib/space-permission-middleware";
 import { isAdmin } from "@/lib/admin-auth";
+import { dbAdmin } from "@/lib/firebase-admin";
 
 const UpdateSpaceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -156,11 +158,60 @@ export const GET = withAuthAndErrors(async (
 
   // Return space data with membership info
   const spaceData = toSpaceWithToolsDTO(space);
+
+  // For gathering/ghost spaces, include gatherer profiles so non-members can see who's waiting
+  let gatherers: { id: string; name: string; avatarUrl: string | null; isFoundingMember?: boolean }[] = [];
+
+  if (spaceData.activationStatus !== 'open') {
+    try {
+      const membersSnap = await dbAdmin.collection('spaceMembers')
+        .where('spaceId', '==', spaceId)
+        .where('campusId', '==', campusId)
+        .where('isActive', '==', true)
+        .limit(20)
+        .get();
+
+      const userIds = membersSnap.docs.map(d => d.data().userId as string);
+      const memberDataMap = new Map<string, { isFoundingMember?: boolean }>(
+        membersSnap.docs.map(d => [d.data().userId as string, { isFoundingMember: d.data().isFoundingMember as boolean | undefined }])
+      );
+
+      if (userIds.length > 0) {
+        // Firestore 'in' queries limited to 30 items, but we already limited to 20
+        const usersSnap = await dbAdmin.collection('users')
+          .where(admin.firestore.FieldPath.documentId(), 'in', userIds)
+          .get();
+
+        gatherers = usersSnap.docs.map(d => {
+          const memberData = memberDataMap.get(d.id);
+          return {
+            id: d.id,
+            name: d.data().fullName || d.data().displayName || 'Student',
+            avatarUrl: d.data().avatarUrl || d.data().photoURL || null,
+            isFoundingMember: memberData?.isFoundingMember ?? true, // Pre-threshold = founding
+          };
+        });
+      }
+
+      logger.info(`Gatherers fetched for space: ${spaceId}`, {
+        spaceId,
+        gathererCount: gatherers.length,
+        activationStatus: spaceData.activationStatus,
+      });
+    } catch (error) {
+      // Don't fail the request if gatherers query fails
+      logger.warn(`Failed to fetch gatherers for space: ${spaceId}`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   return respond.success({
     ...spaceData,
     membership,
     isMember: membership?.isActive ?? false,
     membershipRole: membership?.role,
+    gatherers, // Include gatherers for ghost/gathering spaces
   });
 });
 

@@ -27,9 +27,16 @@ import type { ChatMessageReaction } from "@hive/core";
  * POST /api/spaces/[spaceId]/chat - Send a new message
  */
 
+const AttachmentSchema = z.object({
+  url: z.string().url(),
+  filename: z.string(),
+  mimeType: z.string(),
+  size: z.number(),
+});
+
 const SendMessageSchema = z.object({
   boardId: z.string().min(1),
-  content: z.string().min(1).max(4000),
+  content: z.string().max(4000),
   replyToId: z.string().optional(),
   componentData: z.object({
     elementType: z.string(),
@@ -38,7 +45,11 @@ const SendMessageSchema = z.object({
     state: z.record(z.unknown()).optional(),
     isActive: z.boolean().default(true),
   }).optional(),
-});
+  attachments: z.array(AttachmentSchema).max(5).optional(),
+}).refine(
+  (data) => data.content.trim().length > 0 || (data.attachments && data.attachments.length > 0),
+  { message: 'Message must have content or attachments' }
+);
 
 /**
  * Create permission check callback for SpaceChatService
@@ -144,6 +155,37 @@ export const GET = withAuthAndErrors(async (
   const serviceResult = result.getValue();
   const { messages, hasMore } = serviceResult.data;
 
+  // Fetch lastReadAt for "Since you left" feature
+  let lastReadAt: number | null = null;
+  let unreadCount = 0;
+  try {
+    const readReceiptDoc = await dbAdmin
+      .collection('spaces')
+      .doc(spaceId)
+      .collection('boards')
+      .doc(boardId)
+      .collection('read_receipts')
+      .doc(userId)
+      .get();
+
+    if (readReceiptDoc.exists) {
+      const data = readReceiptDoc.data();
+      lastReadAt = data?.lastReadTimestamp || null;
+    }
+
+    // Count messages newer than lastReadAt (excluding user's own)
+    if (lastReadAt) {
+      unreadCount = messages.filter(msg => {
+        const dto = msg.toDTO();
+        const timestamp = dto.timestamp as number;
+        return timestamp > lastReadAt! && dto.authorId !== userId;
+      }).length;
+    }
+  } catch (error) {
+    // Non-critical - continue without lastReadAt
+    logger.warn('Failed to fetch read receipt', { error, spaceId, boardId, userId });
+  }
+
   // Transform messages to API response format
   const apiMessages = messages.map(msg => {
     const dto = msg.toDTO();
@@ -178,6 +220,9 @@ export const GET = withAuthAndErrors(async (
     messages: apiMessages,
     hasMore,
     boardId,
+    // "Since you left" data
+    lastReadAt,
+    unreadCount,
   });
 });
 
@@ -255,6 +300,7 @@ export const POST = withAuthValidationAndErrors(
       content: data.content,
       componentData: data.componentData,
       replyToId: data.replyToId,
+      attachments: data.attachments,
     });
 
     if (result.isFailure) {
@@ -272,6 +318,15 @@ export const POST = withAuthValidationAndErrors(
       userId,
     });
 
+    // Trigger keyword automations (non-blocking)
+    triggerKeywordAutomations(spaceId, messageId, data.content, userId, data.boardId).catch(err => {
+      logger.warn('Keyword automation trigger failed', {
+        error: err instanceof Error ? err.message : String(err),
+        spaceId,
+        messageId,
+      });
+    });
+
     return respond.success({
       message: "Message sent",
       messageId,
@@ -279,3 +334,155 @@ export const POST = withAuthValidationAndErrors(
     }, { status: 201 });
   }
 );
+
+/**
+ * Trigger keyword-based automations for a message
+ * Non-blocking - runs in background
+ */
+async function triggerKeywordAutomations(
+  spaceId: string,
+  messageId: string,
+  content: string,
+  authorId: string,
+  boardId: string
+): Promise<void> {
+  const { FieldValue } = await import('firebase-admin/firestore');
+
+  // Get keyword automations for this space
+  const automationsSnapshot = await dbAdmin
+    .collection('spaces')
+    .doc(spaceId)
+    .collection('automations')
+    .where('trigger.type', '==', 'keyword')
+    .where('enabled', '==', true)
+    .get();
+
+  if (automationsSnapshot.empty) return;
+
+  const contentLower = content.toLowerCase();
+
+  for (const doc of automationsSnapshot.docs) {
+    const automation = doc.data();
+    const keywords: string[] = automation.trigger?.keywords || [];
+
+    // Check if any keyword matches
+    const matchedKeyword = keywords.find((kw: string) =>
+      contentLower.includes(kw.toLowerCase())
+    );
+
+    if (!matchedKeyword) continue;
+
+    try {
+      // Execute the automation action based on type
+      const action = automation.action;
+      if (!action) continue;
+
+      if (action.type === 'send_message') {
+        // Send a response message
+        const config = action.config || {};
+        let responseContent = config.content || '';
+
+        // Interpolate variables
+        responseContent = responseContent
+          .replace(/\{keyword\}/g, matchedKeyword)
+          .replace(/\{author\}/g, `<@${authorId}>`)
+          .replace(/\{message\}/g, content.slice(0, 100));
+
+        // Get user profile for bot message
+        const userDoc = await dbAdmin.collection('profiles').doc(authorId).get();
+        const userName = userDoc.exists ? (userDoc.data()?.displayName || 'Member') : 'Member';
+
+        // Create system message in response
+        await dbAdmin
+          .collection('spaces')
+          .doc(spaceId)
+          .collection('boards')
+          .doc(boardId)
+          .collection('messages')
+          .add({
+            content: responseContent,
+            authorId: 'system',
+            authorName: 'HIVE Bot',
+            authorAvatarUrl: null,
+            authorRole: 'system',
+            type: 'system',
+            timestamp: Date.now(),
+            isDeleted: false,
+            isPinned: false,
+            reactions: [],
+            replyToId: messageId,
+            replyToPreview: content.slice(0, 100),
+            threadCount: 0,
+            metadata: {
+              automationId: doc.id,
+              automationName: automation.name,
+              triggeredBy: 'keyword',
+              matchedKeyword,
+            },
+          });
+      } else if (action.type === 'notify') {
+        // Send notification to leaders
+        const { createBulkNotifications } = await import('@/lib/notification-service');
+
+        const leadersSnapshot = await dbAdmin
+          .collection('spaceMembers')
+          .where('spaceId', '==', spaceId)
+          .where('role', 'in', ['owner', 'admin', 'moderator', 'leader'])
+          .where('isActive', '==', true)
+          .get();
+
+        const leaderIds = leadersSnapshot.docs.map(d => d.data().userId);
+
+        if (leaderIds.length > 0) {
+          let title = action.config?.title || 'Keyword Alert';
+          let body = action.config?.body || `Keyword "${matchedKeyword}" detected`;
+
+          title = title.replace(/\{keyword\}/g, matchedKeyword);
+          body = body.replace(/\{keyword\}/g, matchedKeyword)
+            .replace(/\{message\}/g, content.slice(0, 100));
+
+          await createBulkNotifications(leaderIds, {
+            type: 'system',
+            category: 'spaces',
+            title,
+            body,
+            actionUrl: `/s/${spaceId}`,
+            metadata: {
+              spaceId,
+              automationId: doc.id,
+              matchedKeyword,
+              messageId,
+            },
+          });
+        }
+      }
+
+      // Update stats
+      await doc.ref.update({
+        'stats.timesTriggered': FieldValue.increment(1),
+        'stats.successCount': FieldValue.increment(1),
+        'stats.lastTriggered': new Date(),
+      });
+
+      logger.info('Keyword automation triggered', {
+        automationId: doc.id,
+        automationName: automation.name,
+        matchedKeyword,
+        spaceId,
+        messageId,
+      });
+    } catch (error) {
+      const { FieldValue: FV } = await import('firebase-admin/firestore');
+      await doc.ref.update({
+        'stats.timesTriggered': FV.increment(1),
+        'stats.failureCount': FV.increment(1),
+        'stats.lastTriggered': new Date(),
+      });
+
+      logger.error('Keyword automation failed', {
+        automationId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}

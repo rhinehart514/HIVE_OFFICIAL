@@ -1,8 +1,10 @@
 import { z } from "zod";
+import * as admin from "firebase-admin";
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { HttpStatus } from "@/lib/api-response-types";
 import { logger } from "@/lib/structured-logger";
 import { dbAdmin } from "@/lib/firebase-admin";
+import { Result } from "@hive/core";
 import {
   createServerSpaceManagementService,
   getServerSpaceRepository,
@@ -11,6 +13,8 @@ import {
   normalizeCategory,
   type SpaceMemberRole,
   type SpaceCategoryValue,
+  type SpaceServiceCallbacks,
+  type SpaceMemberData,
 } from "@hive/core/server";
 
 /**
@@ -25,6 +29,65 @@ import {
 const UpdateMemberRoleSchema = z.object({
   role: z.enum(['owner', 'admin', 'moderator', 'member', 'guest'])
 });
+
+/**
+ * Create callbacks for DDD SpaceManagementService
+ */
+function createSpaceCallbacks(campusId: string): SpaceServiceCallbacks {
+  return {
+    findSpaceMember: async (spaceId: string, userId: string): Promise<Result<SpaceMemberData | null>> => {
+      try {
+        const query = dbAdmin.collection('spaceMembers')
+          .where('spaceId', '==', spaceId)
+          .where('userId', '==', userId)
+          .where('campusId', '==', campusId)
+          .limit(1);
+        const snapshot = await query.get();
+        if (snapshot.empty) {
+          return Result.ok(null);
+        }
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        return Result.ok({
+          spaceId: data.spaceId,
+          userId: data.userId,
+          campusId: data.campusId,
+          role: data.role,
+          joinedAt: data.joinedAt?.toDate?.() || new Date(),
+          isActive: data.isActive,
+          permissions: data.permissions || ['post'],
+          joinMethod: data.joinMethod || 'manual'
+        });
+      } catch (error) {
+        return Result.fail(`Failed to find member: ${error}`);
+      }
+    },
+    updateSpaceMember: async (spaceId: string, userId: string, updates: Record<string, unknown>): Promise<Result<void>> => {
+      try {
+        const query = dbAdmin.collection('spaceMembers')
+          .where('spaceId', '==', spaceId)
+          .where('userId', '==', userId)
+          .where('campusId', '==', campusId)
+          .limit(1);
+        const snapshot = await query.get();
+        if (!snapshot.empty) {
+          const updateData: Record<string, unknown> = {};
+          if (updates.isActive !== undefined) updateData.isActive = updates.isActive;
+          if (updates.role) updateData.role = updates.role;
+          if (updates.permissions) updateData.permissions = updates.permissions;
+          if (updates.leftAt) updateData.leftAt = admin.firestore.FieldValue.serverTimestamp();
+          if (updates.removedAt) updateData.removedAt = admin.firestore.FieldValue.serverTimestamp();
+          if (updates.removedBy) updateData.removedBy = updates.removedBy;
+          updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+          await snapshot.docs[0].ref.update(updateData);
+        }
+        return Result.ok<void>();
+      } catch (error) {
+        return Result.fail<void>(`Failed to update member: ${error}`);
+      }
+    }
+  };
+}
 
 // PATCH /api/spaces/[spaceId]/members/[memberId] - Update a member's role
 export const PATCH = withAuthAndErrors(async (
@@ -49,8 +112,11 @@ export const PATCH = withAuthAndErrors(async (
   }
   const { role: newRole } = parse.data;
 
-  // Create the space management service
-  const spaceService = createServerSpaceManagementService({ userId: requesterId, campusId });
+  // Create the space management service with callbacks for member updates
+  const spaceService = createServerSpaceManagementService(
+    { userId: requesterId, campusId },
+    createSpaceCallbacks(campusId)
+  );
 
   // Use the DDD service to change member role
   const result = await spaceService.changeMemberRole(requesterId, {
@@ -122,8 +188,11 @@ export const DELETE = withAuthAndErrors(async (
     }
   }
 
-  // Create the space management service
-  const spaceService = createServerSpaceManagementService({ userId: requesterId, campusId });
+  // Create the space management service with callbacks for member updates
+  const spaceService = createServerSpaceManagementService(
+    { userId: requesterId, campusId },
+    createSpaceCallbacks(campusId)
+  );
 
   // Use the DDD service to remove member
   const result = await spaceService.removeMember(requesterId, {

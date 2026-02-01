@@ -13,6 +13,7 @@ import {
   dbAdmin,
 } from '@hive/core/server';
 import { getOrchestrationExecutor } from '@hive/core';
+import { createBulkNotifications } from '@/lib/notification-service';
 
 // ============================================================================
 // Request Validation
@@ -170,6 +171,51 @@ export async function POST(request: NextRequest) {
               .collection('placed_tools')
               .doc(tool.deploymentId)
               .update(configUpdates);
+          }
+        }
+
+        // Handle notification actions
+        if (actionResult.actionType === 'notification' && actionResult.updates) {
+          const notifData = actionResult.updates as {
+            recipients?: 'all' | 'leaders';
+            title?: string;
+            body?: string;
+            actionUrl?: string;
+          };
+
+          let userIds: string[] = [];
+          const spaceId = deployment.spaceId;
+
+          if (notifData.recipients === 'all') {
+            const membersSnapshot = await dbAdmin
+              .collection('spaceMembers')
+              .where('spaceId', '==', spaceId)
+              .where('isActive', '==', true)
+              .get();
+            userIds = membersSnapshot.docs.map(d => d.data().userId);
+          } else if (notifData.recipients === 'leaders') {
+            const leadersSnapshot = await dbAdmin
+              .collection('spaceMembers')
+              .where('spaceId', '==', spaceId)
+              .where('role', 'in', ['owner', 'admin', 'moderator', 'leader'])
+              .where('isActive', '==', true)
+              .get();
+            userIds = leadersSnapshot.docs.map(d => d.data().userId);
+          }
+
+          if (userIds.length > 0) {
+            await createBulkNotifications(userIds, {
+              type: 'system',
+              category: 'tools',
+              title: notifData.title || 'Setup Notification',
+              body: notifData.body || '',
+              actionUrl: notifData.actionUrl || `/s/${spaceId}`,
+              metadata: {
+                deploymentId: deployment.id,
+                templateId: deployment.templateId,
+                orchestrationType: 'tool_event',
+              },
+            });
           }
         }
       }

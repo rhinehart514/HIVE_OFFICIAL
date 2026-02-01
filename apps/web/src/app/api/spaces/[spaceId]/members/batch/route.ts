@@ -254,12 +254,21 @@ export const POST = withAuthValidationAndErrors(
     let failureCount = 0;
 
     if (body.action === "invite") {
-      // Batch invite
+      // PERFORMANCE FIX: Batch fetch all user docs first instead of N+1 queries
+      const userIds = body.members.map(m => m.userId);
+      const userRefs = userIds.map(id => dbAdmin.collection("users").doc(id));
+      const userDocs = await dbAdmin.getAll(...userRefs);
+      const existingUsers = new Set<string>();
+      userDocs.forEach((doc, index) => {
+        if (doc.exists) {
+          existingUsers.add(userIds[index]);
+        }
+      });
+
+      // Process invites with pre-validated user existence
       for (const member of body.members) {
         try {
-          // Verify user exists
-          const userDoc = await dbAdmin.collection("users").doc(member.userId).get();
-          if (!userDoc.exists) {
+          if (!existingUsers.has(member.userId)) {
             results.push({ success: false, userId: member.userId, error: "User not found" });
             failureCount++;
             continue;

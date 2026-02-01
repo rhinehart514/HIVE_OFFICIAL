@@ -16,6 +16,7 @@ import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 const schoolNotifySchema = z.object({
   email: z.string().email('Invalid email format').max(254),
   schoolName: z.string().min(1, 'School name is required').max(200),
+  schoolId: z.string().max(100).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, schoolName } = validation.data;
+    const { email, schoolName, schoolId } = validation.data;
     const normalizedEmail = email.toLowerCase().trim();
 
     // Store in Firestore
@@ -59,7 +60,9 @@ export async function POST(request: NextRequest) {
       await dbAdmin.collection('school_waitlist').doc(docId).set({
         email: normalizedEmail,
         schoolName,
+        schoolId: schoolId || null,
         status: 'pending',
+        notified: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }, { merge: true });

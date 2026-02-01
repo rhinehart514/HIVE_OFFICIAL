@@ -31,6 +31,9 @@ import type {
   ToolBudgets,
   BudgetUsage,
   ResolvedConnections,
+  DeploymentExecutionContext,
+  SpaceExecutionContext,
+  ProfileExecutionContext,
 } from '@hive/core';
 import {
   hasCapability,
@@ -106,7 +109,10 @@ export interface ActionContext {
   /** @deprecated Use sharedState and userState instead */
   state: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  /** @deprecated Use executionContext instead */
   spaceContext?: Record<string, unknown>;
+  /** Type-safe execution context for space or profile deployments */
+  executionContext?: DeploymentExecutionContext;
 
   // ============================================================================
   // Phase 1: Shared State Architecture
@@ -1869,14 +1875,20 @@ async function executeToolAction(params: {
       }
     }
 
-    // Fetch space context if tool is deployed to a space
-    // This provides events, members, and other space data to HiveLab tools
+    // Fetch execution context based on deployment type (space or profile)
+    // This provides events, members, and other contextual data to HiveLab tools
     let spaceContext: Record<string, unknown> | undefined;
+    let executionContext: DeploymentExecutionContext | undefined;
     const targetType = (placementContext?.snapshot?.data() as Record<string, unknown> | undefined)?.targetType || deployment.deployedTo;
     const targetId = (placementContext?.snapshot?.data() as Record<string, unknown> | undefined)?.targetId || deployment.targetId;
 
     if (targetType === 'space' && targetId) {
-      spaceContext = await fetchSpaceContext(targetId as string, user.uid, campusId);
+      const spaceCtx = await fetchSpaceContext(targetId as string, user.uid, campusId);
+      spaceContext = spaceCtx as unknown as Record<string, unknown>; // Legacy compat
+      executionContext = { type: 'space', context: spaceCtx };
+    } else if (targetType === 'profile' && targetId) {
+      const profileCtx = await fetchProfileContext(targetId as string, user.uid, campusId);
+      executionContext = { type: 'profile', context: profileCtx };
     }
 
     // =========================================================================
@@ -1948,7 +1960,8 @@ async function executeToolAction(params: {
       data,
       state: currentState, // Legacy - deprecated
       metadata: params.context,
-      spaceContext, // Inject space data (events, members, etc.)
+      spaceContext, // Legacy - use executionContext instead
+      executionContext, // Type-safe execution context
       // Phase 1: Shared State Architecture
       sharedState: currentSharedState,
       userState: currentUserState,
@@ -2537,7 +2550,7 @@ async function processNotifications(deployment: DeploymentData, notifications: T
  * @param campusId - The campus ID for isolation
  * @returns Space context with events, members, and space info
  */
-async function fetchSpaceContext(spaceId: string, userId: string, campusId: string): Promise<Record<string, unknown>> {
+async function fetchSpaceContext(spaceId: string, userId: string, campusId: string): Promise<SpaceExecutionContext> {
   try {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -2626,16 +2639,20 @@ async function fetchSpaceContext(spaceId: string, userId: string, campusId: stri
         memberCount: spaceData?.metrics?.memberCount || memberProfiles.length,
       },
       events: {
-        upcoming: upcomingEvents,
-        recent: recentEvents,
+        upcoming: upcomingEvents as Array<{ id: string; title?: string; startDate?: string; [key: string]: unknown }>,
+        recent: recentEvents as Array<{ id: string; title?: string; startDate?: string; [key: string]: unknown }>,
         total: events.length,
       },
       members: {
-        list: memberProfiles,
+        list: memberProfiles.map(m => ({
+          id: m.id as string,
+          displayName: m.displayName as string,
+          avatarUrl: (m.avatarUrl as string | null) || null,
+          role: m.role as string,
+        })),
         total: memberProfiles.length,
         currentUserIsMember: memberIds.includes(userId),
       },
-      // Timestamps for cache invalidation
       fetchedAt: now.toISOString(),
     };
   } catch (error) {
@@ -2647,11 +2664,72 @@ async function fetchSpaceContext(spaceId: string, userId: string, campusId: stri
 
     // Return minimal context on error
     return {
-      space: { id: spaceId },
+      space: { id: spaceId, name: 'Unknown', description: '', category: 'student_org', memberCount: 0 },
       events: { upcoming: [], recent: [], total: 0 },
       members: { list: [], total: 0, currentUserIsMember: false },
       fetchedAt: new Date().toISOString(),
       error: 'Failed to fetch complete space context',
+    };
+  }
+}
+
+/**
+ * Fetch profile context for HiveLab tool execution
+ *
+ * This provides profile data to tools deployed on user profiles.
+ *
+ * @param profileId - The profile owner's user ID
+ * @param requestingUserId - The user executing the tool
+ * @param campusId - The campus ID for isolation
+ * @returns Profile context with user info
+ */
+async function fetchProfileContext(
+  profileId: string,
+  requestingUserId: string,
+  campusId: string
+): Promise<ProfileExecutionContext> {
+  try {
+    const profileDoc = await dbAdmin.collection('users').doc(profileId).get();
+    const profileData = profileDoc.exists ? profileDoc.data() : null;
+
+    // Verify campus isolation
+    if (profileData?.campusId && profileData.campusId !== campusId) {
+      return {
+        profile: {
+          userId: profileId,
+          displayName: 'Unknown User',
+          avatarUrl: null,
+        },
+        isOwner: false,
+        fetchedAt: new Date().toISOString(),
+      };
+    }
+
+    return {
+      profile: {
+        userId: profileId,
+        displayName: profileData?.displayName || profileData?.fullName || 'Anonymous',
+        avatarUrl: profileData?.avatarUrl || null,
+      },
+      isOwner: profileId === requestingUserId,
+      fetchedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error('Error fetching profile context for tool execution', {
+      error: error instanceof Error ? error.message : String(error),
+      profileId,
+      requestingUserId,
+    });
+
+    // Return minimal context on error
+    return {
+      profile: {
+        userId: profileId,
+        displayName: 'Unknown',
+        avatarUrl: null,
+      },
+      isOwner: profileId === requestingUserId,
+      fetchedAt: new Date().toISOString(),
     };
   }
 }

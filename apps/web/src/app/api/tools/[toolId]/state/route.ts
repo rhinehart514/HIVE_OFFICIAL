@@ -153,6 +153,21 @@ export const POST = withAuthValidationAndErrors(
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
+    // Trigger threshold automations (non-blocking)
+    const deploymentId = toolDeploymentDoc.docs[0]?.id;
+    if (deploymentId) {
+      triggerThresholdAutomations(
+        deploymentId,
+        toolId,
+        spaceId,
+        state,
+        userId
+      ).catch(err => {
+        // Non-blocking - log but don't fail the request
+        console.warn('Threshold automation trigger failed:', err instanceof Error ? err.message : String(err));
+      });
+    }
+
     return respond.success({
       savedAt: new Date().toISOString()
     });
@@ -199,3 +214,274 @@ export const DELETE = withAuthAndErrors(async (
       deletedAt: new Date().toISOString()
     });
 });
+
+/**
+ * Trigger threshold automations when tool state changes
+ * Non-blocking - runs in background
+ */
+async function triggerThresholdAutomations(
+  deploymentId: string,
+  toolId: string,
+  spaceId: string,
+  newState: Record<string, unknown>,
+  userId: string
+): Promise<void> {
+  const { FieldValue } = await import('firebase-admin/firestore');
+
+  // Get threshold automations for this deployment
+  const automationsSnapshot = await dbAdmin
+    .collection('deployedTools')
+    .doc(deploymentId)
+    .collection('automations')
+    .where('trigger.type', '==', 'threshold')
+    .where('enabled', '==', true)
+    .get();
+
+  if (automationsSnapshot.empty) return;
+
+  // Get previous state for comparison
+  const previousStateDoc = await dbAdmin
+    .collection('tool_states')
+    .doc(`${toolId}_${spaceId}_${userId}`)
+    .get();
+
+  const previousState = previousStateDoc.exists ? previousStateDoc.data() || {} : {};
+
+  const now = new Date();
+
+  for (const doc of automationsSnapshot.docs) {
+    const automation = doc.data();
+    const trigger = automation.trigger || {};
+    const path = trigger.path as string;
+    const operator = trigger.operator as '>' | '<' | '==' | '>=' | '<=';
+    const thresholdValue = trigger.value as number;
+
+    // Get previous and current values
+    const prevValue = getValueAtPath(previousState, path);
+    const currValue = getValueAtPath(newState, path);
+
+    // Check if threshold was crossed
+    const wasCrossed = wasThresholdCrossed(
+      prevValue,
+      currValue,
+      operator,
+      thresholdValue
+    );
+
+    if (!wasCrossed) continue;
+
+    // Check rate limits
+    const runsToday = await getRunsToday(deploymentId, doc.id);
+    const maxRunsPerDay = automation.limits?.maxRunsPerDay || 100;
+    if (runsToday >= maxRunsPerDay) continue;
+
+    // Check cooldown
+    if (automation.lastRun) {
+      const lastRunTime = new Date(automation.lastRun).getTime();
+      const cooldownSeconds = automation.limits?.cooldownSeconds || 60;
+      if (Date.now() - lastRunTime < cooldownSeconds * 1000) continue;
+    }
+
+    try {
+      // Execute actions
+      for (const action of automation.actions || []) {
+        await executeAutomationAction(action, deploymentId, spaceId, userId, newState);
+      }
+
+      // Log run and update stats
+      const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      await dbAdmin
+        .collection('deployedTools')
+        .doc(deploymentId)
+        .collection('automationRuns')
+        .doc(runId)
+        .set({
+          automationId: doc.id,
+          deploymentId,
+          timestamp: now.toISOString(),
+          status: 'success',
+          triggerType: 'threshold',
+          triggerData: {
+            path,
+            operator,
+            threshold: thresholdValue,
+            previousValue: prevValue,
+            currentValue: currValue,
+          },
+          actionsExecuted: (automation.actions || []).map((a: { type: string }) => a.type),
+          duration: Date.now() - now.getTime(),
+        });
+
+      await doc.ref.update({
+        lastRun: now.toISOString(),
+        runCount: FieldValue.increment(1),
+      });
+
+      console.log(`Threshold automation triggered: ${automation.name}`, {
+        deploymentId,
+        automationId: doc.id,
+        path,
+        previousValue: prevValue,
+        currentValue: currValue,
+      });
+    } catch (error) {
+      // Log failure
+      await doc.ref.update({
+        errorCount: FieldValue.increment(1),
+        lastRun: now.toISOString(),
+      });
+
+      console.error('Threshold automation failed:', {
+        automationId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}
+
+/**
+ * Get value at a dot-notation path
+ */
+function getValueAtPath(obj: Record<string, unknown>, path: string): unknown {
+  if (!obj || typeof obj !== 'object' || !path) return undefined;
+
+  const parts = path.split('.');
+  let current: unknown = obj;
+
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    if (typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+
+  return current;
+}
+
+/**
+ * Check if a threshold was crossed
+ */
+function wasThresholdCrossed(
+  prevValue: unknown,
+  currValue: unknown,
+  operator: '>' | '<' | '==' | '>=' | '<=',
+  threshold: number
+): boolean {
+  const prev = typeof prevValue === 'number' ? prevValue : 0;
+  const curr = typeof currValue === 'number' ? currValue : 0;
+
+  const wasAbove = compareValue(prev, operator, threshold);
+  const isAbove = compareValue(curr, operator, threshold);
+
+  // Crossed means it wasn't meeting the condition before but is now
+  return !wasAbove && isAbove;
+}
+
+/**
+ * Compare a value against a threshold
+ */
+function compareValue(
+  value: number,
+  operator: '>' | '<' | '==' | '>=' | '<=',
+  threshold: number
+): boolean {
+  switch (operator) {
+    case '>': return value > threshold;
+    case '<': return value < threshold;
+    case '==': return value === threshold;
+    case '>=': return value >= threshold;
+    case '<=': return value <= threshold;
+    default: return false;
+  }
+}
+
+/**
+ * Get runs today count for rate limiting
+ */
+async function getRunsToday(deploymentId: string, automationId: string): Promise<number> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const runsRef = dbAdmin
+    .collection('deployedTools')
+    .doc(deploymentId)
+    .collection('automationRuns')
+    .where('automationId', '==', automationId)
+    .where('timestamp', '>=', today.toISOString());
+
+  const snapshot = await runsRef.count().get();
+  return snapshot.data().count;
+}
+
+/**
+ * Execute a single automation action
+ */
+async function executeAutomationAction(
+  action: { type: string; [key: string]: unknown },
+  deploymentId: string,
+  spaceId: string,
+  userId: string,
+  state: Record<string, unknown>
+): Promise<void> {
+  if (action.type === 'notify') {
+    const { createBulkNotifications } = await import('@/lib/notification-service');
+
+    // Get recipients
+    let userIds: string[] = [];
+    const to = action.to as string;
+
+    if (to === 'user') {
+      userIds = [userId];
+    } else if (to === 'all') {
+      const membersSnapshot = await dbAdmin
+        .collection('spaceMembers')
+        .where('spaceId', '==', spaceId)
+        .where('status', '==', 'active')
+        .get();
+      userIds = membersSnapshot.docs.map(d => d.data().userId);
+    } else if (to === 'role' && action.roleName) {
+      const membersSnapshot = await dbAdmin
+        .collection('spaceMembers')
+        .where('spaceId', '==', spaceId)
+        .where('role', '==', action.roleName)
+        .where('status', '==', 'active')
+        .get();
+      userIds = membersSnapshot.docs.map(d => d.data().userId);
+    }
+
+    if (userIds.length > 0) {
+      const channel = action.channel as string;
+      if (channel === 'push' || channel === 'email') {
+        await createBulkNotifications(userIds, {
+          type: 'system',
+          category: 'tools',
+          title: (action.title as string) || 'Tool Notification',
+          body: (action.body as string) || '',
+          actionUrl: `/s/${spaceId}`,
+          metadata: {
+            deploymentId,
+            automationType: 'threshold',
+          },
+        });
+      }
+    }
+  } else if (action.type === 'mutate') {
+    const elementId = action.elementId as string;
+    const mutation = action.mutation as Record<string, unknown>;
+
+    // Update element state in tool_states
+    const stateRef = dbAdmin
+      .collection('deployedTools')
+      .doc(deploymentId)
+      .collection('sharedState')
+      .doc('current');
+
+    const updates: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(mutation)) {
+      updates[`${elementId}.${key}`] = value;
+    }
+    updates.lastModified = new Date().toISOString();
+
+    await stateRef.set(updates, { merge: true });
+  }
+  // triggerTool action would call another tool's event endpoint
+}

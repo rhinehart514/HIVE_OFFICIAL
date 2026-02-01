@@ -20,7 +20,7 @@ function toDateSafe(timestamp: unknown): Date | null {
 }
 
 const SearchUsersSchema = z.object({
-  query: z.string().min(1).max(100),
+  query: z.string().max(100).optional(), // Optional for browse mode
   limit: z.coerce.number().min(1).max(50).default(20),
   offset: z.coerce.number().min(0).default(0),
   userType: z.enum(['student', 'faculty', 'admin']).optional(),
@@ -150,7 +150,8 @@ export async function POST(request: NextRequest) {
     }
 
     const users = [];
-    const queryLower = query.toLowerCase();
+    const queryLower = (query || '').toLowerCase();
+    const isBrowseMode = !query || query.length < 2;
 
     // Process each user and apply text search + privacy filters
     for (const userData of usersToSearch) {
@@ -174,27 +175,36 @@ export async function POST(request: NextRequest) {
         // 'campus' and 'public' are visible (campus already filtered by query)
       }
 
-      // Text matching
+      // Text matching (skip in browse mode - include all users)
       const fullName = (userData.fullName || '').toLowerCase();
       const handle = (userData.handle || '').toLowerCase();
       const bio = (userData.bio || '').toLowerCase();
       const major = (userData.academic?.major || '').toLowerCase();
-      
-      const nameMatch = fullName.includes(queryLower);
-      const handleMatch = handle.includes(queryLower);
-      const bioMatch = bio.includes(queryLower);
-      const majorMatch = major.includes(queryLower);
-      
-      if (!nameMatch && !handleMatch && !bioMatch && !majorMatch) {
-        continue;
+
+      let nameMatch = false;
+      let handleMatch = false;
+      let bioMatch = false;
+      let majorMatch = false;
+
+      if (!isBrowseMode) {
+        nameMatch = fullName.includes(queryLower);
+        handleMatch = handle.includes(queryLower);
+        bioMatch = bio.includes(queryLower);
+        majorMatch = major.includes(queryLower);
+
+        if (!nameMatch && !handleMatch && !bioMatch && !majorMatch) {
+          continue;
+        }
       }
 
       // Calculate relevance score
       let relevanceScore = 0;
-      if (handleMatch) relevanceScore += handle === queryLower ? 100 : 90;
-      if (nameMatch) relevanceScore += fullName === queryLower ? 95 : 80;
-      if (bioMatch) relevanceScore += 50;
-      if (majorMatch) relevanceScore += 40;
+      if (!isBrowseMode) {
+        if (handleMatch) relevanceScore += handle === queryLower ? 100 : 90;
+        if (nameMatch) relevanceScore += fullName === queryLower ? 95 : 80;
+        if (bioMatch) relevanceScore += 50;
+        if (majorMatch) relevanceScore += 40;
+      }
       
       // Boost verified users
       if (userData.isVerified) relevanceScore += 20;

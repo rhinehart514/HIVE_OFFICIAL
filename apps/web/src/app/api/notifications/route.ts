@@ -16,6 +16,7 @@ interface HiveNotification {
   readAt?: string;
   timestamp: string;
   metadata?: Record<string, unknown>;
+  actionUrl?: string; // Deep link URL for navigation
 }
 
 // Real notification fetching from Firebase

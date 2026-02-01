@@ -13,6 +13,7 @@ import {
   dbAdmin,
 } from '@hive/core/server';
 import type { OrchestrationLogEntry, OrchestrationActionConfig } from '@hive/core';
+import { createBulkNotifications } from '@/lib/notification-service';
 
 // ============================================================================
 // Request Validation
@@ -259,8 +260,52 @@ async function executeAction(
     }
 
     case 'notification': {
-      // TODO: Integrate with notification system
-      // Notification would be sent to recipients with title, body, actionUrl
+      const notifAction = action as unknown as {
+        recipients: 'all' | 'leaders';
+        title: string;
+        body: string;
+        actionUrl?: string;
+      };
+
+      let userIds: string[] = [];
+      const spaceId = deployment.spaceId;
+
+      if (notifAction.recipients === 'all') {
+        const membersSnapshot = await dbAdmin
+          .collection('spaceMembers')
+          .where('spaceId', '==', spaceId)
+          .where('isActive', '==', true)
+          .get();
+        userIds = membersSnapshot.docs.map(d => d.data().userId);
+      } else if (notifAction.recipients === 'leaders') {
+        const leadersSnapshot = await dbAdmin
+          .collection('spaceMembers')
+          .where('spaceId', '==', spaceId)
+          .where('role', 'in', ['owner', 'admin', 'moderator', 'leader'])
+          .where('isActive', '==', true)
+          .get();
+        userIds = leadersSnapshot.docs.map(d => d.data().userId);
+      }
+
+      if (userIds.length > 0) {
+        // Interpolate variables from shared data
+        const sharedData = deployment.sharedData;
+        const title = interpolateTemplate(notifAction.title || 'Notification', sharedData);
+        const body = interpolateTemplate(notifAction.body || '', sharedData);
+
+        await createBulkNotifications(userIds, {
+          type: 'system',
+          category: 'tools',
+          title,
+          body,
+          actionUrl: notifAction.actionUrl || `/s/${spaceId}`,
+          metadata: {
+            deploymentId: deployment.id,
+            templateId: deployment.templateId,
+            orchestrationType: 'manual',
+          },
+        });
+      }
       break;
     }
 
@@ -268,4 +313,32 @@ async function executeAction(
       // Unknown action type - ignored
       break;
   }
+}
+
+/**
+ * Interpolate template variables like {eventName} with shared data values
+ */
+function interpolateTemplate(template: string, data: Record<string, unknown>): string {
+  return template.replace(/\{([^}]+)\}/g, (match, key) => {
+    const value = getNestedValue(data, key);
+    return value !== undefined ? String(value) : match;
+  });
+}
+
+/**
+ * Get nested value from object using dot notation
+ */
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+  if (!obj || !path) return undefined;
+
+  const parts = path.split('.');
+  let current: unknown = obj;
+
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    if (typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+
+  return current;
 }
