@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import {
@@ -39,6 +40,7 @@ const Shield = ShieldCheckIcon;
 interface EnhancedSpace {
   id: string;
   name: string;
+  handle?: string;
   type: 'campus_living' | 'fraternity_and_sorority' | 'hive_exclusive' | 'student_organizations' | 'university_organizations';
   description: string;
   memberCount: number;
@@ -46,11 +48,15 @@ interface EnhancedSpace {
   builderCount: number;
   adminCount: number;
   status: 'dormant' | 'activated' | 'frozen' | 'archived';
+  activationStatus: 'ghost' | 'gathering' | 'open';
   hasBuilders: boolean;
   healthScore: number;
   createdAt: string;
   updatedAt: string;
   activatedAt?: string;
+  campusId?: string;
+  campusName?: string;
+  activationThreshold: number;
   surfaces: {
     pinned: boolean;
     posts: boolean;
@@ -116,6 +122,8 @@ export function EnhancedSpaceControlDashboard() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedHealth, setSelectedHealth] = useState<string>("all");
+  const [selectedActivation, setSelectedActivation] = useState<string>("all");
+  const [selectedCampus, setSelectedCampus] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("updated");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
@@ -196,6 +204,16 @@ export function EnhancedSpaceControlDashboard() {
       });
     }
 
+    // Activation status filter
+    if (selectedActivation !== 'all') {
+      filtered = filtered.filter(space => space.activationStatus === selectedActivation);
+    }
+
+    // Campus filter (for HIVE team only)
+    if (selectedCampus !== 'all') {
+      filtered = filtered.filter(space => space.campusId === selectedCampus);
+    }
+
     // Sort
     filtered.sort((a, b) => {
       let aVal: string | number, bVal: string | number;
@@ -228,7 +246,7 @@ export function EnhancedSpaceControlDashboard() {
     });
 
     setFilteredSpaces(filtered);
-  }, [spaces, searchTerm, selectedType, selectedStatus, selectedHealth, sortBy, sortOrder]);
+  }, [spaces, searchTerm, selectedType, selectedStatus, selectedHealth, selectedActivation, selectedCampus, sortBy, sortOrder]);
 
   // Bulk Operations
   const executeBulkOperation = async (operation: BulkOperation) => {
@@ -322,38 +340,68 @@ export function EnhancedSpaceControlDashboard() {
     return <Badge className="bg-red-500/20 text-red-400">Critical</Badge>;
   };
 
+  const getActivationBadge = (status: string, memberCount: number, threshold: number) => {
+    switch (status) {
+      case 'ghost':
+        return (
+          <div className="flex flex-col gap-0.5">
+            <Badge className="bg-white/[0.08] text-white/50">👻 Ghost</Badge>
+            <span className="text-xs text-white/40">0 members</span>
+          </div>
+        );
+      case 'gathering':
+        return (
+          <div className="flex flex-col gap-0.5">
+            <Badge className="bg-blue-500/20 text-blue-400">🌱 Gathering</Badge>
+            <span className="text-xs text-white/40">{memberCount}/{threshold}</span>
+          </div>
+        );
+      case 'open':
+        return (
+          <div className="flex flex-col gap-0.5">
+            <Badge className="bg-green-500/20 text-green-400">🚀 Open</Badge>
+            <span className="text-xs text-white/40">{memberCount} members</span>
+          </div>
+        );
+      default:
+        return <Badge className="bg-white/[0.08] text-white/50">Unknown</Badge>;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0A0A0A] via-[#0F0F0F] to-[#1A1A1A] text-white">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        
-        {/* Header with Real-Time Stats */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Shield className="h-8 w-8 text-amber-400" />
-              Space Control Center
-            </h1>
-            <p className="text-white/50 mt-1">Complete administrative control over all campus spaces</p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              onClick={fetchSpaces}
-              disabled={loading}
-              className="bg-amber-500 hover:bg-amber-600"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button
-              onClick={() => setShowBulkActions(!showBulkActions)}
-              variant="outline"
-              className="border-amber-500/30 text-amber-400"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Bulk Actions
-            </Button>
-          </div>
+    <div className="space-y-6 text-white">
+      {/* Actions Bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Badge className="bg-amber-500/10 text-amber-400 text-sm px-3 py-1">
+            {filteredSpaces.length} spaces
+          </Badge>
+          {selectedSpaces.size > 0 && (
+            <Badge className="bg-blue-500/10 text-blue-400 text-sm px-3 py-1">
+              {selectedSpaces.size} selected
+            </Badge>
+          )}
         </div>
+        <div className="flex gap-3">
+          <Button
+            onClick={fetchSpaces}
+            disabled={loading}
+            variant="outline"
+            className="border-white/[0.12] text-white/70"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
+            onClick={() => setShowBulkActions(!showBulkActions)}
+            variant="outline"
+            className={showBulkActions ? "border-amber-500/50 text-amber-400" : "border-white/[0.12] text-white/70"}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Bulk Actions
+          </Button>
+        </div>
+      </div>
 
         {/* Real-Time Statistics Dashboard */}
         {stats && (
@@ -462,6 +510,8 @@ export function EnhancedSpaceControlDashboard() {
                     setSelectedType("all");
                     setSelectedStatus("all");
                     setSelectedHealth("all");
+                    setSelectedActivation("all");
+                    setSelectedCampus("all");
                   }}
                   variant="outline"
                   className="border-white/[0.12] text-white/50"
@@ -471,7 +521,7 @@ export function EnhancedSpaceControlDashboard() {
               </div>
 
               {/* Filter Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
@@ -495,6 +545,17 @@ export function EnhancedSpaceControlDashboard() {
                   <option value="dormant">⏸️ Dormant</option>
                   <option value="frozen">❄️ Frozen</option>
                   <option value="archived">📦 Archived</option>
+                </select>
+
+                <select
+                  value={selectedActivation}
+                  onChange={(e) => setSelectedActivation(e.target.value)}
+                  className="bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
+                >
+                  <option value="all">All Activation</option>
+                  <option value="ghost">👻 Ghost (0 members)</option>
+                  <option value="gathering">🌱 Gathering</option>
+                  <option value="open">🚀 Open</option>
                 </select>
 
                 <select
@@ -527,6 +588,38 @@ export function EnhancedSpaceControlDashboard() {
                   {sortOrder === 'asc' ? '↑' : '↓'} {sortOrder.toUpperCase()}
                 </Button>
               </div>
+
+              {/* Campus filter for HIVE team (no campusId) */}
+              {!admin?.campusId && (
+                <div className="flex items-center gap-4 pt-2 border-t border-white/[0.08]">
+                  <span className="text-sm text-white/50">Campus:</span>
+                  <select
+                    value={selectedCampus}
+                    onChange={(e) => setSelectedCampus(e.target.value)}
+                    className="bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
+                  >
+                    <option value="all">All Campuses</option>
+                    {/* Unique campuses from spaces */}
+                    {Array.from(new Set(spaces.map(s => s.campusId).filter(Boolean))).map(campusId => {
+                      const campus = spaces.find(s => s.campusId === campusId);
+                      return (
+                        <option key={campusId} value={campusId}>
+                          {campus?.campusName || campusId}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
+
+              {/* School admin campus badge */}
+              {admin?.campusId && (
+                <div className="flex items-center gap-2 pt-2 border-t border-white/[0.08]">
+                  <Badge className="bg-amber-500/20 text-amber-400">
+                    Campus: {spaces[0]?.campusName || admin.campusId}
+                  </Badge>
+                </div>
+              )}
 
               {/* View Mode Toggles */}
               <div className="flex items-center justify-between">
@@ -675,6 +768,7 @@ export function EnhancedSpaceControlDashboard() {
                       <th className="text-left p-3 text-white/50">Space</th>
                       <th className="text-left p-3 text-white/50">Type</th>
                       <th className="text-left p-3 text-white/50">Status</th>
+                      <th className="text-left p-3 text-white/50">Activation</th>
                       <th className="text-left p-3 text-white/50">Members</th>
                       <th className="text-left p-3 text-white/50">Health</th>
                       <th className="text-left p-3 text-white/50">Actions</th>
@@ -724,6 +818,9 @@ export function EnhancedSpaceControlDashboard() {
                           </div>
                         </td>
                         <td className="p-3">
+                          {getActivationBadge(space.activationStatus, space.actualMemberCount, space.activationThreshold)}
+                        </td>
+                        <td className="p-3">
                           <div>
                             <div className="text-white">{space.actualMemberCount}</div>
                             <div className="text-xs text-white/50">
@@ -741,13 +838,23 @@ export function EnhancedSpaceControlDashboard() {
                         </td>
                         <td className="p-3">
                           <div className="flex gap-2">
+                            <Link href={`/spaces/${space.id}`}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-white/[0.12] text-white/50"
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                            </Link>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => setSelectedSpace(space)}
                               className="border-white/[0.12] text-white/50"
+                              title="Quick view"
                             >
-                              <Eye className="h-3 w-3" />
+                              <Edit className="h-3 w-3" />
                             </Button>
                             {space.status === 'activated' ? (
                               <Button
@@ -794,7 +901,7 @@ export function EnhancedSpaceControlDashboard() {
               <Search className="h-12 w-12 text-white/50 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-white mb-2">No Spaces Found</h3>
               <p className="text-white/50 mb-4">
-                {searchTerm || selectedType !== 'all' || selectedStatus !== 'all' 
+                {searchTerm || selectedType !== 'all' || selectedStatus !== 'all' || selectedActivation !== 'all'
                   ? 'Try adjusting your search criteria or filters.'
                   : 'No spaces have been created yet.'}
               </p>
@@ -804,6 +911,8 @@ export function EnhancedSpaceControlDashboard() {
                   setSelectedType("all");
                   setSelectedStatus("all");
                   setSelectedHealth("all");
+                  setSelectedActivation("all");
+                  setSelectedCampus("all");
                 }}
                 className="bg-amber-500 hover:bg-amber-600"
               >
@@ -1025,7 +1134,6 @@ export function EnhancedSpaceControlDashboard() {
             </CardContent>
           </Card>
         )}
-      </div>
     </div>
   );
 }

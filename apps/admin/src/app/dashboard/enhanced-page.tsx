@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { HiveCard as Card, CardContent, CardHeader, CardTitle } from "@hive/ui";
-import { getCurrentAdmin } from "@/lib/auth";
+import { verifyAdminSession } from "@/lib/admin-auth";
 import { UserManagementDashboard } from "../../components/user-management-dashboard";
 import { BuilderQueueEnhanced } from "../../components/builder-queue-enhanced";
 import { AnalyticsDashboard } from "../../components/analytics-dashboard";
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function EnhancedAdminDashboard() {
-  const admin = await getCurrentAdmin();
+  const admin = await verifyAdminSession();
 
   if (!admin) {
     redirect("/auth/login");

@@ -15,6 +15,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logAdminActivity } from '@/lib/admin-activity';
+import { sendSuspensionEmail } from '@/lib/email-service';
 
 interface RouteContext {
   params: Promise<{ userId: string }>;
@@ -136,7 +137,21 @@ export const POST = withAdminPermission<RouteContext>('manage_users', async (req
       },
     });
 
-    // TODO: Send notification email if notify is true
+    // Send notification email if notify is true
+    if (notify && userData?.email) {
+      sendSuspensionEmail(
+        userData.email,
+        userData.fullName || userData.displayName || 'User',
+        reason,
+        duration,
+        suspendedUntil
+      ).catch(err => {
+        logger.warn('Failed to send suspension email', {
+          userId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
 
     logger.info('User suspended', {
       adminId,

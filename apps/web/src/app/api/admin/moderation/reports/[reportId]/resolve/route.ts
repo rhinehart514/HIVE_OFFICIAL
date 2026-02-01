@@ -14,6 +14,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logAdminActivity } from '@/lib/admin-activity';
+import { sendReportResolvedToReporter, sendReportResolvedToTarget } from '@/lib/email-service';
 
 interface RouteContext {
   params: Promise<{ reportId: string }>;
@@ -181,7 +182,37 @@ export const POST = withAdminAuthAndErrors<RouteContext>(async (request, context
       },
     });
 
-    // TODO: Send notifications if notifyReporter or notifyTarget is true
+    // Send notifications if notifyReporter or notifyTarget is true
+    if (notifyReporter && reportData?.reporterUserId) {
+      const reporterDoc = await dbAdmin.collection('profiles').doc(reportData.reporterUserId).get();
+      const reporterEmail = reporterDoc.data()?.email;
+      if (reporterEmail) {
+        sendReportResolvedToReporter(reporterEmail, action, resolution).catch(err => {
+          logger.warn('Failed to send report notification to reporter', {
+            reportId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+      }
+    }
+
+    if (notifyTarget && reportData?.targetUserId && action !== 'dismiss') {
+      const targetDoc = await dbAdmin.collection('profiles').doc(reportData.targetUserId).get();
+      const targetData = targetDoc.data();
+      if (targetData?.email) {
+        sendReportResolvedToTarget(
+          targetData.email,
+          targetData.fullName || targetData.displayName || 'User',
+          action,
+          resolution
+        ).catch(err => {
+          logger.warn('Failed to send report notification to target', {
+            reportId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
+      }
+    }
 
     logger.info('Report resolved', {
       adminId,

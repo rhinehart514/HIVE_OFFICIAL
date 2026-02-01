@@ -58,6 +58,10 @@ interface ClaimRequest {
   reviewedBy?: string;
   reviewNotes?: string;
   expiresAt?: string;
+  // New fields for enhanced display
+  activationStatus?: 'ghost' | 'gathering' | 'open';
+  memberCount?: number;
+  activationThreshold?: number;
 }
 
 interface ClaimsSummary {
@@ -263,6 +267,20 @@ export function ClaimsQueue() {
                       <Badge variant="outline" className="text-xs">
                         {claim.spaceCategory}
                       </Badge>
+                      {/* Activation status badge */}
+                      {claim.activationStatus && (
+                        <Badge
+                          className={
+                            claim.activationStatus === 'open'
+                              ? 'bg-green-500/20 text-green-400 text-xs'
+                              : claim.activationStatus === 'gathering'
+                              ? 'bg-blue-500/20 text-blue-400 text-xs'
+                              : 'bg-white/[0.08] text-white/50 text-xs'
+                          }
+                        >
+                          {claim.activationStatus}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-white/50">
                       <span>@{claim.userName}</span>
@@ -273,8 +291,27 @@ export function ClaimsQueue() {
                         <Clock className="w-3 h-3" />
                         {getTimeAgo(claim.submittedAt)}
                       </span>
+                      {/* Member count vs threshold */}
+                      {claim.memberCount !== undefined && claim.activationThreshold !== undefined && (
+                        <>
+                          <span>·</span>
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {claim.memberCount}/{claim.activationThreshold} members
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
+
+                  {/* View Space link */}
+                  <a
+                    href={`/spaces/${claim.spaceId}`}
+                    className="text-sm text-amber-400 hover:text-amber-300 flex items-center gap-1 shrink-0"
+                  >
+                    View Space
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
 
                   {/* Proof indicator */}
                   {claim.proofType !== 'none' && (

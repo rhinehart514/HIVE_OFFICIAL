@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getCurrentAdmin } from "@/lib/auth";
+import { verifyAdminSession } from "@/lib/admin-auth";
 import { EnhancedSpaceControlDashboard } from "../../components/enhanced-space-control-dashboard";
 
 export const dynamic = 'force-dynamic';
@@ -11,15 +11,11 @@ export const metadata: Metadata = {
 };
 
 export default async function SpacesAdminPage() {
-  const admin = await getCurrentAdmin();
+  const admin = await verifyAdminSession();
 
   if (!admin) {
     redirect("/auth/login");
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0A0A0A] via-[#0F0F0F] to-[#1A1A1A]">
-      <EnhancedSpaceControlDashboard />
-    </div>
-  );
+  return <EnhancedSpaceControlDashboard />;
 }

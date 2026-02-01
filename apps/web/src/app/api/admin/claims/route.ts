@@ -53,8 +53,29 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
       .limit(limit)
       .get();
 
+    // Fetch space data for activation status and member count
+    const spaceIds = new Set(claimsSnapshot.docs.map(doc => doc.data().spaceId));
+    const spaceDataMap = new Map<string, {
+      activationStatus: string;
+      memberCount: number;
+      activationThreshold: number;
+    }>();
+
+    for (const spaceId of spaceIds) {
+      const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+      if (spaceDoc.exists) {
+        const sd = spaceDoc.data();
+        spaceDataMap.set(spaceId, {
+          activationStatus: sd?.activationStatus || 'ghost',
+          memberCount: sd?.memberCount || 0,
+          activationThreshold: sd?.activationThreshold || 10,
+        });
+      }
+    }
+
     const claims = claimsSnapshot.docs.map((doc) => {
       const data = doc.data();
+      const spaceInfo = spaceDataMap.get(data.spaceId);
       return {
         id: doc.id,
         type: 'claim',
@@ -74,6 +95,10 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
         reviewedBy: data.reviewedBy ?? null,
         reviewNotes: data.reviewNotes ?? null,
         expiresAt: data.expiresAt?.toDate?.()?.toISOString() ?? null,
+        // Enhanced fields for UI display
+        activationStatus: spaceInfo?.activationStatus || 'ghost',
+        memberCount: spaceInfo?.memberCount || 0,
+        activationThreshold: spaceInfo?.activationThreshold || 10,
       };
     });
 
