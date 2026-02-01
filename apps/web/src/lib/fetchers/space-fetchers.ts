@@ -98,6 +98,48 @@ export interface PinnedMessageDTO {
   pinnedBy: string;
 }
 
+export interface SpaceBoardDTO {
+  id: string;
+  name: string;
+  description?: string;
+  order: number;
+  isDefault: boolean;
+  isLocked: boolean;
+  createdAt?: string;
+}
+
+export interface SpaceBoardsResponse {
+  boards: SpaceBoardDTO[];
+  defaultBoard?: string;
+}
+
+export interface ChatMessageDTO {
+  id: string;
+  boardId: string;
+  authorId: string;
+  authorName: string;
+  authorHandle?: string;
+  authorAvatarUrl?: string;
+  content: string;
+  timestamp: number;
+  reactions?: Array<{ emoji: string; count: number; hasReacted: boolean }>;
+  isPinned?: boolean;
+  replyCount?: number;
+  attachments?: Array<{
+    url: string;
+    filename: string;
+    mimeType: string;
+    size: number;
+  }>;
+}
+
+export interface ChatMessagesResponse {
+  messages: ChatMessageDTO[];
+  hasMore: boolean;
+  cursor?: string;
+  lastReadAt?: number;
+}
+
 // ============================================================
 // Fetchers
 // ============================================================
@@ -257,4 +299,125 @@ export async function leaveSpace(spaceId: string): Promise<{ success: boolean }>
   }
 
   return { success: true };
+}
+
+/**
+ * Fetch space boards (tabs)
+ */
+export async function fetchSpaceBoards(spaceId: string): Promise<SpaceBoardsResponse> {
+  const res = await secureApiFetch(`/api/spaces/${spaceId}/tabs`);
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      // Return default board structure
+      return {
+        boards: [{ id: 'general', name: 'general', order: 0, isDefault: true, isLocked: false }],
+        defaultBoard: 'general',
+      };
+    }
+    throw new Error(`Failed to fetch space boards: ${res.status}`);
+  }
+
+  const response = await res.json();
+  const data = response.data || response;
+  const tabs = data.tabs || [];
+
+  return {
+    boards: tabs.map((tab: Record<string, unknown>, index: number) => ({
+      id: tab.id as string,
+      name: tab.name as string,
+      description: tab.description as string | undefined,
+      order: (tab.order as number) ?? index,
+      isDefault: (tab.isDefault as boolean) ?? tab.name === 'general',
+      isLocked: (tab.isLocked as boolean) ?? false,
+      createdAt: tab.createdAt as string | undefined,
+    })),
+    defaultBoard: data.defaultBoard || 'general',
+  };
+}
+
+/**
+ * Fetch chat messages for a board
+ */
+export async function fetchSpaceChat(
+  spaceId: string,
+  boardId: string,
+  options?: { limit?: number; cursor?: string; before?: number }
+): Promise<ChatMessagesResponse> {
+  const params = new URLSearchParams();
+  params.set('boardId', boardId);
+  if (options?.limit) params.set('limit', String(options.limit));
+  if (options?.cursor) params.set('cursor', options.cursor);
+  if (options?.before) params.set('before', String(options.before));
+
+  const res = await secureApiFetch(`/api/spaces/${spaceId}/chat?${params.toString()}`);
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      return { messages: [], hasMore: false };
+    }
+    throw new Error(`Failed to fetch chat messages: ${res.status}`);
+  }
+
+  const response = await res.json();
+  const data = response.data || response;
+  const messagesList = data.messages || [];
+
+  return {
+    messages: messagesList.map((msg: Record<string, unknown>) => ({
+      id: msg.id as string,
+      boardId: (msg.boardId as string) || boardId,
+      authorId: msg.authorId as string,
+      authorName: msg.authorName as string,
+      authorHandle: msg.authorHandle as string | undefined,
+      authorAvatarUrl: msg.authorAvatarUrl as string | undefined,
+      content: msg.content as string,
+      timestamp: (msg.timestamp as number) || Date.now(),
+      reactions: msg.reactions as ChatMessageDTO['reactions'],
+      isPinned: msg.isPinned as boolean | undefined,
+      replyCount: msg.replyCount as number | undefined,
+      attachments: msg.attachments as ChatMessageDTO['attachments'],
+    })),
+    hasMore: data.hasMore ?? false,
+    cursor: data.cursor as string | undefined,
+    lastReadAt: data.lastReadAt as number | undefined,
+  };
+}
+
+/**
+ * Send a chat message
+ */
+export async function sendChatMessage(
+  spaceId: string,
+  boardId: string,
+  content: string,
+  attachments?: ChatMessageDTO['attachments']
+): Promise<ChatMessageDTO> {
+  const res = await secureApiFetch(`/api/spaces/${spaceId}/chat`, {
+    method: 'POST',
+    body: JSON.stringify({ boardId, content, attachments }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to send message: ${res.status}`);
+  }
+
+  const response = await res.json();
+  const data = response.data || response;
+
+  return {
+    id: data.id,
+    boardId: data.boardId || boardId,
+    authorId: data.authorId,
+    authorName: data.authorName,
+    authorHandle: data.authorHandle,
+    authorAvatarUrl: data.authorAvatarUrl,
+    content: data.content,
+    timestamp: data.timestamp || Date.now(),
+    reactions: data.reactions,
+    isPinned: data.isPinned,
+    replyCount: data.replyCount,
+    attachments: data.attachments,
+  };
 }

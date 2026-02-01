@@ -11,12 +11,19 @@ export {
   fetchSpaceStructure,
   fetchSpaceEvents,
   fetchPinnedMessages,
+  fetchSpaceBoards,
+  fetchSpaceChat,
+  sendChatMessage,
   joinSpace,
   leaveSpace,
   type SpaceDTO,
   type SpaceStructureDTO,
   type SpaceEventDTO,
   type PinnedMessageDTO,
+  type SpaceBoardDTO,
+  type SpaceBoardsResponse,
+  type ChatMessageDTO,
+  type ChatMessagesResponse,
 } from "./space-fetchers";
 
 // Browse/Discovery fetchers
@@ -47,12 +54,15 @@ export {
 // Members fetchers
 export {
   fetchSpaceMembers,
-  fetchOnlineCount,
   updateMemberRole,
   removeMember,
+  batchInviteMembers,
+  batchUpdateRoles,
+  batchRemoveMembers,
   type SpaceMemberDTO,
   type MembersResponse,
   type MemberFilters,
+  type BatchMemberFilters,
 } from "./members-fetchers";
 
 // Tool fetchers

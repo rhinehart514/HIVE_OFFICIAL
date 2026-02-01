@@ -209,7 +209,7 @@ export function BoardCreationModal({
           {/* Actions */}
           <div className="flex items-center gap-3 mt-6">
             <Button
-              variant="default"
+              variant="cta"
               size="default"
               onClick={handleCreate}
               disabled={!name.trim() || isCreating}

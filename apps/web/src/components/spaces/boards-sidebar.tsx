@@ -23,12 +23,44 @@ import {
   PlusIcon,
   EllipsisVerticalIcon,
   Bars3Icon,
+  CalendarIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { Text } from '@hive/ui/design-system/primitives';
 import { MOTION } from '@hive/tokens';
 import { SidebarToolSection } from './sidebar-tool-section';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
+
+// ============================================================
+// Helpers
+// ============================================================
+
+function formatEventTime(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
+    if (isToday) return `Today ${timeStr}`;
+    if (isTomorrow) return `Tomorrow ${timeStr}`;
+
+    const dayStr = date.toLocaleDateString('en-US', { weekday: 'short' });
+    return `${dayStr} ${timeStr}`;
+  } catch {
+    return 'TBD';
+  }
+}
 
 // ============================================================
 // Types
@@ -39,6 +71,15 @@ export interface Board {
   name: string;
   unreadCount?: number;
   isPinned?: boolean;
+}
+
+/** Upcoming event for sidebar display */
+export interface SidebarEvent {
+  id: string;
+  title: string;
+  startDate: string;
+  rsvpCount: number;
+  userRsvp?: 'going' | 'maybe' | 'not_going' | null;
 }
 
 export interface BoardsSidebarProps {
@@ -62,6 +103,15 @@ export interface BoardsSidebarProps {
   onToggleCollapse?: () => void;
   /** Position of sidebar - affects border and flex order */
   position?: 'left' | 'right';
+  // ============================================================
+  // Events Section (Phase 3 redesign)
+  // ============================================================
+  /** Upcoming events to display in "NEXT UP" section */
+  upcomingEvents?: SidebarEvent[];
+  /** Event click handler */
+  onEventClick?: (eventId: string) => void;
+  /** Event RSVP handler */
+  onEventRsvp?: (eventId: string, status: 'going' | 'maybe' | 'not_going') => void;
   // ============================================================
   // Tool Integration (HiveLab Sprint 1)
   // ============================================================
@@ -189,6 +239,10 @@ export function BoardsSidebar({
   isCollapsed = false,
   onToggleCollapse,
   position = 'left',
+  // Events props (Phase 3 redesign)
+  upcomingEvents = [],
+  onEventClick,
+  onEventRsvp,
   // Tool props (HiveLab Sprint 1)
   sidebarTools = [],
   isLoadingTools = false,
@@ -317,6 +371,65 @@ export function BoardsSidebar({
     },
   };
 
+  // Collapsed state: Show only icon strip
+  if (isCollapsed && !isMobile) {
+    return (
+      <motion.aside
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, ease: MOTION.ease.premium }}
+        className={cn(
+          'flex flex-col items-center w-12 flex-shrink-0 h-full py-2',
+          position === 'left' ? 'border-r border-white/[0.06]' : 'border-l border-white/[0.06] order-last'
+        )}
+      >
+        {/* Expand button */}
+        <button
+          onClick={onToggleCollapse}
+          className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors mb-3"
+          title="Expand sidebar"
+        >
+          {position === 'left' ? (
+            <ChevronRightIcon className="w-4 h-4 text-white/40" />
+          ) : (
+            <ChevronLeftIcon className="w-4 h-4 text-white/40" />
+          )}
+        </button>
+
+        {/* Board icons */}
+        <div className="space-y-2">
+          {localBoards.slice(0, 5).map((board) => (
+            <button
+              key={board.id}
+              onClick={() => onBoardChange(board.id)}
+              className={cn(
+                'w-8 h-8 rounded-lg flex items-center justify-center transition-colors relative',
+                board.id === activeBoard
+                  ? 'bg-white/[0.08] text-white'
+                  : 'hover:bg-white/[0.04] text-white/50'
+              )}
+              title={board.name}
+            >
+              <HashtagIcon className="w-4 h-4" />
+              {board.unreadCount && board.unreadCount > 0 && board.id !== activeBoard && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--color-gold)]" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Events indicator */}
+        {upcomingEvents.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-white/[0.06]">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.02]">
+              <CalendarIcon className="w-4 h-4 text-[var(--color-gold)]/60" />
+            </div>
+          </div>
+        )}
+      </motion.aside>
+    );
+  }
+
   return (
     <motion.aside
       initial={{ opacity: 0, x: positionStyles[position].initialX }}
@@ -336,15 +449,30 @@ export function BoardsSidebar({
         >
           Boards
         </Text>
-        {onCreateBoard && (
-          <button
-            onClick={onCreateBoard}
-            className="p-1 rounded hover:bg-white/[0.06] transition-colors"
-            title="Add board"
-          >
-            <PlusIcon className="w-4 h-4 text-white/40 hover:text-white/60" />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {onCreateBoard && (
+            <button
+              onClick={onCreateBoard}
+              className="p-1 rounded hover:bg-white/[0.06] transition-colors"
+              title="Add board"
+            >
+              <PlusIcon className="w-4 h-4 text-white/40 hover:text-white/60" />
+            </button>
+          )}
+          {onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              className="p-1 rounded hover:bg-white/[0.06] transition-colors"
+              title="Collapse sidebar"
+            >
+              {position === 'left' ? (
+                <ChevronLeftIcon className="w-4 h-4 text-white/40 hover:text-white/60" />
+              ) : (
+                <ChevronRightIcon className="w-4 h-4 text-white/40 hover:text-white/60" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Board List */}
@@ -387,6 +515,59 @@ export function BoardsSidebar({
               />
             ))}
           </>
+        )}
+
+        {/* NEXT UP Events Section (Phase 3 redesign) */}
+        {upcomingEvents.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-white/[0.06]">
+            <Text
+              size="xs"
+              weight="medium"
+              className="uppercase tracking-wider text-white/40 mb-3 px-1"
+            >
+              Next Up
+            </Text>
+            <div className="space-y-2">
+              {upcomingEvents.slice(0, 3).map((event) => (
+                <button
+                  key={event.id}
+                  onClick={() => onEventClick?.(event.id)}
+                  className={cn(
+                    'w-full px-3 py-2.5 rounded-lg',
+                    'text-left',
+                    'bg-white/[0.02] hover:bg-white/[0.04]',
+                    'border border-white/[0.04] hover:border-white/[0.08]',
+                    'transition-all duration-150'
+                  )}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <CalendarIcon className="w-4 h-4 text-[var(--color-gold)]/60 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <Text size="sm" weight="medium" className="text-white/90 truncate">
+                        {event.title}
+                      </Text>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Text size="xs" className="text-white/40">
+                          {formatEventTime(event.startDate)}
+                        </Text>
+                        <span className="flex items-center gap-1">
+                          <UserGroupIcon className="w-3 h-3 text-white/30" />
+                          <Text size="xs" className="text-white/40">
+                            {event.rsvpCount}
+                          </Text>
+                        </span>
+                      </div>
+                    </div>
+                    {event.userRsvp === 'going' && (
+                      <span className="px-1.5 py-0.5 text-label-xs font-medium bg-[var(--color-gold)]/[0.12] text-[var(--color-gold)]/80 rounded">
+                        Going
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Pinned Tools Section (HiveLab Sprint 1) */}

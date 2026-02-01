@@ -98,7 +98,7 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
         {/* CTA */}
         <motion.button
           onClick={onScrollToDiscover}
-          className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-[#0A0A09] font-medium text-sm hover:bg-white/90 transition-all duration-200"
+          className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[var(--color-bg-void,#0A0A09)] font-medium text-sm hover:bg-white/90 transition-all duration-200"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.7, ease: MOTION.ease.premium }}

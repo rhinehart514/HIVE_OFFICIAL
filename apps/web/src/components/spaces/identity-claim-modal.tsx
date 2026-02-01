@@ -395,11 +395,10 @@ export function IdentityClaimModal({
                 Cancel
               </Button>
               <Button
-                variant="default"
+                variant="solid"
                 size="sm"
                 onClick={handleClaim}
                 disabled={!selectedSpace || claiming}
-                className="bg-white text-black hover:bg-white/90"
               >
                 {claiming ? 'Claiming...' : 'Claim Identity'}
               </Button>

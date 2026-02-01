@@ -23,6 +23,16 @@ type OnlineMember = SpacePanelOnlineMember;
 // TYPES
 // ============================================
 
+/**
+ * Gatherer profile for displaying who's waiting in a ghost/gathering space
+ */
+export interface GathererProfile {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  isFoundingMember?: boolean;
+}
+
 export interface SpaceResidenceData {
   id: string;
   handle: string;
@@ -35,6 +45,14 @@ export interface SpaceResidenceData {
   isVerified: boolean;
   isMember: boolean;
   isLeader: boolean;
+  userRole?: 'owner' | 'admin' | 'moderator' | 'member' | 'guest';
+  // Quorum-based activation (GTM mechanic)
+  activationStatus: 'ghost' | 'gathering' | 'open';
+  activationThreshold: number;
+  activatedAt?: string;
+  isClaimed: boolean;
+  // Gatherers (for ghost/gathering spaces - who's waiting for quorum)
+  gatherers: GathererProfile[];
   // CampusLabs imported metadata (P2.2, P2.3)
   email?: string;
   contactName?: string;
@@ -52,6 +70,13 @@ export interface SpaceResidenceData {
   };
 }
 
+export interface ChatAttachment {
+  url: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+
 export interface ChatMessage {
   id: string;
   boardId: string;
@@ -64,6 +89,7 @@ export interface ChatMessage {
   reactions?: Array<{ emoji: string; count: number; hasReacted: boolean }>;
   isPinned?: boolean;
   replyCount?: number;
+  attachments?: ChatAttachment[];
 }
 
 export interface SpaceMember {
@@ -75,6 +101,10 @@ export interface SpaceMember {
   isOnline?: boolean;
   joinedAt?: string;
 }
+
+// Pagination constants
+const INITIAL_MESSAGE_LIMIT = 20;
+const LOAD_MORE_MESSAGE_LIMIT = 30;
 
 interface UseSpaceResidenceStateReturn {
   // Space data
@@ -91,8 +121,15 @@ interface UseSpaceResidenceStateReturn {
   // Chat (main content)
   messages: ChatMessage[];
   isLoadingMessages: boolean;
+  isLoadingMoreMessages: boolean;
+  hasMoreMessages: boolean;
+  loadMoreMessages: () => Promise<void>;
   typingUsers: string[];
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, attachments?: ChatAttachment[]) => Promise<void>;
+
+  // "Since you left" feature
+  lastReadAt: number | null;
+  unreadCount: number;
 
   // Panel data
   onlineMembers: OnlineMember[];
@@ -156,7 +193,13 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
 
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = React.useState(false);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = React.useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = React.useState(false);
   const [typingUsers, _setTypingUsers] = React.useState<string[]>([]);
+
+  // "Since you left" feature state
+  const [lastReadAt, setLastReadAt] = React.useState<number | null>(null);
+  const [unreadCount, setUnreadCount] = React.useState(0);
 
   // Initialize with empty arrays - real data comes from API
   const [onlineMembers, setOnlineMembers] = React.useState<OnlineMember[]>([]);
@@ -203,6 +246,24 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         const spaceResult = await spaceResponse.json();
         const spaceData = spaceResult.data || spaceResult;
 
+        // Calculate activation status from API data or derive from member count
+        const memberCount = spaceData.memberCount || 0;
+        const threshold = spaceData.activationThreshold || 10;
+        const isClaimed = Boolean(spaceData.createdBy || spaceData.creatorId);
+        let activationStatus: 'ghost' | 'gathering' | 'open' = spaceData.activationStatus;
+        if (!activationStatus) {
+          // Derive from member count if not provided
+          if (isClaimed) {
+            activationStatus = 'open';
+          } else if (memberCount === 0) {
+            activationStatus = 'ghost';
+          } else if (memberCount < threshold) {
+            activationStatus = 'gathering';
+          } else {
+            activationStatus = 'open';
+          }
+        }
+
         setSpace({
           id: spaceId,
           handle: spaceData.slug || handle,
@@ -210,11 +271,19 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
           description: spaceData.description,
           avatarUrl: spaceData.avatarUrl || spaceData.iconURL,
           bannerUrl: spaceData.bannerUrl || spaceData.coverImageURL,
-          memberCount: spaceData.memberCount || 0,
+          memberCount,
           onlineCount: spaceData.onlineCount || 0,
           isVerified: spaceData.isVerified || false,
           isMember: spaceData.isMember || false,
           isLeader: spaceData.isLeader || false,
+          userRole: spaceData.membership?.role || (spaceData.isLeader ? 'admin' : (spaceData.isMember ? 'member' : undefined)),
+          // Quorum-based activation
+          activationStatus,
+          activationThreshold: threshold,
+          activatedAt: spaceData.activatedAt,
+          isClaimed,
+          // Gatherers (for ghost/gathering spaces)
+          gatherers: spaceData.gatherers || [],
           // CampusLabs imported metadata (P2.2, P2.3)
           email: spaceData.email,
           contactName: spaceData.contactName,
@@ -293,35 +362,56 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     }
   }, [handle]);
 
-  // Load messages when board changes
+  // Load messages when board changes (initial load with limit for fast first paint)
   React.useEffect(() => {
     async function loadMessages() {
       if (!space?.id) return;
 
       setIsLoadingMessages(true);
+      setHasMoreMessages(false);
+      // Reset "Since you left" state on board change
+      setLastReadAt(null);
+      setUnreadCount(0);
 
       try {
-        const response = await fetch(`/api/spaces/${space.id}/chat?boardId=${activeBoard}`);
+        // Initial load: fetch first N messages for fast render
+        const response = await fetch(
+          `/api/spaces/${space.id}/chat?boardId=${activeBoard}&limit=${INITIAL_MESSAGE_LIMIT}`
+        );
         if (response.ok) {
           const data = await response.json();
           setMessages(data.messages || []);
+          setHasMoreMessages(data.hasMore || false);
 
-          // Mark messages as read for this board
+          // Capture "Since you left" data from API
+          if (data.lastReadAt) {
+            setLastReadAt(data.lastReadAt);
+            setUnreadCount(data.unreadCount || 0);
+          }
+
+          // Mark messages as read for this board (after a short delay to show divider)
           if (data.messages && data.messages.length > 0) {
             const latestMessage = data.messages[data.messages.length - 1];
             const lastReadTimestamp = latestMessage.timestamp || Date.now();
 
-            // Update read receipt (fire and forget - don't block UI)
-            fetch(`/api/spaces/${space.id}/chat/read`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                boardId: activeBoard,
-                lastReadTimestamp,
-              }),
-            }).catch(() => {
-              // Silent fail - unread count will update on next load
-            });
+            // Delay marking as read so user sees the divider first
+            setTimeout(() => {
+              // Update read receipt (fire and forget - don't block UI)
+              fetch(`/api/spaces/${space.id}/chat/read`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  boardId: activeBoard,
+                  lastReadTimestamp,
+                }),
+              }).catch(() => {
+                // Silent fail - unread count will update on next load
+              });
+
+              // Clear "Since you left" state after marking as read
+              setLastReadAt(null);
+              setUnreadCount(0);
+            }, 3000); // 3 second delay to let user see the divider
 
             // Optimistically clear unread count for this board
             setBoards((prev) =>
@@ -333,9 +423,11 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         } else {
           // No messages yet - that's okay
           setMessages([]);
+          setHasMoreMessages(false);
         }
       } catch {
         setMessages([]);
+        setHasMoreMessages(false);
       } finally {
         setIsLoadingMessages(false);
       }
@@ -343,6 +435,37 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
 
     loadMessages();
   }, [activeBoard, space?.id]);
+
+  // Load more messages (cursor-based pagination - loads older messages)
+  const loadMoreMessages = React.useCallback(async () => {
+    if (!space?.id || !hasMoreMessages || isLoadingMoreMessages || messages.length === 0) return;
+
+    setIsLoadingMoreMessages(true);
+
+    try {
+      // Get the oldest message timestamp as cursor
+      const oldestMessage = messages[0];
+      const before = oldestMessage?.timestamp;
+
+      const response = await fetch(
+        `/api/spaces/${space.id}/chat?boardId=${activeBoard}&limit=${LOAD_MORE_MESSAGE_LIMIT}&before=${before}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const olderMessages = data.messages || [];
+
+        // Prepend older messages to the front
+        setMessages((prev) => [...olderMessages, ...prev]);
+        setHasMoreMessages(data.hasMore || false);
+      }
+    } catch (error) {
+      console.error('Failed to load more messages:', error);
+      toast.error("Failed to load older messages", "Please try again");
+    } finally {
+      setIsLoadingMoreMessages(false);
+    }
+  }, [space?.id, activeBoard, hasMoreMessages, isLoadingMoreMessages, messages, toast]);
 
   // Load all members when space loads
   React.useEffect(() => {
@@ -471,7 +594,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
   );
 
   // Actions
-  const sendMessage = React.useCallback(async (content: string) => {
+  const sendMessage = React.useCallback(async (content: string, attachments?: ChatAttachment[]) => {
     if (!space?.id) return;
 
     // Optimistic update
@@ -484,6 +607,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       authorHandle: 'you',
       content,
       timestamp: Date.now(),
+      attachments,
     };
     setMessages((prev) => [...prev, optimisticMessage]);
 
@@ -494,6 +618,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         body: JSON.stringify({
           boardId: activeBoard,
           content,
+          attachments,
         }),
       });
 
@@ -540,7 +665,12 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         // Revert optimistic update
         setSpace((prev) => (prev ? { ...prev, isMember: false, memberCount: prev.memberCount - 1 } : null));
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to join space');
+
+        // Map API error to user-friendly message
+        const apiError = errorData.error || 'Failed to join space';
+        const userFriendlyError = mapJoinErrorToUserMessage(apiError, errorData.code);
+
+        throw new Error(userFriendlyError);
       }
 
       // Reload members after joining
@@ -553,10 +683,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       // Revert optimistic update
       setSpace((prev) => (prev ? { ...prev, isMember: false, memberCount: prev.memberCount - 1 } : null));
       console.error('Failed to join space:', error);
-      toast.error("Couldn't join space", "Please try again");
+      // Re-throw with the mapped error message (don't override with generic)
       throw error;
     }
-  }, [space?.id, toast]);
+  }, [space?.id]);
 
   const leaveSpace = React.useCallback(async () => {
     if (!space?.id) return;
@@ -710,8 +840,15 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     // Chat
     messages,
     isLoadingMessages,
+    isLoadingMoreMessages,
+    hasMoreMessages,
+    loadMoreMessages,
     typingUsers,
     sendMessage,
+
+    // "Since you left" feature
+    lastReadAt,
+    unreadCount,
 
     // Panel data
     onlineMembers,
@@ -746,3 +883,66 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
 }
 
 export default useSpaceResidenceState;
+
+/**
+ * Maps API error messages to user-friendly messages for space join failures.
+ * Handles all known error cases from the join-v2 API.
+ */
+function mapJoinErrorToUserMessage(apiError: string, errorCode?: string): string {
+  // Handle specific error codes first
+  if (errorCode === 'CONFLICT') {
+    return "You're already a member of this space";
+  }
+  if (errorCode === 'FORBIDDEN') {
+    return "You don't have permission to join this space";
+  }
+  if (errorCode === 'RESOURCE_NOT_FOUND') {
+    return "This space no longer exists";
+  }
+
+  // Handle specific error messages
+  const errorLower = apiError.toLowerCase();
+
+  if (errorLower.includes('already a member') || errorLower.includes('user is already a member')) {
+    return "You're already a member of this space";
+  }
+  if (errorLower.includes('private') && errorLower.includes('invitation')) {
+    return "This space is invite-only. Request an invitation from a member.";
+  }
+  if (errorLower.includes('not active') || errorLower.includes('space is not active')) {
+    return "This space is no longer active";
+  }
+  if (errorLower.includes('greek life')) {
+    return "You can only be a member of one Greek organization";
+  }
+  if (errorLower.includes('suspended')) {
+    return "Your membership in this space has been suspended";
+  }
+  if (errorLower.includes('banned')) {
+    return "You've been banned from joining this space";
+  }
+  if (errorLower.includes('space is full') || errorLower.includes('member limit')) {
+    return "This space has reached its member limit";
+  }
+  if (errorLower.includes('permission denied') || errorLower.includes('access denied')) {
+    return "You don't have permission to join this space";
+  }
+  if (errorLower.includes('campus mismatch')) {
+    return "This space is not available at your campus";
+  }
+  if (errorLower.includes('not found')) {
+    return "This space no longer exists";
+  }
+
+  // Network/server errors
+  if (errorLower.includes('network') || errorLower.includes('fetch')) {
+    return "Network error. Check your connection and try again.";
+  }
+
+  // Default fallback - return the original if it's reasonably user-friendly
+  if (apiError.length < 100 && !apiError.includes('Error:')) {
+    return apiError;
+  }
+
+  return "Unable to join this space right now. Please try again.";
+}

@@ -30,6 +30,8 @@ export const queryKeys = {
       [...queryKeys.spaces.detail(spaceId), "events"] as const,
     members: (spaceId: string) =>
       [...queryKeys.spaces.detail(spaceId), "members"] as const,
+    boards: (spaceId: string) =>
+      [...queryKeys.spaces.detail(spaceId), "boards"] as const,
     chat: (spaceId: string, boardId?: string) =>
       [...queryKeys.spaces.detail(spaceId), "chat", boardId].filter(Boolean) as readonly string[],
     pinnedMessages: (spaceId: string, boardId: string) =>

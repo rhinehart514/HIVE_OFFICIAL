@@ -2,19 +2,17 @@
 
 /**
  * Space Residence Page - /s/[handle]
- * UNIFIED VIEW REDESIGN: Jan 22, 2026
+ * SPLIT PANEL REBUILD: Jan 31, 2026
  *
- * Homebase-first architecture with unified activity feed.
- * No mode switching - everything lives in one view.
- *
- * Layout: 60/40 split (feed LEFT, boards RIGHT)
- * Entry: ArrivalTransition for first-time members
+ * Linear-style split panel layout:
+ * - 200px sidebar (left): boards, tools, members
+ * - Remaining width: chat feed + input
  *
  * Flow:
  * - Non-member → SpaceThreshold (join gate)
- * - Member → Unified View (boards sidebar + activity feed)
+ * - Member → Split Panel View
  *
- * @version 3.1.0 - 60/40 split, boards right, ArrivalTransition (Jan 2026)
+ * @version 4.0.0 - Split Panel Layout (Jan 2026)
  */
 
 import * as React from 'react';
@@ -22,6 +20,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
   Text,
   Button,
@@ -32,7 +31,7 @@ import {
 } from '@hive/ui/design-system/primitives';
 import { ConfirmDialog } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
-import { useSpaceResidenceState } from './hooks';
+import { useSpaceResidenceState, useKeyboardNav } from './hooks';
 import {
   SpaceHeader,
   SpaceThreshold,
@@ -43,12 +42,19 @@ import {
   SpaceInfoDrawer,
   BoardEmptyState,
   getBoardType,
+  SpaceLayout,
+  SpaceSidebar,
+  MainContent,
+  MessageFeed,
   type Member,
+  type Board,
+  type SidebarTool,
+  type OnlineMember,
 } from './components';
+import { GatheringThreshold } from './components/threshold';
 import {
   BoardsSidebar,
   UnifiedActivityFeed,
-  type Board,
   type FeedItem,
 } from '@/components/spaces';
 import { CreateEventModal, type CreateEventData } from '@/components/events/create-event-modal';
@@ -60,6 +66,7 @@ export default function SpacePageUnified() {
   const handle = params.handle as string;
   const { user } = useAuth();
   const [isJoining, setIsJoining] = React.useState(false);
+  const [joinError, setJoinError] = React.useState<string | null>(null);
   const [showBoardModal, setShowBoardModal] = React.useState(false);
   const [showMembersPanel, setShowMembersPanel] = React.useState(false);
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
@@ -89,6 +96,9 @@ export default function SpacePageUnified() {
     canAddBoard,
     messages,
     isLoadingMessages,
+    isLoadingMoreMessages,
+    hasMoreMessages,
+    loadMoreMessages,
     sendMessage,
     joinSpace,
     leaveSpace,
@@ -104,19 +114,15 @@ export default function SpacePageUnified() {
     isLoadingTools,
     // Refresh
     refreshSpace,
+    // "Since you left" feature
+    lastReadAt,
+    unreadCount,
   } = useSpaceResidenceState(handle);
 
-  // Transform boards for sidebar
-  const sidebarBoards: Board[] = React.useMemo(() => {
-    return boards.map((b) => ({
-      id: b.id,
-      name: b.name,
-      unreadCount: 0, // TODO: Get from membership data
-      isPinned: b.name === 'general',
-    }));
-  }, [boards]);
+  // Permissions hook for message deletion
+  const { canDeleteMessage } = usePermissions(space?.id, user?.id);
 
-  // Transform messages to unified feed items
+  // Transform messages to unified feed items (for legacy compatibility)
   const feedItems: FeedItem[] = React.useMemo(() => {
     // Combine messages, events, and tools into unified feed
     const items: FeedItem[] = [];
@@ -171,19 +177,28 @@ export default function SpacePageUnified() {
     });
   }, [messages, upcomingEvents]);
 
-  // Handle join
+  // Handle join with inline error display
   const handleJoin = async () => {
     setIsJoining(true);
+    setJoinError(null);
     try {
       await joinSpace();
       toast.success('Welcome to the space!');
     } catch (error) {
       logger.error('Join failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-      toast.error(error instanceof Error ? error.message : 'Failed to join space');
-      // Don't re-throw - error is handled via toast
+      // Display error inline on the threshold instead of just a toast
+      const errorMessage = error instanceof Error ? error.message : 'Failed to join space';
+      setJoinError(errorMessage);
+      // Also show toast for accessibility
+      toast.error(errorMessage);
     } finally {
       setIsJoining(false);
     }
+  };
+
+  // Clear join error
+  const handleClearJoinError = () => {
+    setJoinError(null);
   };
 
   // Handle board creation
@@ -277,6 +292,29 @@ export default function SpacePageUnified() {
     }
   };
 
+  // Handle message deletion
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!space?.id || !activeBoard) return;
+
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/chat/${messageId}?boardId=${activeBoard}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error?.message || 'Failed to delete message');
+      }
+
+      // Refresh to update the feed
+      await refreshSpace();
+      toast.success('Message deleted');
+    } catch (error) {
+      logger.error('Failed to delete message', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete message');
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return <SpacePageSkeleton />;
@@ -309,8 +347,46 @@ export default function SpacePageUnified() {
     );
   }
 
-  // Non-member: Show threshold
+  // Non-member: Show appropriate threshold based on activation status
   if (!space.isMember) {
+    // Ghost or Gathering spaces show quorum-based GatheringThreshold
+    const showGatheringThreshold = space.activationStatus === 'ghost' || space.activationStatus === 'gathering';
+
+    if (showGatheringThreshold) {
+      // Use API-provided gatherers (includes isFoundingMember status)
+      // These are the people waiting for quorum to be reached
+      const gatherers = (space.gatherers || []).slice(0, 10).map((g) => ({
+        id: g.id,
+        name: g.name,
+        avatarUrl: g.avatarUrl ?? undefined, // Convert null to undefined for component compatibility
+      }));
+
+      return (
+        <AnimatePresence mode="wait">
+          <GatheringThreshold
+            key="gathering-threshold"
+            space={{
+              id: space.id,
+              handle: space.handle,
+              name: space.name,
+              description: space.description,
+              avatarUrl: space.avatarUrl,
+              category: undefined,
+              isVerified: space.isVerified,
+            }}
+            memberCount={space.memberCount}
+            threshold={space.activationThreshold}
+            gatherers={gatherers}
+            onJoin={handleJoin}
+            isJoining={isJoining}
+            joinError={joinError}
+            onClearError={handleClearJoinError}
+          />
+        </AnimatePresence>
+      );
+    }
+
+    // Open/claimed spaces show the regular threshold
     return (
       <AnimatePresence mode="wait">
         <SpaceThreshold
@@ -336,174 +412,202 @@ export default function SpacePageUnified() {
           }
           onJoin={handleJoin}
           isJoining={isJoining}
+          joinError={joinError}
+          onClearError={handleClearJoinError}
         />
       </AnimatePresence>
     );
   }
 
-  // Member: Show unified view with ArrivalTransition
+  // Transform sidebar boards
+  const sidebarBoardsNew: Board[] = React.useMemo(() => {
+    return boards.map((b) => ({
+      id: b.id,
+      name: b.name,
+      unreadCount: 0, // TODO: Get from membership data
+      isPinned: b.name === 'general',
+    }));
+  }, [boards]);
+
+  // Transform sidebar tools
+  const sidebarToolsNew: SidebarTool[] = React.useMemo(() => {
+    return (sidebarTools || []).map((t) => ({
+      toolId: t.toolId,
+      name: t.name,
+      // PlacedToolDTO doesn't have icon, use undefined
+      icon: undefined,
+      deploymentId: t.placementId,
+    }));
+  }, [sidebarTools]);
+
+  // Transform online members for preview
+  // OnlineMember from @hive/ui has: id, handle, name?, avatar?
+  const onlineMembersPreview: OnlineMember[] = React.useMemo(() => {
+    return (onlineMembers || []).slice(0, 5).map((m) => ({
+      id: m.id,
+      name: m.name || 'Unknown',
+      avatarUrl: m.avatar,
+    }));
+  }, [onlineMembers]);
+
+  // Keyboard navigation
+  const { highlightedBoard } = useKeyboardNav({
+    boardIds: boards.map((b) => b.id),
+    activeBoard: activeBoard || boards[0]?.id || 'general',
+    onBoardChange: setActiveBoard,
+    enabled: !showSettingsModal && !showMembersPanel && !showBoardModal,
+  });
+
+  // Transform messages to Message type
+  const feedMessages = React.useMemo(() => {
+    return messages.map((msg) => ({
+      id: msg.id,
+      authorId: msg.authorId,
+      authorName: msg.authorName,
+      authorAvatarUrl: msg.authorAvatarUrl,
+      content: msg.content,
+      timestamp: typeof msg.timestamp === 'string' ? msg.timestamp : new Date(msg.timestamp).toISOString(),
+      reactions: msg.reactions?.map((r) => ({
+        emoji: r.emoji,
+        count: r.count,
+        userReacted: r.hasReacted,
+      })),
+      replyCount: msg.replyCount,
+      attachments: msg.attachments,
+    }));
+  }, [messages]);
+
+  // Member: Show Split Panel layout
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key="unified"
-        className="min-h-screen flex flex-col"
+        key="split-panel"
+        className="h-screen"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
       >
-        <ArrivalTransition skipAnimation={!isFirstEntry}>
-          {/* Space Header */}
-          <ArrivalZone zone="header" className="px-6">
-            <SpaceHeader
-              space={{
-                id: space.id,
-                handle: space.handle,
-                name: space.name,
-                avatarUrl: space.avatarUrl,
-                onlineCount: space.onlineCount,
-                memberCount: space.memberCount,
-                isVerified: space.isVerified,
-                socialLinks: space.socialLinks,
-                // Energy signals: count of recent messages (proxy for activity)
-                recentMessageCount: messages.length,
-              }}
-              isLeader={space.isLeader}
-              isMember={space.isMember}
-              onMembersClick={() => setShowMembersPanel(true)}
-              onSettingsClick={() => setShowSettingsModal(true)}
-              onSpaceInfoClick={() => setShowInfoDrawer(true)}
-              onBuildToolClick={() => {
-                // Navigate to integrated tool creation with space context
-                // After tool creation, deploy modal will pre-select this space
-                const params = new URLSearchParams({
-                  spaceId: space.id,
-                });
-                router.push(`/lab?${params.toString()}`);
-              }}
-              onCreateEventClick={() => setShowEventModal(true)}
-            />
-          </ArrivalZone>
-
-          {/* Main Content - 60/40 split with boards on RIGHT */}
-          <div className="flex-1 flex px-6 gap-4">
-            {/* Content Area (60%) - Feed on LEFT */}
-            <ArrivalZone zone="content" className="flex-1 flex flex-col min-w-0">
-              {/* Feed with board transition */}
-              <div className="flex-1 overflow-y-auto">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeBoard || 'default'}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
-                    className="h-full"
-                  >
-                    {feedItems.length === 0 && !isLoadingMessages ? (
-                      <BoardEmptyState
-                        boardType={getBoardType(boards.find(b => b.id === activeBoard)?.name || 'general')}
-                        boardName={boards.find(b => b.id === activeBoard)?.name}
-                        isLeader={space.isLeader}
-                        onAction={() => {
-                          // Focus the chat input
-                          const input = document.querySelector('textarea[placeholder^="Message #"]') as HTMLTextAreaElement;
-                          input?.focus();
-                        }}
-                      />
-                    ) : (
-                      <UnifiedActivityFeed
-                        items={feedItems}
-                        loading={isLoadingMessages}
-                        currentUserId={user?.id}
-                        onEventRsvp={async (eventId, status) => {
-                          try {
-                            await rsvpToEvent(eventId, status as 'going' | 'maybe' | 'not_going');
-                          } catch (error) {
-                            logger.error('RSVP failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-                          }
-                        }}
-                        onRunTool={(toolId, placementId) => {
-                          // Open tool in modal or navigate to HiveLab
-                          const params = new URLSearchParams({
-                            toolId,
-                            ...(placementId && { placementId }),
-                            spaceId: space?.id || '',
-                          });
-                          router.push(`/lab/${toolId}?${params.toString()}`);
-                        }}
-                        onReact={async (messageId, emoji) => {
-                          if (!space?.id) return;
-                          try {
-                            await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ emoji }),
-                            });
-                          } catch (error) {
-                            logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-                          }
-                        }}
-                        onOpenThread={(messageId) => {
-                          // Navigate to thread view
-                          router.push(`/s/${handle}?board=${activeBoard}&thread=${messageId}`);
-                        }}
-                      />
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Chat Input - Fixed at bottom */}
-              <div className="border-t border-white/[0.06] bg-[#0A0A09] py-4">
-                <ChatInput
-                  onSend={sendMessage}
-                  placeholder={`Message #${boards.find(b => b.id === activeBoard)?.name || 'general'}`}
-                />
-              </div>
-            </ArrivalZone>
-
-            {/* Boards Sidebar (40%) - on RIGHT */}
-            <ArrivalZone zone="sidebar">
-              <BoardsSidebar
-                boards={sidebarBoards}
-                activeBoard={activeBoard || boards[0]?.id || 'general'}
-                onBoardChange={(boardId) => setActiveBoard(boardId)}
-                onCreateBoard={space.isLeader ? handleCreateBoard : undefined}
-                onReorderBoards={space.isLeader ? handleReorderBoards : undefined}
-                position="right"
-                // Tools (HiveLab Sprint 1)
-                sidebarTools={sidebarTools}
-                isLoadingTools={isLoadingTools}
+        <SpaceLayout
+          header={
+            <div className="px-4 h-full flex items-center">
+              <SpaceHeader
+                space={{
+                  id: space.id,
+                  handle: space.handle,
+                  name: space.name,
+                  avatarUrl: space.avatarUrl,
+                  onlineCount: space.onlineCount,
+                  memberCount: space.memberCount,
+                  isVerified: space.isVerified,
+                  socialLinks: space.socialLinks,
+                  recentMessageCount: messages.length,
+                }}
                 isLeader={space.isLeader}
-                onToolRun={(tool) => {
-                  // Navigate to space tool page with full context injection
-                  const params = new URLSearchParams();
-                  if (tool.deploymentId) {
-                    params.set('deploymentId', tool.deploymentId);
-                  }
-                  router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
-                }}
-                onToolViewFull={(tool) => {
-                  // Navigate to full app view within space context
-                  const params = new URLSearchParams();
-                  if (tool.deploymentId) {
-                    params.set('deploymentId', tool.deploymentId);
-                  }
-                  router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
-                }}
-                onAddTool={() => {
-                  // Navigate to Lab with space context
-                  const params = new URLSearchParams({
-                    spaceId: space?.id || '',
-                    deploy: 'sidebar',
-                  });
+                isMember={space.isMember}
+                onMembersClick={() => setShowMembersPanel(true)}
+                onSettingsClick={() => setShowSettingsModal(true)}
+                onSpaceInfoClick={() => setShowInfoDrawer(true)}
+                onBuildToolClick={() => {
+                  const params = new URLSearchParams({ spaceId: space.id });
                   router.push(`/lab?${params.toString()}`);
                 }}
+                onCreateEventClick={() => setShowEventModal(true)}
+                className="w-full border-b-0"
               />
-            </ArrivalZone>
-          </div>
-        </ArrivalTransition>
+            </div>
+          }
+          sidebar={
+            <SpaceSidebar
+              boards={{
+                boards: sidebarBoardsNew,
+                activeBoard: activeBoard || boards[0]?.id || 'general',
+                onBoardChange: setActiveBoard,
+                onCreateBoard: space.isLeader ? handleCreateBoard : undefined,
+                onReorderBoards: space.isLeader ? handleReorderBoards : undefined,
+              }}
+              tools={{
+                tools: sidebarToolsNew,
+                isLoading: isLoadingTools,
+                isLeader: space.isLeader,
+                onToolClick: (tool) => {
+                  const params = new URLSearchParams();
+                  if (tool.deploymentId) params.set('deploymentId', tool.deploymentId);
+                  router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
+                },
+                onToolRun: (tool) => {
+                  const params = new URLSearchParams();
+                  if (tool.deploymentId) params.set('deploymentId', tool.deploymentId);
+                  router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
+                },
+                onAddTool: () => {
+                  const params = new URLSearchParams({ spaceId: space.id, deploy: 'sidebar' });
+                  router.push(`/lab?${params.toString()}`);
+                },
+              }}
+              members={{
+                onlineCount: space.onlineCount,
+                totalCount: space.memberCount,
+                onlineMembers: onlineMembersPreview,
+                onClick: () => setShowMembersPanel(true),
+              }}
+            />
+          }
+          input={
+            <ChatInput
+              spaceId={space.id}
+              onSend={sendMessage}
+              placeholder={`Message #${boards.find((b) => b.id === activeBoard)?.name || 'general'}`}
+            />
+          }
+        >
+          {/* Main Content: Message Feed */}
+          <MainContent
+            boardName={boards.find((b) => b.id === activeBoard)?.name || 'general'}
+            contentKey={activeBoard || 'default'}
+            isLoading={isLoadingMessages}
+          >
+            {feedMessages.length === 0 && !isLoadingMessages ? (
+              <BoardEmptyState
+                boardType={getBoardType(boards.find((b) => b.id === activeBoard)?.name || 'general')}
+                boardName={boards.find((b) => b.id === activeBoard)?.name}
+                isLeader={space.isLeader}
+                onAction={() => {
+                  const input = document.querySelector('textarea[placeholder^="Message #"]') as HTMLTextAreaElement;
+                  input?.focus();
+                }}
+              />
+            ) : (
+              <MessageFeed
+                messages={feedMessages}
+                currentUserId={user?.id}
+                lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
+                unreadCount={unreadCount}
+                isLoading={isLoadingMessages}
+                isLoadingMore={isLoadingMoreMessages}
+                hasMore={hasMoreMessages}
+                onLoadMore={loadMoreMessages}
+                onReact={async (messageId, emoji) => {
+                  if (!space?.id) return;
+                  try {
+                    await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ emoji }),
+                    });
+                  } catch (error) {
+                    logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+                  }
+                }}
+                onReply={(messageId) => {
+                  router.push(`/s/${handle}?board=${activeBoard}&thread=${messageId}`);
+                }}
+                onDelete={handleDeleteMessage}
+                canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
+              />
+            )}
+          </MainContent>
+        </SpaceLayout>
 
         {/* Board Creation Modal */}
         <AnimatePresence>
@@ -662,7 +766,7 @@ export default function SpacePageUnified() {
                     }))}
                     isLeader={space.isLeader}
                     currentUserId={user?.id}
-                    currentUserRole={space.isLeader ? 'admin' : 'member'}
+                    currentUserRole={space.userRole && space.userRole !== 'guest' ? space.userRole : (space.isLeader ? 'admin' : 'member')}
                     onUpdate={space.isLeader ? async (updates) => {
                       try {
                         const response = await fetch(`/api/spaces/${space.id}`, {

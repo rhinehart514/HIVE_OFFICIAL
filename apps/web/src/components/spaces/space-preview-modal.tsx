@@ -239,7 +239,8 @@ export function SpacePreviewModal({
             ) : space.isJoined ? (
               <Button
                 onClick={handleEnter}
-                className="w-full bg-white text-[#0A0A09] hover:bg-white/90 font-medium"
+                variant="solid"
+                className="w-full font-medium"
               >
                 <span>Enter Space</span>
                 <ArrowRightIcon className="w-4 h-4 ml-2" />

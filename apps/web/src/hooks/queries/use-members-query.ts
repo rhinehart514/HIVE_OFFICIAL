@@ -4,13 +4,17 @@
  * React Query hooks for space members
  *
  * Provides caching and pagination for member lists.
+ * Optimized to avoid N+1 queries via cursor-based pagination
+ * and batch mutations.
  */
 
-import { useQuery, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import {
   fetchSpaceMembers,
-  fetchOnlineCount,
+  batchInviteMembers,
+  batchUpdateRoles,
+  batchRemoveMembers,
   type MembersResponse,
   type MemberFilters,
   type SpaceMemberDTO,
@@ -63,7 +67,8 @@ export function useSpaceMembers(spaceId: string, filters: MemberFilters = {}) {
 // ============================================================
 
 /**
- * Fetch online members count with polling
+ * Get online members count from members list
+ * Derives count from members with presence.status === 'online'
  *
  * @example
  * const { data: onlineCount } = useOnlineCount(spaceId);
@@ -74,7 +79,10 @@ export function useOnlineCount(
 ) {
   return useQuery<number>({
     queryKey: [...queryKeys.spaces.members(spaceId), "online"],
-    queryFn: () => fetchOnlineCount(spaceId),
+    queryFn: async () => {
+      const result = await fetchSpaceMembers(spaceId, { limit: 100 });
+      return result.members.filter(m => m.presence?.status === 'online').length;
+    },
     enabled: Boolean(spaceId) && options?.enabled !== false,
     staleTime: 1000 * 30, // 30 seconds
     refetchInterval: options?.refetchInterval ?? 1000 * 60, // Poll every minute by default
@@ -105,5 +113,75 @@ export function useMemberSearch(
     enabled: Boolean(spaceId) && query.length >= 1,
     staleTime: 1000 * 30, // 30 seconds
     placeholderData: keepPreviousData,
+  });
+}
+
+// ============================================================
+// Batch Mutations (N+1 Prevention)
+// ============================================================
+
+/**
+ * Batch invite multiple members to a space
+ * Use this instead of multiple individual invite calls
+ *
+ * @example
+ * const { mutate } = useBatchInviteMembers(spaceId);
+ * mutate([
+ *   { userId: 'user1', role: 'member' },
+ *   { userId: 'user2', role: 'moderator' }
+ * ]);
+ */
+export function useBatchInviteMembers(spaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (members: Array<{ userId: string; role: "member" | "moderator" | "admin" }>) =>
+      batchInviteMembers(spaceId, members),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.members(spaceId) });
+    },
+  });
+}
+
+/**
+ * Batch update roles for multiple members
+ * Use this instead of multiple individual role update calls
+ *
+ * @example
+ * const { mutate } = useBatchUpdateRoles(spaceId);
+ * mutate([
+ *   { userId: 'user1', role: 'admin' },
+ *   { userId: 'user2', role: 'member' }
+ * ]);
+ */
+export function useBatchUpdateRoles(spaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (updates: Array<{ userId: string; role: "member" | "moderator" | "admin" }>) =>
+      batchUpdateRoles(spaceId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.members(spaceId) });
+    },
+  });
+}
+
+/**
+ * Batch remove multiple members from a space
+ * Use this instead of multiple individual remove calls
+ *
+ * @example
+ * const { mutate } = useBatchRemoveMembers(spaceId);
+ * mutate({ userIds: ['user1', 'user2'], reason: 'Inactive' });
+ */
+export function useBatchRemoveMembers(spaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userIds, reason }: { userIds: string[]; reason?: string }) =>
+      batchRemoveMembers(spaceId, userIds, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.spaces.members(spaceId) });
+    },
   });
 }

@@ -401,7 +401,7 @@ export const ResourcesPanel = ({ spaceId, userRole = 'member' }: ResourcesPanelP
           </Text>
         </div>
         <Button
-          variant="default"
+          variant="cta"
           onClick={() => setAddModalOpen(true)}
           className="gap-2"
         >
@@ -610,7 +610,7 @@ export const ResourcesPanel = ({ spaceId, userRole = 'member' }: ResourcesPanelP
               Cancel
             </Button>
             <Button
-              variant="default"
+              variant="cta"
               onClick={handleCreate}
               disabled={!formData.title || !formData.url || formLoading}
             >
@@ -700,7 +700,7 @@ export const ResourcesPanel = ({ spaceId, userRole = 'member' }: ResourcesPanelP
               Cancel
             </Button>
             <Button
-              variant="default"
+              variant="cta"
               onClick={handleUpdate}
               disabled={!formData.title || !formData.url || formLoading}
             >
@@ -731,10 +731,9 @@ export const ResourcesPanel = ({ spaceId, userRole = 'member' }: ResourcesPanelP
               Cancel
             </Button>
             <Button
-              variant="default"
+              variant="destructive"
               onClick={handleDelete}
               disabled={formLoading}
-              className="bg-red-500/20 hover:bg-red-500/30 text-red-400"
             >
               {formLoading ? 'Deleting...' : 'Delete'}
             </Button>

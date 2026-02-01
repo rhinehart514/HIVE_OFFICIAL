@@ -23,6 +23,10 @@ import {
   SimpleAvatar,
   Badge,
   AvatarGroup,
+  SpaceHealthBadge,
+  SpaceHealthEdge,
+  getSpaceHealthLevel,
+  type SpaceHealthLevel,
 } from '@hive/ui/design-system/primitives';
 
 // ============================================================
@@ -42,6 +46,12 @@ export interface SpaceListRowSpace {
   // Activity signals
   lastActivityAt?: string | null;
   activityLevel?: 'active' | 'recent' | 'quiet';
+  /** Recent message count (last 24h) for health calculation */
+  recentMessageCount?: number;
+  /** Online users count */
+  onlineCount?: number;
+  /** New members in last 7 days */
+  newMembers7d?: number;
   // Social proof
   mutualCount?: number;
   mutualAvatars?: string[];
@@ -66,7 +76,7 @@ export interface SpaceListRowProps {
 }
 
 // ============================================================
-// Activity Indicator
+// Activity Indicator (Legacy - now uses SpaceHealthBadge)
 // ============================================================
 
 function ActivityIndicator({
@@ -74,25 +84,16 @@ function ActivityIndicator({
 }: {
   level: 'active' | 'recent' | 'quiet';
 }) {
-  const dots = level === 'active' ? 3 : level === 'recent' ? 2 : 1;
-  const colors = {
-    active: 'bg-emerald-400',
-    recent: 'bg-amber-400',
-    quiet: 'bg-white/20',
-  };
+  // Map legacy activity levels to health levels
+  const healthLevel: SpaceHealthLevel = level === 'active' ? 'active' : level === 'recent' ? 'moderate' : 'quiet';
 
   return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <span
-          key={i}
-          className={cn(
-            'w-1 h-1 rounded-full transition-colors',
-            i < dots ? colors[level] : 'bg-white/10'
-          )}
-        />
-      ))}
-    </div>
+    <SpaceHealthBadge
+      level={healthLevel}
+      variant="dot"
+      dotSize="sm"
+      animated={level === 'active'}
+    />
   );
 }
 
@@ -152,10 +153,10 @@ function JoinButton({
       onClick={handleClick}
       disabled={isLoading}
       className={cn(
-        'px-3 py-1.5 rounded-md',
+        'px-3 py-1.5 rounded-lg',
         'text-xs font-medium',
-        'bg-white/90 text-[#0A0A09]',
-        'hover:bg-white',
+        'bg-white text-[var(--color-bg-void,#0A0A09)]',
+        'hover:bg-white/90',
         'transition-all duration-150',
         'disabled:opacity-50'
       )}
@@ -179,18 +180,26 @@ export function SpaceListRow({
   variant = 'default',
   className,
 }: SpaceListRowProps) {
-  // Compute activity level from lastActivityAt if not provided
+  // Compute health level from space metrics
+  const healthLevel = React.useMemo((): SpaceHealthLevel => {
+    return getSpaceHealthLevel({
+      lastActivityAt: space.lastActivityAt,
+      onlineCount: space.onlineCount,
+      recentMessageCount: space.recentMessageCount,
+      memberCount: space.memberCount,
+      newMembers7d: space.newMembers7d,
+    });
+  }, [space.lastActivityAt, space.onlineCount, space.recentMessageCount, space.memberCount, space.newMembers7d]);
+
+  // Map health level to legacy activity level for backward compat
   const activityLevel = React.useMemo(() => {
     if (space.activityLevel) return space.activityLevel;
-    if (!space.lastActivityAt) return 'quiet';
-
-    const diffMs = Date.now() - new Date(space.lastActivityAt).getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
-
-    if (diffHours < 1) return 'active';
-    if (diffHours < 24) return 'recent';
-    return 'quiet';
-  }, [space.activityLevel, space.lastActivityAt]);
+    switch (healthLevel) {
+      case 'active': return 'active';
+      case 'moderate': return 'recent';
+      default: return 'quiet';
+    }
+  }, [space.activityLevel, healthLevel]);
 
   const content = (
     <div
@@ -204,9 +213,13 @@ export function SpaceListRow({
       )}
       onClick={onClick}
     >
-      {/* Activity edge indicator */}
-      {showActivityIndicator && activityLevel === 'active' && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-8 bg-emerald-400 rounded-r" />
+      {/* Health edge indicator */}
+      {showActivityIndicator && healthLevel !== 'quiet' && healthLevel !== 'dormant' && (
+        <SpaceHealthEdge
+          level={healthLevel}
+          size="md"
+          className="absolute left-0 top-1/2 -translate-y-1/2"
+        />
       )}
 
       {/* Avatar */}

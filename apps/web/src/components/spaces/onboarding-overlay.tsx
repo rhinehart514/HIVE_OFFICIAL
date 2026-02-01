@@ -99,6 +99,8 @@ function CategoryCard({
 }) {
   return (
     <motion.div
+      role="article"
+      aria-label={`${category.label}: ${category.description}`}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -110,7 +112,7 @@ function CategoryCard({
         'p-4 rounded-xl',
         'bg-white/[0.02] border border-white/[0.08]',
         'hover:bg-white/[0.04] hover:border-white/[0.12]',
-        'transition-all duration-200'
+        'transition-all duration-300'
       )}
     >
       {/* Icon + Label */}
@@ -217,10 +219,10 @@ export function OnboardingOverlay({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3, ease: MOTION.ease.premium }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-2xl mx-auto z-50"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-2xl mx-auto z-50 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-[#0A0A09] border border-white/[0.12] rounded-2xl p-8 shadow-2xl">
+            <div className="bg-[var(--color-bg-ground,#0A0A09)] border border-white/[0.12] rounded-2xl p-6 sm:p-8 shadow-2xl">
               {/* Close button */}
               <button
                 onClick={handleSkip}

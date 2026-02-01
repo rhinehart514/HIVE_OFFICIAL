@@ -98,9 +98,9 @@ function EmptyState({ onBrowse }: { onBrowse?: () => void }) {
         <button
           onClick={onBrowse}
           className={cn(
-            'px-5 py-2.5 rounded-lg',
+            'px-5 py-2.5 rounded-xl',
             'text-sm font-medium',
-            'bg-white text-[#0A0A09]',
+            'bg-white text-[var(--color-bg-void,#0A0A09)]',
             'hover:bg-white/90',
             'transition-colors duration-150',
             'shadow-sm'

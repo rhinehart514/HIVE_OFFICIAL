@@ -34,6 +34,25 @@ export {
   useMemberSearch,
 } from "./use-members-query";
 
+// Boards queries
+export {
+  useSpaceBoards,
+  useCreateBoard,
+  useDeleteBoard,
+  useReorderBoards,
+} from "./use-space-boards-query";
+
+// Chat queries
+export {
+  useSpaceChat,
+  useSpaceChatInfinite,
+  useSendMessage,
+  useDeleteMessage,
+  useReactToMessage,
+  useLastReadAt,
+  useMarkAsRead,
+} from "./use-space-chat-query";
+
 // Tool queries
 export {
   useToolQuery,

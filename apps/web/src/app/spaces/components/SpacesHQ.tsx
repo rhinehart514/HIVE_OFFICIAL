@@ -162,16 +162,30 @@ function IdentityQuadrantPlaceholder({ type, delay }: { type: 'major' | 'home' |
 // Onboarding State
 // ============================================================
 
-function OnboardingBanner({ progress, onBrowse }: { progress: number; onBrowse: () => void }) {
+interface OnboardingBannerProps {
+  progress: number;
+  onBrowse: () => void;
+  isFirstWeek?: boolean; // Within 7-day onboarding period
+}
+
+function OnboardingBanner({ progress, onBrowse, isFirstWeek = false }: OnboardingBannerProps) {
   const remaining = 3 - progress;
+
+  // More prominent during first week
+  const bannerStyle = isFirstWeek
+    ? {
+        background: 'linear-gradient(180deg, rgba(255,215,0,0.06) 0%, rgba(255,215,0,0.02) 100%)',
+        boxShadow: 'inset 0 1px 0 rgba(255,215,0,0.1), 0 0 0 1px rgba(255,215,0,0.1)',
+      }
+    : {
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
+      };
 
   return (
     <motion.div
       className="mx-6 mb-6 p-4 rounded-xl"
-      style={{
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
-      }}
+      style={bannerStyle}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
@@ -184,20 +198,28 @@ function OnboardingBanner({ progress, onBrowse }: { progress: number; onBrowse: 
               <div
                 key={i}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  i < progress ? 'bg-[var(--color-gold)]' : 'bg-white/10'
+                  i < progress ? 'bg-[#FFD700]' : isFirstWeek ? 'bg-[#FFD700]/20' : 'bg-white/10'
                 }`}
               />
             ))}
           </div>
-          <span className="text-body-sm text-white/60">
-            {remaining === 0 ? 'Identity complete!' : `${remaining} identity space${remaining === 1 ? '' : 's'} remaining`}
+          <span className={`text-body-sm ${isFirstWeek ? 'text-[#FFD700]/80' : 'text-white/60'}`}>
+            {remaining === 0
+              ? 'Identity complete!'
+              : isFirstWeek
+              ? `Claim ${remaining} more to complete your identity`
+              : `${remaining} identity space${remaining === 1 ? '' : 's'} remaining`}
           </span>
         </div>
         <button
           onClick={onBrowse}
-          className="text-label text-white/40 hover:text-white/60 transition-colors"
+          className={`text-label transition-colors ${
+            isFirstWeek
+              ? 'text-[#FFD700]/60 hover:text-[#FFD700]'
+              : 'text-white/40 hover:text-white/60'
+          }`}
         >
-          Complete setup
+          {isFirstWeek ? 'Find spaces' : 'Complete setup'}
         </button>
       </div>
     </motion.div>
@@ -314,7 +336,12 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
 // Main Component
 // ============================================================
 
-export function SpacesHQ() {
+interface SpacesHQProps {
+  /** Whether user is in the 7-day onboarding period */
+  isOnboarding?: boolean;
+}
+
+export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showCreateModal, setShowCreateModal] = React.useState(false);
@@ -393,25 +420,38 @@ export function SpacesHQ() {
     <div className="min-h-screen bg-black flex flex-col">
       <Header onCreateSpace={() => setShowCreateModal(true)} />
 
-      {/* Onboarding banner */}
+      {/* Onboarding banner - show when missing identity spaces */}
       {state === 'onboarding' && (
         <OnboardingBanner
           progress={identityProgress}
           onBrowse={() => router.push('/spaces/browse')}
+          isFirstWeek={isOnboarding}
         />
       )}
 
       {/* Main content */}
       <main className="flex-1 px-6 pb-8 flex flex-col gap-8">
-        {/* Identity Row */}
+        {/* Identity Row - more prominent during onboarding period */}
         <section>
-          <h2 className="text-label text-white/40 uppercase tracking-wider mb-4">
-            Your Identity
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={`text-label uppercase tracking-wider ${
+              isOnboarding && state === 'onboarding'
+                ? 'text-[#FFD700]/60'
+                : 'text-white/40'
+            }`}>
+              {isOnboarding && state === 'onboarding' ? 'Claim Your Identity' : 'Your Identity'}
+            </h2>
+            {isOnboarding && state === 'onboarding' && identityProgress > 0 && (
+              <span className="text-label text-[#FFD700]/40">
+                {identityProgress}/3
+              </span>
+            )}
+          </div>
           <IdentityRow
             majorSpace={identityClaims.major}
             homeSpace={identityClaims.home}
             greekSpace={identityClaims.greek}
+            isOnboarding={isOnboarding && state === 'onboarding'}
           />
         </section>
 

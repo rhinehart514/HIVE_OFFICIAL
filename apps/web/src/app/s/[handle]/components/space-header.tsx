@@ -17,7 +17,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Facebook, Linkedin, Youtube, ExternalLink, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
+import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials, SpaceHealthBadge, getSpaceHealthLevel, type SpaceHealthLevel } from '@hive/ui';
 import { MOTION, durationSeconds } from '@hive/tokens';
 
 type EnergyLevel = 'busy' | 'active' | 'quiet' | 'none';
@@ -42,6 +42,10 @@ interface SpaceHeaderProps {
     };
     // Energy signals (Sprint 3)
     recentMessageCount?: number;
+    /** Last activity timestamp */
+    lastActivityAt?: string | Date | null;
+    /** New members in last 7 days */
+    newMembers7d?: number;
   };
   isLeader?: boolean;
   isMember?: boolean;
@@ -100,6 +104,15 @@ export function SpaceHeader({
 }: SpaceHeaderProps) {
   const energyLevel = getEnergyLevel(space.recentMessageCount);
 
+  // Calculate health level for health indicator
+  const healthLevel = getSpaceHealthLevel({
+    lastActivityAt: space.lastActivityAt,
+    onlineCount: space.onlineCount,
+    recentMessageCount: space.recentMessageCount,
+    memberCount: space.memberCount,
+    newMembers7d: space.newMembers7d,
+  });
+
   return (
     <motion.header
       className={cn(
@@ -138,7 +151,7 @@ export function SpaceHeader({
             <ChevronDown className="h-3 w-3 text-white/30 group-hover:text-white/50 transition-colors flex-shrink-0" />
           </div>
 
-          {/* Row 2: Handle · Members · Online (inline stats) */}
+          {/* Row 2: Handle · Members · Online · Health (inline stats) */}
           <div className="flex items-center gap-2 text-label text-white/40">
             <span className="font-mono">@{space.handle}</span>
             <span className="text-white/20">·</span>
@@ -152,10 +165,17 @@ export function SpaceHeader({
                 </span>
               </>
             )}
-            {energyLevel !== 'none' && space.onlineCount === 0 && (
+            {/* Health indicator - show when no online users */}
+            {space.onlineCount === 0 && (
               <>
                 <span className="text-white/20">·</span>
-                <EnergyDots level={energyLevel} />
+                <SpaceHealthBadge
+                  level={healthLevel}
+                  variant="compact"
+                  showLabel
+                  dotSize="xs"
+                  animated
+                />
               </>
             )}
           </div>

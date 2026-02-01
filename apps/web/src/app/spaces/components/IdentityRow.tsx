@@ -36,12 +36,15 @@ interface IdentityRowProps {
   majorSpace: IdentityClaim | null;
   homeSpace: IdentityClaim | null;
   greekSpace: IdentityClaim | null;
+  /** Whether user is in 7-day onboarding period - makes empty cards more prominent */
+  isOnboarding?: boolean;
 }
 
 interface IdentityCardProps {
   type: 'major' | 'home' | 'greek';
   claim: IdentityClaim | null;
   index: number;
+  isOnboarding?: boolean;
 }
 
 // ============================================================
@@ -98,7 +101,7 @@ function EnergyDots({ count }: { count: number }) {
 // Identity Card
 // ============================================================
 
-function IdentityCard({ type, claim, index }: IdentityCardProps) {
+function IdentityCard({ type, claim, index, isOnboarding = false }: IdentityCardProps) {
   const router = useRouter();
   const config = IDENTITY_CONFIG[type];
   const [isHovered, setIsHovered] = React.useState(false);
@@ -106,6 +109,9 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
   // Calculate energy level for this space
   const energyLevel = claim ? getEnergyLevel(claim.recentMessageCount) : 'none';
   const energyDotCount = getEnergyDotCount(energyLevel);
+
+  // Empty cards get gold hint during onboarding
+  const showOnboardingHint = !claim && isOnboarding;
 
   const handleClick = () => {
     if (claim) {
@@ -128,8 +134,12 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
         'hover:scale-[1.01]'
       )}
       style={{
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
+        background: showOnboardingHint
+          ? 'linear-gradient(180deg, rgba(255,215,0,0.04) 0%, rgba(255,215,0,0.01) 100%)'
+          : 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+        boxShadow: showOnboardingHint
+          ? 'inset 0 1px 0 rgba(255,215,0,0.08), 0 0 0 1px rgba(255,215,0,0.08)'
+          : 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
       }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -179,7 +189,10 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
               </div>
             </>
           ) : (
-            <p className="text-body text-white/40 italic">
+            <p className={cn(
+              'text-body italic',
+              showOnboardingHint ? 'text-[#FFD700]/50' : 'text-white/40'
+            )}>
               {config.emptyText}
             </p>
           )}
@@ -221,12 +234,12 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
 // Main Component
 // ============================================================
 
-export function IdentityRow({ majorSpace, homeSpace, greekSpace }: IdentityRowProps) {
+export function IdentityRow({ majorSpace, homeSpace, greekSpace, isOnboarding = false }: IdentityRowProps) {
   return (
     <div className="flex gap-4 shrink-0">
-      <IdentityCard type="major" claim={majorSpace} index={0} />
-      <IdentityCard type="home" claim={homeSpace} index={1} />
-      <IdentityCard type="greek" claim={greekSpace} index={2} />
+      <IdentityCard type="major" claim={majorSpace} index={0} isOnboarding={isOnboarding} />
+      <IdentityCard type="home" claim={homeSpace} index={1} isOnboarding={isOnboarding} />
+      <IdentityCard type="greek" claim={greekSpace} index={2} isOnboarding={isOnboarding} />
     </div>
   );
 }

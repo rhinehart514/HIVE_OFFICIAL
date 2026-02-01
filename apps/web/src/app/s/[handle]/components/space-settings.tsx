@@ -23,9 +23,12 @@ import {
   Link as LinkIcon,
   Trash2,
   UserPlus,
+  Pencil,
+  X,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Text, Button, toast } from '@hive/ui';
+import { Text, Button, toast, AutomationsPanel, AutomationBuilderModal, type AutomationItem, type AutomationData } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 import { InviteLinkModal } from '@/components/spaces/invite-link-modal';
 import { MemberManagement } from './member-management';
@@ -33,8 +36,10 @@ import { MemberManagement } from './member-management';
 interface Board {
   id: string;
   name: string;
+  description?: string;
   isDefault?: boolean;
   isLocked?: boolean;
+  isVisible?: boolean;
 }
 
 interface SpaceSettingsProps {
@@ -66,15 +71,26 @@ interface SpaceSettingsProps {
   onDelete?: () => Promise<void>;
   onLeave?: () => Promise<void>;
   onBoardDelete?: (boardId: string) => Promise<void>;
+  onBoardUpdate?: (boardId: string, updates: { name?: string; description?: string; isVisible?: boolean }) => Promise<void>;
   className?: string;
 }
 
-export function SpaceSettings({ space, boards = [], isLeader = false, currentUserId, currentUserRole = 'member', onUpdate, onDelete, onLeave, onBoardDelete, className }: SpaceSettingsProps) {
-  const [activeSection, setActiveSection] = React.useState<'general' | 'contact' | 'members' | 'boards' | 'danger'>('general');
+export function SpaceSettings({ space, boards = [], isLeader = false, currentUserId, currentUserRole = 'member', onUpdate, onDelete, onLeave, onBoardDelete, onBoardUpdate, className }: SpaceSettingsProps) {
+  const [activeSection, setActiveSection] = React.useState<'general' | 'contact' | 'members' | 'boards' | 'automations' | 'danger'>('general');
   const [isSaving, setIsSaving] = React.useState(false);
   const [isLeaving, setIsLeaving] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const [showInviteModal, setShowInviteModal] = React.useState(false);
   const [deletingBoardId, setDeletingBoardId] = React.useState<string | null>(null);
+  const [editingBoardId, setEditingBoardId] = React.useState<string | null>(null);
+  const [boardEdits, setBoardEdits] = React.useState<Record<string, { name: string; description: string }>>({});
+
+  // Automations state
+  const [automations, setAutomations] = React.useState<AutomationItem[]>([]);
+  const [automationsLoading, setAutomationsLoading] = React.useState(false);
+  const [showAutomationBuilder, setShowAutomationBuilder] = React.useState(false);
+  const [showTemplates, setShowTemplates] = React.useState(false);
+  const [editingAutomation, setEditingAutomation] = React.useState<AutomationData | null>(null);
 
   const handleLeave = async () => {
     if (!onLeave) return;
@@ -104,6 +120,87 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
       toast.error('Failed to delete board', 'Please try again');
     } finally {
       setDeletingBoardId(null);
+    }
+  };
+
+  const handleBoardEdit = (board: Board) => {
+    setEditingBoardId(board.id);
+    setBoardEdits({
+      ...boardEdits,
+      [board.id]: {
+        name: board.name,
+        description: board.description || '',
+      },
+    });
+  };
+
+  const handleBoardSave = async (boardId: string) => {
+    if (!onBoardUpdate || !boardEdits[boardId]) return;
+    const edits = boardEdits[boardId];
+    const board = boards.find((b) => b.id === boardId);
+    if (!board) return;
+
+    // Only send changed fields
+    const updates: { name?: string; description?: string } = {};
+    if (edits.name !== board.name) updates.name = edits.name;
+    if (edits.description !== (board.description || '')) updates.description = edits.description;
+
+    if (Object.keys(updates).length === 0) {
+      setEditingBoardId(null);
+      return;
+    }
+
+    try {
+      await onBoardUpdate(boardId, updates);
+      toast.success('Board updated', 'Changes saved successfully');
+      setEditingBoardId(null);
+    } catch {
+      toast.error('Failed to update board', 'Please try again');
+    }
+  };
+
+  const handleBoardCancel = () => {
+    setEditingBoardId(null);
+  };
+
+  // Fetch automations when section is active
+  React.useEffect(() => {
+    if (activeSection === 'automations' && isLeader && automations.length === 0) {
+      setAutomationsLoading(true);
+      fetch(`/api/spaces/${space.id}/automations`, { credentials: 'include' })
+        .then(res => res.ok ? res.json() : { automations: [] })
+        .then(data => setAutomations(data.automations || []))
+        .catch(() => setAutomations([]))
+        .finally(() => setAutomationsLoading(false));
+    }
+  }, [activeSection, isLeader, space.id, automations.length]);
+
+  // Handle automation save
+  const handleAutomationSave = async (automation: AutomationData) => {
+    try {
+      const isEdit = !!automation.id;
+      const response = await fetch(
+        isEdit ? `/api/spaces/${space.id}/automations/${automation.id}` : `/api/spaces/${space.id}/automations`,
+        {
+          method: isEdit ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(automation),
+        }
+      );
+      if (!response.ok) throw new Error('Failed to save');
+      const data = await response.json();
+      if (isEdit) {
+        setAutomations(prev => prev.map(a => a.id === automation.id ? data.automation : a));
+      } else {
+        setAutomations(prev => [...prev, data.automation]);
+      }
+      setShowAutomationBuilder(false);
+      setEditingAutomation(null);
+      toast.success(isEdit ? 'Automation updated' : 'Automation created');
+    } catch {
+      toast.error('Failed to save automation');
+      throw new Error('Failed to save automation');
     }
   };
 
@@ -200,6 +297,14 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             icon={<Hash className="w-4 h-4" />}
             label="Boards"
           />
+          {isLeader && (
+            <SettingsNavItem
+              active={activeSection === 'automations'}
+              onClick={() => setActiveSection('automations')}
+              icon={<Zap className="w-4 h-4" />}
+              label="Automations"
+            />
+          )}
           <SettingsNavItem
             active={activeSection === 'danger'}
             onClick={() => setActiveSection('danger')}
@@ -343,7 +448,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     className="flex items-center gap-3 pt-4 border-t border-white/[0.06]"
                   >
                     <Button
-                      variant="default"
+                      variant="cta"
                       size="default"
                       onClick={handleSave}
                       disabled={isSaving}
@@ -393,7 +498,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       </Text>
                     </div>
                     <Button
-                      variant="default"
+                      variant="cta"
                       size="sm"
                       onClick={() => setShowInviteModal(true)}
                     >
@@ -564,7 +669,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     className="flex items-center gap-3 pt-4 border-t border-white/[0.06]"
                   >
                     <Button
-                      variant="default"
+                      variant="cta"
                       size="default"
                       onClick={handleSave}
                       disabled={isSaving}
@@ -611,42 +716,137 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                   <Text size="sm" tone="muted">No boards yet</Text>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {boards.map((board) => (
                     <div
                       key={board.id}
-                      className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+                      className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
                     >
-                      <div className="flex items-center gap-3">
-                        <Hash className="w-4 h-4 text-white/40" />
-                        <div>
-                          <Text weight="medium">{board.name}</Text>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {board.isDefault && (
-                              <Text size="xs" className="text-blue-400">Default</Text>
-                            )}
-                            {board.isLocked && (
-                              <Text size="xs" className="text-orange-400">Locked</Text>
-                            )}
+                      {editingBoardId === board.id ? (
+                        // Edit mode
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block mb-2">
+                              <Text size="xs" weight="medium" tone="muted">Name</Text>
+                            </label>
+                            <input
+                              type="text"
+                              value={boardEdits[board.id]?.name || ''}
+                              onChange={(e) => setBoardEdits({
+                                ...boardEdits,
+                                [board.id]: { ...boardEdits[board.id], name: e.target.value },
+                              })}
+                              className={cn(
+                                'w-full px-3 py-2',
+                                'rounded-lg text-sm',
+                                'bg-white/[0.04] border border-white/[0.08]',
+                                'text-white placeholder:text-white/30',
+                                'focus:outline-none focus:ring-2 focus:ring-white/20',
+                                'transition-all duration-150'
+                              )}
+                            />
+                          </div>
+                          <div>
+                            <label className="block mb-2">
+                              <Text size="xs" weight="medium" tone="muted">Description</Text>
+                            </label>
+                            <textarea
+                              value={boardEdits[board.id]?.description || ''}
+                              onChange={(e) => setBoardEdits({
+                                ...boardEdits,
+                                [board.id]: { ...boardEdits[board.id], description: e.target.value },
+                              })}
+                              placeholder="What's this board for?"
+                              rows={2}
+                              className={cn(
+                                'w-full px-3 py-2',
+                                'rounded-lg text-sm',
+                                'bg-white/[0.04] border border-white/[0.08]',
+                                'text-white placeholder:text-white/30',
+                                'resize-none',
+                                'focus:outline-none focus:ring-2 focus:ring-white/20',
+                                'transition-all duration-150'
+                              )}
+                            />
+                            <Text size="xs" tone="muted" className="mt-1">
+                              {(boardEdits[board.id]?.description || '').length}/500 characters
+                            </Text>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="cta"
+                              size="sm"
+                              onClick={() => handleBoardSave(board.id)}
+                            >
+                              <Save className="w-3 h-3 mr-1.5" />
+                              Save
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleBoardCancel}
+                            >
+                              Cancel
+                            </Button>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        // View mode
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <Hash className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <Text weight="medium">{board.name}</Text>
+                              {board.description && (
+                                <Text size="sm" tone="muted" className="mt-0.5 line-clamp-2">
+                                  {board.description}
+                                </Text>
+                              )}
+                              <div className="flex items-center gap-2 mt-1">
+                                {board.isDefault && (
+                                  <Text size="xs" className="text-blue-400">Default</Text>
+                                )}
+                                {board.isLocked && (
+                                  <Text size="xs" className="text-orange-400">Locked</Text>
+                                )}
+                                {board.isVisible === false && (
+                                  <Text size="xs" className="text-yellow-400">Hidden</Text>
+                                )}
+                              </div>
+                            </div>
+                          </div>
 
-                      {/* Delete button - not available for default board */}
-                      {isLeader && !board.isDefault && onBoardDelete && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleBoardDelete(board.id, board.name)}
-                          disabled={deletingBoardId === board.id}
-                          className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
-                        >
-                          {deletingBoardId === board.id ? (
-                            <span className="text-xs">Deleting...</span>
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
+                          {/* Action buttons */}
+                          {isLeader && (
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {onBoardUpdate && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleBoardEdit(board)}
+                                  className="text-white/50 hover:text-white hover:bg-white/[0.06]"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              )}
+                              {!board.isDefault && onBoardDelete && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleBoardDelete(board.id, board.name)}
+                                  disabled={deletingBoardId === board.id}
+                                  className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
+                                >
+                                  {deletingBoardId === board.id ? (
+                                    <span className="text-xs">...</span>
+                                  ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
                           )}
-                        </Button>
+                        </div>
                       )}
                     </div>
                   ))}
@@ -657,6 +857,109 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                 <Text size="sm" tone="muted" className="mt-4">
                   Only space leaders can manage boards
                 </Text>
+              )}
+            </>
+          )}
+
+          {activeSection === 'automations' && isLeader && (
+            <>
+              <h2
+                className="text-title-lg font-semibold text-white mb-2"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                Automations
+              </h2>
+              <Text size="sm" tone="muted" className="mb-8">
+                Set up automated workflows to engage members
+              </Text>
+
+              {/* Empty state with templates */}
+              {automations.length === 0 && !automationsLoading && (
+                <div className="text-center py-12 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                  <Zap className="w-12 h-12 mx-auto mb-4 text-amber-500/40" />
+                  <Text weight="medium" className="mb-2">No automations yet</Text>
+                  <Text size="sm" tone="muted" className="mb-6 max-w-sm mx-auto">
+                    Automations let you send welcome messages, schedule reminders, and more.
+                  </Text>
+                  <div className="flex items-center justify-center gap-3">
+                    <Button
+                      variant="cta"
+                      size="default"
+                      onClick={() => setShowTemplates(true)}
+                    >
+                      <Zap className="w-4 h-4 mr-2" />
+                      Use Template
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="default"
+                      onClick={() => setShowAutomationBuilder(true)}
+                    >
+                      Create Custom
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Automations list */}
+              {automations.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Text size="sm" weight="medium" tone="muted">
+                      {automations.filter(a => a.enabled).length} active
+                    </Text>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowTemplates(true)}
+                    >
+                      <Zap className="w-3 h-3 mr-1.5" />
+                      Add
+                    </Button>
+                  </div>
+                  <AutomationsPanel
+                    automations={automations}
+                    isLeader={isLeader}
+                    isLoading={automationsLoading}
+                    onToggle={async (id) => {
+                      try {
+                        const response = await fetch(`/api/spaces/${space.id}/automations/${id}/toggle`, {
+                          method: 'POST',
+                          credentials: 'include',
+                        });
+                        if (response.ok) {
+                          setAutomations(prev =>
+                            prev.map(a => a.id === id ? { ...a, enabled: !a.enabled } : a)
+                          );
+                          return true;
+                        }
+                        return false;
+                      } catch {
+                        toast.error('Failed to toggle automation');
+                        return false;
+                      }
+                    }}
+                    onDelete={async (id) => {
+                      if (!window.confirm('Delete this automation?')) return false;
+                      try {
+                        const response = await fetch(`/api/spaces/${space.id}/automations/${id}`, {
+                          method: 'DELETE',
+                          credentials: 'include',
+                        });
+                        if (response.ok) {
+                          setAutomations(prev => prev.filter(a => a.id !== id));
+                          toast.success('Automation deleted');
+                          return true;
+                        }
+                        return false;
+                      } catch {
+                        toast.error('Failed to delete automation');
+                        return false;
+                      }
+                    }}
+                    onAdd={() => setShowTemplates(true)}
+                  />
+                </div>
               )}
             </>
           )}
@@ -693,7 +996,8 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       variant="ghost"
                       size="sm"
                       onClick={handleLeave}
-                      disabled={isLeaving}
+                      disabled={isLeaving || isDeleting}
+                      loading={isLeaving}
                       className="text-orange-400 hover:bg-orange-500/10"
                     >
                       {isLeaving ? 'Leaving...' : 'Leave Space'}
@@ -719,10 +1023,23 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={onDelete}
+                      onClick={async () => {
+                        const confirmed = window.confirm(
+                          'Are you absolutely sure you want to delete this space? This action cannot be undone.'
+                        );
+                        if (!confirmed) return;
+                        setIsDeleting(true);
+                        try {
+                          await onDelete();
+                        } finally {
+                          setIsDeleting(false);
+                        }
+                      }}
+                      disabled={isDeleting || isLeaving}
+                      loading={isDeleting}
                       className="text-red-400 hover:bg-red-500/10"
                     >
-                      Delete Space
+                      {isDeleting ? 'Deleting...' : 'Delete Space'}
                     </Button>
                   </div>
                 )}
@@ -743,6 +1060,108 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
           />
         )}
       </AnimatePresence>
+
+      {/* Automation Builder Modal */}
+      {showAutomationBuilder && (
+        <AutomationBuilderModal
+          isOpen={showAutomationBuilder}
+          onClose={() => {
+            setShowAutomationBuilder(false);
+            setEditingAutomation(null);
+          }}
+          onSave={handleAutomationSave}
+          initialData={editingAutomation || undefined}
+          mode={editingAutomation ? 'edit' : 'create'}
+        />
+      )}
+
+      {/* Automation Templates Picker */}
+      {showTemplates && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowTemplates(false)}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative z-10 bg-[#1A1A1A] rounded-2xl border border-white/[0.08] shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+          >
+            <div className="sticky top-0 bg-[#1A1A1A] border-b border-white/[0.06] p-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Automation Templates</h3>
+              <button
+                onClick={() => setShowTemplates(false)}
+                className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/60 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              {/* Quick Templates */}
+              {[
+                {
+                  name: 'Welcome Message',
+                  description: 'Send a greeting when new members join',
+                  trigger: { type: 'event' as const, elementId: '', event: 'member_join' },
+                  actions: [{ type: 'notify' as const, channel: 'push' as const, title: 'Welcome!', body: 'Welcome to the space!' }],
+                },
+                {
+                  name: 'Weekly Digest',
+                  description: 'Send a summary every Monday',
+                  trigger: { type: 'schedule' as const, cron: '0 9 * * 1', timezone: 'America/New_York' },
+                  actions: [{ type: 'notify' as const, channel: 'email' as const, title: 'Weekly Update', body: 'Here is what happened this week...' }],
+                },
+                {
+                  name: 'Event Reminder',
+                  description: 'Notify members 30 minutes before events',
+                  trigger: { type: 'schedule' as const, cron: '0 * * * *', timezone: 'America/New_York' },
+                  actions: [{ type: 'notify' as const, channel: 'push' as const, title: 'Event Starting Soon', body: 'Your event starts in 30 minutes!' }],
+                },
+              ].map((template) => (
+                <button
+                  key={template.name}
+                  onClick={() => {
+                    setShowTemplates(false);
+                    setEditingAutomation({
+                      name: template.name,
+                      description: template.description,
+                      enabled: true,
+                      trigger: template.trigger,
+                      conditions: [],
+                      actions: template.actions,
+                      limits: { maxRunsPerDay: 100, cooldownSeconds: 0 },
+                    });
+                    setShowAutomationBuilder(true);
+                  }}
+                  className="w-full p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-amber-500/30 transition-all text-left group"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+                      <Zap className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div>
+                      <Text weight="medium" className="mb-1">{template.name}</Text>
+                      <Text size="sm" tone="muted">{template.description}</Text>
+                    </div>
+                  </div>
+                </button>
+              ))}
+              <div className="pt-4 border-t border-white/[0.06] text-center">
+                <button
+                  onClick={() => {
+                    setShowTemplates(false);
+                    setShowAutomationBuilder(true);
+                  }}
+                  className="text-sm text-white/60 hover:text-white transition-colors"
+                >
+                  Or create from scratch →
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

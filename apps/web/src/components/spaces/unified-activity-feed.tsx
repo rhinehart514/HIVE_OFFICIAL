@@ -25,6 +25,8 @@ import {
   UserGroupIcon,
   CheckIcon,
   XMarkIcon,
+  EllipsisHorizontalIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import {
@@ -118,6 +120,16 @@ export interface UnifiedActivityFeedProps {
   onOpenThread?: (messageId: string) => void;
   /** Post reply handler */
   onReplyToPost?: (postId: string) => void;
+  /** Check if user can delete a message */
+  canDeleteMessage?: (authorId: string) => boolean;
+  /** Delete message handler */
+  onDeleteMessage?: (messageId: string) => Promise<void>;
+  /** "Since you left" feature - timestamp of last read message */
+  lastReadAt?: number | null;
+  /** "Since you left" feature - count of unread messages */
+  unreadCount?: number;
+  /** Exclude events from feed (when shown in sidebar instead) */
+  excludeEvents?: boolean;
 }
 
 // ============================================================
@@ -128,11 +140,18 @@ function MessageFeedItem({
   item,
   onReact,
   onOpenThread,
+  canDelete,
+  onDelete,
 }: {
   item: MessageItem;
   onReact?: (messageId: string, emoji: string) => void;
   onOpenThread?: (messageId: string) => void;
+  canDelete?: boolean;
+  onDelete?: (messageId: string) => Promise<void>;
 }) {
+  const [showActions, setShowActions] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
   const timeAgo = React.useMemo(() => {
     try {
       return formatDistanceToNow(new Date(item.timestamp), { addSuffix: true });
@@ -141,8 +160,19 @@ function MessageFeedItem({
     }
   }, [item.timestamp]);
 
+  const handleDelete = async () => {
+    if (!onDelete || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await onDelete(item.id);
+    } finally {
+      setIsDeleting(false);
+      setShowActions(false);
+    }
+  };
+
   return (
-    <div className="flex gap-3 px-4 py-3 hover:bg-white/[0.01] group">
+    <div className="flex gap-3 px-4 py-3 hover:bg-white/[0.01] group relative">
       {/* Avatar */}
       <Avatar size="sm" className="flex-shrink-0 mt-0.5">
         {item.authorAvatarUrl && <AvatarImage src={item.authorAvatarUrl} />}
@@ -199,6 +229,52 @@ function MessageFeedItem({
           </button>
         )}
       </div>
+
+      {/* Actions (on hover) */}
+      {canDelete && onDelete && (
+        <div className="absolute right-4 top-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="relative">
+            <button
+              onClick={() => setShowActions(!showActions)}
+              className={cn(
+                'p-1.5 rounded hover:bg-white/[0.08] transition-colors',
+                'text-white/40 hover:text-white/60'
+              )}
+            >
+              <EllipsisHorizontalIcon className="w-4 h-4" />
+            </button>
+
+            {/* Dropdown menu */}
+            {showActions && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowActions(false)}
+                />
+                <div className={cn(
+                  'absolute right-0 top-full mt-1 z-20',
+                  'bg-[#1a1a1b] border border-white/[0.08] rounded-xl shadow-lg',
+                  'py-1 min-w-[120px]'
+                )}>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className={cn(
+                      'w-full px-3 py-1.5 text-left text-sm',
+                      'text-red-400 hover:bg-red-500/10',
+                      'flex items-center gap-2',
+                      'disabled:opacity-50'
+                    )}
+                  >
+                    <TrashIcon className="w-3.5 h-3.5" />
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -404,6 +480,38 @@ function PostFeedItem({
 }
 
 // ============================================================
+// "Since You Left" Divider
+// ============================================================
+
+function SinceYouLeftDivider({ unreadCount }: { unreadCount: number }) {
+  return (
+    <motion.div
+      className="relative px-4 py-3"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: MOTION.ease.premium }}
+      data-since-you-left
+    >
+      <div className="flex items-center gap-3">
+        {/* Left line */}
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--color-gold)]/30 to-[var(--color-gold)]/50" />
+
+        {/* Badge */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-gold)]/[0.08] border border-[var(--color-gold)]/20">
+          <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)] animate-pulse" />
+          <Text size="xs" weight="medium" className="text-[var(--color-gold)]">
+            {unreadCount === 1 ? '1 new message' : `${unreadCount} new messages`} since you left
+          </Text>
+        </div>
+
+        {/* Right line */}
+        <div className="flex-1 h-px bg-gradient-to-l from-transparent via-[var(--color-gold)]/30 to-[var(--color-gold)]/50" />
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================================
 // Loading Skeleton
 // ============================================================
 
@@ -472,8 +580,33 @@ export function UnifiedActivityFeed({
   onReact,
   onOpenThread,
   onReplyToPost,
+  canDeleteMessage,
+  onDeleteMessage,
+  lastReadAt,
+  unreadCount = 0,
+  excludeEvents = false,
 }: UnifiedActivityFeedProps) {
+  // Filter out events if excludeEvents is true (events shown in sidebar)
+  const filteredItems = React.useMemo(() => {
+    if (!excludeEvents) return items;
+    return items.filter(item => item.type !== 'event');
+  }, [items, excludeEvents]);
   const observerRef = React.useRef<HTMLDivElement>(null);
+  const firstUnreadRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to first unread message on initial load
+  React.useEffect(() => {
+    if (lastReadAt && unreadCount > 0 && firstUnreadRef.current) {
+      // Small delay to ensure layout is complete
+      const timeout = setTimeout(() => {
+        firstUnreadRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [lastReadAt, unreadCount]);
 
   // Infinite scroll observer
   React.useEffect(() => {
@@ -496,59 +629,107 @@ export function UnifiedActivityFeed({
     };
   }, [hasMore, onLoadMore, loading]);
 
-  if (loading && items.length === 0) {
+  if (loading && filteredItems.length === 0) {
     return <FeedSkeleton />;
   }
 
-  if (items.length === 0) {
+  if (filteredItems.length === 0) {
     return <EmptyState />;
   }
+
+  // Find the index where unread messages begin
+  const firstUnreadIndex = React.useMemo(() => {
+    if (!lastReadAt || unreadCount === 0) return -1;
+
+    // Items are sorted by timestamp descending (newest first)
+    // Find the first message that is newer than lastReadAt
+    for (let i = filteredItems.length - 1; i >= 0; i--) {
+      const item = filteredItems[i];
+      const itemTimestamp = new Date(item.timestamp).getTime();
+      if (itemTimestamp > lastReadAt) {
+        return i;
+      }
+    }
+    return -1;
+  }, [filteredItems, lastReadAt, unreadCount]);
 
   return (
     <div className="flex flex-col">
       {/* Feed Items */}
       <AnimatePresence mode="popLayout">
-        {items.map((item, index) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{
-              duration: 0.2,
-              delay: Math.min(index * 0.02, 0.15),
-              ease: MOTION.ease.premium,
-            }}
-          >
-            {item.type === 'message' && (
-              <MessageFeedItem
-                item={item}
-                onReact={onReact}
-                onOpenThread={onOpenThread}
-              />
-            )}
-            {item.type === 'post' && (
-              <PostFeedItem item={item} onReply={onReplyToPost} />
-            )}
-            {item.type === 'event' && (
-              <EventFeedItem item={item} onRsvp={onEventRsvp} />
-            )}
-            {item.type === 'tool' && (
-              <ToolFeedItem item={item} onRun={onRunTool} />
-            )}
-          </motion.div>
-        ))}
+        {filteredItems.map((item, index) => {
+          // Determine if we should show the "Since you left" divider before this item
+          const showDivider = firstUnreadIndex !== -1 && index === firstUnreadIndex;
+
+          return (
+            <React.Fragment key={item.id}>
+              {/* "Since you left" divider */}
+              {showDivider && (
+                <div ref={firstUnreadRef}>
+                  <SinceYouLeftDivider unreadCount={unreadCount} />
+                </div>
+              )}
+
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{
+                  duration: 0.2,
+                  delay: Math.min(index * 0.02, 0.15),
+                  ease: MOTION.ease.premium,
+                }}
+              >
+                {item.type === 'message' && (
+                  <MessageFeedItem
+                    item={item}
+                    onReact={onReact}
+                    onOpenThread={onOpenThread}
+                    canDelete={canDeleteMessage?.(item.authorId) ?? false}
+                    onDelete={onDeleteMessage}
+                  />
+                )}
+                {item.type === 'post' && (
+                  <PostFeedItem item={item} onReply={onReplyToPost} />
+                )}
+                {item.type === 'event' && (
+                  <EventFeedItem item={item} onRsvp={onEventRsvp} />
+                )}
+                {item.type === 'tool' && (
+                  <ToolFeedItem item={item} onRun={onRunTool} />
+                )}
+              </motion.div>
+            </React.Fragment>
+          );
+        })}
       </AnimatePresence>
 
-      {/* Load More Trigger */}
+      {/* Load More Trigger (for infinite scroll) */}
       {hasMore && <div ref={observerRef} className="h-4" />}
 
       {/* Loading More Indicator */}
       {loading && items.length > 0 && (
         <div className="py-4 text-center">
-          <Text size="xs" className="text-white/30">
-            Loading more...
-          </Text>
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-white/20 animate-pulse" />
+            <Text size="xs" className="text-white/30">
+              Loading older messages...
+            </Text>
+          </div>
+        </div>
+      )}
+
+      {/* Load More Button (fallback for non-scroll interaction) */}
+      {hasMore && !loading && onLoadMore && (
+        <div className="py-4 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLoadMore}
+            className="text-white/40 hover:text-white/60"
+          >
+            Load older messages
+          </Button>
         </div>
       )}
     </div>

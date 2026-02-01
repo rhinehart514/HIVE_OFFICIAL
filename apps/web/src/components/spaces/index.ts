@@ -56,7 +56,7 @@ export type { SpaceQuickActionsProps } from './space-quick-actions';
 
 // Boards sidebar (unified space view)
 export { BoardsSidebar } from './boards-sidebar';
-export type { Board, BoardsSidebarProps } from './boards-sidebar';
+export type { Board, BoardsSidebarProps, SidebarEvent } from './boards-sidebar';
 
 // Unified activity feed (space residence)
 export { UnifiedActivityFeed } from './unified-activity-feed';
@@ -75,3 +75,12 @@ export { SidebarToolCard } from './sidebar-tool-card';
 export type { SidebarToolCardProps } from './sidebar-tool-card';
 export { SidebarToolSection } from './sidebar-tool-section';
 export type { SidebarToolSectionProps } from './sidebar-tool-section';
+
+// Space creation modal
+export { SpaceCreationModal } from './SpaceCreationModal';
+
+// Space claim modal (institutional spaces)
+export { SpaceClaimModal } from './SpaceClaimModal';
+
+// Space join modal (invite codes)
+export { SpaceJoinModal } from './SpaceJoinModal';

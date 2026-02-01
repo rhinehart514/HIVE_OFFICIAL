@@ -7,10 +7,12 @@
  * - Full-row messages (not bubbles)
  * - Author info, timestamp, reactions
  * - Auto-scroll to bottom on new messages
+ * - Image attachments with lightbox
  */
 
 import * as React from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import { X, Trash2, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, Text, getInitials } from '@hive/ui/design-system/primitives';
 import type { ChatMessage } from '../hooks/use-space-residence-state';
@@ -19,9 +21,26 @@ interface ChatMessagesProps {
   messages: ChatMessage[];
   isLoading?: boolean;
   className?: string;
+  /**
+   * Optional function to check if user can delete a message
+   * @param authorId - The author ID of the message
+   * @returns true if user can delete this message
+   */
+  canDeleteMessage?: (authorId: string) => boolean;
+  /**
+   * Optional callback to delete a message
+   */
+  onDeleteMessage?: (messageId: string) => Promise<void>;
 }
 
-export function ChatMessages({ messages, isLoading, className }: ChatMessagesProps) {
+export function ChatMessages({
+  messages,
+  isLoading,
+  className,
+  canDeleteMessage,
+  onDeleteMessage,
+}: ChatMessagesProps) {
+  const [lightboxImage, setLightboxImage] = React.useState<string | null>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages
@@ -51,38 +70,84 @@ export function ChatMessages({ messages, isLoading, className }: ChatMessagesPro
   }
 
   return (
-    <div
-      ref={scrollRef}
-      className={cn('flex-1 overflow-y-auto px-4 py-4 space-y-4', className)}
-    >
-      {messages.map((message, index) => {
-        const prevMessage = messages[index - 1];
-        const showAuthor = !prevMessage || prevMessage.authorId !== message.authorId;
-        const timeDiff = prevMessage ? message.timestamp - prevMessage.timestamp : Infinity;
-        const showTimestamp = timeDiff > 300000; // 5 minutes
+    <>
+      <div
+        ref={scrollRef}
+        className={cn('flex-1 overflow-y-auto px-4 py-4 space-y-4', className)}
+      >
+        {messages.map((message, index) => {
+          const prevMessage = messages[index - 1];
+          const showAuthor = !prevMessage || prevMessage.authorId !== message.authorId;
+          const timeDiff = prevMessage ? message.timestamp - prevMessage.timestamp : Infinity;
+          const showTimestamp = timeDiff > 300000; // 5 minutes
 
-        return (
-          <MessageRow
-            key={message.id}
-            message={message}
-            showAuthor={showAuthor || showTimestamp}
+          return (
+            <MessageRow
+              key={message.id}
+              message={message}
+              showAuthor={showAuthor || showTimestamp}
+              onImageClick={setLightboxImage}
+              canDelete={canDeleteMessage?.(message.authorId) ?? false}
+              onDelete={onDeleteMessage}
+            />
+          );
+        })}
+      </div>
+
+      {/* Lightbox for full-size image view */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 p-2 text-white/60 hover:text-white transition-colors"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="Full size"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
           />
-        );
-      })}
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
 interface MessageRowProps {
   message: ChatMessage;
   showAuthor: boolean;
+  onImageClick?: (url: string) => void;
+  canDelete?: boolean;
+  onDelete?: (messageId: string) => Promise<void>;
 }
 
-function MessageRow({ message, showAuthor }: MessageRowProps) {
+function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete }: MessageRowProps) {
+  const [showActions, setShowActions] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  // Type-safe access to attachments
+  const attachments = (message as ChatMessage & { attachments?: Array<{ url: string; filename: string; mimeType: string }> }).attachments;
+
+  const handleDelete = async () => {
+    if (!onDelete || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await onDelete(message.id);
+    } finally {
+      setIsDeleting(false);
+      setShowActions(false);
+    }
+  };
+
   return (
     <div
       className={cn(
-        'group flex gap-3',
+        'group flex gap-3 relative',
         'hover:bg-white/[0.02] -mx-2 px-2 py-1 rounded-lg',
         'transition-colors'
       )}
@@ -113,9 +178,36 @@ function MessageRow({ message, showAuthor }: MessageRowProps) {
         )}
 
         {/* Message content */}
-        <Text size="sm" className="whitespace-pre-wrap break-words">
-          {message.content}
-        </Text>
+        {message.content && (
+          <Text size="sm" className="whitespace-pre-wrap break-words">
+            {message.content}
+          </Text>
+        )}
+
+        {/* Attachments */}
+        {attachments && attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {attachments.map((attachment, index) => (
+              <button
+                key={index}
+                onClick={() => onImageClick?.(attachment.url)}
+                className={cn(
+                  'relative rounded-lg overflow-hidden',
+                  'border border-white/[0.08]',
+                  'hover:border-white/20 transition-colors',
+                  'cursor-pointer'
+                )}
+              >
+                <img
+                  src={attachment.url}
+                  alt={attachment.filename}
+                  className="max-w-xs max-h-48 object-contain"
+                  loading="lazy"
+                />
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Reactions */}
         {message.reactions && message.reactions.length > 0 && (
@@ -140,8 +232,54 @@ function MessageRow({ message, showAuthor }: MessageRowProps) {
         )}
       </div>
 
+      {/* Actions (on hover) */}
+      {canDelete && onDelete && (
+        <div className="absolute right-2 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="relative">
+            <button
+              onClick={() => setShowActions(!showActions)}
+              className={cn(
+                'p-1 rounded hover:bg-white/[0.08] transition-colors',
+                'text-white/40 hover:text-white/60'
+              )}
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+
+            {/* Dropdown menu */}
+            {showActions && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowActions(false)}
+                />
+                <div className={cn(
+                  'absolute right-0 top-full mt-1 z-20',
+                  'bg-[#1a1a1b] border border-white/[0.08] rounded-xl shadow-lg',
+                  'py-1 min-w-[120px]'
+                )}>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className={cn(
+                      'w-full px-3 py-1.5 text-left text-sm',
+                      'text-red-400 hover:bg-red-500/10',
+                      'flex items-center gap-2',
+                      'disabled:opacity-50'
+                    )}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Timestamp on hover (for grouped messages) */}
-      {!showAuthor && (
+      {!showAuthor && !canDelete && (
         <div className="w-12 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           <Text size="xs" tone="muted" className="text-right">
             {new Date(message.timestamp).toLocaleTimeString([], {

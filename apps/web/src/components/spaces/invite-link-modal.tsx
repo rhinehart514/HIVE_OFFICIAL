@@ -399,7 +399,7 @@ export function InviteLinkModal({
                       'flex-1 px-3 py-2 rounded-lg',
                       'bg-white/[0.04] border border-white/[0.08]',
                       'text-white text-sm',
-                      'focus:outline-none focus:ring-2 focus:ring-white/20'
+                      'focus:outline-none focus:ring-2 focus:ring-white/50'
                     )}
                   >
                     {EXPIRY_OPTIONS.map((opt) => (
@@ -419,7 +419,7 @@ export function InviteLinkModal({
                       'flex-1 px-3 py-2 rounded-lg',
                       'bg-white/[0.04] border border-white/[0.08]',
                       'text-white text-sm',
-                      'focus:outline-none focus:ring-2 focus:ring-white/20'
+                      'focus:outline-none focus:ring-2 focus:ring-white/50'
                     )}
                   >
                     {MAX_USE_OPTIONS.map((opt) => (
@@ -431,9 +431,10 @@ export function InviteLinkModal({
                 </div>
 
                 <Button
+                  variant="solid"
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="w-full bg-white text-black hover:bg-white/90"
+                  className="w-full"
                 >
                   {generating ? (
                     <ArrowPathIcon className="w-4 h-4 animate-spin mr-2" />
