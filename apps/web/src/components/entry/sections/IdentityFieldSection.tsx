@@ -175,8 +175,8 @@ export function IdentityFieldSection({
           className={cn(
             'flex items-center h-12 px-4 rounded-xl border transition-all duration-200',
             'bg-white/[0.03] border-white/[0.08]',
-            'focus-within:bg-white/[0.05] focus-within:border-[var(--color-gold)]/30',
-            'focus-within:shadow-[0_0_0_4px_rgba(255,215,0,0.06)]'
+            'focus-within:bg-white/[0.05] focus-within:border-white/30',
+            'focus-within:ring-2 focus-within:ring-white/20'
           )}
         >
           <Search className="w-4 h-4 text-white/30 mr-3 flex-shrink-0" />
@@ -254,8 +254,8 @@ export function IdentityFieldSection({
               className={cn(
                 'w-full flex items-center justify-between h-14 px-4 rounded-2xl border transition-all duration-200',
                 'bg-white/[0.03] border-white/[0.08]',
-                yearOpen && 'bg-white/[0.05] border-[var(--color-gold)]/30 shadow-[0_0_0_4px_rgba(255,215,0,0.06)]',
-                'focus:outline-none focus-visible:border-[var(--color-gold)]/30 focus-visible:shadow-[0_0_0_4px_rgba(255,215,0,0.06)]',
+                yearOpen && 'bg-white/[0.05] border-white/30 ring-2 ring-white/20',
+                'focus:outline-none focus-visible:border-white/30 focus-visible:ring-2 focus-visible:ring-white/20',
                 'disabled:opacity-50'
               )}
             >
@@ -277,7 +277,7 @@ export function IdentityFieldSection({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.98 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-[#1a1a19] border border-white/[0.08] rounded-xl shadow-xl"
+                  className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-elevated border border-white/[0.08] rounded-xl shadow-xl"
                 >
                   {YEAR_OPTIONS.map((y) => (
                     <button

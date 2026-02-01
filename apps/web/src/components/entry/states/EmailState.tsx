@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { EmailInput, Button } from '@hive/ui/design-system/primitives';
+import { EmailInput, Button, Input } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import {
   stateVariants,
@@ -31,8 +31,8 @@ export interface EmailStateProps {
   error: string | null;
   /** Loading state */
   isLoading: boolean;
-  /** Campus email domain (e.g., "buffalo.edu") */
-  domain: string;
+  /** Campus email domain (e.g., "buffalo.edu") - optional for multi-campus */
+  domain?: string;
   /** Whether user is returning (show "Enter" vs "Claim your spot") */
   isReturning?: boolean;
 }
@@ -75,17 +75,32 @@ export function EmailState({
 
       {/* Email Input + Button */}
       <motion.div variants={childVariants} className="space-y-4">
-        <EmailInput
-          domain={domain}
-          value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="you"
-          disabled={isLoading}
-          error={!!error}
-          autoFocus
-          size="lg"
-        />
+        {domain ? (
+          <EmailInput
+            domain={domain}
+            value={email}
+            onChange={(e) => onEmailChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="you"
+            disabled={isLoading}
+            error={!!error}
+            autoFocus
+            size="lg"
+          />
+        ) : (
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => onEmailChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="you@school.edu"
+            disabled={isLoading}
+            error={!!error}
+            autoFocus
+            size="lg"
+            className="w-full"
+          />
+        )}
 
         {/* Error message */}
         <AnimatePresence mode="wait">

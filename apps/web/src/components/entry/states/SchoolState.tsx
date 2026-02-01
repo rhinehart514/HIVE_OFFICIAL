@@ -230,7 +230,7 @@ export function SchoolState({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
-              className="w-full max-w-sm p-6 rounded-2xl bg-[#141413] border border-white/[0.08]"
+              className="w-full max-w-sm p-6 rounded-2xl bg-surface border border-white/[0.08]"
               onClick={(e) => e.stopPropagation()}
             >
               {notifySuccess ? (
@@ -275,7 +275,7 @@ export function SchoolState({
                       className={cn(
                         'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all',
                         notifyEmail.trim()
-                          ? 'bg-white text-black hover:bg-white/90'
+                          ? 'bg-white text-[var(--color-bg-void,#0A0A09)] hover:bg-white/90'
                           : 'bg-white/10 text-white/30 cursor-not-allowed'
                       )}
                     >

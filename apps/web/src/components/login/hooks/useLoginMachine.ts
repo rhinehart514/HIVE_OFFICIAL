@@ -22,6 +22,7 @@ export type LoginState =
   | 'sending'
   | 'code'
   | 'verifying'
+  | 'waitlist'
   | 'complete';
 
 export interface LoginData {
@@ -29,11 +30,12 @@ export interface LoginData {
   code: string[];
 }
 
+export interface WaitlistSchool {
+  id: string;
+  name: string;
+}
+
 export interface UseLoginMachineOptions {
-  /** Campus email domain (e.g., "buffalo.edu") */
-  domain: string;
-  /** School ID for API calls */
-  schoolId: string;
   /** Default redirect after completion */
   defaultRedirect?: string;
 }
@@ -53,6 +55,9 @@ export interface UseLoginMachineReturn {
   // Computed
   fullEmail: string;
 
+  // Waitlist info (populated when SCHOOL_NOT_ACTIVE)
+  waitlistSchool: WaitlistSchool | null;
+
   // Actions
   setEmail: (email: string) => void;
   setCode: (code: string[]) => void;
@@ -62,6 +67,7 @@ export interface UseLoginMachineReturn {
   verifyCode: (code: string) => Promise<void>;
   resendCode: () => Promise<void>;
   goBackToEmail: () => void;
+  joinWaitlist: () => Promise<void>;
 
   // Navigation
   redirectTo: string;
@@ -79,8 +85,8 @@ const PENDING_EMAIL_KEY = 'hive_pending_email';
 // HOOK
 // ============================================
 
-export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachineReturn {
-  const { domain, schoolId, defaultRedirect = '/spaces' } = options;
+export function useLoginMachine(options: UseLoginMachineOptions = {}): UseLoginMachineReturn {
+  const { defaultRedirect = '/spaces' } = options;
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -95,6 +101,8 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
   const [state, setState] = useState<LoginState>('email');
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [waitlistSchool, setWaitlistSchool] = useState<WaitlistSchool | null>(null);
+  const [detectedSchoolId, setDetectedSchoolId] = useState<string | null>(null);
 
   const [data, setData] = useState<LoginData>({
     email: '',
@@ -109,9 +117,8 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
   // COMPUTED VALUES
   // ============================================
 
-  const fullEmail = data.email.includes('@')
-    ? data.email
-    : `${data.email}@${domain}`;
+  // Email should include @ - if not, it's invalid but we still store it
+  const fullEmail = data.email;
 
   // ============================================
   // EFFECTS
@@ -121,10 +128,9 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
   useEffect(() => {
     const pending = localStorage.getItem(PENDING_EMAIL_KEY);
     if (pending && state === 'email') {
-      const emailPart = pending.replace(`@${domain}`, '');
-      setData((prev) => ({ ...prev, email: emailPart }));
+      setData((prev) => ({ ...prev, email: pending }));
     }
-  }, [domain, state]);
+  }, [state]);
 
   // Resend cooldown timer
   useEffect(() => {
@@ -163,38 +169,54 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
       return;
     }
 
-    const emailToValidate = fullEmail;
+    const emailToValidate = data.email;
     if (!emailToValidate.includes('@') || !emailToValidate.includes('.')) {
       setError('Enter a valid email address');
       return;
     }
 
-    const emailDomain = emailToValidate.split('@')[1];
-    if (emailDomain !== domain) {
-      setError(`Use your ${domain} email`);
-      return;
-    }
+    // Extract domain and derive schoolId from domain
+    const emailDomain = emailToValidate.split('@')[1].toLowerCase();
+    // Use domain as schoolId hint - API will validate
+    const schoolIdFromDomain = emailDomain.split('.')[0]; // e.g., 'buffalo' from 'buffalo.edu'
 
     // Store email for session
     localStorage.setItem(PENDING_EMAIL_KEY, emailToValidate);
 
     setState('sending');
     setError(null);
+    setWaitlistSchool(null);
 
     try {
       const response = await fetch('/api/auth/send-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: fullEmail,
-          schoolId,
+          email: emailToValidate,
+          schoolId: detectedSchoolId || schoolIdFromDomain,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to send code');
+        // Handle SCHOOL_NOT_ACTIVE - show waitlist UI
+        if (result.code === 'SCHOOL_NOT_ACTIVE' || result.error === 'SCHOOL_NOT_ACTIVE') {
+          setWaitlistSchool({
+            id: result.schoolId,
+            name: result.schoolName,
+          });
+          setDetectedSchoolId(result.schoolId);
+          setState('waitlist');
+          return;
+        }
+
+        throw new Error(result.message || result.error || 'Failed to send code');
+      }
+
+      // Store detected schoolId for verify call
+      if (result.schoolId) {
+        setDetectedSchoolId(result.schoolId);
       }
 
       // Set cooldown
@@ -208,7 +230,7 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
       setError(err instanceof Error ? err.message : 'Unable to send code');
       setState('email');
     }
-  }, [data.email, fullEmail, domain, schoolId, resendCount]);
+  }, [data.email, detectedSchoolId, resendCount]);
 
   // Verify code
   const verifyCode = useCallback(
@@ -216,15 +238,20 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
       setState('verifying');
       setError(null);
 
+      // Extract schoolId from email domain if not already detected
+      const emailDomain = data.email.split('@')[1]?.toLowerCase() || '';
+      const schoolIdFromDomain = emailDomain.split('.')[0];
+      const schoolIdToUse = detectedSchoolId || schoolIdFromDomain;
+
       try {
         const response = await fetch('/api/auth/verify-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
-            email: fullEmail,
+            email: data.email,
             code: codeString,
-            schoolId,
+            schoolId: schoolIdToUse,
           }),
         });
 
@@ -258,7 +285,7 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
         setState('code');
       }
     },
-    [fullEmail, schoolId, router]
+    [data.email, detectedSchoolId, router]
   );
 
   // Resend code
@@ -271,8 +298,41 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
   const goBackToEmail = useCallback(() => {
     setState('email');
     setError(null);
+    setWaitlistSchool(null);
     setData((prev) => ({ ...prev, code: ['', '', '', '', '', ''] }));
   }, []);
+
+  // Join waitlist for school not yet on HIVE
+  const joinWaitlist = useCallback(async () => {
+    if (!waitlistSchool) return;
+
+    setError(null);
+
+    try {
+      const response = await fetch('/api/waitlist/school-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: data.email,
+          schoolName: waitlistSchool.name,
+          schoolId: waitlistSchool.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setError(result.error || 'Failed to join waitlist');
+        return;
+      }
+
+      // Show success and redirect to landing
+      localStorage.removeItem(PENDING_EMAIL_KEY);
+      // Just stay on waitlist state with success message - parent component handles UI
+    } catch {
+      setError('Unable to join waitlist. Please try again.');
+    }
+  }, [data.email, waitlistSchool]);
 
   // Handle successful login
   const handleComplete = useCallback(() => {
@@ -302,6 +362,9 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
     // Computed
     fullEmail,
 
+    // Waitlist
+    waitlistSchool,
+
     // Data setters
     setEmail,
     setCode,
@@ -311,6 +374,7 @@ export function useLoginMachine(options: UseLoginMachineOptions): UseLoginMachin
     verifyCode,
     resendCode,
     goBackToEmail,
+    joinWaitlist,
 
     // Navigation
     redirectTo,

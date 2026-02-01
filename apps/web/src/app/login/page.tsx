@@ -32,12 +32,6 @@ import { useLoginMachine } from '@/components/login/hooks/useLoginMachine';
 
 export const dynamic = 'force-dynamic';
 
-// Campus configuration - use defaults
-const CAMPUS_CONFIG = {
-  domain: process.env.NEXT_PUBLIC_CAMPUS_EMAIL_DOMAIN || 'buffalo.edu',
-  schoolId: process.env.NEXT_PUBLIC_SCHOOL_ID || 'ub-buffalo',
-};
-
 /**
  * Map login state to emotional state for ambient glow
  */
@@ -49,6 +43,8 @@ function getEmotionalState(state: string): EmotionalState {
     case 'code':
     case 'verifying':
       return 'anticipation';
+    case 'waitlist':
+      return 'neutral';
     case 'complete':
       return 'celebration';
     default:
@@ -168,14 +164,12 @@ function LoginEmailState({
   onSubmit,
   error,
   isLoading,
-  domain,
 }: {
   email: string;
   onEmailChange: (email: string) => void;
   onSubmit: () => void;
   error: string | null;
   isLoading: boolean;
-  domain: string;
 }) {
   return (
     <div className="space-y-0">
@@ -185,7 +179,6 @@ function LoginEmailState({
         onSubmit={onSubmit}
         error={error}
         isLoading={isLoading}
-        domain={domain}
         isReturning
       />
 
@@ -207,6 +200,62 @@ function LoginEmailState({
         </p>
       </motion.div>
     </div>
+  );
+}
+
+/**
+ * Waitlist state - shown when user's school isn't active yet
+ */
+function WaitlistState({
+  email,
+  schoolName,
+  onJoinWaitlist,
+  onBack,
+  isLoading,
+}: {
+  email: string;
+  schoolName: string;
+  onJoinWaitlist: () => void;
+  onBack: () => void;
+  isLoading: boolean;
+}) {
+  return (
+    <motion.div
+      variants={stateVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="space-y-6"
+    >
+      <motion.div variants={childVariants} className="space-y-3">
+        <h1 className="text-heading-lg lg:text-display-sm font-semibold tracking-tight text-white">
+          {schoolName} isn't on HIVE yet
+        </h1>
+        <p className="text-body text-white/50">
+          We'll notify you at <span className="text-white/70">{email}</span> when it launches.
+        </p>
+      </motion.div>
+
+      <motion.div variants={childVariants} className="space-y-4">
+        <Button
+          onClick={onJoinWaitlist}
+          variant="cta"
+          size="lg"
+          className="w-full"
+          disabled={isLoading}
+          loading={isLoading}
+        >
+          Notify me
+        </Button>
+
+        <button
+          onClick={onBack}
+          className="w-full text-body-sm text-white/40 hover:text-white/60 transition-colors"
+        >
+          Try a different email
+        </button>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -245,6 +294,8 @@ function LoginContent() {
     resendCooldown,
     // Computed
     fullEmail,
+    // Waitlist
+    waitlistSchool,
     // Setters
     setEmail,
     setCode,
@@ -253,12 +304,10 @@ function LoginContent() {
     verifyCode,
     resendCode,
     goBackToEmail,
+    joinWaitlist,
     // Navigation
     handleComplete,
-  } = useLoginMachine({
-    domain: CAMPUS_CONFIG.domain,
-    schoolId: CAMPUS_CONFIG.schoolId,
-  });
+  } = useLoginMachine();
 
   const emotionalState = getEmotionalState(state);
 
@@ -277,7 +326,18 @@ function LoginContent() {
             onSubmit={submitEmail}
             error={error}
             isLoading={state === 'sending'}
-            domain={CAMPUS_CONFIG.domain}
+          />
+        )}
+
+        {/* WAITLIST STATE */}
+        {state === 'waitlist' && waitlistSchool && (
+          <WaitlistState
+            key="waitlist"
+            email={fullEmail}
+            schoolName={waitlistSchool.name}
+            onJoinWaitlist={joinWaitlist}
+            onBack={goBackToEmail}
+            isLoading={false}
           />
         )}
 

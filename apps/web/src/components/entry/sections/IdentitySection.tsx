@@ -331,7 +331,7 @@ export function IdentitySection({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.98 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-[#1a1a19] border border-white/[0.08] rounded-xl shadow-xl max-h-[240px] overflow-y-auto"
+                  className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-elevated border border-white/[0.08] rounded-xl shadow-xl max-h-[240px] overflow-y-auto"
                 >
                   {MAJOR_OPTIONS.map((m) => (
                     <button
@@ -390,7 +390,7 @@ export function IdentitySection({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.98 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-[#1a1a19] border border-white/[0.08] rounded-xl shadow-xl"
+                  className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-elevated border border-white/[0.08] rounded-xl shadow-xl"
                 >
                   {YEAR_OPTIONS.map((y) => (
                     <button

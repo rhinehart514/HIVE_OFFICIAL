@@ -11,3 +11,8 @@ export { OfflineBanner } from './OfflineBanner';
 export { StepCounter } from './StepCounter';
 export { VerificationPending } from './VerificationPending';
 export { RoleCard } from './RoleCard';
+
+// Narrative Entry primitives
+export { ManifestoLine } from './ManifestoLine';
+export { GoldFlash, GoldPulse } from './GoldFlash';
+export { IdentityCard } from './IdentityCard';

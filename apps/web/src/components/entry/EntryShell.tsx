@@ -26,6 +26,9 @@ import {
   GOLD,
 } from './motion/entry-motion';
 
+// LOCKED: Entry content max-width for consistency across shell variants
+const ENTRY_MAX_WIDTH = 'max-w-[460px]';
+
 export type EntryStep = 'school' | 'email' | 'code' | 'role' | 'identity' | 'arrival' | 'alumni-waitlist';
 
 export interface EntryShellProps {
@@ -169,7 +172,8 @@ export function EntryShell({
               : { duration: DURATION.dramatic, ease: EASE_PREMIUM }
           }
           className={cn(
-            'w-full max-w-[460px] mx-auto',
+            'w-full mx-auto',
+            ENTRY_MAX_WIDTH,
             className
           )}
         >
@@ -209,8 +213,8 @@ export function EntryShellStatic({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col justify-center px-6 py-12">
-        <div className="w-full max-w-[400px] mx-auto">
+      <main className="flex-1 flex flex-col justify-center px-6 py-8">
+        <div className={cn('w-full mx-auto', ENTRY_MAX_WIDTH)}>
           {children}
         </div>
       </main>
