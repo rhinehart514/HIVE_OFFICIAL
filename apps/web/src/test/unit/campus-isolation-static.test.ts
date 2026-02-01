@@ -1,9 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import glob from 'glob';
-
-type GlobSync = (pattern: string) => string[];
+import { globSync } from 'glob';
 
 // Tests run from apps/web directory, so process.cwd() is already apps/web
 const webRoot = process.cwd();
@@ -14,7 +12,7 @@ function read(file: string) {
 }
 
 describe('Static: Admin routes use admin campus isolation', () => {
-  const adminFiles = (glob.sync as GlobSync)(join(apiRoot, 'admin', '**', 'route.ts'));
+  const adminFiles = globSync(join(apiRoot, 'admin', '**', 'route.ts'));
 
   it('every admin route wraps with admin isolation or secure auth requireAdmin', () => {
     const offenders: string[] = [];
@@ -33,7 +31,7 @@ ${offenders.join('\n')}
 });
 
 describe('Static: Firestore-using routes include campus isolation', () => {
-  const allRouteFiles = (glob.sync as GlobSync)(join(apiRoot, '**', 'route.ts'))
+  const allRouteFiles = globSync(join(apiRoot, '**', 'route.ts'))
     .filter((f: string) => !f.includes('/auth/') && !f.includes('/internal/') && !f.includes('/onboarding/catalog'));
 
   it('routes that call dbAdmin include campus isolation markers', () => {

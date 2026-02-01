@@ -1,7 +1,14 @@
 // HIVE Color System Utilities
 // Advanced color utilities for the HIVE design system
 
-import { prdColors, prdSemantic } from './colors-prd-aligned';
+import { foundation, semantic } from './colors-unified';
+
+// Aliases for backwards compatibility
+const prdColors = {
+  gold: { 500: foundation.gold[500] },
+  gray: foundation.gray,
+};
+const prdSemantic = semantic;
 
 // === COLOR MANIPULATION UTILITIES ===
 
@@ -236,14 +243,21 @@ export const generateSemanticCSSProperties = (): string => {
 /**
  * Get all HIVE colors for documentation
  */
-export const getAllHiveColors = () => {
+export const getAllHiveColors = (): {
+  backgrounds: Record<string, string>;
+  text: Record<string, string>;
+  brand: Record<string, string>;
+  status: Record<string, string>;
+  interactive: Record<string, string>;
+  borders: Record<string, string>;
+} => {
   return {
-    backgrounds: prdSemantic.background,
-    text: prdSemantic.text,
-    brand: prdSemantic.brand,
-    status: prdSemantic.status,
-    interactive: prdSemantic.interactive,
-    borders: prdSemantic.border,
+    backgrounds: prdSemantic.background as Record<string, string>,
+    text: prdSemantic.text as Record<string, string>,
+    brand: prdSemantic.brand as Record<string, string>,
+    status: prdSemantic.status as Record<string, string>,
+    interactive: prdSemantic.interactive as Record<string, string>,
+    borders: prdSemantic.border as Record<string, string>,
   };
 };
 
@@ -293,4 +307,8 @@ export const goldAccentUtils = {
 
 // Export all color data for external use
 export { prdColors, prdSemantic };
-export type { PRDColorToken, PRDSemanticToken } from './colors-prd-aligned';
+export { foundation, semantic };
+export type { FoundationToken, SemanticToken } from './colors-unified';
+// Legacy type aliases
+export type PRDColorToken = string;
+export type PRDSemanticToken = string;

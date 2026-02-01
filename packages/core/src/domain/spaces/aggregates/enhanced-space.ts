@@ -84,6 +84,21 @@ export type SpaceStatus = 'unclaimed' | 'active' | 'claimed' | 'verified';
 export type SpaceSource = 'ublinked' | 'user-created';
 
 /**
+ * Activation status - quorum-based community activation
+ * Orthogonal to claim status (a space can be open but unclaimed)
+ * - ghost: 0 members, space exists but no community yet
+ * - gathering: 1 to threshold-1 members, building toward activation
+ * - open: threshold+ members, full community features unlocked
+ */
+export type ActivationStatus = 'ghost' | 'gathering' | 'open';
+
+/**
+ * Default number of members needed to activate a space
+ * Once reached, chat and full community features unlock
+ */
+export const DEFAULT_ACTIVATION_THRESHOLD = 10;
+
+/**
  * Get default governance model based on space type
  */
 function getDefaultGovernance(spaceType: SpaceType): GovernanceModel {
@@ -105,6 +120,11 @@ interface SpaceMember {
   profileId: ProfileId;
   role: SpaceMemberRole;
   joinedAt: Date;
+  /**
+   * Whether this member joined before the space reached activation threshold.
+   * Founding members get special recognition for helping bootstrap the community.
+   */
+  isFoundingMember?: boolean;
 }
 
 /**
@@ -231,6 +251,22 @@ interface EnhancedSpaceProps {
   publishStatus: SpacePublishStatus;
   /** When the space went live (stealth → live) */
   wentLiveAt?: Date;
+  /**
+   * Quorum-based activation status
+   * - ghost: 0 members
+   * - gathering: 1 to activationThreshold-1 members
+   * - open: activationThreshold+ members (full features unlocked)
+   */
+  activationStatus: ActivationStatus;
+  /**
+   * Number of members needed to activate the space (default: 10)
+   * Once reached, chat and community features unlock without needing a leader
+   */
+  activationThreshold: number;
+  /**
+   * When the space reached activation threshold and became 'open'
+   */
+  activatedAt?: Date;
   isActive: boolean;
   isVerified: boolean;
   trendingScore: number;
@@ -385,6 +421,76 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
    */
   get isClaimed(): boolean {
     return this.props.status === 'claimed' || this.props.status === 'verified';
+  }
+
+  // ============================================================
+  // Quorum-Based Activation (GTM Mechanic)
+  // ============================================================
+
+  /**
+   * Activation status (ghost, gathering, open)
+   */
+  get activationStatus(): ActivationStatus {
+    return this.props.activationStatus;
+  }
+
+  /**
+   * Number of members needed to activate the space
+   */
+  get activationThreshold(): number {
+    return this.props.activationThreshold;
+  }
+
+  /**
+   * When the space reached activation threshold
+   */
+  get activatedAt(): Date | undefined {
+    return this.props.activatedAt;
+  }
+
+  /**
+   * Whether the space is in gathering state (below threshold)
+   */
+  get isGathering(): boolean {
+    return this.props.activationStatus === 'gathering';
+  }
+
+  /**
+   * Whether the space is open (threshold reached)
+   */
+  get isOpen(): boolean {
+    return this.props.activationStatus === 'open';
+  }
+
+  /**
+   * Whether the space is a ghost (0 members)
+   */
+  get isGhost(): boolean {
+    return this.props.activationStatus === 'ghost';
+  }
+
+  /**
+   * Whether chat is enabled (only when open OR claimed)
+   * Claimed spaces bypass the quorum requirement
+   */
+  get canChat(): boolean {
+    return this.props.activationStatus === 'open' || this.isClaimed;
+  }
+
+  /**
+   * Progress toward activation (0-1)
+   */
+  get activationProgress(): number {
+    const memberCount = this.props.members.length;
+    return Math.min(1, memberCount / this.props.activationThreshold);
+  }
+
+  /**
+   * Number of additional members needed to activate
+   */
+  get membersNeededToActivate(): number {
+    const memberCount = this.props.members.length;
+    return Math.max(0, this.props.activationThreshold - memberCount);
   }
 
   get leaderRequests(): LeaderRequest[] {
@@ -781,6 +887,22 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     const isUnlocked = identityType === 'major' ? (props.isUnlocked ?? false) : true;
     const unlockThreshold = identityType === 'major' ? (props.unlockThreshold ?? 10) : 0;
 
+    // Quorum-based activation - determine initial status based on members
+    const activationThreshold = DEFAULT_ACTIVATION_THRESHOLD;
+    const memberCount = members.length;
+    let activationStatus: ActivationStatus;
+    if (memberCount === 0) {
+      activationStatus = 'ghost';
+    } else if (memberCount < activationThreshold) {
+      activationStatus = 'gathering';
+    } else {
+      activationStatus = 'open';
+    }
+    // If claimed by a leader, auto-open (bypass quorum)
+    if (props.createdBy) {
+      activationStatus = 'open';
+    }
+
     const spaceProps: EnhancedSpaceProps = {
       spaceId: props.spaceId,
       name: props.name,
@@ -808,6 +930,10 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       claimedAt: props.createdBy ? new Date() : undefined,
       publishStatus,
       wentLiveAt: publishStatus === 'live' ? new Date() : undefined,
+      // Quorum-based activation
+      activationStatus,
+      activationThreshold,
+      activatedAt: activationStatus === 'open' ? new Date() : undefined,
       isActive: true,
       isVerified: false,
       trendingScore: 0,
@@ -854,8 +980,58 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       joinedAt: new Date()
     });
 
+    // Update activation status based on new member count
+    this.updateActivationStatus();
+
     this.updateLastActivity();
     return Result.ok<void>();
+  }
+
+  /**
+   * Update activation status based on current member count
+   * Called after member joins/leaves
+   * Returns true if activation status changed
+   */
+  public updateActivationStatus(): boolean {
+    // If already claimed, always stay open
+    if (this.isClaimed) {
+      if (this.props.activationStatus !== 'open') {
+        this.props.activationStatus = 'open';
+        this.props.activatedAt = new Date();
+        return true;
+      }
+      return false;
+    }
+
+    const memberCount = this.props.members.length;
+    const previousStatus = this.props.activationStatus;
+    let newStatus: ActivationStatus;
+
+    if (memberCount === 0) {
+      newStatus = 'ghost';
+    } else if (memberCount < this.props.activationThreshold) {
+      newStatus = 'gathering';
+    } else {
+      newStatus = 'open';
+    }
+
+    if (newStatus !== previousStatus) {
+      this.props.activationStatus = newStatus;
+      if (newStatus === 'open' && !this.props.activatedAt) {
+        this.props.activatedAt = new Date();
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if space just activated (for triggering notifications)
+   */
+  public justActivated(): boolean {
+    return this.props.activationStatus === 'open' &&
+           this.props.members.length === this.props.activationThreshold;
   }
 
   public removeMember(profileId: ProfileId): Result<void> {
@@ -1221,7 +1397,7 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
    */
   public updateTab(
     tabId: string,
-    updates: { name?: string; order?: number; isVisible?: boolean }
+    updates: { name?: string; description?: string; order?: number; isVisible?: boolean }
   ): Result<void> {
     const tab = this.getTabById(tabId);
     if (!tab) {
@@ -2186,6 +2362,31 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
    */
   public setClaimedAt(date: Date | undefined): void {
     (this.props as any).claimedAt = date;
+  }
+
+  // ============================================================
+  // Activation Status Setters (Repository Layer)
+  // ============================================================
+
+  /**
+   * Set activation status from external data (repository layer)
+   */
+  public setActivationStatus(status: ActivationStatus): void {
+    (this.props as any).activationStatus = status;
+  }
+
+  /**
+   * Set activation threshold from external data (repository layer)
+   */
+  public setActivationThreshold(threshold: number): void {
+    (this.props as any).activationThreshold = threshold;
+  }
+
+  /**
+   * Set activatedAt from external data (repository layer)
+   */
+  public setActivatedAt(date: Date | undefined): void {
+    (this.props as any).activatedAt = date;
   }
 
   // ============================================================

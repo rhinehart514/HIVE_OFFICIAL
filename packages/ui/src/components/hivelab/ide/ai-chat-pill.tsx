@@ -19,23 +19,12 @@ import {
   useEffect,
 } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { SparklesIcon, XMarkIcon, ArrowUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ArrowUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../../lib/utils';
 import { MOTION } from '../../../tokens/motion';
+import { FOCUS_RING } from '../tokens';
 
 const EASE = MOTION.ease.premium;
-
-// Colors matching HiveLab dark theme
-const COLORS = {
-  bg: 'var(--hivelab-panel, #1A1A1A)',
-  bgDark: 'var(--hivelab-bg, #0A0A0A)',
-  surface: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  gold: 'var(--life-gold, #D4AF37)',
-};
 
 interface Message {
   id: string;
@@ -199,28 +188,18 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
               'fixed z-50 flex items-center gap-2 px-4 py-2.5 rounded-full',
               'border shadow-lg backdrop-blur-sm cursor-pointer',
               'transition-colors duration-200',
-              'hover:shadow-[0_0_20px_rgba(212,175,55,0.2)]',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+              'bg-[var(--hivelab-panel)] border-[var(--life-gold)]/40',
+              'hover:border-[var(--life-gold)]/60 hover:brightness-110',
+              FOCUS_RING,
               isFloating ? 'bottom-6 right-6' : 'bottom-6 left-[calc(64px+1.5rem)]'
             )}
-            style={{
-              backgroundColor: COLORS.bg,
-              borderColor: `${COLORS.gold}40`,
-            }}
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <SparklesIcon className="h-4 w-4" style={{ color: COLORS.gold }} />
-            <span
-              className="text-sm font-medium"
-              style={{ color: COLORS.textPrimary }}
-            >
+            <SparklesIcon className="h-4 w-4 text-[var(--life-gold)]" />
+            <span className="text-sm font-medium text-[var(--hivelab-text-primary)]">
               Ask AI
             </span>
-            <kbd
-              className="px-1.5 py-0.5 text-label-xs rounded"
-              style={{ backgroundColor: COLORS.surface, color: COLORS.textTertiary }}
-            >
+            <kbd className="px-1.5 py-0.5 text-label-xs rounded bg-[var(--hivelab-surface)] text-[var(--hivelab-text-tertiary)]">
               ⌘K
             </kbd>
           </motion.button>
@@ -237,39 +216,23 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
             }}
             className={cn(
               'fixed z-50 flex flex-col rounded-2xl border shadow-2xl overflow-hidden',
+              'bg-[var(--hivelab-panel)] border-[var(--hivelab-border)]',
               isFloating
                 ? 'bottom-6 right-6 w-[380px] max-h-[480px]'
                 : 'bottom-6 left-[calc(64px+1.5rem)] w-[340px] max-h-[60vh]'
             )}
-            style={{
-              backgroundColor: COLORS.bg,
-              borderColor: COLORS.border,
-            }}
           >
             {/* Header */}
-            <div
-              className="flex items-center justify-between px-4 py-3 border-b"
-              style={{ borderColor: COLORS.border }}
-            >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--hivelab-border)]">
               <div className="flex items-center gap-2">
                 <SparklesIcon
-                  className={cn('h-4 w-4', isLoading && 'animate-pulse')}
-                  style={{ color: COLORS.gold }}
+                  className={cn('h-4 w-4 text-[var(--life-gold)]', isLoading && 'animate-pulse')}
                 />
-                <span
-                  className="text-sm font-medium"
-                  style={{ color: COLORS.textPrimary }}
-                >
+                <span className="text-sm font-medium text-[var(--hivelab-text-primary)]">
                   AI Assistant
                 </span>
                 {selectedCount > 0 && (
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full"
-                    style={{
-                      backgroundColor: `${COLORS.gold}20`,
-                      color: COLORS.gold,
-                    }}
-                  >
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--life-gold)]/20 text-[var(--life-gold)]">
                     {selectedCount} selected
                   </span>
                 )}
@@ -280,16 +243,7 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
                   <button
                     type="button"
                     onClick={toggleDock}
-                    className="p-1.5 rounded-lg transition-colors"
-                    style={{ color: COLORS.textTertiary }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = COLORS.textPrimary;
-                      e.currentTarget.style.backgroundColor = COLORS.surface;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = COLORS.textTertiary;
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
+                    className="p-1.5 rounded-lg transition-colors text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]"
                     title={isFloating ? 'Dock to left' : 'Float'}
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -304,16 +258,7 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
                 <button
                   type="button"
                   onClick={() => setIsExpanded(false)}
-                  className="p-1.5 rounded-lg transition-colors"
-                  style={{ color: COLORS.textTertiary }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = COLORS.textPrimary;
-                    e.currentTarget.style.backgroundColor = COLORS.surface;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = COLORS.textTertiary;
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
+                  className="p-1.5 rounded-lg transition-colors text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]"
                   title="Collapse"
                 >
                   <ChevronDownIcon className="h-4 w-4" />
@@ -322,23 +267,14 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
             </div>
 
             {/* Messages */}
-            <div
-              className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[200px]"
-              style={{ backgroundColor: COLORS.bgDark }}
-            >
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[200px] bg-[var(--hivelab-bg)]">
               {messages.length === 0 && !streamingStatus && (
                 <div className="text-center py-8">
-                  <SparklesIcon
-                    className="h-8 w-8 mx-auto mb-3 opacity-30"
-                    style={{ color: COLORS.gold }}
-                  />
-                  <p
-                    className="text-sm mb-1"
-                    style={{ color: COLORS.textSecondary }}
-                  >
+                  <SparklesIcon className="h-8 w-8 mx-auto mb-3 opacity-30 text-[var(--life-gold)]" />
+                  <p className="text-sm mb-1 text-[var(--hivelab-text-secondary)]">
                     Describe what you want to build
                   </p>
-                  <p className="text-xs" style={{ color: COLORS.textTertiary }}>
+                  <p className="text-xs text-[var(--hivelab-text-tertiary)]">
                     AI will create the elements for you
                   </p>
                 </div>
@@ -358,15 +294,11 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
                   <div
                     className={cn(
                       'max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm',
-                      message.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md',
+                      message.role === 'user'
+                        ? 'rounded-br-md bg-[var(--life-gold)] text-black'
+                        : 'rounded-bl-md bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)]',
                       message.role === 'status' && 'italic'
                     )}
-                    style={{
-                      backgroundColor:
-                        message.role === 'user' ? COLORS.gold : COLORS.surface,
-                      color:
-                        message.role === 'user' ? '#000' : COLORS.textPrimary,
-                    }}
                   >
                     {message.content}
                   </div>
@@ -380,38 +312,23 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
                   animate={{ opacity: 1, y: 0 }}
                   className="flex justify-start"
                 >
-                  <div
-                    className="max-w-[85%] px-3.5 py-2.5 rounded-2xl rounded-bl-md text-sm"
-                    style={{
-                      backgroundColor: COLORS.surface,
-                      color: COLORS.textPrimary,
-                    }}
-                  >
+                  <div className="max-w-[85%] px-3.5 py-2.5 rounded-2xl rounded-bl-md text-sm bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)]">
                     <div className="flex items-center gap-2">
                       <span className="flex gap-1">
                         <span
-                          className="w-1.5 h-1.5 rounded-full animate-bounce"
-                          style={{
-                            backgroundColor: COLORS.gold,
-                            animationDelay: '0ms',
-                          }}
+                          className="w-1.5 h-1.5 rounded-full animate-bounce bg-[var(--life-gold)]"
+                          style={{ animationDelay: '0ms' }}
                         />
                         <span
-                          className="w-1.5 h-1.5 rounded-full animate-bounce"
-                          style={{
-                            backgroundColor: COLORS.gold,
-                            animationDelay: '150ms',
-                          }}
+                          className="w-1.5 h-1.5 rounded-full animate-bounce bg-[var(--life-gold)]"
+                          style={{ animationDelay: '150ms' }}
                         />
                         <span
-                          className="w-1.5 h-1.5 rounded-full animate-bounce"
-                          style={{
-                            backgroundColor: COLORS.gold,
-                            animationDelay: '300ms',
-                          }}
+                          className="w-1.5 h-1.5 rounded-full animate-bounce bg-[var(--life-gold)]"
+                          style={{ animationDelay: '300ms' }}
                         />
                       </span>
-                      <span style={{ color: COLORS.textSecondary }}>
+                      <span className="text-[var(--hivelab-text-secondary)]">
                         {streamingStatus}
                       </span>
                     </div>
@@ -423,14 +340,8 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
             </div>
 
             {/* Input */}
-            <div
-              className="p-3 border-t"
-              style={{ borderColor: COLORS.border }}
-            >
-              <div
-                className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                style={{ backgroundColor: COLORS.surface }}
-              >
+            <div className="p-3 border-t border-[var(--hivelab-border)]">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--hivelab-surface)]">
                 <input
                   ref={inputRef}
                   type="text"
@@ -440,8 +351,7 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
                   placeholder={getPlaceholder()}
                   disabled={isLoading}
                   autoFocus
-                  className="flex-1 bg-transparent text-sm outline-none disabled:cursor-not-allowed"
-                  style={{ color: COLORS.textPrimary }}
+                  className="flex-1 bg-transparent text-sm outline-none disabled:cursor-not-allowed text-[var(--hivelab-text-primary)] placeholder:text-[var(--hivelab-text-tertiary)]"
                 />
                 <button
                   type="button"
@@ -450,23 +360,14 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
                   className={cn(
                     'w-7 h-7 rounded-full flex items-center justify-center',
                     'transition-all duration-200',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
+                    input.trim() && !isLoading
+                      ? 'bg-[var(--life-gold)] text-black cursor-pointer'
+                      : 'bg-[var(--hivelab-panel)] text-[var(--hivelab-text-tertiary)] cursor-not-allowed',
+                    FOCUS_RING
                   )}
-                  style={{
-                    backgroundColor:
-                      input.trim() && !isLoading ? COLORS.gold : COLORS.bg,
-                    color:
-                      input.trim() && !isLoading
-                        ? '#000'
-                        : COLORS.textTertiary,
-                    cursor:
-                      !input.trim() || isLoading ? 'not-allowed' : 'pointer',
-                  }}
                 >
                   {isLoading ? (
-                    <div
-                      className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"
-                    />
+                    <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <ArrowUpIcon className="h-3.5 w-3.5" />
                   )}
@@ -476,19 +377,7 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="w-full mt-2 py-1.5 text-xs rounded-lg transition-colors"
-                  style={{
-                    color: COLORS.textTertiary,
-                    backgroundColor: 'transparent',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = COLORS.textPrimary;
-                    e.currentTarget.style.backgroundColor = COLORS.surface;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = COLORS.textTertiary;
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
+                  className="w-full mt-2 py-1.5 text-xs rounded-lg transition-colors text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]"
                 >
                   Cancel generation
                 </button>

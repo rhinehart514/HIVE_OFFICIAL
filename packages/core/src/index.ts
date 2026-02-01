@@ -38,6 +38,16 @@ export { EnhancedProfile } from "./domain/profile/aggregates/enhanced-profile";
 export type { SpecCompliantProfile } from "./domain/profile/spec-compliant-profile";
 export { isProfileComplete, getProfileCompletionPercentage, createDefaultProfile } from "./domain/profile/spec-compliant-profile";
 export { Connection, ConnectionType, ConnectionSource } from "./domain/profile/aggregates/connection";
+// Profile Completion Config (Single Source of Truth)
+export type { UserData as ProfileUserData } from "./domain/profile/completion-config";
+export {
+  COMPLETION_REQUIREMENTS,
+  isEntryComplete,
+  isProfileComplete as isProfileCompletionComplete,
+  getCompletionPercentage,
+  getMissingFields,
+  getNextSteps,
+} from "./domain/profile/completion-config";
 export { SpaceId } from "./domain/spaces/value-objects/space-id.value";
 export { SpaceName } from "./domain/spaces/value-objects/space-name.value";
 export { SpaceSlug } from "./domain/spaces/value-objects/space-slug.value";
@@ -379,6 +389,9 @@ export type {
   ConditionOperator,
   ContextRequirements,
   ContextFieldPath,
+  SpaceExecutionContext,
+  ProfileExecutionContext,
+  DeploymentExecutionContext,
 } from "./domain/hivelab/tool-context.types";
 export {
   evaluateCondition,
@@ -424,6 +437,8 @@ export {
   // P0: Surface Modes
   DEFAULT_SURFACE_MODES,
   DEFAULT_APP_CONFIG,
+  // Placement validation
+  validatePlacementCapabilities,
 } from "./domain/hivelab/capabilities";
 export type {
   ToolCapabilities,
@@ -438,6 +453,9 @@ export type {
   TrustTier,
   SurfaceModes,
   AppConfig,
+  // Placement validation types
+  PlacementValidationResult,
+  SpaceGovernance,
 } from "./domain/hivelab/capabilities";
 
 // HiveLab Element-to-Capability Mapping (Deploy & Execute Time Enforcement)

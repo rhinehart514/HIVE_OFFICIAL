@@ -125,7 +125,7 @@ export function ElementPopover({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 4 }}
         transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed z-50 w-80 rounded-xl bg-[#1E1D1B] border border-white/[0.06] shadow-2xl overflow-hidden"
+        className="fixed z-50 w-80 rounded-xl bg-foundation-gray-800 border border-white/[0.06] shadow-2xl overflow-hidden"
         style={{
           left: Math.min(position.x, window.innerWidth - 340),
           top: Math.min(position.y, window.innerHeight - 400),
@@ -134,14 +134,14 @@ export function ElementPopover({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
           <div className="flex items-center gap-2">
-            <Cog6ToothIcon className="w-4 h-4 text-[#6B6B70]" />
-            <span className="font-medium text-[#FAF9F7] capitalize">
+            <Cog6ToothIcon className="w-4 h-4 text-text-placeholder" />
+            <span className="font-medium text-text-primary capitalize">
               {element.elementId.replace(/-/g, ' ')}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-white/[0.04] text-[#6B6B70] hover:text-[#A3A19E]"
+            className="p-1 rounded hover:bg-white/[0.04] text-text-placeholder hover:text-text-secondary"
           >
             <XMarkIcon className="w-4 h-4" />
           </button>
@@ -150,13 +150,13 @@ export function ElementPopover({
         {/* Config fields */}
         <div className="p-4 space-y-4 max-h-64 overflow-y-auto">
           {schema.length === 0 ? (
-            <p className="text-[#6B6B70] text-sm text-center py-4">
+            <p className="text-text-placeholder text-sm text-center py-4">
               No configurable options
             </p>
           ) : (
             schema.map((field) => (
               <div key={field.key}>
-                <label className="block text-xs font-medium text-[#A3A19E] mb-1.5">
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   {field.label}
                 </label>
 
@@ -167,7 +167,7 @@ export function ElementPopover({
                     onChange={(e) => handleChange(field.key, e.target.value)}
                     placeholder={field.placeholder}
                     className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08]
-                      text-[#FAF9F7] placeholder:text-[#6B6B70] text-sm
+                      text-text-primary placeholder:text-text-placeholder text-sm
                       focus:outline-none focus:border-white/[0.24] transition-colors"
                   />
                 )}
@@ -179,7 +179,7 @@ export function ElementPopover({
                     placeholder={field.placeholder}
                     rows={3}
                     className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08]
-                      text-[#FAF9F7] placeholder:text-[#6B6B70] text-sm resize-none
+                      text-text-primary placeholder:text-text-placeholder text-sm resize-none
                       focus:outline-none focus:border-white/[0.24] transition-colors"
                   />
                 )}
@@ -190,7 +190,7 @@ export function ElementPopover({
                     value={(config[field.key] as number) ?? field.defaultValue ?? ''}
                     onChange={(e) => handleChange(field.key, parseInt(e.target.value) || 0)}
                     className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08]
-                      text-[#FAF9F7] text-sm
+                      text-text-primary text-sm
                       focus:outline-none focus:border-white/[0.24] transition-colors"
                   />
                 )}
@@ -220,11 +220,11 @@ export function ElementPopover({
                     value={(config[field.key] as string) || field.options[0]}
                     onChange={(e) => handleChange(field.key, e.target.value)}
                     className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08]
-                      text-[#FAF9F7] text-sm
+                      text-text-primary text-sm
                       focus:outline-none focus:border-white/[0.24] transition-colors"
                   >
                     {field.options.map((opt) => (
-                      <option key={opt} value={opt} className="bg-[#1E1D1B]">
+                      <option key={opt} value={opt} className="bg-foundation-gray-800">
                         {opt}
                       </option>
                     ))}
@@ -240,7 +240,7 @@ export function ElementPopover({
           <div className="flex items-center gap-1">
             <button
               onClick={onDuplicate}
-              className="p-2 rounded-lg text-[#6B6B70] hover:text-[#A3A19E] hover:bg-white/[0.04]
+              className="p-2 rounded-lg text-text-placeholder hover:text-text-secondary hover:bg-white/[0.04]
                 transition-colors"
               title="Duplicate"
             >
@@ -248,7 +248,7 @@ export function ElementPopover({
             </button>
             <button
               onClick={handleDelete}
-              className="p-2 rounded-lg text-[#6B6B70] hover:text-red-400 hover:bg-red-500/10
+              className="p-2 rounded-lg text-text-placeholder hover:text-red-400 hover:bg-red-500/10
                 transition-colors"
               title="Delete"
             >
@@ -257,7 +257,7 @@ export function ElementPopover({
           </div>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg bg-white/[0.06] text-[#A3A19E] text-sm font-medium
+            className="px-3 py-1.5 rounded-lg bg-white/[0.06] text-text-secondary text-sm font-medium
               hover:bg-white/[0.10] transition-colors"
           >
             Done

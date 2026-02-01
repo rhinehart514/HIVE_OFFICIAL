@@ -49,13 +49,164 @@ export function PageContainer({
 // LOADING SKELETON
 // ============================================
 
+/**
+ * CalendarLoadingSkeleton - Premium skeleton for calendar page
+ *
+ * Matches the calendar page layout:
+ * - Header with title, subtitle, and action buttons
+ * - View mode toggle (day/week/month)
+ * - Navigation controls with month title
+ * - Event cards grid
+ *
+ * Uses staggered wave animation (0.15s delay between elements)
+ * Base color: white/[0.08] per design tokens
+ */
 export function CalendarLoadingSkeleton() {
   return (
-    <div className="p-8">
-      <div className="animate-pulse space-y-4">
-        <div className="h-6 w-48 bg-[var(--surface-elevated)] rounded" />
-        <div className="h-4 w-64 bg-[var(--surface-subtle)] rounded" />
-        <div className="h-64 w-full bg-[var(--bg-ground)] rounded" />
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <motion.div
+            className="h-7 w-24 bg-white/[0.08] rounded mb-2"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.premium }}
+          />
+          <motion.div
+            className="h-4 w-56 bg-white/[0.08] rounded"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.premium }}
+          />
+        </div>
+        {/* Action buttons */}
+        <div className="flex items-center gap-3">
+          <motion.div
+            className="h-9 w-20 bg-white/[0.08] rounded-lg"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.15, ease: MOTION.ease.premium }}
+          />
+          <motion.div
+            className="h-9 w-24 bg-white/[0.08] rounded-lg"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.premium }}
+          />
+          <motion.div
+            className="h-9 w-28 bg-[var(--life-gold)]/20 rounded-lg"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.25, ease: MOTION.ease.premium }}
+          />
+        </div>
+      </div>
+
+      {/* View mode toggle + Navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          {/* Prev/Next + Month */}
+          <div className="flex items-center gap-2">
+            <motion.div
+              className="h-9 w-9 bg-white/[0.08] rounded-lg"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.3, ease: MOTION.ease.premium }}
+            />
+            <motion.div
+              className="h-7 w-44 bg-white/[0.08] rounded"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.35, ease: MOTION.ease.premium }}
+            />
+            <motion.div
+              className="h-9 w-9 bg-white/[0.08] rounded-lg"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.4, ease: MOTION.ease.premium }}
+            />
+          </div>
+          <motion.div
+            className="h-9 w-16 bg-white/[0.08] rounded-lg"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.45, ease: MOTION.ease.premium }}
+          />
+        </div>
+
+        {/* Filter dropdown */}
+        <div className="flex items-center gap-2">
+          <motion.div
+            className="h-4 w-4 bg-white/[0.08] rounded"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.5, ease: MOTION.ease.premium }}
+          />
+          <motion.div
+            className="h-8 w-32 bg-white/[0.08] rounded-lg"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.55, ease: MOTION.ease.premium }}
+          />
+        </div>
+      </div>
+
+      {/* Event cards grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <motion.div
+            key={i}
+            className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: 0.6 + i * 0.1,
+              ease: MOTION.ease.premium,
+            }}
+          >
+            {/* Event type indicator */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <motion.div
+                  className="w-3 h-3 rounded-full bg-white/[0.08]"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity, delay: 0.65 + i * 0.1, ease: MOTION.ease.premium }}
+                />
+                <motion.div
+                  className="w-5 h-5 bg-white/[0.08] rounded"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity, delay: 0.7 + i * 0.1, ease: MOTION.ease.premium }}
+                />
+              </div>
+            </div>
+
+            {/* Event title */}
+            <motion.div
+              className="h-5 w-3/4 bg-white/[0.08] rounded mb-3"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 + i * 0.1, ease: MOTION.ease.premium }}
+            />
+
+            {/* Event details */}
+            <div className="space-y-2">
+              <motion.div
+                className="h-3 w-full bg-white/[0.06] rounded"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.8 + i * 0.1, ease: MOTION.ease.premium }}
+              />
+              <motion.div
+                className="h-3 w-2/3 bg-white/[0.06] rounded"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.85 + i * 0.1, ease: MOTION.ease.premium }}
+              />
+            </div>
+
+            {/* Footer badges */}
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.06]">
+              <motion.div
+                className="h-5 w-16 bg-white/[0.08] rounded-full"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.9 + i * 0.1, ease: MOTION.ease.premium }}
+              />
+              <motion.div
+                className="h-5 w-14 bg-white/[0.08] rounded-full"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.95 + i * 0.1, ease: MOTION.ease.premium }}
+              />
+            </div>
+          </motion.div>
+        ))}
       </div>
     </div>
   );

@@ -53,6 +53,7 @@ export function QuickElements({ onAddElement, disabled = false }: QuickElementsP
           key={element.id}
           onClick={() => onAddElement(element.id)}
           disabled={disabled}
+          aria-label={`Add ${element.name} element: ${element.description}`}
           className="flex items-center gap-2 px-3 py-2 rounded-lg
             bg-[var(--surface-subtle)] border border-[var(--border-subtle)]
             text-[var(--text-secondary)] text-sm font-medium
@@ -62,7 +63,7 @@ export function QuickElements({ onAddElement, disabled = false }: QuickElementsP
             disabled:opacity-40 disabled:cursor-not-allowed"
           title={element.description}
         >
-          <element.icon className="w-4 h-4" />
+          <element.icon className="w-4 h-4" aria-hidden="true" />
           <span className="hidden sm:inline">{element.name}</span>
         </button>
       ))}
@@ -72,6 +73,9 @@ export function QuickElements({ onAddElement, disabled = false }: QuickElementsP
         <button
           onClick={() => setShowMore(!showMore)}
           disabled={disabled}
+          aria-label={showMore ? "Close element menu" : "Show more elements"}
+          aria-expanded={showMore}
+          aria-haspopup="menu"
           className="flex items-center justify-center w-9 h-9 rounded-lg
             bg-[var(--surface-subtle)] border border-[var(--border-subtle)]
             text-[var(--text-tertiary)]
@@ -82,9 +86,9 @@ export function QuickElements({ onAddElement, disabled = false }: QuickElementsP
           title="More elements"
         >
           {showMore ? (
-            <XMarkIcon className="w-4 h-4" />
+            <XMarkIcon className="w-4 h-4" aria-hidden="true" />
           ) : (
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon className="w-4 h-4" aria-hidden="true" />
           )}
         </button>
 
@@ -110,10 +114,11 @@ export function QuickElements({ onAddElement, disabled = false }: QuickElementsP
                     onAddElement(element.id);
                     setShowMore(false);
                   }}
+                  aria-label={`Add ${element.name} element: ${element.description}`}
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-left
                     hover:bg-[var(--surface-hover)] transition-colors duration-150"
                 >
-                  <element.icon className="w-4 h-4 text-[var(--text-tertiary)]" />
+                  <element.icon className="w-4 h-4 text-[var(--text-tertiary)]" aria-hidden="true" />
                   <div>
                     <div className="text-sm font-medium text-[var(--text-primary)]">{element.name}</div>
                     <div className="text-xs text-[var(--text-tertiary)]">{element.description}</div>

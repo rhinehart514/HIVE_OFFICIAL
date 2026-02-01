@@ -1,15 +1,70 @@
 /**
- * Motion Tokens
+ * Motion Tokens - UI Package
  *
- * Premium motion design tokens for HIVE.
- * Based on patterns from /about page - the gold standard for motion design.
+ * This file provides a UI-friendly API with SECONDS-based durations.
+ * All values derive from @hive/tokens (the authoritative source).
  *
- * Philosophy:
- * - Every transition has physical weight (premium easing)
- * - Motion explains causality (parallax = depth, reveals = earning visibility)
- * - Consistency signals confidence (same easing everywhere)
+ * For raw millisecond values or advanced variants, import directly from @hive/tokens:
+ *   import { durationSeconds, easingArrays, springPresets } from '@hive/tokens';
  */
 
+// Re-export everything from @hive/tokens for convenience
+export {
+  easingArrays,
+  durationSeconds,
+  springPresets,
+  staggerPresets,
+  tinderSprings,
+  motion,
+  performance,
+  // HIVE signature motion
+  SPRING_SNAP_NAV,
+  PUNCH_TRANSITION,
+  SNAP_TRANSITION,
+  // HIVE signature variants (Design Principles)
+  revealVariants,
+  surfaceVariants,
+  staggerContainerVariants,
+  // Micro-interaction presets
+  buttonPressVariants,
+  cardHoverVariants,
+  messageEntryVariants,
+  successVariants,
+  errorShakeVariants,
+  pageTransitionVariants,
+  modalVariants,
+  dropdownVariants,
+  selectionVariants,
+  reducedMotionVariants,
+} from '@hive/tokens';
+
+// Re-export types
+export type {
+  MotionToken,
+  MotionEasing,
+  MotionDuration,
+  MotionCascade,
+  EasingArray,
+  DurationSeconds,
+  SpringPreset,
+  TinderSpring,
+  StaggerPreset,
+} from '@hive/tokens';
+
+/**
+ * UI-friendly MOTION object
+ *
+ * Provides a simplified API for common animation patterns.
+ * All durations are in SECONDS (for direct use with Framer Motion).
+ *
+ * Maps to @hive/tokens values:
+ * - instant (0.15s) = snap (150ms)
+ * - fast (0.3s) = standard (300ms)
+ * - base (0.6s) = gentle (600ms)
+ * - slow (1.0s) = orchestrated (1000ms)
+ * - slower (1.2s) = hero (1200ms)
+ * - slowest (1.5s) = extended (custom)
+ */
 export const MOTION = {
   /**
    * Easing curves
@@ -27,10 +82,20 @@ export const MOTION = {
 
     /** Sharp - instant response for immediate actions */
     sharp: [0.4, 0, 0.2, 1] as const,
+
+    // Aliases from @hive/tokens
+    /** Default easing (alias for premium) */
+    default: [0.23, 1, 0.32, 1] as const,
+
+    /** Snap easing for quick interactions */
+    snap: [0.25, 0.1, 0.25, 1] as const,
+
+    /** Dramatic easing for celebrations */
+    dramatic: [0.165, 0.84, 0.44, 1] as const,
   },
 
   /**
-   * Duration scales (seconds)
+   * Duration scales (SECONDS - for Framer Motion)
    * Shorter = more responsive, longer = more ceremonial
    */
   duration: {
@@ -51,6 +116,34 @@ export const MOTION = {
 
     /** Slowest (1.5s) - border draws, narrative reveals */
     slowest: 1.5,
+
+    // Aliases from @hive/tokens durationSeconds
+    /** Micro (100ms) - micro-interactions */
+    micro: 0.1,
+
+    /** Snap (150ms) - toggles, checkboxes */
+    snap: 0.15,
+
+    /** Quick (200ms) - fast interactions */
+    quick: 0.2,
+
+    /** Standard (300ms) - default transitions */
+    standard: 0.3,
+
+    /** Smooth (400ms) - smooth movements */
+    smooth: 0.4,
+
+    /** Flowing (500ms) - layout changes */
+    flowing: 0.5,
+
+    /** Gentle (600ms) - gentle entrances */
+    gentle: 0.6,
+
+    /** Dramatic (700ms) - special moments */
+    dramatic: 0.7,
+
+    /** Hero (1200ms) - hero entrances */
+    hero: 1.2,
   },
 
   /**
@@ -72,6 +165,19 @@ export const MOTION = {
 
     /** Characters - for dramatic reveals (20ms between characters) */
     characters: 0.02,
+
+    // Aliases from @hive/tokens
+    /** Fast stagger (30ms) */
+    fast: 0.03,
+
+    /** Default stagger (50ms) */
+    default: 0.05,
+
+    /** Section stagger (80ms) */
+    section: 0.08,
+
+    /** Slow stagger (100ms) */
+    slow: 0.1,
   },
 
   /**
@@ -111,6 +217,13 @@ export const MOTION = {
 
     /** Smooth cursor - for cursor-following effects (stiffness: 100, damping: 30) */
     cursor: { stiffness: 100, damping: 30 },
+
+    // Aliases from @hive/tokens
+    /** Default spring */
+    default: { stiffness: 200, damping: 25 },
+
+    /** Bouncy spring for celebrations */
+    bouncy: { stiffness: 300, damping: 15 },
   },
 
   /**

@@ -213,7 +213,7 @@ export function InterestsSection({
           <Button
             onClick={handleSave}
             disabled={isSaving || isUpdating}
-            className="bg-white text-black hover:bg-white/90 disabled:opacity-50"
+            variant="solid"
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>

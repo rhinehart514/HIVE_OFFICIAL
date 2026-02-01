@@ -198,19 +198,30 @@ function SearchResultSkeleton() {
 function EmptyState({ query }: { query: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
+      <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mb-4">
         <Search className="w-6 h-6 text-white/30" />
       </div>
       {query ? (
         <>
-          <Text className="text-white/70 mb-1">No messages found</Text>
-          <Text size="sm" className="text-white/40">
-            Try a different search term or adjust filters
+          <Text className="text-white/70 font-medium mb-1">No messages found</Text>
+          <Text size="sm" className="text-white/40 max-w-xs">
+            No messages match "{query}". Try a different search term or adjust your filters.
           </Text>
+          <div className="mt-4 flex flex-wrap gap-2 justify-center max-w-xs">
+            <Text size="xs" className="text-white/30 w-full mb-1">Try searching for:</Text>
+            {['links', 'images', 'announcements'].map((suggestion) => (
+              <span
+                key={suggestion}
+                className="px-2.5 py-1 rounded-full text-xs text-white/50 bg-white/[0.04] border border-white/[0.06]"
+              >
+                {suggestion}
+              </span>
+            ))}
+          </div>
         </>
       ) : (
         <>
-          <Text className="text-white/70 mb-1">Search messages</Text>
+          <Text className="text-white/70 font-medium mb-1">Search messages</Text>
           <Text size="sm" className="text-white/40">
             Enter at least 2 characters to search
           </Text>

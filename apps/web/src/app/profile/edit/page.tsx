@@ -15,7 +15,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { ProfileBentoGrid, Button, Avatar, AvatarImage, AvatarFallback, HiveConfirmModal, Input, HiveLogo, EASE_PREMIUM } from '@hive/ui';
+import { ProfileBentoGrid, Button, Avatar, AvatarImage, AvatarFallback, HiveConfirmModal, Input, Textarea, HiveLogo, EASE_PREMIUM } from '@hive/ui';
 import type { ProfileSystem } from '@hive/core';
 import { ArrowLeftIcon, CheckIcon, ArrowPathIcon, Bars3Icon, Cog6ToothIcon, XMarkIcon, PlusIcon, CameraIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { GhostModeModal } from '@/components/privacy';
@@ -144,7 +144,7 @@ export default function EditProfilePage() {
                 <ArrowLeftIcon className="w-5 h-5" aria-hidden="true" />
               </button>
               <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9 ring-2 ring-[var(--life-gold)]/30">
+                <Avatar className="h-9 w-9 ring-2 ring-white/20">
                   <AvatarImage src={profileData.profile.avatarUrl ?? undefined} alt={profileData.profile.fullName} />
                   <AvatarFallback className="text-sm bg-white/[0.04] text-white">{initials}</AvatarFallback>
                 </Avatar>
@@ -156,7 +156,7 @@ export default function EditProfilePage() {
             </div>
 
             {/* Center: Edit mode indicator (mobile only) */}
-            <div className="sm:hidden flex items-center gap-2 text-[var(--life-gold)]">
+            <div className="sm:hidden flex items-center gap-2 text-white/60">
               <Bars3Icon className="w-4 h-4" />
               <span className="text-sm font-medium">Edit Mode</span>
             </div>
@@ -236,7 +236,7 @@ export default function EditProfilePage() {
               <div className="flex-1 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white/40">
                 @{profileData.profile.handle}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => router.push('/settings')}>
+              <Button variant="ghost" size="sm" onClick={() => router.push('/me/settings')}>
                 <Cog6ToothIcon className="w-4 h-4" />
               </Button>
             </div>
@@ -246,13 +246,12 @@ export default function EditProfilePage() {
           {/* Bio */}
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-white/50 mb-2">Bio</label>
-            <textarea
+            <Textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell people about yourself..."
               rows={3}
               maxLength={200}
-              className="w-full px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none transition-all"
             />
             <p className="text-xs text-white/30 mt-1">{bio.length}/200 characters</p>
           </div>
@@ -331,12 +330,12 @@ export default function EditProfilePage() {
       {/* Layout Customization Banner */}
       <motion.div
         {...fadeIn(0.15)}
-        className="bg-gradient-to-r from-[var(--life-gold)]/5 via-orange-500/5 to-[var(--life-gold)]/5 border-b border-[var(--life-gold)]/10"
+        className="bg-white/[0.02] border-b border-white/[0.06]"
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[var(--life-gold)]/10 flex items-center justify-center">
-              <Bars3Icon className="w-5 h-5 text-[var(--life-gold)]" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center">
+              <Bars3Icon className="w-5 h-5 text-white/50" />
             </div>
             <div>
               <h2 className="text-sm font-medium text-white">Customize your layout</h2>
@@ -377,7 +376,7 @@ export default function EditProfilePage() {
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
             }}
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--life-gold)] animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
             <span className="text-sm text-white/70">Unsaved changes</span>
             <Button
               onClick={handleSaveLayout}
@@ -399,7 +398,15 @@ export default function EditProfilePage() {
         description="You have unsaved changes. Are you sure you want to leave? Your changes will be lost."
         confirmText="Discard"
         variant="danger"
-        onConfirm={() => { setShowDiscardConfirm(false); router.push(`/profile/${currentUser?.id}`); }}
+        onConfirm={() => {
+          setShowDiscardConfirm(false);
+          const handle = profileData?.profile?.handle || currentUser?.handle;
+          if (handle) {
+            router.push(`/u/${handle}`);
+          } else {
+            router.push(`/profile/${currentUser?.id}`);
+          }
+        }}
       />
 
       {/* Ghost Mode Modal */}

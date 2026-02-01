@@ -151,9 +151,9 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
         isBuilder={user.isBuilder}
         isQuickCreateOpen={isQuickCreateOpen}
         onQuickCreateOpenChange={setQuickCreateOpen}
-        onProfileClick={() => router.push('/profile')}
-        onSettingsClick={() => router.push('/settings')}
-        onNotificationClick={() => router.push('/notifications')}
+        onProfileClick={() => router.push('/me')}
+        onSettingsClick={() => router.push('/me/settings')}
+        onNotificationClick={() => router.push('/me/notifications')}
       />
 
       {/* Main Content */}
@@ -216,10 +216,10 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
         onOpenChange={setCommandPaletteOpen}
         items={[
           // Navigation
-          { id: 'browse', label: 'Browse Spaces', category: 'Navigation', shortcut: ['G', 'S'], onSelect: () => router.push('/spaces') },
-          { id: 'profile', label: 'My Profile', category: 'Navigation', shortcut: ['G', 'P'], onSelect: () => router.push('/profile') },
-          { id: 'notifications', label: 'Notifications', category: 'Navigation', shortcut: ['G', 'N'], onSelect: () => router.push('/notifications') },
-          { id: 'settings', label: 'Settings', category: 'Navigation', shortcut: ['G', ','], onSelect: () => router.push('/settings') },
+          { id: 'browse', label: 'Browse Spaces', category: 'Navigation', shortcut: ['G', 'S'], onSelect: () => router.push('/explore') },
+          { id: 'profile', label: 'My Profile', category: 'Navigation', shortcut: ['G', 'P'], onSelect: () => router.push('/me') },
+          { id: 'notifications', label: 'Notifications', category: 'Navigation', shortcut: ['G', 'N'], onSelect: () => router.push('/me/notifications') },
+          { id: 'settings', label: 'Settings', category: 'Navigation', shortcut: ['G', ','], onSelect: () => router.push('/me/settings') },
           ...(user.isBuilder ? [
             { id: 'tools', label: 'HiveLab', category: 'Navigation', shortcut: ['G', 'H'], onSelect: () => router.push('/tools') },
           ] : []),

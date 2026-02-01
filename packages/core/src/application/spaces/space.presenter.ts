@@ -58,6 +58,13 @@ function toBaseDTO(space: EnhancedSpace): SpaceBaseDTO {
     isClaimed: space.status === 'claimed' || space.status === 'verified',
     wentLiveAt: space.wentLiveAt,
     createdAt: space.createdAt,
+    // Quorum-based activation (GTM mechanic)
+    activationStatus: space.activationStatus,
+    activationThreshold: space.activationThreshold,
+    activatedAt: space.activatedAt,
+    activationProgress: space.activationProgress,
+    membersNeededToActivate: space.membersNeededToActivate,
+    canChat: space.canChat,
     // CampusLabs imported metadata
     email: space.email,
     contactName: space.contactName,
@@ -209,7 +216,7 @@ export function toSpaceMembershipDTO(
 ): SpaceMembershipDTO {
   return {
     ...toBaseDTO(space),
-    activationStatus: space.isActive ? 'activated' : 'inactive',
+    userActivationStatus: space.isActive ? 'activated' : 'inactive',
     updatedAt: space.updatedAt,
     tabCount: space.tabs.length,
     widgetCount: space.widgets.length,

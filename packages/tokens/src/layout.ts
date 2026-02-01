@@ -4,6 +4,9 @@
 /**
  * LAYOUT PHILOSOPHY
  * -----------------
+ * - Web-first, mobile-capable
+ * - Desktop (1024px+) is the full experience
+ * - Mobile is a companion for quick checks and chat
  * - Single-column dominance (ChatGPT/Apple pattern)
  * - When two things needed: 60/40 split (primary/context)
  * - Never 50/50 (creates competition for attention)
@@ -249,6 +252,66 @@ export const CONTEXT_PANEL = {
   /** 90% - Mobile full snap point */
   mobileFull: '90%',
 } as const;
+
+// ============================================
+// RESPONSIVE BEHAVIOR
+// ============================================
+
+/**
+ * RESPONSIVE DESIGN GUIDE
+ * -----------------------
+ * Element behavior across breakpoints.
+ * Mobile (<640px) → Tablet (640-1023px) → Desktop (1024px+)
+ */
+
+export const RESPONSIVE_BEHAVIOR = {
+  navigation: {
+    mobile: 'Bottom nav (64px)',
+    desktop: 'Sidebar (260px expanded, 68px collapsed)',
+  },
+  contentWidth: {
+    mobile: '100% with padding',
+    desktop: 'Constrained to max-widths',
+  },
+  modals: {
+    mobile: 'Full-screen or bottom sheet',
+    desktop: 'Centered overlay',
+  },
+  panels: {
+    mobile: 'Bottom sheet',
+    desktop: 'Right-side drawer',
+  },
+  touchTargets: {
+    mobile: '48px minimum',
+    desktop: '44px minimum',
+  },
+  typography: 'Same scale across all breakpoints',
+  spacing: {
+    mobile: 'Reduce by ~25%',
+    desktop: 'Full spacing scale',
+  },
+} as const;
+
+/**
+ * Mobile-only features (not on desktop)
+ */
+export const MOBILE_ONLY = [
+  'Bottom navigation',
+  'Pull-to-refresh',
+  'Swipe gestures (back, dismiss)',
+  'Bottom sheets instead of side panels',
+] as const;
+
+/**
+ * Desktop-only features (not on mobile)
+ */
+export const DESKTOP_ONLY = [
+  'Hover states',
+  'Keyboard shortcuts',
+  'Multi-panel layouts',
+  'Expanded sidebar',
+  'Context panels',
+] as const;
 
 // Types
 export type MaxWidth = keyof typeof MAX_WIDTHS;

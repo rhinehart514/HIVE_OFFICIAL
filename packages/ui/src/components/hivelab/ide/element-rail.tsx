@@ -21,9 +21,11 @@ const AUTOMATIONS_ENABLED = false;
 // HiveLab Element Rail - Uses CSS variables from globals.css
 // ============================================
 
-// Workshop tokens
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
-const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
+import { FOCUS_RING, WORKSHOP_TRANSITION } from '../tokens';
+
+// Use shared tokens
+const focusRing = FOCUS_RING;
+const workshopTransition = WORKSHOP_TRANSITION;
 
 export type RailState = 'expanded' | 'collapsed' | 'hidden';
 export type RailTab = 'elements' | 'layers' | 'spaceTools' | 'automations';

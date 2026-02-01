@@ -98,7 +98,7 @@ export function FeedbackToast() {
             transition={{ duration: 0.2 }}
             onClick={() => setIsOpen(true)}
             className="group bg-background-tertiary hover:bg-background-secondary
-                     border border-white/6 rounded-lg p-4
+                     border border-white/6 rounded-xl p-4
                      flex items-center gap-3 max-w-xs"
           >
             <div className="flex-shrink-0">
@@ -127,7 +127,7 @@ export function FeedbackToast() {
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
             className="bg-background-primary border border-white/6
-                     rounded-lg overflow-hidden w-80"
+                     rounded-xl overflow-hidden w-80"
           >
             {/* Header */}
             <div className="p-4 border-b border-[var(--hive-border-subtle)] bg-[var(--hive-background-tertiary)]">
@@ -219,8 +219,8 @@ export function FeedbackToast() {
                                border border-[var(--hive-border-subtle)] rounded-xl
                                text-sm text-[var(--hive-text-primary)]
                                placeholder:text-[var(--hive-text-muted)]
-                               focus:outline-none focus:ring-2 focus:ring-[var(--hive-brand-primary)]/50
-                               focus:border-[var(--hive-brand-primary)]/50
+                               focus:outline-none focus:ring-2 focus:ring-white/50
+                               focus:border-white/30
                                resize-none transition-all duration-200"
                     />
                     <div className="absolute bottom-3 right-3 text-xs text-[var(--hive-text-muted)] bg-[var(--hive-background-primary)] px-2 py-1 rounded">

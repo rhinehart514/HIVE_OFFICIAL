@@ -20,6 +20,19 @@ export type {
   ParallaxType,
 } from '../../tokens';
 
+// Density tokens
+export {
+  DENSITY,
+  DENSITY_CONTEXTS,
+  getDensityConfig,
+  getDensityClasses,
+  getDensityForContext,
+} from '../../tokens';
+export type {
+  DensityLevel,
+  DensityContext,
+} from '../../tokens';
+
 // ============================================
 // TYPOGRAPHY PRIMITIVES
 // ============================================
@@ -893,3 +906,46 @@ export {
   type ArrivalTransitionProps,
   type ArrivalZoneProps,
 } from './motion/ArrivalTransition';
+
+// ============================================
+// SPACE HEALTH PRIMITIVES (Sprint 3)
+// ============================================
+
+export {
+  SpaceHealthBadge,
+  SpaceHealthDot,
+  SpaceHealthEdge,
+  SpaceGrowthIndicator,
+  SpaceHealthIndicator,
+  healthBadgeContainerVariants,
+  healthDotVariants,
+  healthEdgeVariants,
+  getSpaceHealthLevel,
+  getHealthLabel,
+  getHealthDescription,
+  getMemberGrowthTrend,
+  type SpaceHealthLevel,
+  type SpaceHealthMetrics,
+  type SpaceHealthBadgeProps,
+  type SpaceHealthDotProps,
+  type SpaceHealthEdgeProps,
+  type SpaceGrowthIndicatorProps,
+  type SpaceHealthIndicatorProps,
+} from './SpaceHealthBadge';
+
+// ============================================
+// BREADCRUMB PRIMITIVES (IA Consolidation)
+// ============================================
+
+export {
+  Breadcrumb,
+  BreadcrumbItem as BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbCurrent,
+  BreadcrumbEllipsis,
+  type BreadcrumbProps,
+  type BreadcrumbItemProps as BreadcrumbLinkProps,
+  type BreadcrumbSeparatorProps,
+  type BreadcrumbCurrentProps,
+  type BreadcrumbEllipsisProps,
+} from './Breadcrumb';

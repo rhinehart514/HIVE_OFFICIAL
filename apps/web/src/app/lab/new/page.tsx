@@ -155,7 +155,7 @@ export default function NewToolPage() {
             </button>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-white text-black rounded-lg font-medium
+              className="px-4 py-2 bg-white text-[var(--color-bg-void,#0A0A09)] rounded-xl font-medium
                 hover:bg-white/90 transition-colors"
             >
               Try again

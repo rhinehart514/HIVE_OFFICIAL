@@ -428,3 +428,52 @@ export function createDefaultCapabilities(
     stateMutations: true,
   };
 }
+
+// ============================================================================
+// Server-Side Execution Context Types
+// ============================================================================
+
+/**
+ * Server-side execution context for space-deployed tools
+ */
+export interface SpaceExecutionContext {
+  space: {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    memberCount: number;
+  };
+  events: {
+    upcoming: Array<{ id: string; title?: string; startDate?: string; [key: string]: unknown }>;
+    recent: Array<{ id: string; title?: string; startDate?: string; [key: string]: unknown }>;
+    total: number;
+  };
+  members: {
+    list: Array<{ id: string; displayName: string; avatarUrl?: string | null; role: string }>;
+    total: number;
+    currentUserIsMember: boolean;
+  };
+  fetchedAt: string;
+  error?: string;
+}
+
+/**
+ * Server-side execution context for profile-deployed tools
+ */
+export interface ProfileExecutionContext {
+  profile: {
+    userId: string;
+    displayName: string;
+    avatarUrl?: string | null;
+  };
+  isOwner: boolean;
+  fetchedAt: string;
+}
+
+/**
+ * Discriminated union for deployment execution context
+ */
+export type DeploymentExecutionContext =
+  | { type: 'space'; context: SpaceExecutionContext }
+  | { type: 'profile'; context: ProfileExecutionContext };

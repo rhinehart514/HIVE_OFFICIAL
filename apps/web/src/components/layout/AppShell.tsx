@@ -16,11 +16,11 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Compass } from 'lucide-react';
+import { Compass, X } from 'lucide-react';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
+import { BottomNav } from '@/components/nav/BottomNav';
 import {
   HomeIcon,
-  UsersIcon,
   BeakerIcon,
   UserIcon,
   SettingsIcon,
@@ -44,23 +44,30 @@ interface NavItem {
 }
 
 // ============================================================
-// Navigation Config
+// Navigation Config — 4-Pillar IA (Jan 2026)
 // ============================================================
 
-// Desktop nav: Full 5-item navigation
+/**
+ * Navigation Structure:
+ * - Home: Unified dashboard (merged Feed + Spaces)
+ * - Explore: Discovery hub
+ * - Lab: Builder dashboard
+ * - You: Own profile + settings
+ *
+ * /home → Unified dashboard (replaces /feed, /spaces)
+ * /explore → Discovery with tabs
+ * /lab → Builder tools
+ * /me → Own profile (or /profile for viewing others)
+ */
+
+// Desktop & Mobile nav: 4-item unified navigation
 const NAV_ITEMS: NavItem[] = [
   {
-    id: 'feed',
-    label: 'Feed',
-    href: '/feed',
+    id: 'home',
+    label: 'Home',
+    href: '/home',
     icon: HomeIcon,
-  },
-  {
-    id: 'spaces',
-    label: 'Spaces',
-    href: '/spaces',
-    icon: UsersIcon,
-    matchPattern: /^\/s(paces)?(\/|$)/,
+    matchPattern: /^\/home(\/|$)|^\/feed(\/|$)|^\/spaces(\/|$)/,
   },
   {
     id: 'explore',
@@ -77,61 +84,25 @@ const NAV_ITEMS: NavItem[] = [
     matchPattern: /^\/lab(\/|$)/,
   },
   {
-    id: 'profile',
-    label: 'Profile',
-    href: '/profile',
+    id: 'you',
+    label: 'You',
+    href: '/me',
     icon: UserIcon,
-    matchPattern: /^\/profile(\/|$)|^\/u\//,
+    matchPattern: /^\/me(\/|$)|^\/profile(\/|$)|^\/u\//,
   },
 ];
 
-// Mobile nav: 4 items (Lab moves to drawer for space constraints)
-const MOBILE_NAV_ITEMS: NavItem[] = [
-  {
-    id: 'feed',
-    label: 'Feed',
-    href: '/feed',
-    icon: HomeIcon,
-  },
-  {
-    id: 'spaces',
-    label: 'Spaces',
-    href: '/spaces',
-    icon: UsersIcon,
-    matchPattern: /^\/s(paces)?(\/|$)/,
-  },
-  {
-    id: 'explore',
-    label: 'Explore',
-    href: '/explore',
-    icon: Compass,
-    matchPattern: /^\/explore(\/|$)/,
-  },
-  {
-    id: 'profile',
-    label: 'Profile',
-    href: '/profile',
-    icon: UserIcon,
-    matchPattern: /^\/profile(\/|$)|^\/u\//,
-  },
-];
+// Mobile nav: Same 4 items for consistency
+const MOBILE_NAV_ITEMS: NavItem[] = NAV_ITEMS;
 
-// Mobile drawer items: Lab + Settings
-const MOBILE_DRAWER_ITEMS: NavItem[] = [
-  {
-    id: 'lab',
-    label: 'Lab',
-    href: '/lab',
-    icon: BeakerIcon,
-    matchPattern: /^\/lab(\/|$)/,
-  },
-];
+// Mobile drawer items: Settings only (Lab now in main nav)
+const MOBILE_DRAWER_ITEMS: NavItem[] = [];
 
 const BOTTOM_ITEMS: NavItem[] = [
   {
     id: 'settings',
     label: 'Settings',
-    href: '/settings',
+    href: '/me/settings',
     icon: SettingsIcon,
   },
 ];
@@ -495,8 +466,12 @@ export function AppShell({ children }: AppShellProps) {
 
   // Pages that need full-width content (escape max-w-3xl constraint)
   const isWideContentPage =
+    pathname.startsWith('/home') ||
     pathname.startsWith('/profile') ||
+    pathname.startsWith('/me') ||
+    pathname.startsWith('/u/') ||
     pathname.startsWith('/spaces') ||
+    pathname.startsWith('/s/') ||
     pathname.startsWith('/explore') ||
     pathname.startsWith('/lab');
 
@@ -516,30 +491,20 @@ export function AppShell({ children }: AppShellProps) {
         />
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile drawer (for settings access) */}
       <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
 
       {/* Main Content - ChatGPT style: sidebar offset, generous padding */}
       <main
-        className="flex-1 overflow-y-auto"
-        style={{
-          marginLeft: `${SIDEBAR_WIDTH}px`,
-        }}
+        className="flex-1 overflow-y-auto lg:ml-[260px]"
       >
-        {/* Mobile Header */}
-        <div className="lg:hidden sticky top-0 z-30 h-14 px-4 bg-[#0A0A09]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between">
-          <button
-            onClick={() => setMobileNavOpen(true)}
-            className="p-2 rounded-lg hover:bg-white/[0.04] transition-colors"
-          >
-            <Menu size={20} className="text-white/60" />
-          </button>
+        {/* Mobile Header - simplified with logo only */}
+        <div className="lg:hidden sticky top-0 z-30 h-14 px-4 bg-[#0A0A09]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-center">
           <Logo variant="mark" size="sm" color="gold" />
-          <div className="w-9" /> {/* Spacer for centering */}
         </div>
 
         {/* Page Content - ChatGPT style for standard pages, full-width for wide pages */}
-        <div className="min-h-screen">
+        <div className="min-h-screen pb-20 lg:pb-0">
           <div className={isWideContentPage ? 'h-full' : 'max-w-3xl mx-auto px-8 py-6'}>
             <AnimatePresence mode="wait">
               <motion.div
@@ -556,6 +521,9 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </div>
       </main>
+
+      {/* Mobile Bottom Nav */}
+      <BottomNav />
     </div>
   );
 }

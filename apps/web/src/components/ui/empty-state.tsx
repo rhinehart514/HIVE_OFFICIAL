@@ -221,3 +221,16 @@ export function NoMessagesEmptyState() {
     />
   );
 }
+
+// Re-export contextual empty states
+export { NotificationsEmptyState } from './NotificationsEmptyState';
+export type { NotificationsEmptyVariant } from './NotificationsEmptyState';
+
+export { CalendarEmptyState } from './CalendarEmptyState';
+export type { CalendarEmptyVariant } from './CalendarEmptyState';
+
+export { SearchEmptyState } from './SearchEmptyState';
+export type { SearchEmptyVariant } from './SearchEmptyState';
+
+export { SpacesEmptyState } from './SpacesEmptyState';
+export type { SpacesEmptyVariant } from './SpacesEmptyState';

@@ -1,28 +1,25 @@
-import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { ProfileContextProvider } from '@/components/profile/ProfileContextProvider';
-import ProfilePageContent from './ProfilePageContent';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
 /**
- * SPEC-COMPLIANT PUBLIC PROFILE VIEW WITH PRESENCE
+ * /profile/[id] — Legacy Profile URL Redirect
  *
- * Per SPEC.md:
- * - NO HANDLE DISPLAY: Use ID in URLs, not handle
- * - CAMPUS ISOLATION: All profiles filtered by campusId
- * - PRIVACY WIDGETS: Respect widget-level privacy settings
- * - TWO-LAYER SOCIAL: Show connections and friends appropriately
- * - PRESENCE SYSTEM: Real-time online/offline status with ghost mode
+ * This route now redirects to the canonical /u/[handle] URL.
+ * Existing bookmarks and links will automatically redirect.
+ *
+ * @deprecated Use /u/[handle] for profile URLs
+ * @version 2.0.0 - IA Unification (Jan 2026)
  */
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-// Fetch profile data server-side for metadata
-async function fetchProfileForMetadata(userId: string) {
+// Fetch profile to get handle for redirect
+async function fetchProfileHandle(userId: string): Promise<string | null> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session')?.value;
 
@@ -39,49 +36,25 @@ async function fetchProfileForMetadata(userId: string) {
     }
 
     const data = await response.json();
-    return data.profile || data;
+    const profile = data.profile || data.data?.profile || data;
+    return profile?.handle || null;
   } catch {
     return null;
   }
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export default async function LegacyProfilePage({ params }: Props) {
   const { id } = await params;
-  const profile = await fetchProfileForMetadata(id);
 
-  if (!profile) {
-    return {
-      title: 'Profile Not Found',
-      description: 'This profile could not be found.',
-    };
+  // Look up handle from ID
+  const handle = await fetchProfileHandle(id);
+
+  if (handle) {
+    // Redirect to canonical URL
+    redirect(`/u/${handle}`);
   }
 
-  const name = profile.fullName || profile.displayName || 'Member';
-  const bio = profile.bio || `${name} on HIVE - the student autonomy platform.`;
-  const avatarUrl = profile.photoURL || profile.avatarUrl;
-
-  return {
-    title: name,
-    description: bio.slice(0, 160),
-    openGraph: {
-      title: `${name} | HIVE`,
-      description: bio.slice(0, 160),
-      type: 'profile',
-      ...(avatarUrl && { images: [{ url: avatarUrl, width: 400, height: 400, alt: name }] }),
-    },
-    twitter: {
-      card: 'summary',
-      title: `${name} | HIVE`,
-      description: bio.slice(0, 160),
-      ...(avatarUrl && { images: [avatarUrl] }),
-    },
-  };
-}
-
-export default function PublicProfilePage() {
-  return (
-    <ProfileContextProvider>
-      <ProfilePageContent />
-    </ProfileContextProvider>
-  );
+  // If no handle found, redirect to home with error
+  // The user might not exist or the API might be down
+  redirect('/home');
 }

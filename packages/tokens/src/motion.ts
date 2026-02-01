@@ -2,14 +2,23 @@
 // Single source of truth for all motion values
 
 /**
- * MOTION TIERS
- * ------------
- * T1: Celebrations, achievements, unlocks (500-700ms) - dramatic easing
- * T2: Standard interactions, cards, filters (300ms) - default easing
- * T3: Ambient, hovers, micro-feedback (150-200ms) - snap easing
- * T4: Reduced motion fallback (0-50ms) - instant
+ * MOTION PHILOSOPHY
+ * -----------------
+ * Motion is intentional. Match tier to context.
  *
- * Match tier to achievement magnitude - celebrations earn dramatic motion.
+ * TIMING TIERS:
+ * - Micro: 150-200ms, ease-out — Hover, focus, toggles
+ * - Standard: 300-400ms, cubic-bezier(0.23, 1, 0.32, 1) — Transitions, panels
+ * - Cinematic: 500-800ms, spring/premium — Entry, celebration
+ *
+ * SIGNATURE MOTIONS:
+ * - Reveal: Fade + slide up (y: 20px → 0)
+ * - Surface: Scale from 0.95 + fade
+ * - Blur transition: Filter blur for screen changes
+ * - Stagger: 50-80ms between list items
+ *
+ * REDUCED MOTION:
+ * Always provide duration-0 fallback for prefers-reduced-motion.
  */
 
 // ============================================
@@ -572,6 +581,76 @@ export const reducedMotionVariants = {
     initial: { opacity: 1 },
     animate: { opacity: 1 },
     exit: { opacity: 0 },
+  },
+} as const;
+
+// ============================================
+// SIGNATURE MOTION VARIANTS (HIVE Design Principles)
+// ============================================
+
+/**
+ * Reveal: Fade + slide up (y: 20px → 0)
+ * Use for: List items, cards, content entry
+ */
+export const revealVariants = {
+  initial: {
+    opacity: 0,
+    y: 20,
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: [0.23, 1, 0.32, 1],
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    transition: {
+      duration: 0.2,
+    },
+  },
+} as const;
+
+/**
+ * Surface: Scale from 0.95 + fade
+ * Use for: Modals, popovers, dropdowns
+ */
+export const surfaceVariants = {
+  initial: {
+    opacity: 0,
+    scale: 0.95,
+  },
+  animate: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 25,
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    transition: {
+      duration: 0.15,
+    },
+  },
+} as const;
+
+/**
+ * Stagger container for list children
+ * Use with staggerPresets for timing
+ */
+export const staggerContainerVariants = {
+  initial: {},
+  animate: {
+    transition: {
+      staggerChildren: 0.05, // 50-80ms between items
+    },
   },
 } as const;
 

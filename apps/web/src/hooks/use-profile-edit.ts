@@ -199,16 +199,28 @@ export function useProfileEdit(): UseProfileEditReturn {
     if (hasPendingChanges) {
       await handleSaveLayout();
     }
-    router.push(`/profile/${currentUser?.id}`);
-  }, [hasPendingChanges, handleSaveLayout, router, currentUser?.id]);
+    // Use handle-based URL if available, fall back to ID
+    const handle = profileData?.profile?.handle || currentUser?.handle;
+    if (handle) {
+      router.push(`/u/${handle}`);
+    } else {
+      router.push(`/profile/${currentUser?.id}`);
+    }
+  }, [hasPendingChanges, handleSaveLayout, router, profileData?.profile?.handle, currentUser?.handle, currentUser?.id]);
 
   const handleCancel = useCallback(() => {
     if (hasPendingChanges) {
       setShowDiscardConfirm(true);
       return;
     }
-    router.push(`/profile/${currentUser?.id}`);
-  }, [hasPendingChanges, router, currentUser?.id]);
+    // Use handle-based URL if available, fall back to ID
+    const handle = profileData?.profile?.handle || currentUser?.handle;
+    if (handle) {
+      router.push(`/u/${handle}`);
+    } else {
+      router.push(`/profile/${currentUser?.id}`);
+    }
+  }, [hasPendingChanges, router, profileData?.profile?.handle, currentUser?.handle, currentUser?.id]);
 
   // Interest handlers
   const handleAddInterest = useCallback(() => {

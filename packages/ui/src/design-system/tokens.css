@@ -441,6 +441,56 @@
   /* Workshop Motion (Snappy) */
   --workshop-duration: 150ms;
   --workshop-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ============================================
+   * IDE STATUS COLORS
+   * For HiveLab status badges and indicators
+   * ============================================ */
+
+  --ide-status-success: #00D46A;
+  --ide-status-success-bg: rgba(0, 212, 106, 0.15);
+  --ide-status-info: #3B82F6;
+  --ide-status-info-bg: rgba(59, 130, 246, 0.15);
+  --ide-status-warning: #FFB800;
+  --ide-status-warning-bg: rgba(255, 184, 0, 0.15);
+  --ide-status-error: #FF3737;
+  --ide-status-error-bg: rgba(255, 55, 55, 0.15);
+
+  /* IDE Type Indicator Colors (for connection builder) */
+  --ide-type-string: #22C55E;
+  --ide-type-number: #3B82F6;
+  --ide-type-boolean: #A855F7;
+  --ide-type-array: #F97316;
+  --ide-type-object: #06B6D4;
+
+  /* IDE Interactive States */
+  --ide-interactive-default: rgba(255, 255, 255, 0.06);
+  --ide-interactive-hover: rgba(255, 255, 255, 0.10);
+  --ide-interactive-active: rgba(255, 255, 255, 0.15);
+
+  /* IDE Text */
+  --ide-text-primary: var(--hivelab-text-primary);
+  --ide-text-secondary: var(--hivelab-text-secondary);
+  --ide-text-tertiary: var(--hivelab-text-tertiary);
+  --ide-text-inverse: var(--bg-ground);
+
+  /* IDE Accent (uses life-gold for primary actions) */
+  --ide-accent-primary: var(--life-gold);
+  --ide-accent-primary-hover: var(--life-gold-hover);
+
+  /* IDE Border Focus */
+  --ide-border-focus: rgba(255, 255, 255, 0.50);
+
+  /* IDE Surface Aliases (map to HiveLab tokens) */
+  --ide-surface-panel: var(--hivelab-panel);
+  --ide-surface-elevated: var(--hivelab-surface);
+
+  /* IDE Border Aliases */
+  --ide-border-default: var(--hivelab-border);
+  --ide-border-emphasis: var(--hivelab-border-emphasis);
+
+  /* IDE Text Aliases */
+  --ide-text-muted: var(--hivelab-text-tertiary);
 }
 
 /* ============================================

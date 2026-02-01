@@ -362,8 +362,18 @@ export const CommandPalette = React.forwardRef<HTMLDivElement, CommandPalettePro
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-text-primary)]" />
                     </div>
                   ) : filteredItems.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-sm text-[var(--color-text-muted)]">
-                      {emptyMessage}
+                    <div className="px-4 py-12 text-center">
+                      <div className="w-10 h-10 mx-auto mb-3 rounded-lg bg-[var(--color-bg-page)] flex items-center justify-center">
+                        <SearchIcon className="w-5 h-5 text-[var(--color-text-muted)]" />
+                      </div>
+                      <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                        {query ? `No results for "${query}"` : emptyMessage}
+                      </p>
+                      {query && (
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          Try a different search term or browse categories
+                        </p>
+                      )}
                     </div>
                   ) : (
                     Object.entries(groupedItems).map(([category, categoryItems]) => (

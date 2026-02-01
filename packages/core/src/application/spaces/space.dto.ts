@@ -70,6 +70,14 @@ export type SpaceStatusDTO = 'unclaimed' | 'active' | 'claimed' | 'verified';
 export type SpaceSourceDTO = 'ublinked' | 'user-created';
 
 /**
+ * Quorum-based activation status
+ * - ghost: 0 members, space is dormant
+ * - gathering: 1 to activationThreshold-1 members, building momentum
+ * - open: activationThreshold+ members, full features unlocked
+ */
+export type ActivationStatusDTO = 'ghost' | 'gathering' | 'open';
+
+/**
  * Base space properties included in all responses
  */
 export interface SpaceBaseDTO {
@@ -134,6 +142,25 @@ export interface SpaceBaseDTO {
   /** When the space went live (if applicable) */
   wentLiveAt?: Date;
   createdAt: Date;
+
+  // Quorum-based activation (GTM mechanic)
+  /**
+   * Current activation status based on member count or claim status
+   * - ghost: 0 members
+   * - gathering: 1 to activationThreshold-1 members
+   * - open: activationThreshold+ members OR space is claimed
+   */
+  activationStatus: ActivationStatusDTO;
+  /** Number of members needed to activate the space (default: 10) */
+  activationThreshold: number;
+  /** When the space reached activation threshold */
+  activatedAt?: Date;
+  /** Progress toward activation (0 to 1) */
+  activationProgress: number;
+  /** Members still needed to activate (0 if already open) */
+  membersNeededToActivate: number;
+  /** Whether chat is available (open OR claimed) */
+  canChat: boolean;
 
   // CampusLabs imported metadata
   /** Contact email for the organization */
@@ -239,8 +266,8 @@ export interface SpaceWidgetStatsDTO {
  * Includes: membership data, activity metrics, widget stats
  */
 export interface SpaceMembershipDTO extends SpaceBaseDTO {
-  /** Whether the space is currently active (separate from lifecycle status) */
-  activationStatus: 'activated' | 'inactive';
+  /** Whether the space is currently active for the user (separate from lifecycle status) */
+  userActivationStatus: 'activated' | 'inactive';
   updatedAt: Date;
   tabCount: number;
   widgetCount: number;

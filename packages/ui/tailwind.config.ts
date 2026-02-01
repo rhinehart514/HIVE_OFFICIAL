@@ -1,12 +1,13 @@
 import type { Config } from 'tailwindcss';
+import { foundation, semantic, components } from '@hive/tokens';
 
 /**
  * HIVE Design System Tailwind Configuration
- * Aligned with design-system/LANGUAGE.md
+ * Single source of truth: @hive/tokens/design-system-v2
  *
  * THE PHILOSOPHY:
  * - 95% grayscale, 5% gold (the campfire)
- * - Warm darks, not cold tech
+ * - Neutral grays, gold brings warmth
  * - Motion answers questions, not decoration
  */
 const config: Config = {
@@ -15,24 +16,20 @@ const config: Config = {
   theme: {
     extend: {
       // ============================================
-      // TYPOGRAPHY (from LANGUAGE.md Part 1)
+      // TYPOGRAPHY
       // ============================================
       fontFamily: {
-        // Primary fonts
         display: ['Clash Display', 'SF Pro Display', 'system-ui', 'sans-serif'],
         body: ['Geist', 'SF Pro Text', 'system-ui', 'sans-serif'],
         mono: ['Geist Mono', 'SF Mono', 'ui-monospace', 'monospace'],
-        // Legacy alias
         sans: ['Geist', 'SF Pro Text', 'system-ui', 'sans-serif'],
       },
       fontSize: {
-        // Display Scale (Clash Display at 32px+)
         'hero': ['72px', { lineHeight: '1', letterSpacing: '-0.03em', fontWeight: '700' }],
         'display-xl': ['56px', { lineHeight: '1.1', letterSpacing: '-0.03em', fontWeight: '600' }],
         'display-lg': ['48px', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '600' }],
         'display': ['40px', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '600' }],
         'display-sm': ['32px', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '600' }],
-        // Interface Scale (Geist)
         'title-lg': ['24px', { lineHeight: '1.25', fontWeight: '600' }],
         'title': ['20px', { lineHeight: '1.25', fontWeight: '600' }],
         'body-lg': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
@@ -44,76 +41,76 @@ const config: Config = {
       },
 
       // ============================================
-      // COLORS (from LANGUAGE.md Part 2)
+      // COLORS - From @hive/tokens (unified source)
       // ============================================
       colors: {
-        // Foundation Surfaces - Warm darks
-        void: '#050504',
-        ground: '#0A0A09',
+        // Foundation Surfaces - Neutral grays from tokens
+        void: '#050505',
+        ground: foundation.gray[1000],       // #0A0A0A
         surface: {
-          DEFAULT: '#141312',
-          hover: '#1A1917',
-          active: '#252521',
+          DEFAULT: foundation.gray[900],     // #141414
+          hover: foundation.gray[800],       // #1A1A1A
+          active: foundation.gray[750],      // #242424
         },
-        elevated: '#1E1D1B',
+        elevated: foundation.gray[800],      // #1A1A1A
 
-        // Text Hierarchy - Slightly warm whites
-        'text-primary': '#FAF9F7',
-        'text-secondary': '#A3A19E',
-        'text-tertiary': '#6B6B70',
-        'text-muted': '#3D3D42',
-        'text-ghost': '#2A2A2E',
-        'text-inverse': '#0A0A09',
+        // Text Hierarchy - From semantic tokens
+        'text-primary': foundation.gray[50],   // #FAFAFA
+        'text-secondary': foundation.gray[200], // #A1A1A6
+        'text-tertiary': foundation.gray[300],  // #818187
+        'text-muted': foundation.gray[350],     // #71717A
+        'text-ghost': foundation.gray[400],     // #52525B
+        'text-inverse': foundation.black,       // #000000
 
         // Interactive Surfaces
         interactive: {
-          DEFAULT: 'rgba(255, 255, 255, 0.06)',
-          hover: 'rgba(255, 255, 255, 0.10)',
-          active: 'rgba(255, 255, 255, 0.15)',
+          DEFAULT: semantic.interactive.hover,  // rgba(255, 255, 255, 0.04)
+          hover: semantic.interactive.active,   // rgba(255, 255, 255, 0.08)
+          active: 'rgba(255, 255, 255, 0.12)',
         },
 
-        // Life Colors (Gold) - THE CAMPFIRE
+        // Gold - THE CAMPFIRE (from tokens)
         life: {
-          gold: '#FFD700',
-          'gold-hover': '#FFDF33',
-          'gold-active': '#E5C200',
+          gold: foundation.gold[500],          // #FFD700
+          'gold-hover': foundation.gold.hover, // #E6C200
+          'gold-active': foundation.gold.dim,  // #CC9900
           pulse: 'rgba(255, 215, 0, 0.60)',
-          glow: 'rgba(255, 215, 0, 0.15)',
-          subtle: 'rgba(255, 215, 0, 0.08)',
-          edge: 'rgba(255, 215, 0, 0.15)',
+          glow: foundation.gold.glow,          // rgba(255, 215, 0, 0.15)
+          subtle: foundation.gold.subtle,      // rgba(255, 215, 0, 0.1)
+          edge: foundation.gold.glow,
         },
 
-        // Status (ultra-rare)
+        // Status - From semantic tokens
         status: {
-          error: '#EF4444',
-          'error-subtle': 'rgba(239, 68, 68, 0.15)',
-          warning: '#F59E0B',
-          'warning-subtle': 'rgba(245, 158, 11, 0.15)',
-          success: '#22C55E',
-          'success-subtle': 'rgba(34, 197, 94, 0.15)',
+          error: semantic.status.error,        // #FF3737
+          'error-subtle': semantic.status.errorDim,
+          warning: semantic.status.warning,    // #FFB800
+          'warning-subtle': semantic.status.warningDim,
+          success: semantic.status.success,    // #00D46A
+          'success-subtle': semantic.status.successDim,
         },
 
-        // Borders
+        // Borders - From semantic tokens
         border: {
-          subtle: 'rgba(255, 255, 255, 0.06)',
-          DEFAULT: 'rgba(255, 255, 255, 0.10)',
-          emphasis: 'rgba(255, 255, 255, 0.15)',
+          subtle: semantic.border.subtle,      // rgba(255, 255, 255, 0.04)
+          DEFAULT: semantic.border.medium,     // rgba(255, 255, 255, 0.08)
+          emphasis: semantic.border.visible,   // rgba(255, 255, 255, 0.16)
         },
 
         // Focus (WHITE, never gold)
         focus: {
-          ring: 'rgba(255, 255, 255, 0.50)',
+          ring: semantic.interactive.focus,    // rgba(255, 255, 255, 0.5)
         },
 
-        // Legacy aliases
+        // Legacy aliases - Map to token values
         hive: {
-          page: '#0A0A09',
-          card: '#141312',
-          hover: '#1A1917',
-          elevated: '#1E1D1B',
-          border: 'rgba(255, 255, 255, 0.10)',
-          'border-subtle': 'rgba(255, 255, 255, 0.06)',
-          gold: '#FFD700',
+          page: foundation.gray[1000],
+          card: foundation.gray[900],
+          hover: foundation.gray[800],
+          elevated: foundation.gray[800],
+          border: semantic.border.medium,
+          'border-subtle': semantic.border.subtle,
+          gold: foundation.gold[500],
         },
       },
 
@@ -150,15 +147,17 @@ const config: Config = {
 
       // ============================================
       // DEPTH (from LANGUAGE.md Part 5)
+      // Updated 2026-01-29 to match Visual Direction spec (round 16px+)
       // ============================================
       borderRadius: {
         'none': '0',
-        'sm': '4px',
-        'DEFAULT': '8px',
-        'md': '8px',
-        'lg': '12px',
-        'xl': '16px',
-        '2xl': '24px',
+        'sm': '8px',       // was 4px - bumped for rounder feel
+        'DEFAULT': '12px', // was 8px - standard cards/inputs
+        'md': '12px',      // was 8px - same as default
+        'lg': '16px',      // was 12px - larger cards
+        'xl': '20px',      // was 16px - modals, hero elements
+        '2xl': '24px',     // unchanged - extra large
+        '3xl': '32px',     // new - for special cases
         'full': '9999px',
       },
       boxShadow: {
@@ -225,6 +224,12 @@ const config: Config = {
           '0%, 100%': { transform: 'scale(1)', opacity: '1' },
           '50%': { transform: 'scale(1.05)', opacity: '0.8' },
         },
+        // Error feedback animation
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-4px)' },
+          '20%, 40%, 60%, 80%': { transform: 'translateX(4px)' },
+        },
         drift: {
           '0%': { transform: 'translate(0, 0)' },
           '50%': { transform: 'translate(10px, 5px)' },
@@ -259,6 +264,8 @@ const config: Config = {
         'pulse-life': 'pulse 3s ease-in-out infinite',
         'drift': 'drift 20s ease-in-out infinite',
         'shimmer': 'shimmer 2s linear infinite',
+        // Error feedback
+        'shake': 'shake 0.5s ease-in-out',
         // Legacy animations
         'shine-rotate': 'shine-rotate var(--shine-duration, 14s) linear infinite',
         'border-beam': 'border-beam var(--beam-duration, 12s) linear infinite',

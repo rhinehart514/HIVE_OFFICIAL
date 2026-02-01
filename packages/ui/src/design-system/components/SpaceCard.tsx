@@ -23,6 +23,9 @@ import {
   Badge,
   AvatarGroup,
   getWarmthFromActiveUsers,
+  SpaceHealthBadge,
+  getSpaceHealthLevel,
+  type SpaceHealthLevel,
 } from '../primitives';
 
 // ============================================
@@ -91,6 +94,12 @@ export interface SpaceCardProps {
     onlineCount: number;
     mutualCount?: number; // "X you know"
     members?: Array<{ id: string; avatar?: string; name?: string }>;
+    /** Last activity timestamp for health calculation */
+    lastActivityAt?: string | Date | null;
+    /** Recent message count (last 24h) for health calculation */
+    recentMessageCount?: number;
+    /** New members in last 7 days for growth indicator */
+    newMembers7d?: number;
   };
   /** Card size variant */
   variant?: 'default' | 'compact';
@@ -122,7 +131,19 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
     onlineCount,
     mutualCount = 0,
     members = [],
+    lastActivityAt,
+    recentMessageCount,
+    newMembers7d,
   } = space;
+
+  // Calculate health level for health indicator
+  const healthLevel = getSpaceHealthLevel({
+    lastActivityAt,
+    onlineCount,
+    recentMessageCount,
+    memberCount,
+    newMembers7d,
+  });
 
   const initials = name
     .split(' ')
@@ -166,6 +187,13 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                   `${memberCount} members`
                 )}
               </Text>
+              {/* Health indicator for compact */}
+              <SpaceHealthBadge
+                level={healthLevel}
+                variant="dot"
+                dotSize="xs"
+                animated
+              />
             </div>
           </div>
         </div>
@@ -251,7 +279,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
 
         {/* LOCKED: Stat row with "X you know" in gold */}
         <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-          {/* Members */}
+          {/* Members + Health */}
           <div className="flex items-center gap-3">
             {members.length > 0 && (
               <AvatarGroup
@@ -267,13 +295,29 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
             <Text size="xs" tone="muted">
               {memberCount.toLocaleString()} members
             </Text>
+            {/* Health indicator */}
+            <SpaceHealthBadge
+              level={healthLevel}
+              variant="compact"
+              showLabel={false}
+              dotSize="sm"
+              animated
+            />
           </div>
 
-          {/* "X you know" in gold */}
-          {mutualCount > 0 && (
+          {/* "X you know" in gold OR health label if no mutuals */}
+          {mutualCount > 0 ? (
             <Text size="xs" className="text-[var(--color-accent-gold)]">
               {mutualCount} you know
             </Text>
+          ) : (
+            <SpaceHealthBadge
+              level={healthLevel}
+              variant="compact"
+              showLabel
+              dotSize="xs"
+              animated={false}
+            />
           )}
         </div>
       </div>

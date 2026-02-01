@@ -162,7 +162,7 @@ function GoldBorderInput({
       <div className="relative rounded-2xl overflow-hidden">
         {/* Top border */}
         <motion.div
-          className="absolute top-0 left-0 right-0 h-px bg-[var(--life-gold)]/20"
+          className="absolute top-0 left-0 right-0 h-px bg-white/20"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: isFocused ? 1 : 0 }}
           transition={{
@@ -174,7 +174,7 @@ function GoldBorderInput({
         />
         {/* Bottom border */}
         <motion.div
-          className="absolute bottom-0 left-0 right-0 h-px bg-[var(--life-gold)]/20"
+          className="absolute bottom-0 left-0 right-0 h-px bg-white/20"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: isFocused ? 1 : 0 }}
           transition={{
@@ -186,7 +186,7 @@ function GoldBorderInput({
         />
         {/* Left border */}
         <motion.div
-          className="absolute top-0 bottom-0 left-0 w-px bg-[var(--life-gold)]/20"
+          className="absolute top-0 bottom-0 left-0 w-px bg-white/20"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: isFocused ? 1 : 0 }}
           transition={{
@@ -198,7 +198,7 @@ function GoldBorderInput({
         />
         {/* Right border */}
         <motion.div
-          className="absolute top-0 bottom-0 right-0 w-px bg-[var(--life-gold)]/20"
+          className="absolute top-0 bottom-0 right-0 w-px bg-white/20"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: isFocused ? 1 : 0 }}
           transition={{
@@ -207,17 +207,6 @@ function GoldBorderInput({
             ease: EASE,
           }}
           style={{ transformOrigin: 'bottom' }}
-        />
-
-        {/* Glow effect on focus */}
-        <motion.div
-          className="absolute inset-0 rounded-2xl pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isFocused ? 1 : 0 }}
-          transition={{ duration: DURATION.fast }}
-          style={{
-            boxShadow: '0 0 40px rgba(255, 215, 0, 0.1), inset 0 0 20px rgba(255, 215, 0, 0.02)',
-          }}
         />
 
         {/* Input container */}
@@ -246,11 +235,11 @@ function GoldBorderInput({
         </div>
       </div>
 
-      {/* Sparkle hint */}
+      {/* Start hint */}
       <div className="absolute -top-3 left-4 flex items-center gap-1.5 px-2 py-0.5
         bg-[var(--bg-ground,#0A0A09)] text-white/40 text-xs">
         <Sparkles className="w-3 h-3" />
-        <span>AI-powered</span>
+        <span>Quick start</span>
       </div>
     </div>
   );
@@ -379,11 +368,11 @@ export default function BuilderDashboard() {
             Build tools for your campus
           </h1>
           <p className="text-white/50 mb-8">
-            Sign in to create polls, RSVPs, countdowns, and more with AI.
+            Sign in to create polls, RSVPs, countdowns, and more for your spaces.
           </p>
           <button
             onClick={() => router.push('/enter?redirect=/lab')}
-            className="px-6 py-3 bg-white text-black rounded-full font-medium
+            className="px-6 py-3 bg-white text-[var(--color-bg-void,#0A0A09)] rounded-xl font-medium
               hover:bg-white/90 transition-colors"
           >
             Sign in to start building
@@ -512,7 +501,7 @@ export default function BuilderDashboard() {
                   onBlur={() => setIsFocused(false)}
                   disabled={isSubmitting}
                   isFocused={isFocused}
-                  placeholder="Or describe what you need..."
+                  placeholder="Or name a new tool..."
                   inputRef={inputRef}
                 />
 
@@ -644,7 +633,7 @@ export default function BuilderDashboard() {
             >
               <div className="flex-1 h-px bg-white/[0.06]" />
               <span className="text-white/30 text-xs tracking-wide">
-                or describe what you need
+                or start from scratch
               </span>
               <div className="flex-1 h-px bg-white/[0.06]" />
             </motion.div>
@@ -665,7 +654,7 @@ export default function BuilderDashboard() {
                   onBlur={() => setIsFocused(false)}
                   disabled={isSubmitting}
                   isFocused={isFocused}
-                  placeholder="Describe the tool you need..."
+                  placeholder="Name your tool to get started..."
                   inputRef={inputRef}
                 />
 

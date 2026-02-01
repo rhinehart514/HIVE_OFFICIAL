@@ -76,6 +76,10 @@ export {
   chatSpacingClasses,
   PANEL_MOTION,
   CONTEXT_PANEL,
+  // Responsive behavior (Design Principles)
+  RESPONSIVE_BEHAVIOR,
+  MOBILE_ONLY,
+  DESKTOP_ONLY,
 } from './layout';
 
 export type {
@@ -97,6 +101,10 @@ export {
   TYPOGRAPHY as TYPOGRAPHY_PATTERNS,
   MOTION_TIERS,
   ELEVATION,
+  EMPTY_STATE,
+  LOADING,
+  MODAL,
+  TOAST,
 } from './patterns';
 
 export type {
@@ -109,6 +117,10 @@ export type {
   TypographyPattern,
   MotionTier,
   ElevationLevel,
+  EmptyStatePattern,
+  LoadingPattern,
+  ModalPattern,
+  ToastPattern,
 } from './patterns';
 
 // Motion tokens
@@ -126,6 +138,10 @@ export {
   SPRING_SNAP_NAV,
   PUNCH_TRANSITION,
   SNAP_TRANSITION,
+  // HIVE signature variants (Design Principles)
+  revealVariants,
+  surfaceVariants,
+  staggerContainerVariants,
   // Phase 5: Micro-interaction presets
   buttonPressVariants,
   cardHoverVariants,
@@ -137,6 +153,18 @@ export {
   dropdownVariants,
   selectionVariants,
   reducedMotionVariants,
+} from './motion';
+
+export type {
+  MotionToken,
+  MotionEasing,
+  MotionDuration,
+  MotionCascade,
+  EasingArray,
+  DurationSeconds,
+  SpringPreset,
+  TinderSpring,
+  StaggerPreset,
 } from './motion';
 
 // Tailwind config
@@ -176,3 +204,27 @@ export type {
   IDEAccent,
   IDETokens,
 } from './ide';
+
+// Space tokens - Split Panel layout for /s/[handle]
+export {
+  SPACE_LAYOUT,
+  spaceLayoutCSS,
+  spaceLayoutClasses,
+  SPACE_COLORS,
+  spaceColorVars,
+  SPACE_TYPOGRAPHY,
+  spaceTypographyClasses,
+  SPACE_MOTION,
+  spaceMotionVariants,
+  SPACE_COMPONENTS,
+  SPACE_RESPONSIVE,
+  SPACE_Z_INDEX,
+} from './spaces';
+
+export type {
+  SpaceLayout,
+  SpaceColors,
+  SpaceTypography,
+  SpaceMotion,
+  SpaceComponents,
+} from './spaces';

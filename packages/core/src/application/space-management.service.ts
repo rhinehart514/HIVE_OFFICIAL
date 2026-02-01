@@ -35,6 +35,11 @@ export interface SpaceMemberData {
   isActive: boolean;
   permissions: string[];
   joinMethod: 'created' | 'manual' | 'invite' | 'approval' | 'auto';
+  /**
+   * Whether this member joined before the space reached activation threshold.
+   * Founding members get special recognition for helping bootstrap the community.
+   */
+  isFoundingMember?: boolean;
 }
 
 /**
@@ -227,6 +232,7 @@ export interface UpdateTabInput {
   spaceId: string;
   tabId: string;
   name?: string;
+  description?: string;
   order?: number;
   isVisible?: boolean;
 }
@@ -1292,16 +1298,27 @@ export class SpaceManagementService extends BaseApplicationService {
         return Result.fail<void>('Only leaders can change member roles');
       }
 
-      // Update role
+      // Update role in aggregate (validates business rules)
       const updateResult = space.updateMemberRole(targetProfileId, input.newRole);
       if (updateResult.isFailure) {
         return Result.fail<void>(updateResult.error!);
       }
 
-      // Save space
+      // Save aggregate state
       const saveResult = await this.spaceRepo.save(space);
       if (saveResult.isFailure) {
         return Result.fail<void>(saveResult.error!);
+      }
+
+      // Update spaceMembers collection with new role and permissions
+      if (this.updateSpaceMember) {
+        const memberUpdateResult = await this.updateSpaceMember(input.spaceId, input.targetUserId, {
+          role: input.newRole,
+          permissions: this.getPermissionsForRole(input.newRole)
+        });
+        if (memberUpdateResult.isFailure) {
+          // Log but don't fail - aggregate updated, member collection can be reconciled
+        }
       }
 
       return Result.ok<void>();
@@ -1548,6 +1565,7 @@ export class SpaceManagementService extends BaseApplicationService {
       // Update tab via aggregate
       const updateResult = space.updateTab(input.tabId, {
         name: input.name,
+        description: input.description,
         order: input.order,
         isVisible: input.isVisible
       });

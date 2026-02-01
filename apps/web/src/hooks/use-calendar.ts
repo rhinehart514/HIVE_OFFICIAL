@@ -264,13 +264,50 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     return createdEvent;
   }, []);
 
-  const updateEventRSVP = useCallback((eventId: string, status: CalendarEvent['rsvpStatus']) => {
+  const updateEventRSVP = useCallback(async (eventId: string, status: CalendarEvent['rsvpStatus'], spaceId?: string) => {
+    // Find the event to get its spaceId if not provided
+    const event = events.find(e => e.id === eventId);
+    const targetSpaceId = spaceId || event?.space?.id;
+
+    // Optimistic update
     setEvents(prev =>
-      prev.map(event =>
-        event.id === eventId ? { ...event, rsvpStatus: status } : event
+      prev.map(e =>
+        e.id === eventId ? { ...e, rsvpStatus: status } : e
       )
     );
-  }, []);
+
+    // If we have a space ID, persist to API
+    if (targetSpaceId) {
+      try {
+        const response = await fetch(`/api/spaces/${targetSpaceId}/events/${eventId}/rsvp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          // Revert on failure
+          setEvents(prev =>
+            prev.map(e =>
+              e.id === eventId ? { ...e, rsvpStatus: event?.rsvpStatus } : e
+            )
+          );
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Failed to update RSVP');
+        }
+      } catch (err) {
+        logger.error('Failed to update RSVP', { eventId, status, error: err instanceof Error ? err.message : 'Unknown error' });
+        // Revert optimistic update on error
+        setEvents(prev =>
+          prev.map(e =>
+            e.id === eventId ? { ...e, rsvpStatus: event?.rsvpStatus } : e
+          )
+        );
+        throw err;
+      }
+    }
+  }, [events]);
 
   const removeEvent = useCallback((eventId: string) => {
     setEvents(prev => prev.filter(event => event.id !== eventId));

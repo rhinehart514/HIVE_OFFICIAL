@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /tools/setups/[setupId] — Setup Detail Page
+ * /lab/setups/[setupId] — Setup Detail Page
  *
  * Shows setup template details including:
  * - Tool slots visualization
@@ -41,16 +41,6 @@ import { BrandSpinner, Button } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 
 const EASE = MOTION.ease.premium;
-
-const COLORS = {
-  gold: 'var(--life-gold, #D4AF37)',
-  bg: 'var(--bg-ground, #0A0A09)',
-  text: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  surface: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-};
 
 // Category configuration
 const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
@@ -168,40 +158,33 @@ function ToolSlotCard({ slot, index }: { slot: SetupToolSlot; index: number }) {
         duration: shouldReduceMotion ? 0 : 0.2,
         delay: shouldReduceMotion ? 0 : index * 0.05,
       }}
-      className="p-4 rounded-lg border"
-      style={{ backgroundColor: COLORS.surface, borderColor: COLORS.border }}
+      className="p-4 rounded-lg border bg-[var(--hivelab-surface)] border-[var(--hivelab-border)]"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div
-            className="p-1.5 rounded"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
-          >
-            <PlacementIcon className="h-4 w-4" style={{ color: COLORS.textSecondary }} />
+          <div className="p-1.5 rounded bg-white/5">
+            <PlacementIcon className="h-4 w-4 text-[var(--hivelab-text-secondary)]" />
           </div>
-          <span className="font-medium text-sm" style={{ color: COLORS.text }}>
+          <span className="font-medium text-sm text-[var(--hivelab-text-primary)]">
             {slot.name}
           </span>
         </div>
         {slot.initiallyVisible ? (
-          <Eye className="h-4 w-4" style={{ color: COLORS.textTertiary }} />
+          <Eye className="h-4 w-4 text-[var(--hivelab-text-tertiary)]" />
         ) : (
-          <EyeOff className="h-4 w-4" style={{ color: COLORS.textTertiary }} />
+          <EyeOff className="h-4 w-4 text-[var(--hivelab-text-tertiary)]" />
         )}
       </div>
       {slot.description && (
-        <p className="text-xs mb-2" style={{ color: COLORS.textTertiary }}>
+        <p className="text-xs mb-2 text-[var(--hivelab-text-tertiary)]">
           {slot.description}
         </p>
       )}
       <div className="flex items-center gap-2">
-        <span
-          className="text-label-xs px-2 py-0.5 rounded-full capitalize"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textSecondary }}
-        >
+        <span className="text-label-xs px-2 py-0.5 rounded-full capitalize bg-white/5 text-[var(--hivelab-text-secondary)]">
           {slot.placement}
         </span>
-        <span className="text-label-xs" style={{ color: COLORS.textTertiary }}>
+        <span className="text-label-xs text-[var(--hivelab-text-tertiary)]">
           {slot.slotId}
         </span>
       </div>
@@ -224,31 +207,20 @@ function OrchestrationRuleCard({ rule, index }: { rule: OrchestrationRule; index
         duration: shouldReduceMotion ? 0 : 0.2,
         delay: shouldReduceMotion ? 0 : index * 0.05,
       }}
-      className="p-4 rounded-lg border"
-      style={{
-        backgroundColor: COLORS.surface,
-        borderColor: rule.enabled ? COLORS.border : 'rgba(255, 255, 255, 0.04)',
-        opacity: rule.enabled ? 1 : 0.6,
-      }}
+      className={`p-4 rounded-lg border bg-[var(--hivelab-surface)] ${rule.enabled ? 'border-[var(--hivelab-border)]' : 'border-white/[0.04] opacity-60'}`}
     >
       {/* Rule header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div
-            className="p-1.5 rounded"
-            style={{ backgroundColor: `${COLORS.gold}15` }}
-          >
-            <TriggerIcon className="h-4 w-4" style={{ color: COLORS.gold }} />
+          <div className="p-1.5 rounded bg-[var(--life-gold)]/15">
+            <TriggerIcon className="h-4 w-4 text-[var(--life-gold)]" />
           </div>
           <div>
-            <span className="font-medium text-sm" style={{ color: COLORS.text }}>
+            <span className="font-medium text-sm text-[var(--hivelab-text-primary)]">
               {rule.name}
             </span>
             {!rule.enabled && (
-              <span
-                className="ml-2 text-label-xs px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textTertiary }}
-              >
+              <span className="ml-2 text-label-xs px-1.5 py-0.5 rounded bg-white/5 text-[var(--hivelab-text-tertiary)]">
                 Disabled
               </span>
             )}
@@ -257,7 +229,7 @@ function OrchestrationRuleCard({ rule, index }: { rule: OrchestrationRule; index
       </div>
 
       {rule.description && (
-        <p className="text-xs mb-3" style={{ color: COLORS.textTertiary }}>
+        <p className="text-xs mb-3 text-[var(--hivelab-text-tertiary)]">
           {rule.description}
         </p>
       )}
@@ -265,10 +237,7 @@ function OrchestrationRuleCard({ rule, index }: { rule: OrchestrationRule; index
       {/* Trigger -> Actions flow */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* Trigger */}
-        <div
-          className="flex items-center gap-1.5 px-2 py-1 rounded text-xs"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textSecondary }}
-        >
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-white/5 text-[var(--hivelab-text-secondary)]">
           <TriggerIcon className="h-3 w-3" />
           {rule.trigger.type === 'tool_event' && rule.trigger.sourceSlotId && (
             <span>
@@ -282,7 +251,7 @@ function OrchestrationRuleCard({ rule, index }: { rule: OrchestrationRule; index
           {rule.trigger.type === 'data_condition' && <span>Condition</span>}
         </div>
 
-        <ChevronRight className="h-4 w-4" style={{ color: COLORS.textTertiary }} />
+        <ChevronRight className="h-4 w-4 text-[var(--hivelab-text-tertiary)]" />
 
         {/* Actions */}
         {rule.actions.map((action, i) => {
@@ -290,8 +259,7 @@ function OrchestrationRuleCard({ rule, index }: { rule: OrchestrationRule; index
           return (
             <div
               key={i}
-              className="flex items-center gap-1.5 px-2 py-1 rounded text-xs"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textSecondary }}
+              className="flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-white/5 text-[var(--hivelab-text-secondary)]"
             >
               <ActionIcon className="h-3 w-3" />
               <span>
@@ -311,12 +279,30 @@ function OrchestrationRuleCard({ rule, index }: { rule: OrchestrationRule; index
   );
 }
 
+interface Space {
+  id: string;
+  name: string;
+  handle?: string;
+  memberCount?: number;
+}
+
+async function fetchUserSpaces(): Promise<Space[]> {
+  const response = await fetch('/api/profile/my-spaces?limit=50', {
+    credentials: 'include',
+  });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return data.spaces || [];
+}
+
 export default function SetupDetailPage() {
   const router = useRouter();
   const params = useParams();
   const shouldReduceMotion = useReducedMotion();
   const setupId = params.setupId as string;
   const [showDeployModal, setShowDeployModal] = React.useState(false);
+  const [selectedSpaceId, setSelectedSpaceId] = React.useState<string | null>(null);
+  const [deploying, setDeploying] = React.useState(false);
 
   const { data: setup, isLoading, error } = useQuery({
     queryKey: ['setup-template', setupId],
@@ -324,16 +310,54 @@ export default function SetupDetailPage() {
     enabled: !!setupId,
   });
 
+  const { data: userSpaces = [] } = useQuery({
+    queryKey: ['user-spaces-for-deploy'],
+    queryFn: fetchUserSpaces,
+    enabled: showDeployModal,
+  });
+
+  const handleDeploy = async () => {
+    if (!selectedSpaceId || !setup) return;
+    setDeploying(true);
+    try {
+      const response = await fetch('/api/setups/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          templateId: setup.id,
+          spaceId: selectedSpaceId,
+          config: {},
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Deploy failed');
+      }
+      const data = await response.json();
+      setShowDeployModal(false);
+      // Navigate to the space
+      const space = userSpaces.find(s => s.id === selectedSpaceId);
+      if (space?.handle) {
+        router.push(`/s/${space.handle}`);
+      } else {
+        router.push('/spaces');
+      }
+    } catch (err) {
+      console.error('Deploy error:', err);
+      alert(err instanceof Error ? err.message : 'Failed to deploy setup');
+    } finally {
+      setDeploying(false);
+    }
+  };
+
   const categoryConfig = setup
     ? CATEGORY_CONFIG[setup.category] || CATEGORY_CONFIG.event
     : CATEGORY_CONFIG.event;
 
   if (isLoading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: COLORS.bg }}
-      >
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-ground)]">
         <BrandSpinner size="md" variant="neutral" />
       </div>
     );
@@ -341,17 +365,13 @@ export default function SetupDetailPage() {
 
   if (error || !setup) {
     return (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center"
-        style={{ backgroundColor: COLORS.bg }}
-      >
-        <p className="text-lg mb-4" style={{ color: COLORS.text }}>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-ground)]">
+        <p className="text-lg mb-4 text-[var(--hivelab-text-primary)]">
           Setup not found
         </p>
         <Link
-          href="/tools/setups"
-          className="text-sm transition-colors"
-          style={{ color: COLORS.gold }}
+          href="/lab/setups"
+          className="text-sm transition-colors text-[var(--life-gold)] hover:brightness-110"
         >
           Back to Setups
         </Link>
@@ -362,7 +382,7 @@ export default function SetupDetailPage() {
   const CategoryIcon = categoryConfig.icon;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: COLORS.bg }}>
+    <div className="min-h-screen bg-[var(--bg-ground)]">
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Back link */}
         <motion.div
@@ -371,11 +391,8 @@ export default function SetupDetailPage() {
           transition={{ duration: 0.3, ease: EASE }}
         >
           <Link
-            href="/tools/setups"
-            className="inline-flex items-center gap-2 text-sm transition-colors mb-8"
-            style={{ color: COLORS.textSecondary }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = COLORS.text)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = COLORS.textSecondary)}
+            href="/lab/setups"
+            className="inline-flex items-center gap-2 text-sm transition-colors mb-8 text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)]"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Setups
@@ -398,17 +415,17 @@ export default function SetupDetailPage() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-medium" style={{ color: COLORS.text }}>
+                <h1 className="text-2xl font-medium text-[var(--hivelab-text-primary)]">
                   {setup.name}
                 </h1>
                 {setup.isFeatured && (
-                  <Sparkles className="h-5 w-5" style={{ color: COLORS.gold }} />
+                  <Sparkles className="h-5 w-5 text-[var(--life-gold)]" />
                 )}
               </div>
-              <p className="text-sm mb-3" style={{ color: COLORS.textSecondary }}>
+              <p className="text-sm mb-3 text-[var(--hivelab-text-secondary)]">
                 {setup.description}
               </p>
-              <div className="flex items-center gap-4 text-sm" style={{ color: COLORS.textTertiary }}>
+              <div className="flex items-center gap-4 text-sm text-[var(--hivelab-text-tertiary)]">
                 <span className="flex items-center gap-1.5">
                   <Layers className="h-4 w-4" />
                   {setup.tools.length} tools
@@ -439,7 +456,7 @@ export default function SetupDetailPage() {
             {!setup.isSystem && (
               <Button
                 variant="secondary"
-                onClick={() => router.push(`/tools/setups/${setupId}/edit`)}
+                onClick={() => router.push(`/lab/setups/${setupId}/edit`)}
                 className="flex items-center gap-2"
               >
                 <Edit className="h-4 w-4" />
@@ -456,7 +473,7 @@ export default function SetupDetailPage() {
           transition={{ duration: 0.3, delay: 0.1 }}
           className="mb-8"
         >
-          <h2 className="text-sm font-medium mb-4" style={{ color: COLORS.textSecondary }}>
+          <h2 className="text-sm font-medium mb-4 text-[var(--hivelab-text-secondary)]">
             Tool Slots
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -474,7 +491,7 @@ export default function SetupDetailPage() {
             transition={{ duration: 0.3, delay: 0.2 }}
             className="mb-8"
           >
-            <h2 className="text-sm font-medium mb-4" style={{ color: COLORS.textSecondary }}>
+            <h2 className="text-sm font-medium mb-4 text-[var(--hivelab-text-secondary)]">
               Orchestration Rules
             </h2>
             <div className="space-y-3">
@@ -493,29 +510,23 @@ export default function SetupDetailPage() {
             transition={{ duration: 0.3, delay: 0.3 }}
             className="mb-8"
           >
-            <h2 className="text-sm font-medium mb-4" style={{ color: COLORS.textSecondary }}>
+            <h2 className="text-sm font-medium mb-4 text-[var(--hivelab-text-secondary)]">
               Configuration Fields
             </h2>
-            <div
-              className="p-4 rounded-lg border"
-              style={{ backgroundColor: COLORS.surface, borderColor: COLORS.border }}
-            >
-              <p className="text-xs mb-3" style={{ color: COLORS.textTertiary }}>
+            <div className="p-4 rounded-lg border bg-[var(--hivelab-surface)] border-[var(--hivelab-border)]">
+              <p className="text-xs mb-3 text-[var(--hivelab-text-tertiary)]">
                 These fields will be configured when deploying:
               </p>
               <div className="space-y-2">
                 {setup.configFields.map((field) => (
                   <div key={field.key} className="flex items-center gap-2">
-                    <span className="text-sm" style={{ color: COLORS.text }}>
+                    <span className="text-sm text-[var(--hivelab-text-primary)]">
                       {field.label}
                     </span>
                     {field.required && (
                       <span className="text-label-xs text-red-400">Required</span>
                     )}
-                    <span
-                      className="text-label-xs px-1.5 py-0.5 rounded"
-                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textTertiary }}
-                    >
+                    <span className="text-label-xs px-1.5 py-0.5 rounded bg-white/5 text-[var(--hivelab-text-tertiary)]">
                       {field.type}
                     </span>
                   </div>
@@ -532,15 +543,14 @@ export default function SetupDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.4 }}
           >
-            <h2 className="text-sm font-medium mb-4" style={{ color: COLORS.textSecondary }}>
+            <h2 className="text-sm font-medium mb-4 text-[var(--hivelab-text-secondary)]">
               Tags
             </h2>
             <div className="flex flex-wrap gap-2">
               {setup.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="px-3 py-1 rounded-full text-xs"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textSecondary }}
+                  className="px-3 py-1 rounded-full text-xs bg-white/5 text-[var(--hivelab-text-secondary)]"
                 >
                   {tag}
                 </span>
@@ -549,7 +559,7 @@ export default function SetupDetailPage() {
           </motion.section>
         )}
 
-        {/* Deploy Modal Placeholder */}
+        {/* Deploy Modal with Space Selector */}
         <AnimatePresence>
           {showDeployModal && (
             <motion.div
@@ -565,23 +575,61 @@ export default function SetupDetailPage() {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-                className="w-full max-w-md p-6 rounded-xl"
-                style={{ backgroundColor: COLORS.surface }}
+                className="w-full max-w-md p-6 rounded-xl bg-[var(--hivelab-surface)]"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-lg font-medium mb-4" style={{ color: COLORS.text }}>
+                <h3 className="text-lg font-medium mb-2 text-[var(--hivelab-text-primary)]">
                   Deploy Setup
                 </h3>
-                <p className="text-sm mb-6" style={{ color: COLORS.textSecondary }}>
+                <p className="text-sm mb-6 text-[var(--hivelab-text-secondary)]">
                   Select a space to deploy "{setup.name}" to. This will install all {setup.tools.length} tools
                   with orchestration rules.
                 </p>
+
+                {/* Space Selector */}
+                <div className="mb-6 space-y-2">
+                  <label className="text-xs font-medium text-[var(--hivelab-text-secondary)]">
+                    Select Space
+                  </label>
+                  {userSpaces.length === 0 ? (
+                    <div className="p-4 rounded-lg text-center text-sm bg-white/[0.03] text-[var(--hivelab-text-tertiary)]">
+                      You need to lead a space to deploy setups
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {userSpaces.map((space) => (
+                        <button
+                          key={space.id}
+                          onClick={() => setSelectedSpaceId(space.id)}
+                          className={`w-full p-3 rounded-lg text-left transition-all border ${
+                            selectedSpaceId === space.id
+                              ? 'bg-[var(--life-gold)]/15 border-[var(--life-gold)]'
+                              : 'bg-white/[0.03] border-[var(--hivelab-border)]'
+                          }`}
+                        >
+                          <div className="font-medium text-sm text-[var(--hivelab-text-primary)]">
+                            {space.name}
+                          </div>
+                          {space.handle && (
+                            <div className="text-xs text-[var(--hivelab-text-tertiary)]">
+                              @{space.handle}
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex justify-end gap-3">
                   <Button variant="secondary" onClick={() => setShowDeployModal(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={() => router.push(`/api/setups/deploy?template=${setup.id}`)}>
-                    Select Space
+                  <Button
+                    onClick={handleDeploy}
+                    disabled={!selectedSpaceId || deploying}
+                  >
+                    {deploying ? 'Deploying...' : 'Deploy'}
                   </Button>
                 </div>
               </motion.div>

@@ -176,6 +176,49 @@ export type {
   ParallaxType,
 } from "./tokens/motion";
 
+// Canonical Motion Variants (7 patterns)
+export {
+  // Pattern constants
+  REVEAL,
+  SURFACE,
+  MORPH,
+  CASCADE,
+  OVERLAY,
+  SNAP,
+  CELEBRATE,
+  CELEBRATE_GOLD,
+  // Reveal variants
+  revealTransition,
+  revealFadeUp,
+  revealFade,
+  revealScale,
+  revealContainer,
+  // Surface variants
+  surfaceCard,
+  surfacePanel,
+  surfaceDrawer,
+  surfaceFloat,
+  // Cascade variants
+  cascadeContainer,
+  cascadeItem,
+  cascadeMessage,
+  // Overlay variants
+  overlayBackdrop,
+  overlayModal,
+  overlayDialog,
+  overlayCommand,
+  overlayToast,
+  // Snap variants
+  snapButton,
+  snapToggle,
+  snapCheck,
+  // Celebrate variants
+  celebratePop,
+  celebrateGlow,
+  celebrateCheck,
+  celebrateBadge,
+} from "./tokens/variants";
+
 // Layout Tokens (Jan 2026 - Consistent layout dimensions)
 export {
   HEADER_HEIGHT,
@@ -429,6 +472,32 @@ export type {
   CountBadgeProps,
 } from "./design-system/primitives";
 // NOTE: NotificationBadge, StatusBadge - Use CountBadge or Badge with variant instead
+
+// Space Health Badge (Sprint 3 - Jan 2026)
+export {
+  SpaceHealthBadge,
+  SpaceHealthDot,
+  SpaceHealthEdge,
+  SpaceGrowthIndicator,
+  SpaceHealthIndicator,
+  healthBadgeContainerVariants,
+  healthDotVariants,
+  healthEdgeVariants,
+  getSpaceHealthLevel,
+  getHealthLabel,
+  getHealthDescription,
+  getMemberGrowthTrend,
+} from "./design-system/primitives";
+export type {
+  SpaceHealthLevel,
+  SpaceHealthMetrics,
+  SpaceHealthBadgeProps,
+  SpaceHealthDotProps,
+  SpaceHealthEdgeProps,
+  SpaceGrowthIndicatorProps,
+  SpaceHealthIndicatorProps,
+} from "./design-system/primitives";
+
 export {
   Card,
   CardHeader,
@@ -1535,6 +1604,16 @@ export type { AutomationItem } from "./components/hivelab/automations-panel";
 // Automation Templates Browser (Phase 3.5)
 export { AutomationTemplates, AutomationTemplatesCompact } from "./components/hivelab/automation-templates";
 
+// Automation Builder Modal (Phase 4 - Full Automation UI)
+export { AutomationBuilderModal } from "./components/hivelab/ide/automation-builder-modal";
+export type {
+  AutomationData,
+  AutomationTrigger,
+  AutomationCondition,
+  AutomationAction,
+  AutomationTestResult,
+} from "./components/hivelab/ide/automation-builder-modal";
+
 // ============================================
 // HIVELAB: LEGACY STUDIO EXPORTS (REMOVED)
 // NOTE: HiveLabStudio, HiveLabElementPalette, HiveLabInspectorPanel,
@@ -1868,6 +1947,12 @@ export type {
 export {
   ToolAnalyticsPage,
   ToolPreviewPage,
+  // Page Skeletons - Premium loading states with staggered animations
+  FeedLoadingSkeleton,
+  ProfileViewLoadingSkeleton,
+  SpacesDiscoverySkeleton,
+  SpaceDetailSkeleton,
+  SpaceCreationSkeleton,
 } from "./pages";
 
 export type {
@@ -1877,72 +1962,203 @@ export type {
 } from "./pages";
 
 // ============================================
-// DEPRECATED COMPONENT STUBS (Jan 2026)
-// These were removed with the atomic/ folder deletion.
-// Stubs prevent import errors during migration.
+// SPACE MODAL COMPONENTS (from design-system)
 // ============================================
 
 export {
-  // Types
-  type ProfileToolModalData,
-  type AddTabInput,
-  type AddWidgetInputUI,
-  type MemberInviteInput,
-  type EventCreateInput,
-  type ExistingTool,
-  type InviteableUser,
-  type MobileDrawerType,
-  type DetectedIntent,
-  type IntentType,
-  type SpaceEventDetails,
-  type RSVPStatus,
-  type FeatureKey,
-  type SetupTask,
-  type SpaceFeatureHighlight,
-  type RitualData,
-  type SetupCardData,
-  type InputStatus,
-  type ChatMessageData,
-  type OnboardingTask,
-  type FoundingClassRitualData,
-  type SpaceBoardData,
-  // Stub Components
-  HiveModal,
-  // HiveConfirmModal - Now exported from design-system/components/ConfirmDialog
-  ProfileToolModal,
   AddTabModal,
   AddWidgetModal,
   MemberInviteModal,
   EventCreateModal,
   EventDetailsModal,
-  // ThreadDrawer - Now exported from design-system/components/ThreadDrawer
   SpaceLeaderOnboardingModal,
   SpaceWelcomeModal,
-  FeedLoadingSkeleton,
-  Shell,
-  ProfileBentoGrid,
-  RitualFoundingClass,
-  RitualSurvival,
-  RitualTournamentBracket,
-  RitualsPageLayout,
-  SetupGrid,
-  IntentConfirmationInline,
   SpaceEntryAnimation,
+  IntentConfirmationInline,
   MobileActionBar,
   MobileDrawer,
   PinnedMessagesWidget,
   LeaderSetupProgress,
-  RitualStrip,
-  // SpaceChatBoard - Now exported from design-system/components/spaces (real component)
-  // SpaceThreshold - Now exported from design-system/components/spaces (real component)
-  SpaceBoardSkeleton,
-  AILandingPageChat,
-  NotificationBell,
-  // Hooks
-  useSpaceWelcome,
-  // Grid re-export
-  Grid,
-} from "./stubs/deprecated-components";
+} from "./design-system/components/spaces";
+
+export type {
+  AddTabInput,
+  AddTabModalProps,
+  AddWidgetInputUI,
+  ExistingTool,
+  AddWidgetModalProps,
+  MemberInviteInput,
+  InviteableUser,
+  MemberInviteModalProps,
+  EventCreateInput,
+  EventCreateModalProps,
+  RSVPStatus,
+  SpaceEventDetails,
+  EventDetailsModalProps,
+  MobileDrawerType,
+  MobileActionBarProps,
+  MobileDrawerProps,
+  SetupTask,
+  LeaderSetupProgressProps,
+  PinnedMessagesWidgetProps,
+  SpaceLeaderOnboardingModalProps,
+  SpaceWelcomeModalProps,
+  SpaceEntryAnimationProps,
+  IntentType,
+  IntentConfirmationInlineProps,
+} from "./design-system/components/spaces";
+
+export { ProfileToolModal } from "./design-system/components/profile";
+
+// Grid layout from design-system
+export { Grid } from "./design-system/templates/Grid";
+
+// ============================================
+// LEGACY TYPE ALIASES (Backwards Compatibility)
+// These types were in deprecated-components.tsx
+// ============================================
+
+export interface ProfileToolModalData {
+  id?: string;
+  name?: string;
+  description?: string;
+  toolId?: string;
+  deploymentId?: string;
+  icon?: string;
+  usageCount?: number;
+  deployedSpaces?: string[];
+  deployedToSpaces?: string[];
+}
+
+// IntentType re-exported from spaces above
+type LocalIntentType = 'create_event' | 'invite_member' | 'add_tool' | 'ask_question' | 'general' | 'unknown' | 'none' | 'help' | 'countdown' | 'poll' | 'rsvp' | 'announcement';
+
+export interface DetectedIntent {
+  type?: LocalIntentType;
+  confidence?: number;
+  entities?: Record<string, unknown>;
+  hasIntent?: boolean;
+  intentType?: LocalIntentType;
+}
+
+export type FeatureKey =
+  | 'chat'
+  | 'events'
+  | 'tools'
+  | 'boards'
+  | 'members'
+  | 'settings'
+  | 'analytics';
+
+export interface SpaceFeatureHighlight {
+  feature?: FeatureKey;
+  title: string;
+  description: string;
+  type?: string;
+  count?: number;
+}
+
+export interface RitualData {
+  id: string;
+  name: string;
+  description?: string;
+  type?: string;
+  status?: string;
+  participants?: number;
+  participantCount?: number;
+  icon?: string;
+  progress?: number;
+  duration?: string | number;
+  startDate?: Date | string;
+  endDate?: Date | string;
+  frequency?: string;
+  category?: string;
+  isParticipating?: boolean;
+  archetype?: string;
+  isCompleted?: boolean;
+}
+
+export interface SetupCardData {
+  id: string;
+  title: string;
+  description?: string;
+  image?: string;
+  category?: string;
+}
+
+export type InputStatus = 'default' | 'success' | 'error' | 'warning' | 'loading' | 'idle';
+
+export interface OnboardingTask {
+  id: string;
+  label: string;
+  title?: string;
+  description?: string;
+  completed: boolean;
+  action?: 'deploy-tool' | 'create-event' | 'invite-members' | 'customize-sidebar' | (() => void);
+}
+
+export interface FoundingClassRitualData extends RitualData {
+  foundingMembers?: string[];
+  deadline?: Date;
+}
+
+// ChatMessageData - Use SpaceChatMessageData from spaces export above
+// SpaceBoardData - Use SpaceChatBoardData from spaces export above
+
+// ============================================
+// DEPRECATED STUBS (Minimal placeholders)
+// ============================================
+
+import * as React from 'react';
+
+/** @deprecated Use Modal from design-system/primitives */
+export const HiveModal: React.FC<{
+  children?: React.ReactNode;
+  open?: boolean;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
+  title?: string;
+  size?: string;
+}> = ({ children }) => (children ? React.createElement(React.Fragment, null, children) : null);
+
+/** @deprecated Use AppShell or layout components */
+export const Shell: React.FC<{
+  children?: React.ReactNode;
+  size?: string;
+  noVerticalPadding?: boolean;
+}> = ({ children }) => React.createElement('div', { className: 'min-h-screen bg-ground' }, children);
+
+/** @deprecated Use ProfileCard components from design-system */
+export const ProfileBentoGrid: React.FC<{
+  userId?: string;
+  isEditable?: boolean;
+  editable?: boolean;
+  profile?: unknown;
+  onLayoutChange?: (layout: unknown) => void;
+}> = () => null;
+
+/** @deprecated Rituals not yet implemented */
+export const RitualFoundingClass: React.FC<{ ritual?: RitualData; isParticipating?: boolean; onJoin?: () => void | Promise<void> }> = () => null;
+export const RitualSurvival: React.FC<{ ritual?: RitualData; isParticipating?: boolean; onVote?: (matchId: string, choice: string) => void }> = () => null;
+export const RitualTournamentBracket: React.FC<{ ritual?: RitualData; isParticipating?: boolean }> = () => null;
+export const RitualsPageLayout: React.FC<{ children?: React.ReactNode; rituals?: RitualData[]; featuredRitual?: RitualData }> = ({ children }) => React.createElement(React.Fragment, null, children);
+export const RitualStrip: React.FC<{ rituals?: RitualData[]; onRitualClick?: (id: string) => void }> = () => null;
+export const SetupGrid: React.FC<{ items?: SetupCardData[]; onItemClick?: (id: string) => void }> = () => null;
+export const SpaceBoardSkeleton: React.FC = () => null;
+export const AILandingPageChat: React.FC<{ onSubmit?: (message: string) => void; templates?: unknown[] }> = () => null;
+export const NotificationBell: React.FC<{ notifications?: unknown[]; unreadCount?: number }> = () => null;
+
+/** @deprecated Use design-system hooks */
+export function useSpaceWelcome(_spaceId?: string) {
+  return {
+    showWelcome: false,
+    shouldShow: false,
+    isLoading: false,
+    setShowWelcome: () => {},
+    dismissWelcome: () => {},
+    features: [] as SpaceFeatureHighlight[],
+  };
+}
 
 // Backwards compatibility: export toast object with methods
 // Some files import { toast } from '@hive/ui' and call toast.success/toast.error

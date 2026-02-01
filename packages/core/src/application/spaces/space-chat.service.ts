@@ -71,6 +71,16 @@ export interface UpdateBoardInput {
 }
 
 /**
+ * Attachment data for chat messages
+ */
+export interface ChatAttachment {
+  url: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+
+/**
  * Input for sending a message
  */
 export interface SendMessageInput {
@@ -79,6 +89,7 @@ export interface SendMessageInput {
   content: string;
   replyToId?: string;
   componentData?: InlineComponentData;
+  attachments?: ChatAttachment[];
 }
 
 /**

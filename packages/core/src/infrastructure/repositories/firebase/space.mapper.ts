@@ -80,6 +80,21 @@ export interface SpaceDocument {
   publishStatus?: 'stealth' | 'live' | 'rejected';
   /** When the space went live (stealth → live) */
   wentLiveAt?: { toDate: () => Date } | null;
+  /**
+   * Quorum-based activation status
+   * - ghost: 0 members
+   * - gathering: 1 to activationThreshold-1 members
+   * - open: activationThreshold+ members (full features unlocked)
+   */
+  activationStatus?: 'ghost' | 'gathering' | 'open';
+  /**
+   * Number of members needed to activate the space (default: 10)
+   */
+  activationThreshold?: number;
+  /**
+   * When the space reached activation threshold
+   */
+  activatedAt?: { toDate: () => Date } | null;
   isVerified?: boolean;
   memberCount?: number;
   postCount?: number;
@@ -100,6 +115,7 @@ interface TabDocument {
   id?: string;
   title?: string;
   name?: string;
+  description?: string;
   type?: string;
   isDefault?: boolean;
   order?: number;
@@ -166,6 +182,7 @@ export interface SpacePersistenceData {
     id: string;
     title: string;
     name: string;
+    description: string | null;
     type: string;
     originPostId: string | null;
     messageCount: number;
@@ -189,6 +206,10 @@ export interface SpacePersistenceData {
   tags: string[];
   rushModeEnabled: boolean;
   rushModeEndDate: Date | null;
+  // Quorum-based activation fields
+  activationStatus: 'ghost' | 'gathering' | 'open';
+  activationThreshold: number;
+  activatedAt: Date | null;
   // Admin moderation fields
   moderationInfo?: {
     disabledAt?: Date;
@@ -299,6 +320,25 @@ export class SpaceMapper {
       space.setPublishStatus(data.publishStatus || 'live');
       if (data.wentLiveAt) space.setWentLiveAt(data.wentLiveAt.toDate());
 
+      // Hydrate quorum-based activation status
+      // Default: ghost for spaces with no data, calculate from member count otherwise
+      if (data.activationStatus) {
+        space.setActivationStatus(data.activationStatus);
+      } else {
+        // Calculate from member count for legacy spaces
+        const memberCount = data.memberCount || 0;
+        const threshold = data.activationThreshold || 10;
+        if (memberCount === 0) {
+          space.setActivationStatus('ghost');
+        } else if (memberCount < threshold) {
+          space.setActivationStatus('gathering');
+        } else {
+          space.setActivationStatus('open');
+        }
+      }
+      space.setActivationThreshold(data.activationThreshold || 10);
+      if (data.activatedAt) space.setActivatedAt(data.activatedAt.toDate());
+
       // Hydrate CampusLabs imported metadata
       if (data.email) space.setEmail(data.email);
       if (data.contactName) space.setContactName(data.contactName);
@@ -332,6 +372,7 @@ export class SpaceMapper {
             widgets: tabData.widgets || [],
             isVisible: tabData.isVisible !== false,
             title: tabData.title || tabData.name || 'Untitled',
+            description: tabData.description,
             originPostId: tabData.originPostId,
             messageCount: tabData.messageCount || 0,
             createdAt: tabData.createdAt?.toDate() || new Date(),
@@ -407,6 +448,7 @@ export class SpaceMapper {
         id: tab.id,
         title: tab.title,
         name: tab.name,
+        description: tab.description || null,
         type: tab.type,
         originPostId: tab.originPostId || null,
         messageCount: tab.messageCount,
@@ -430,6 +472,10 @@ export class SpaceMapper {
       tags: [],
       rushModeEnabled: space.rushMode?.isActive || false,
       rushModeEndDate: space.rushMode?.endDate || null,
+      // Quorum-based activation fields
+      activationStatus: space.activationStatus,
+      activationThreshold: space.activationThreshold,
+      activatedAt: space.activatedAt || null,
       // CampusLabs imported metadata (spread conditionally to avoid undefined fields)
       ...(space.email && { email: space.email }),
       ...(space.contactName && { contactName: space.contactName }),

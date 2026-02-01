@@ -87,7 +87,7 @@ export default function FeedComingSoon() {
             </Link>
           </Button>
           <Button asChild variant="outline" className="w-full">
-            <Link href="/notifications">
+            <Link href="/me/notifications">
               <BellIcon className="h-4 w-4 mr-2" />
               View Notifications
             </Link>

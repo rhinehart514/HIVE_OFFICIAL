@@ -10,9 +10,17 @@ import type { SpaceType, SpaceTypeRules } from './space-type-rules';
 export type UserRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest';
 
 export type Permission =
-  // Content permissions
-  | 'posts:create' | 'posts:edit' | 'posts:delete' | 'posts:pin'
-  | 'events:create' | 'events:edit' | 'events:delete' | 'events:manage'
+  // Content permissions - Own vs Any distinction
+  | 'posts:create'
+  | 'posts:edit_own' | 'posts:edit_any'
+  | 'posts:delete_own' | 'posts:delete_any'
+  | 'posts:pin'
+  | 'events:create'
+  | 'events:edit_own' | 'events:edit_any'
+  | 'events:delete_own' | 'events:delete_any'
+  | 'events:manage'
+  | 'messages:edit_own' | 'messages:edit_any'
+  | 'messages:delete_own' | 'messages:delete_any'
   | 'members:view' | 'members:invite' | 'members:remove' | 'members:promote'
 
   // Tool permissions
@@ -22,7 +30,11 @@ export type Permission =
   | 'space:settings' | 'space:delete' | 'space:transfer'
 
   // Data permissions
-  | 'data:export' | 'analytics:view' | 'moderation:access';
+  | 'data:export' | 'analytics:view' | 'moderation:access'
+
+  // Legacy aliases (for backwards compatibility)
+  | 'posts:edit' | 'posts:delete'
+  | 'events:edit' | 'events:delete';
 
 export interface UserPermissions {
   userId: string;
@@ -42,12 +54,14 @@ export interface ToolPermissions {
 
 /**
  * Base permission matrix for user roles
+ * Uses _own vs _any distinction for content permissions
  */
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   owner: [
-    // All permissions
-    'posts:create', 'posts:edit', 'posts:delete', 'posts:pin',
-    'events:create', 'events:edit', 'events:delete', 'events:manage',
+    // All permissions - can edit/delete any content
+    'posts:create', 'posts:edit_own', 'posts:edit_any', 'posts:delete_own', 'posts:delete_any', 'posts:pin',
+    'events:create', 'events:edit_own', 'events:edit_any', 'events:delete_own', 'events:delete_any', 'events:manage',
+    'messages:edit_own', 'messages:edit_any', 'messages:delete_own', 'messages:delete_any',
     'members:view', 'members:invite', 'members:remove', 'members:promote',
     'tools:view', 'tools:install', 'tools:configure', 'tools:remove',
     'space:settings', 'space:delete', 'space:transfer',
@@ -55,8 +69,10 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 
   admin: [
-    'posts:create', 'posts:edit', 'posts:delete', 'posts:pin',
-    'events:create', 'events:edit', 'events:delete', 'events:manage',
+    // Can edit/delete any content
+    'posts:create', 'posts:edit_own', 'posts:edit_any', 'posts:delete_own', 'posts:delete_any', 'posts:pin',
+    'events:create', 'events:edit_own', 'events:edit_any', 'events:delete_own', 'events:delete_any', 'events:manage',
+    'messages:edit_own', 'messages:edit_any', 'messages:delete_own', 'messages:delete_any',
     'members:view', 'members:invite', 'members:remove', 'members:promote',
     'tools:view', 'tools:install', 'tools:configure', 'tools:remove',
     'space:settings',
@@ -64,16 +80,20 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 
   moderator: [
-    'posts:create', 'posts:edit', 'posts:delete', 'posts:pin',
-    'events:create', 'events:edit', 'events:delete',
+    // Can edit/delete any content (moderation power)
+    'posts:create', 'posts:edit_own', 'posts:edit_any', 'posts:delete_own', 'posts:delete_any', 'posts:pin',
+    'events:create', 'events:edit_own', 'events:edit_any', 'events:delete_own', 'events:delete_any',
+    'messages:edit_own', 'messages:edit_any', 'messages:delete_own', 'messages:delete_any',
     'members:view', 'members:invite',
     'tools:view',
     'moderation:access'
   ],
 
   member: [
-    'posts:create', 'posts:edit',
-    'events:create',
+    // Can only edit/delete own content
+    'posts:create', 'posts:edit_own', 'posts:delete_own',
+    'events:create', 'events:edit_own', 'events:delete_own',
+    'messages:edit_own', 'messages:delete_own',
     'members:view',
     'tools:view'
   ],

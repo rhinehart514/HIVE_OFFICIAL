@@ -144,11 +144,11 @@ const OTPInput = React.forwardRef<HTMLDivElement, OTPInputProps>(
               'text-center text-title-lg font-semibold',
               'text-white',
               'rounded-lg',
-              'border border-white/10',
+              'border border-white/20',
               'bg-white/[0.04]',
               'outline-none',
-              'transition-all duration-150 ease-out',
-              'focus:border-white/30 focus:bg-white/[0.06]',
+              'transition-all duration-300 ease-out',
+              'focus:border-white/40 focus:bg-white/[0.06] focus:ring-2 focus:ring-white/20',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               error && 'border-red-500/50 animate-shake'
             )}

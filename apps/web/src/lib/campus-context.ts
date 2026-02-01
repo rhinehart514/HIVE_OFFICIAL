@@ -331,6 +331,204 @@ export function isValidCampusId(campusId: string): boolean {
 }
 
 /**
+ * School status for multi-campus architecture
+ */
+export type SchoolStatus = 'active' | 'beta' | 'waitlist' | 'unsupported';
+
+/**
+ * Result from getSchoolFromEmailAsync
+ */
+export interface SchoolLookupResult {
+  campusId: string;
+  status: SchoolStatus;
+  schoolName: string;
+  domain: string;
+}
+
+/**
+ * Cache for full school data (includes waitlist schools)
+ */
+let fullSchoolCache: Map<string, SchoolLookupResult> | null = null;
+let fullSchoolCacheTime = 0;
+
+/**
+ * Load full school data including waitlist schools from Firestore
+ */
+async function loadFullSchoolData(): Promise<Map<string, SchoolLookupResult>> {
+  const now = Date.now();
+
+  // Return cached if valid
+  if (fullSchoolCache && now - fullSchoolCacheTime < CACHE_TTL) {
+    return fullSchoolCache;
+  }
+
+  // If Firebase not configured, use fallback
+  if (!isFirebaseConfigured) {
+    const fallbackMap = new Map<string, SchoolLookupResult>();
+    fallbackMap.set('buffalo.edu', {
+      campusId: 'ub-buffalo',
+      status: 'active',
+      schoolName: 'University at Buffalo',
+      domain: 'buffalo.edu',
+    });
+    fallbackMap.set('ub.edu', {
+      campusId: 'ub-buffalo',
+      status: 'active',
+      schoolName: 'University at Buffalo',
+      domain: 'ub.edu',
+    });
+    fullSchoolCache = fallbackMap;
+    fullSchoolCacheTime = now;
+    return fallbackMap;
+  }
+
+  try {
+    const mapping = new Map<string, SchoolLookupResult>();
+
+    // Load ALL schools (active, beta, and waitlist)
+    const schoolsSnapshot = await dbAdmin
+      .collection('schools')
+      .get();
+
+    for (const doc of schoolsSnapshot.docs) {
+      const school = doc.data();
+      const campusId = school.campusId || doc.id;
+      const schoolName = school.name || doc.id;
+
+      // Determine status
+      let status: SchoolStatus = 'waitlist';
+      if (school.status === 'active' || school.active === true) {
+        status = 'active';
+      } else if (school.status === 'beta') {
+        status = 'beta';
+      } else if (school.status === 'waitlist' || school.active === false) {
+        status = 'waitlist';
+      }
+
+      // Collect all email domains
+      const emailDomains = school.emailDomains || {};
+      const allDomains = [
+        ...(emailDomains.student || []),
+        ...(emailDomains.faculty || []),
+        ...(emailDomains.staff || []),
+        ...(emailDomains.alumni || []),
+      ];
+
+      // Also add the legacy single domain field
+      if (school.domain) {
+        allDomains.push(school.domain);
+      }
+
+      for (const domain of allDomains) {
+        if (domain && typeof domain === 'string') {
+          const normalizedDomain = domain.toLowerCase();
+          mapping.set(normalizedDomain, {
+            campusId,
+            status,
+            schoolName,
+            domain: normalizedDomain,
+          });
+        }
+      }
+    }
+
+    // Ensure UB is always available (fallback safety)
+    if (!mapping.has('buffalo.edu')) {
+      mapping.set('buffalo.edu', {
+        campusId: 'ub-buffalo',
+        status: 'active',
+        schoolName: 'University at Buffalo',
+        domain: 'buffalo.edu',
+      });
+      mapping.set('ub.edu', {
+        campusId: 'ub-buffalo',
+        status: 'active',
+        schoolName: 'University at Buffalo',
+        domain: 'ub.edu',
+      });
+    }
+
+    fullSchoolCache = mapping;
+    fullSchoolCacheTime = now;
+
+    logger.debug('Refreshed full school cache', {
+      component: 'campus-context',
+      schoolCount: schoolsSnapshot.size,
+      domainCount: mapping.size,
+    });
+
+    return mapping;
+  } catch (error) {
+    logger.error('Failed to load full school data from Firestore', {
+      component: 'campus-context',
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    // Fall back to UB only
+    const fallbackMap = new Map<string, SchoolLookupResult>();
+    fallbackMap.set('buffalo.edu', {
+      campusId: 'ub-buffalo',
+      status: 'active',
+      schoolName: 'University at Buffalo',
+      domain: 'buffalo.edu',
+    });
+    fullSchoolCache = fallbackMap;
+    fullSchoolCacheTime = now;
+    return fallbackMap;
+  }
+}
+
+/**
+ * Get school information from email domain
+ * Returns status to allow handling of waitlisted schools
+ * @throws Error with code 'UNSUPPORTED_DOMAIN' if domain is not recognized
+ */
+export async function getSchoolFromEmailAsync(email: string): Promise<SchoolLookupResult> {
+  if (!email || typeof email !== 'string') {
+    const error = new Error('Email is required for school lookup');
+    (error as Error & { code?: string }).code = 'INVALID_INPUT';
+    throw error;
+  }
+
+  const parts = email.split('@');
+  if (parts.length !== 2) {
+    const error = new Error('Invalid email format');
+    (error as Error & { code?: string }).code = 'INVALID_INPUT';
+    throw error;
+  }
+
+  const domain = parts[1].toLowerCase();
+  const schoolMap = await loadFullSchoolData();
+
+  // Check for exact match first
+  if (schoolMap.has(domain)) {
+    return schoolMap.get(domain)!;
+  }
+
+  // Check for subdomain match (e.g., 'cs.buffalo.edu' -> 'buffalo.edu')
+  const domainParts = domain.split('.');
+  for (let i = 0; i < domainParts.length - 1; i++) {
+    const parentDomain = domainParts.slice(i).join('.');
+    if (schoolMap.has(parentDomain)) {
+      return schoolMap.get(parentDomain)!;
+    }
+  }
+
+  // Domain not found - throw unsupported error
+  const error = new Error(`Unsupported email domain: ${domain}`);
+  (error as Error & { code?: string }).code = 'UNSUPPORTED_DOMAIN';
+  throw error;
+}
+
+/**
+ * Clear full school cache (for testing or manual refresh)
+ */
+export function clearFullSchoolCache(): void {
+  fullSchoolCache = null;
+  fullSchoolCacheTime = 0;
+}
+
+/**
  * Preload domain cache (call during server startup)
  */
 export async function preloadDomainCache(): Promise<void> {

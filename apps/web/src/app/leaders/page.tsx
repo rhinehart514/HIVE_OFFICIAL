@@ -55,8 +55,8 @@ function OrgCarousel() {
           className="absolute inset-0 flex flex-col items-center justify-center"
         >
           <div className="flex items-center gap-2 mb-2">
-            <span className="w-2 h-2 rounded-full bg-[#FFD700] animate-pulse" />
-            <span className="text-label-sm font-mono text-[#FFD700]/70 uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-gold-500 animate-pulse" />
+            <span className="text-label-sm font-mono text-gold-500/70 uppercase tracking-wider">
               Unclaimed
             </span>
           </div>
@@ -142,7 +142,7 @@ function Stats() {
       </div>
       <div className="w-px h-10 bg-white/10" />
       <div>
-        <div className="text-3xl font-semibold text-[#FFD700]">47</div>
+        <div className="text-3xl font-semibold text-gold-500">47</div>
         <div className="text-xs text-white/30 mt-1">Founding Spots</div>
       </div>
       <div className="w-px h-10 bg-white/10" />
@@ -188,7 +188,7 @@ export default function LeadersPage() {
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <HiveLogo className="w-8 h-8 text-[#FFD700]" />
+              <HiveLogo className="w-8 h-8 text-gold-500" />
               <span className="text-lg font-semibold text-white">HIVE</span>
             </Link>
             <Link
@@ -209,10 +209,10 @@ export default function LeadersPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={isVisible ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.1, duration: 0.5, ease: EASE_PREMIUM }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/[0.03]"
+            className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full border border-gold-500/20 bg-gold-500/[0.03]"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] animate-pulse" />
-            <span className="text-label-sm font-medium text-[#FFD700]/80 tracking-wide uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold-500 animate-pulse" />
+            <span className="text-label-sm font-medium text-gold-500/80 tracking-wide uppercase">
               For Club Leaders
             </span>
           </motion.div>
@@ -333,19 +333,19 @@ export default function LeadersPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={isVisible ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 1.0, duration: 0.5, ease: EASE_PREMIUM }}
-            className="mt-16 p-6 rounded-2xl border border-[#FFD700]/10 bg-[#FFD700]/[0.02]"
+            className="mt-16 p-6 rounded-2xl border border-gold-500/10 bg-gold-500/[0.02]"
           >
             <div className="flex items-center justify-center gap-2 mb-3">
-              <span className="text-[#FFD700]">
+              <span className="text-gold-500">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
                 </svg>
               </span>
-              <span className="text-sm font-medium text-[#FFD700]/90">Founding Leader Class of 2026</span>
+              <span className="text-sm font-medium text-gold-500/90">Founding Leader Class of 2026</span>
             </div>
             <p className="text-xs text-white/40 max-w-md mx-auto">
               The first 50 leaders to fully activate their spaces earn the permanent{" "}
-              <span className="text-[#FFD700]/70">Founding Leader</span> badge.{" "}
+              <span className="text-gold-500/70">Founding Leader</span> badge.{" "}
               <span className="text-white/50">47 spots remaining.</span>
             </p>
           </motion.div>

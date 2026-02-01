@@ -32,13 +32,13 @@ interface ToolCardProps {
 const STATUS_CONFIG = {
   deployed: {
     label: 'Live',
-    bg: 'bg-emerald-500/20',
-    text: 'text-emerald-400',
+    bg: 'bg-[var(--ide-status-success-bg)]',
+    text: 'text-[var(--ide-status-success)]',
   },
   published: {
     label: 'Ready',
-    bg: 'bg-blue-500/20',
-    text: 'text-blue-400',
+    bg: 'bg-[var(--ide-status-info-bg)]',
+    text: 'text-[var(--ide-status-info)]',
   },
   draft: {
     label: 'Draft',
@@ -129,8 +129,8 @@ export function NewToolCard({ onClick, index = 0 }: NewToolCardProps) {
         transition-all duration-200 min-h-[88px]"
     >
       <div className="w-8 h-8 rounded-full bg-white/[0.04] flex items-center justify-center
-        group-hover:bg-[var(--color-gold,#FFD700)]/10 transition-colors mb-1.5">
-        <span className="text-white/40 group-hover:text-[var(--color-gold,#FFD700)] text-lg transition-colors">
+        group-hover:bg-[var(--life-gold)]/10 transition-colors mb-1.5">
+        <span className="text-white/40 group-hover:text-[var(--life-gold)] text-lg transition-colors">
           +
         </span>
       </div>

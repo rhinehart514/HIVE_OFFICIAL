@@ -86,11 +86,11 @@ export function ImageCropper({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] bg-black flex flex-col"
+      className="fixed inset-0 z-[9999] bg-[var(--color-bg-void,#050504)] flex flex-col"
       style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-black border-b border-white/[0.06]">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-[var(--color-bg-void,#050504)] border-b border-white/[0.06]">
         <button
           type="button"
           onClick={onCancel}
@@ -130,7 +130,7 @@ export function ImageCropper({
           showGrid={false}
           style={{
             containerStyle: {
-              background: '#000',
+              background: 'var(--color-bg-void, #050504)',
             },
             cropAreaStyle: {
               border: '2px solid var(--color-gold-500, #FFD700)',
@@ -141,7 +141,7 @@ export function ImageCropper({
       </div>
 
       {/* Controls */}
-      <div className="flex-shrink-0 px-6 py-4 bg-black border-t border-white/[0.06] space-y-4">
+      <div className="flex-shrink-0 px-6 py-4 bg-[var(--color-bg-void,#050504)] border-t border-white/[0.06] space-y-4">
         {/* Zoom slider */}
         <div className="flex items-center gap-3">
           <button
@@ -186,7 +186,7 @@ export function ImageCropper({
       </div>
 
       {/* Confirm button */}
-      <div className="flex-shrink-0 px-6 pb-6 pt-2 bg-black">
+      <div className="flex-shrink-0 px-6 pb-6 pt-2 bg-[var(--color-bg-void,#050504)]">
         <motion.button
           type="button"
           onClick={handleConfirm}
@@ -194,7 +194,7 @@ export function ImageCropper({
           whileHover={{ opacity: 0.9 }}
           whileTap={{ opacity: 0.8 }}
           transition={transitionSpring}
-          className="w-full h-12 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-colors disabled:opacity-50"
+          className="w-full h-12 bg-white text-[var(--color-bg-void,#0A0A09)] font-semibold rounded-xl hover:bg-white/90 transition-colors disabled:opacity-50"
         >
           {isProcessing ? 'Processing...' : 'Use this photo'}
         </motion.button>

@@ -12,6 +12,7 @@ import {
   realtimeService,
   type TypingIndicator,
 } from "@/lib/firebase-realtime";
+import { logger } from "@/lib/logger";
 import type { TypingUser } from "./types";
 import {
   TYPING_INDICATOR_INTERVAL_MS,
@@ -61,7 +62,13 @@ export function useChatTyping(
 
     realtimeService
       .setBoardTypingIndicator(spaceId, boardId, currentUserId, false)
-      .catch(() => {});
+      .catch((error) => {
+        logger.warn("Failed to clear typing indicator", {
+          component: "useChatTyping",
+          action: "clearTyping",
+          metadata: { spaceId, boardId, error: String(error) },
+        });
+      });
 
     if (typingClearTimeoutRef.current) {
       clearTimeout(typingClearTimeoutRef.current);
@@ -87,14 +94,26 @@ export function useChatTyping(
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ boardId }),
-        }).catch(() => {});
+        }).catch((error) => {
+          logger.warn("Failed to send typing indicator via API", {
+            component: "useChatTyping",
+            action: "setTyping",
+            metadata: { spaceId, boardId, error: String(error) },
+          });
+        });
         return;
       }
 
       // Use Firebase RTDB for real-time typing
       realtimeService
         .setBoardTypingIndicator(spaceId, boardId, currentUserId, true)
-        .catch(() => {});
+        .catch((error) => {
+          logger.warn("Failed to set typing indicator", {
+            component: "useChatTyping",
+            action: "setTyping",
+            metadata: { spaceId, boardId, error: String(error) },
+          });
+        });
     }
 
     // Reset clear timeout on any keystroke
@@ -106,7 +125,13 @@ export function useChatTyping(
       typingClearTimeoutRef.current = setTimeout(() => {
         realtimeService
           .setBoardTypingIndicator(spaceId, boardId, currentUserId, false)
-          .catch(() => {});
+          .catch((error) => {
+            logger.warn("Failed to auto-clear typing indicator", {
+              component: "useChatTyping",
+              action: "autoClear",
+              metadata: { spaceId, boardId, error: String(error) },
+            });
+          });
         typingClearTimeoutRef.current = null;
       }, TYPING_TTL_MS);
     }
@@ -154,7 +179,13 @@ export function useChatTyping(
       if (currentUserId) {
         realtimeService
           .setBoardTypingIndicator(spaceId, boardId, currentUserId, false)
-          .catch(() => {});
+          .catch((error) => {
+            logger.warn("Failed to clear typing indicator on unmount", {
+              component: "useChatTyping",
+              action: "cleanup",
+              metadata: { spaceId, boardId, error: String(error) },
+            });
+          });
       }
     };
   }, [spaceId, boardId, enabled]);
@@ -166,13 +197,25 @@ export function useChatTyping(
     // Run cleanup immediately on mount
     realtimeService
       .cleanupStaleTypingIndicators(spaceId, boardId)
-      .catch(() => {});
+      .catch((error) => {
+        logger.warn("Failed to cleanup stale typing indicators", {
+          component: "useChatTyping",
+          action: "cleanupStale",
+          metadata: { spaceId, boardId, error: String(error) },
+        });
+      });
 
     const cleanupInterval = setInterval(() => {
       if (!mountedRef.current) return;
       realtimeService
         .cleanupStaleTypingIndicators(spaceId, boardId)
-        .catch(() => {});
+        .catch((error) => {
+          logger.warn("Failed to cleanup stale typing indicators (interval)", {
+            component: "useChatTyping",
+            action: "cleanupStaleInterval",
+            metadata: { spaceId, boardId, error: String(error) },
+          });
+        });
     }, TYPING_CLEANUP_INTERVAL_MS);
 
     return () => {

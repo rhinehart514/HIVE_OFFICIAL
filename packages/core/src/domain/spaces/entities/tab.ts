@@ -14,6 +14,7 @@ interface TabProps {
   widgets: string[]; // Widget IDs
   isVisible: boolean;
   title: string;
+  description?: string;
   originPostId?: string;
   messageCount: number;
   createdAt: Date;
@@ -45,6 +46,10 @@ export class Tab extends Entity<TabProps> {
 
   get title(): string {
     return this.props.title;
+  }
+
+  get description(): string | undefined {
+    return this.props.description;
   }
 
   get originPostId(): string | undefined {
@@ -93,6 +98,7 @@ export class Tab extends Entity<TabProps> {
       widgets: props.widgets || [],
       isVisible: props.isVisible !== undefined ? props.isVisible : true,
       title: props.title || props.name,
+      description: props.description,
       originPostId: props.originPostId,
       messageCount: props.messageCount || 0,
       createdAt: props.createdAt || new Date(),
@@ -143,6 +149,7 @@ export class Tab extends Entity<TabProps> {
    */
   public update(updates: {
     name?: string;
+    description?: string;
     order?: number;
     isVisible?: boolean;
   }): Result<{ changedFields: string[] }> {
@@ -154,6 +161,11 @@ export class Tab extends Entity<TabProps> {
         return Result.fail<{ changedFields: string[] }>(nameResult.error ?? 'Name update failed');
       }
       changedFields.push('name');
+    }
+
+    if (updates.description !== undefined && updates.description !== this.props.description) {
+      this.props.description = updates.description;
+      changedFields.push('description');
     }
 
     if (updates.order !== undefined && updates.order !== this.props.order) {

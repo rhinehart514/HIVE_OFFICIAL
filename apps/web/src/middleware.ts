@@ -59,7 +59,9 @@ const PARTIAL_AUTH_ROUTES: string[] = [
 const ADMIN_ROUTES = ['/admin'];
 
 // Route redirects (replacing deleted client-side redirect pages)
-const ROUTE_REDIRECTS: Record<string, string> = {
+// These are PERMANENT (301) redirects per IA_INVARIANTS.md
+// Auth/session redirects elsewhere use temporary (307) redirects
+export const ROUTE_REDIRECTS: Record<string, string> = {
   // Alias routes
   '/browse': '/spaces',
   '/build': '/tools/create',
@@ -255,21 +257,24 @@ export async function middleware(request: NextRequest) {
   }
 
   // Handle route redirects (from deleted client-side redirect pages)
+  // These are PERMANENT (301) per IA_INVARIANTS.md - canonical route changes
   const redirectTarget = ROUTE_REDIRECTS[pathname];
   if (redirectTarget) {
-    return NextResponse.redirect(new URL(redirectTarget, request.url));
+    return NextResponse.redirect(new URL(redirectTarget, request.url), 301);
   }
 
   // Handle dynamic route redirects: /spaces/join/:code -> /spaces?join=:code
+  // PERMANENT (301) - canonical route pattern
   const joinMatch = pathname.match(/^\/spaces\/join\/([^/]+)$/);
   if (joinMatch) {
     const code = joinMatch[1];
-    return NextResponse.redirect(new URL(`/spaces?join=${encodeURIComponent(code)}`, request.url));
+    return NextResponse.redirect(new URL(`/spaces?join=${encodeURIComponent(code)}`, request.url), 301);
   }
 
   // Handle /spaces/new/* paths -> /spaces?create=true (pages are now modals)
+  // PERMANENT (301) - canonical route pattern
   if (pathname.startsWith('/spaces/new/')) {
-    return NextResponse.redirect(new URL('/spaces?create=true', request.url));
+    return NextResponse.redirect(new URL('/spaces?create=true', request.url), 301);
   }
 
   // Public routes - no auth required
@@ -327,9 +332,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(enterUrl);
   }
 
-  // Legacy /onboarding redirect
+  // Legacy /onboarding redirect - PERMANENT (301) canonical route change
   if (pathname === '/onboarding') {
-    return NextResponse.redirect(new URL('/spaces', request.url));
+    return NextResponse.redirect(new URL('/spaces', request.url), 301);
   }
 
   return NextResponse.next();

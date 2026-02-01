@@ -1,12 +1,16 @@
 /**
  * HIVE Design System V2
- * Apple/Vercel aesthetic with HIVE gold warmth
+ * Dark-only. The void is the brand.
  *
  * Design Direction:
- * - Neutral backgrounds (no cool/warm tint) - let gold bring the warmth
- * - High contrast text hierarchy
- * - Gold reserved for life/activity/CTAs
- * - Dark-first (no light mode)
+ * - Monochrome-dominant: primary palette is white-on-void
+ * - Color is the exception, not the rule
+ * - Hierarchy through opacity, not hue
+ * - Gold restricted to logo/brand mark and leader status indicators ONLY
+ * - Light typography weights (400-600 max, never bold/black)
+ * - Pillowy corners (16px+ on containers)
+ *
+ * References: Apple (hardware precision), ChatGPT (dark UI), Discord (community-native)
  */
 
 // ============================================================================
@@ -141,7 +145,7 @@ export const cssVariables = {
     // Border & Input
     '--border': colors.borderDefault,
     '--input': colors.bgSurface,
-    '--ring': colors.gold,
+    '--ring': 'rgba(255, 255, 255, 0.50)', // WHITE focus rings, never gold
 
     // Chart colors
     '--chart-1': colors.gold,
@@ -181,34 +185,34 @@ export const cssVariables = {
 
 export const componentTokens = {
   button: {
-    default: {
-      bg: colors.textPrimary,
-      text: colors.bgBase,
-      hover: scale.gray[11],
-    },
+    // PRIMARY: Solid white - the main CTA
     primary: {
-      bg: colors.gold,
+      bg: colors.white,
       text: colors.bgBase,
-      hover: scale.gold[10],
-      glow: colors.goldGlow,
+      hover: 'rgba(255, 255, 255, 0.90)',
+      radius: '24px', // rounded-3xl
     },
+    // SECONDARY: Ghost/outline - supporting actions
     secondary: {
-      bg: colors.bgElevated,
-      text: colors.textPrimary,
-      border: colors.borderDefault,
-      hover: colors.bgActive,
-    },
-    outline: {
       bg: 'transparent',
       text: colors.textPrimary,
-      border: colors.borderDefault,
-      hover: colors.bgElevated,
+      border: 'rgba(255, 255, 255, 0.08)',
+      hoverBg: 'rgba(255, 255, 255, 0.04)',
+      hoverBorder: 'rgba(255, 255, 255, 0.12)',
+      radius: '24px', // rounded-3xl
     },
+    // GHOST: Text only - tertiary actions
     ghost: {
       bg: 'transparent',
-      text: colors.textSecondary,
-      hover: colors.bgElevated,
+      text: 'rgba(255, 255, 255, 0.60)',
       hoverText: colors.textPrimary,
+    },
+    // ICON: Square icon buttons
+    icon: {
+      bg: 'rgba(255, 255, 255, 0.04)',
+      border: 'rgba(255, 255, 255, 0.06)',
+      hoverBg: 'rgba(255, 255, 255, 0.08)',
+      radius: '12px', // rounded-xl
     },
     destructive: {
       bg: colors.error,
@@ -218,36 +222,35 @@ export const componentTokens = {
   },
 
   card: {
+    // Default card - glass surface
     default: {
-      bg: colors.bgSurface,
-      border: colors.borderDefault,
+      bg: 'rgba(255, 255, 255, 0.02)',
+      border: 'rgba(255, 255, 255, 0.06)',
       text: colors.textPrimary,
+      radius: '16px', // rounded-2xl
     },
+    // Interactive card with hover states
     interactive: {
-      bg: colors.bgSurface,
-      border: colors.borderDefault,
-      hoverBg: colors.bgElevated,
-      hoverBorder: colors.borderHover,
+      bg: 'rgba(255, 255, 255, 0.02)',
+      border: 'rgba(255, 255, 255, 0.06)',
+      hoverBg: 'rgba(255, 255, 255, 0.04)',
+      hoverBorder: 'rgba(255, 255, 255, 0.12)',
+      radius: '16px', // rounded-2xl
     },
   },
 
   input: {
+    // Ghost style input (default)
     default: {
-      bg: colors.bgSurface,
-      border: colors.borderDefault,
+      bg: 'rgba(255, 255, 255, 0.03)',
+      border: 'rgba(255, 255, 255, 0.08)',
       text: colors.textPrimary,
-      placeholder: colors.textSubtle,
-      focusBorder: colors.borderFocus,
-      focusGlow: 'rgba(255, 255, 255, 0.15)',
-    },
-    hero: {
-      bg: colors.bgSurface,
-      border: colors.borderDefault,
-      text: colors.textPrimary,
-      placeholder: colors.textSubtle,
-      focusBorder: colors.borderFocus,
-      focusGlow: '0 0 0 3px rgba(255, 255, 255, 0.2)',
-      minHeight: '56px',
+      placeholder: 'rgba(255, 255, 255, 0.30)',
+      focusBg: 'rgba(255, 255, 255, 0.05)',
+      focusBorder: 'rgba(255, 255, 255, 0.20)',
+      focusRing: 'rgba(255, 255, 255, 0.50)', // White, never gold
+      radius: '12px', // rounded-xl
+      height: '44px', // h-11
     },
   },
 
@@ -332,58 +335,71 @@ export const spacing = {
 } as const;
 
 // ============================================================================
-// RADIUS
+// RADIUS (Shape Language)
 // ============================================================================
+// Pillowy corners - 16px+ on containers. Smaller for nested elements.
 
 export const radius = {
   none: '0',
-  sm: '4px',        // Subtle rounding
-  md: '8px',        // Standard cards
-  lg: '12px',       // Buttons, inputs (--radius base)
-  xl: '16px',       // Modals, large cards
-  '2xl': '20px',    // Extra large
-  '3xl': '24px',    // Maximum
-  full: '9999px',   // Pills, avatars
+  sm: '4px',        // Subtle rounding (rarely used)
+  md: '8px',        // Small elements
+  lg: '12px',       // Inputs (rounded-xl in Tailwind)
+  xl: '16px',       // Cards, modals (rounded-2xl) - default container radius
+  '2xl': '20px',    // Large containers
+  '3xl': '24px',    // Buttons, pills (rounded-3xl)
+  full: '9999px',   // Chips, badges, avatars
+
+  // Semantic aliases for clarity
+  button: '24px',   // Primary/secondary buttons
+  card: '16px',     // Cards, modals
+  input: '12px',    // Inputs, text fields
+  chip: '9999px',   // Chips, badges
 } as const;
 
 // ============================================================================
 // TYPOGRAPHY
 // ============================================================================
+// Weight Philosophy: Never use bold (700) or black (900). Elegance through lightness.
+// Regular (400) for body, Medium (500) for emphasis, Semibold (600) for headlines only.
 
 export const typography = {
   fontFamily: {
     sans: ['Geist Sans', 'system-ui', 'sans-serif'],
-    display: ['Space Grotesk', 'system-ui', 'sans-serif'],
-    mono: ['JetBrains Mono', 'monospace'],
+    display: ['Geist Sans', 'system-ui', 'sans-serif'], // System font for display too
+    mono: ['JetBrains Mono', 'SF Mono', 'monospace'],
   },
   fontSize: {
-    // Display scale (Space Grotesk)
-    'display-hero': ['3rem', { lineHeight: '1.1', fontWeight: '700', letterSpacing: '-0.03em' }],     // 48px
-    'display-xl': ['2.25rem', { lineHeight: '1.15', fontWeight: '700', letterSpacing: '-0.02em' }],   // 36px
-    'display-lg': ['1.75rem', { lineHeight: '1.2', fontWeight: '600', letterSpacing: '-0.02em' }],    // 28px
-    'display-md': ['1.5rem', { lineHeight: '1.25', fontWeight: '600', letterSpacing: '-0.01em' }],    // 24px
+    // HIVE Type Scale - aligned with design principles
+    'display': ['2.5rem', { lineHeight: '1.1', fontWeight: '600' }],      // 40px - Hero titles
+    'title-xl': ['2rem', { lineHeight: '1.2', fontWeight: '400' }],       // 32px - Page titles
+    'title-lg': ['1.5rem', { lineHeight: '1.3', fontWeight: '500' }],     // 24px - Section headers
+    'title': ['1.25rem', { lineHeight: '1.4', fontWeight: '500' }],       // 20px - Card titles
+    'body-lg': ['1.0625rem', { lineHeight: '1.5', fontWeight: '400' }],   // 17px - Large body
+    'body': ['0.9375rem', { lineHeight: '1.6', fontWeight: '400' }],      // 15px - Default body
+    'body-sm': ['0.8125rem', { lineHeight: '1.5', fontWeight: '400' }],   // 13px - Secondary text
+    'label': ['0.75rem', { lineHeight: '1.4', fontWeight: '500' }],       // 12px - Labels, uppercase
+    'caption': ['0.6875rem', { lineHeight: '1.4', fontWeight: '400' }],   // 11px - Timestamps, meta
 
-    // Body scale (Geist Sans)
+    // Legacy scale (for compatibility)
     xs: ['0.75rem', { lineHeight: '1rem' }],        // 12px
-    sm: ['0.875rem', { lineHeight: '1.25rem' }],    // 14px
-    base: ['1rem', { lineHeight: '1.5rem' }],       // 16px
-    lg: ['1.125rem', { lineHeight: '1.75rem' }],    // 18px
+    sm: ['0.8125rem', { lineHeight: '1.25rem' }],   // 13px
+    base: ['0.9375rem', { lineHeight: '1.5rem' }],  // 15px
+    lg: ['1.0625rem', { lineHeight: '1.75rem' }],   // 17px
     xl: ['1.25rem', { lineHeight: '1.75rem' }],     // 20px
     '2xl': ['1.5rem', { lineHeight: '2rem' }],      // 24px
-    '3xl': ['1.875rem', { lineHeight: '2.25rem' }], // 30px
-    '4xl': ['2.25rem', { lineHeight: '2.5rem' }],   // 36px
+    '3xl': ['2rem', { lineHeight: '2.25rem' }],     // 32px
+    '4xl': ['2.5rem', { lineHeight: '2.5rem' }],    // 40px
     '5xl': ['3rem', { lineHeight: '1.2' }],         // 48px
-    '6xl': ['3.75rem', { lineHeight: '1.1' }],      // 60px
 
     // Mono scale (JetBrains Mono)
     'mono-sm': ['0.75rem', { lineHeight: '1.4' }],  // 12px
     'mono-md': ['0.875rem', { lineHeight: '1.5' }], // 14px
   },
   fontWeight: {
-    normal: '400',
-    medium: '500',
-    semibold: '600',
-    bold: '700',
+    // IMPORTANT: Never use bold (700) or black (900)
+    normal: '400',   // Body, labels, most text
+    medium: '500',   // Emphasis, card titles
+    semibold: '600', // Headlines only - MAX weight allowed
   },
   letterSpacing: {
     tighter: '-0.03em',
@@ -392,6 +408,13 @@ export const typography = {
     wide: '0.02em',
     wider: '0.05em',
     widest: '0.1em',
+  },
+  // Text opacity scale for hierarchy
+  opacity: {
+    primary: 0.70,    // Body text, labels - text-white/70
+    secondary: 0.50,  // Helper text, metadata - text-white/50
+    tertiary: 0.30,   // Disabled, placeholders - text-white/30
+    emphasis: 0.90,   // Headlines, active states - text-white/90
   },
 } as const;
 
@@ -445,15 +468,23 @@ export const blur = {
 } as const;
 
 // ============================================================================
-// BREAKPOINTS
+// BREAKPOINTS (Web-first, mobile-capable)
 // ============================================================================
+// Design priority: Desktop (1024px+) > Tablet (640-1023px) > Mobile (<640px)
 
 export const breakpoints = {
-  sm: '640px',
-  md: '768px',
-  lg: '1024px',
-  xl: '1280px',
-  '2xl': '1536px',
+  // Tailwind breakpoint values
+  sm: '640px',   // Tablet starts
+  md: '768px',   // Mid tablet
+  lg: '1024px',  // Desktop starts - full experience
+  xl: '1280px',  // Wide desktop
+  '2xl': '1440px', // Extra wide - centered with max-width
+
+  // Semantic breakpoints
+  mobile: { max: '639px' },        // Single column, bottom nav
+  tablet: { min: '640px', max: '1023px' }, // 2 columns possible, collapsed sidebar
+  desktop: { min: '1024px' },      // Full sidebar, panels
+  wide: { min: '1440px' },         // Centered with max-width
 } as const;
 
 // ============================================================================
@@ -511,29 +542,41 @@ export const cognitiveBudgets = {
 // ============================================================================
 
 export const guidelines = {
+  // GOLD IS RARE - Only for earned distinction, never for actions
   goldUsage: {
     allowed: [
-      'Primary CTA buttons',
-      'Online presence indicators',
-      'Active/selected states',
-      'Unread indicators',
-      'Achievement moments',
-      'Focus rings',
+      'Logo/brand mark (always)',
+      'Leader status indicators (earned distinction)',
     ],
     forbidden: [
-      'Hover backgrounds',
-      'All borders (except focus)',
+      'CTAs or buttons', // White is for CTAs
+      'Focus rings',     // White focus rings
+      'Hover states',
+      'Borders',
       'Decorative elements',
       'Body text',
+      'Everything else',
     ],
   },
+  // Anti-patterns - NEVER do these
+  antiPatterns: [
+    'Corporate/enterprise UI (we serve students)',
+    'Gamification (badges, streaks) - we are infrastructure',
+    'Skeleton loaders (use spinners instead)',
+    'Heavy borders (>15% opacity)',
+    'Bold/black typography (700+)',
+    'Gold for CTAs (use white)',
+    'Solid filled secondary buttons (keep ghost)',
+    'Light mode',
+  ],
   accessibility: {
     minContrastText: 4.5,
     minContrastLarge: 3,
-    minTouchTarget: '44px',
+    minTouchTargetDesktop: '44px',
+    minTouchTargetMobile: '48px',
   },
   performance: {
-    maxAnimationDuration: '400ms',
+    maxAnimationDuration: '800ms', // Cinematic max
     preferReducedMotion: true,
   },
 } as const;

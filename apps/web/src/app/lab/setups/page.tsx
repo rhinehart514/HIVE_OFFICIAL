@@ -30,16 +30,6 @@ import { MOTION } from '@hive/tokens';
 
 const EASE = MOTION.ease.premium;
 
-const COLORS = {
-  gold: 'var(--life-gold, #D4AF37)',
-  bg: 'var(--bg-ground, #0A0A09)',
-  text: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  surface: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-};
-
 // Category configuration
 const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   event: { label: 'Events', icon: Calendar, color: '#10B981' },
@@ -51,7 +41,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; 
 
 // Source badge configuration
 const SOURCE_CONFIG: Record<string, { label: string; color: string }> = {
-  system: { label: 'HIVE', color: COLORS.gold },
+  system: { label: 'HIVE', color: 'var(--life-gold)' },
   featured: { label: 'Featured', color: '#10B981' },
   community: { label: 'Community', color: '#6366F1' },
 };
@@ -113,27 +103,17 @@ function SetupCard({
         delay: shouldReduceMotion ? 0 : index * 0.06,
         ease: EASE,
       }}
-      whileHover={{ scale: 1.02, y: -2 }}
+      whileHover={{ y: -2 }}
       onClick={onClick}
-      className="text-left p-5 rounded-xl border transition-all duration-200 group"
-      style={{
-        backgroundColor: COLORS.surface,
-        borderColor: setup.isFeatured ? `${COLORS.gold}20` : COLORS.border,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = setup.isFeatured
-          ? `${COLORS.gold}40`
-          : 'rgba(255, 255, 255, 0.15)';
-        e.currentTarget.style.boxShadow = setup.isFeatured
-          ? `0 4px 20px ${COLORS.gold}15`
-          : '0 4px 20px rgba(0, 0, 0, 0.15)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = setup.isFeatured
-          ? `${COLORS.gold}20`
-          : COLORS.border;
-        e.currentTarget.style.boxShadow = 'none';
-      }}
+      className={`
+        text-left p-5 rounded-xl border transition-all duration-200 group
+        bg-[var(--hivelab-surface)] hover:bg-[var(--hivelab-surface-hover)] hover:brightness-105
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-ground)]
+        ${setup.isFeatured
+          ? 'border-[var(--life-gold)]/20 hover:border-[var(--life-gold)]/40'
+          : 'border-[var(--hivelab-border)] hover:border-white/15'
+        }
+      `}
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
@@ -145,11 +125,11 @@ function SetupCard({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-sm truncate" style={{ color: COLORS.text }}>
+            <span className="font-medium text-sm truncate text-[var(--hivelab-text-primary)]">
               {setup.name}
             </span>
             {setup.isFeatured && (
-              <Sparkles className="h-3.5 w-3.5 flex-shrink-0" style={{ color: COLORS.gold }} />
+              <Sparkles className="h-3.5 w-3.5 flex-shrink-0 text-[var(--life-gold)]" />
             )}
           </div>
           <div className="flex items-center gap-2 mt-1">
@@ -162,7 +142,7 @@ function SetupCard({
             >
               {sourceConfig.label}
             </span>
-            <span className="text-xs" style={{ color: COLORS.textTertiary }}>
+            <span className="text-xs text-[var(--hivelab-text-tertiary)]">
               {categoryConfig.label}
             </span>
           </div>
@@ -170,12 +150,12 @@ function SetupCard({
       </div>
 
       {/* Description */}
-      <p className="text-sm line-clamp-2 mb-3" style={{ color: COLORS.textSecondary }}>
+      <p className="text-sm line-clamp-2 mb-3 text-[var(--hivelab-text-secondary)]">
         {setup.description}
       </p>
 
       {/* Stats */}
-      <div className="flex items-center gap-4 text-xs" style={{ color: COLORS.textTertiary }}>
+      <div className="flex items-center gap-4 text-xs text-[var(--hivelab-text-tertiary)]">
         <span className="flex items-center gap-1.5">
           <Layers className="h-3.5 w-3.5" />
           {setup.toolCount} tools
@@ -224,7 +204,7 @@ export default function SetupsGalleryPage() {
   const regularSetups = filteredSetups.filter((s) => !s.isFeatured);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: COLORS.bg }}>
+    <div className="min-h-screen bg-[var(--bg-ground)]">
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Back link */}
         <motion.div
@@ -233,14 +213,11 @@ export default function SetupsGalleryPage() {
           transition={{ duration: 0.3, ease: EASE }}
         >
           <Link
-            href="/tools"
-            className="inline-flex items-center gap-2 text-sm transition-colors mb-8"
-            style={{ color: COLORS.textSecondary }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = COLORS.text)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = COLORS.textSecondary)}
+            href="/lab"
+            className="inline-flex items-center gap-2 text-sm transition-colors mb-8 text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)]"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Tools
+            Back to Lab
           </Link>
         </motion.div>
 
@@ -250,8 +227,7 @@ export default function SetupsGalleryPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="text-2xl sm:text-3xl font-medium mb-3"
-            style={{ color: COLORS.text }}
+            className="text-2xl sm:text-3xl font-medium mb-3 text-[var(--hivelab-text-primary)]"
           >
             Setups
           </motion.h1>
@@ -259,8 +235,7 @@ export default function SetupsGalleryPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="text-sm"
-            style={{ color: COLORS.textSecondary }}
+            className="text-sm text-[var(--hivelab-text-secondary)]"
           >
             Orchestrated tool bundles with cross-tool automation
           </motion.p>
@@ -274,17 +249,13 @@ export default function SetupsGalleryPage() {
           className="max-w-xl mx-auto mb-6"
         >
           <div className="relative">
-            <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4"
-              style={{ color: COLORS.textTertiary }}
-            />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--hivelab-text-tertiary)]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search setups..."
-              className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.03] border transition-colors text-sm outline-none"
-              style={{ borderColor: COLORS.border, color: COLORS.text }}
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.03] border border-[var(--hivelab-border)] text-[var(--hivelab-text-primary)] transition-colors text-sm outline-none focus:border-white/20"
             />
           </div>
         </motion.div>
@@ -298,12 +269,14 @@ export default function SetupsGalleryPage() {
         >
           <button
             onClick={() => setCategory('all')}
-            className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
-            style={{
-              backgroundColor: category === 'all' ? `${COLORS.gold}20` : 'transparent',
-              color: category === 'all' ? COLORS.gold : COLORS.textSecondary,
-              border: `1px solid ${category === 'all' ? `${COLORS.gold}40` : COLORS.border}`,
-            }}
+            className={`
+              px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+              border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
+              ${category === 'all'
+                ? 'bg-[var(--life-gold)]/20 text-[var(--life-gold)] border-[var(--life-gold)]/40'
+                : 'bg-transparent text-[var(--hivelab-text-secondary)] border-[var(--hivelab-border)] hover:border-white/15'
+              }
+            `}
           >
             All
           </button>
@@ -311,12 +284,19 @@ export default function SetupsGalleryPage() {
             <button
               key={key}
               onClick={() => setCategory(key)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
-              style={{
-                backgroundColor: category === key ? `${config.color}20` : 'transparent',
-                color: category === key ? config.color : COLORS.textSecondary,
-                border: `1px solid ${category === key ? `${config.color}40` : COLORS.border}`,
-              }}
+              className={`
+                flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
+                ${category === key
+                  ? 'border-opacity-40'
+                  : 'bg-transparent text-[var(--hivelab-text-secondary)] border-[var(--hivelab-border)] hover:border-white/15'
+                }
+              `}
+              style={category === key ? {
+                backgroundColor: `${config.color}20`,
+                color: config.color,
+                borderColor: `${config.color}40`,
+              } : undefined}
             >
               <config.icon className="h-3.5 w-3.5" />
               {config.label}
@@ -338,11 +318,11 @@ export default function SetupsGalleryPage() {
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <Layers className="h-12 w-12 mx-auto mb-4" style={{ color: COLORS.textTertiary }} />
-            <p className="text-lg mb-2" style={{ color: COLORS.text }}>
+            <Layers className="h-12 w-12 mx-auto mb-4 text-[var(--hivelab-text-tertiary)]" />
+            <p className="text-lg mb-2 text-[var(--hivelab-text-primary)]">
               No setups found
             </p>
-            <p className="text-sm" style={{ color: COLORS.textSecondary }}>
+            <p className="text-sm text-[var(--hivelab-text-secondary)]">
               {search
                 ? `No setups match "${search}"`
                 : 'Setup templates will appear here when available'}
@@ -364,13 +344,10 @@ export default function SetupsGalleryPage() {
               {featuredSetups.length > 0 && (
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <h2 className="text-sm font-medium" style={{ color: COLORS.textSecondary }}>
+                    <h2 className="text-sm font-medium text-[var(--hivelab-text-secondary)]">
                       Featured Setups
                     </h2>
-                    <span
-                      className="text-label-xs px-2 py-0.5 rounded-full font-medium"
-                      style={{ backgroundColor: `${COLORS.gold}20`, color: COLORS.gold }}
-                    >
+                    <span className="text-label-xs px-2 py-0.5 rounded-full font-medium bg-[var(--life-gold)]/20 text-[var(--life-gold)]">
                       Recommended
                     </span>
                   </div>
@@ -380,7 +357,7 @@ export default function SetupsGalleryPage() {
                         key={setup.id}
                         setup={setup}
                         index={index}
-                        onClick={() => router.push(`/tools/setups/${setup.id}`)}
+                        onClick={() => router.push(`/lab/setups/${setup.id}`)}
                       />
                     ))}
                   </div>
@@ -391,7 +368,7 @@ export default function SetupsGalleryPage() {
               {regularSetups.length > 0 && (
                 <div>
                   {featuredSetups.length > 0 && (
-                    <h2 className="text-sm font-medium mb-4" style={{ color: COLORS.textSecondary }}>
+                    <h2 className="text-sm font-medium mb-4 text-[var(--hivelab-text-secondary)]">
                       All Setups
                     </h2>
                   )}
@@ -401,7 +378,7 @@ export default function SetupsGalleryPage() {
                         key={setup.id}
                         setup={setup}
                         index={index + featuredSetups.length}
-                        onClick={() => router.push(`/tools/setups/${setup.id}`)}
+                        onClick={() => router.push(`/lab/setups/${setup.id}`)}
                       />
                     ))}
                   </div>
@@ -416,31 +393,20 @@ export default function SetupsGalleryPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: shouldReduceMotion ? 0 : 0.6 }}
-          className="mt-8 p-4 rounded-xl border-dashed"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.02)',
-            border: `1px dashed ${COLORS.border}`,
-          }}
+          className="mt-8 p-4 rounded-xl border-dashed bg-white/[0.02] border border-dashed border-[var(--hivelab-border)]"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-sm" style={{ color: COLORS.text }}>
+              <p className="font-medium text-sm text-[var(--hivelab-text-primary)]">
                 Want to create a custom setup?
               </p>
-              <p className="text-xs" style={{ color: COLORS.textSecondary }}>
+              <p className="text-xs text-[var(--hivelab-text-secondary)]">
                 Bundle multiple tools with orchestration rules
               </p>
             </div>
             <button
-              onClick={() => router.push('/tools/setups/new')}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-              style={{
-                backgroundColor: COLORS.surface,
-                color: COLORS.text,
-                border: `1px solid ${COLORS.border}`,
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = COLORS.gold)}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = COLORS.border)}
+              onClick={() => router.push('/lab/setups/new')}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)] border border-[var(--hivelab-border)] hover:border-[var(--life-gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               Create Setup
             </button>

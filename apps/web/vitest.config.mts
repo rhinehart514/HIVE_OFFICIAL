@@ -12,6 +12,7 @@ export default defineConfig({
       '**/__tests__/**/*.{test,spec}.{ts,tsx}',
       '**/test/integration/**/*.{test,spec}.{ts,tsx}',
       '**/test/unit/**/*.{test,spec}.{ts,tsx}',
+      '**/test/ia-enforcement/**/*.{test,spec}.{ts,tsx}',
     ],
     exclude: [
       '**/node_modules/**',

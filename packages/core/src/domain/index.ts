@@ -59,6 +59,17 @@ export { Connection, ConnectionType, ConnectionSource } from './profile/aggregat
 export type { SpecCompliantProfile } from './profile/spec-compliant-profile';
 export { isProfileComplete, getProfileCompletionPercentage, createDefaultProfile } from './profile/spec-compliant-profile';
 
+// Profile Completion Config (Single Source of Truth)
+export type { UserData as ProfileUserData } from './profile/completion-config';
+export {
+  COMPLETION_REQUIREMENTS,
+  isEntryComplete,
+  isProfileComplete as isProfileCompletionComplete,
+  getCompletionPercentage,
+  getMissingFields,
+  getNextSteps,
+} from './profile/completion-config';
+
 // Services
 export {
   GhostModeService,
@@ -93,7 +104,7 @@ export {
 export type { SpaceCategoryValue } from './spaces/constants/space-categories';
 
 // Aggregates
-export { EnhancedSpace } from './spaces/aggregates/enhanced-space';
+export { EnhancedSpace, DEFAULT_ACTIVATION_THRESHOLD } from './spaces/aggregates/enhanced-space';
 export type {
   SpaceMemberRole,
   LeaderRequestStatus,
@@ -103,7 +114,8 @@ export type {
   SpaceType,
   GovernanceModel,
   SpaceStatus,
-  SpaceSource
+  SpaceSource,
+  ActivationStatus,
 } from './spaces/aggregates/enhanced-space';
 
 // Entities
@@ -325,6 +337,9 @@ export type {
   ConditionOperator,
   ContextRequirements,
   ContextFieldPath,
+  SpaceExecutionContext,
+  ProfileExecutionContext,
+  DeploymentExecutionContext,
 } from './hivelab/tool-context.types';
 export {
   evaluateCondition,
@@ -349,6 +364,7 @@ export {
   validateCapabilityRequest,
   DEFAULT_SURFACE_MODES,
   DEFAULT_APP_CONFIG,
+  validatePlacementCapabilities,
 } from './hivelab/capabilities';
 export type {
   ToolCapabilities,
@@ -361,6 +377,8 @@ export type {
   TrustTier,
   SurfaceModes,
   AppConfig,
+  PlacementValidationResult,
+  SpaceGovernance,
 } from './hivelab/capabilities';
 
 // Automation Entity

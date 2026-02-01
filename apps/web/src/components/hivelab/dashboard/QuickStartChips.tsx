@@ -103,17 +103,17 @@ export function QuickStartChips({
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className="p-2 rounded-lg bg-white/[0.04] group-hover:bg-[var(--color-gold,#FFD700)]/10
+                  <div className="p-2 rounded-lg bg-white/[0.04] group-hover:bg-[var(--life-gold)]/10
                     transition-colors">
                     {isLoading ? (
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                       >
-                        <IconComponent className="w-5 h-5 text-[var(--color-gold,#FFD700)]" />
+                        <IconComponent className="w-5 h-5 text-[var(--life-gold)]" />
                       </motion.div>
                     ) : (
-                      <IconComponent className="w-5 h-5 text-white/50 group-hover:text-[var(--color-gold,#FFD700)]
+                      <IconComponent className="w-5 h-5 text-white/50 group-hover:text-[var(--life-gold)]
                         transition-colors" />
                     )}
                   </div>
@@ -174,7 +174,7 @@ export function QuickStartChips({
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               >
-                <IconComponent className="w-3 h-3 text-[var(--color-gold,#FFD700)]" />
+                <IconComponent className="w-3 h-3 text-[var(--life-gold)]" />
               </motion.div>
             ) : (
               <IconComponent className="w-3 h-3" />

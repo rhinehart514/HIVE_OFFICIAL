@@ -16,8 +16,10 @@ import type { ContextRequirements, VisibilityCondition, ConditionGroup, ToolConn
 // HiveLab Properties Panel - Uses CSS variables from globals.css
 // ============================================
 
+import { FOCUS_RING } from '../tokens';
+
 // Workshop tokens
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
+const focusRing = FOCUS_RING;
 
 // Validation shake animation
 const shakeAnimation = {

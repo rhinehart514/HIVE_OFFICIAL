@@ -18,25 +18,27 @@ import type { CanvasElement, Connection } from './types';
 import { PropertiesPanel } from './properties-panel';
 import { ConnectionConfig } from './connection-config';
 
-// HiveLab Dark Panel Colors
+import { FOCUS_RING, WORKSHOP_TRANSITION } from '../tokens';
+
+// HiveLab Dark Panel Colors (using CSS variables only)
 const PANEL_COLORS = {
-  bg: 'var(--hivelab-panel, #1A1A1A)',
-  bgHover: 'var(--hivelab-surface-hover, #1A1A1A)',
-  bgActive: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  borderLight: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  accent: 'var(--life-gold, #D4AF37)',
-  accentLight: 'rgba(212, 175, 55, 0.1)',
-  error: 'var(--hivelab-status-error)',
-  errorLight: 'var(--hivelab-status-error-muted)',
+  bg: 'var(--hivelab-panel)',
+  bgHover: 'var(--hivelab-surface-hover)',
+  bgActive: 'var(--hivelab-surface)',
+  border: 'var(--hivelab-border)',
+  borderLight: 'var(--hivelab-border)',
+  textPrimary: 'var(--hivelab-text-primary)',
+  textSecondary: 'var(--hivelab-text-secondary)',
+  textTertiary: 'var(--hivelab-text-tertiary)',
+  accent: 'var(--life-gold)',
+  accentLight: 'var(--life-gold-muted)',
+  error: 'var(--ide-status-error)',
+  errorLight: 'var(--ide-status-error-bg)',
 };
 
 // Workshop tokens
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
-const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
+const focusRing = FOCUS_RING;
+const workshopTransition = WORKSHOP_TRANSITION;
 
 const RAIL_WIDTH = 300;
 

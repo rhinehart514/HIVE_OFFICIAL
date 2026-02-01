@@ -9,6 +9,7 @@ import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { deliverNotification } from '@/lib/notification-delivery-service';
 
 // Notification types that can be generated
 export type NotificationType =
@@ -190,6 +191,14 @@ export async function createNotification(params: CreateNotificationParams): Prom
       userId,
       type,
       category
+    });
+
+    // Trigger delivery asynchronously (don't block)
+    deliverNotification(docRef.id, notificationData, userId).catch(err => {
+      logger.warn('Notification delivery failed', {
+        notificationId: docRef.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
     });
 
     return docRef.id;

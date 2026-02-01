@@ -38,6 +38,7 @@ interface HeaderBarProps {
   onBack?: () => void;
   hasUnsavedChanges?: boolean;
   onAnalytics?: () => void;
+  onAutomations?: () => void;
   onSettings?: () => void;
   /** Current page mode - edit or use */
   mode?: PageMode;
@@ -70,6 +71,7 @@ export function HeaderBar({
   onBack,
   hasUnsavedChanges,
   onAnalytics,
+  onAutomations,
   onSettings,
   mode = 'edit',
   onModeChange,
@@ -469,6 +471,29 @@ export function HeaderBar({
                     </button>
                   )}
 
+                  {onAutomations && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenu(false);
+                        onAutomations();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors"
+                      style={{ color: 'var(--hivelab-text-primary)' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                      </svg>
+                      Automations
+                    </button>
+                  )}
+
                   {onSettings && (
                     <button
                       type="button"
@@ -491,7 +516,7 @@ export function HeaderBar({
                   )}
 
                   {/* Divider if there are items above */}
-                  {(onAnalytics || onSettings) && (
+                  {(onAnalytics || onAutomations || onSettings) && (
                     <div
                       className="my-1 h-px mx-2"
                       style={{ backgroundColor: 'var(--hivelab-border)' }}

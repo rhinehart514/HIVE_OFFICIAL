@@ -9,22 +9,7 @@ const ZoomOut = MinusIcon;
 const ZoomIn = PlusIcon;
 const Grid3X3 = Squares2X2Icon;
 import { cn } from '../../../lib/utils';
-
-// HiveLab Dark Toolbar Colors
-const TOOLBAR_COLORS = {
-  bg: 'var(--hivelab-panel, #1A1A1A)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  runButton: 'var(--life-gold, #D4AF37)',
-  runButtonHover: 'var(--life-gold, #D4AF37)',
-  activeButton: 'var(--hivelab-surface, #141414)',
-};
-
-// Workshop tokens
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
-const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
+import { FOCUS_RING, WORKSHOP_TRANSITION } from '../tokens';
 
 interface Message {
   id: string;
@@ -183,31 +168,19 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
             transition={{ duration: 0.2 }}
             className="w-full max-h-[40vh] overflow-hidden"
           >
-            <div
-              className="rounded-2xl border overflow-hidden"
-              style={{
-                backgroundColor: TOOLBAR_COLORS.bg,
-                borderColor: TOOLBAR_COLORS.border,
-              }}
-            >
+            <div className="rounded-2xl border overflow-hidden bg-[var(--hivelab-panel)] border-[var(--hivelab-border)]">
               {/* Header */}
-              <div
-                className="flex items-center justify-between px-4 py-2 border-b"
-                style={{ borderColor: TOOLBAR_COLORS.border }}
-              >
-                <span className="text-xs font-medium" style={{ color: TOOLBAR_COLORS.textTertiary }}>
+              <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--hivelab-border)]">
+                <span className="text-xs font-medium text-[var(--hivelab-text-tertiary)]">
                   AI Conversation
                 </span>
                 <button
                   type="button"
                   onClick={handleClear}
                   className={cn(
-                    'p-1 rounded-md transition-colors',
-                    focusRing
+                    'p-1 rounded-md transition-colors text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)]',
+                    FOCUS_RING
                   )}
-                  style={{ color: TOOLBAR_COLORS.textTertiary }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = TOOLBAR_COLORS.textPrimary; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = TOOLBAR_COLORS.textTertiary; }}
                   title="Clear conversation"
                 >
                   <XMarkIcon className="h-4 w-4" />
@@ -227,13 +200,9 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
                       className={cn(
                         'max-w-[80%] px-4 py-2.5 rounded-2xl text-sm',
                         message.role === 'user'
-                          ? 'rounded-br-md'
-                          : 'rounded-bl-md'
+                          ? 'rounded-br-md bg-[var(--life-gold)] text-black'
+                          : 'rounded-bl-md bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)]'
                       )}
-                      style={{
-                        backgroundColor: message.role === 'user' ? TOOLBAR_COLORS.runButton : TOOLBAR_COLORS.activeButton,
-                        color: message.role === 'user' ? '#000' : TOOLBAR_COLORS.textPrimary,
-                      }}
                     >
                       {message.content}
                     </div>
@@ -247,17 +216,14 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
                     animate={{ opacity: 1, y: 0 }}
                     className="flex justify-start"
                   >
-                    <div
-                      className="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-bl-md text-sm"
-                      style={{ backgroundColor: TOOLBAR_COLORS.activeButton, color: TOOLBAR_COLORS.textPrimary }}
-                    >
+                    <div className="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-bl-md text-sm bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)]">
                       <div className="flex items-center gap-2">
                         <span className="flex gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: TOOLBAR_COLORS.runButton, animationDelay: '0ms' }} />
-                          <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: TOOLBAR_COLORS.runButton, animationDelay: '150ms' }} />
-                          <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: TOOLBAR_COLORS.runButton, animationDelay: '300ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-[var(--life-gold)]" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-[var(--life-gold)]" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-[var(--life-gold)]" style={{ animationDelay: '300ms' }} />
                         </span>
-                        <span style={{ color: TOOLBAR_COLORS.textSecondary }}>{aiStreamingText}</span>
+                        <span className="text-[var(--hivelab-text-secondary)]">{aiStreamingText}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -272,19 +238,14 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={workshopTransition}
-        className="flex items-center gap-2 px-2 py-1.5 rounded-2xl shadow-lg"
-        style={{
-          backgroundColor: TOOLBAR_COLORS.bg,
-          border: `1px solid ${TOOLBAR_COLORS.border}`,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-        }}
+        transition={WORKSHOP_TRANSITION}
+        className="flex items-center gap-2 px-2 py-1.5 rounded-2xl shadow-lg bg-[var(--hivelab-panel)] border border-[var(--hivelab-border)]"
+        style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}
       >
         {/* AI Input Section */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl min-w-[280px]" style={{ backgroundColor: TOOLBAR_COLORS.activeButton }}>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl min-w-[280px] bg-[var(--hivelab-surface)]">
           <SparklesIcon
-            className={cn('h-4 w-4 flex-shrink-0', aiLoading && 'animate-pulse')}
-            style={{ color: TOOLBAR_COLORS.runButton }}
+            className={cn('h-4 w-4 flex-shrink-0 text-[var(--life-gold)]', aiLoading && 'animate-pulse')}
           />
           <input
             ref={inputRef}
@@ -295,15 +256,9 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
             onFocus={() => messages.length > 0 && setShowConversation(true)}
             placeholder={getPlaceholder()}
             disabled={aiLoading}
-            className="flex-1 bg-transparent text-sm outline-none min-w-[180px] disabled:cursor-not-allowed"
-            style={{
-              color: TOOLBAR_COLORS.textPrimary,
-            }}
+            className="flex-1 bg-transparent text-sm outline-none min-w-[180px] disabled:cursor-not-allowed text-[var(--hivelab-text-primary)] placeholder:text-[var(--hivelab-text-tertiary)]"
           />
-          <kbd
-            className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 text-label-xs rounded"
-            style={{ backgroundColor: TOOLBAR_COLORS.bg, color: TOOLBAR_COLORS.textTertiary }}
-          >
+          <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 text-label-xs rounded bg-[var(--hivelab-panel)] text-[var(--hivelab-text-tertiary)]">
             ⌘K
           </kbd>
           <button
@@ -312,13 +267,11 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
             disabled={!input.trim() || aiLoading}
             className={cn(
               'w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200',
-              focusRing
+              input.trim() && !aiLoading
+                ? 'bg-[var(--life-gold)] text-black cursor-pointer'
+                : 'bg-[var(--hivelab-panel)] text-[var(--hivelab-text-tertiary)] cursor-not-allowed',
+              FOCUS_RING
             )}
-            style={{
-              backgroundColor: input.trim() && !aiLoading ? TOOLBAR_COLORS.runButton : TOOLBAR_COLORS.bg,
-              color: input.trim() && !aiLoading ? '#000' : TOOLBAR_COLORS.textTertiary,
-              cursor: !input.trim() || aiLoading ? 'not-allowed' : 'pointer',
-            }}
             title="Send"
           >
             {aiLoading ? (
@@ -330,7 +283,7 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
         </div>
 
         {/* Divider */}
-        <div className="w-px h-8" style={{ backgroundColor: TOOLBAR_COLORS.border }} />
+        <div className="w-px h-8 bg-[var(--hivelab-border)]" />
 
         {/* Run Button */}
         <button
@@ -338,12 +291,11 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
           onClick={onRun}
           className={cn(
             'flex items-center gap-2 px-4 py-2 rounded-xl',
-            'text-black font-semibold text-sm',
+            'bg-[var(--life-gold)] text-black font-semibold text-sm',
             'transition-all duration-200',
-            'hover:opacity-90 hover:shadow-[0_0_16px_rgba(212,175,55,0.4)] active:opacity-80',
-            focusRing
+            'hover:brightness-110 active:brightness-90',
+            FOCUS_RING
           )}
-          style={{ backgroundColor: TOOLBAR_COLORS.runButton }}
           title="Run once"
         >
           <PlayIconSolid className="h-4 w-4" />
@@ -351,18 +303,20 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
         </button>
 
         {/* Divider */}
-        <div className="w-px h-8" style={{ backgroundColor: TOOLBAR_COLORS.border }} />
+        <div className="w-px h-8 bg-[var(--hivelab-border)]" />
 
         {/* Undo/Redo */}
         <button
           type="button"
           onClick={onUndo}
           disabled={!canUndo}
-          className={cn('p-2 rounded-lg transition-colors duration-200', focusRing)}
-          style={{
-            color: canUndo ? TOOLBAR_COLORS.textSecondary : TOOLBAR_COLORS.textTertiary,
-            opacity: canUndo ? 1 : 0.5,
-          }}
+          className={cn(
+            'p-2 rounded-lg transition-colors duration-200',
+            canUndo
+              ? 'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]'
+              : 'text-[var(--hivelab-text-tertiary)] opacity-50',
+            FOCUS_RING
+          )}
           title="Undo (⌘Z)"
         >
           <ArrowUturnLeftIcon className="h-4 w-4" />
@@ -371,28 +325,32 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
           type="button"
           onClick={onRedo}
           disabled={!canRedo}
-          className={cn('p-2 rounded-lg transition-colors duration-200', focusRing)}
-          style={{
-            color: canRedo ? TOOLBAR_COLORS.textSecondary : TOOLBAR_COLORS.textTertiary,
-            opacity: canRedo ? 1 : 0.5,
-          }}
+          className={cn(
+            'p-2 rounded-lg transition-colors duration-200',
+            canRedo
+              ? 'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]'
+              : 'text-[var(--hivelab-text-tertiary)] opacity-50',
+            FOCUS_RING
+          )}
           title="Redo (⌘⇧Z)"
         >
           <ArrowUturnRightIcon className="h-4 w-4" />
         </button>
 
         {/* Divider */}
-        <div className="w-px h-8" style={{ backgroundColor: TOOLBAR_COLORS.border }} />
+        <div className="w-px h-8 bg-[var(--hivelab-border)]" />
 
         {/* Grid Toggle */}
         <button
           type="button"
           onClick={onToggleGrid}
-          className={cn('p-2 rounded-lg transition-colors duration-200', focusRing)}
-          style={{
-            color: showGrid ? TOOLBAR_COLORS.textPrimary : TOOLBAR_COLORS.textSecondary,
-            backgroundColor: showGrid ? TOOLBAR_COLORS.activeButton : 'transparent',
-          }}
+          className={cn(
+            'p-2 rounded-lg transition-colors duration-200',
+            showGrid
+              ? 'text-[var(--hivelab-text-primary)] bg-[var(--hivelab-surface)]'
+              : 'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
+            FOCUS_RING
+          )}
           title={`Grid: ${showGrid ? 'On' : 'Off'} (⌘G)`}
         >
           <Grid3X3 className="h-4 w-4" />
@@ -402,11 +360,13 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
         <button
           type="button"
           onClick={onToggleSnap}
-          className={cn('px-2 py-1.5 text-xs font-medium rounded-lg transition-colors duration-200', focusRing)}
-          style={{
-            color: snapToGrid ? TOOLBAR_COLORS.textPrimary : TOOLBAR_COLORS.textTertiary,
-            backgroundColor: snapToGrid ? TOOLBAR_COLORS.activeButton : 'transparent',
-          }}
+          className={cn(
+            'px-2 py-1.5 text-xs font-medium rounded-lg transition-colors duration-200',
+            snapToGrid
+              ? 'text-[var(--hivelab-text-primary)] bg-[var(--hivelab-surface)]'
+              : 'text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
+            FOCUS_RING
+          )}
           title={`Snap to Grid: ${snapToGrid ? 'On' : 'Off'}`}
         >
           Snap
@@ -416,33 +376,29 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
         <button
           type="button"
           onClick={onFitToScreen}
-          className={cn('p-2 rounded-lg transition-colors duration-200', focusRing)}
-          style={{ color: TOOLBAR_COLORS.textSecondary }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = TOOLBAR_COLORS.textPrimary;
-            e.currentTarget.style.backgroundColor = TOOLBAR_COLORS.activeButton;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = TOOLBAR_COLORS.textSecondary;
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
+          className={cn(
+            'p-2 rounded-lg transition-colors duration-200',
+            'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
+            FOCUS_RING
+          )}
           title="Fit to Screen"
         >
           <ArrowsPointingOutIcon className="h-4 w-4" />
         </button>
 
         {/* Divider */}
-        <div className="w-px h-8" style={{ backgroundColor: TOOLBAR_COLORS.border }} />
+        <div className="w-px h-8 bg-[var(--hivelab-border)]" />
 
         {/* Zoom Controls */}
         <div className="flex items-center">
           <button
             type="button"
             onClick={() => onZoomChange(Math.max(0.25, zoom - 0.1))}
-            className={cn('p-2 rounded-lg transition-colors duration-200', focusRing)}
-            style={{ color: TOOLBAR_COLORS.textSecondary }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = TOOLBAR_COLORS.textPrimary; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = TOOLBAR_COLORS.textSecondary; }}
+            className={cn(
+              'p-2 rounded-lg transition-colors duration-200',
+              'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)]',
+              FOCUS_RING
+            )}
             title="Zoom Out"
           >
             <ZoomOut className="h-4 w-4" />
@@ -451,16 +407,11 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
           <button
             type="button"
             onClick={() => onZoomChange(1)}
-            className={cn('px-2 py-1.5 min-w-[52px] text-center text-sm rounded-lg transition-colors duration-200', focusRing)}
-            style={{ color: TOOLBAR_COLORS.textSecondary }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = TOOLBAR_COLORS.textPrimary;
-              e.currentTarget.style.backgroundColor = TOOLBAR_COLORS.activeButton;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = TOOLBAR_COLORS.textSecondary;
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
+            className={cn(
+              'px-2 py-1.5 min-w-[52px] text-center text-sm rounded-lg transition-colors duration-200',
+              'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
+              FOCUS_RING
+            )}
             title="Reset to 100%"
           >
             {Math.round(zoom * 100)}%
@@ -469,10 +420,11 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
           <button
             type="button"
             onClick={() => onZoomChange(Math.min(3, zoom + 0.1))}
-            className={cn('p-2 rounded-lg transition-colors duration-200', focusRing)}
-            style={{ color: TOOLBAR_COLORS.textSecondary }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = TOOLBAR_COLORS.textPrimary; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = TOOLBAR_COLORS.textSecondary; }}
+            className={cn(
+              'p-2 rounded-lg transition-colors duration-200',
+              'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)]',
+              FOCUS_RING
+            )}
             title="Zoom In"
           >
             <ZoomIn className="h-4 w-4" />
@@ -487,15 +439,8 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
           animate={{ opacity: 1, y: 0 }}
           className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full"
         >
-          <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border"
-            style={{
-              backgroundColor: TOOLBAR_COLORS.activeButton,
-              borderColor: TOOLBAR_COLORS.border,
-              color: TOOLBAR_COLORS.textSecondary,
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: TOOLBAR_COLORS.runButton }} />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-[var(--hivelab-surface)] border-[var(--hivelab-border)] text-[var(--hivelab-text-secondary)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--life-gold)]" />
             {selectedCount} element{selectedCount > 1 ? 's' : ''} selected
           </span>
         </motion.div>

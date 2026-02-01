@@ -64,10 +64,10 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
         ) : (
           <>
             <p className="text-white/40 text-body mb-2">
-              Start typing to find people
+              No classmates found yet
             </p>
             <p className="text-white/25 text-body-sm">
-              Search by name, handle, or major
+              Join some spaces to see people with shared interests
             </p>
           </>
         )}

@@ -14,21 +14,10 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { SparklesIcon, DocumentDuplicateIcon, ArrowRightIcon, ClockIcon, ListBulletIcon, UserGroupIcon, TrophyIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../../lib/utils';
 import { MOTION } from '../../../tokens/motion';
+import { FOCUS_RING } from '../tokens';
 import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
 const EASE = MOTION.ease.premium;
-
-// Colors matching HiveLab dark theme
-const COLORS = {
-  bg: 'var(--hivelab-bg, #0A0A0A)',
-  panel: 'var(--hivelab-panel, #1A1A1A)',
-  surface: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  gold: 'var(--life-gold, #D4AF37)',
-};
 
 // Top 4 template picks
 const TOP_TEMPLATES: TemplateCardData[] = [
@@ -225,15 +214,15 @@ function TemplateCard({ template, onClick, index }: TemplateCardProps) {
         delay: shouldReduceMotion ? 0 : 0.1 + index * 0.08,
         ease: EASE,
       }}
-      whileHover={{ scale: 1.02, y: -2 }}
+      whileHover={{ y: -2 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
         'relative flex flex-col items-center text-center p-5 rounded-xl',
         'border transition-all duration-200 group',
         'bg-[var(--hivelab-surface)] border-[var(--hivelab-border)]',
-        'hover:border-white/20 hover:bg-[var(--hivelab-surface-hover)]',
+        'hover:border-white/20 hover:bg-[var(--hivelab-surface-hover)] hover:brightness-105',
         'hover:shadow-lg',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
+        FOCUS_RING
       )}
     >
       {/* Icon */}
@@ -249,18 +238,12 @@ function TemplateCard({ template, onClick, index }: TemplateCardProps) {
       </div>
 
       {/* Name */}
-      <h3
-        className="font-medium text-sm mb-1 transition-colors group-hover:text-white"
-        style={{ color: COLORS.textPrimary }}
-      >
+      <h3 className="font-medium text-sm mb-1 transition-colors group-hover:text-white text-[var(--hivelab-text-primary)]">
         {template.name}
       </h3>
 
       {/* Description */}
-      <p
-        className="text-xs transition-colors"
-        style={{ color: COLORS.textSecondary }}
-      >
+      <p className="text-xs transition-colors text-[var(--hivelab-text-secondary)]">
         {template.description}
       </p>
     </motion.button>
@@ -291,8 +274,7 @@ export function TemplateOverlay({
         duration: shouldReduceMotion ? 0 : MOTION.duration.fast,
         ease: EASE,
       }}
-      className="absolute inset-0 z-20 flex items-center justify-center p-8"
-      style={{ backgroundColor: COLORS.bg }}
+      className="absolute inset-0 z-20 flex items-center justify-center p-8 bg-[var(--hivelab-bg)]"
     >
       <div className="max-w-2xl w-full">
         {/* Header */}
@@ -306,13 +288,10 @@ export function TemplateOverlay({
           }}
           className="text-center mb-8"
         >
-          <h2
-            className="text-2xl font-semibold tracking-tight mb-2"
-            style={{ color: COLORS.textPrimary }}
-          >
+          <h2 className="text-2xl font-semibold tracking-tight mb-2 text-[var(--hivelab-text-primary)]">
             Start with a template
           </h2>
-          <p style={{ color: COLORS.textSecondary }}>
+          <p className="text-[var(--hivelab-text-secondary)]">
             Pick a template to customize, or start from scratch
           </p>
         </motion.div>
@@ -328,30 +307,20 @@ export function TemplateOverlay({
             delay: shouldReduceMotion ? 0 : 0.08,
             ease: EASE,
           }}
-          whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
           className={cn(
             'w-full flex items-center justify-center gap-3 px-5 py-4 mb-6',
             'rounded-xl border transition-all duration-200',
-            'hover:shadow-[0_0_24px_rgba(212,175,55,0.15)]',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
+            'bg-[var(--life-gold)]/10 border-[var(--life-gold)]/40',
+            'hover:bg-[var(--life-gold)]/15 hover:border-[var(--life-gold)]/60',
+            FOCUS_RING
           )}
-          style={{
-            backgroundColor: `${COLORS.gold}15`,
-            borderColor: `${COLORS.gold}40`,
-          }}
         >
-          <SparklesIcon className="h-5 w-5" style={{ color: COLORS.gold }} />
-          <span className="font-medium" style={{ color: COLORS.gold }}>
+          <SparklesIcon className="h-5 w-5 text-[var(--life-gold)]" />
+          <span className="font-medium text-[var(--life-gold)]">
             Describe what you want to build
           </span>
-          <kbd
-            className="ml-2 px-2 py-0.5 text-xs rounded"
-            style={{
-              backgroundColor: `${COLORS.gold}20`,
-              color: COLORS.gold,
-            }}
-          >
+          <kbd className="ml-2 px-2 py-0.5 text-xs rounded bg-[var(--life-gold)]/20 text-[var(--life-gold)]">
             ⌘K
           </kbd>
         </motion.button>
@@ -366,11 +335,11 @@ export function TemplateOverlay({
           }}
           className="flex items-center gap-4 mb-6"
         >
-          <div className="flex-1 h-px" style={{ backgroundColor: COLORS.border }} />
-          <span className="text-xs" style={{ color: COLORS.textTertiary }}>
+          <div className="flex-1 h-px bg-[var(--hivelab-border)]" />
+          <span className="text-xs text-[var(--hivelab-text-tertiary)]">
             or pick a template
           </span>
-          <div className="flex-1 h-px" style={{ backgroundColor: COLORS.border }} />
+          <div className="flex-1 h-px bg-[var(--hivelab-border)]" />
         </motion.div>
 
         {/* Template Grid */}
@@ -398,20 +367,18 @@ export function TemplateOverlay({
           <button
             type="button"
             onClick={onStartFromScratch}
-            className="flex items-center gap-2 px-4 py-2 text-sm transition-colors hover:text-white"
-            style={{ color: COLORS.textSecondary }}
+            className="flex items-center gap-2 px-4 py-2 text-sm transition-colors text-[var(--hivelab-text-secondary)] hover:text-white"
           >
             <DocumentDuplicateIcon className="h-4 w-4" />
             Start from scratch
           </button>
 
-          <span className="w-px h-4" style={{ backgroundColor: COLORS.border }} />
+          <span className="w-px h-4 bg-[var(--hivelab-border)]" />
 
           <button
             type="button"
             onClick={onSeeAllTemplates}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm transition-colors hover:text-white group"
-            style={{ color: COLORS.textSecondary }}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm transition-colors text-[var(--hivelab-text-secondary)] hover:text-white group"
           >
             See all templates
             <ArrowRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -426,14 +393,10 @@ export function TemplateOverlay({
             duration: shouldReduceMotion ? 0 : MOTION.duration.fast,
             delay: shouldReduceMotion ? 0 : 0.5,
           }}
-          className="text-center text-xs mt-8"
-          style={{ color: COLORS.textTertiary }}
+          className="text-center text-xs mt-8 text-[var(--hivelab-text-tertiary)]"
         >
           Press{' '}
-          <kbd
-            className="px-1.5 py-0.5 rounded"
-            style={{ backgroundColor: COLORS.surface, color: COLORS.textTertiary }}
-          >
+          <kbd className="px-1.5 py-0.5 rounded bg-[var(--hivelab-surface)] text-[var(--hivelab-text-tertiary)]">
             /
           </kbd>{' '}
           anywhere to quickly add elements

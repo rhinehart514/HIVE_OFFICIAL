@@ -15,6 +15,13 @@ import { UBEmail } from '../../identity/value-objects/ub-email.value';
 import { GraduationYear } from '../value-objects/graduation-year.value';
 import { Major, AcademicSchool } from '../value-objects/major.value';
 import { Interest, InterestCollection, InterestCategory } from '../value-objects/interest.value';
+// Completion config (single source of truth)
+import {
+  COMPLETION_REQUIREMENTS,
+  isProfileComplete as isProfileCompletionComplete,
+  getCompletionPercentage as getProfileCompletionPercentage,
+  type UserData
+} from '../completion-config';
 
 export interface PersonalInfo {
   firstName: string;
@@ -432,48 +439,42 @@ export class EnhancedProfile extends AggregateRoot<EnhancedProfileProps> {
     this.props.lastActive = new Date();
   }
 
+  /**
+   * Check if profile is complete using centralized config
+   * Uses COMPLETION_REQUIREMENTS from completion-config.ts
+   */
   public isProfileComplete(): boolean {
-    const { personalInfo, academicInfo, socialInfo } = this.props;
-
-    // Basic info required
-    if (!personalInfo.firstName || !personalInfo.lastName) return false;
-    if (!personalInfo.bio) return false;
-
-    // Students need academic info
-    if (this.props.userType.isStudent() && !academicInfo) return false;
-
-    // Social info minimum
-    if (socialInfo.interests.length === 0) return false;
-
-    return true;
+    const userData = this.toUserData();
+    return isProfileCompletionComplete(userData);
   }
 
+  /**
+   * Get profile completion percentage using centralized config
+   * Uses COMPLETION_REQUIREMENTS from completion-config.ts
+   */
   public getCompletionPercentage(): number {
-    let completed = 0;
-    let total = 0;
+    const userData = this.toUserData();
+    return getProfileCompletionPercentage(userData);
+  }
 
-    // Personal Info (40%)
-    total += 4;
-    if (this.props.personalInfo.firstName) completed++;
-    if (this.props.personalInfo.lastName) completed++;
-    if (this.props.personalInfo.bio) completed++;
-    if (this.props.personalInfo.profilePhoto) completed++;
-
-    // Academic Info (30%) - only for students
-    if (this.props.userType.isStudent()) {
-      total += 3;
-      if (this.props.academicInfo?.major) completed++;
-      if (this.props.academicInfo?.graduationYear) completed++;
-      if (this.props.academicInfo?.courses.length) completed++;
-    }
-
-    // Social Info (30%)
-    total += 3;
-    if (this.props.socialInfo.interests.length > 0) completed++;
-    if (this.props.socialInfo.clubs.length > 0) completed++;
-    if (this.props.socialInfo.instagram || this.props.socialInfo.snapchat) completed++;
-
-    return Math.round((completed / total) * 100);
+  /**
+   * Convert to UserData for completion checks
+   */
+  private toUserData(): UserData {
+    return {
+      firstName: this.props.personalInfo.firstName,
+      lastName: this.props.personalInfo.lastName,
+      handle: this.props.handle.value,
+      email: this.props.email.value,
+      campusId: this.props.campusId.id,
+      role: this.props.userType.value,
+      major: this.props.academicInfo?.major || this.props.personalInfo.major,
+      graduationYear: this.props.academicInfo?.graduationYear || this.props.personalInfo.graduationYear,
+      bio: this.props.personalInfo.bio,
+      avatarUrl: this.props.personalInfo.profilePhoto,
+      interests: this.props.socialInfo.interests,
+      isOnboarded: this.props.isOnboarded,
+    };
   }
 
   // ============================================

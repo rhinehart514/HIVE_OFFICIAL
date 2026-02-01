@@ -118,17 +118,41 @@ async function fetchSpaces(search?: string): Promise<{ spaces: SpaceCardData[]; 
   return { spaces, ghostSpaces };
 }
 
-async function fetchPeople(search: string): Promise<PersonData[]> {
-  if (!search || search.length < 2) return [];
+interface PeopleFilters {
+  major?: string;
+  graduationYear?: string;
+}
+
+async function fetchPeople(search?: string, filters?: PeopleFilters): Promise<PersonData[]> {
+  // Build request body - omit query for browse mode (returns classmates/nearby)
+  const requestBody: {
+    limit: number;
+    sortBy: string;
+    query?: string;
+    major?: string;
+    graduationYear?: number;
+  } = {
+    limit: 20,
+    sortBy: 'relevance',
+  };
+
+  // Only include query if it has meaningful content
+  if (search && search.length >= 2) {
+    requestBody.query = search;
+  }
+
+  // Add filters if present
+  if (filters?.major) {
+    requestBody.major = filters.major;
+  }
+  if (filters?.graduationYear) {
+    requestBody.graduationYear = parseInt(filters.graduationYear, 10);
+  }
 
   const response = await fetch('/api/users/search', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: search,
-      limit: 20,
-      sortBy: 'relevance',
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) throw new Error('Failed to fetch people');
@@ -253,6 +277,7 @@ function ExploreContent() {
   const [searchQuery, setSearchQuery] = useState(queryParam);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [peopleFilters, setPeopleFilters] = useState<PeopleFilters>({});
 
   // Data state
   const [spaces, setSpaces] = useState<SpaceCardData[]>([]);
@@ -289,7 +314,7 @@ function ExploreContent() {
             break;
           }
           case 'people': {
-            const p = await fetchPeople(debouncedQuery);
+            const p = await fetchPeople(debouncedQuery, peopleFilters);
             setPeople(p);
             break;
           }
@@ -322,7 +347,7 @@ function ExploreContent() {
     };
 
     fetchData();
-  }, [activeTab, debouncedQuery]);
+  }, [activeTab, debouncedQuery, peopleFilters]);
 
   const handleTabChange = useCallback((tab: ExploreTab) => {
     setActiveTab(tab);
@@ -413,11 +438,57 @@ function ExploreContent() {
             )}
 
             {activeTab === 'people' && (
-              <PeopleGrid
-                people={people}
-                loading={isLoading}
-                searchQuery={debouncedQuery}
-              />
+              <>
+                {/* Filter chips */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <select
+                    value={peopleFilters.major || ''}
+                    onChange={(e) => setPeopleFilters(prev => ({
+                      ...prev,
+                      major: e.target.value || undefined
+                    }))}
+                    className="px-3 py-1.5 rounded-lg text-sm bg-white/[0.04] border border-white/10 text-white/80 focus:outline-none focus:border-white/20"
+                  >
+                    <option value="">All Majors</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Business Administration">Business</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Psychology">Psychology</option>
+                    <option value="Biology">Biology</option>
+                    <option value="Communications">Communications</option>
+                    <option value="Economics">Economics</option>
+                    <option value="Nursing">Nursing</option>
+                  </select>
+                  <select
+                    value={peopleFilters.graduationYear || ''}
+                    onChange={(e) => setPeopleFilters(prev => ({
+                      ...prev,
+                      graduationYear: e.target.value || undefined
+                    }))}
+                    className="px-3 py-1.5 rounded-lg text-sm bg-white/[0.04] border border-white/10 text-white/80 focus:outline-none focus:border-white/20"
+                  >
+                    <option value="">All Years</option>
+                    <option value="2025">Class of 2025</option>
+                    <option value="2026">Class of 2026</option>
+                    <option value="2027">Class of 2027</option>
+                    <option value="2028">Class of 2028</option>
+                    <option value="2029">Class of 2029</option>
+                  </select>
+                  {(peopleFilters.major || peopleFilters.graduationYear) && (
+                    <button
+                      onClick={() => setPeopleFilters({})}
+                      className="px-3 py-1.5 rounded-lg text-sm text-white/50 hover:text-white/70 transition-colors"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+                <PeopleGrid
+                  people={people}
+                  loading={isLoading}
+                  searchQuery={debouncedQuery}
+                />
+              </>
             )}
 
             {activeTab === 'events' && (

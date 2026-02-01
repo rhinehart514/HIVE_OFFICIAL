@@ -754,3 +754,79 @@ export async function recordBudgetUsage(
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true });
 }
+
+// =============================================================================
+// Placement Validation
+// =============================================================================
+
+/**
+ * Result of placement capability validation
+ */
+export interface PlacementValidationResult {
+  canPlace: boolean;
+  errors: string[];
+  warnings: string[];
+  requiredLane: CapabilityLane;
+}
+
+/**
+ * Space governance configuration for capability lane restrictions
+ */
+export interface SpaceGovernance {
+  allowedLanes?: CapabilityLane[];
+  requireApprovalForPower?: boolean;
+  [key: string]: unknown;
+}
+
+/**
+ * Validate that a tool's capabilities are compatible with a space's governance settings.
+ * Call this BEFORE creating a placement to catch incompatibility early.
+ *
+ * @param toolCapabilities - The tool's capability requirements
+ * @param spaceGovernance - The space's governance configuration (optional)
+ * @returns Validation result with errors, warnings, and required lane
+ */
+export function validatePlacementCapabilities(
+  toolCapabilities: Partial<ToolCapabilities>,
+  spaceGovernance: SpaceGovernance | undefined
+): PlacementValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const requiredLane = getCapabilityLane(toolCapabilities);
+
+  // Default: spaces allow all lanes unless explicitly restricted
+  const allowedLanes = spaceGovernance?.allowedLanes || ['safe', 'scoped', 'power'];
+
+  if (!allowedLanes.includes(requiredLane)) {
+    errors.push(
+      `Tool requires "${requiredLane}" lane but space only allows: ${allowedLanes.join(', ')}`
+    );
+  }
+
+  // Warn about power capabilities that affect other users
+  if (toolCapabilities.create_posts) {
+    warnings.push('Tool can create posts on behalf of users');
+  }
+  if (toolCapabilities.send_notifications) {
+    warnings.push('Tool can send notifications to space members');
+  }
+  if (toolCapabilities.trigger_automations) {
+    warnings.push('Tool can trigger automations');
+  }
+
+  // Check if space requires approval for power tools
+  if (
+    requiredLane === 'power' &&
+    spaceGovernance?.requireApprovalForPower &&
+    errors.length === 0
+  ) {
+    warnings.push('This tool requires leader approval before it becomes active');
+  }
+
+  return {
+    canPlace: errors.length === 0,
+    errors,
+    warnings,
+    requiredLane,
+  };
+}

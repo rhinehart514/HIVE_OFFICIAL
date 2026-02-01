@@ -56,9 +56,9 @@ function Button({
 }) {
   const baseStyles = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center";
   const variantStyles = {
-    default: "bg-[#FFD700] text-black hover:bg-[#FFD700]/90",
+    default: "bg-gold-500 text-black hover:bg-gold-500/90",
     secondary: "border border-white/20 text-white hover:bg-white/10",
-    ghost: "text-white/60 hover:text-white hover:bg-white/[0.06]"
+    ghost: "text-white/60 hover:text-white hover:bg-overlay-subtle"
   };
 
   return (
@@ -78,14 +78,14 @@ export default function ResourcesPage() {
 
   if (!mounted) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0A0A09]">
+      <div className="flex items-center justify-center min-h-screen bg-foundation-gray-1000">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A09]">
+    <div className="min-h-screen bg-foundation-gray-1000">
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-12">
@@ -104,11 +104,11 @@ export default function ResourcesPage() {
             onClick={() => router.push('/lab/create')}
           >
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#FFD700]/10 flex items-center justify-center group-hover:opacity-80 transition-transform">
-                <WrenchScrewdriverIcon className="h-5 w-5 text-[#FFD700]" />
+              <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center group-hover:opacity-80 transition-transform">
+                <WrenchScrewdriverIcon className="h-5 w-5 text-gold-500" />
               </div>
               <div>
-                <h3 className="text-sm font-medium text-white group-hover:text-[#FFD700] transition-colors">Create a Tool</h3>
+                <h3 className="text-sm font-medium text-white group-hover:text-gold-500 transition-colors">Create a Tool</h3>
                 <p className="text-xs text-white/50">Build with HiveLab</p>
               </div>
             </div>
@@ -123,7 +123,7 @@ export default function ResourcesPage() {
                 <UsersIcon className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-medium text-white group-hover:text-[#FFD700] transition-colors">Find Spaces</h3>
+                <h3 className="text-sm font-medium text-white group-hover:text-gold-500 transition-colors">Find Spaces</h3>
                 <p className="text-xs text-white/50">Join your community</p>
               </div>
             </div>
@@ -138,7 +138,7 @@ export default function ResourcesPage() {
                 <SparklesIcon className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-medium text-white group-hover:text-[#FFD700] transition-colors">My Tools</h3>
+                <h3 className="text-sm font-medium text-white group-hover:text-gold-500 transition-colors">My Tools</h3>
                 <p className="text-xs text-white/50">Manage your creations</p>
               </div>
             </div>
@@ -148,7 +148,7 @@ export default function ResourcesPage() {
         {/* Getting Started Section */}
         <div className="mb-12">
           <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <StarIcon className="h-5 w-5 text-[#FFD700]" />
+            <StarIcon className="h-5 w-5 text-gold-500" />
             Getting Started
           </h2>
           <div className="space-y-3">
@@ -158,7 +158,7 @@ export default function ResourcesPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-medium mb-1 group-hover:text-[#FFD700] transition-colors">
+                  <h3 className="text-white font-medium mb-1 group-hover:text-gold-500 transition-colors">
                     Build Your First Tool
                   </h3>
                   <p className="text-sm text-white/50 mb-3">
@@ -172,7 +172,7 @@ export default function ResourcesPage() {
                     <span>27 elements available</span>
                   </div>
                 </div>
-                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/30 group-hover:text-[#FFD700] flex-shrink-0 ml-4 transition-colors" />
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/30 group-hover:text-gold-500 flex-shrink-0 ml-4 transition-colors" />
               </div>
             </Card>
 
@@ -182,7 +182,7 @@ export default function ResourcesPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-medium mb-1 group-hover:text-[#FFD700] transition-colors">
+                  <h3 className="text-white font-medium mb-1 group-hover:text-gold-500 transition-colors">
                     Start a Space
                   </h3>
                   <p className="text-sm text-white/50 mb-3">
@@ -197,7 +197,7 @@ export default function ResourcesPage() {
                     <span>Custom tools</span>
                   </div>
                 </div>
-                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/30 group-hover:text-[#FFD700] flex-shrink-0 ml-4 transition-colors" />
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/30 group-hover:text-gold-500 flex-shrink-0 ml-4 transition-colors" />
               </div>
             </Card>
 
@@ -207,7 +207,7 @@ export default function ResourcesPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-medium mb-1 group-hover:text-[#FFD700] transition-colors">
+                  <h3 className="text-white font-medium mb-1 group-hover:text-gold-500 transition-colors">
                     Claim Your Organization
                   </h3>
                   <p className="text-sm text-white/50 mb-3">
@@ -217,7 +217,7 @@ export default function ResourcesPage() {
                     <span>400+ UB organizations available</span>
                   </div>
                 </div>
-                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/30 group-hover:text-[#FFD700] flex-shrink-0 ml-4 transition-colors" />
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/30 group-hover:text-gold-500 flex-shrink-0 ml-4 transition-colors" />
               </div>
             </Card>
           </div>
@@ -253,7 +253,7 @@ export default function ResourcesPage() {
                   <span className={`text-label-xs px-2 py-0.5 rounded-full ${
                     element.tier === "Universal" ? "bg-white/[0.06] text-white/50" :
                     element.tier === "Connected" ? "bg-blue-500/20 text-blue-400" :
-                    "bg-[#FFD700]/20 text-[#FFD700]"
+                    "bg-gold-500/20 text-gold-500"
                   }`}>
                     {element.tier}
                   </span>
@@ -262,12 +262,12 @@ export default function ResourcesPage() {
             ))}
           </div>
           <p className="text-xs text-white/40 mt-4 text-center">
-            27 total elements across 3 tiers. <span className="text-white/60 cursor-pointer hover:text-[#FFD700]" onClick={() => router.push('/lab/create')}>Explore all in HiveLab →</span>
+            27 total elements across 3 tiers. <span className="text-white/60 cursor-pointer hover:text-gold-500" onClick={() => router.push('/lab/create')}>Explore all in HiveLab →</span>
           </p>
         </div>
 
         {/* Help Section */}
-        <Card className="p-8 bg-gradient-to-br from-[#FFD700]/10 via-[#FFD700]/5 to-transparent border-[#FFD700]/20">
+        <Card className="p-8 bg-gradient-to-br from-gold-500/10 via-gold-500/5 to-transparent border-gold-500/20">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-white mb-2">Need help?</h2>
             <p className="text-white/50 mb-6 max-w-md mx-auto">

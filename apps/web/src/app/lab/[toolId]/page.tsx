@@ -23,8 +23,8 @@ import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import { ToolAnalyticsPanel } from './components/analytics-panel';
 import { AutomationAwarenessPanel } from './components/automation-awareness-panel';
 
-// Feature flag: Automations are non-functional, hide UI until backend is ready
-const AUTOMATIONS_ENABLED = false;
+// Feature flag: Automations are now enabled
+const AUTOMATIONS_ENABLED = true;
 
 /**
  * Tool Studio Page - Full HiveLabIDE Experience
@@ -572,6 +572,7 @@ export default function ToolStudioPage({ params }: Props) {
         hasUnsavedChanges={hasUnsavedChanges}
         onDeploy={() => setDeployModalOpen(true)}
         onAnalytics={() => setAnalyticsOpen(true)}
+        onAutomations={AUTOMATIONS_ENABLED ? () => setAutomationsOpen(true) : undefined}
         mode={pageMode}
         onModeChange={handleModeChange}
         canEdit={true}

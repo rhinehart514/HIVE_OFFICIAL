@@ -9,8 +9,25 @@
  * - Time-based notifications (30-min reminder)
  */
 
-import type { SetupToolSlot, OrchestrationRule, SetupConfigField } from './setup-template';
+import type { SetupToolSlot, OrchestrationRule, SetupConfigField, SetupCategory } from './setup-template';
 import type { ToolCapabilities } from '../capabilities';
+
+/**
+ * Type for system setup templates - allows any SetupCategory
+ */
+interface SystemTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: SetupCategory;
+  tools: SetupToolSlot[];
+  orchestration: OrchestrationRule[];
+  sharedDataSchema: Record<string, unknown>;
+  configFields: SetupConfigField[];
+  requiredCapabilities: Partial<ToolCapabilities>;
+  tags: string[];
+}
 
 // ============================================================================
 // Tool Slots
@@ -462,7 +479,7 @@ const EVENT_SERIES_SHARED_DATA_SCHEMA = {
 // Event Series Template Definition
 // ============================================================================
 
-export const EVENT_SERIES_TEMPLATE = {
+export const EVENT_SERIES_TEMPLATE: SystemTemplate = {
   id: 'event-series',
   name: 'Event Series',
   description:
@@ -485,18 +502,525 @@ export const EVENT_SERIES_TEMPLATE = {
 };
 
 // ============================================================================
+// Campaign Kit Template
+// ============================================================================
+
+const CAMPAIGN_KIT_TEMPLATE: SystemTemplate = {
+  id: 'campaign-kit',
+  name: 'Campaign Kit',
+  description:
+    'Launch countdown, signup collection, and progress updates for product launches, recruitment drives, or fundraising campaigns.',
+  icon: 'Rocket',
+  category: 'campaign' as const,
+  tools: [
+    {
+      slotId: 'countdown',
+      name: 'Launch Countdown',
+      composition: {
+        elements: [
+          {
+            elementId: 'countdown-timer',
+            instanceId: 'campaign_countdown',
+            config: {
+              title: 'Launching In',
+              showDays: true,
+              showHours: true,
+              showMinutes: true,
+              showSeconds: false,
+              targetField: 'launchDate',
+              emitEvent: true,
+              eventType: 'campaign_launch',
+            },
+            position: { x: 0, y: 0 },
+            size: { width: 12, height: 3 },
+          },
+        ],
+        connections: [],
+        layout: 'grid' as const,
+      },
+      defaultConfig: {},
+      placement: 'sidebar' as const,
+      initiallyVisible: true,
+      description: 'Countdown to campaign launch',
+      icon: 'Timer',
+    },
+    {
+      slotId: 'signup',
+      name: 'Interest Signup',
+      composition: {
+        elements: [
+          {
+            elementId: 'form-builder',
+            instanceId: 'campaign_signup',
+            config: {
+              title: 'Get Notified',
+              submitLabel: 'Sign Me Up',
+              fields: [
+                { name: 'email', type: 'email', required: true },
+                { name: 'notes', type: 'textarea', required: false },
+              ],
+            },
+            position: { x: 0, y: 0 },
+            size: { width: 12, height: 3 },
+          },
+          {
+            elementId: 'counter',
+            instanceId: 'signup_counter',
+            config: {
+              title: 'People Interested',
+              suffix: ' signed up',
+            },
+            position: { x: 0, y: 3 },
+            size: { width: 12, height: 2 },
+          },
+        ],
+        connections: [
+          {
+            from: { instanceId: 'campaign_signup', output: 'submissions' },
+            to: { instanceId: 'signup_counter', input: 'count' },
+          },
+        ],
+        layout: 'grid' as const,
+      },
+      defaultConfig: {},
+      placement: 'sidebar' as const,
+      initiallyVisible: true,
+      description: 'Collect interest signups',
+      icon: 'UserPlus',
+    },
+    {
+      slotId: 'updates',
+      name: 'Progress Updates',
+      composition: {
+        elements: [
+          {
+            elementId: 'feed',
+            instanceId: 'campaign_updates',
+            config: {
+              title: 'Campaign Updates',
+              allowPosts: false,
+              showTimestamps: true,
+              maxItems: 10,
+            },
+            position: { x: 0, y: 0 },
+            size: { width: 12, height: 6 },
+          },
+        ],
+        connections: [],
+        layout: 'grid' as const,
+      },
+      defaultConfig: {},
+      placement: 'sidebar' as const,
+      initiallyVisible: true,
+      description: 'Post campaign progress updates',
+      icon: 'Megaphone',
+    },
+  ],
+  orchestration: [
+    {
+      id: 'notify-on-launch',
+      name: 'Launch Notification',
+      description: 'Notify all signups when campaign launches',
+      trigger: {
+        type: 'tool_event' as const,
+        sourceSlotId: 'countdown',
+        eventType: 'campaign_launch',
+      },
+      actions: [
+        {
+          type: 'notification' as const,
+          recipients: 'all' as const,
+          title: 'Campaign Has Launched!',
+          body: '{campaignName} is now live. Check it out!',
+          actionUrl: '/spaces/{spaceId}',
+        },
+      ],
+      enabled: true,
+      runOnce: true,
+    },
+  ],
+  sharedDataSchema: {
+    type: 'object',
+    properties: {
+      campaignName: { type: 'string' },
+      launchDate: { type: 'string', format: 'date-time' },
+      signupCount: { type: 'number' },
+    },
+    required: ['campaignName', 'launchDate'],
+  },
+  configFields: [
+    {
+      key: 'campaignName',
+      label: 'Campaign Name',
+      type: 'text' as const,
+      required: true,
+      placeholder: 'e.g., Spring Recruitment 2025',
+    },
+    {
+      key: 'launchDate',
+      label: 'Launch Date',
+      type: 'datetime' as const,
+      required: true,
+      helpText: 'When the campaign goes live',
+    },
+  ],
+  requiredCapabilities: {
+    read_own_state: true,
+    write_own_state: true,
+    send_notifications: true,
+  },
+  tags: ['campaign', 'launch', 'signup', 'countdown', 'marketing'],
+};
+
+// ============================================================================
+// Onboarding Flow Template
+// ============================================================================
+
+const ONBOARDING_FLOW_TEMPLATE: SystemTemplate = {
+  id: 'onboarding-flow',
+  name: 'Onboarding Flow',
+  description:
+    'Welcome new members with a greeting, checklist of steps to complete, and introductions to the community.',
+  icon: 'Compass',
+  category: 'workflow' as const,
+  tools: [
+    {
+      slotId: 'welcome',
+      name: 'Welcome Message',
+      composition: {
+        elements: [
+          {
+            elementId: 'rich-text',
+            instanceId: 'welcome_message',
+            config: {
+              title: 'Welcome!',
+              content: 'Welcome to our space. We are excited to have you!',
+              format: 'markdown',
+            },
+            position: { x: 0, y: 0 },
+            size: { width: 12, height: 4 },
+          },
+        ],
+        connections: [],
+        layout: 'grid' as const,
+      },
+      defaultConfig: {},
+      placement: 'modal' as const,
+      initiallyVisible: true,
+      description: 'Welcome message for new members',
+      icon: 'Hand',
+    },
+    {
+      slotId: 'checklist',
+      name: 'Getting Started Checklist',
+      composition: {
+        elements: [
+          {
+            elementId: 'checklist',
+            instanceId: 'onboarding_checklist',
+            config: {
+              title: 'Getting Started',
+              items: [
+                { id: '1', label: 'Complete your profile', done: false },
+                { id: '2', label: 'Introduce yourself', done: false },
+                { id: '3', label: 'Read the guidelines', done: false },
+              ],
+              showProgress: true,
+            },
+            position: { x: 0, y: 0 },
+            size: { width: 12, height: 5 },
+          },
+        ],
+        connections: [],
+        layout: 'grid' as const,
+      },
+      defaultConfig: {},
+      placement: 'sidebar' as const,
+      initiallyVisible: true,
+      description: 'Checklist of onboarding steps',
+      icon: 'CheckSquare',
+    },
+    {
+      slotId: 'introductions',
+      name: 'Introductions',
+      composition: {
+        elements: [
+          {
+            elementId: 'form-builder',
+            instanceId: 'intro_form',
+            config: {
+              title: 'Introduce Yourself',
+              submitLabel: 'Post Introduction',
+              oneTimeSubmit: true,
+              fields: [
+                { name: 'intro', type: 'textarea', label: 'Tell us about yourself', required: true },
+                { name: 'interests', type: 'text', label: 'Your interests', required: false },
+              ],
+            },
+            position: { x: 0, y: 0 },
+            size: { width: 12, height: 4 },
+          },
+          {
+            elementId: 'result-list',
+            instanceId: 'intro_list',
+            config: {
+              title: 'Recent Introductions',
+              showAvatar: true,
+              showTimestamp: true,
+              maxVisible: 10,
+            },
+            position: { x: 0, y: 4 },
+            size: { width: 12, height: 5 },
+          },
+        ],
+        connections: [
+          {
+            from: { instanceId: 'intro_form', output: 'submission' },
+            to: { instanceId: 'intro_list', input: 'data' },
+          },
+        ],
+        layout: 'grid' as const,
+      },
+      defaultConfig: {},
+      placement: 'sidebar' as const,
+      initiallyVisible: true,
+      description: 'Member introduction board',
+      icon: 'Users',
+    },
+  ],
+  orchestration: [
+    {
+      id: 'show-welcome-on-join',
+      name: 'Show Welcome on Join',
+      description: 'Display welcome message when new member joins',
+      trigger: {
+        type: 'data_condition' as const,
+        dataPath: 'member.isNew',
+        operator: 'eq' as const,
+        value: true,
+      },
+      actions: [
+        {
+          type: 'visibility' as const,
+          targetSlotId: 'welcome',
+          visible: true,
+        },
+      ],
+      enabled: true,
+      runOnce: false,
+    },
+  ],
+  sharedDataSchema: {
+    type: 'object',
+    properties: {
+      completedOnboarding: { type: 'number' },
+      introductionsCount: { type: 'number' },
+    },
+  },
+  configFields: [
+    {
+      key: 'welcomeMessage',
+      label: 'Welcome Message',
+      type: 'textarea' as const,
+      required: true,
+      placeholder: 'Write your welcome message...',
+      helpText: 'This appears when new members join',
+    },
+  ],
+  requiredCapabilities: {
+    read_own_state: true,
+    write_own_state: true,
+    read_space_members: true,
+  },
+  tags: ['onboarding', 'welcome', 'checklist', 'introductions', 'new members'],
+};
+
+// ============================================================================
+// Weekly Rituals Template
+// ============================================================================
+
+const WEEKLY_RITUALS_TEMPLATE: SystemTemplate = {
+  id: 'weekly-rituals',
+  name: 'Weekly Rituals',
+  description:
+    'Recurring engagement tools: weekly polls, member highlights, and shoutouts to keep your community active.',
+  icon: 'Calendar',
+  category: 'engagement' as const,
+  tools: [
+    {
+      slotId: 'poll',
+      name: 'Weekly Poll',
+      composition: {
+        elements: [
+          {
+            elementId: 'poll',
+            instanceId: 'weekly_poll',
+            config: {
+              title: 'This Week\'s Question',
+              question: 'What should we focus on this week?',
+              options: ['Option A', 'Option B', 'Option C'],
+              allowMultiple: false,
+              showResults: true,
+              endDate: null,
+            },
+            position: { x: 0, y: 0 },
+            size: { width: 12, height: 5 },
+          },
+        ],
+        connections: [],
+        layout: 'grid' as const,
+      },
+      defaultConfig: {},
+      placement: 'sidebar' as const,
+      initiallyVisible: true,
+      description: 'Weekly community poll',
+      icon: 'BarChart',
+    },
+    {
+      slotId: 'highlights',
+      name: 'Member Highlights',
+      composition: {
+        elements: [
+          {
+            elementId: 'spotlight',
+            instanceId: 'member_highlight',
+            config: {
+              title: 'Member of the Week',
+              showBio: true,
+              showJoinDate: true,
+              showContributions: true,
+            },
+            position: { x: 0, y: 0 },
+            size: { width: 12, height: 4 },
+          },
+        ],
+        connections: [],
+        layout: 'grid' as const,
+      },
+      defaultConfig: {},
+      placement: 'sidebar' as const,
+      initiallyVisible: true,
+      description: 'Highlight standout members',
+      icon: 'Star',
+    },
+    {
+      slotId: 'shoutouts',
+      name: 'Shoutouts',
+      composition: {
+        elements: [
+          {
+            elementId: 'form-builder',
+            instanceId: 'shoutout_form',
+            config: {
+              title: 'Give a Shoutout',
+              submitLabel: 'Send Shoutout',
+              fields: [
+                { name: 'to', type: 'text', label: 'Who deserves recognition?', required: true },
+                { name: 'reason', type: 'textarea', label: 'Why?', required: true },
+              ],
+            },
+            position: { x: 0, y: 0 },
+            size: { width: 12, height: 3 },
+          },
+          {
+            elementId: 'result-list',
+            instanceId: 'shoutout_list',
+            config: {
+              title: 'Recent Shoutouts',
+              showAvatar: true,
+              showTimestamp: true,
+              maxVisible: 5,
+            },
+            position: { x: 0, y: 3 },
+            size: { width: 12, height: 4 },
+          },
+        ],
+        connections: [
+          {
+            from: { instanceId: 'shoutout_form', output: 'submission' },
+            to: { instanceId: 'shoutout_list', input: 'data' },
+          },
+        ],
+        layout: 'grid' as const,
+      },
+      defaultConfig: {},
+      placement: 'sidebar' as const,
+      initiallyVisible: true,
+      description: 'Peer recognition board',
+      icon: 'Heart',
+    },
+  ],
+  orchestration: [
+    {
+      id: 'weekly-poll-reminder',
+      name: 'Weekly Poll Reminder',
+      description: 'Remind members to vote every Monday',
+      trigger: {
+        type: 'manual' as const,
+        buttonLabel: 'Send Poll Reminder',
+        confirmMessage: 'Send reminder to all members?',
+      },
+      actions: [
+        {
+          type: 'notification' as const,
+          recipients: 'all' as const,
+          title: 'New Weekly Poll',
+          body: 'A new weekly poll is up! Share your thoughts.',
+          actionUrl: '/spaces/{spaceId}',
+        },
+      ],
+      enabled: true,
+      runOnce: false,
+    },
+  ],
+  sharedDataSchema: {
+    type: 'object',
+    properties: {
+      totalVotes: { type: 'number' },
+      shoutoutsCount: { type: 'number' },
+      highlightedMemberId: { type: 'string' },
+    },
+  },
+  configFields: [
+    {
+      key: 'pollFrequency',
+      label: 'Poll Frequency',
+      type: 'select' as const,
+      required: true,
+      defaultValue: 'weekly',
+      options: [
+        { value: 'daily', label: 'Daily' },
+        { value: 'weekly', label: 'Weekly' },
+        { value: 'biweekly', label: 'Bi-weekly' },
+      ],
+    },
+  ],
+  requiredCapabilities: {
+    read_own_state: true,
+    write_own_state: true,
+    send_notifications: true,
+  },
+  tags: ['engagement', 'polls', 'highlights', 'shoutouts', 'weekly', 'recurring'],
+};
+
+// ============================================================================
 // Export All System Templates
 // ============================================================================
 
 /**
  * All system-defined Setup templates
  */
-export const SYSTEM_SETUP_TEMPLATES = [EVENT_SERIES_TEMPLATE];
+export const SYSTEM_SETUP_TEMPLATES: SystemTemplate[] = [
+  EVENT_SERIES_TEMPLATE,
+  CAMPAIGN_KIT_TEMPLATE,
+  ONBOARDING_FLOW_TEMPLATE,
+  WEEKLY_RITUALS_TEMPLATE,
+];
 
 /**
  * Get a system template by ID
  */
-export function getSystemSetupTemplate(id: string): typeof EVENT_SERIES_TEMPLATE | undefined {
+export function getSystemSetupTemplate(id: string): SystemTemplate | undefined {
   return SYSTEM_SETUP_TEMPLATES.find(t => t.id === id);
 }
 
@@ -504,7 +1028,7 @@ export function getSystemSetupTemplate(id: string): typeof EVENT_SERIES_TEMPLATE
  * Get all system templates for a category
  */
 export function getSystemSetupTemplatesByCategory(
-  category: 'event' | 'campaign' | 'workflow' | 'engagement' | 'governance',
-): typeof SYSTEM_SETUP_TEMPLATES {
+  category: SetupCategory,
+): SystemTemplate[] {
   return SYSTEM_SETUP_TEMPLATES.filter(t => t.category === category);
 }

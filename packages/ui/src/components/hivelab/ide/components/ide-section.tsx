@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../../../lib/utils';
+import { FOCUS_RING_INSET } from '../../tokens';
 
 export interface IDESectionProps {
   title: string;
@@ -36,6 +37,7 @@ export function IDESection({
         className={cn(
           'flex items-center justify-between w-full px-3 py-2 text-left',
           'hover:bg-[var(--ide-interactive-hover)] transition-colors',
+          FOCUS_RING_INSET,
           headerClassName
         )}
       >

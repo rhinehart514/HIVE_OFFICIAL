@@ -155,6 +155,10 @@ async function callGroq(
     throw new Error('GROQ_API_KEY not configured');
   }
 
+  // Use higher token limit for 70b model (better at complex tools)
+  const is70b = config.groqModel.includes('70b');
+  const maxTokens = is70b ? 2048 : 1024;
+
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -168,7 +172,9 @@ async function callGroq(
         { role: 'user', content: prompt },
       ],
       temperature: 0.3,
-      max_tokens: 1024,
+      max_tokens: maxTokens,
+      // Groq-specific: request JSON mode for better structured output
+      response_format: is70b ? { type: 'json_object' } : undefined,
     }),
   });
 
@@ -363,7 +369,12 @@ export async function generateTool(
           break;
 
         case 'groq':
-          rawOutput = await callGroq(config, request.prompt, buildCompactSystemPrompt());
+          // Use full system prompt for 70b model, compact for 8b
+          const is70b = config.groqModel.includes('70b');
+          const groqSystemPrompt = is70b
+            ? systemPrompt  // Full prompt for 70b - better understanding
+            : buildCompactSystemPrompt();  // Compact for smaller models
+          rawOutput = await callGroq(config, request.prompt, groqSystemPrompt);
           composition = parseModelOutput(rawOutput);
           break;
 

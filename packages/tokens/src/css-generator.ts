@@ -1,11 +1,44 @@
 // CSS Custom Properties Generator for HIVE Design Tokens
-import { colors, semantic, overlay, gradients, shadows, border } from './colors';
+import { foundation, semantic, components } from './colors-unified';
 import { typography } from './typography';
 import { spacing, layoutSizes } from './spacing';
 import { radius } from './radius';
 import { motion } from './motion';
 import { effects } from './effects';
 import { zIndex } from './design-system-v2';
+
+// Legacy aliases for backwards compatibility
+const colors = {
+  ...foundation.gray,
+  gold: foundation.gold[500],
+  black: foundation.black,
+  white: foundation.white,
+};
+
+const overlay = {
+  glass: 'rgba(255, 255, 255, 0.04)',
+  'glass-strong': 'rgba(255, 255, 255, 0.08)',
+  modal: 'rgba(0, 0, 0, 0.6)',
+};
+
+const gradients = {
+  gold: `linear-gradient(135deg, ${foundation.gold[500]} 0%, ${foundation.gold.hover} 100%)`,
+};
+
+const shadows = {
+  sm: '0 1px 2px rgba(0, 0, 0, 0.3)',
+  md: '0 4px 12px rgba(0, 0, 0, 0.4)',
+  lg: '0 8px 24px rgba(0, 0, 0, 0.5)',
+  'gold-glow': '0 0 20px rgba(255, 215, 0, 0.15)',
+  'gold-glow-strong': '0 0 30px rgba(255, 215, 0, 0.25)',
+};
+
+const border = {
+  default: semantic.border.default,
+  subtle: semantic.border.subtle,
+  hover: semantic.border.hover,
+  focus: semantic.border.focus,
+};
 
 // Generate CSS custom properties from design tokens
 export function generateCSSCustomProperties(): string {

@@ -66,22 +66,23 @@ export interface ConnectionCreateData {
 // STYLING
 // ============================================================================
 
+import { FOCUS_RING, TYPE_COLORS } from '../tokens';
+
 const COLORS = {
-  bg: 'var(--hivelab-panel, #1A1A1A)',
-  bgHover: 'var(--hivelab-surface-hover, #2a2a2a)',
-  bgActive: 'var(--hivelab-surface, #333333)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  textPrimary: 'var(--hivelab-text-primary, #ffffff)',
-  textSecondary: 'var(--hivelab-text-secondary, rgba(255,255,255,0.7))',
-  textTertiary: 'var(--hivelab-text-tertiary, rgba(255,255,255,0.5))',
-  accent: 'var(--life-gold, #D4AF37)',
-  success: 'var(--hivelab-status-success)',
-  error: 'var(--hivelab-status-error)',
-  warning: 'var(--hivelab-status-warning)',
+  bg: 'var(--hivelab-panel)',
+  bgHover: 'var(--hivelab-surface-hover)',
+  bgActive: 'var(--hivelab-surface)',
+  border: 'var(--hivelab-border)',
+  textPrimary: 'var(--hivelab-text-primary)',
+  textSecondary: 'var(--hivelab-text-secondary)',
+  textTertiary: 'var(--hivelab-text-tertiary)',
+  accent: 'var(--life-gold)',
+  success: 'var(--ide-status-success)',
+  error: 'var(--ide-status-error)',
+  warning: 'var(--ide-status-warning)',
 };
 
-const focusRing =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
+const focusRing = FOCUS_RING;
 
 // ============================================================================
 // TYPE BADGE
@@ -91,25 +92,25 @@ function TypeBadge({ type }: { type: string }) {
   const getTypeStyle = (t: string) => {
     switch (t) {
       case 'memberList':
-        return { bg: '#22c55e20', color: '#22c55e', label: 'Members' };
+        return { color: TYPE_COLORS.string, label: 'Members' };
       case 'counter':
-        return { bg: '#3b82f620', color: '#3b82f6', label: 'Counter' };
+        return { color: TYPE_COLORS.number, label: 'Counter' };
       case 'collection':
-        return { bg: '#a855f720', color: '#a855f7', label: 'Collection' };
+        return { color: TYPE_COLORS.boolean, label: 'Collection' };
       case 'array':
-        return { bg: '#f9731620', color: '#f97316', label: 'Array' };
+        return { color: TYPE_COLORS.array, label: 'Array' };
       case 'number':
-        return { bg: '#06b6d420', color: '#06b6d4', label: 'Number' };
+        return { color: TYPE_COLORS.object, label: 'Number' };
       case 'boolean':
-        return { bg: '#ec489920', color: '#ec4899', label: 'Boolean' };
+        return { color: 'var(--ide-type-boolean)', label: 'Boolean' };
       case 'string':
-        return { bg: '#8b5cf620', color: '#8b5cf6', label: 'String' };
+        return { color: TYPE_COLORS.string, label: 'String' };
       case 'timeline':
-        return { bg: '#14b8a620', color: '#14b8a6', label: 'Timeline' };
+        return { color: 'var(--ide-type-object)', label: 'Timeline' };
       case 'any':
-        return { bg: COLORS.bgActive, color: COLORS.textSecondary, label: 'Any' };
+        return { color: COLORS.textSecondary, label: 'Any' };
       default:
-        return { bg: COLORS.bgActive, color: COLORS.textTertiary, label: type };
+        return { color: COLORS.textTertiary, label: type };
     }
   };
 
@@ -118,7 +119,7 @@ function TypeBadge({ type }: { type: string }) {
   return (
     <span
       className="text-label-xs px-1.5 py-0.5 rounded font-medium"
-      style={{ backgroundColor: style.bg, color: style.color }}
+      style={{ backgroundColor: `color-mix(in srgb, ${style.color} 20%, transparent)`, color: style.color }}
     >
       {style.label}
     </span>

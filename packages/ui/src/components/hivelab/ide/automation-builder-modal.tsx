@@ -29,24 +29,25 @@ import {
 } from '@heroicons/react/24/outline';
 import { cn } from '../../../lib/utils';
 
+import { FOCUS_RING } from '../tokens';
+
 // HiveLab Dark Panel Colors
 const PANEL_COLORS = {
-  bg: 'var(--hivelab-panel, #1A1A1A)',
-  bgHover: 'var(--hivelab-surface-hover, #1A1A1A)',
-  bgActive: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  accent: 'var(--life-gold, #D4AF37)',
-  accentLight: 'rgba(212, 175, 55, 0.1)',
-  error: 'var(--hivelab-status-error)',
-  errorLight: 'var(--hivelab-status-error-muted)',
-  success: 'var(--hivelab-status-success)',
+  bg: 'var(--hivelab-panel)',
+  bgHover: 'var(--hivelab-surface-hover)',
+  bgActive: 'var(--hivelab-surface)',
+  border: 'var(--hivelab-border)',
+  textPrimary: 'var(--hivelab-text-primary)',
+  textSecondary: 'var(--hivelab-text-secondary)',
+  textTertiary: 'var(--hivelab-text-tertiary)',
+  accent: 'var(--life-gold)',
+  accentLight: 'var(--life-gold-muted)',
+  error: 'var(--ide-status-error)',
+  errorLight: 'var(--ide-status-error-bg)',
+  success: 'var(--ide-status-success)',
 };
 
-const focusRing =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
+const focusRing = FOCUS_RING;
 
 // ============================================================================
 // Types
