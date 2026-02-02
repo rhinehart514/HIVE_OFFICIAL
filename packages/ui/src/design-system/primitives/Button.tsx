@@ -23,9 +23,11 @@ const buttonVariants = cva(
     'font-medium',
     'rounded-xl',
     'transition-all duration-200 ease-out',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
     'disabled:pointer-events-none disabled:opacity-40',
+    // Spring-like active state
+    'active:scale-[0.98] active:transition-transform',
   ].join(' '),
   {
     variants: {
@@ -108,12 +110,18 @@ const buttonVariants = cva(
           'hover:bg-white/[0.06] hover:border-white/15',
           'active:bg-white/[0.04]',
         ].join(' '),
+        /**
+         * CTA: Gold gradient for primary call-to-action (1% rule)
+         * Use sparingly - only for the most important action on screen
+         */
         cta: [
-          'bg-white',
-          'text-[#0A0A09]',
-          'border border-white/20',
-          'hover:bg-white/90',
-          'active:bg-white/80',
+          'bg-gradient-to-r from-[#FFD700] to-[#FFA500]',
+          'text-black font-semibold',
+          'border border-[#FFD700]/30',
+          'shadow-[0_0_20px_rgba(255,215,0,0.3)]',
+          'hover:shadow-[0_0_30px_rgba(255,215,0,0.4)]',
+          'hover:from-[#FFE44D] hover:to-[#FFB833]',
+          'active:from-[#E6C200] active:to-[#E69500]',
         ].join(' '),
         brand: [
           'bg-white',

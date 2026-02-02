@@ -230,6 +230,100 @@ When building UI:
 
 ---
 
+## Motion Implementation (CRITICAL)
+
+**Status:** Motion system exists but is NOT implemented in app shell.
+**Reference:** `/about` page shows correct motion. App shell has none.
+**Full audit:** `docs/DESIGN_AUDIT.md`
+
+### Required Motion Patterns
+
+Every component in the app shell needs motion. Import from `@hive/tokens`:
+
+#### Card Entrance (revealVariants)
+```tsx
+import { revealVariants } from '@hive/tokens';
+
+<motion.div
+  variants={revealVariants}
+  initial="initial"
+  animate="animate"
+>
+  <Card />
+</motion.div>
+```
+
+#### List Stagger (staggerContainerVariants)
+```tsx
+import { staggerContainerVariants, revealVariants } from '@hive/tokens';
+
+<motion.div
+  variants={staggerContainerVariants}
+  initial="initial"
+  animate="animate"
+>
+  {items.map(item => (
+    <motion.div key={item.id} variants={revealVariants}>
+      <Card />
+    </motion.div>
+  ))}
+</motion.div>
+```
+
+#### Card Hover (cardHoverVariants)
+```tsx
+import { cardHoverVariants } from '@hive/tokens';
+
+<motion.div
+  variants={cardHoverVariants}
+  initial="rest"
+  whileHover="hover"
+>
+  <Card />
+</motion.div>
+```
+
+#### Page Transitions (pageTransitionVariants)
+```tsx
+import { pageTransitionVariants } from '@hive/tokens';
+
+<motion.main
+  variants={pageTransitionVariants}
+  initial="initial"
+  animate="animate"
+  exit="exit"
+>
+  {children}
+</motion.main>
+```
+
+### Motion Variants Reference
+
+All variants are defined in `packages/tokens/src/motion.ts`:
+
+| Variant | Use For | Duration |
+|---------|---------|----------|
+| `revealVariants` | Card/item entrance | 300ms |
+| `surfaceVariants` | Modals, popovers | spring |
+| `staggerContainerVariants` | List parent | 50ms stagger |
+| `cardHoverVariants` | Interactive cards | spring |
+| `buttonPressVariants` | Button press | spring |
+| `messageEntryVariants` | Chat messages | 250ms |
+| `modalVariants` | Modal overlay + content | spring |
+| `dropdownVariants` | Dropdown menus | spring + stagger |
+| `pageTransitionVariants` | Route changes | 400ms |
+
+### Spring Presets
+
+| Preset | Use For | Config |
+|--------|---------|--------|
+| `snappy` | Buttons, toggles | stiffness: 400, damping: 30 |
+| `default` | General UI | stiffness: 200, damping: 25 |
+| `gentle` | Modals, sheets | stiffness: 100, damping: 20 |
+| `bouncy` | Celebrations | stiffness: 300, damping: 15 |
+
+---
+
 ## Files Changed (2026-01-29)
 
 1. `packages/ui/src/design-system/primitives/Button.tsx`

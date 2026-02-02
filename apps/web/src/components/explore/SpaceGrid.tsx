@@ -5,13 +5,14 @@
  *
  * Combines claimed and ghost (unclaimed) spaces.
  * Shows activity signals and claim CTAs.
+ * Uses stagger container for orchestrated reveals.
  */
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { SpaceCard, type SpaceCardData } from './SpaceCard';
 import { GhostSpaceCard, type GhostSpaceData } from './GhostSpaceCard';
-import { MOTION } from '@hive/ui/design-system/primitives';
+import { MOTION, revealVariants, staggerContainerVariants } from '@hive/tokens';
 
 export interface SpaceGridProps {
   spaces: SpaceCardData[];
@@ -43,7 +44,7 @@ export function SpaceGrid({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+        transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
         className="text-center py-16"
       >
         <p className="text-white/40 text-body mb-2">
@@ -64,34 +65,52 @@ export function SpaceGrid({
     <div className="space-y-8">
       {/* Claimed Spaces */}
       {spaces.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-label text-white/40 uppercase tracking-wider">
+        <motion.div
+          className="space-y-4"
+          variants={staggerContainerVariants}
+          initial="initial"
+          animate="animate"
+        >
+          <motion.h3
+            className="text-label text-white/40 uppercase tracking-wider"
+            variants={revealVariants}
+          >
             Active Spaces · {spaces.length}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {spaces.map((space, i) => (
-              <SpaceCard key={space.id} space={space} index={i} />
+          </motion.h3>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            variants={staggerContainerVariants}
+          >
+            {spaces.map((space) => (
+              <SpaceCard key={space.id} space={space} />
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
 
       {/* Ghost Spaces */}
       {ghostSpaces.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-label text-white/40 uppercase tracking-wider">
+        <motion.div
+          className="space-y-4"
+          variants={staggerContainerVariants}
+          initial="initial"
+          animate="animate"
+        >
+          <motion.h3
+            className="text-label text-white/40 uppercase tracking-wider"
+            variants={revealVariants}
+          >
             Waiting for Leaders · {ghostSpaces.length}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ghostSpaces.map((space, i) => (
-              <GhostSpaceCard
-                key={space.id}
-                space={space}
-                index={spaces.length + i}
-              />
+          </motion.h3>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            variants={staggerContainerVariants}
+          >
+            {ghostSpaces.map((space) => (
+              <GhostSpaceCard key={space.id} space={space} />
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );

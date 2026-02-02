@@ -27,12 +27,13 @@ HIVE ships as **two different products**:
 | Duplicate space cards | `/explore` | **FIXED** ✓ |
 | "1 members" grammar | `/explore` SpaceCard | **FIXED** ✓ |
 | Category labels raw | `/explore` SpaceCard | **FIXED** ✓ |
-| API 401 errors | `/api/explore/people` | Broken |
-| API 500 errors | `/api/explore/events`, `/api/explore/tools` | Broken |
-| React hooks crash | `/s/[handle]` | Broken |
-| Route missing | `/you` | 404 |
-| Sidebar nav broken | All app shell | Buttons don't navigate |
-| Missing redirects | `/spaces/*` → `/s/*` | Should 301 |
+| API 401 errors | `/api/users/search` | **FIXED** ✓ (withOptionalAuth) |
+| API 401 errors | `/api/events`, `/api/tools/browse` | **FIXED** ✓ (withOptionalAuth) |
+| React hooks crash | `/s/[handle]` | **VERIFIED** ✓ (hooks before returns) |
+| Route missing | `/you` | **FIXED** ✓ (redirect to /me) |
+| Sidebar nav broken | Profile button | **FIXED** ✓ (onClick handler) |
+| Leave space redirect | `/s/[handle]` | **FIXED** ✓ (redirects to /home) |
+| Missing redirects | `/spaces/*` → `/s/*` | Already existed ✓ |
 
 ### P1: Motion Parity
 
@@ -41,6 +42,11 @@ Every component in app shell needs:
 - `staggerContainerVariants` — List stagger
 - `cardHoverVariants` — Interactive cards
 - `pageTransitionVariants` — Route changes
+
+**Status:**
+- **Explore page** — **DEPLOYED** ✓ (SpaceGrid, PeopleGrid, EventList, ToolGallery use stagger + reveal + hover variants)
+- **Home page** — **DEPLOYED** ✓ (fixed MOTION.duration.standard, section stagger working)
+- **Lab page** — **VERIFIED** ✓ (already using @hive/tokens motion system correctly)
 
 **Reference:** `/about` page (working), `packages/tokens/src/motion.ts`
 
@@ -56,35 +62,35 @@ Every component in app shell needs:
 
 | # | System | Why This Order | Status |
 |---|--------|----------------|--------|
-| 0 | **Foundation** | APIs broken, routes 404, motion missing | **CRITICAL** |
-| 1 | **Spaces** | The core. If this works, HIVE works. | BLOCKED (API errors) |
+| 0 | **Foundation** | APIs broken, routes 404, motion missing | **10/12 DONE** |
+| 1 | **Spaces** | The core. If this works, HIVE works. | READY |
 | 2 | **Entry** | The gate. First impression. | COMPLETE |
 | 3 | **Notifications** | Re-engagement loop. Currently broken. | NOT STARTED |
 | 4 | **Profiles** | Social glue. Identity system. | NOT STARTED |
 | 5 | **Events/Calendar** | Coordination feature. RSVP broken. | NOT STARTED |
-| 6 | **Discovery** | Growth. Browse mode missing. | BLOCKED (API errors) |
+| 6 | **Discovery** | Growth. Browse mode missing. | READY (APIs fixed) |
 | 7 | **HiveLab** | Builder tools. AI generation broken. | COMPLETE |
 
 ---
 
 ## Active System
 
-**System 0: Foundation** — Fix what's broken before building new
+**System 0: Foundation** — 10/12 tasks complete. Remaining: icon standardization, error states.
 
 ### Foundation Tasks
 
 | # | Task | Status |
 |---|------|--------|
-| 1 | Fix `/api/explore/people` 401 | NOT STARTED |
-| 2 | Fix `/api/explore/events` 500 | NOT STARTED |
-| 3 | Fix `/api/explore/tools` 500 | NOT STARTED |
-| 4 | Fix Space detail React hooks error | NOT STARTED |
-| 5 | Implement `/you` route | NOT STARTED |
-| 6 | Fix sidebar navigation (client-side routing) | NOT STARTED |
-| 7 | Add `/spaces/*` → `/s/*` redirects | NOT STARTED |
-| 8 | Apply motion to Explore page cards | NOT STARTED |
-| 9 | Apply motion to Lab page | NOT STARTED |
-| 10 | Apply motion to Home page | NOT STARTED |
+| 1 | Fix `/api/users/search` 401 | **DONE** ✓ (withOptionalAuth) |
+| 2 | Fix `/api/events` 401 | **DONE** ✓ (withOptionalAuth) |
+| 3 | Fix `/api/tools/browse` 401 | **DONE** ✓ (withOptionalAuth) |
+| 4 | Fix Space detail React hooks error | **VERIFIED** ✓ (already fixed) |
+| 5 | Implement `/you` route | **DONE** ✓ (redirect to /me) |
+| 6 | Fix sidebar navigation (profile button) | **DONE** ✓ (onClick handler) |
+| 7 | Add `/spaces/*` → `/s/*` redirects | **VERIFIED** ✓ (already existed) |
+| 8 | Apply motion to Explore page cards | **DONE** ✓ (stagger + reveal + hover) |
+| 9 | Apply motion to Lab page | **VERIFIED** ✓ (already using tokens) |
+| 10 | Apply motion to Home page | **DONE** ✓ (fixed MOTION.duration.standard) |
 | 11 | Standardize icon system (kill emojis) | NOT STARTED |
 | 12 | Standardize error states | NOT STARTED |
 

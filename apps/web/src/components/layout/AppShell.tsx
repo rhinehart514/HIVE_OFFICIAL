@@ -238,6 +238,7 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
             className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors"
             whileHover={{ x: 2 }}
             transition={{ duration: 0.2 }}
+            onClick={() => handleNavClick('/me')}
           >
             {/* Avatar */}
             <div className="w-8 h-8 rounded-full overflow-hidden border border-white/[0.08] flex-shrink-0 bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">

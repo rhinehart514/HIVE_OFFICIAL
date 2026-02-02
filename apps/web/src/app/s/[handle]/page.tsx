@@ -122,6 +122,67 @@ export default function SpacePageUnified() {
   // Permissions hook for message deletion
   const { canDeleteMessage } = usePermissions(space?.id, user?.id);
 
+  // ============================================
+  // ALL HOOKS MUST BE CALLED BEFORE ANY RETURNS
+  // (React hooks must be called in the same order every render)
+  // ============================================
+
+  // Transform sidebar boards (called unconditionally)
+  const sidebarBoardsNew: Board[] = React.useMemo(() => {
+    return (boards || []).map((b) => ({
+      id: b.id,
+      name: b.name,
+      unreadCount: 0,
+      isPinned: b.name === 'general',
+    }));
+  }, [boards]);
+
+  // Transform sidebar tools (called unconditionally)
+  const sidebarToolsNew: SidebarTool[] = React.useMemo(() => {
+    return (sidebarTools || []).map((t) => ({
+      toolId: t.toolId,
+      name: t.name,
+      icon: undefined,
+      deploymentId: t.placementId,
+    }));
+  }, [sidebarTools]);
+
+  // Transform online members for preview (called unconditionally)
+  const onlineMembersPreview: OnlineMember[] = React.useMemo(() => {
+    return (onlineMembers || []).slice(0, 5).map((m) => ({
+      id: m.id,
+      name: m.name || 'Unknown',
+      avatarUrl: m.avatar,
+    }));
+  }, [onlineMembers]);
+
+  // Keyboard navigation (called unconditionally)
+  const { highlightedBoard } = useKeyboardNav({
+    boardIds: (boards || []).map((b) => b.id),
+    activeBoard: activeBoard || boards?.[0]?.id || 'general',
+    onBoardChange: setActiveBoard,
+    enabled: !showSettingsModal && !showMembersPanel && !showBoardModal && !!space?.isMember,
+  });
+
+  // Transform messages to Message type (called unconditionally)
+  const feedMessages = React.useMemo(() => {
+    return (messages || []).map((msg) => ({
+      id: msg.id,
+      authorId: msg.authorId,
+      authorName: msg.authorName,
+      authorAvatarUrl: msg.authorAvatarUrl,
+      content: msg.content,
+      timestamp: typeof msg.timestamp === 'string' ? msg.timestamp : new Date(msg.timestamp).toISOString(),
+      reactions: msg.reactions?.map((r) => ({
+        emoji: r.emoji,
+        count: r.count,
+        userReacted: r.hasReacted,
+      })),
+      replyCount: msg.replyCount,
+      attachments: msg.attachments,
+    }));
+  }, [messages]);
+
   // Transform messages to unified feed items (for legacy compatibility)
   const feedItems: FeedItem[] = React.useMemo(() => {
     // Combine messages, events, and tools into unified feed
@@ -418,64 +479,6 @@ export default function SpacePageUnified() {
       </AnimatePresence>
     );
   }
-
-  // Transform sidebar boards
-  const sidebarBoardsNew: Board[] = React.useMemo(() => {
-    return boards.map((b) => ({
-      id: b.id,
-      name: b.name,
-      unreadCount: 0, // TODO: Get from membership data
-      isPinned: b.name === 'general',
-    }));
-  }, [boards]);
-
-  // Transform sidebar tools
-  const sidebarToolsNew: SidebarTool[] = React.useMemo(() => {
-    return (sidebarTools || []).map((t) => ({
-      toolId: t.toolId,
-      name: t.name,
-      // PlacedToolDTO doesn't have icon, use undefined
-      icon: undefined,
-      deploymentId: t.placementId,
-    }));
-  }, [sidebarTools]);
-
-  // Transform online members for preview
-  // OnlineMember from @hive/ui has: id, handle, name?, avatar?
-  const onlineMembersPreview: OnlineMember[] = React.useMemo(() => {
-    return (onlineMembers || []).slice(0, 5).map((m) => ({
-      id: m.id,
-      name: m.name || 'Unknown',
-      avatarUrl: m.avatar,
-    }));
-  }, [onlineMembers]);
-
-  // Keyboard navigation
-  const { highlightedBoard } = useKeyboardNav({
-    boardIds: boards.map((b) => b.id),
-    activeBoard: activeBoard || boards[0]?.id || 'general',
-    onBoardChange: setActiveBoard,
-    enabled: !showSettingsModal && !showMembersPanel && !showBoardModal,
-  });
-
-  // Transform messages to Message type
-  const feedMessages = React.useMemo(() => {
-    return messages.map((msg) => ({
-      id: msg.id,
-      authorId: msg.authorId,
-      authorName: msg.authorName,
-      authorAvatarUrl: msg.authorAvatarUrl,
-      content: msg.content,
-      timestamp: typeof msg.timestamp === 'string' ? msg.timestamp : new Date(msg.timestamp).toISOString(),
-      reactions: msg.reactions?.map((r) => ({
-        emoji: r.emoji,
-        count: r.count,
-        userReacted: r.hasReacted,
-      })),
-      replyCount: msg.replyCount,
-      attachments: msg.attachments,
-    }));
-  }, [messages]);
 
   // Member: Show Split Panel layout
   return (
@@ -796,7 +799,7 @@ export default function SpacePageUnified() {
                       try {
                         await leaveSpace();
                         setShowSettingsModal(false);
-                        router.push('/spaces');
+                        router.push('/home');
                       } catch (error) {
                         logger.error('Failed to leave space', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
                       }
@@ -828,7 +831,7 @@ export default function SpacePageUnified() {
               setShowDeleteSpaceConfirm(false);
               setShowSettingsModal(false);
               toast.success('Space deleted');
-              router.push('/spaces');
+              router.push('/home');
             } catch (error) {
               logger.error('Failed to delete space', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
               toast.error('Failed to delete space');

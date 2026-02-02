@@ -106,19 +106,24 @@ function initFirebase() {
     envContent.split('\n').forEach(line => {
       const [key, ...valueParts] = line.split('=');
       if (key && valueParts.length) {
-        envVars[key.trim()] = valueParts.join('=').trim();
+        // Strip surrounding quotes from values
+        const value = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
+        envVars[key.trim()] = value;
       }
     });
 
-    const serviceAccount = envVars.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccount) {
-      throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY not found');
+    const privateKeyBase64 = envVars.FIREBASE_PRIVATE_KEY_BASE64;
+    const projectId = envVars.FIREBASE_PROJECT_ID || 'hive-9265c';
+    const clientEmail = envVars.FIREBASE_CLIENT_EMAIL || 'firebase-adminsdk-fbsvc@hive-9265c.iam.gserviceaccount.com';
+
+    if (!privateKeyBase64) {
+      throw new Error('FIREBASE_PRIVATE_KEY_BASE64 not found');
     }
 
-    const credentials = JSON.parse(Buffer.from(serviceAccount, 'base64').toString('utf-8'));
+    const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
     initializeApp({
-      credential: cert(credentials),
-      projectId: 'hive-9265c'
+      credential: cert({ projectId, clientEmail, privateKey }),
+      projectId
     });
 
     return getFirestore();

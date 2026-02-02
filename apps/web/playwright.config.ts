@@ -68,6 +68,23 @@ export default defineConfig({
       },
       retries: 0,
     },
+
+    // UX Audit - comprehensive screenshot capture and flow testing
+    // NOTE: Auth-dependent tests may be skipped due to complex onboarding flow
+    {
+      name: 'audit',
+      testDir: './src/test/e2e/audit',
+      testIgnore: /global-setup\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        screenshot: 'on',
+        video: 'retain-on-failure',
+        trace: 'on',
+      },
+      outputDir: './audit-results',
+      retries: 0, // No retries - we want accurate status
+      timeout: 60000, // 1 minute per test
+    },
   ],
   webServer: {
     command: 'pnpm dev',

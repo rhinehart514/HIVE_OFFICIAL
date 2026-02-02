@@ -17,21 +17,25 @@ import { useAtmosphereOptional, type AtmosphereLevel, type WarmthLevel } from '.
 
 const cardVariants = cva(
   [
-    'bg-[#0A0A0A]',
+    // Glass surface treatment
+    'relative overflow-hidden',
+    'bg-gradient-to-br from-[#1c1c1c]/95 to-[#121212]/92',
     'border border-white/[0.08]',
+    // Layered shadow system
+    'shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)]',
     'transition-all duration-200 ease-out',
   ].join(' '),
   {
     variants: {
       elevation: {
         resting: '',
-        raised: 'border-white/10',
-        floating: 'border-white/12',
+        raised: 'border-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)]',
+        floating: 'border-white/12 shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.15)]',
       },
       size: {
-        default: 'rounded-2xl',
-        compact: 'rounded-xl',
-        modal: 'rounded-2xl',
+        default: 'rounded-xl',
+        compact: 'rounded-lg',
+        modal: 'rounded-xl',
         tooltip: 'rounded-lg',
       },
     },
@@ -72,12 +76,12 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     const atmosphereContext = useAtmosphereOptional();
     const atmosphere = atmosphereProp ?? atmosphereContext?.atmosphere ?? 'spaces';
 
-    // Subtle warmth via border color only
-    const warmthBorder = {
+    // Warmth system: border + glow for high warmth
+    const warmthStyles = {
       none: '',
       low: 'border-[var(--color-gold)]/10',
       medium: 'border-[var(--color-gold)]/20',
-      high: 'border-[var(--color-gold)]/30',
+      high: 'border-[var(--color-gold)]/30 shadow-[0_0_20px_rgba(255,215,0,0.15),0_0_0_1px_rgba(255,215,0,0.1)]',
     }[warmth];
 
     const sharedProps = {
@@ -85,12 +89,13 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       className: cn(
         cardVariants({ elevation, size }),
         !noPadding && 'p-5',
-        warmth !== 'none' && warmthBorder,
+        warmth !== 'none' && warmthStyles,
         interactive && [
           'cursor-pointer select-none',
-          'hover:bg-white/[0.02] hover:border-white/12',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
-          'focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]',
+          'hover:bg-[#1e1e1e]/95 hover:border-white/12',
+          'hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+          'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
         ],
         className
       ),

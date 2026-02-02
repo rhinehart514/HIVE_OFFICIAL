@@ -427,7 +427,7 @@ describe('API Routes Integration', () => {
         })
       });
 
-      const response = await POST(request);
+      const response = await POST(request, {});
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -474,7 +474,7 @@ describe('API Routes Integration', () => {
         })
       });
 
-      const response = await POST(request);
+      const response = await POST(request, {});
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -530,7 +530,7 @@ describe('API Routes Integration', () => {
         })
       });
 
-      const response = await POST(request);
+      const response = await POST(request, {});
       const data = await response.json();
 
       expect(response.status).toBe(200);

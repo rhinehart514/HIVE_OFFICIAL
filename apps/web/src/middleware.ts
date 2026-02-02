@@ -82,6 +82,8 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/people': '/explore?tab=people',
   '/events': '/explore?tab=events',
   '/leaders': '/spaces?claim=true',
+  // Profile redirects
+  '/you': '/me',
 };
 
 function getClientIdentifier(request: NextRequest): string {

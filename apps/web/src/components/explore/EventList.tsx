@@ -4,12 +4,14 @@
  * EventList - List of campus events
  *
  * Shows upcoming events with RSVP counts and space context.
+ * Uses stagger container for orchestrated reveals.
  */
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { GlassSurface, Badge, Button, MOTION } from '@hive/ui/design-system/primitives';
+import { GlassSurface, Badge, Button } from '@hive/ui/design-system/primitives';
+import { MOTION, revealVariants, staggerContainerVariants, cardHoverVariants } from '@hive/tokens';
 import { toast } from '@hive/ui';
 import { cn } from '@/lib/utils';
 
@@ -53,7 +55,7 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+        transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
         className="text-center py-16"
       >
         {searchQuery ? (
@@ -70,9 +72,12 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
             <p className="text-white/40 text-body mb-2">
               Nothing on the calendar yet
             </p>
-            <p className="text-white/25 text-body-sm">
+            <p className="text-white/25 text-body-sm mb-4">
               Join spaces to see their upcoming events
             </p>
+            <Button variant="default" size="sm" asChild>
+              <Link href="/explore?tab=spaces">Browse Spaces</Link>
+            </Button>
           </>
         )}
       </motion.div>
@@ -83,20 +88,28 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
   const groupedEvents = groupEventsByDate(events);
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={staggerContainerVariants}
+      initial="initial"
+      animate="animate"
+    >
       {Object.entries(groupedEvents).map(([dateKey, dateEvents]) => (
-        <div key={dateKey} className="space-y-3">
+        <motion.div key={dateKey} className="space-y-3" variants={revealVariants}>
           <h3 className="text-label text-white/40 uppercase tracking-wider">
             {dateKey}
           </h3>
-          <div className="space-y-3">
-            {dateEvents.map((event, i) => (
-              <EventCard key={event.id} event={event} index={i} onRSVP={onRSVP} />
+          <motion.div
+            className="space-y-3"
+            variants={staggerContainerVariants}
+          >
+            {dateEvents.map((event) => (
+              <EventCard key={event.id} event={event} onRSVP={onRSVP} />
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -106,11 +119,10 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
 
 interface EventCardProps {
   event: EventData;
-  index: number;
   onRSVP?: (eventId: string, spaceId: string, status: 'going' | 'maybe' | 'not_going') => Promise<void>;
 }
 
-function EventCard({ event, index, onRSVP }: EventCardProps) {
+function EventCard({ event, onRSVP }: EventCardProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [localRsvp, setLocalRsvp] = React.useState(event.userRsvp);
   const timeString = formatEventTime(event.startTime, event.endTime);
@@ -139,87 +151,85 @@ function EventCard({ event, index, onRSVP }: EventCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: MOTION.duration.fast,
-        delay: index * 0.03,
-        ease: MOTION.ease.premium,
-      }}
+      variants={revealVariants}
+      whileHover="hover"
+      initial="initial"
     >
       <Link href={event.spaceHandle ? `/s/${event.spaceHandle}/events/${event.id}` : '#'}>
-        <GlassSurface
-          intensity="subtle"
-          className={cn(
-            'group p-4 rounded-xl transition-all duration-200',
-            'border border-white/[0.06] hover:border-white/10 hover:bg-white/[0.02]',
-            event.isLive && 'border-[var(--life-gold)]/30'
-          )}
-        >
-          <div className="flex items-start gap-4">
-            {/* Time column */}
-            <div className="w-16 shrink-0 text-center">
-              <p className="text-label text-white/40 group-hover:text-white/60 transition-colors">
-                {timeString.time}
-              </p>
-              {event.isLive && (
-                <Badge variant="gold" size="sm" className="mt-1">
-                  Live
-                </Badge>
-              )}
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              {/* Space context - now more prominent */}
-              {event.spaceName && (
-                <p className="text-label-sm text-white/30 mb-1">
-                  {event.spaceName}
+        <motion.div variants={cardHoverVariants}>
+          <GlassSurface
+            intensity="subtle"
+            className={cn(
+              'group p-4 rounded-xl transition-colors duration-200',
+              'border border-white/[0.06] hover:border-white/10',
+              event.isLive && 'border-[var(--life-gold)]/30'
+            )}
+          >
+            <div className="flex items-start gap-4">
+              {/* Time column */}
+              <div className="w-16 shrink-0 text-center">
+                <p className="text-label text-white/40 group-hover:text-white/60 transition-colors">
+                  {timeString.time}
                 </p>
-              )}
-
-              <h3 className="text-body font-medium text-white truncate group-hover:text-white/90">
-                {event.title}
-              </h3>
-
-              {event.description && (
-                <p className="text-body-sm text-white/50 line-clamp-1 mt-0.5">
-                  {event.description}
-                </p>
-              )}
-
-              {/* Location and attendees */}
-              <div className="flex items-center gap-3 mt-2 text-label text-white/30">
-                {event.location && <span>{event.location}</span>}
-                {event.rsvpCount > 0 && (
-                  <>
-                    {event.location && <span>·</span>}
-                    <span>{event.rsvpCount} going</span>
-                  </>
+                {event.isLive && (
+                  <Badge variant="gold" size="sm" className="mt-1">
+                    Live
+                  </Badge>
                 )}
               </div>
-            </div>
 
-            {/* RSVP - shows user state */}
-            <div className="shrink-0 text-right">
-              <Button
-                variant={isGoing ? 'secondary' : 'ghost'}
-                size="sm"
-                className={cn(
-                  isGoing && 'text-[var(--life-gold)] border-[var(--life-gold)]/30'
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                {/* Space context - now more prominent */}
+                {event.spaceName && (
+                  <p className="text-label-sm text-white/30 mb-1">
+                    {event.spaceName}
+                  </p>
                 )}
-                disabled={isSubmitting || !event.spaceId}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleRSVP();
-                }}
-              >
-                {isSubmitting ? '...' : rsvpLabel}
-              </Button>
+
+                <h3 className="text-body font-medium text-white truncate group-hover:text-white/90">
+                  {event.title}
+                </h3>
+
+                {event.description && (
+                  <p className="text-body-sm text-white/50 line-clamp-1 mt-0.5">
+                    {event.description}
+                  </p>
+                )}
+
+                {/* Location and attendees */}
+                <div className="flex items-center gap-3 mt-2 text-label text-white/30">
+                  {event.location && <span>{event.location}</span>}
+                  {event.rsvpCount > 0 && (
+                    <>
+                      {event.location && <span>·</span>}
+                      <span>{event.rsvpCount} going</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* RSVP - shows user state */}
+              <div className="shrink-0 text-right">
+                <Button
+                  variant={isGoing ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className={cn(
+                    isGoing && 'text-[var(--life-gold)] border-[var(--life-gold)]/30'
+                  )}
+                  disabled={isSubmitting || !event.spaceId}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleRSVP();
+                  }}
+                >
+                  {isSubmitting ? '...' : rsvpLabel}
+                </Button>
+              </div>
             </div>
-          </div>
-        </GlassSurface>
+          </GlassSurface>
+        </motion.div>
       </Link>
     </motion.div>
   );

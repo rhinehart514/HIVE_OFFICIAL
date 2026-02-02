@@ -1,12 +1,9 @@
-"use server";
-
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import {
-  withAuthAndErrors,
-  getUserId,
-  getCampusId,
-  type AuthenticatedRequest,
+  withOptionalAuth,
+  getUser,
+  ResponseFormatter,
 } from "@/lib/middleware";
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
@@ -29,14 +26,16 @@ const GetEventsSchema = z.object({
   campusWide: z.coerce.boolean().optional(), // Filter for campus-wide events only
 });
 
-export const GET = withAuthAndErrors(async (
-  request,
-  _context,
-  respond,
+export const GET = withOptionalAuth(async (
+  request: Request,
+  _context: unknown,
+  respond: typeof ResponseFormatter
 ) => {
   try {
-    const userId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
+    // Optional auth: get user if authenticated, null otherwise
+    const user = getUser(request as import("next/server").NextRequest);
+    const userId = user?.uid || null;
+    const campusId = user?.campusId || 'ub-buffalo'; // Default campus for public
 
     const queryParams = GetEventsSchema.parse(
       Object.fromEntries(new URL(request.url).searchParams.entries()),
@@ -101,7 +100,7 @@ export const GET = withAuthAndErrors(async (
     }
     // Get user's spaces for membership-based filtering
     let userSpaceIds: Set<string> = new Set();
-    if (queryParams.myEvents) {
+    if (queryParams.myEvents && userId) {
       const membershipsSnapshot = await dbAdmin
         .collection("spaceMembers")
         .where("userId", "==", userId)
@@ -150,8 +149,9 @@ export const GET = withAuthAndErrors(async (
 
     // COST OPTIMIZATION: Batch fetch user's RSVPs for all events (N+1 → 1)
     // Note: Firestore 'in' queries support up to 30 values
+    // Only fetch RSVPs if user is authenticated
     const userRsvpMap = new Map<string, string>();
-    if (eventIds.length > 0) {
+    if (userId && eventIds.length > 0) {
       const chunks = [];
       for (let i = 0; i < eventIds.length; i += 30) {
         chunks.push(eventIds.slice(i, i + 30));

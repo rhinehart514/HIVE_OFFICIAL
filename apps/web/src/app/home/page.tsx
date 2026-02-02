@@ -25,12 +25,19 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import {
+  Calendar,
+  MessageCircle,
+  Wrench,
+  Sparkles,
+  Building2,
+} from 'lucide-react';
+import {
   Tilt,
   GlassSurface,
   GradientText,
   Badge,
-  MOTION,
 } from '@hive/ui/design-system/primitives';
+import { MOTION, staggerContainerVariants, revealVariants, cardHoverVariants } from '@hive/tokens';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 
@@ -196,7 +203,7 @@ function Section({ section, title, action, actionHref, children, className }: Se
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: MOTION.duration.base,
+        duration: MOTION.duration.standard,
         delay,
         ease: MOTION.ease.premium,
       }}
@@ -336,8 +343,8 @@ function TodaySection({
                   className={cn('rounded-xl', density.cardPadding)}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-title-sm">
-                      📅
+                    <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                      <Calendar className="w-5 h-5 text-white/40" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -373,8 +380,8 @@ function TodaySection({
                 className={cn('rounded-xl', density.cardPadding)}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-title-sm">
-                    💬
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                    <MessageCircle className="w-5 h-5 text-white/40" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -627,7 +634,13 @@ function YourCreationsSection({
                   density.cardPadding
                 )}
               >
-                <span className="text-title">{tool.icon || '🛠️'}</span>
+                <span className="flex items-center justify-center">
+                  {tool.icon ? (
+                    <span className="text-title">{tool.icon}</span>
+                  ) : (
+                    <Wrench className="w-6 h-6 text-white/40" />
+                  )}
+                </span>
                 <div>
                   <p className="text-body-sm font-medium text-white truncate">
                     {tool.name}
@@ -715,8 +728,8 @@ function DiscoverSection({
                 className={cn('rounded-xl', density.cardPadding)}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-title-sm">
-                    ✨
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-white/40" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-body font-medium text-white truncate">
@@ -751,21 +764,21 @@ function QuickActions() {
           href="/lab/new"
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
         >
-          <span className="text-body-lg">🛠️</span>
+          <Wrench className="w-5 h-5 text-white/40" />
           <span className="text-body-sm text-white/70">Build a Tool</span>
         </Link>
         <Link
           href="/explore"
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
         >
-          <span className="text-body-lg">🏠</span>
+          <Building2 className="w-5 h-5 text-white/40" />
           <span className="text-body-sm text-white/70">Find Spaces</span>
         </Link>
         <Link
           href="/explore?tab=events"
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
         >
-          <span className="text-body-lg">📅</span>
+          <Calendar className="w-5 h-5 text-white/40" />
           <span className="text-body-sm text-white/70">Browse Events</span>
         </Link>
       </div>
@@ -983,7 +996,7 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+              transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
             >
               <h1 className="text-title-lg font-semibold text-white">
                 {getGreeting()}
@@ -1016,7 +1029,7 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+              transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
             >
               <h1 className="text-title-lg font-semibold text-white">
                 {getGreeting()}
@@ -1103,7 +1116,7 @@ export default function HomePage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{
-                duration: MOTION.duration.base,
+                duration: MOTION.duration.standard,
                 delay: 0.3,
                 ease: MOTION.ease.premium,
               }}

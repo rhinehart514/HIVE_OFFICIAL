@@ -8,12 +8,15 @@
  * - Member count and online count
  * - Recent activity indicator
  * - Join/Preview CTA
+ *
+ * Uses revealVariants for stagger-coordinated entrance.
  */
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Tilt, GlassSurface, Badge, MOTION } from '@hive/ui/design-system/primitives';
+import { Tilt, GlassSurface, Badge } from '@hive/ui/design-system/primitives';
+import { revealVariants, cardHoverVariants } from '@hive/tokens';
 import { CATEGORY_LABELS, SpaceCategoryEnum } from '@hive/core';
 import { cn } from '@/lib/utils';
 
@@ -31,33 +34,29 @@ export interface SpaceCardData {
 
 export interface SpaceCardProps {
   space: SpaceCardData;
-  index?: number;
 }
 
-export function SpaceCard({ space, index = 0 }: SpaceCardProps) {
+export function SpaceCard({ space }: SpaceCardProps) {
   const lastActiveText = space.lastActive
     ? getRelativeTime(space.lastActive)
     : null;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: MOTION.duration.fast,
-        delay: index * 0.03,
-        ease: MOTION.ease.premium,
-      }}
+      variants={revealVariants}
+      whileHover="hover"
+      initial="initial"
     >
       <Tilt intensity={4}>
         <Link href={`/s/${space.handle}`}>
-          <GlassSurface
-            intensity="subtle"
-            className={cn(
-              'p-5 rounded-xl transition-all duration-200',
-              'border border-white/[0.06] hover:border-white/10 hover:bg-white/[0.02]'
-            )}
-          >
+          <motion.div variants={cardHoverVariants}>
+            <GlassSurface
+              intensity="subtle"
+              className={cn(
+                'p-5 rounded-xl transition-colors duration-200',
+                'border border-white/[0.06] hover:border-white/10'
+              )}
+            >
             <div className="space-y-3">
               {/* Header */}
               <div className="flex items-start justify-between gap-3">
@@ -105,7 +104,8 @@ export function SpaceCard({ space, index = 0 }: SpaceCardProps) {
                 )}
               </div>
             </div>
-          </GlassSurface>
+            </GlassSurface>
+          </motion.div>
         </Link>
       </Tilt>
     </motion.div>

@@ -5,13 +5,15 @@
  *
  * Shows classmates, mutual connections, and interesting people.
  * Enhanced with mutual space context and interaction affordances.
+ * Uses stagger container for orchestrated reveals.
  */
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Users } from 'lucide-react';
-import { GlassSurface, SimpleAvatar, Badge, MOTION } from '@hive/ui/design-system/primitives';
+import { GlassSurface, SimpleAvatar, Badge, Button } from '@hive/ui/design-system/primitives';
+import { MOTION, revealVariants, staggerContainerVariants, cardHoverVariants } from '@hive/tokens';
 import { cn } from '@/lib/utils';
 
 export interface PersonData {
@@ -49,7 +51,7 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+        transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
         className="text-center py-16"
       >
         {searchQuery ? (
@@ -66,9 +68,12 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
             <p className="text-white/40 text-body mb-2">
               No classmates found yet
             </p>
-            <p className="text-white/25 text-body-sm">
+            <p className="text-white/25 text-body-sm mb-4">
               Join some spaces to see people with shared interests
             </p>
+            <Button variant="default" size="sm" asChild>
+              <Link href="/explore?tab=spaces">Browse Spaces</Link>
+            </Button>
           </>
         )}
       </motion.div>
@@ -76,11 +81,16 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {people.map((person, i) => (
-        <PersonCard key={person.id} person={person} index={i} />
+    <motion.div
+      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+      variants={staggerContainerVariants}
+      initial="initial"
+      animate="animate"
+    >
+      {people.map((person) => (
+        <PersonCard key={person.id} person={person} />
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -90,93 +100,90 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
 
 interface PersonCardProps {
   person: PersonData;
-  index: number;
 }
 
-function PersonCard({ person, index }: PersonCardProps) {
+function PersonCard({ person }: PersonCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: MOTION.duration.fast,
-        delay: index * 0.03,
-        ease: MOTION.ease.premium,
-      }}
+      variants={revealVariants}
+      whileHover="hover"
+      initial="initial"
     >
       <Link href={`/profile/${person.id}`}>
-        <GlassSurface
-          intensity="subtle"
-          className={cn(
-            'group p-4 rounded-xl transition-all duration-200',
-            'border border-white/[0.06] hover:border-white/10 hover:bg-white/[0.02]'
-          )}
-        >
-          <div className="flex items-start gap-3">
-            {/* Avatar */}
-            <div className="relative shrink-0">
-              <SimpleAvatar
-                src={person.avatarUrl}
-                fallback={person.name?.charAt(0) || '?'}
-                size="lg"
-              />
-              {person.isOnline && (
-                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[var(--life-gold)] border-2 border-[var(--bg-ground)]" />
-              )}
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              {/* Name + Connection Badge */}
-              <div className="flex items-center gap-2">
-                <h3 className="text-body font-medium text-white truncate group-hover:text-white/90">
-                  {person.name}
-                </h3>
-                {person.isConnected && (
-                  <Badge variant="success" size="sm" className="shrink-0 text-[10px] px-1.5 py-0.5">
-                    Connected
-                  </Badge>
-                )}
-                {!person.isConnected && person.mutualSpaces && person.mutualSpaces > 0 && (
-                  <Badge variant="neutral" size="sm" className="shrink-0 text-[10px] px-1.5 py-0.5 bg-[var(--life-gold)]/10 text-[var(--life-gold)]">
-                    Mutual
-                  </Badge>
+        <motion.div variants={cardHoverVariants}>
+          <GlassSurface
+            intensity="subtle"
+            className={cn(
+              'group p-4 rounded-xl transition-colors duration-200',
+              'border border-white/[0.06] hover:border-white/10'
+            )}
+          >
+            <div className="flex items-start gap-3">
+              {/* Avatar */}
+              <div className="relative shrink-0">
+                <SimpleAvatar
+                  src={person.avatarUrl}
+                  fallback={person.name?.charAt(0) || '?'}
+                  size="lg"
+                />
+                {person.isOnline && (
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[var(--life-gold)] border-2 border-[var(--bg-ground)]" />
                 )}
               </div>
 
-              {/* Handle if available */}
-              {person.handle && (
-                <p className="text-label-sm text-white/30 truncate">
-                  @{person.handle}
-                </p>
-              )}
-
-              {/* Role */}
-              {person.role && (
-                <p className="text-label text-white/40 truncate mt-0.5">
-                  {person.role}
-                </p>
-              )}
-
-              {/* Mutual spaces - now with icon for clarity */}
-              {person.mutualSpaces && person.mutualSpaces > 0 && (
-                <div className="flex items-center gap-1 mt-2 text-white/30">
-                  <Users className="w-3 h-3" />
-                  <span className="text-label-sm">
-                    {person.mutualSpaces} mutual {person.mutualSpaces === 1 ? 'space' : 'spaces'}
-                  </span>
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                {/* Name + Connection Badge */}
+                <div className="flex items-center gap-2">
+                  <h3 className="text-body font-medium text-white truncate group-hover:text-white/90">
+                    {person.name}
+                  </h3>
+                  {person.isConnected && (
+                    <Badge variant="success" size="sm" className="shrink-0 text-[10px] px-1.5 py-0.5">
+                      Connected
+                    </Badge>
+                  )}
+                  {!person.isConnected && person.mutualSpaces && person.mutualSpaces > 0 && (
+                    <Badge variant="neutral" size="sm" className="shrink-0 text-[10px] px-1.5 py-0.5 bg-[var(--life-gold)]/10 text-[var(--life-gold)]">
+                      Mutual
+                    </Badge>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* View profile affordance - appears on hover */}
-          <div className="mt-3 pt-3 border-t border-white/[0.04] opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="text-label-sm text-white/40 group-hover:text-white/60">
-              View profile →
-            </span>
-          </div>
-        </GlassSurface>
+                {/* Handle if available */}
+                {person.handle && (
+                  <p className="text-label-sm text-white/30 truncate">
+                    @{person.handle}
+                  </p>
+                )}
+
+                {/* Role */}
+                {person.role && (
+                  <p className="text-label text-white/40 truncate mt-0.5">
+                    {person.role}
+                  </p>
+                )}
+
+                {/* Mutual spaces - now with icon for clarity */}
+                {person.mutualSpaces && person.mutualSpaces > 0 && (
+                  <div className="flex items-center gap-1 mt-2 text-white/30">
+                    <Users className="w-3 h-3" />
+                    <span className="text-label-sm">
+                      {person.mutualSpaces} mutual {person.mutualSpaces === 1 ? 'space' : 'spaces'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* View profile affordance - appears on hover */}
+            <div className="mt-3 pt-3 border-t border-white/[0.04] opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-label-sm text-white/40 group-hover:text-white/60">
+                View profile →
+              </span>
+            </div>
+          </GlassSurface>
+        </motion.div>
       </Link>
     </motion.div>
   );

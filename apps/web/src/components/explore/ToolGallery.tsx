@@ -4,12 +4,15 @@
  * ToolGallery - Gallery of HiveLab tools
  *
  * Shows tools available to deploy to spaces.
+ * Uses stagger container for orchestrated reveals.
  */
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Tilt, GlassSurface, Badge, MOTION } from '@hive/ui/design-system/primitives';
+import { Wrench } from 'lucide-react';
+import { Tilt, GlassSurface, Badge, Button } from '@hive/ui/design-system/primitives';
+import { MOTION, revealVariants, staggerContainerVariants, cardHoverVariants } from '@hive/tokens';
 import { cn } from '@/lib/utils';
 
 export interface ToolData {
@@ -46,7 +49,7 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+        transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
         className="text-center py-16"
       >
         <p className="text-white/40 text-body mb-2">
@@ -54,19 +57,27 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
             ? `No tools match "${searchQuery}"`
             : 'No tools available'}
         </p>
-        <p className="text-white/25 text-body-sm">
+        <p className="text-white/25 text-body-sm mb-4">
           Build one in HiveLab
         </p>
+        <Button variant="default" size="sm" asChild>
+          <Link href="/lab/new">Create Tool</Link>
+        </Button>
       </motion.div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {tools.map((tool, i) => (
-        <ToolCard key={tool.id} tool={tool} index={i} />
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+      variants={staggerContainerVariants}
+      initial="initial"
+      animate="animate"
+    >
+      {tools.map((tool) => (
+        <ToolCard key={tool.id} tool={tool} />
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -76,70 +87,71 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
 
 interface ToolCardProps {
   tool: ToolData;
-  index: number;
 }
 
-function ToolCard({ tool, index }: ToolCardProps) {
+function ToolCard({ tool }: ToolCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: MOTION.duration.fast,
-        delay: index * 0.03,
-        ease: MOTION.ease.premium,
-      }}
+      variants={revealVariants}
+      whileHover="hover"
+      initial="initial"
     >
       <Tilt intensity={4}>
         <Link href={`/lab/${tool.id}`}>
-          <GlassSurface
-            intensity="subtle"
-            className={cn(
-              'p-5 rounded-xl transition-all duration-200',
-              'border border-white/[0.06] hover:border-white/10 hover:bg-white/[0.02]'
-            )}
-          >
-            <div className="space-y-3">
-              {/* Header */}
-              <div className="flex items-start gap-3">
-                {/* Icon */}
-                <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-xl">
-                  {tool.icon || '🔧'}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-body font-medium text-white truncate">
-                      {tool.name}
-                    </h3>
-                    {tool.isOfficial && (
-                      <Badge variant="gold" size="sm">
-                        Official
-                      </Badge>
+          <motion.div variants={cardHoverVariants}>
+            <GlassSurface
+              intensity="subtle"
+              className={cn(
+                'p-5 rounded-xl transition-colors duration-200',
+                'border border-white/[0.06] hover:border-white/10'
+              )}
+            >
+              <div className="space-y-3">
+                {/* Header */}
+                <div className="flex items-start gap-3">
+                  {/* Icon */}
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                    {tool.icon && !tool.icon.startsWith('http') ? (
+                      <span className="text-xl">{tool.icon}</span>
+                    ) : (
+                      <Wrench className="w-5 h-5 text-white/40" />
                     )}
                   </div>
 
-                  {tool.category && (
-                    <p className="text-label text-white/40">{tool.category}</p>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-body font-medium text-white truncate">
+                        {tool.name}
+                      </h3>
+                      {tool.isOfficial && (
+                        <Badge variant="gold" size="sm">
+                          Official
+                        </Badge>
+                      )}
+                    </div>
+
+                    {tool.category && (
+                      <p className="text-label text-white/40">{tool.category}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
+                {tool.description && (
+                  <p className="text-body-sm text-white/50 line-clamp-2">
+                    {tool.description}
+                  </p>
+                )}
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-label text-white/30">
+                    {tool.deployCount} deployments
+                  </span>
                 </div>
               </div>
-
-              {/* Description */}
-              {tool.description && (
-                <p className="text-body-sm text-white/50 line-clamp-2">
-                  {tool.description}
-                </p>
-              )}
-
-              {/* Footer */}
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-label text-white/30">
-                  {tool.deployCount} deployments
-                </span>
-              </div>
-            </div>
-          </GlassSurface>
+            </GlassSurface>
+          </motion.div>
         </Link>
       </Tilt>
     </motion.div>

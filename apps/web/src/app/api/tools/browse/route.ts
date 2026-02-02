@@ -3,10 +3,8 @@
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import {
-  withAuthAndErrors,
-  getUserId,
-  getCampusId,
-  type AuthenticatedRequest,
+  withOptionalAuth,
+  getUser,
 } from "@/lib/middleware";
 
 const VALID_STATUSES = new Set(["draft", "published", "archived"]);
@@ -24,14 +22,16 @@ function normalizeText(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
-export const GET = withAuthAndErrors(async (
+export const GET = withOptionalAuth(async (
   request,
   _context,
   respond,
 ) => {
   try {
-    const viewerId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
+    // Optional auth: get user if authenticated, null otherwise
+    const user = getUser(request as import("next/server").NextRequest);
+    const viewerId = user?.uid || null;
+    const campusId = user?.campusId || 'ub-buffalo'; // Default campus for public
     const searchParams = new URL(request.url).searchParams;
 
     const requestedUserId = searchParams.get("userId") ?? undefined;

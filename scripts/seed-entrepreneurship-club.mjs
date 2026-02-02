@@ -27,7 +27,9 @@ const envVars = {};
 envContent.split('\n').forEach(line => {
   const [key, ...valueParts] = line.split('=');
   if (key && valueParts.length) {
-    envVars[key.trim()] = valueParts.join('=').trim();
+    // Strip surrounding quotes from values
+    const value = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
+    envVars[key.trim()] = value;
   }
 });
 

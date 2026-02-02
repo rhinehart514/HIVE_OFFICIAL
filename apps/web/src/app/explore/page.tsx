@@ -252,7 +252,7 @@ async function fetchTools(search?: string): Promise<ToolData[]> {
     id: t.id,
     name: t.name,
     description: t.description,
-    icon: t.thumbnailUrl || t.iconUrl || '🔧',
+    icon: t.thumbnailUrl || t.iconUrl || undefined,
     category: t.category || 'General',
     deployCount: t.stats?.installs || 0,
     isOfficial: t.metadata?.featured || t.isOfficial || false,
@@ -397,8 +397,11 @@ function ExploreContent() {
             className="mb-6 text-center"
           >
             <p className="text-body-sm text-white/30">
-              {spaces.length + ghostSpaces.length} spaces ·{' '}
-              {spaces.reduce((acc, s) => acc + s.memberCount, 0)} students
+              {spaces.length + ghostSpaces.length} {spaces.length + ghostSpaces.length === 1 ? 'space' : 'spaces'} ·{' '}
+              {(() => {
+                const studentCount = spaces.reduce((acc, s) => acc + s.memberCount, 0);
+                return `${studentCount} ${studentCount === 1 ? 'student' : 'students'}`;
+              })()}
             </p>
           </motion.div>
         )}

@@ -8,6 +8,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
+import { Building2, Users, Calendar, Wrench, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type ExploreTab = 'spaces' | 'people' | 'events' | 'tools';
@@ -18,11 +19,11 @@ export interface TabNavProps {
   className?: string;
 }
 
-const TABS: { id: ExploreTab; label: string; icon: string }[] = [
-  { id: 'spaces', label: 'Spaces', icon: '🏠' },
-  { id: 'people', label: 'People', icon: '👥' },
-  { id: 'events', label: 'Events', icon: '📅' },
-  { id: 'tools', label: 'Tools', icon: '🛠️' },
+const TABS: { id: ExploreTab; label: string; icon: LucideIcon }[] = [
+  { id: 'spaces', label: 'Spaces', icon: Building2 },
+  { id: 'people', label: 'People', icon: Users },
+  { id: 'events', label: 'Events', icon: Calendar },
+  { id: 'tools', label: 'Tools', icon: Wrench },
 ];
 
 export function TabNav({ activeTab, onTabChange, className }: TabNavProps) {
@@ -50,13 +51,15 @@ export function TabNav({ activeTab, onTabChange, className }: TabNavProps) {
               isActive ? 'text-white' : 'text-white/50 hover:text-white/70'
             )}
           >
-            {/* Active/hover background */}
+            {/* Active/hover background with glass treatment */}
             {(isActive || isHovered) && (
               <motion.div
                 layoutId="tab-indicator"
                 className={cn(
                   'absolute inset-0 rounded-lg',
-                  isActive ? 'bg-white/[0.08]' : 'bg-white/[0.04]'
+                  isActive
+                    ? 'bg-white/[0.08] border border-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
+                    : 'bg-white/[0.04]'
                 )}
                 transition={{
                   type: 'spring',
@@ -67,7 +70,7 @@ export function TabNav({ activeTab, onTabChange, className }: TabNavProps) {
             )}
 
             {/* Content */}
-            <span className="relative z-10">{tab.icon}</span>
+            <tab.icon className="relative z-10 w-4 h-4" />
             <span className="relative z-10">{tab.label}</span>
           </button>
         );

@@ -1,4 +1,4 @@
-import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware/index";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest, ResponseFormatter } from "@/lib/middleware/index";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
 import { getServerProfileRepository } from '@hive/core/server';
@@ -12,9 +12,13 @@ import { isTestUserId } from "@/lib/security-service";
  * - timeRange: 'day' | 'week' | 'month' | 'all'
  * - includeRecommendations: boolean
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
-  const userId = getUserId(request as AuthenticatedRequest);
-  const campusId = getCampusId(request as AuthenticatedRequest);
+export const GET = withAuthAndErrors(async (
+  request: AuthenticatedRequest,
+  _context: unknown,
+  respond: typeof ResponseFormatter
+) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
   const { searchParams } = new URL(request.url);
   const timeRange = searchParams.get('timeRange') || 'week';
   const includeRecommendations = searchParams.get('includeRecommendations') === 'true';
