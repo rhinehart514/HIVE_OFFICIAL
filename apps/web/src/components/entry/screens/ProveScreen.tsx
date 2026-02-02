@@ -11,7 +11,7 @@ import { ArrowLeft, Loader2, Bell, Check, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OTPInput, Button } from '@hive/ui/design-system/primitives';
 import type { UseEntryReturn } from '../hooks/useEntry';
-import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
+import { DURATION, EASE_PREMIUM, GOLD } from '../motion/entry-motion';
 import { clashDisplay } from '../Entry';
 
 interface ProveScreenProps {
@@ -106,7 +106,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5, ease: EASE_PREMIUM }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+              <span className="w-1.5 h-1.5 rounded-full bg-gold-500/60" />
               <span className="text-[11px] uppercase tracking-[0.3em] text-white/30">
                 {entry.gateStep === 'email' ? 'Prove yourself' : 'Verify'}
               </span>
@@ -193,7 +193,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
               disabled={entry.isLoading || !entry.data.email.trim()}
               className={cn(
                 'group w-full py-4 rounded-xl font-medium transition-all duration-300',
-                'bg-white text-[#030303]',
+                'bg-white text-neutral-950',
                 'hover:bg-white/90',
                 'disabled:opacity-40 disabled:cursor-not-allowed',
                 'flex items-center justify-center gap-2'
@@ -237,7 +237,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
               <div className="flex items-center justify-center gap-2 text-[13px] text-white/40">
                 <div
                   className="w-4 h-4 rounded-full border-2 border-white/10 animate-spin"
-                  style={{ borderTopColor: '#FFD700' }}
+                  style={{ borderTopColor: GOLD.primary }}
                 />
                 <span>Verifying...</span>
               </div>
@@ -277,9 +277,9 @@ export function ProveScreen({ entry }: ProveScreenProps) {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                  className="w-16 h-16 mx-auto rounded-full bg-[#FFD700]/10 border border-[#FFD700]/20 flex items-center justify-center"
+                  className="w-16 h-16 mx-auto rounded-full bg-gold-500/10 border border-gold-500/20 flex items-center justify-center"
                 >
-                  <Check className="w-8 h-8 text-[#FFD700]" />
+                  <Check className="w-8 h-8 text-gold-500" />
                 </motion.div>
 
                 <div className="text-center space-y-3">
@@ -303,7 +303,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
               <>
                 {/* Section label */}
                 <div className="flex items-center gap-2 justify-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold-500/60" />
                   <span className="text-[11px] uppercase tracking-[0.3em] text-white/30">
                     Coming soon
                   </span>
@@ -334,8 +334,8 @@ export function ProveScreen({ entry }: ProveScreenProps) {
                     disabled={entry.isLoading}
                     className={cn(
                       'group w-full py-4 rounded-xl font-medium transition-all duration-300',
-                      'bg-[#FFD700] text-[#030303]',
-                      'hover:bg-[#FFD700]/90',
+                      'bg-gold-500 text-neutral-950',
+                      'hover:bg-gold-500/90',
                       'disabled:opacity-50 disabled:cursor-not-allowed',
                       'flex items-center justify-center gap-2'
                     )}

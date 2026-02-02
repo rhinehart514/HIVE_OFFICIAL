@@ -16,6 +16,7 @@
  */
 
 import { type Variants, type Transition } from 'framer-motion';
+import { monochromeValues } from '@hive/tokens';
 
 // ============================================
 // CORE TIMING CONSTANTS
@@ -256,13 +257,14 @@ export const glowTransition: Transition = {
 // GOLD PALETTE
 // ============================================
 
+/** Gold color palette - sourced from design tokens */
 export const GOLD = {
-  primary: '#FFD700',
-  light: '#FFDF33',
-  dark: '#B8860B',
-  glow: 'rgba(255, 215, 0, 0.4)',
-  glowSubtle: 'rgba(255, 215, 0, 0.15)',
-  glowSoft: 'rgba(255, 215, 0, 0.08)',
+  primary: monochromeValues.gold.hex,
+  light: '#FFDF33', // Light variant (not in tokens yet)
+  dark: '#B8860B', // Dark variant (not in tokens yet)
+  glow: monochromeValues.gold.rgba(0.4),
+  glowSubtle: monochromeValues.gold.rgba(0.15),
+  glowSoft: monochromeValues.gold.rgba(0.08),
 } as const;
 
 // ============================================

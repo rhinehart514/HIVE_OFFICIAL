@@ -29,6 +29,9 @@ export const HIVE_FEATURE_FLAGS = {
   RITUALS: 'rituals',
   TOOL_MARKETPLACE: 'tool_marketplace',
   ADVANCED_ANALYTICS: 'advanced_analytics',
+  // Social features
+  ENABLE_DMS: 'enable_dms',
+  ENABLE_CONNECTIONS: 'enable_connections',
 } as const;
 
 // Simple feature flag service (inlined)

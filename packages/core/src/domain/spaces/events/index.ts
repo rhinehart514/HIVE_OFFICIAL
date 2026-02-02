@@ -631,3 +631,22 @@ export class SpaceWentLiveEvent extends DomainEvent {
     return 'SpaceWentLive';
   }
 }
+
+/**
+ * Emitted when a space's lifecycle state changes (ADR-007)
+ * Tracks transitions in the unified state machine
+ */
+export class SpaceLifecycleChangedEvent extends DomainEvent {
+  constructor(
+    aggregateId: string,
+    public readonly previousState: string,
+    public readonly newState: string,
+    public readonly timestamp: Date
+  ) {
+    super(aggregateId);
+  }
+
+  getEventName(): string {
+    return 'SpaceLifecycleChanged';
+  }
+}

@@ -38,6 +38,7 @@ interface UserPreferences {
     events: boolean;
     connections: boolean;
     tools: boolean;
+    rituals: boolean;
     system: boolean;
   };
   email?: {
@@ -58,6 +59,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     events: true,
     connections: true,
     tools: true,
+    rituals: true,
     system: true,
   },
   email: {
@@ -138,8 +140,18 @@ async function sendEmailNotification(
     const sendGridFromEmail = process.env.SENDGRID_FROM_EMAIL || 'hello@hive.college';
 
     if (!sendGridApiKey) {
+      logger.warn('SendGrid not configured - email notifications disabled', {
+        notificationType: notification.type,
+        hint: 'Set SENDGRID_API_KEY in .env.local to enable email delivery',
+      });
       return { success: false, error: 'SendGrid not configured' };
     }
+
+    logger.debug('Attempting to send email via SendGrid', {
+      to: email.replace(/(.{3}).*@/, '$1***@'),
+      from: sendGridFromEmail,
+      notificationType: notification.type,
+    });
 
     const sgMail = require('@sendgrid/mail');
     sgMail.setApiKey(sendGridApiKey);
@@ -154,7 +166,7 @@ async function sendEmailNotification(
       html,
     });
 
-    logger.info('Notification email sent', {
+    logger.info('Notification email sent successfully', {
       email: email.replace(/(.{3}).*@/, '$1***@'),
       notificationType: notification.type,
       category: notification.category,
@@ -163,9 +175,15 @@ async function sendEmailNotification(
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode = (error as { code?: number })?.code;
+
     logger.error('Failed to send notification email', {
       error: errorMessage,
+      errorCode,
       notificationType: notification.type,
+      category: notification.category,
+      hint: errorCode === 401 ? 'Invalid SENDGRID_API_KEY' :
+            errorCode === 403 ? 'Sender email not verified in SendGrid' : undefined,
     });
     return { success: false, error: errorMessage };
   }

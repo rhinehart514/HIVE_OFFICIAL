@@ -260,7 +260,7 @@ export default function SpaceHealthPage() {
     );
   }
 
-  // Generate mock data if no overview
+  // Default empty state if API returns no data
   const data: HealthOverview = overview || {
     totalSpaces: 0,
     healthDistribution: { healthy: 0, warning: 0, critical: 0 },

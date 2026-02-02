@@ -25,6 +25,7 @@ import {
   incrementMemberCount,
   isShardedMemberCountEnabled
 } from "@/lib/services/sharded-member-counter.service";
+import { notifySpaceInvite } from "@/lib/notification-service";
 
 const GetMembersQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
@@ -612,6 +613,28 @@ export const POST = withAuthValidationAndErrors(
         isReactivation: result.isReactivation,
         endpoint: '/api/spaces/[spaceId]/members'
       });
+
+      // Send notification to invited user
+      try {
+        const inviterDoc = await dbAdmin.collection('users').doc(inviterId).get();
+        const inviterName = inviterDoc.data()?.fullName || inviterDoc.data()?.displayName || 'Someone';
+        const spaceName = validation.space?.name?.value || 'a space';
+
+        await notifySpaceInvite({
+          invitedUserId: body.userId,
+          inviterId,
+          inviterName,
+          spaceId,
+          spaceName,
+        });
+      } catch (notifyError) {
+        // Don't fail the invite if notification fails
+        logger.warn('Failed to send space invite notification', {
+          error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+          spaceId,
+          invitedUserId: body.userId,
+        });
+      }
 
       // Fix 3: Auto-unlock major spaces when threshold is reached
       // Check if space is a major type and should unlock after adding this member

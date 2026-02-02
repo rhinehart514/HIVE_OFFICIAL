@@ -1295,9 +1295,22 @@ export function HiveLabIDE({
   const handleRunAutomationNow = useCallback(async (id: string) => {
     if (!deploymentId) return;
 
-    // For now, manual triggering is not implemented server-side
-    // This would require a separate trigger endpoint
-    toast.info('Manual triggering coming soon');
+    try {
+      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}/trigger`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        toast.success('Automation triggered successfully');
+      } else {
+        toast.error(result.error || 'Failed to trigger automation');
+      }
+    } catch (error) {
+      toast.error('Failed to trigger automation');
+    }
   }, [deploymentId]);
 
   // Save automation from builder (create or update)

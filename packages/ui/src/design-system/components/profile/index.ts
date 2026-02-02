@@ -137,6 +137,17 @@ export {
 } from './ConnectButton';
 
 // ============================================
+// DISCOVERY COMPONENTS
+// ============================================
+
+export {
+  PeopleYouMayKnow,
+  type PeopleYouMayKnowProps,
+  type UserSuggestion,
+  type SuggestedUser,
+} from './PeopleYouMayKnow';
+
+// ============================================
 // BENTO GRID WIDGETS (New - Phase 2)
 // ============================================
 

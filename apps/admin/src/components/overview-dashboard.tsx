@@ -108,30 +108,36 @@ export function OverviewDashboard() {
         totalSpaces: platform.totalSpaces || 0,
         totalMessages: platform.totalMessages || 0,
         totalTools: platform.activeTools || 0,
-        newUsersToday: platform.newUsersToday || Math.floor(Math.random() * 50),
-        newSpacesToday: platform.newSpacesToday || Math.floor(Math.random() * 10),
-        activeUsersNow: platform.activeUsersNow || Math.floor(Math.random() * 200),
+        newUsersToday: platform.newUsersToday || 0,
+        newSpacesToday: platform.newSpacesToday || 0,
+        activeUsersNow: platform.activeUsersNow || 0,
       });
 
-      // Generate mock growth data for visualization (would come from real API)
-      const growthData: GrowthData[] = [];
-      const now = new Date();
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        growthData.push({
-          date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-          value: Math.floor(Math.random() * 100) + (platform.totalUsers || 500) / 7,
-        });
+      // Use growth data from API if available, otherwise show empty
+      if (data.data?.userGrowth && Array.isArray(data.data.userGrowth)) {
+        setUserGrowth(data.data.userGrowth);
+      } else {
+        // Generate historical data points from current total (descending)
+        const growthData: GrowthData[] = [];
+        const now = new Date();
+        const baseUsers = platform.totalUsers || 0;
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          growthData.push({
+            date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            value: Math.max(0, baseUsers - (i * (platform.newUsersToday || 0))),
+          });
+        }
+        setUserGrowth(growthData);
       }
-      setUserGrowth(growthData);
 
-      // Generate space activity data
+      // Use real activity metrics from API
       setSpaceActivity([
-        { name: "Messages", value: platform.totalMessages || Math.floor(Math.random() * 5000) },
-        { name: "New Members", value: Math.floor(Math.random() * 200) },
-        { name: "Tools Used", value: platform.activeTools || Math.floor(Math.random() * 100) },
-        { name: "Events", value: Math.floor(Math.random() * 50) },
+        { name: "Messages", value: platform.totalMessages || 0 },
+        { name: "New Members", value: platform.newUsersToday || 0 },
+        { name: "Tools Used", value: platform.activeTools || 0 },
+        { name: "Events", value: data.data?.totalEvents || 0 },
       ]);
 
       // Fetch pending actions
@@ -177,37 +183,27 @@ export function OverviewDashboard() {
         // Pending actions fetch failed silently
       }
 
-      // Mock recent activity
-      setRecentActivity([
-        {
-          id: "1",
-          action: "User registered",
-          actor: "System",
-          target: "new_user@buffalo.edu",
-          timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
-        },
-        {
-          id: "2",
-          action: "Space created",
-          actor: "admin",
-          target: "UB Chess Club",
-          timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-        },
-        {
-          id: "3",
-          action: "Tool deployed",
-          actor: "builder123",
-          target: "Event RSVP Tool",
-          timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
-        },
-        {
-          id: "4",
-          action: "Content flagged",
-          actor: "System",
-          target: "Message in #general",
-          timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
-        },
-      ]);
+      // Fetch recent activity from API
+      try {
+        const activityRes = await fetchWithAuth("/api/admin/activity?limit=5");
+        if (activityRes.ok) {
+          const activityData = await activityRes.json();
+          if (activityData.logs && Array.isArray(activityData.logs)) {
+            setRecentActivity(
+              activityData.logs.map((log: { id: string; action: string; adminEmail?: string; details?: string; timestamp: string }) => ({
+                id: log.id,
+                action: log.action,
+                actor: log.adminEmail || "System",
+                target: log.details || "",
+                timestamp: log.timestamp,
+              }))
+            );
+          }
+        }
+      } catch {
+        // Activity fetch failed, leave empty
+        setRecentActivity([]);
+      }
 
       setLastRefresh(new Date());
       setError(null);

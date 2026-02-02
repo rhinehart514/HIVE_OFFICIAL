@@ -27,9 +27,6 @@ vi.mock('@/lib/session', () => ({
   }))
 }));
 
-// Mock SSE to be no-op
-vi.mock('@/lib/sse-realtime-service', () => ({ sseRealtimeService: { sendMessage: vi.fn(async () => {}) } }));
-
 // Import routes after mocks
 import * as SearchRoute from '@/app/api/search/route';
 

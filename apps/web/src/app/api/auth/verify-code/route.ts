@@ -9,19 +9,11 @@ import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { SESSION_CONFIG, getEncodedSessionSecret } from "@/lib/session";
 import { validateOrigin } from "@/lib/security-middleware";
+import { isDevAuthBypassAllowed, getDevUserId } from "@/lib/dev-auth-bypass";
 
 // Security constants
 const MAX_ATTEMPTS_PER_CODE = 5;
 const LOCKOUT_DURATION_SECONDS = 60; // 1 minute lockout after max attempts
-
-// Development mode guard - ONLY allow dev bypass when ALL conditions are met:
-// 1. NODE_ENV is explicitly 'development'
-// 2. Firebase is not configured
-// 3. DEV_AUTH_BYPASS env var is set to 'true' (explicit opt-in)
-const ALLOW_DEV_BYPASS =
-  SESSION_CONFIG.isDevelopment &&
-  !isFirebaseConfigured &&
-  process.env.DEV_AUTH_BYPASS === 'true';
 
 const verifyCodeSchema = z.object({
   email: z.string().email().max(254),
@@ -136,11 +128,7 @@ export const POST = withValidation(
 
       // DEV BYPASS: In development mode, accept any valid 6-digit code
       // This avoids Firebase quota issues during testing
-      if (SESSION_CONFIG.isDevelopment) {
-        logger.info('DEV MODE: Bypassing Firebase code verification', {
-          component: 'verify-code',
-          email: normalizedEmail.replace(/(.{3}).*@/, '$1***@'),
-        });
+      if (isDevAuthBypassAllowed('verify_code', { email: normalizedEmail, endpoint: '/api/auth/verify-code' })) {
         if (normalizedCode.length === 6 && /^\d+$/.test(normalizedCode)) {
           // Create session in dev mode
           return await createSessionResponse(normalizedEmail, schoolId, true, respond);
@@ -150,21 +138,8 @@ export const POST = withValidation(
 
       // Find the most recent pending code for this email
       if (!isFirebaseConfigured) {
-        // Development fallback - ONLY if explicitly enabled
-        if (ALLOW_DEV_BYPASS) {
-          logger.warn('DEV MODE: Firebase not configured, using development mode verification', {
-            component: 'verify-code',
-            email: normalizedEmail.replace(/(.{3}).*@/, '$1***@'),
-          });
-          if (normalizedCode.length === 6 && /^\d+$/.test(normalizedCode)) {
-            // Create session in dev mode
-            return await createSessionResponse(normalizedEmail, schoolId, true, respond);
-          }
-          return respond.error("Invalid code format", "INVALID_CODE", { status: 400 });
-        }
-
-        // Firebase not configured but dev bypass not enabled - fail securely
-        logger.error('Firebase not configured and DEV_AUTH_BYPASS not enabled', {
+        // Firebase not configured - fail securely (centralized bypass already checked above)
+        logger.error('Firebase not configured - authentication service unavailable', {
           component: 'verify-code',
           nodeEnv: process.env.NODE_ENV,
         });
@@ -307,8 +282,8 @@ async function createSessionResponse(
   let isAdmin = false;
 
   // DEV BYPASS: Skip Firebase user lookup in development mode
-  if (SESSION_CONFIG.isDevelopment || isDevMode) {
-    userId = `dev-${email.replace(/[^a-zA-Z0-9]/g, '-')}`;
+  if (isDevMode) {
+    userId = getDevUserId(email);
     needsOnboarding = true;
     logger.info('DEV MODE: Using dev user ID', { userId, email: email.replace(/(.{3}).*@/, '$1***@') });
   } else if (isFirebaseConfigured) {

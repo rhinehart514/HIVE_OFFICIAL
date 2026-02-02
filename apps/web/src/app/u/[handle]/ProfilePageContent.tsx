@@ -31,6 +31,7 @@ import { MOTION } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import { useProfileByHandle } from './hooks';
 import { useDM } from '@/contexts/dm-context';
+import { useDMsEnabled, useConnectionsEnabled } from '@/hooks/use-feature-flags';
 
 // ============================================================================
 // Constants
@@ -201,6 +202,8 @@ export default function ProfilePageContent() {
   const router = useRouter();
   const state = useProfileByHandle();
   const { openConversation } = useDM();
+  const { enabled: dmsEnabled } = useDMsEnabled();
+  const { enabled: connectionsEnabled } = useConnectionsEnabled();
 
   // Inline expansion state
   const [showAllTools, setShowAllTools] = React.useState(false);
@@ -340,6 +343,8 @@ export default function ProfilePageContent() {
             connectionState={connectionState}
             pendingRequestId={pendingRequestId}
             isConnectionLoading={isConnectionLoading}
+            showConnectButton={connectionsEnabled}
+            showMessageButton={dmsEnabled}
             onEdit={handleEditProfile}
             onConnect={handleConnect}
             onAcceptRequest={handleAcceptRequest}

@@ -1901,6 +1901,8 @@ export {
   ProfileActivityHeatmap,
   ProfileStatsWidget,
   ProfileFeaturedToolCard,
+  // Discovery Components
+  PeopleYouMayKnow,
 } from "./design-system/components/profile";
 
 export type {
@@ -1937,6 +1939,10 @@ export type {
   ProfileStatsWidgetProps,
   ProfileFeaturedToolCardProps,
   FeaturedTool,
+  // Discovery Types
+  PeopleYouMayKnowProps,
+  UserSuggestion,
+  SuggestedUser,
 } from "./design-system/components/profile";
 
 // ============================================

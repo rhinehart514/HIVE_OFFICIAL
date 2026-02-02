@@ -26,6 +26,7 @@ import {
   signinCodeRateLimit,
   signinVerifyRateLimit,
 } from './rate-limit-simple';
+import { logSecurityEvent } from './logger';
 
 // Rate limit preset configurations (limits and windows)
 const RATE_LIMIT_CONFIGS = {
@@ -195,8 +196,19 @@ export async function enforceRateLimit(
 
     // Redis worked, return the result
     return transformRedisResult(ipResult);
-  } catch {
-    // Redis failed, fall back to in-memory
+  } catch (error) {
+    // Redis failed - log security event and fall back to in-memory
+    logSecurityEvent('rate_limit', {
+      operation: 'redis_fallback',
+      reason: `Redis rate limiter failed, falling back to in-memory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      ip: clientId,
+      endpoint: request.url,
+      metadata: {
+        preset: validPreset,
+        limit: config.limit,
+        windowMs: config.windowMs,
+      },
+    });
     return checkMemoryRateLimit(validPreset, clientId);
   }
 }

@@ -277,22 +277,58 @@ function executeConfigAction(
 }
 
 /**
- * Execute a notification action (placeholder - requires integration)
+ * Execute a notification action
+ * Uses ExecutorCallbacks.sendNotification if provided
  */
-function executeNotificationAction(
+async function executeNotificationAction(
   action: NotificationActionConfig,
-  _context: ExecutionContext,
-): OrchestrationActionResult {
-  // Notification sending would be handled by callbacks in real implementation
-  return {
-    actionType: 'notification',
-    success: true,
-    updates: {
-      recipients: action.recipients,
-      title: action.title,
-      body: action.body,
-    },
-  };
+  context: ExecutionContext,
+  callbacks?: ExecutorCallbacks,
+): Promise<OrchestrationActionResult> {
+  // If no callback, return success with pending delivery
+  if (!callbacks?.sendNotification) {
+    return {
+      actionType: 'notification',
+      success: true,
+      updates: {
+        recipients: action.recipients,
+        title: action.title,
+        body: action.body,
+        status: 'pending_delivery',
+      },
+    };
+  }
+
+  try {
+    // Send via callback
+    await callbacks.sendNotification(
+      action.recipients,
+      action.title,
+      action.body,
+      action.actionUrl
+    );
+
+    return {
+      actionType: 'notification',
+      success: true,
+      updates: {
+        recipients: action.recipients,
+        title: action.title,
+        body: action.body,
+        status: 'delivered',
+      },
+    };
+  } catch (error) {
+    return {
+      actionType: 'notification',
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send notification',
+      updates: {
+        recipients: action.recipients,
+        status: 'failed',
+      },
+    };
+  }
 }
 
 /**
@@ -338,10 +374,11 @@ function executeStateAction(
 /**
  * Execute a single action based on its type
  */
-function executeAction(
+async function executeAction(
   action: OrchestrationActionConfig,
   context: ExecutionContext,
-): OrchestrationActionResult {
+  callbacks?: ExecutorCallbacks,
+): Promise<OrchestrationActionResult> {
   switch (action.type) {
     case 'data_flow':
       return executeDataFlowAction(action, context);
@@ -350,7 +387,7 @@ function executeAction(
     case 'config':
       return executeConfigAction(action, context);
     case 'notification':
-      return executeNotificationAction(action, context);
+      return executeNotificationAction(action, context, callbacks);
     case 'state':
       return executeStateAction(action, context);
     default:
@@ -372,13 +409,13 @@ export class OrchestrationExecutorService {
   /**
    * Evaluate which rules match a tool event and execute them
    */
-  executeOnToolEvent(
+  async executeOnToolEvent(
     deployment: SetupDeployment,
     slotId: string,
     eventType: string,
     payload: Record<string, unknown>,
     triggeredBy: string,
-  ): OrchestrationExecutionResult {
+  ): Promise<OrchestrationExecutionResult> {
     const matchingRules = deployment.orchestrationRules.filter(rule => {
       if (!rule.enabled) return false;
       if (rule.trigger.type !== 'tool_event') return false;
@@ -396,10 +433,10 @@ export class OrchestrationExecutorService {
   /**
    * Evaluate time-relative triggers and execute matching rules
    */
-  executeOnTimeCheck(
+  async executeOnTimeCheck(
     deployment: SetupDeployment,
     triggeredBy: string,
-  ): OrchestrationExecutionResult {
+  ): Promise<OrchestrationExecutionResult> {
     const matchingRules = deployment.orchestrationRules.filter(rule => {
       if (!rule.enabled) return false;
       if (rule.trigger.type !== 'time_relative') return false;
@@ -417,10 +454,10 @@ export class OrchestrationExecutorService {
   /**
    * Evaluate data condition triggers and execute matching rules
    */
-  executeOnDataChange(
+  async executeOnDataChange(
     deployment: SetupDeployment,
     triggeredBy: string,
-  ): OrchestrationExecutionResult {
+  ): Promise<OrchestrationExecutionResult> {
     const matchingRules = deployment.orchestrationRules.filter(rule => {
       if (!rule.enabled) return false;
       if (rule.trigger.type !== 'data_condition') return false;
@@ -438,11 +475,11 @@ export class OrchestrationExecutorService {
   /**
    * Execute a specific manual trigger rule
    */
-  executeManualTrigger(
+  async executeManualTrigger(
     deployment: SetupDeployment,
     ruleId: string,
     triggeredBy: string,
-  ): Result<RuleExecutionResult> {
+  ): Promise<Result<RuleExecutionResult>> {
     const rule = deployment.orchestrationRules.find(r => r.id === ruleId);
 
     if (!rule) {
@@ -458,7 +495,7 @@ export class OrchestrationExecutorService {
     }
 
     const context: ExecutionContext = { deployment, triggeredBy };
-    const result = this.executeSingleRule(rule, context, 'manual', {});
+    const result = await this.executeSingleRule(rule, context, 'manual', {});
 
     return Result.ok(result);
   }
@@ -466,18 +503,18 @@ export class OrchestrationExecutorService {
   /**
    * Execute a list of matching rules
    */
-  private executeRules(
+  private async executeRules(
     rules: OrchestrationRule[],
     context: ExecutionContext,
     triggerType: string,
     triggerDetails: Record<string, unknown>,
-  ): OrchestrationExecutionResult {
+  ): Promise<OrchestrationExecutionResult> {
     const executedRules: RuleExecutionResult[] = [];
     const logEntries: OrchestrationLogEntry[] = [];
     let totalActionsExecuted = 0;
 
     for (const rule of rules) {
-      const result = this.executeSingleRule(rule, context, triggerType, triggerDetails);
+      const result = await this.executeSingleRule(rule, context, triggerType, triggerDetails);
       executedRules.push(result);
 
       if (!result.skipped) {
@@ -515,12 +552,12 @@ export class OrchestrationExecutorService {
   /**
    * Execute a single rule
    */
-  private executeSingleRule(
+  private async executeSingleRule(
     rule: OrchestrationRule,
     context: ExecutionContext,
     triggerType: string,
     triggerDetails: Record<string, unknown>,
-  ): RuleExecutionResult {
+  ): Promise<RuleExecutionResult> {
     const { deployment } = context;
 
     // Check if runOnce rule has already been executed
@@ -539,7 +576,7 @@ export class OrchestrationExecutorService {
     const actionsExecuted: OrchestrationActionResult[] = [];
 
     for (const action of rule.actions) {
-      const result = executeAction(action, context);
+      const result = await executeAction(action, context, this.callbacks);
       actionsExecuted.push(result);
     }
 

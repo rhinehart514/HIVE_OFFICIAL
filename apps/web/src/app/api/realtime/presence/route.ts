@@ -4,7 +4,6 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/auth-server';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { sseRealtimeService as _sseRealtimeService } from '@/lib/sse-realtime-service';
 import { deriveCampusFromEmail } from '@/lib/middleware';
 
 // Presence indicator interfaces
@@ -99,6 +98,11 @@ interface PresenceEvent {
   broadcastToSpaces: string[];
 }
 
+// TTL for presence data: 90 minutes
+const PRESENCE_TTL_MS = 90 * 60 * 1000;
+// Consider stale after 3 minutes without heartbeat
+const STALE_THRESHOLD_MS = 3 * 60 * 1000;
+
 // POST - Update user presence and activity
 export async function POST(request: NextRequest) {
   try {
@@ -127,15 +131,19 @@ export async function POST(request: NextRequest) {
     // Get current presence
     const currentPresence = await getUserPresence(user.uid);
     
-    // Prepare presence update
-    const presenceUpdate: Partial<UserPresence> = {
+    // Prepare presence update with TTL
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + PRESENCE_TTL_MS);
+
+    const presenceUpdate: Partial<UserPresence> & { expiresAt: string } = {
       userId: user.uid,
       userName: user.displayName || user.email || 'Unknown User',
-      lastSeen: new Date().toISOString(),
+      lastSeen: now.toISOString(),
+      expiresAt: expiresAt.toISOString(), // TTL field for automatic cleanup
       metadata: {
         timezone: 'UTC',
         locale: 'en-US',
-        lastActivityUpdate: new Date().toISOString()
+        lastActivityUpdate: now.toISOString()
       }
     };
 
@@ -468,12 +476,29 @@ async function getSpacePresence(spaceId: string, requestingUserId: string, campu
     // Get space members
     const spaceMembers = await getSpaceMembers(spaceId, campusId);
     
-    // Get presence for each member
+    // Get presence for each member, filtering stale entries
     const memberPresences: UserPresence[] = [];
+    const now = Date.now();
+
     for (const memberId of spaceMembers) {
       const presence = await getUserPresence(memberId);
-      if (presence && (includeOffline || presence.status !== 'offline')) {
-        memberPresences.push(presence);
+      if (!presence) continue;
+
+      // Check if presence is stale (no heartbeat in 3+ minutes)
+      const lastActivityTime = presence.metadata?.lastActivityUpdate
+        ? new Date(presence.metadata.lastActivityUpdate).getTime()
+        : 0;
+
+      const isStale = now - lastActivityTime > STALE_THRESHOLD_MS;
+
+      // Treat stale presence as offline
+      const effectiveStatus = isStale ? 'offline' : presence.status;
+
+      if (includeOffline || effectiveStatus !== 'offline') {
+        memberPresences.push({
+          ...presence,
+          status: effectiveStatus
+        });
       }
     }
 
@@ -759,10 +784,17 @@ async function getRecentSpaceActivity(spaceId: string, limit = 10): Promise<Arra
   }
 }
 
-// Background cleanup function for stale presence data
-async function _cleanupStalePresence(): Promise<number> {
+/**
+ * Background cleanup function for stale presence data.
+ * Sets users with no heartbeat in 90+ minutes to offline.
+ *
+ * Note: Consider enabling Firestore TTL policy on the `expiresAt` field
+ * for automatic document deletion. See:
+ * https://firebase.google.com/docs/firestore/ttl
+ */
+export async function cleanupStalePresence(): Promise<number> {
   try {
-    const staleThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours
+    const staleThreshold = new Date(Date.now() - PRESENCE_TTL_MS);
     const stalePresenceQuery = dbAdmin.collection('userPresence')
       .where('metadata.lastActivityUpdate', '<', staleThreshold.toISOString());
 
@@ -779,6 +811,7 @@ async function _cleanupStalePresence(): Promise<number> {
       cleaned++;
     }
 
+    logger.info('Cleaned up stale presence entries', { count: cleaned });
     return cleaned;
   } catch (error) {
     logger.error(

@@ -305,7 +305,7 @@ export const POST = withAuthValidationAndErrors(
       const campusId = getCampusId(request as AuthenticatedRequest);
 
       // Require leader permission to create events
-      const permCheck = await checkSpacePermission(spaceId, userId, 'leader');
+      const permCheck = await checkSpacePermission(spaceId, userId, 'admin');
       if (!permCheck.hasPermission) {
         const code = permCheck.code === 'NOT_FOUND' ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
         const status = permCheck.code === 'NOT_FOUND' ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;

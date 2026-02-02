@@ -40,9 +40,6 @@ vi.mock('@/lib/session', () => ({
   }))
 }));
 
-// Mock SSE to be no-op
-vi.mock('@/lib/sse-realtime-service', () => ({ sseRealtimeService: { sendMessage: vi.fn(async () => {}) } }));
-
 // Mock event-board auto-link (since it uses SpaceChatService which is complex)
 vi.mock('@/lib/event-board-auto-link', () => ({
   autoLinkEventToBoard: vi.fn(async () => ({ success: true, boardId: 'board_1', boardName: 'Test Event Board' })),

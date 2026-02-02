@@ -83,6 +83,13 @@ export interface ActionExecutors {
     body: string;
     link?: string;
   }) => Promise<{ sent: number }>;
+
+  /** Resolve space members by role - returns array of user IDs */
+  resolveSpaceMembers?: (params: {
+    spaceId: string;
+    /** 'leaders' for admins/moderators, 'all' for all active members */
+    filter: 'leaders' | 'all';
+  }) => Promise<{ userIds: string[] }>;
 }
 
 /**
@@ -283,13 +290,30 @@ export class AutomationExecutorService {
       return { success: false, error: 'Notifications not available' };
     }
 
-    // Determine recipients (simplified - real impl would fetch from DB)
+    // Determine recipients
     let userIds: string[] = [];
-    if (action.config.recipients === 'specific' && action.config.userIds) {
+    const recipients = action.config.recipients;
+
+    if (recipients === 'specific' && action.config.userIds) {
       userIds = action.config.userIds;
+    } else if (recipients === 'leaders' || recipients === 'all_members') {
+      // Resolve members from space
+      if (!this.executors.resolveSpaceMembers) {
+        return { success: false, error: 'Member resolution not available' };
+      }
+
+      const filter = recipients === 'leaders' ? 'leaders' : 'all';
+      const resolved = await this.executors.resolveSpaceMembers({
+        spaceId: context.spaceId,
+        filter,
+      });
+      userIds = resolved.userIds;
+
+      if (userIds.length === 0) {
+        return { success: true, output: { notificationsSent: 0 } };
+      }
     } else {
-      // For 'leaders' or 'all_members', caller needs to resolve
-      return { success: false, error: 'Recipient resolution not implemented' };
+      return { success: false, error: `Unknown recipient type: ${recipients}` };
     }
 
     const result = await this.executors.sendNotification({

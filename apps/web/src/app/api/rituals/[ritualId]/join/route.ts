@@ -8,6 +8,7 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { isRitualsEnabled } from "@/lib/feature-flags";
+import { notifyRitualJoined } from "@/lib/notification-service";
 
 interface RouteParams {
   params: Promise<{ ritualId: string }>;
@@ -122,6 +123,20 @@ export const POST = withAuthAndErrors(
         userId,
         archetype: ritual.archetype,
         campusId,
+      });
+
+      // Send welcome notification (non-blocking)
+      notifyRitualJoined({
+        userId,
+        ritualId,
+        ritualName: ritual.title,
+        ritualSlug: ritual.slug || ritualId,
+      }).catch((err) => {
+        logger.warn("Failed to send ritual join notification", {
+          error: err instanceof Error ? err.message : String(err),
+          ritualId,
+          userId,
+        });
       });
 
       return respond.success({

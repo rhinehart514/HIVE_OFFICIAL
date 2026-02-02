@@ -15,7 +15,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SmilePlus, MessageSquare, MoreHorizontal, Trash2 } from 'lucide-react';
+import { SmilePlus, MessageSquare, MoreHorizontal, Trash2, Pencil, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { SPACE_COMPONENTS, spaceTypographyClasses } from '@hive/tokens';
@@ -42,6 +42,10 @@ export interface Message {
   reactions?: MessageReaction[];
   replyCount?: number;
   attachments?: MessageAttachment[];
+  /** Whether message has been edited */
+  isEdited?: boolean;
+  /** When the message was last edited */
+  editedAt?: string;
 }
 
 interface MessageItemProps {
@@ -56,6 +60,8 @@ interface MessageItemProps {
   onReply?: () => void;
   /** Delete handler (if permitted) */
   onDelete?: () => void;
+  /** Edit handler (only for own messages) */
+  onEdit?: (newContent: string) => void;
 }
 
 export function MessageItem({
@@ -65,9 +71,42 @@ export function MessageItem({
   onReact,
   onReply,
   onDelete,
+  onEdit,
 }: MessageItemProps) {
   const [isHovered, setIsHovered] = React.useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editContent, setEditContent] = React.useState(message.content);
+  const editInputRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Focus input when entering edit mode
+  React.useEffect(() => {
+    if (isEditing && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.setSelectionRange(editContent.length, editContent.length);
+    }
+  }, [isEditing, editContent.length]);
+
+  const handleEditSave = () => {
+    if (editContent.trim() && editContent !== message.content) {
+      onEdit?.(editContent.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleEditCancel = () => {
+    setEditContent(message.content);
+    setIsEditing(false);
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleEditSave();
+    } else if (e.key === 'Escape') {
+      handleEditCancel();
+    }
+  };
 
   const { messageItem } = SPACE_COMPONENTS;
 
@@ -137,9 +176,63 @@ export function MessageItem({
           )}
 
           {/* Message content */}
-          <p className={cn(spaceTypographyClasses.messageContent, 'text-white/80 break-words')}>
-            {message.content}
-          </p>
+          {isEditing ? (
+            <div className="flex flex-col gap-2">
+              <textarea
+                ref={editInputRef}
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                onKeyDown={handleEditKeyDown}
+                className={cn(
+                  'w-full px-3 py-2 rounded-lg',
+                  'bg-white/[0.04] border border-white/[0.08]',
+                  'text-white text-sm placeholder:text-white/30',
+                  'focus:outline-none focus:ring-2 focus:ring-white/20',
+                  'resize-none'
+                )}
+                rows={Math.max(2, editContent.split('\n').length)}
+                placeholder="Edit message..."
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleEditSave}
+                  disabled={!editContent.trim() || editContent === message.content}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 rounded text-xs font-medium',
+                    'bg-[var(--color-gold)] text-black',
+                    'hover:bg-[var(--color-gold)]/90 transition-colors',
+                    'disabled:opacity-50 disabled:cursor-not-allowed'
+                  )}
+                >
+                  <Check className="w-3 h-3" />
+                  Save
+                </button>
+                <button
+                  onClick={handleEditCancel}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 rounded text-xs',
+                    'text-white/60 hover:text-white hover:bg-white/[0.06]',
+                    'transition-colors'
+                  )}
+                >
+                  <X className="w-3 h-3" />
+                  Cancel
+                </button>
+                <span className="text-xs text-white/30 ml-2">
+                  Enter to save, Esc to cancel
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className={cn(spaceTypographyClasses.messageContent, 'text-white/80 break-words')}>
+              {message.content}
+              {message.isEdited && (
+                <span className="ml-1 text-xs text-white/30" title={message.editedAt ? `Edited ${new Date(message.editedAt).toLocaleString()}` : 'Edited'}>
+                  (edited)
+                </span>
+              )}
+            </p>
+          )}
 
           {/* Attachments */}
           {message.attachments && message.attachments.length > 0 && (
@@ -254,6 +347,17 @@ export function MessageItem({
                     title="Reply in thread"
                   >
                     <MessageSquare className="w-4 h-4 text-white/50" />
+                  </button>
+                )}
+
+                {/* Edit button (own messages only) */}
+                {isOwn && onEdit && !isEditing && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="p-1.5 hover:bg-white/[0.08] rounded transition-colors"
+                    title="Edit message"
+                  >
+                    <Pencil className="w-4 h-4 text-white/50" />
                   </button>
                 )}
 

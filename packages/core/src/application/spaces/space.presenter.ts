@@ -58,6 +58,8 @@ function toBaseDTO(space: EnhancedSpace): SpaceBaseDTO {
     isClaimed: space.status === 'claimed' || space.status === 'verified',
     wentLiveAt: space.wentLiveAt,
     createdAt: space.createdAt,
+    // Unified lifecycle state (ADR-007)
+    lifecycleState: space.lifecycleState,
     // Quorum-based activation (GTM mechanic)
     activationStatus: space.activationStatus,
     activationThreshold: space.activationThreshold,

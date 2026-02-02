@@ -129,7 +129,7 @@ export const POST = withAuthValidationAndErrors(
     }
 
     // Check leader permission (only leaders can create connections)
-    const permCheck = await checkSpacePermission(spaceId, userId, 'leader');
+    const permCheck = await checkSpacePermission(spaceId, userId, 'admin');
     if (!permCheck.hasPermission) {
       return respond.error(
         "Only space leaders can create tool connections",

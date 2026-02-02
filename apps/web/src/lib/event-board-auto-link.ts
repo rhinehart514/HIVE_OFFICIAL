@@ -75,7 +75,7 @@ export const AUTO_LINK_CONFIG = {
  * Create permission check callback for SpaceChatService
  */
 function createPermissionChecker(): CheckPermissionFn {
-  return async (userId: string, spaceId: string, requiredRole: 'member' | 'leader' | 'owner' | 'read') => {
+  return async (userId: string, spaceId: string, requiredRole: 'member' | 'admin' | 'owner' | 'read') => {
     // Map 'read' to 'member' for permission checking (read access requires at least member)
     const mappedRole = requiredRole === 'read' ? 'member' : requiredRole;
     const permCheck = await checkSpacePermission(spaceId, userId, mappedRole);

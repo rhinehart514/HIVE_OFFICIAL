@@ -619,31 +619,360 @@ export default function SetupBuilderPage() {
                   </label>
                 </div>
 
-                {/* Trigger Info */}
+                {/* Trigger Configuration */}
                 <div className="p-4 rounded-lg mb-5" style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                  <p className="text-xs font-medium mb-2" style={{ color: COLORS.textSecondary }}>TRIGGER</p>
-                  <p className="text-sm" style={{ color: COLORS.text }}>
-                    Type: <span style={{ color: COLORS.gold }}>{selectedOrcheRule.trigger.type}</span>
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: COLORS.textTertiary }}>
-                    Advanced trigger configuration coming soon.
-                  </p>
+                  <p className="text-xs font-medium mb-3" style={{ color: COLORS.textSecondary }}>TRIGGER</p>
+
+                  {/* Trigger Type Selector */}
+                  <div className="mb-3">
+                    <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Type</label>
+                    <select
+                      value={selectedOrcheRule.trigger.type}
+                      onChange={(e) => {
+                        const newType = e.target.value as OrchestrationRule['trigger']['type'];
+                        // Set default values based on type
+                        const defaultTriggers: Record<string, OrchestrationRule['trigger']> = {
+                          manual: { type: 'manual', buttonLabel: 'Run' },
+                          tool_event: { type: 'tool_event', toolSlotId: '', event: 'submit' },
+                          time_relative: { type: 'time_relative', delay: 60, unit: 'minutes', relativeTo: 'deployment' },
+                          data_condition: { type: 'data_condition', field: '', operator: 'equals', value: '' },
+                        };
+                        updateRule(selectedOrcheRule.id, { trigger: defaultTriggers[newType] });
+                      }}
+                      className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                      style={{ borderColor: COLORS.border, color: COLORS.text }}
+                    >
+                      <option value="manual">Manual (Button)</option>
+                      <option value="tool_event">Tool Event</option>
+                      <option value="time_relative">Time-Based</option>
+                      <option value="data_condition">Data Condition</option>
+                    </select>
+                  </div>
+
+                  {/* Type-specific fields */}
+                  {selectedOrcheRule.trigger.type === 'manual' && (
+                    <div>
+                      <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Button Label</label>
+                      <input
+                        type="text"
+                        value={(selectedOrcheRule.trigger.buttonLabel as string) || 'Run'}
+                        onChange={(e) => updateRule(selectedOrcheRule.id, {
+                          trigger: { ...selectedOrcheRule.trigger, buttonLabel: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                        style={{ borderColor: COLORS.border, color: COLORS.text }}
+                        placeholder="Run"
+                      />
+                    </div>
+                  )}
+
+                  {selectedOrcheRule.trigger.type === 'tool_event' && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Tool Slot</label>
+                        <select
+                          value={(selectedOrcheRule.trigger.toolSlotId as string) || ''}
+                          onChange={(e) => updateRule(selectedOrcheRule.id, {
+                            trigger: { ...selectedOrcheRule.trigger, toolSlotId: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                          style={{ borderColor: COLORS.border, color: COLORS.text }}
+                        >
+                          <option value="">Select tool...</option>
+                          {localTools.map(slot => (
+                            <option key={slot.slotId} value={slot.slotId}>{slot.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Event</label>
+                        <select
+                          value={(selectedOrcheRule.trigger.event as string) || 'submit'}
+                          onChange={(e) => updateRule(selectedOrcheRule.id, {
+                            trigger: { ...selectedOrcheRule.trigger, event: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                          style={{ borderColor: COLORS.border, color: COLORS.text }}
+                        >
+                          <option value="submit">Submit</option>
+                          <option value="vote">Vote</option>
+                          <option value="rsvp">RSVP</option>
+                          <option value="complete">Complete</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedOrcheRule.trigger.type === 'time_relative' && (
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Delay</label>
+                          <input
+                            type="number"
+                            value={(selectedOrcheRule.trigger.delay as number) || 60}
+                            onChange={(e) => updateRule(selectedOrcheRule.id, {
+                              trigger: { ...selectedOrcheRule.trigger, delay: parseInt(e.target.value) || 0 }
+                            })}
+                            className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                            style={{ borderColor: COLORS.border, color: COLORS.text }}
+                            min="1"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Unit</label>
+                          <select
+                            value={(selectedOrcheRule.trigger.unit as string) || 'minutes'}
+                            onChange={(e) => updateRule(selectedOrcheRule.id, {
+                              trigger: { ...selectedOrcheRule.trigger, unit: e.target.value }
+                            })}
+                            className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                            style={{ borderColor: COLORS.border, color: COLORS.text }}
+                          >
+                            <option value="minutes">Minutes</option>
+                            <option value="hours">Hours</option>
+                            <option value="days">Days</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Relative To</label>
+                        <select
+                          value={(selectedOrcheRule.trigger.relativeTo as string) || 'deployment'}
+                          onChange={(e) => updateRule(selectedOrcheRule.id, {
+                            trigger: { ...selectedOrcheRule.trigger, relativeTo: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                          style={{ borderColor: COLORS.border, color: COLORS.text }}
+                        >
+                          <option value="deployment">Setup Deployment</option>
+                          <option value="event_start">Event Start</option>
+                          <option value="event_end">Event End</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedOrcheRule.trigger.type === 'data_condition' && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Field Path</label>
+                        <input
+                          type="text"
+                          value={(selectedOrcheRule.trigger.field as string) || ''}
+                          onChange={(e) => updateRule(selectedOrcheRule.id, {
+                            trigger: { ...selectedOrcheRule.trigger, field: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                          style={{ borderColor: COLORS.border, color: COLORS.text }}
+                          placeholder="e.g., responses.count"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Operator</label>
+                          <select
+                            value={(selectedOrcheRule.trigger.operator as string) || 'equals'}
+                            onChange={(e) => updateRule(selectedOrcheRule.id, {
+                              trigger: { ...selectedOrcheRule.trigger, operator: e.target.value }
+                            })}
+                            className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                            style={{ borderColor: COLORS.border, color: COLORS.text }}
+                          >
+                            <option value="equals">Equals</option>
+                            <option value="not_equals">Not Equals</option>
+                            <option value="greater_than">Greater Than</option>
+                            <option value="less_than">Less Than</option>
+                            <option value="contains">Contains</option>
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs mb-1.5" style={{ color: COLORS.textTertiary }}>Value</label>
+                          <input
+                            type="text"
+                            value={(selectedOrcheRule.trigger.value as string) || ''}
+                            onChange={(e) => updateRule(selectedOrcheRule.id, {
+                              trigger: { ...selectedOrcheRule.trigger, value: e.target.value }
+                            })}
+                            className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                            style={{ borderColor: COLORS.border, color: COLORS.text }}
+                            placeholder="Value"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Actions Info */}
+                {/* Actions Builder */}
                 <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                  <p className="text-xs font-medium mb-2" style={{ color: COLORS.textSecondary }}>ACTIONS</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-medium" style={{ color: COLORS.textSecondary }}>ACTIONS</p>
+                    <button
+                      onClick={() => {
+                        const newAction = { type: 'notify', channel: 'push', title: '', body: '', to: 'all_members' };
+                        updateRule(selectedOrcheRule.id, {
+                          actions: [...selectedOrcheRule.actions, newAction]
+                        });
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors"
+                      style={{ color: COLORS.gold }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = `${COLORS.gold}15`)}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add
+                    </button>
+                  </div>
+
                   {selectedOrcheRule.actions.length > 0 ? (
-                    <ul className="space-y-1">
+                    <div className="space-y-3">
                       {selectedOrcheRule.actions.map((action, i) => (
-                        <li key={i} className="text-sm" style={{ color: COLORS.text }}>
-                          • {action.type}
-                        </li>
+                        <div key={i} className="p-3 rounded-lg border" style={{ borderColor: COLORS.border }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <select
+                              value={action.type}
+                              onChange={(e) => {
+                                const newActions = [...selectedOrcheRule.actions];
+                                const newType = e.target.value;
+                                // Set default values based on type
+                                const defaults: Record<string, OrchestrationRule['actions'][number]> = {
+                                  notify: { type: 'notify', channel: 'push', title: '', body: '', to: 'all_members' },
+                                  mutate: { type: 'mutate', toolSlotId: '', mutation: {} },
+                                  show_tool: { type: 'show_tool', toolSlotId: '' },
+                                  hide_tool: { type: 'hide_tool', toolSlotId: '' },
+                                };
+                                newActions[i] = defaults[newType] ?? { type: newType };
+                                updateRule(selectedOrcheRule.id, { actions: newActions });
+                              }}
+                              className="px-2 py-1 rounded bg-white/[0.03] border text-xs outline-none"
+                              style={{ borderColor: COLORS.border, color: COLORS.text }}
+                            >
+                              <option value="notify">Send Notification</option>
+                              <option value="show_tool">Show Tool</option>
+                              <option value="hide_tool">Hide Tool</option>
+                              <option value="mutate">Update Tool Data</option>
+                            </select>
+                            <button
+                              onClick={() => {
+                                const newActions = selectedOrcheRule.actions.filter((_, idx) => idx !== i);
+                                updateRule(selectedOrcheRule.id, { actions: newActions });
+                              }}
+                              className="p-1 rounded transition-colors"
+                              style={{ color: COLORS.error }}
+                              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = `${COLORS.error}15`)}
+                              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+
+                          {/* Action-specific fields */}
+                          {action.type === 'notify' && (
+                            <div className="space-y-2 mt-2">
+                              <input
+                                type="text"
+                                value={(action.title as string) || ''}
+                                onChange={(e) => {
+                                  const newActions = [...selectedOrcheRule.actions];
+                                  newActions[i] = { ...action, title: e.target.value };
+                                  updateRule(selectedOrcheRule.id, { actions: newActions });
+                                }}
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                style={{ borderColor: COLORS.border, color: COLORS.text }}
+                                placeholder="Notification title"
+                              />
+                              <input
+                                type="text"
+                                value={(action.body as string) || ''}
+                                onChange={(e) => {
+                                  const newActions = [...selectedOrcheRule.actions];
+                                  newActions[i] = { ...action, body: e.target.value };
+                                  updateRule(selectedOrcheRule.id, { actions: newActions });
+                                }}
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                style={{ borderColor: COLORS.border, color: COLORS.text }}
+                                placeholder="Notification body"
+                              />
+                              <select
+                                value={(action.to as string) || 'all_members'}
+                                onChange={(e) => {
+                                  const newActions = [...selectedOrcheRule.actions];
+                                  newActions[i] = { ...action, to: e.target.value };
+                                  updateRule(selectedOrcheRule.id, { actions: newActions });
+                                }}
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                style={{ borderColor: COLORS.border, color: COLORS.text }}
+                              >
+                                <option value="all_members">All Members</option>
+                                <option value="officers">Officers Only</option>
+                                <option value="participants">Participants</option>
+                              </select>
+                            </div>
+                          )}
+
+                          {(action.type === 'show_tool' || action.type === 'hide_tool') && (
+                            <div className="mt-2">
+                              <select
+                                value={(action.toolSlotId as string) || ''}
+                                onChange={(e) => {
+                                  const newActions = [...selectedOrcheRule.actions];
+                                  newActions[i] = { ...action, toolSlotId: e.target.value };
+                                  updateRule(selectedOrcheRule.id, { actions: newActions });
+                                }}
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                style={{ borderColor: COLORS.border, color: COLORS.text }}
+                              >
+                                <option value="">Select tool...</option>
+                                {localTools.map(slot => (
+                                  <option key={slot.slotId} value={slot.slotId}>{slot.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+
+                          {action.type === 'mutate' && (
+                            <div className="space-y-2 mt-2">
+                              <select
+                                value={(action.toolSlotId as string) || ''}
+                                onChange={(e) => {
+                                  const newActions = [...selectedOrcheRule.actions];
+                                  newActions[i] = { ...action, toolSlotId: e.target.value };
+                                  updateRule(selectedOrcheRule.id, { actions: newActions });
+                                }}
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                style={{ borderColor: COLORS.border, color: COLORS.text }}
+                              >
+                                <option value="">Select tool...</option>
+                                {localTools.map(slot => (
+                                  <option key={slot.slotId} value={slot.slotId}>{slot.name}</option>
+                                ))}
+                              </select>
+                              <input
+                                type="text"
+                                value={JSON.stringify((action.mutation as object) || {})}
+                                onChange={(e) => {
+                                  try {
+                                    const mutation = JSON.parse(e.target.value);
+                                    const newActions = [...selectedOrcheRule.actions];
+                                    newActions[i] = { ...action, mutation };
+                                    updateRule(selectedOrcheRule.id, { actions: newActions });
+                                  } catch {
+                                    // Invalid JSON, ignore
+                                  }
+                                }}
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none font-mono"
+                                style={{ borderColor: COLORS.border, color: COLORS.text }}
+                                placeholder='{"key": "value"}'
+                              />
+                            </div>
+                          )}
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   ) : (
                     <p className="text-xs" style={{ color: COLORS.textTertiary }}>
-                      No actions configured. Visual action builder coming soon.
+                      No actions configured. Click &quot;Add&quot; to create one.
                     </p>
                   )}
                 </div>

@@ -23,6 +23,11 @@ import { HiveCard, CardContent, Badge } from "@hive/ui";
 import { QueueDashboard } from "./QueueDashboard";
 import { ControlPanel } from "./ControlPanel";
 import { CommsPanel } from "./CommsPanel";
+import { UserManagementDashboard } from "../user-management-dashboard";
+import { SpaceManagementDashboard } from "../space-management-dashboard";
+import { ContentModerationDashboard } from "../content-moderation-dashboard";
+import { ToolReviewDashboard } from "../tool-review-dashboard";
+import { SystemHealthDashboard } from "../system-health-dashboard";
 import {
   InboxStackIcon,
   Cog6ToothIcon,
@@ -157,31 +162,6 @@ function OperationsNav({
   );
 }
 
-function PlaceholderSection({
-  section,
-  description,
-}: {
-  section: string;
-  description: string;
-}) {
-  return (
-    <HiveCard className="bg-[#111] border-white/10">
-      <CardContent className="py-12 text-center">
-        <div className="text-4xl mb-4">🚧</div>
-        <h3 className="text-lg font-semibold text-white mb-2">
-          {section} Section
-        </h3>
-        <p className="text-sm text-white/50 max-w-md mx-auto">
-          {description}
-        </p>
-        <p className="text-xs text-white/40 mt-4">
-          Use the dedicated pages in the sidebar for full functionality.
-        </p>
-      </CardContent>
-    </HiveCard>
-  );
-}
-
 export function OperationsCenterDashboard() {
   const [activeSection, setActiveSection] = useState<Section>("queues");
 
@@ -192,42 +172,17 @@ export function OperationsCenterDashboard() {
       case "controls":
         return <ControlPanel />;
       case "users":
-        return (
-          <PlaceholderSection
-            section="Users"
-            description="User directory, search, and management. View profiles, manage roles, handle suspensions, and review violation history."
-          />
-        );
+        return <UserManagementDashboard />;
       case "spaces":
-        return (
-          <PlaceholderSection
-            section="Spaces"
-            description="Space management and health monitoring. Feature/unfeature spaces, review claims, manage per-space settings."
-          />
-        );
+        return <SpaceManagementDashboard />;
       case "content":
-        return (
-          <PlaceholderSection
-            section="Content"
-            description="Content moderation tools. Review reports, manage auto-mod rules, word filters, and process appeals."
-          />
-        );
+        return <ContentModerationDashboard />;
       case "tools":
-        return (
-          <PlaceholderSection
-            section="Tools"
-            description="HiveLab tool review workflow. Inspect schemas, test in sandbox, approve or reject with feedback."
-          />
-        );
+        return <ToolReviewDashboard />;
       case "comms":
         return <CommsPanel />;
       case "system":
-        return (
-          <PlaceholderSection
-            section="System"
-            description="Platform configuration and monitoring. Integration status, audit logs, data export, and campus settings."
-          />
-        );
+        return <SystemHealthDashboard />;
       default:
         return null;
     }

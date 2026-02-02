@@ -14,98 +14,17 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Compass, X } from 'lucide-react';
+import { X, MessageSquare } from 'lucide-react';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import { BottomNav } from '@/components/nav/BottomNav';
-import {
-  HomeIcon,
-  BeakerIcon,
-  UserIcon,
-  SettingsIcon,
-  LogOutIcon,
-  EASE_PREMIUM,
-  SIDEBAR_WIDTH,
-} from '@hive/ui';
+import { SettingsIcon, LogOutIcon, EASE_PREMIUM, SIDEBAR_WIDTH } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { cn } from '@/lib/utils';
+import { useDM } from '@/contexts/dm-context';
+import { useDMsEnabled } from '@/hooks/use-feature-flags';
+import { NAV_ITEMS, BOTTOM_ITEMS, isNavItemActive, type NavItem } from '@/lib/navigation';
 
-// ============================================================
-// Types
-// ============================================================
-
-interface NavItem {
-  id: string;
-  label: string;
-  href: string;
-  icon: React.ElementType;
-  matchPattern?: RegExp;
-}
-
-// ============================================================
-// Navigation Config — 4-Pillar IA (Jan 2026)
-// ============================================================
-
-/**
- * Navigation Structure:
- * - Home: Unified dashboard (merged Feed + Spaces)
- * - Explore: Discovery hub
- * - Lab: Builder dashboard
- * - You: Own profile + settings
- *
- * /home → Unified dashboard (replaces /feed, /spaces)
- * /explore → Discovery with tabs
- * /lab → Builder tools
- * /me → Own profile (or /profile for viewing others)
- */
-
-// Desktop & Mobile nav: 4-item unified navigation
-const NAV_ITEMS: NavItem[] = [
-  {
-    id: 'home',
-    label: 'Home',
-    href: '/home',
-    icon: HomeIcon,
-    matchPattern: /^\/home(\/|$)|^\/feed(\/|$)|^\/spaces(\/|$)/,
-  },
-  {
-    id: 'explore',
-    label: 'Explore',
-    href: '/explore',
-    icon: Compass,
-    matchPattern: /^\/explore(\/|$)/,
-  },
-  {
-    id: 'lab',
-    label: 'Lab',
-    href: '/lab',
-    icon: BeakerIcon,
-    matchPattern: /^\/lab(\/|$)/,
-  },
-  {
-    id: 'you',
-    label: 'You',
-    href: '/me',
-    icon: UserIcon,
-    matchPattern: /^\/me(\/|$)|^\/profile(\/|$)|^\/u\//,
-  },
-];
-
-// Mobile nav: Same 4 items for consistency
-const MOBILE_NAV_ITEMS: NavItem[] = NAV_ITEMS;
-
-// Mobile drawer items: Settings only (Lab now in main nav)
-const MOBILE_DRAWER_ITEMS: NavItem[] = [];
-
-const BOTTOM_ITEMS: NavItem[] = [
-  {
-    id: 'settings',
-    label: 'Settings',
-    href: '/me/settings',
-    icon: SettingsIcon,
-  },
-];
 
 // Premium easing from design system
 const EASE = EASE_PREMIUM;
@@ -115,22 +34,17 @@ const EASE = EASE_PREMIUM;
 // ============================================================
 
 interface SidebarProps {
-  isExpanded: boolean;
-  onToggle: () => void;
   onNavigate?: () => void;
 }
 
-function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
+function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { openPanel, totalUnread } = useDM();
+  const { enabled: dmsEnabled, isLoading: dmsLoading } = useDMsEnabled();
 
-  const isActive = (item: NavItem) => {
-    if (item.matchPattern) {
-      return item.matchPattern.test(pathname);
-    }
-    return pathname === item.href || pathname.startsWith(item.href + '/');
-  };
+  const isActive = (item: NavItem) => isNavItemActive(item, pathname);
 
   const handleNavClick = (href: string) => {
     router.push(href);
@@ -147,20 +61,20 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
 
   return (
     <motion.aside
-      className="fixed left-0 top-0 h-screen bg-[#0A0A09] border-r border-white/[0.06] flex flex-col z-50 overflow-hidden"
+      className="fixed left-0 top-0 h-screen bg-[var(--bg-ground)] border-r border-white/[0.06] flex flex-col z-50 overflow-hidden"
       style={{ width: railWidth }}
     >
       {/* Noise texture for depth */}
       <NoiseOverlay opacity={0.03} />
 
-      {/* Gold edge glow when expanded */}
+      {/* Gold edge glow */}
       <motion.div
         className="absolute right-0 top-0 bottom-0 w-[1px] pointer-events-none"
         style={{
           background: 'linear-gradient(180deg, transparent 0%, var(--color-gold)/20 50%, transparent 100%)',
         }}
         initial={{ opacity: 0 }}
-        animate={{ opacity: isExpanded ? 1 : 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.6, ease: EASE }}
       />
       {/* Header - ChatGPT style: 56px, centered */}
@@ -231,6 +145,45 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
         })}
       </nav>
 
+      {/* Utilities Section - DMs */}
+      {dmsEnabled && !dmsLoading && user && (
+        <div className="p-3 border-t border-white/[0.06] relative z-10">
+          <motion.button
+            onClick={openPanel}
+            className="group relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-body font-medium transition-colors duration-200 text-white/60 hover:text-white/90"
+            whileHover={{ x: 2 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Soft background on hover */}
+            <motion.div
+              className="absolute inset-0 rounded-xl bg-white/[0.04]"
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            />
+
+            <div className="relative z-10">
+              <MessageSquare className="w-5 h-5" />
+              {totalUnread > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center bg-[var(--color-gold)] text-black text-[10px] font-bold rounded-full">
+                  {totalUnread > 99 ? '99+' : totalUnread}
+                </span>
+              )}
+            </div>
+
+            <span className="relative z-10 tracking-[-0.01em]">
+              Messages
+            </span>
+
+            {totalUnread > 0 && (
+              <span className="ml-auto relative z-10 min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-[var(--color-gold)] text-black text-[11px] font-bold rounded-full">
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </span>
+            )}
+          </motion.button>
+        </div>
+      )}
+
       {/* Profile Footer - ChatGPT style */}
       <div className="p-3 border-t border-white/[0.06] relative z-10">
         {user && (
@@ -300,13 +253,10 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { openPanel, totalUnread } = useDM();
+  const { enabled: dmsEnabled, isLoading: dmsLoading } = useDMsEnabled();
 
-  const isActive = (item: NavItem) => {
-    if (item.matchPattern) {
-      return item.matchPattern.test(pathname);
-    }
-    return pathname === item.href || pathname.startsWith(item.href + '/');
-  };
+  const isActive = (item: NavItem) => isNavItemActive(item, pathname);
 
   const handleNavClick = (href: string) => {
     router.push(href);
@@ -334,7 +284,7 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
 
           {/* Drawer */}
           <motion.div
-            className="fixed left-0 top-0 bottom-0 w-[280px] bg-[#0A0A09] border-r border-white/[0.06] z-50 lg:hidden"
+            className="fixed left-0 top-0 bottom-0 w-[280px] bg-[var(--bg-ground)] border-r border-white/[0.06] z-50 lg:hidden"
             initial={{ x: -280 }}
             animate={{ x: 0 }}
             exit={{ x: -280 }}
@@ -352,9 +302,9 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 </button>
               </div>
 
-              {/* Primary Navigation - 4 items on mobile */}
+              {/* Primary Navigation */}
               <nav className="flex-1 py-4 px-3 space-y-1">
-                {MOBILE_NAV_ITEMS.map((item) => {
+                {NAV_ITEMS.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item);
 
@@ -379,31 +329,33 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 })}
               </nav>
 
-              {/* Bottom: Lab + Settings + Sign Out */}
+              {/* Bottom: DMs + Settings + Sign Out */}
               <div className="py-4 px-3 space-y-1 border-t border-white/[0.06]">
-                {/* Lab - moved from primary nav on mobile */}
-                {MOBILE_DRAWER_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item);
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.href)}
-                      className={cn(
-                        'relative w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors',
-                        active
-                          ? 'text-white bg-white/[0.06]'
-                          : 'text-white/60 hover:text-white hover:bg-white/[0.03]'
+                {/* DMs button */}
+                {dmsEnabled && !dmsLoading && user && (
+                  <button
+                    onClick={() => {
+                      openPanel();
+                      onClose();
+                    }}
+                    className="relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/[0.03] transition-colors"
+                  >
+                    <div className="relative">
+                      <MessageSquare size={20} />
+                      {totalUnread > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 flex items-center justify-center bg-[var(--color-gold)] text-black text-[9px] font-bold rounded-full">
+                          {totalUnread > 99 ? '99+' : totalUnread}
+                        </span>
                       )}
-                    >
-                      {active && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[var(--color-gold)] rounded-r" />
-                      )}
-                      <Icon size={20} />
-                      <span className="text-body font-medium">{item.label}</span>
-                    </button>
-                  );
-                })}
+                    </div>
+                    <span className="text-body font-medium">Messages</span>
+                    {totalUnread > 0 && (
+                      <span className="ml-auto min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-[var(--color-gold)] text-black text-[11px] font-bold rounded-full">
+                        {totalUnread > 99 ? '99+' : totalUnread}
+                      </span>
+                    )}
+                  </button>
+                )}
 
                 {/* Settings */}
                 {BOTTOM_ITEMS.map((item) => {
@@ -447,7 +399,6 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
 
@@ -482,14 +433,10 @@ export function AppShell({ children }: AppShellProps) {
 
   // ChatGPT aesthetic: Fixed 260px rail, generous content padding
   return (
-    <div className="flex h-screen bg-[#0A0A09] overflow-hidden">
-      {/* Desktop Sidebar - Always 260px */}
+    <div className="flex h-screen bg-[var(--bg-ground)] overflow-hidden">
+      {/* Desktop Sidebar */}
       <div className="hidden lg:block">
-        <Sidebar
-          isExpanded={true}
-          onToggle={() => {}}
-          onNavigate={undefined}
-        />
+        <Sidebar />
       </div>
 
       {/* Mobile drawer (for settings access) */}
@@ -499,15 +446,15 @@ export function AppShell({ children }: AppShellProps) {
       <main
         className="flex-1 overflow-y-auto lg:ml-[260px]"
       >
-        {/* Mobile Header - simplified with logo only */}
-        <div className="lg:hidden sticky top-0 z-30 h-14 px-4 bg-[#0A0A09]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-center">
+        {/* Mobile Header */}
+        <div className="lg:hidden sticky top-0 z-30 h-14 px-4 bg-[var(--bg-ground)]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-center">
           <Logo variant="mark" size="sm" color="gold" />
         </div>
 
-        {/* Page Content - ChatGPT style for standard pages, full-width for wide pages */}
+        {/* Page Content */}
         <div className="min-h-screen pb-20 lg:pb-0">
           <div className={isWideContentPage ? 'h-full' : 'max-w-3xl mx-auto px-8 py-6'}>
-            {/* Animation removed for reliability - nested motion wrappers caused opacity:0 stuck state */}
+            {/* No animation wrapper - caused opacity:0 bug */}
             <div className={isWideContentPage ? 'h-full' : undefined}>
               {children}
             </div>

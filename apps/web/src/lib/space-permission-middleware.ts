@@ -2,7 +2,10 @@
  * Space Permission Middleware
  *
  * Centralized permission checking for space operations.
- * Handles role hierarchy: owner > admin > leader > moderator > member > guest
+ * Handles role hierarchy: owner > admin > moderator > member > guest
+ *
+ * Note: "leader" role was removed for consistency with domain model (EnhancedSpace).
+ * Use "admin" for leadership permissions.
  *
  * @module space-permission-middleware
  */
@@ -14,7 +17,7 @@ import { logger } from '@/lib/structured-logger';
 // Types
 // ============================================================
 
-export type SpaceRole = 'owner' | 'admin' | 'leader' | 'moderator' | 'member' | 'guest';
+export type SpaceRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest';
 
 export interface SpacePermissionResult {
   hasPermission: boolean;
@@ -52,14 +55,16 @@ export interface SpaceMembership {
 /**
  * Role levels for permission checking.
  * Higher number = more permissions.
+ *
+ * Hierarchy matches EnhancedSpace aggregate:
+ * owner > admin > moderator > member > guest
  */
 const ROLE_LEVELS: Record<SpaceRole, number> = {
   guest: 0,
   member: 1,
   moderator: 2,
-  leader: 3,  // leader = admin in UI terminology
-  admin: 4,
-  owner: 5,
+  admin: 3,
+  owner: 4,
 };
 
 /**
@@ -90,11 +95,11 @@ function hasRoleLevel(userRole: SpaceRole, requiredRole: SpaceRole): boolean {
 export async function checkSpacePermission(
   spaceId: string,
   userId: string | null,
-  requiredRole: SpaceRole | 'admin' = 'member'
+  requiredRole: SpaceRole = 'member'
 ): Promise<SpacePermissionResult> {
   try {
-    // Normalize 'admin' to 'leader' for backward compatibility
-    const normalizedRole: SpaceRole = requiredRole === 'admin' ? 'leader' : requiredRole as SpaceRole;
+    // Use the role directly - no normalization needed
+    const normalizedRole: SpaceRole = requiredRole;
 
     // Get the space
     const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
@@ -179,12 +184,13 @@ export async function checkSpacePermission(
     }
 
     // Also check if user is in space's leaders array (legacy pattern)
+    // Map legacy "leaders" array to "admin" role for consistency
     if (!membership && spaceData.leaders?.includes(userId)) {
-      logger.debug('User found in space leaders array', { spaceId, userId });
+      logger.debug('User found in space leaders array, mapping to admin role', { spaceId, userId });
       membership = {
         spaceId,
         userId,
-        role: 'leader',
+        role: 'admin',
         isSuspended: false,
         isActive: true,
         joinedAt: new Date(),
@@ -354,13 +360,14 @@ export async function getSpaceMembership(
 }
 
 /**
- * Check if a user is a leader (admin, owner, or leader role) of a space.
+ * Check if a user is a leader (admin or owner role) of a space.
+ * "Leader" is a semantic concept, mapped to admin role in the permission system.
  */
 export async function isSpaceLeader(
   spaceId: string,
   userId: string
 ): Promise<boolean> {
-  const result = await checkSpacePermission(spaceId, userId, 'leader');
+  const result = await checkSpacePermission(spaceId, userId, 'admin');
   return result.hasPermission;
 }
 
@@ -394,7 +401,7 @@ export async function getUserLedSpaces(
       const data = doc.data();
       const role = data.role as SpaceRole;
 
-      if (hasRoleLevel(role, 'leader')) {
+      if (hasRoleLevel(role, 'admin')) {
         // Get space name
         const spaceDoc = await dbAdmin.collection('spaces').doc(data.spaceId).get();
         if (spaceDoc.exists) {

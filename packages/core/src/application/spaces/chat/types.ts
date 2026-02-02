@@ -269,7 +269,7 @@ export interface IInlineComponentRepository {
 export type CheckPermissionFn = (
   userId: string,
   spaceId: string,
-  requiredRole: 'member' | 'leader' | 'owner'
+  requiredRole: 'member' | 'admin' | 'owner'
 ) => Promise<{ allowed: boolean; role?: string | null }>;
 
 /**

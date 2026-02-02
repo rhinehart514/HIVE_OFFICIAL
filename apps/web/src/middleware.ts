@@ -279,8 +279,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/spaces?create=true', request.url), 301);
   }
 
-  // Public routes - no auth required
+  // Public routes - no auth required (but check if completed user visiting /enter)
   if (isPublicRoute(pathname)) {
+    // Special case: /enter with completed session should redirect to /spaces
+    if (pathname === '/enter' || pathname.startsWith('/enter/')) {
+      const sessionCookie = request.cookies.get('hive_session')?.value;
+      if (sessionCookie) {
+        const session = await verifySessionAtEdge(sessionCookie);
+        if (session?.onboardingCompleted) {
+          // User already completed onboarding - redirect to spaces
+          return NextResponse.redirect(new URL('/spaces', request.url));
+        }
+      }
+    }
     return NextResponse.next();
   }
 

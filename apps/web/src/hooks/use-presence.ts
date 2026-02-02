@@ -18,10 +18,16 @@ import { db } from '@hive/firebase';
 import { useAuth } from '@hive/auth-logic';
 import { logger } from '@/lib/logger';
 
+// TTL for presence data: 90 minutes in milliseconds
+const PRESENCE_TTL_MS = 90 * 60 * 1000;
+// Consider stale after 3 minutes without heartbeat (30s heartbeat * 6)
+const STALE_THRESHOLD_MS = 3 * 60 * 1000;
+
 interface PresenceData {
   userId: string;
   status: 'online' | 'away' | 'offline';
   lastSeen: Date;
+  expiresAt: Date; // TTL field for automatic cleanup
   campusId: string;
   deviceInfo?: {
     browser?: string;
@@ -55,10 +61,14 @@ export function usePresence() {
     // Function to update presence
     const updatePresence = async (status: 'online' | 'away' | 'offline') => {
       try {
+        // Calculate expiration time (90 minutes from now)
+        const expiresAt = new Date(Date.now() + PRESENCE_TTL_MS);
+
         await setDoc(userPresenceRef, {
           userId: user.uid,
           status,
           lastSeen: serverTimestamp(),
+          expiresAt, // TTL field - Firestore TTL policy can auto-delete expired docs
           campusId,
           deviceInfo: {
             browser: navigator.userAgent,
@@ -94,10 +104,32 @@ export function usePresence() {
       updatePresence('offline');
     };
 
+    // Handle page close/navigation (more reliable than React cleanup)
+    // These fire when tab closes, page navigates, or browser closes
+    const handleBeforeUnload = () => {
+      // Fire-and-forget Firestore update on page unload
+      // Note: This may not always complete, but combined with TTL + stale filtering,
+      // the presence will eventually be cleaned up
+      updatePresence('offline');
+    };
+
+    const handlePageHide = (event: PageTransitionEvent) => {
+      // pagehide fires on mobile when app is backgrounded
+      // persisted = true means page might be restored (bfcache)
+      if (!event.persisted) {
+        updatePresence('offline');
+      } else {
+        // Page is being cached, mark as away instead of offline
+        updatePresence('away');
+      }
+    };
+
     // Add event listeners
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
 
     // Send heartbeat every 30 seconds to keep alive
     const heartbeatInterval = setInterval(() => {
@@ -106,12 +138,14 @@ export function usePresence() {
       }
     }, 30000);
 
-    // Cleanup
+    // Cleanup (React unmount)
     return () => {
       updatePresence('offline');
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
       clearInterval(heartbeatInterval);
     };
   }, [user?.uid]);
@@ -147,10 +181,29 @@ export function useOnlineUsers(spaceId?: string) {
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
-        // Collect all user IDs from presence docs
+        // Collect all user IDs from presence docs, filtering stale entries
         const presenceMap = new Map<string, PresenceData>();
+        const now = Date.now();
+
         snapshot.docs.forEach((doc) => {
           const presence = doc.data() as PresenceData;
+
+          // Filter out stale presence (no heartbeat in 3+ minutes)
+          let lastSeenTime: number;
+          if (presence.lastSeen && typeof presence.lastSeen === 'object' && 'toMillis' in presence.lastSeen) {
+            lastSeenTime = (presence.lastSeen as { toMillis: () => number }).toMillis();
+          } else if (presence.lastSeen instanceof Date) {
+            lastSeenTime = presence.lastSeen.getTime();
+          } else {
+            // Can't determine lastSeen, consider stale
+            return;
+          }
+
+          if (now - lastSeenTime > STALE_THRESHOLD_MS) {
+            // Stale presence - user likely closed tab without cleanup
+            return;
+          }
+
           presenceMap.set(presence.userId, presence);
         });
 
@@ -298,11 +351,33 @@ export function useUserStatus(userId: string) {
 
     const unsubscribe = onSnapshot(
       presenceRef,
-      (doc) => {
-        if (doc.exists()) {
-          const data = doc.data() as PresenceData;
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data() as PresenceData;
+
+          // Check if presence is stale (no heartbeat in 3+ minutes)
+          let lastSeenTime: number;
+          if (data.lastSeen && typeof data.lastSeen === 'object' && 'toMillis' in data.lastSeen) {
+            lastSeenTime = (data.lastSeen as { toMillis: () => number }).toMillis();
+          } else if (data.lastSeen instanceof Date) {
+            lastSeenTime = data.lastSeen.getTime();
+          } else {
+            // Can't determine lastSeen, consider offline
+            setStatus('offline');
+            setLastSeen(null);
+            return;
+          }
+
+          const now = Date.now();
+          if (now - lastSeenTime > STALE_THRESHOLD_MS) {
+            // Stale presence - treat as offline
+            setStatus('offline');
+            setLastSeen(new Date(lastSeenTime));
+            return;
+          }
+
           setStatus(data.status);
-          setLastSeen(data.lastSeen instanceof Date ? data.lastSeen : new Date());
+          setLastSeen(new Date(lastSeenTime));
         } else {
           setStatus('offline');
           setLastSeen(null);

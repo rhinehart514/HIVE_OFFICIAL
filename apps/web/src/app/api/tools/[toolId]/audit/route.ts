@@ -60,7 +60,7 @@ export async function GET(
 
     // Check if user is a space officer (only officers can view audit logs)
     if (spaceId) {
-      const permResult = await checkSpacePermission(spaceId, user.uid, 'leader');
+      const permResult = await checkSpacePermission(spaceId, user.uid, 'admin');
       if (!permResult.hasPermission) {
         return NextResponse.json(
           { error: 'Only space officers can view audit logs' },

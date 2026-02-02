@@ -1,7 +1,6 @@
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
-import { sseRealtimeService } from '@/lib/sse-realtime-service';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getServerSpaceRepository } from '@hive/core/server';
 
@@ -142,37 +141,7 @@ export const POST = withAuthAndErrors(async (
             .add(postData);
 
           totalSeeded++;
-
-          // Broadcast new post to space members via SSE
-          try {
-            await sseRealtimeService.sendMessage({
-              type: 'chat',
-              channel: `space:${spaceId}:posts`,
-              senderId: 'system',
-              content: {
-                type: 'new_post',
-                post: {
-                  id: postRef.id,
-                  ...postData,
-                  author: {
-                    id: 'system',
-                    fullName: 'RSS Feed',
-                    handle: 'rss-bot',
-                    photoURL: null,
-                  }
-                },
-                spaceId: spaceId
-              },
-              metadata: {
-                timestamp: new Date().toISOString(),
-                priority: 'low', // RSS content is lower priority
-                requiresAck: false,
-                retryCount: 0
-              }
-            });
-          } catch (sseError) {
-            logger.warn('Failed to broadcast RSS post via SSE', { sseError, postId: postRef.id });
-          }
+          // Real-time updates handled by Firestore listeners on client
         }
       } catch (feedError) {
         logger.warn('Failed to process RSS feed', { feedUrl, error: feedError });

@@ -131,35 +131,19 @@ export const GET = withAuthAndErrors(async (
     Object.fromEntries(new URL(request.url).searchParams.entries()),
   );
 
-  const queue: Array<{
+  // Build intermediate queue without author data (collected author IDs for batch fetch)
+  const queueItems: Array<{
     id: string;
     type: string;
     content: Record<string, unknown>;
-    author: { id: string; name: string; avatar?: string } | null;
+    authorId: string | null;
     status: string;
     flagCount?: number;
     flaggedAt?: string;
     hiddenAt?: string;
     reason?: string;
   }> = [];
-
-  // Helper to fetch author info
-  const getAuthor = async (authorId: string) => {
-    try {
-      const authorDoc = await dbAdmin.collection('users').doc(authorId).get();
-      if (authorDoc.exists) {
-        const data = authorDoc.data();
-        return {
-          id: authorId,
-          name: data?.fullName || 'Unknown',
-          avatar: data?.photoURL,
-        };
-      }
-    } catch {
-      // Ignore
-    }
-    return null;
-  };
+  const authorIdsToFetch = new Set<string>();
 
   // Fetch posts - use flat /posts collection filtered by spaceId
   if (queryParams.contentType === 'all' || queryParams.contentType === 'post') {
@@ -177,7 +161,9 @@ export const GET = withAuthAndErrors(async (
       if (queryParams.status === 'hidden' && !isContentHidden(data)) continue;
       if (queryParams.status === 'all' && !isContentHidden(data) && !isContentFlagged(data)) continue;
 
-      queue.push({
+      if (data.authorId) authorIdsToFetch.add(data.authorId);
+
+      queueItems.push({
         id: doc.id,
         type: 'post',
         content: {
@@ -186,7 +172,7 @@ export const GET = withAuthAndErrors(async (
           type: data.type,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         },
-        author: await getAuthor(data.authorId),
+        authorId: data.authorId || null,
         status: getModerationStatus(data),
         flagCount: data.flagCount,
         flaggedAt: data.flaggedAt,
@@ -211,7 +197,9 @@ export const GET = withAuthAndErrors(async (
       if (queryParams.status === 'hidden' && !isContentHidden(data)) continue;
       if (queryParams.status === 'all' && !isContentHidden(data) && !isContentFlagged(data)) continue;
 
-      queue.push({
+      if (data.organizerId) authorIdsToFetch.add(data.organizerId);
+
+      queueItems.push({
         id: doc.id,
         type: 'event',
         content: {
@@ -220,7 +208,7 @@ export const GET = withAuthAndErrors(async (
           startDate: data.startDate?.toDate?.()?.toISOString(),
           type: data.type,
         },
-        author: await getAuthor(data.organizerId),
+        authorId: data.organizerId || null,
         status: getModerationStatus(data),
         flagCount: data.flagCount,
         flaggedAt: data.flaggedAt,
@@ -229,6 +217,47 @@ export const GET = withAuthAndErrors(async (
       });
     }
   }
+
+  // Batch fetch all authors (Firestore 'in' query supports up to 30 items per query)
+  const authorsMap = new Map<string, { id: string; name: string; avatar?: string }>();
+  const authorIds = Array.from(authorIdsToFetch);
+
+  if (authorIds.length > 0) {
+    const BATCH_SIZE = 30;
+    for (let i = 0; i < authorIds.length; i += BATCH_SIZE) {
+      const batch = authorIds.slice(i, i + BATCH_SIZE);
+      try {
+        const authorsSnapshot = await dbAdmin
+          .collection('users')
+          .where('__name__', 'in', batch)
+          .get();
+
+        for (const doc of authorsSnapshot.docs) {
+          const data = doc.data();
+          authorsMap.set(doc.id, {
+            id: doc.id,
+            name: data.fullName || 'Unknown',
+            avatar: data.photoURL,
+          });
+        }
+      } catch (error) {
+        logger.warn('Failed to batch fetch authors', { error, spaceId, batchSize: batch.length });
+      }
+    }
+  }
+
+  // Build final queue with author data
+  const queue = queueItems.map(item => ({
+    id: item.id,
+    type: item.type,
+    content: item.content,
+    author: item.authorId ? authorsMap.get(item.authorId) || null : null,
+    status: item.status,
+    flagCount: item.flagCount,
+    flaggedAt: item.flaggedAt,
+    hiddenAt: item.hiddenAt,
+    reason: item.reason,
+  }));
 
   // Sort by flaggedAt or hiddenAt (most recent first)
   queue.sort((a, b) => {

@@ -5,7 +5,6 @@ import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { deriveCampusFromEmail } from "@/lib/middleware";
-import { sseRealtimeService } from '@/lib/sse-realtime-service';
 
 // Real-time chat interfaces
 interface ChatMessage {
@@ -175,8 +174,7 @@ export async function POST(request: NextRequest) {
     // Store message in Firestore for persistence
     await dbAdmin.collection('chatMessages').doc(messageId).set(message);
 
-    // Send message to Firebase Realtime Database for real-time updates
-    await sseRealtimeService.sendChatMessage(spaceId, user.uid, content, messageType);
+    // Real-time updates handled by Firestore listeners on client
 
     // Update channel's last message
     await updateChannelLastMessage(channelId, message);

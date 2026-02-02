@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import { useEntry, type EntryPhase } from './hooks/useEntry';
-import { DURATION, EASE_PREMIUM } from './motion/entry-motion';
+import { DURATION, EASE_PREMIUM, GOLD } from './motion/entry-motion';
 
 // Screens
 import { GateScreen } from './screens/GateScreen';
@@ -49,8 +49,41 @@ export function Entry() {
     domain,
   });
 
+  // Handle browser back button - intercept and use entry.goBack() instead
+  React.useEffect(() => {
+    // Push initial state to history so we can intercept back button
+    const initialState = { phase: entry.phase, gateStep: entry.gateStep };
+    window.history.replaceState(initialState, '');
+
+    const handlePopState = (event: PopStateEvent) => {
+      // Prevent default browser back navigation
+      event.preventDefault();
+
+      // If we're at the first step (gate/email), allow leaving
+      if (entry.phase === 'gate' && entry.gateStep === 'email') {
+        router.push('/');
+        return;
+      }
+
+      // Otherwise, use our internal back navigation
+      entry.goBack();
+
+      // Push state again to continue intercepting
+      window.history.pushState({ phase: entry.phase }, '');
+    };
+
+    // Push initial state
+    window.history.pushState({ phase: entry.phase }, '');
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [entry.phase, entry.gateStep, entry.goBack, router]);
+
   return (
-    <div className="min-h-dvh bg-[#030303] text-white relative">
+    <div className="min-h-dvh bg-[var(--color-bg-void,#030303)] text-white relative">
       <NoiseOverlay />
 
       {/* Animated line at top */}
@@ -70,7 +103,8 @@ export function Entry() {
           </Link>
           <Link
             href="/"
-            className="text-[13px] text-white/30 hover:text-white/50 transition-colors"
+            aria-label="Return to homepage"
+            className="text-[13px] text-white/30 hover:text-white/50 transition-colors min-h-11 min-w-11 flex items-center justify-center -mr-3"
           >
             Back to home
           </Link>
@@ -157,9 +191,9 @@ export function Entry() {
                   transition={{ delay: 0.3 + i * 0.1, duration: 0.4, ease: EASE_PREMIUM }}
                   style={{
                     backgroundColor: isComplete
-                      ? '#FFD700'
+                      ? GOLD.primary
                       : isActive
-                        ? 'rgba(255, 215, 0, 0.4)'
+                        ? GOLD.glow
                         : 'rgba(255, 255, 255, 0.15)',
                   }}
                 />

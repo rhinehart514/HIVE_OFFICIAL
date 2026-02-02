@@ -28,7 +28,7 @@ const PinSchema = z.object({
  * Create permission check callback
  */
 function createPermissionChecker(): CheckPermissionFn {
-  return async (userId: string, spaceId: string, requiredRole: 'member' | 'leader' | 'owner' | 'read') => {
+  return async (userId: string, spaceId: string, requiredRole: 'member' | 'admin' | 'owner' | 'read') => {
     if (requiredRole === 'read') {
       const memberCheck = await checkSpacePermission(spaceId, userId, 'member');
       if (memberCheck.hasPermission) {
@@ -89,7 +89,7 @@ export const POST = withAuthValidationAndErrors(
     }
 
     // Check leader permission first
-    const permCheck = await checkSpacePermission(spaceId, userId, 'leader');
+    const permCheck = await checkSpacePermission(spaceId, userId, 'admin');
     if (!permCheck.hasPermission) {
       return respond.error("Only space leaders can pin messages", "FORBIDDEN", { status: 403 });
     }

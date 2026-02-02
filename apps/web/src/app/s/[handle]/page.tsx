@@ -46,11 +46,13 @@ import {
   SpaceSidebar,
   MainContent,
   MessageFeed,
+  TypingIndicator,
+  ModerationPanel,
   type Member,
   type Board,
-  type SidebarTool,
   type OnlineMember,
 } from './components';
+import { useTypingIndicator } from '@/hooks/use-presence';
 import { GatheringThreshold } from './components/threshold';
 import {
   BoardsSidebar,
@@ -75,6 +77,7 @@ export default function SpacePageUnified() {
   const [isFirstEntry, setIsFirstEntry] = React.useState(true);
   const [showDeleteSpaceConfirm, setShowDeleteSpaceConfirm] = React.useState(false);
   const [showDeleteBoardConfirm, setShowDeleteBoardConfirm] = React.useState<string | null>(null);
+  const [showModerationPanel, setShowModerationPanel] = React.useState(false);
   const [isCreatingBoard, setIsCreatingBoard] = React.useState(false);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
   const [isDeletingBoard, setIsDeletingBoard] = React.useState(false);
@@ -122,6 +125,10 @@ export default function SpacePageUnified() {
   // Permissions hook for message deletion
   const { canDeleteMessage } = usePermissions(space?.id, user?.id);
 
+  // Typing indicator hook - contextId is spaceId/boardId for per-board tracking
+  const typingContextId = space?.id && activeBoard ? `${space.id}/${activeBoard}` : '';
+  const { typingUsers, setTyping } = useTypingIndicator(typingContextId);
+
   // ============================================
   // ALL HOOKS MUST BE CALLED BEFORE ANY RETURNS
   // (React hooks must be called in the same order every render)
@@ -132,20 +139,11 @@ export default function SpacePageUnified() {
     return (boards || []).map((b) => ({
       id: b.id,
       name: b.name,
-      unreadCount: 0,
+      unreadCount: b.unreadCount || 0,
       isPinned: b.name === 'general',
     }));
   }, [boards]);
 
-  // Transform sidebar tools (called unconditionally)
-  const sidebarToolsNew: SidebarTool[] = React.useMemo(() => {
-    return (sidebarTools || []).map((t) => ({
-      toolId: t.toolId,
-      name: t.name,
-      icon: undefined,
-      deploymentId: t.placementId,
-    }));
-  }, [sidebarTools]);
 
   // Transform online members for preview (called unconditionally)
   const onlineMembersPreview: OnlineMember[] = React.useMemo(() => {
@@ -516,6 +514,8 @@ export default function SpacePageUnified() {
                   router.push(`/lab?${params.toString()}`);
                 }}
                 onCreateEventClick={() => setShowEventModal(true)}
+                onModerationClick={() => setShowModerationPanel(true)}
+                canModerate={space.isLeader || space.userRole === 'moderator' || space.userRole === 'admin'}
                 className="w-full border-b-0"
               />
             </div>
@@ -530,18 +530,24 @@ export default function SpacePageUnified() {
                 onReorderBoards: space.isLeader ? handleReorderBoards : undefined,
               }}
               tools={{
-                tools: sidebarToolsNew,
+                tools: sidebarTools || [],
                 isLoading: isLoadingTools,
                 isLeader: space.isLeader,
                 onToolClick: (tool) => {
                   const params = new URLSearchParams();
-                  if (tool.deploymentId) params.set('deploymentId', tool.deploymentId);
+                  if (tool.placementId) params.set('placementId', tool.placementId);
                   router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
                 },
                 onToolRun: (tool) => {
                   const params = new URLSearchParams();
-                  if (tool.deploymentId) params.set('deploymentId', tool.deploymentId);
+                  if (tool.placementId) params.set('placementId', tool.placementId);
                   router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
+                },
+                onViewFull: (tool) => {
+                  // Navigate to full app view (only for tools that support app mode)
+                  if (tool.surfaceModes?.app) {
+                    router.push(`/lab/tools/${tool.toolId}`);
+                  }
                 },
                 onAddTool: () => {
                   const params = new URLSearchParams({ spaceId: space.id, deploy: 'sidebar' });
@@ -557,11 +563,15 @@ export default function SpacePageUnified() {
             />
           }
           input={
-            <ChatInput
-              spaceId={space.id}
-              onSend={sendMessage}
-              placeholder={`Message #${boards.find((b) => b.id === activeBoard)?.name || 'general'}`}
-            />
+            <div>
+              <TypingIndicator typingUsers={typingUsers} />
+              <ChatInput
+                spaceId={space.id}
+                onSend={sendMessage}
+                placeholder={`Message #${boards.find((b) => b.id === activeBoard)?.name || 'general'}`}
+                onTypingChange={setTyping}
+              />
+            </div>
           }
         >
           {/* Main Content: Message Feed */}
@@ -873,6 +883,14 @@ export default function SpacePageUnified() {
               setIsDeletingBoard(false);
             }
           }}
+        />
+
+        {/* Moderation Panel */}
+        <ModerationPanel
+          isOpen={showModerationPanel}
+          onClose={() => setShowModerationPanel(false)}
+          spaceId={space.id}
+          spaceName={space.name}
         />
       </motion.div>
     </AnimatePresence>

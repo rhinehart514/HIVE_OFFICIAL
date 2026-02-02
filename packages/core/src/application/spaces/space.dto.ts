@@ -60,9 +60,15 @@ export type SpaceTypeDTO = 'uni' | 'student' | 'greek' | 'residential';
 export type GovernanceModelDTO = 'flat' | 'emergent' | 'hybrid' | 'hierarchical';
 
 /**
- * Space lifecycle status
+ * Space lifecycle status (legacy)
  */
 export type SpaceStatusDTO = 'unclaimed' | 'active' | 'claimed' | 'verified';
+
+/**
+ * Unified space lifecycle state (ADR-007)
+ * Single enum consolidating status, publishStatus, and activationStatus
+ */
+export type SpaceLifecycleStateDTO = 'seeded' | 'claimed' | 'pending' | 'live' | 'suspended' | 'archived';
 
 /**
  * Space source
@@ -142,6 +148,13 @@ export interface SpaceBaseDTO {
   /** When the space went live (if applicable) */
   wentLiveAt?: Date;
   createdAt: Date;
+
+  /**
+   * Unified lifecycle state (ADR-007)
+   * Single source of truth for space lifecycle, consolidating legacy status fields.
+   * Transitions: seeded → claimed → pending|live → suspended|archived
+   */
+  lifecycleState: SpaceLifecycleStateDTO;
 
   // Quorum-based activation (GTM mechanic)
   /**

@@ -74,7 +74,7 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
       setPendingCounts({
         builderRequests: builderData.requests?.filter((r: { status: string }) => r.status === 'pending').length || 0,
         flaggedContent: contentData.flaggedContent?.filter((c: { status: string }) => c.status === 'pending').length || 0,
-        userReports: 0, // TODO: Implement user reports
+        userReports: 0,
         pendingClaims: claimsData.data?.summary?.pending || claimsData.summary?.pending || (claimsData.data?.claims || claimsData.claims || []).length,
       });
     } catch {
@@ -183,7 +183,7 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
               <CardTitle className="text-white">Security Settings</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-white/50">Security settings coming soon...</p>
+              <p className="text-white/50">Navigate to /security for full security dashboard.</p>
             </CardContent>
           </Card>
         );
@@ -234,8 +234,6 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
     <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
       {/* Sidebar */}
       <AdminSidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
         pendingCounts={pendingCounts}
         currentMode={adminMode}
         onModeChange={setAdminMode}

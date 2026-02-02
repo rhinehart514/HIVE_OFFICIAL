@@ -20,8 +20,17 @@ import {
   Text,
   getInitials,
 } from '@hive/ui/design-system/primitives';
-import { EASE_PREMIUM } from '@hive/ui';
+import {
+  PeopleYouMayKnow,
+  type UserSuggestion,
+} from '@hive/ui';
+import {
+  revealVariants,
+  staggerContainerVariants,
+  cardHoverVariants,
+} from '@hive/tokens';
 import { useAuth } from '@hive/auth-logic';
+import { useConnectionsEnabled } from '@/hooks/use-feature-flags';
 
 // Types for connections API
 interface ConnectionProfile {
@@ -73,19 +82,12 @@ interface ConnectionStats {
   pending: number;
 }
 
-const EASE = EASE_PREMIUM;
-
-const fadeIn = (delay: number) => ({
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35, delay, ease: EASE },
-});
-
 type TabType = 'all' | 'friends' | 'following' | 'followers' | 'requests';
 
 export default function ConnectionsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { enabled: connectionsEnabled, isLoading: flagsLoading } = useConnectionsEnabled();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -93,6 +95,8 @@ export default function ConnectionsPage() {
   const [friends, setFriends] = useState<FriendData[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<FriendRequestData[]>([]);
   const [sentRequests, setSentRequests] = useState<FriendRequestData[]>([]);
+  const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [stats, setStats] = useState<ConnectionStats>({
     totalConnections: 0,
     friends: 0,
@@ -154,6 +158,33 @@ export default function ConnectionsPage() {
     }
   }, [user, fetchConnections]);
 
+  // Fetch user suggestions
+  const fetchSuggestions = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setSuggestionsLoading(true);
+      const response = await fetch('/api/users/suggestions?limit=10', {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data.suggestions || []);
+      }
+    } catch {
+      // Silently fail - suggestions are not critical
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && connectionsEnabled) {
+      fetchSuggestions();
+    }
+  }, [user, connectionsEnabled, fetchSuggestions]);
+
   const sendFriendRequest = async (toUserId: string, message?: string) => {
     const response = await fetch('/api/friends', {
       method: 'POST',
@@ -208,8 +239,35 @@ export default function ConnectionsPage() {
     await fetchConnections();
   };
 
+  // Handle connecting with a suggested user
+  const handleSuggestionConnect = async (userId: string) => {
+    await sendFriendRequest(userId);
+    // Remove from suggestions after connecting
+    setSuggestions(prev => prev.filter(s => s.user.id !== userId));
+  };
+
+  // Handle dismissing a suggestion
+  const handleSuggestionDismiss = (userId: string) => {
+    setSuggestions(prev => prev.filter(s => s.user.id !== userId));
+  };
+
+  // Handle viewing a suggested user's profile
+  const handleSuggestionViewProfile = (userId: string, handle?: string) => {
+    if (handle) {
+      router.push(`/u/${handle}`);
+    } else {
+      router.push(`/profile/${userId}`);
+    }
+  };
+
   if (!user) {
     router.push('/enter');
+    return null;
+  }
+
+  // Feature flag gate - redirect if connections feature is not enabled
+  if (!flagsLoading && !connectionsEnabled) {
+    router.push('/me');
     return null;
   }
 
@@ -332,9 +390,14 @@ export default function ConnectionsPage() {
 
   return (
     <div className="min-h-screen w-full overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <motion.div
+        className="max-w-4xl mx-auto px-6 py-12"
+        variants={staggerContainerVariants}
+        initial="initial"
+        animate="animate"
+      >
         {/* Header */}
-        <motion.div className="mb-10" {...fadeIn(0)}>
+        <motion.div className="mb-10" variants={revealVariants}>
           <h1
             className="text-heading-sm font-semibold text-white mb-2 tracking-tight"
           >
@@ -345,8 +408,21 @@ export default function ConnectionsPage() {
           </p>
         </motion.div>
 
+        {/* People You May Know */}
+        {(suggestionsLoading || suggestions.length > 0) && (
+          <motion.div className="mb-8" variants={revealVariants}>
+            <PeopleYouMayKnow
+              suggestions={suggestions}
+              isLoading={suggestionsLoading}
+              onConnect={handleSuggestionConnect}
+              onDismiss={handleSuggestionDismiss}
+              onViewProfile={handleSuggestionViewProfile}
+            />
+          </motion.div>
+        )}
+
         {/* Stats */}
-        <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8" {...fadeIn(0.05)}>
+        <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8" variants={revealVariants}>
           <Card elevation="resting" className="text-center py-4">
             <div className="text-2xl font-semibold text-white">
               {stats.totalConnections}
@@ -382,7 +458,7 @@ export default function ConnectionsPage() {
         </motion.div>
 
         {/* Tabs */}
-        <motion.div className="mb-6" {...fadeIn(0.1)}>
+        <motion.div className="mb-6" variants={revealVariants}>
           <div className="flex gap-2 overflow-x-auto pb-2">
             {[
               { id: 'all', label: 'All' },
@@ -414,7 +490,7 @@ export default function ConnectionsPage() {
         </motion.div>
 
         {/* Search */}
-        <motion.div className="mb-6" {...fadeIn(0.15)}>
+        <motion.div className="mb-6" variants={revealVariants}>
           <Input
             placeholder="Search connections..."
             value={searchQuery}
@@ -423,7 +499,7 @@ export default function ConnectionsPage() {
         </motion.div>
 
         {/* Content */}
-        <motion.div {...fadeIn(0.2)}>
+        <motion.div variants={revealVariants}>
           {activeTab === 'requests' && receivedRequests.length > 0 && (
             <div className="mb-8">
               <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">
@@ -506,7 +582,7 @@ export default function ConnectionsPage() {
             </div>
           )}
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -540,13 +616,18 @@ function ConnectionCard({
   const initials = getInitials(fullName);
 
   return (
-    <Card
-      elevation="resting"
-      interactive
-      onClick={onViewProfile}
-      className="p-4"
+    <motion.div
+      variants={cardHoverVariants}
+      initial="rest"
+      whileHover="hover"
     >
-      <div className="flex items-center gap-4">
+      <Card
+        elevation="resting"
+        interactive
+        onClick={onViewProfile}
+        className="p-4"
+      >
+        <div className="flex items-center gap-4">
         <div
           className="w-12 h-12 rounded-lg overflow-hidden shrink-0"
           style={{
@@ -606,7 +687,8 @@ function ConnectionCard({
           )}
         </div>
       </div>
-    </Card>
+      </Card>
+    </motion.div>
   );
 }
 

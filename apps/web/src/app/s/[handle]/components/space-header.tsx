@@ -15,7 +15,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Facebook, Linkedin, Youtube, ExternalLink, Calendar } from 'lucide-react';
+import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Facebook, Linkedin, Youtube, ExternalLink, Calendar, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials, SpaceHealthBadge, getSpaceHealthLevel, type SpaceHealthLevel } from '@hive/ui';
 import { MOTION, durationSeconds } from '@hive/tokens';
@@ -54,6 +54,9 @@ interface SpaceHeaderProps {
   onSpaceInfoClick?: () => void;
   onBuildToolClick?: () => void;
   onCreateEventClick?: () => void;
+  onModerationClick?: () => void;
+  /** Whether user can moderate (owner, admin, or moderator role) */
+  canModerate?: boolean;
   className?: string;
 }
 
@@ -100,6 +103,8 @@ export function SpaceHeader({
   onSpaceInfoClick,
   onBuildToolClick,
   onCreateEventClick,
+  onModerationClick,
+  canModerate = false,
   className,
 }: SpaceHeaderProps) {
   const energyLevel = getEnergyLevel(space.recentMessageCount);
@@ -264,6 +269,19 @@ export function SpaceHeader({
             title="Create an event for this space"
           >
             <Calendar className="h-4 w-4" />
+          </Button>
+        )}
+
+        {/* Moderation (moderators, admins, owners) */}
+        {canModerate && onModerationClick && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onModerationClick}
+            className="text-white/40 hover:text-white/60 px-2"
+            title="Moderation queue"
+          >
+            <Shield className="h-4 w-4" />
           </Button>
         )}
 

@@ -154,56 +154,59 @@ export function MessageFeed({
       {/* Messages */}
       <div className="flex-1 flex flex-col justify-end">
         <AnimatePresence initial={false}>
-          {groupedMessages.map((group, groupIndex) => (
-            <React.Fragment key={group.authorId + '-' + groupIndex}>
-              {/* Check if unread divider should appear before this group */}
-              {showUnreadDivider &&
-                unreadDividerIndex >= 0 &&
-                group.messages.some((_, i) => {
-                  const flatIndex = groupedMessages
-                    .slice(0, groupIndex)
-                    .reduce((acc, g) => acc + g.messages.length, 0) + i;
-                  return flatIndex === unreadDividerIndex;
-                }) && (
-                  <UnreadDivider
-                    count={unreadCount}
-                    onDismiss={handleDismissUnread}
-                  />
-                )}
+          {groupedMessages.map((group, groupIndex) => {
+            // Calculate the flat index offset for this group
+            const groupStartIndex = groupedMessages
+              .slice(0, groupIndex)
+              .reduce((acc, g) => acc + g.messages.length, 0);
 
-              {/* Message group */}
+            return (
               <div
+                key={group.authorId + '-' + groupIndex}
                 className={cn(
                   groupIndex > 0 && 'mt-5' // 20px between different authors
                 )}
               >
-                {group.messages.map((message, msgIndex) => (
-                  <motion.div
-                    key={message.id}
-                    initial={spaceMotionVariants.messageEnter.initial}
-                    animate={spaceMotionVariants.messageEnter.animate}
-                    transition={spaceMotionVariants.messageEnter.transition}
-                    className={cn(
-                      msgIndex > 0 && 'mt-1.5' // 6px within same author
-                    )}
-                  >
-                    <MessageItem
-                      message={message}
-                      showAuthor={msgIndex === 0}
-                      isOwn={message.authorId === currentUserId}
-                      onReact={onReact ? (emoji) => onReact(message.id, emoji) : undefined}
-                      onReply={onReply ? () => onReply(message.id) : undefined}
-                      onDelete={
-                        onDelete && canDeleteMessage?.(message.id, message.authorId)
-                          ? () => onDelete(message.id)
-                          : undefined
-                      }
-                    />
-                  </motion.div>
-                ))}
+                {group.messages.map((message, msgIndex) => {
+                  const flatIndex = groupStartIndex + msgIndex;
+                  const showDividerBefore = showUnreadDivider && flatIndex === unreadDividerIndex;
+
+                  return (
+                    <React.Fragment key={message.id}>
+                      {/* Show unread divider before this specific message */}
+                      {showDividerBefore && (
+                        <UnreadDivider
+                          count={unreadCount}
+                          onDismiss={handleDismissUnread}
+                        />
+                      )}
+                      <motion.div
+                        initial={spaceMotionVariants.messageEnter.initial}
+                        animate={spaceMotionVariants.messageEnter.animate}
+                        transition={spaceMotionVariants.messageEnter.transition}
+                        className={cn(
+                          msgIndex > 0 && !showDividerBefore && 'mt-1.5' // 6px within same author (not after divider)
+                        )}
+                      >
+                        <MessageItem
+                          message={message}
+                          showAuthor={msgIndex === 0 || showDividerBefore} // Show author after divider too
+                          isOwn={message.authorId === currentUserId}
+                          onReact={onReact ? (emoji) => onReact(message.id, emoji) : undefined}
+                          onReply={onReply ? () => onReply(message.id) : undefined}
+                          onDelete={
+                            onDelete && canDeleteMessage?.(message.id, message.authorId)
+                              ? () => onDelete(message.id)
+                              : undefined
+                          }
+                        />
+                      </motion.div>
+                    </React.Fragment>
+                  );
+                })}
               </div>
-            </React.Fragment>
-          ))}
+            );
+          })}
         </AnimatePresence>
       </div>
 

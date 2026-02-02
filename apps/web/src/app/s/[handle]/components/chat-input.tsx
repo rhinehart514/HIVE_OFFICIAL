@@ -26,6 +26,8 @@ interface ChatInputProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Callback when typing state changes */
+  onTypingChange?: (isTyping: boolean) => void;
 }
 
 export function ChatInput({
@@ -34,6 +36,7 @@ export function ChatInput({
   placeholder = 'Type a message...',
   disabled,
   className,
+  onTypingChange,
 }: ChatInputProps) {
   const [value, setValue] = React.useState('');
   const [isSending, setIsSending] = React.useState(false);
@@ -42,6 +45,7 @@ export function ChatInput({
   const [uploadError, setUploadError] = React.useState<string | null>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleFileSelect = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -104,6 +108,15 @@ export function ChatInput({
     const trimmed = value.trim();
     if ((!trimmed && attachments.length === 0) || isSending || disabled) return;
 
+    // Clear typing indicator immediately
+    if (onTypingChange) {
+      onTypingChange(false);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+    }
+
     setIsSending(true);
     try {
       await onSend(trimmed, attachments.length > 0 ? attachments : undefined);
@@ -119,7 +132,7 @@ export function ChatInput({
     } finally {
       setIsSending(false);
     }
-  }, [value, attachments, onSend, isSending, disabled]);
+  }, [value, attachments, onSend, isSending, disabled, onTypingChange]);
 
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -131,13 +144,28 @@ export function ChatInput({
     [handleSend]
   );
 
-  // Auto-resize textarea
+  // Auto-resize textarea and handle typing indicator
   const handleInput = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
     setValue(textarea.value);
     textarea.style.height = 'auto';
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
-  }, []);
+
+    // Trigger typing indicator
+    if (onTypingChange && textarea.value.length > 0) {
+      onTypingChange(true);
+
+      // Clear any existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Stop typing indicator after 2 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        onTypingChange(false);
+      }, 2000);
+    }
+  }, [onTypingChange]);
 
   return (
     <div className={cn('p-3', className)}>

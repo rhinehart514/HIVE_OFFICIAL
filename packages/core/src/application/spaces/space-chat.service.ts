@@ -282,7 +282,7 @@ export interface IInlineComponentRepository {
 export type CheckPermissionFn = (
   userId: string,
   spaceId: string,
-  requiredRole: 'member' | 'leader' | 'owner' | 'read'
+  requiredRole: 'member' | 'admin' | 'owner' | 'read'
 ) => Promise<{ allowed: boolean; role?: string | null }>;
 
 /**
@@ -394,7 +394,7 @@ export class SpaceChatService extends BaseApplicationService {
     return this.execute(async () => {
       // Check leader permission
       if (this.checkPermission) {
-        const permResult = await this.checkPermission(userId, input.spaceId, 'leader');
+        const permResult = await this.checkPermission(userId, input.spaceId, 'admin');
         if (!permResult.allowed) {
           return Result.fail<ServiceResult<BoardResult>>('Only space leaders can create boards');
         }
@@ -453,7 +453,7 @@ export class SpaceChatService extends BaseApplicationService {
     return this.execute(async () => {
       // Check leader permission
       if (this.checkPermission) {
-        const permResult = await this.checkPermission(userId, input.spaceId, 'leader');
+        const permResult = await this.checkPermission(userId, input.spaceId, 'admin');
         if (!permResult.allowed) {
           return Result.fail<ServiceResult<void>>('Only space leaders can update boards');
         }
@@ -523,7 +523,7 @@ export class SpaceChatService extends BaseApplicationService {
     return this.execute(async () => {
       // Check leader permission
       if (this.checkPermission) {
-        const permResult = await this.checkPermission(userId, spaceId, 'leader');
+        const permResult = await this.checkPermission(userId, spaceId, 'admin');
         if (!permResult.allowed) {
           return Result.fail<ServiceResult<void>>('Only leaders can archive boards');
         }
@@ -937,7 +937,7 @@ export class SpaceChatService extends BaseApplicationService {
       let isLeader = false;
 
       if (this.checkPermission && !isAuthor) {
-        const permResult = await this.checkPermission(userId, spaceId, 'leader');
+        const permResult = await this.checkPermission(userId, spaceId, 'admin');
         if (permResult.allowed) {
           isLeader = true;
         }
@@ -976,7 +976,7 @@ export class SpaceChatService extends BaseApplicationService {
     return this.execute(async () => {
       // Check leader permission
       if (this.checkPermission) {
-        const permResult = await this.checkPermission(userId, spaceId, 'leader');
+        const permResult = await this.checkPermission(userId, spaceId, 'admin');
         if (!permResult.allowed) {
           return Result.fail<ServiceResult<void>>('Only leaders can pin messages');
         }
@@ -1498,7 +1498,7 @@ export class SpaceChatService extends BaseApplicationService {
       let isLeader = false;
 
       if (this.checkPermission && !isCreator) {
-        const permResult = await this.checkPermission(userId, spaceId, 'leader');
+        const permResult = await this.checkPermission(userId, spaceId, 'admin');
         isLeader = permResult.allowed;
       }
 

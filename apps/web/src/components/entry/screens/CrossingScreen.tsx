@@ -150,7 +150,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
 
         {/* Section label with gold dot */}
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+          <span className="w-1.5 h-1.5 rounded-full bg-gold-500/60" />
           <span className="text-[11px] uppercase tracking-[0.3em] text-white/30">
             Connect
           </span>
@@ -207,7 +207,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
             'px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all duration-200',
             'border',
             activeCategory === null
-              ? 'bg-white text-[#030303] border-white'
+              ? 'bg-white text-neutral-950 border-white'
               : 'bg-white/[0.03] text-white/50 border-white/10 hover:bg-white/[0.06] hover:text-white/70'
           )}
         >
@@ -226,7 +226,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
                 'px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all duration-200',
                 'border flex items-center gap-1.5',
                 activeCategory === cat.id
-                  ? 'bg-white text-[#030303] border-white'
+                  ? 'bg-white text-neutral-950 border-white'
                   : 'bg-white/[0.03] text-white/50 border-white/10 hover:bg-white/[0.06] hover:text-white/70'
               )}
             >
@@ -237,7 +237,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
                     'w-5 h-5 rounded-full text-[10px] flex items-center justify-center',
                     activeCategory === cat.id
                       ? 'bg-black/10 text-black'
-                      : 'bg-[#FFD700]/20 text-[#FFD700]'
+                      : 'bg-gold-500/20 text-gold-500'
                   )}
                 >
                   {count}
@@ -271,7 +271,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
                     'border',
                     'disabled:opacity-30 disabled:cursor-not-allowed',
                     isSelected
-                      ? 'bg-[#FFD700] text-[#030303] border-[#FFD700]'
+                      ? 'bg-gold-500 text-neutral-950 border-gold-500'
                       : 'bg-white/[0.03] text-white/60 border-white/10 hover:bg-white/[0.06] hover:text-white/80 hover:border-white/20'
                   )}
                 >
@@ -300,7 +300,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
           >
             <div className="flex items-center justify-between mb-3">
               <p className="text-[13px] text-white/40">Your picks</p>
-              <p className="text-[11px] text-[#FFD700]/60">
+              <p className="text-[11px] text-gold-500/60">
                 {entry.data.interests.length}/5
               </p>
             </div>
@@ -312,10 +312,10 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   onClick={() => handleToggle(interest)}
-                  className="group px-3 py-1.5 rounded-full text-[13px] font-medium bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/20 flex items-center gap-1.5 hover:bg-[#FFD700]/15 transition-all"
+                  className="group px-3 py-1.5 rounded-full text-[13px] font-medium bg-gold-500/10 text-gold-500 border border-gold-500/20 flex items-center gap-1.5 hover:bg-gold-500/15 transition-all"
                 >
                   {interest}
-                  <span className="text-[#FFD700]/50 group-hover:text-[#FFD700]">
+                  <span className="text-gold-500/50 group-hover:text-gold-500">
                     ×
                   </span>
                 </motion.button>
@@ -325,9 +325,30 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
         )}
       </AnimatePresence>
 
-      {/* Error */}
+      {/* Error with handle suggestions */}
       {entry.error && (
-        <p className="text-[13px] text-red-400 mb-4">{entry.error}</p>
+        <div className="mb-4 space-y-3">
+          <p className="text-[13px] text-red-400">{entry.error}</p>
+
+          {/* Handle suggestions */}
+          {entry.suggestedHandles.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {entry.suggestedHandles.map((handle) => (
+                <button
+                  key={handle}
+                  onClick={() => entry.selectSuggestedHandle(handle)}
+                  className={cn(
+                    'px-4 py-2 rounded-lg text-[14px] font-medium transition-all duration-200',
+                    'bg-gold-500/10 text-gold-500 border border-gold-500/30',
+                    'hover:bg-gold-500/20 hover:border-gold-500/50'
+                  )}
+                >
+                  @{handle}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* CTA - gold when ready */}
@@ -337,7 +358,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
         className={cn(
           'group w-full py-4 rounded-xl font-medium transition-all duration-300',
           canContinue
-            ? 'bg-[#FFD700] text-[#030303] hover:bg-[#FFD700]/90'
+            ? 'bg-gold-500 text-neutral-950 hover:bg-gold-500/90'
             : 'bg-white/10 text-white/40',
           'disabled:cursor-not-allowed',
           'flex items-center justify-center gap-2'

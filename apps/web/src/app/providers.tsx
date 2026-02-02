@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AtmosphereProvider, PageTransitionProvider, Toaster, useToast } from "@hive/ui";
 import { DMProvider } from "@/contexts/dm-context";
 import { DMPanel } from "@/components/dm";
+import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -51,6 +52,18 @@ function ToastBridge() {
   return null;
 }
 
+/**
+ * FCMRegistration - Automatically registers FCM token for push notifications
+ *
+ * Runs on app startup for authenticated users.
+ * Token is stored in user profile for server-side push delivery.
+ */
+function FCMRegistration() {
+  // This hook handles all the FCM logic internally
+  useFCMRegistration();
+  return null;
+}
+
 export function Providers({ children }: ProvidersProps) {
   // Create QueryClient instance once per app lifecycle
   const [queryClient] = useState(
@@ -80,6 +93,7 @@ export function Providers({ children }: ProvidersProps) {
               <DMPanel />
               <Toaster />
               <ToastBridge />
+              <FCMRegistration />
             </DMProvider>
           </PageTransitionProvider>
         </AtmosphereProvider>

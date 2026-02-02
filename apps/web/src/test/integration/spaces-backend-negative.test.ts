@@ -23,9 +23,6 @@ vi.mock('firebase-admin/auth', () => ({
   })
 }));
 
-// SSE noop
-vi.mock('@/lib/sse-realtime-service', () => ({ sseRealtimeService: { sendMessage: vi.fn(async () => {}) } }));
-
 // Routes
 import * as SpacesRoot from '@/app/api/spaces/route';
 import * as SpacesJoin from '@/app/api/spaces/join/route';

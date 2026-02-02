@@ -19,7 +19,9 @@ export interface Member {
   name: string;
   handle: string;
   avatarUrl?: string;
-  role?: 'owner' | 'admin' | 'leader' | 'moderator' | 'member';
+  // Roles: owner > admin > moderator > member
+  // Note: Legacy data may have 'leader' which is treated as 'admin' for display
+  role?: 'owner' | 'admin' | 'moderator' | 'member';
   isOnline?: boolean;
   joinedAt?: string;
 }
@@ -53,10 +55,11 @@ export function MembersList({
     );
   }, [members, searchQuery]);
 
-  // Group by role - Leaders = owners + admins + leaders
+  // Group by role - Leaders section includes owners and admins
+  // Note: 'leader' check kept for backwards compatibility with legacy data
   const groupedMembers = React.useMemo(() => {
     const leaders = filteredMembers.filter(
-      (m) => m.role === 'owner' || m.role === 'admin' || m.role === 'leader'
+      (m) => m.role === 'owner' || m.role === 'admin' || (m.role as string) === 'leader'
     );
     const moderators = filteredMembers.filter((m) => m.role === 'moderator');
     const regularMembers = filteredMembers.filter((m) => !m.role || m.role === 'member');
@@ -192,19 +195,12 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
         </span>
       );
     }
-    if (member.role === 'admin') {
+    // Admin role (also handles legacy 'leader' data)
+    if (member.role === 'admin' || (member.role as string) === 'leader') {
       return (
         <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--color-gold)]/10">
           <Crown className="w-3 h-3 text-[var(--color-gold)]/70" />
           <span className="text-[10px] font-medium text-[var(--color-gold)]/70">Admin</span>
-        </span>
-      );
-    }
-    if (member.role === 'leader') {
-      return (
-        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.04]">
-          <Crown className="w-3 h-3 text-white/50" />
-          <span className="text-[10px] font-medium text-white/50">Leader</span>
         </span>
       );
     }

@@ -26,6 +26,9 @@ export type NotificationType =
   | 'event_rsvp'        // Someone RSVPd to your event
   | 'connection_new'    // New connection
   | 'tool_deployed'     // Tool was deployed to your space
+  | 'ritual_joined'     // You joined a ritual
+  | 'ritual_active'     // A ritual you joined is now active
+  | 'ritual_checkin'    // Daily reminder to check in to ritual
   | 'system';           // System notification
 
 // Notification categories for filtering
@@ -35,6 +38,7 @@ export type NotificationCategory =
   | 'events'       // Event reminders, RSVPs
   | 'connections'  // New connections
   | 'tools'        // Tool deployments
+  | 'rituals'      // Ritual participation
   | 'system';      // System announcements
 
 interface CreateNotificationParams {
@@ -65,6 +69,7 @@ interface NotificationPreferences {
     events: boolean;
     connections: boolean;
     tools: boolean;
+    rituals: boolean;
     system: boolean;
   };
   quietHoursStart?: number; // Hour (0-23)
@@ -79,6 +84,7 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
     events: true,
     connections: true,
     tools: true,
+    rituals: true,
     system: true,
   },
 };
@@ -517,6 +523,41 @@ export async function notifyEventRsvp(params: {
 }
 
 /**
+ * Notify attendee about their RSVP confirmation
+ */
+export async function notifyRsvpConfirmation(params: {
+  attendeeId: string;
+  eventId: string;
+  eventTitle: string;
+  spaceId: string;
+  spaceName: string;
+  rsvpStatus: 'going' | 'maybe';
+  eventStart?: Date;
+}): Promise<string | null> {
+  const statusText = params.rsvpStatus === 'going' ? "You're going to" : "You're interested in";
+  const eventTime = params.eventStart
+    ? ` on ${params.eventStart.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`
+    : '';
+
+  return createNotification({
+    userId: params.attendeeId,
+    type: 'event_reminder',
+    category: 'events',
+    title: `${statusText} ${params.eventTitle}`,
+    body: `${params.spaceName}${eventTime}. We'll remind you before it starts.`,
+    actionUrl: `/s/${params.spaceId}/events/${params.eventId}`,
+    metadata: {
+      eventId: params.eventId,
+      eventTitle: params.eventTitle,
+      spaceId: params.spaceId,
+      spaceName: params.spaceName,
+      rsvpStatus: params.rsvpStatus,
+      isConfirmation: true,
+    },
+  });
+}
+
+/**
  * Notify user about new connection
  */
 export async function notifyNewConnection(params: {
@@ -593,4 +634,87 @@ export async function sendSystemNotification(params: {
   };
 
   return createBulkNotifications(params.userIds, notificationParams);
+}
+
+// =============================================================================
+// Ritual notifications
+// =============================================================================
+
+/**
+ * Notify user when they join a ritual
+ */
+export async function notifyRitualJoined(params: {
+  userId: string;
+  ritualId: string;
+  ritualName: string;
+  ritualSlug: string;
+}): Promise<string | null> {
+  return createNotification({
+    userId: params.userId,
+    type: 'ritual_joined',
+    category: 'rituals',
+    title: `You joined ${params.ritualName}`,
+    body: 'Check in daily to build your streak and climb the leaderboard!',
+    actionUrl: `/rituals/${params.ritualSlug}`,
+    metadata: {
+      ritualId: params.ritualId,
+      ritualName: params.ritualName,
+      ritualSlug: params.ritualSlug,
+    },
+  });
+}
+
+/**
+ * Notify participants when a ritual becomes active
+ */
+export async function notifyRitualActive(params: {
+  participantIds: string[];
+  ritualId: string;
+  ritualName: string;
+  ritualSlug: string;
+}): Promise<number> {
+  const notificationParams: Omit<CreateNotificationParams, 'userId'> = {
+    type: 'ritual_active',
+    category: 'rituals',
+    title: `${params.ritualName} is now active!`,
+    body: 'The ritual has started. Complete your first check-in today!',
+    actionUrl: `/rituals/${params.ritualSlug}`,
+    metadata: {
+      ritualId: params.ritualId,
+      ritualName: params.ritualName,
+      ritualSlug: params.ritualSlug,
+    },
+  };
+
+  return createBulkNotifications(params.participantIds, notificationParams);
+}
+
+/**
+ * Notify user with a daily check-in reminder for a ritual
+ */
+export async function notifyRitualCheckIn(params: {
+  userId: string;
+  ritualId: string;
+  ritualName: string;
+  ritualSlug: string;
+  currentStreak: number;
+}): Promise<string | null> {
+  const streakText = params.currentStreak > 0
+    ? `You're on a ${params.currentStreak}-day streak!`
+    : 'Start your streak today!';
+
+  return createNotification({
+    userId: params.userId,
+    type: 'ritual_checkin',
+    category: 'rituals',
+    title: `Time to check in: ${params.ritualName}`,
+    body: streakText,
+    actionUrl: `/rituals/${params.ritualSlug}`,
+    metadata: {
+      ritualId: params.ritualId,
+      ritualName: params.ritualName,
+      ritualSlug: params.ritualSlug,
+      currentStreak: params.currentStreak,
+    },
+  });
 }

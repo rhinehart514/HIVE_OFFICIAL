@@ -5,7 +5,6 @@ import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { deriveCampusFromEmail } from "@/lib/middleware";
-import { sseRealtimeService as _sseRealtimeService } from '@/lib/sse-realtime-service';
 
 // Typing indicator interfaces
 interface TypingIndicator {

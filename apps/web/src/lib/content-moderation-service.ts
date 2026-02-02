@@ -6,7 +6,7 @@
 import { dbAdmin } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
-import { sseRealtimeService } from '@/lib/sse-realtime-service';
+import { createNotification } from '@/lib/notification-service';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
 // Re-export types for backwards compatibility
@@ -470,17 +470,16 @@ export class ContentModerationService {
       };
 
       await dbAdmin.collection('userWarnings').doc(warning.id).set(warning);
-      
+
       // Send notification to user
-      await sseRealtimeService.sendNotification(
+      await createNotification({
         userId,
-        {
-          title: 'Community Guidelines Warning',
-          message: warning.message,
-          type: 'warning',
-          actionUrl: '/profile/warnings'
-        }
-      );
+        type: 'system',
+        category: 'system',
+        title: 'Community Guidelines Warning',
+        body: warning.message,
+        actionUrl: '/profile/warnings',
+      });
     } catch (error) {
       logger.error('Error warning user', { error: { error: error instanceof Error ? error.message : String(error) }, userId, category });
       throw error;
@@ -510,15 +509,14 @@ export class ContentModerationService {
       });
 
       // Notify user
-      await sseRealtimeService.sendNotification(
+      await createNotification({
         userId,
-        {
-          title: 'Account Suspended',
-          message: `Your account has been suspended for ${days} days due to community guidelines violations.`,
-          type: 'error',
-          actionUrl: '/profile/suspension'
-        }
-      );
+        type: 'system',
+        category: 'system',
+        title: 'Account Suspended',
+        body: `Your account has been suspended for ${days} days due to community guidelines violations.`,
+        actionUrl: '/profile/suspension',
+      });
     } catch (error) {
       logger.error('Error suspending user', { error: { error: error instanceof Error ? error.message : String(error) }, userId });
       throw error;

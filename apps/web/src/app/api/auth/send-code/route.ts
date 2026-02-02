@@ -14,6 +14,7 @@ import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { SESSION_CONFIG } from "@/lib/session";
 import { validateOrigin } from "@/lib/security-middleware";
 import { Resend } from 'resend';
+import { isDevAuthBypassAllowed, logDevCode } from "@/lib/dev-auth-bypass";
 
 // Firebase Client SDK for school validation fallback
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -22,11 +23,6 @@ import { getFirestore as getClientFirestore, doc, getDoc } from 'firebase/firest
 // Security constants
 const CODE_TTL_SECONDS = 600; // 10 minutes
 const MAX_CODES_PER_EMAIL_PER_HOUR = 10; // Temporarily increased for testing
-
-// Development mode guard - allow dev bypass for email sending in development
-const ALLOW_DEV_BYPASS =
-  SESSION_CONFIG.isDevelopment &&
-  process.env.DEV_AUTH_BYPASS === 'true';
 
 // Access gate feature flag - enable limited access mode
 const ACCESS_GATE_ENABLED = process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED === 'true';
@@ -275,10 +271,8 @@ async function sendVerificationCodeEmail(
   schoolName: string
 ): Promise<boolean> {
   // In development with explicit bypass, just log the code
-  if (ALLOW_DEV_BYPASS) {
-    logger.info('===========================================');
-    logger.info(`DEV MODE: VERIFICATION CODE for ${email}: ${code}`);
-    logger.info('===========================================');
+  if (isDevAuthBypassAllowed('send_verification_email', { email, endpoint: '/api/auth/send-code' })) {
+    logDevCode(email, code);
     return true;
   }
 
@@ -690,9 +684,13 @@ export const POST = withValidation(
         schoolName: schoolLookup.schoolName
       });
 
+      // Calculate exact expiry time for countdown display
+      const expiresAt = new Date(Date.now() + CODE_TTL_SECONDS * 1000);
+
       return respond.success({
         message: "Verification code sent to your email",
-        expiresIn: CODE_TTL_SECONDS
+        expiresIn: CODE_TTL_SECONDS,
+        expiresAt: expiresAt.toISOString(),
       });
 
     } catch (error) {

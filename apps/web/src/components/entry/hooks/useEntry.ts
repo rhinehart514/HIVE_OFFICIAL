@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useOnboardingAnalytics } from '@hive/hooks';
 
 /**
  * Entry Flow State Machine
@@ -9,6 +10,12 @@ import * as React from 'react';
  * Naming: THE WEDGE - Real identity claim (first/last name)
  * Field: Year (required) + Major (optional)
  * Crossing: Interests selection (2-5 required)
+ *
+ * Analytics mapping:
+ * - gate (email/code) → 'welcome'
+ * - naming → 'name'
+ * - field → 'academics'
+ * - crossing → 'handle'
  */
 
 export type EntryPhase = 'gate' | 'naming' | 'field' | 'crossing';
@@ -35,6 +42,16 @@ export interface EntryData {
 
   // Crossing
   interests: string[];
+
+  // Handle override (if user selects a suggested handle)
+  handleOverride: string | null;
+}
+
+export interface HandlePreviewState {
+  preview: string;
+  isAvailable: boolean | null; // null = checking or not checked yet
+  isChecking: boolean;
+  error: string | null;
 }
 
 export interface EntryState {
@@ -44,6 +61,12 @@ export interface EntryState {
   data: EntryData;
   isLoading: boolean;
   error: string | null;
+
+  // Handle preview (shown in naming phase)
+  handlePreview: HandlePreviewState;
+
+  // Handle suggestions (shown on collision in crossing phase)
+  suggestedHandles: string[];
 
   // Waitlist
   waitlistSchool: WaitlistSchoolInfo | null;
@@ -65,13 +88,18 @@ export interface UseEntryReturn extends EntryState {
   verifyCode: () => Promise<void>;
   resendCode: () => Promise<void>;
 
+  // Code expiry
+  codeExpiresAt: Date | null;
+
   // Waitlist actions
   joinWaitlist: () => Promise<void>;
+  setWaitlistSuccess: (success: boolean) => void;
 
   // Naming actions
   setFirstName: (name: string) => void;
   setLastName: (name: string) => void;
   submitNaming: () => void;
+  checkHandleAvailability: () => Promise<void>;
 
   // Field actions
   setGraduationYear: (year: number | null) => void;
@@ -86,6 +114,8 @@ export interface UseEntryReturn extends EntryState {
   // Crossing actions
   toggleInterest: (interest: string) => void;
   completeEntry: () => Promise<void>;
+  selectSuggestedHandle: (handle: string) => void;
+  clearSuggestedHandles: () => void;
 
   // Navigation
   goBack: () => void;
@@ -100,6 +130,7 @@ const initialData: EntryData = {
   graduationYear: null,
   major: '',
   interests: [],
+  handleOverride: null,
 };
 
 export function useEntry(options: UseEntryOptions): UseEntryReturn {
@@ -112,8 +143,26 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Code expiry tracking
+  const [codeExpiresAt, setCodeExpiresAt] = React.useState<Date | null>(null);
+
+  // Analytics
+  const analytics = useOnboardingAnalytics();
+  const analyticsInitialized = React.useRef(false);
+
   // School ID detection (from URL params or email domain)
   const [detectedSchoolId, setDetectedSchoolId] = React.useState<string | null>(initialSchoolId || null);
+
+  // Handle preview state
+  const [handlePreview, setHandlePreview] = React.useState<HandlePreviewState>({
+    preview: '',
+    isAvailable: null,
+    isChecking: false,
+    error: null,
+  });
+
+  // Suggested handles (on collision)
+  const [suggestedHandles, setSuggestedHandles] = React.useState<string[]>([]);
 
   // Waitlist state
   const [waitlistSchool, setWaitlistSchool] = React.useState<WaitlistSchoolInfo | null>(null);
@@ -121,6 +170,10 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
 
   // Main request abort controller (for canceling in-flight API calls)
   const requestAbort = React.useRef<AbortController | null>(null);
+
+  // Handle check abort controller (separate from main request)
+  const handleCheckAbort = React.useRef<AbortController | null>(null);
+  const handleCheckTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   // Cancel any in-flight request
   const cancelRequest = React.useCallback(() => {
@@ -130,6 +183,174 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       setIsLoading(false);
     }
   }, []);
+
+  // Generate handle from name
+  const generateHandleFromName = React.useCallback((firstName: string, lastName: string): string => {
+    const base = `${firstName}${lastName}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .slice(0, 20);
+    return base;
+  }, []);
+
+  // Check handle availability (debounced)
+  const checkHandleAvailability = React.useCallback(async () => {
+    const handle = generateHandleFromName(data.firstName, data.lastName);
+
+    if (!handle || handle.length < 3) {
+      setHandlePreview((prev) => ({
+        ...prev,
+        preview: handle,
+        isAvailable: null,
+        isChecking: false,
+        error: null,
+      }));
+      return;
+    }
+
+    // Cancel any previous check
+    if (handleCheckAbort.current) {
+      handleCheckAbort.current.abort();
+    }
+
+    const abortController = new AbortController();
+    handleCheckAbort.current = abortController;
+
+    setHandlePreview((prev) => ({
+      ...prev,
+      preview: handle,
+      isChecking: true,
+      error: null,
+    }));
+
+    try {
+      const res = await fetch(`/api/auth/check-handle?handle=${encodeURIComponent(handle)}`, {
+        signal: abortController.signal,
+      });
+
+      const result = await res.json();
+
+      if (!abortController.signal.aborted) {
+        setHandlePreview({
+          preview: result.handle || handle,
+          isAvailable: result.available === true,
+          isChecking: false,
+          error: result.available ? null : (result.reason || 'Handle not available'),
+        });
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
+      if (!abortController.signal.aborted) {
+        setHandlePreview((prev) => ({
+          ...prev,
+          isChecking: false,
+          isAvailable: null,
+          error: 'Could not check availability',
+        }));
+      }
+    }
+  }, [data.firstName, data.lastName, generateHandleFromName]);
+
+  // Analytics: Track phase transitions
+  React.useEffect(() => {
+    // Initialize onboarding tracking on first render
+    if (!analyticsInitialized.current) {
+      analyticsInitialized.current = true;
+      analytics.trackOnboardingStarted();
+    }
+  }, [analytics]);
+
+  // Analytics: Track step changes
+  const prevPhase = React.useRef<EntryPhase>(phase);
+  const prevGateStep = React.useRef<GateStep>(gateStep);
+
+  React.useEffect(() => {
+    // Gate step: email → code transition (entering code entry)
+    if (phase === 'gate' && gateStep === 'code' && prevGateStep.current === 'email') {
+      analytics.trackStepStarted('welcome');
+    }
+
+    // Gate → naming transition (code verified)
+    if (phase === 'naming' && prevPhase.current === 'gate') {
+      analytics.trackStepCompleted('welcome');
+      analytics.trackStepStarted('name');
+    }
+
+    // Naming → field transition
+    if (phase === 'field' && prevPhase.current === 'naming') {
+      analytics.trackStepCompleted('name');
+      analytics.trackStepStarted('academics');
+    }
+
+    // Field → crossing transition
+    if (phase === 'crossing' && prevPhase.current === 'field') {
+      analytics.trackStepCompleted('academics');
+      analytics.trackStepStarted('handle');
+    }
+
+    prevPhase.current = phase;
+    prevGateStep.current = gateStep;
+  }, [phase, gateStep, analytics]);
+
+  // Check if user is already on waitlist when entering waitlist step
+  React.useEffect(() => {
+    if (gateStep === 'waitlist' && waitlistSchool && data.email && !waitlistSuccess) {
+      // Check if already on waitlist
+      const checkWaitlist = async () => {
+        try {
+          const params = new URLSearchParams({
+            email: data.email,
+            ...(waitlistSchool.id && { schoolId: waitlistSchool.id }),
+          });
+          const res = await fetch(`/api/waitlist/check?${params}`);
+          if (res.ok) {
+            const result = await res.json();
+            if (result.data?.onWaitlist) {
+              setWaitlistSuccess(true);
+            }
+          }
+        } catch {
+          // Silent fail - just show normal waitlist UI
+        }
+      };
+      checkWaitlist();
+    }
+  }, [gateStep, waitlistSchool, data.email, waitlistSuccess]);
+
+  // Debounced handle check when name changes
+  React.useEffect(() => {
+    if (phase !== 'naming') return;
+
+    // Clear existing timeout
+    if (handleCheckTimeout.current) {
+      clearTimeout(handleCheckTimeout.current);
+    }
+
+    const handle = generateHandleFromName(data.firstName, data.lastName);
+
+    // Update preview immediately
+    setHandlePreview((prev) => ({
+      ...prev,
+      preview: handle,
+      isAvailable: null,
+      isChecking: handle.length >= 3,
+    }));
+
+    // Debounce the API call
+    if (handle.length >= 3) {
+      handleCheckTimeout.current = setTimeout(() => {
+        checkHandleAvailability();
+      }, 400);
+    }
+
+    return () => {
+      if (handleCheckTimeout.current) {
+        clearTimeout(handleCheckTimeout.current);
+      }
+    };
+  }, [phase, data.firstName, data.lastName, generateHandleFromName, checkHandleAvailability]);
 
   // Data setters
   const setEmail = (email: string) => {
@@ -174,11 +395,13 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
   const sendCode = async () => {
     if (!data.email.trim()) {
       setError('Enter your email');
+      analytics.trackValidationError('welcome', 'email', 'empty_email');
       return;
     }
 
     if (!data.email.includes('@') || !data.email.includes('.')) {
       setError('Enter a valid email address');
+      analytics.trackValidationError('welcome', 'email', 'invalid_email_format');
       return;
     }
 
@@ -192,6 +415,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     setError(null);
     setWaitlistSchool(null);
     setWaitlistSuccess(false);
+    setCodeExpiresAt(null);
 
     // Derive schoolId from email domain if not already set
     const emailDomain = data.email.split('@')[1]?.toLowerCase() || '';
@@ -231,6 +455,13 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
         setDetectedSchoolId(result.schoolId);
       }
 
+      // Store code expiry time for countdown
+      if (result.data?.expiresAt) {
+        setCodeExpiresAt(new Date(result.data.expiresAt));
+      } else if (result.expiresAt) {
+        setCodeExpiresAt(new Date(result.expiresAt));
+      }
+
       setGateStep('code');
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
@@ -248,6 +479,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     const codeString = data.code.join('');
     if (codeString.length !== 6) {
       setError('Enter the 6-digit code');
+      analytics.trackValidationError('welcome', 'code', 'incomplete_code');
       return;
     }
 
@@ -284,7 +516,9 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       if (err instanceof Error && err.name === 'AbortError') {
         return; // Request was cancelled, don't show error
       }
-      setError(err instanceof Error ? err.message : 'Invalid code');
+      const errorMsg = err instanceof Error ? err.message : 'Invalid code';
+      setError(errorMsg);
+      analytics.trackValidationError('welcome', 'code', errorMsg);
     } finally {
       if (!abortController.signal.aborted) {
         setIsLoading(false);
@@ -300,6 +534,13 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
   const submitNaming = () => {
     if (!data.firstName.trim() || !data.lastName.trim()) {
       setError('Enter your name');
+      return;
+    }
+
+    // Only block while checking - don't block on unavailable
+    // API auto-generates variants if the preferred handle is taken
+    if (handlePreview.isChecking) {
+      setError('Checking handle availability...');
       return;
     }
 
@@ -341,6 +582,17 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     setPhase('crossing');
   };
 
+  const selectSuggestedHandle = (handle: string) => {
+    setData((d) => ({ ...d, handleOverride: handle }));
+    setSuggestedHandles([]);
+    setError(null);
+  };
+
+  const clearSuggestedHandles = () => {
+    setSuggestedHandles([]);
+    setError(null);
+  };
+
   const completeEntry = async () => {
     if (data.interests.length < 2) {
       setError('Pick at least 2 interests');
@@ -355,6 +607,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
 
     setIsLoading(true);
     setError(null);
+    setSuggestedHandles([]);
 
     try {
       const res = await fetch('/api/auth/complete-entry', {
@@ -367,6 +620,8 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
           major: data.major || null,
           graduationYear: data.graduationYear || null,
           interests: data.interests,
+          // Use override handle if user selected a suggestion
+          ...(data.handleOverride && { handle: data.handleOverride }),
         }),
         signal: abortController.signal,
       });
@@ -374,8 +629,18 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       const result = await res.json();
 
       if (!res.ok) {
+        // Handle collision - show suggested handles
+        if (result.code === 'HANDLE_COLLISION' && result.suggestedHandles) {
+          setSuggestedHandles(result.suggestedHandles);
+          setError('That handle was just taken. Pick one of these:');
+          return;
+        }
         throw new Error(result.error || 'Failed to complete entry');
       }
+
+      // Track completion
+      analytics.trackStepCompleted('handle');
+      analytics.trackOnboardingCompleted(0, ['welcome', 'name', 'academics', 'handle']);
 
       onComplete();
     } catch (err) {
@@ -410,9 +675,11 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       // Back to gate (email step)
       setPhase('gate');
       setGateStep('email');
+      setCodeExpiresAt(null);
     } else if (phase === 'gate') {
       if (gateStep === 'code') {
         setGateStep('email');
+        setCodeExpiresAt(null);
       } else if (gateStep === 'waitlist') {
         setGateStep('email');
         setWaitlistSchool(null);
@@ -473,8 +740,13 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     data,
     isLoading,
     error,
+    handlePreview,
+    suggestedHandles,
     waitlistSchool,
     waitlistSuccess,
+
+    // Code expiry
+    codeExpiresAt,
 
     // Gate actions
     setEmail,
@@ -483,11 +755,13 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     verifyCode,
     resendCode,
     joinWaitlist,
+    setWaitlistSuccess,
 
     // Naming actions
     setFirstName,
     setLastName,
     submitNaming,
+    checkHandleAvailability,
 
     // Field actions
     setGraduationYear,
@@ -498,6 +772,8 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     // Crossing actions
     toggleInterest,
     completeEntry,
+    selectSuggestedHandle,
+    clearSuggestedHandles,
 
     // Navigation
     goBack,

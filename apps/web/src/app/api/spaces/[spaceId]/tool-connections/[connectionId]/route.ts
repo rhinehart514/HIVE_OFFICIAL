@@ -148,7 +148,7 @@ export const PATCH = withAuthValidationAndErrors(
     }
 
     // Check leader permission
-    const permCheck = await checkSpacePermission(spaceId, userId, 'leader');
+    const permCheck = await checkSpacePermission(spaceId, userId, 'admin');
     if (!permCheck.hasPermission) {
       return respond.error(
         "Only space leaders can update connections",
@@ -231,7 +231,7 @@ export const DELETE = withAuthAndErrors(
     }
 
     // Check leader permission
-    const permCheck = await checkSpacePermission(spaceId, userId, 'leader');
+    const permCheck = await checkSpacePermission(spaceId, userId, 'admin');
     if (!permCheck.hasPermission) {
       return respond.error(
         "Only space leaders can delete connections",

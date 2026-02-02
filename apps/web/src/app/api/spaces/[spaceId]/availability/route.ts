@@ -53,7 +53,7 @@ export const GET = withAuthAndErrors(async (
   const userId = getUserId(request);
 
   // Verify user has leader+ permission
-  const permCheck = await checkSpacePermission(spaceId, userId, 'leader');
+  const permCheck = await checkSpacePermission(spaceId, userId, 'admin');
   if (!permCheck.hasPermission) {
     return respond.error(
       'Only space leaders can view availability',

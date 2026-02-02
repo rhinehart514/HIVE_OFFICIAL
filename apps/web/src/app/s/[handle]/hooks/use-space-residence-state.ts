@@ -97,7 +97,7 @@ export interface SpaceMember {
   name: string;
   handle: string;
   avatarUrl?: string;
-  role?: 'leader' | 'moderator' | 'member';
+  role?: 'owner' | 'admin' | 'moderator' | 'member';
   isOnline?: boolean;
   joinedAt?: string;
 }

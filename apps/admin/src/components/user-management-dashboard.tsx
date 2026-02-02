@@ -85,7 +85,22 @@ type StatusFilter = "all" | "active" | "suspended" | "pending";
 type SortField = "createdAt" | "lastActive" | "displayName";
 type SortOrder = "asc" | "desc";
 
-export function UserManagementDashboard() {
+interface UserManagementFilters {
+  search?: string;
+  role?: RoleFilter;
+  status?: StatusFilter;
+  page?: number;
+}
+
+interface UserManagementDashboardProps {
+  initialFilters?: UserManagementFilters;
+  onFiltersChange?: (filters: Partial<UserManagementFilters>) => void;
+}
+
+export function UserManagementDashboard({
+  initialFilters,
+  onFiltersChange,
+}: UserManagementDashboardProps = {}) {
   // Data state
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -97,12 +112,28 @@ export function UserManagementDashboard() {
     hasMore: false,
   });
 
-  // Filter state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  // Filter state - use initialFilters if provided
+  const [searchTerm, setSearchTerm] = useState(initialFilters?.search || "");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>(initialFilters?.role || "all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilters?.status || "all");
   const [sortBy, setSortBy] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
+  // Sync with URL state when using onFiltersChange
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    onFiltersChange?.({ search: value });
+  };
+
+  const handleRoleChange = (value: RoleFilter) => {
+    setRoleFilter(value);
+    onFiltersChange?.({ role: value });
+  };
+
+  const handleStatusChange = (value: StatusFilter) => {
+    setStatusFilter(value);
+    onFiltersChange?.({ status: value });
+  };
 
   // Selection state
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
@@ -268,13 +299,10 @@ export function UserManagementDashboard() {
 
       if (!response.ok) throw new Error("Bulk operation failed");
 
-      const result = await response.json();
+      await response.json();
       setSelectedUsers(new Set());
       setSelectAll(false);
       await fetchUsers();
-
-      // Show result feedback
-      console.log("Bulk operation result:", result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bulk operation failed");
     } finally {
@@ -384,13 +412,13 @@ export function UserManagementDashboard() {
               <Input
                 placeholder="Search by name, email, or handle..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10 bg-[#0A0A0A] border-white/10 text-white placeholder:text-[#818187]"
               />
             </div>
 
             {/* Role Filter */}
-            <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
+            <Select value={roleFilter} onValueChange={(v) => handleRoleChange(v as RoleFilter)}>
               <SelectTrigger className="w-[140px] bg-[#0A0A0A] border-white/10 text-white">
                 <Filter className="h-4 w-4 mr-2 text-[#818187]" />
                 <SelectValue placeholder="Role" />
@@ -404,7 +432,7 @@ export function UserManagementDashboard() {
             </Select>
 
             {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+            <Select value={statusFilter} onValueChange={(v) => handleStatusChange(v as StatusFilter)}>
               <SelectTrigger className="w-[140px] bg-[#0A0A0A] border-white/10 text-white">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>

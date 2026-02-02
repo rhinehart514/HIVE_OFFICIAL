@@ -108,11 +108,24 @@ export function LeaderHealthDashboard() {
     setSendingNudge(leader.userId);
 
     try {
-      // TODO: Implement nudge API
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated
-      alert(`Nudge sent to ${leader.userName} (${leader.userEmail})`);
+      const response = await fetch("/api/admin/leaders/nudge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: leader.userId,
+          email: leader.userEmail,
+          type: "reactivation",
+          message: `Hi ${leader.userName}, we noticed you haven't been active on your space recently. Your community is waiting! Log in to check on your members.`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send nudge");
+      }
+
+      await fetchMetrics();
     } catch {
-      alert('Failed to send nudge');
+      setError("Failed to send nudge notification");
     } finally {
       setSendingNudge(null);
     }

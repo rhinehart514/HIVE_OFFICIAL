@@ -9,7 +9,6 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { sseRealtimeService } from "@/lib/sse-realtime-service";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
 
@@ -129,32 +128,7 @@ export const POST = withAuthValidationAndErrors(
         return { count, reacted: didReact };
       });
 
-      try {
-        await sseRealtimeService.sendMessage({
-          type: "chat",
-          channel: `space:${spaceId}:posts`,
-          senderId: userId,
-          content: {
-            type: "reaction_update",
-            postId,
-            reactionType: body.type,
-            reacted: result.reacted,
-            count: result.count,
-          },
-          metadata: {
-            timestamp: new Date().toISOString(),
-            priority: "low",
-            requiresAck: false,
-            retryCount: 0,
-          },
-        });
-      } catch (broadcastError) {
-        logger.warn("Failed to broadcast reaction via SSE", {
-          broadcastError,
-          spaceId,
-          postId,
-        });
-      }
+      // Real-time updates handled by Firestore listeners on client
 
       return respond.success({
         postId,

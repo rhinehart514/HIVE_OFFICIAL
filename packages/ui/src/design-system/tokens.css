@@ -361,21 +361,31 @@
   --color-interactive-active: var(--interactive-active);
 
   /* For Tailwind config (tailwind.config.ts) */
+  --hive-background: var(--bg-ground);
+  --hive-background-page: var(--bg-ground);
   --hive-background-primary: var(--bg-ground);
   --hive-background-secondary: var(--bg-surface);
   --hive-background-tertiary: var(--bg-elevated);
   --hive-background-hover: var(--bg-surface-hover);
+  --hive-foreground: var(--text-primary);
   --hive-text-primary: var(--text-primary);
   --hive-text-secondary: var(--text-secondary);
   --hive-text-tertiary: var(--text-tertiary);
+  --hive-text-muted: var(--text-muted);
+  --hive-gold: var(--life-gold);
   --hive-brand-primary: var(--life-gold);
   --hive-brand-hover: var(--life-gold-hover);
   --hive-brand-active: var(--life-gold-active);
   --hive-status-success: var(--status-success);
   --hive-status-error: var(--status-error);
   --hive-status-warning: var(--status-warning);
+  --hive-status-info: #0070F3;
+  --hive-status-purple: #8B5CF6;
+  --hive-status-pink: #EC4899;
   --hive-border-default: var(--border-default);
   --hive-border-subtle: var(--border-subtle);
+  --hive-border-primary: var(--border-default);
+  --hive-border-hover: var(--border-emphasis);
 
   /* ============================================
    * PART 8: COMPOSITE TOKENS
@@ -491,6 +501,64 @@
 
   /* IDE Text Aliases */
   --ide-text-muted: var(--hivelab-text-tertiary);
+
+  /* ============================================
+   * PART 10: COMPONENT TOKENS
+   * Semantic tokens for UI components
+   * ============================================ */
+
+  /* Input */
+  --input-bg: var(--bg-surface);
+  --input-border: var(--border-default);
+  --input-border-hover: var(--border-emphasis);
+  --input-border-focus: var(--focus-ring);
+  --input-placeholder: var(--text-tertiary);
+
+  /* Card */
+  --card-bg: var(--bg-surface);
+  --card-border: var(--border-subtle);
+  --card-shadow: var(--shadow-sm);
+
+  /* Button */
+  --button-primary-bg: var(--text-primary);
+  --button-primary-text: var(--bg-ground);
+  --button-primary-hover: rgba(250, 249, 247, 0.9);
+  --button-gold-bg: var(--life-gold);
+  --button-gold-text: var(--bg-ground);
+  --button-gold-hover: var(--life-gold-hover);
+  --button-secondary-bg: var(--bg-elevated);
+  --button-secondary-border: var(--border-default);
+  --button-ghost-hover: var(--interactive-hover);
+
+  /* Avatar */
+  --avatar-border: var(--life-gold);
+  --avatar-fallback-bg: var(--bg-elevated);
+  --avatar-fallback-text: var(--text-secondary);
+
+  /* Badge */
+  --badge-bg: var(--life-subtle);
+  --badge-text: var(--life-gold);
+  --badge-border: rgba(255, 215, 0, 0.30);
+
+  /* Presence Indicators */
+  --presence-online: var(--status-success);
+  --presence-away: var(--status-warning);
+  --presence-busy: var(--status-error);
+  --presence-offline: var(--text-muted);
+
+  /* ============================================
+   * PART 11: CATEGORY/SPACE TYPE COLORS
+   * For distinguishing space types
+   * ============================================ */
+
+  --category-university: #3B82F6;
+  --category-university-dim: rgba(59, 130, 246, 0.15);
+  --category-student: #F59E0B;
+  --category-student-dim: rgba(245, 158, 11, 0.15);
+  --category-residential: #10B981;
+  --category-residential-dim: rgba(16, 185, 129, 0.15);
+  --category-greek: #8B5CF6;
+  --category-greek-dim: rgba(139, 92, 246, 0.15);
 }
 
 /* ============================================

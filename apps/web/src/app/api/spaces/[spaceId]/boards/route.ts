@@ -37,7 +37,7 @@ const CreateBoardSchema = z.object({
  * Create permission check callback for SpaceChatService
  */
 function createPermissionChecker(): CheckPermissionFn {
-  return async (userId: string, spaceId: string, requiredRole: 'member' | 'leader' | 'owner' | 'read') => {
+  return async (userId: string, spaceId: string, requiredRole: 'member' | 'admin' | 'owner' | 'read') => {
     // 'read' permission allows non-members to view public spaces
     if (requiredRole === 'read') {
       // First check if user is a member (any level)
@@ -121,9 +121,59 @@ export const GET = withAuthAndErrors(async (
   const serviceResult = result.getValue();
   const boards = serviceResult.data;
 
-  // Transform to API response format
-  const apiBoards = boards.map(board => {
+  // Fetch read receipts for all boards to compute unread counts
+  const readReceiptsMap = new Map<string, number>();
+  try {
+    for (const board of boards) {
+      const receiptDoc = await dbAdmin
+        .collection('spaces')
+        .doc(spaceId)
+        .collection('boards')
+        .doc(board.id)
+        .collection('read_receipts')
+        .doc(userId)
+        .get();
+
+      if (receiptDoc.exists) {
+        readReceiptsMap.set(board.id, receiptDoc.data()?.lastReadTimestamp || 0);
+      } else {
+        readReceiptsMap.set(board.id, 0);
+      }
+    }
+  } catch (error) {
+    logger.warn('Failed to fetch read receipts for boards', { error, spaceId, userId });
+    // Continue without unread counts if fetch fails
+  }
+
+  // Transform to API response format with unread counts
+  const apiBoards = await Promise.all(boards.map(async board => {
     const dto = board.toDTO();
+    const lastReadTimestamp = readReceiptsMap.get(board.id) || 0;
+
+    // Compute unread count: messages newer than lastReadTimestamp (excluding user's own)
+    let unreadCount = 0;
+    if (lastReadTimestamp > 0) {
+      try {
+        const unreadSnapshot = await dbAdmin
+          .collection('spaces')
+          .doc(spaceId)
+          .collection('boards')
+          .doc(board.id)
+          .collection('messages')
+          .where('timestamp', '>', lastReadTimestamp)
+          .where('authorId', '!=', userId)
+          .count()
+          .get();
+        unreadCount = unreadSnapshot.data().count;
+      } catch {
+        // Silent fail - unread count will be 0
+      }
+    } else if (lastReadTimestamp === 0 && (dto.messageCount as number) > 0) {
+      // User has never read this board - all messages are "unread"
+      // But we cap it to avoid overwhelming the UI
+      unreadCount = Math.min(dto.messageCount as number, 99);
+    }
+
     return {
       id: board.id,
       name: dto.name,
@@ -135,10 +185,11 @@ export const GET = withAuthAndErrors(async (
       isDefault: dto.isDefault,
       isLocked: dto.isLocked,
       canPost: dto.canPost,
+      unreadCount,
       createdAt: dto.createdAt instanceof Date ? dto.createdAt.toISOString() : null,
       lastActivityAt: dto.lastActivityAt instanceof Date ? dto.lastActivityAt.toISOString() : null,
     };
-  });
+  }));
 
   logger.info(`Boards listed for space: ${spaceId}`, { spaceId, boardCount: apiBoards.length });
 

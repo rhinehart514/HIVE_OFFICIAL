@@ -1,7 +1,6 @@
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
-import { sseRealtimeService } from '@/lib/sse-realtime-service';
 import { FieldValue } from 'firebase-admin/firestore';
 import { requireSpaceAccess, requireSpaceMembership } from '@/lib/space-security';
 import { HttpStatus } from '@/lib/api-response-types';
@@ -182,34 +181,7 @@ export const POST = withAuthAndErrors(async (
       lastPromotedAt: FieldValue.serverTimestamp()
     });
 
-    // Broadcast promotion to feed subscribers via SSE
-    try {
-      await sseRealtimeService.sendMessage({
-        type: 'system',
-        channel: 'campus:feed:promoted',
-        senderId: userId,
-        content: {
-          type: 'post_promoted',
-          post: {
-            id: feedRef.id,
-            ...feedEntry
-          },
-          sourceSpace: {
-            id: spaceId,
-            name: resolvedSpace.name,
-            emoji: resolvedSpace.emoji
-          }
-        },
-        metadata: {
-          timestamp: new Date().toISOString(),
-          priority: 'high', // Promoted content gets high priority
-          requiresAck: false,
-          retryCount: 0
-        }
-      });
-    } catch (sseError) {
-      logger.warn('Failed to broadcast promoted post via SSE', { sseError, feedPostId: feedRef.id });
-    }
+    // Real-time updates handled by Firestore listeners on client
 
     return respond.success({
       feedPostId: feedRef.id,

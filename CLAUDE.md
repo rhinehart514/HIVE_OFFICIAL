@@ -1,8 +1,16 @@
 # HIVE
 
-## Soul
+Web-first platform for students who do things — build, join, organize, belong. Not a feed to scroll. A place to do.
 
-Web-first platform for students who do things — build, join, organize, belong. YC energy meets campus social: ship real projects, find real people, skip institutional friction. Not a feed to scroll. A place to do.
+---
+
+## Decision Filter
+
+Every decision runs through one question:
+
+**Does this help a student find their people, join something real, and come back tomorrow?**
+
+If no → kill it, ignore it, or defer it.
 
 ---
 
@@ -10,73 +18,97 @@ Web-first platform for students who do things — build, join, organize, belong.
 
 Non-negotiable. Every PR.
 
-| Constraint | Implementation |
-|------------|----------------|
-| Campus isolation | Every query filters by `campusId`. No cross-campus data leakage. |
+| Rule | Implementation |
+|------|----------------|
+| Campus isolation | Every query filters by `campusId` from session. Never accept from client. |
 | Real identity | Campus email verification required. No anonymous users. |
-| Validation at boundaries | Zod schemas on all inputs. Never trust client data. |
-| Design tokens only | All visual values from `packages/tokens`. No hardcoded colors/spacing/radii. |
+| Validation | Zod schemas on all API inputs. Never trust client data. |
+| Design tokens | All visual values from `packages/tokens`. No hardcoded colors/spacing/radii. |
 | Real handlers | Every button does real work. No console.log placeholders. |
-| No dead ends | Every state shows next action. Empty states have guidance. |
-
----
-
-## Index
-
-| Need | Location |
-|------|----------|
-| Design language | `docs/VISUAL_DIRECTION.md` |
-| IA rules | `docs/IA_INVARIANTS.md` |
-| Architecture | `docs/` |
-| Database schema | `docs/DATABASE_SCHEMA.md` |
-| Component library | `packages/ui/src` |
-| Design tokens | `packages/tokens/src` |
-| Visual reference | `/about` page (live) |
-| Current priorities | `TODO.md` |
+| No dead ends | Every state shows next action. Empty states guide, never "Nothing here". |
+| Motion | All transitions use `@hive/tokens/motion`. Subtle, <300ms. |
 
 ---
 
 ## Patterns
 
-**When building UI:**
-- Check `packages/ui` for existing components before creating new ones
-- Motion: subtle, purposeful, <300ms, use `packages/tokens/src/motion.ts`
-- Empty states: always show what to do next, never just "Nothing here"
+**Adding an API route:**
+```
+apps/web/src/app/api/[domain]/route.ts
+```
+- Use `withAuthAndErrors` wrapper
+- Validate with Zod: `const body = schema.parse(await req.json())`
+- Filter by `campusId` from session
+- Return `NextResponse.json({ data })`
 
-**When writing API routes:**
-- Validate with Zod at the boundary
-- Filter by `campusId` from session — never accept from client
-- Check existing routes in `apps/web/src/app/api/` for patterns
+**Adding a component:**
+```
+packages/ui/src/components/[domain]/ComponentName.tsx   # Reusable
+apps/web/src/components/[feature]/ComponentName.tsx    # Feature-specific
+```
+- Check `packages/ui` first — don't duplicate
+- Use design tokens for all values
+- Add motion with `@hive/tokens` variants
 
-**When making product decisions:**
-- Web-first: desktop is the primary experience, mobile follows
-- Builder aesthetic: precision, confidence, speed — even for non-builders using it
-- Social with purpose: connections that lead to doing things, not just following
-- Cold start test: would this work with zero existing activity?
-- 48-hour test: if we ignore this for 48 hours, does anything change for users?
+**Adding a hook:**
+```
+apps/web/src/hooks/use-[name].ts
+```
 
-**When adding features:**
-- STUBBED → WIRED → COMPLETE → PRODUCTION-READY
-- Not done until user accomplishes their goal, not when code merges
+**Adding a page:**
+```
+apps/web/src/app/[route]/page.tsx
+```
+
+**Using feature flags:**
+```typescript
+import { useFeatureFlags } from '@/hooks/use-feature-flags';
+const { dmsEnabled } = useFeatureFlags();
+if (!dmsEnabled) return null;
+```
+
+---
+
+## File Map
+
+| Need | Location |
+|------|----------|
+| API routes | `apps/web/src/app/api/` |
+| Pages | `apps/web/src/app/` |
+| Shared components | `packages/ui/src/` |
+| Feature components | `apps/web/src/components/` |
+| Hooks | `apps/web/src/hooks/` |
+| Design tokens | `packages/tokens/src/` |
+| Motion tokens | `packages/tokens/src/motion.ts` |
+| Core types | `packages/core/src/` |
+| Firebase admin | `packages/firebase/src/admin/` |
 
 ---
 
 ## Commands
 
 ```bash
-pnpm dev                      # all servers
-pnpm --filter=@hive/web dev   # web only
-pnpm build && pnpm typecheck  # run before any merge
+pnpm dev                      # Start all
+pnpm --filter=@hive/web dev   # Web only
+pnpm build && pnpm typecheck  # Before merge
 ```
 
 ---
 
 ## Stack
 
-- **App:** Next.js 15, App Router, TypeScript
-- **Database:** Firebase Firestore
-- **Storage:** Firebase Storage
-- **Auth:** Firebase Auth + campus email verification
-- **Email:** Resend
-- **Rate limiting:** Upstash
-- **Hosting:** Vercel
+Next.js 15 (App Router) · TypeScript · Firebase (Firestore, Auth, Storage) · Vercel
+
+---
+
+## Reference
+
+| Topic | Location |
+|-------|----------|
+| System details & game plans | `docs/SYSTEMS.md` |
+| Quality standards | `docs/QUALITY_STANDARDS.md` |
+| Platform audit | `docs/PLATFORM_AUDIT.md` |
+| Database schema | `docs/DATABASE_SCHEMA.md` |
+| IA rules | `docs/IA_INVARIANTS.md` |
+| Visual direction | `docs/VISUAL_DIRECTION.md` |
+| Current priorities | `TODO.md` |

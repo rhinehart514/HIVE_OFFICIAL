@@ -38,7 +38,7 @@ export const POST = withAuthValidationAndErrors(
     }
 
     // Permission check - only leaders can reorder boards
-    const permission = await checkSpacePermission(spaceId, userId, 'leader');
+    const permission = await checkSpacePermission(spaceId, userId, 'admin');
     if (!permission.hasPermission) {
       return respond.error("Only leaders can reorder boards", "FORBIDDEN", { status: 403 });
     }

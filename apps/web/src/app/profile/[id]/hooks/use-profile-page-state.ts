@@ -217,6 +217,16 @@ export function useProfilePageState(): UseProfilePageStateReturn {
     count: number;
   }>({ connections: [], count: 0 });
 
+  // Activity contributions state
+  const [activityData, setActivityData] = React.useState<{
+    contributions: ActivityContribution[];
+    totalCount: number;
+    currentStreak: number;
+  }>({ contributions: [], totalCount: 0, currentStreak: 0 });
+
+  // Viewer interests for shared interests computation
+  const [viewerInterests, setViewerInterests] = React.useState<string[]>([]);
+
   // Connection state (friend request system)
   const [connectionState, setConnectionState] = React.useState<ConnectionState>('none');
   const [pendingRequestId, setPendingRequestId] = React.useState<string | null>(null);
@@ -466,6 +476,66 @@ export function useProfilePageState(): UseProfilePageStateReturn {
     fetchMutualConnections();
   }, [profileId, isOwnProfile]);
 
+  // ============================================================================
+  // Fetch activity contributions for heatmap
+  // ============================================================================
+
+  React.useEffect(() => {
+    if (!profileId) return;
+
+    const fetchActivityContributions = async () => {
+      try {
+        const response = await fetch(`/api/profile/${profileId}/activity?days=365`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const data = result.data || result;
+          setActivityData({
+            contributions: data.contributions || [],
+            totalCount: data.totalCount || 0,
+            currentStreak: data.currentStreak || 0,
+          });
+        }
+      } catch (err) {
+        logger.warn('Failed to fetch activity contributions', {
+          component: 'ProfilePageState',
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    };
+
+    fetchActivityContributions();
+  }, [profileId]);
+
+  // ============================================================================
+  // Fetch viewer interests for shared interests computation
+  // ============================================================================
+
+  React.useEffect(() => {
+    if (!currentUser?.id || isOwnProfile) return;
+
+    const fetchViewerInterests = async () => {
+      try {
+        const response = await fetch(`/api/profile/v2?id=${currentUser.id}`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const interests = result.data?.profile?.interests || [];
+          setViewerInterests(interests);
+        }
+      } catch (err) {
+        logger.warn('Failed to fetch viewer interests', {
+          component: 'ProfilePageState',
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    };
+
+    fetchViewerInterests();
+  }, [currentUser?.id, isOwnProfile]);
+
   // Fetch connection state (friend request status)
   React.useEffect(() => {
     if (!profileId || isOwnProfile || !currentUser?.id) {
@@ -667,9 +737,17 @@ export function useProfilePageState(): UseProfilePageStateReturn {
 
   // ProfileInterestsCard data
   const interests = profileData?.profile.interests ?? [];
-  // NOTE: Interest comparison requires viewer context. Empty for now - could be enhanced
-  // to highlight shared interests when viewer data is available in auth context.
-  const sharedInterests: string[] = [];
+
+  // Compute shared interests between viewer and profile
+  const sharedInterests: string[] = React.useMemo(() => {
+    if (isOwnProfile || viewerInterests.length === 0 || interests.length === 0) {
+      return [];
+    }
+    const profileInterestsLower = interests.map((i) => i.toLowerCase());
+    return viewerInterests.filter((vi) =>
+      profileInterestsLower.includes(vi.toLowerCase())
+    );
+  }, [isOwnProfile, viewerInterests, interests]);
 
   // ContextBanner data
   // Shared space names computed from profileSpaces with isShared flag
@@ -690,22 +768,16 @@ export function useProfilePageState(): UseProfilePageStateReturn {
     return profileData?.connections?.filter((c) => c.isFriend && (c.mutualConnections ?? 0) > 0).length ?? 0;
   }, [mutualConnectionsData.count, profileData?.connections]);
 
-  // NOTE: Builder status determined by whether viewer has created tools.
-  // Not fetched here to avoid extra API calls - shows tools to all viewers.
-  const viewerIsBuilder = false;
+  // Viewer is a builder if they have created tools or opted into builder mode
+  const viewerIsBuilder = currentUser?.isBuilder ?? false;
 
-  // ProfileActivityHeatmap data - empty until real activity tracking is implemented
-  const activityContributions: ActivityContribution[] = React.useMemo(() => {
-    // Return empty array - real activity tracking not yet implemented
-    // When implemented, this will fetch from /api/profile/activity endpoint
-    return [];
-  }, []);
+  // Activity contributions from the fetched data
+  const activityContributions: ActivityContribution[] = activityData.contributions;
 
-  const totalActivityCount = React.useMemo(() => {
-    return activityContributions.reduce((sum, c) => sum + c.count, 0);
-  }, [activityContributions]);
+  const totalActivityCount = activityData.totalCount;
 
-  const currentStreak = profileData?.stats?.currentStreak ?? 0;
+  // Use activity data streak if available, fallback to profile stats
+  const currentStreak = activityData.currentStreak || (profileData?.stats?.currentStreak ?? 0);
 
   // ============================================================================
   // Handlers

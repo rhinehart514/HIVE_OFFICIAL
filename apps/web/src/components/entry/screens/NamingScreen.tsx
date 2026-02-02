@@ -10,8 +10,8 @@
  */
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, ArrowRight, Check, Loader2, AtSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { UseEntryReturn } from '../hooks/useEntry';
 import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
@@ -33,7 +33,10 @@ export function NamingScreen({ entry }: NamingScreenProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  const canContinue = entry.data.firstName.trim() && entry.data.lastName.trim();
+  const hasName = entry.data.firstName.trim() && entry.data.lastName.trim();
+  // Don't block on handle availability - API auto-generates variants if taken
+  // Only block while checking to avoid race conditions
+  const canContinue = hasName && !entry.handlePreview.isChecking;
 
   const handleKeyDown = (e: React.KeyboardEvent, isLast: boolean) => {
     if (e.key === 'Enter') {
@@ -68,7 +71,7 @@ export function NamingScreen({ entry }: NamingScreenProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5, ease: EASE_PREMIUM }}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+          <span className="w-1.5 h-1.5 rounded-full bg-gold-500/60" />
           <span className="text-[11px] uppercase tracking-[0.3em] text-white/30">
             Identity
           </span>
@@ -118,7 +121,7 @@ export function NamingScreen({ entry }: NamingScreenProps) {
               'text-[16px] text-white placeholder:text-white/25',
               'focus:outline-none',
               entry.data.firstName
-                ? 'border-[#FFD700]/40 bg-[#FFD700]/[0.02]'
+                ? 'border-gold-500/40 bg-gold-500/[0.02]'
                 : 'border-white/10 focus:border-white/25 focus:bg-white/[0.05]'
             )}
           />
@@ -142,12 +145,82 @@ export function NamingScreen({ entry }: NamingScreenProps) {
               'text-[16px] text-white placeholder:text-white/25',
               'focus:outline-none',
               entry.data.lastName
-                ? 'border-[#FFD700]/40 bg-[#FFD700]/[0.02]'
+                ? 'border-gold-500/40 bg-gold-500/[0.02]'
                 : 'border-white/10 focus:border-white/25 focus:bg-white/[0.05]'
             )}
           />
         </motion.div>
       </div>
+
+      {/* Handle Preview */}
+      <AnimatePresence>
+        {entry.handlePreview.preview.length >= 3 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: DURATION.fast, ease: EASE_PREMIUM }}
+            className="overflow-hidden"
+          >
+            <div className={cn(
+              'flex items-center gap-3 px-4 py-3 rounded-xl',
+              'border-2 transition-all duration-300',
+              entry.handlePreview.isChecking
+                ? 'bg-white/[0.02] border-white/10'
+                : entry.handlePreview.isAvailable
+                  ? 'bg-gold-500/[0.03] border-gold-500/30'
+                  : 'bg-amber-500/[0.03] border-amber-500/30' // Warning, not error
+            )}>
+              <AtSign className={cn(
+                'w-4 h-4 flex-shrink-0',
+                entry.handlePreview.isChecking
+                  ? 'text-white/30'
+                  : entry.handlePreview.isAvailable
+                    ? 'text-gold-500/60'
+                    : 'text-amber-400/60'
+              )} />
+
+              <div className="flex-1 min-w-0">
+                <p className={cn(
+                  'text-[15px] font-medium truncate',
+                  entry.handlePreview.isChecking
+                    ? 'text-white/50'
+                    : 'text-white'
+                )}>
+                  @{entry.handlePreview.preview}
+                </p>
+                <p
+                  aria-live="polite"
+                  className={cn(
+                    'text-[12px]',
+                    entry.handlePreview.isChecking
+                      ? 'text-white/30'
+                      : entry.handlePreview.isAvailable
+                        ? 'text-gold-500/60'
+                        : 'text-amber-400/70'
+                  )}
+                >
+                  {entry.handlePreview.isChecking
+                    ? 'Checking availability...'
+                    : entry.handlePreview.isAvailable
+                      ? 'Available! This will be your handle.'
+                      : "Taken — we'll pick a variant for you"}
+                </p>
+              </div>
+
+              <div className="flex-shrink-0">
+                {entry.handlePreview.isChecking ? (
+                  <Loader2 className="w-4 h-4 text-white/30 animate-spin" />
+                ) : entry.handlePreview.isAvailable ? (
+                  <Check className="w-4 h-4 text-gold-500" />
+                ) : (
+                  <ArrowRight className="w-4 h-4 text-amber-400" />
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Error */}
       {entry.error && (
@@ -173,7 +246,7 @@ export function NamingScreen({ entry }: NamingScreenProps) {
             'group px-8 py-4 rounded-xl font-medium transition-all duration-300',
             'flex items-center gap-2',
             canContinue
-              ? 'bg-white text-[#030303] hover:bg-white/90'
+              ? 'bg-white text-neutral-950 hover:bg-white/90'
               : 'bg-white/10 text-white/30 cursor-not-allowed'
           )}
         >

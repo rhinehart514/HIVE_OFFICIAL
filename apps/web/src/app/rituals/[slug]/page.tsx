@@ -43,6 +43,10 @@ export default function RitualDetailPage() {
   const [isParticipating, setIsParticipating] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isJoining, setIsJoining] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [userStreak, setUserStreak] = useState<number>(0);
+  const [userPoints, setUserPoints] = useState<number>(0);
+  const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
 
   // Fetch ritual details
   useEffect(() => {
@@ -77,7 +81,38 @@ export default function RitualDetailPage() {
           );
           if (lbData.currentUserEntry || isInLeaderboard) {
             setIsParticipating(true);
+            // Get user's current stats from their entry
+            const userEntry = lbData.currentUserEntry ||
+              (lbData.leaderboard || []).find((e: LeaderboardEntry) => e.isCurrentUser);
+            if (userEntry) {
+              setUserStreak(userEntry.streakCount || 0);
+              setUserPoints(userEntry.totalPoints || 0);
+            }
           }
+        }
+
+        // Check if user already checked in today
+        try {
+          const participationsRes = await fetch("/api/rituals/my-participations");
+          if (participationsRes.ok) {
+            const pData = await participationsRes.json();
+            const participation = (pData.participations || []).find(
+              (p: { ritualId: string; lastParticipatedAt?: string }) => p.ritualId === data.ritual.id
+            );
+            if (participation?.lastParticipatedAt) {
+              const lastCheckin = new Date(participation.lastParticipatedAt);
+              const today = new Date();
+              if (
+                lastCheckin.getFullYear() === today.getFullYear() &&
+                lastCheckin.getMonth() === today.getMonth() &&
+                lastCheckin.getDate() === today.getDate()
+              ) {
+                setHasCheckedInToday(true);
+              }
+            }
+          }
+        } catch {
+          // Silently fail - non-critical
         }
       } catch (err) {
         logger.error("Failed to load ritual", {
@@ -119,6 +154,42 @@ export default function RitualDetailPage() {
       setIsJoining(false);
     }
   }, [ritual, isJoining]);
+
+  // Handle daily check-in
+  const handleCheckIn = useCallback(async () => {
+    if (!ritual || isCheckingIn || hasCheckedInToday) return;
+
+    try {
+      setIsCheckingIn(true);
+      const response = await fetch(`/api/rituals/${ritual.id}/participate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "daily_checkin",
+          points: 10,
+          metadata: { timestamp: new Date().toISOString() },
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to check in");
+      }
+
+      const result = await response.json();
+      setHasCheckedInToday(true);
+      setUserStreak(result.streak || userStreak + 1);
+      setUserPoints(result.totalPoints || userPoints + 10);
+      logger.info("Daily check-in completed", { ritualId: ritual.id, streak: result.streak });
+    } catch (err) {
+      logger.error("Failed to check in", {
+        ritualId: ritual?.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setIsCheckingIn(false);
+    }
+  }, [ritual, isCheckingIn, hasCheckedInToday, userStreak, userPoints]);
 
   if (isLoading) {
     return (
@@ -334,6 +405,54 @@ export default function RitualDetailPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Check-in Section for Participants */}
+        {isParticipating && isActive && (
+          <div className="mb-8 rounded-2xl bg-[var(--hive-background-secondary)] p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--hive-text-primary)] mb-1">
+                  Daily Check-in
+                </h3>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-[var(--hive-text-secondary)]">
+                    🔥 {userStreak} day streak
+                  </span>
+                  <span className="text-[var(--hive-text-tertiary)]">
+                    {userPoints.toLocaleString()} points
+                  </span>
+                </div>
+              </div>
+
+              {hasCheckedInToday ? (
+                <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-green-500/20 text-green-400">
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span className="font-medium">Done Today</span>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleCheckIn}
+                  disabled={isCheckingIn}
+                  className="bg-[var(--hive-brand-primary)] text-black font-semibold px-6"
+                >
+                  {isCheckingIn ? "Checking in..." : "Complete Today"}
+                </Button>
+              )}
             </div>
           </div>
         )}

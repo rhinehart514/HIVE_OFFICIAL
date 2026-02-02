@@ -5,71 +5,17 @@
  *
  * Fixed bottom navigation for mobile devices.
  * 4-pillar structure: Home | Explore | Lab | You
- *
- * Design:
- * - Fixed to bottom, above safe area
- * - Gold active indicator
- * - Haptic feedback on tap (when supported)
- * - Backdrop blur for layering
- *
- * @version 1.0.0 - IA Unification (Jan 2026)
  */
 
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Compass } from 'lucide-react';
-import { HomeIcon, BeakerIcon, UserIcon, EASE_PREMIUM } from '@hive/ui';
+import { EASE_PREMIUM } from '@hive/ui';
 import { cn } from '@/lib/utils';
-
-interface NavItem {
-  id: string;
-  label: string;
-  href: string;
-  icon: React.ElementType;
-  matchPattern?: RegExp;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  {
-    id: 'home',
-    label: 'Home',
-    href: '/home',
-    icon: HomeIcon,
-    matchPattern: /^\/home(\/|$)|^\/feed(\/|$)|^\/spaces(\/|$)/,
-  },
-  {
-    id: 'explore',
-    label: 'Explore',
-    href: '/explore',
-    icon: Compass,
-    matchPattern: /^\/explore(\/|$)/,
-  },
-  {
-    id: 'lab',
-    label: 'Lab',
-    href: '/lab',
-    icon: BeakerIcon,
-    matchPattern: /^\/lab(\/|$)/,
-  },
-  {
-    id: 'you',
-    label: 'You',
-    href: '/me',
-    icon: UserIcon,
-    matchPattern: /^\/me(\/|$)|^\/profile(\/|$)|^\/u\//,
-  },
-];
+import { NAV_ITEMS, isNavItemActive } from '@/lib/navigation';
 
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-
-  const isActive = (item: NavItem) => {
-    if (item.matchPattern) {
-      return item.matchPattern.test(pathname);
-    }
-    return pathname === item.href || pathname.startsWith(item.href + '/');
-  };
 
   const handleNavClick = (href: string) => {
     // Trigger haptic feedback if available
@@ -91,7 +37,7 @@ export function BottomNav() {
       <div className="flex items-center justify-around h-16">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item);
+          const active = isNavItemActive(item, pathname);
 
           return (
             <button

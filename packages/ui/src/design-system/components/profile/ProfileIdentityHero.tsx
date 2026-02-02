@@ -44,6 +44,10 @@ export interface ProfileIdentityHeroProps {
   pendingRequestId?: string | null;
   /** Whether connection state is still loading */
   isConnectionLoading?: boolean;
+  /** Whether to show the Connect button (feature flag controlled) */
+  showConnectButton?: boolean;
+  /** Whether to show the Message button (feature flag controlled) */
+  showMessageButton?: boolean;
   onEdit?: () => void;
   onConnect?: () => Promise<void>;
   onAcceptRequest?: (requestId: string) => Promise<void>;
@@ -76,6 +80,8 @@ export function ProfileIdentityHero({
   connectionState = 'none',
   pendingRequestId,
   isConnectionLoading = false,
+  showConnectButton = true,
+  showMessageButton = true,
   onEdit,
   onConnect,
   onAcceptRequest,
@@ -240,45 +246,51 @@ export function ProfileIdentityHero({
                 </motion.button>
               ) : (
                 <>
-                  {/* Connect Button */}
-                  {!isConnectionLoading && onConnect && (
-                    <ConnectButton
-                      targetUserId={user.id}
-                      connectionState={connectionState}
-                      pendingRequestId={pendingRequestId ?? undefined}
-                      onConnect={onConnect}
-                      onAccept={onAcceptRequest}
-                      onReject={onRejectRequest}
-                      onUnfriend={onUnfriend}
-                    />
-                  )}
-                  {isConnectionLoading && (
-                    <div
-                      className="px-5 py-2.5 rounded-full text-sm font-medium animate-pulse"
-                      style={{
-                        backgroundColor: 'rgba(255,255,255,0.06)',
-                        width: 100,
-                        height: 40,
-                      }}
-                    />
+                  {/* Connect Button - controlled by feature flag */}
+                  {showConnectButton && (
+                    <>
+                      {!isConnectionLoading && onConnect && (
+                        <ConnectButton
+                          targetUserId={user.id}
+                          connectionState={connectionState}
+                          pendingRequestId={pendingRequestId ?? undefined}
+                          onConnect={onConnect}
+                          onAccept={onAcceptRequest}
+                          onReject={onRejectRequest}
+                          onUnfriend={onUnfriend}
+                        />
+                      )}
+                      {isConnectionLoading && (
+                        <div
+                          className="px-5 py-2.5 rounded-full text-sm font-medium animate-pulse"
+                          style={{
+                            backgroundColor: 'rgba(255,255,255,0.06)',
+                            width: 100,
+                            height: 40,
+                          }}
+                        />
+                      )}
+                    </>
                   )}
 
-                  {/* Message - Secondary action */}
-                  <motion.button
-                    onClick={onMessage}
-                    className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
-                    style={{
-                      backgroundColor: 'transparent',
-                      color: 'var(--text-secondary)',
-                      border: '1px solid var(--border-default)',
-                    }}
-                    whileHover={{
-                      backgroundColor: 'rgba(255,255,255,0.06)',
-                    }}
-                    whileTap={{ opacity: 0.8 }}
-                  >
-                    Message
-                  </motion.button>
+                  {/* Message - Secondary action, controlled by feature flag */}
+                  {showMessageButton && (
+                    <motion.button
+                      onClick={onMessage}
+                      className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
+                      style={{
+                        backgroundColor: 'transparent',
+                        color: 'var(--text-secondary)',
+                        border: '1px solid var(--border-default)',
+                      }}
+                      whileHover={{
+                        backgroundColor: 'rgba(255,255,255,0.06)',
+                      }}
+                      whileTap={{ opacity: 0.8 }}
+                    >
+                      Message
+                    </motion.button>
+                  )}
                 </>
               )}
             </div>

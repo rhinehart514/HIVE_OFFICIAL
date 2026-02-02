@@ -11,7 +11,6 @@ import {
 } from "@/lib/middleware";
 import { postCreationRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
-import { sseRealtimeService } from "@/lib/sse-realtime-service";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
 
@@ -271,30 +270,7 @@ export const POST = withAuthValidationAndErrors(
           updatedAt: now,
         });
 
-      try {
-        await sseRealtimeService.sendMessage({
-          type: "chat",
-          channel: `space:${spaceId}:posts`,
-          senderId: userId,
-          content: {
-            type: "post_created",
-            postId: postRef.id,
-            content: postData.content,
-            authorId: userId,
-          },
-          metadata: {
-            timestamp: now.toISOString(),
-            priority: "normal",
-            requiresAck: false,
-            retryCount: 0,
-          },
-        });
-      } catch (broadcastError) {
-        logger.warn("Failed to broadcast new post via SSE", {
-          broadcastError,
-          spaceId,
-        });
-      }
+      // Real-time updates handled by Firestore listeners on client
 
       return respond.created({
         post: {

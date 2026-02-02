@@ -30,7 +30,7 @@ export const POST = withAuthAndErrors(
     }
 
     // Check leader permission
-    const permCheck = await checkSpacePermission(spaceId, userId, 'leader');
+    const permCheck = await checkSpacePermission(spaceId, userId, 'admin');
     if (!permCheck.hasPermission) {
       return respond.error("Only space leaders can toggle automations", "FORBIDDEN", { status: 403 });
     }

@@ -86,7 +86,7 @@ export function SpaceSidebar({
       </section>
 
       {/* Tools Section (if provided) */}
-      {tools && tools.tools.length > 0 && (
+      {tools && (tools.tools.length > 0 || tools.isLeader) && (
         <section>
           <h3 className={cn(spaceTypographyClasses.sectionLabel, 'mb-3 px-1')}>
             Tools

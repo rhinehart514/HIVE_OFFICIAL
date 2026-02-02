@@ -5,8 +5,6 @@ import { HivePlatformErrorHandler } from '@/lib/error-resilience-system';
 // Mock the error resilience system
 vi.mock('@/lib/error-resilience-system');
 vi.mock('@/lib/platform-wide-search');
-vi.mock('@/lib/cross-platform-notifications');
-vi.mock('@/lib/platform-integration');
 
 describe('ResilientHiveApiClient', () => {
   let client: ResilientHiveApiClient;

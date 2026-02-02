@@ -77,7 +77,7 @@ export const GET = withAuthAndErrors(async (
   const { spaceId, webhookId } = await params;
 
   // Check leader permission
-  const permCheck = await checkSpacePermission(spaceId, userId, "leader");
+  const permCheck = await checkSpacePermission(spaceId, userId, "admin");
   if (!permCheck.hasPermission) {
     const code = permCheck.code === "NOT_FOUND" ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
     const status = permCheck.code === "NOT_FOUND" ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
@@ -169,7 +169,7 @@ export const PATCH = withAuthValidationAndErrors(
     const { spaceId, webhookId } = await params;
 
     // Check leader permission
-    const permCheck = await checkSpacePermission(spaceId, userId, "leader");
+    const permCheck = await checkSpacePermission(spaceId, userId, "admin");
     if (!permCheck.hasPermission) {
       const code = permCheck.code === "NOT_FOUND" ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       const status = permCheck.code === "NOT_FOUND" ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
@@ -324,7 +324,7 @@ export const DELETE = withAuthAndErrors(async (
   const { spaceId, webhookId } = await params;
 
   // Check leader permission
-  const permCheck = await checkSpacePermission(spaceId, userId, "leader");
+  const permCheck = await checkSpacePermission(spaceId, userId, "admin");
   if (!permCheck.hasPermission) {
     const code = permCheck.code === "NOT_FOUND" ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
     const status = permCheck.code === "NOT_FOUND" ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;

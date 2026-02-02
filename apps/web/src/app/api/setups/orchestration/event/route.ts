@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Execute matching rules via the executor service
-    const result = executor.executeOnToolEvent(
+    const result = await executor.executeOnToolEvent(
       deployment,
       slotId,
       eventType,

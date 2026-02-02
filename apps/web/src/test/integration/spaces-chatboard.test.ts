@@ -34,9 +34,6 @@ vi.mock('firebase-admin/auth', () => ({
   })
 }));
 
-// Mock SSE to be no-op
-vi.mock('@/lib/sse-realtime-service', () => ({ sseRealtimeService: { sendMessage: vi.fn(async () => {}) } }));
-
 // Mock space permission middleware
 vi.mock('@/lib/space-permission-middleware', () => ({
   checkSpacePermission: vi.fn(async (spaceId: string, userId: string, requiredRole: string) => {

@@ -106,7 +106,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="px-3 py-1.5 rounded-full text-[13px] font-medium bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/20"
+            className="px-3 py-1.5 rounded-full text-[13px] font-medium bg-gold-500/10 text-gold-500 border border-gold-500/20"
           >
             Class of {entry.data.graduationYear}
           </motion.div>
@@ -134,7 +134,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.5, ease: EASE_PREMIUM }}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold-500/60" />
                   <span className="text-[11px] uppercase tracking-[0.3em] text-white/30">
                     Timeline
                   </span>
@@ -169,7 +169,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                         'px-8 py-5 rounded-xl text-xl font-medium transition-all duration-300',
                         'border-2',
                         isSelected
-                          ? 'bg-[#FFD700]/10 border-[#FFD700]/60 text-[#FFD700]'
+                          ? 'bg-gold-500/10 border-gold-500/60 text-gold-500'
                           : 'bg-white/[0.02] border-white/10 text-white/50 hover:border-white/25 hover:text-white/70 hover:bg-white/[0.04]'
                       )}
                     >
@@ -203,7 +203,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                     'group px-8 py-4 rounded-xl font-medium transition-all duration-300',
                     'flex items-center gap-2',
                     entry.data.graduationYear !== null
-                      ? 'bg-white text-[#030303] hover:bg-white/90'
+                      ? 'bg-white text-neutral-950 hover:bg-white/90'
                       : 'bg-white/10 text-white/30 cursor-not-allowed'
                   )}
                 >
@@ -235,7 +235,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.5, ease: EASE_PREMIUM }}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold-500/60" />
                   <span className="text-[11px] uppercase tracking-[0.3em] text-white/30">
                     Craft
                   </span>
@@ -269,7 +269,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                       'flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-300',
                       'bg-white/[0.03] border-2',
                       majorFocused || entry.data.major
-                        ? 'border-[#FFD700]/40 bg-[#FFD700]/[0.02]'
+                        ? 'border-gold-500/40 bg-gold-500/[0.02]'
                         : 'border-white/10'
                     )}
                   >
@@ -285,7 +285,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                       className="flex-1 bg-transparent text-lg text-white placeholder:text-white/25 focus:outline-none"
                     />
                     {entry.data.major && (
-                      <Check className="w-5 h-5 text-[#FFD700]" />
+                      <Check className="w-5 h-5 text-gold-500" />
                     )}
                   </div>
 
@@ -359,14 +359,14 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                     'group px-8 py-4 rounded-xl font-medium transition-all duration-300',
                     'flex items-center gap-2',
                     entry.data.major
-                      ? 'bg-white text-[#030303] hover:bg-white/90'
+                      ? 'bg-white text-neutral-950 hover:bg-white/90'
                       : 'bg-white/10 text-white/50 hover:bg-white/15'
                   )}
                 >
                   <span>{entry.data.major ? 'Continue' : 'Skip for now'}</span>
                   <ArrowRight className={cn(
                     'w-4 h-4 transition-transform',
-                    entry.data.major ? 'text-[#030303] group-hover:translate-x-0.5' : 'text-white/30'
+                    entry.data.major ? 'text-neutral-950 group-hover:translate-x-0.5' : 'text-white/30'
                   )} />
                 </button>
               </motion.div>

@@ -255,6 +255,7 @@ export default function BuilderDashboard() {
   const [statusText, setStatusText] = useState('');
   const [titleRevealed, setTitleRevealed] = useState(false);
   const [creatingFromTemplate, setCreatingFromTemplate] = useState(false);
+  const [showAllTools, setShowAllTools] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
@@ -441,7 +442,7 @@ export default function BuilderDashboard() {
                 Your Tools
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {userTools.slice(0, 7).map((tool, index) => (
+                {(showAllTools ? userTools : userTools.slice(0, 7)).map((tool, index) => (
                   <ToolCard
                     key={tool.id}
                     tool={tool}
@@ -449,19 +450,19 @@ export default function BuilderDashboard() {
                     index={index}
                   />
                 ))}
-                <NewToolCard onClick={handleNewTool} index={userTools.length} />
+                <NewToolCard onClick={handleNewTool} index={showAllTools ? userTools.length : Math.min(userTools.length, 7)} />
               </div>
 
-              {/* View all link if more than 7 tools */}
+              {/* View all / collapse link if more than 7 tools */}
               {userTools.length > 7 && (
                 <motion.button
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  onClick={() => router.push('/lab/library')}
+                  onClick={() => setShowAllTools(!showAllTools)}
                   className="mt-3 text-white/40 hover:text-white/60 text-xs transition-colors"
                 >
-                  View all {userTools.length} tools →
+                  {showAllTools ? 'Show less' : `View all ${userTools.length} tools →`}
                 </motion.button>
               )}
             </motion.div>

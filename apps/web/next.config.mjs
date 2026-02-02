@@ -48,6 +48,37 @@ const nextConfig = {
         destination: '/lab/:path*',
         permanent: true,
       },
+      // Legacy route redirects (Jan 2026 IA unification)
+      {
+        source: '/hivelab',
+        destination: '/lab',
+        permanent: true,
+      },
+      {
+        source: '/hivelab/:path*',
+        destination: '/lab/:path*',
+        permanent: true,
+      },
+      {
+        source: '/calendar',
+        destination: '/me/calendar',
+        permanent: true,
+      },
+      {
+        source: '/notifications',
+        destination: '/me/notifications',
+        permanent: true,
+      },
+      {
+        source: '/settings',
+        destination: '/me/settings',
+        permanent: true,
+      },
+      {
+        source: '/settings/:path*',
+        destination: '/me/settings/:path*',
+        permanent: true,
+      },
     ];
   },
   webpack: (config) => {

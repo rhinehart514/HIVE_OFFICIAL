@@ -414,10 +414,14 @@ export const featureFlagService = new FeatureFlagService();
 export const HIVE_FEATURE_FLAGS = {
   // Core Features
   SPACES_V2: 'spaces_v2',
-  TOOLS_MARKETPLACE: 'tools_marketplace', 
+  TOOLS_MARKETPLACE: 'tools_marketplace',
   CALENDAR_INTEGRATION: 'calendar_integration',
   REAL_TIME_CHAT: 'real_time_chat',
   PROFILE_ANALYTICS: 'profile_analytics',
+
+  // Social Features
+  ENABLE_DMS: 'enable_dms',                 // Direct messaging between users
+  ENABLE_CONNECTIONS: 'enable_connections', // Friend/connection requests
   
   // Experimental Features
   AI_RECOMMENDATIONS: 'ai_recommendations',
@@ -593,6 +597,34 @@ export function logScalingStatus(): void {
     redisConfigured: status.redisConfigured,
     allScalingEnabled: status.allScalingEnabled,
   });
+}
+
+// Social feature flag helpers
+export const SOCIAL_FLAGS = {
+  DMS: HIVE_FEATURE_FLAGS.ENABLE_DMS,
+  CONNECTIONS: HIVE_FEATURE_FLAGS.ENABLE_CONNECTIONS,
+} as const;
+
+export type SocialFeatureFlag = typeof SOCIAL_FLAGS[keyof typeof SOCIAL_FLAGS];
+
+/**
+ * Check if DMs are enabled for a user
+ */
+export async function isDMsEnabled(
+  userContext: UserFeatureContext
+): Promise<boolean> {
+  const result = await featureFlagService.isFeatureEnabled(HIVE_FEATURE_FLAGS.ENABLE_DMS, userContext);
+  return result.enabled;
+}
+
+/**
+ * Check if Connections are enabled for a user
+ */
+export async function isConnectionsEnabled(
+  userContext: UserFeatureContext
+): Promise<boolean> {
+  const result = await featureFlagService.isFeatureEnabled(HIVE_FEATURE_FLAGS.ENABLE_CONNECTIONS, userContext);
+  return result.enabled;
 }
 
 // HiveLab visibility helpers

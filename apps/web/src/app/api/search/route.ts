@@ -36,7 +36,7 @@ interface SearchResult {
   relevanceScore: number;
 }
 
-type SearchCategory = 'spaces' | 'tools' | 'people' | 'posts' | 'all';
+type SearchCategory = 'spaces' | 'tools' | 'people' | 'posts' | 'events' | 'all';
 
 /**
  * Search spaces collection
@@ -319,6 +319,99 @@ async function searchPosts(
 }
 
 /**
+ * Search events collection
+ */
+async function searchEvents(
+  query: string,
+  campusId: string,
+  limit: number
+): Promise<SearchResult[]> {
+  const results: SearchResult[] = [];
+  const lowercaseQuery = query.toLowerCase();
+
+  try {
+    // Search by title prefix
+    const titleSnapshot = await dbAdmin
+      .collection('events')
+      .where('campusId', '==', campusId)
+      .where('title_lowercase', '>=', lowercaseQuery)
+      .where('title_lowercase', '<=', lowercaseQuery + '\uf8ff')
+      .limit(limit)
+      .get();
+
+    for (const doc of titleSnapshot.docs) {
+      const data = doc.data();
+      // Only include future or ongoing events
+      const startTime = data.startTime?.toDate?.() || new Date(data.startTime);
+      const endTime = data.endTime?.toDate?.() || new Date(data.endTime);
+      const now = new Date();
+      if (endTime < now) continue;
+
+      results.push({
+        id: doc.id,
+        title: data.title || 'Unnamed Event',
+        description: data.description,
+        type: 'event',
+        category: 'events',
+        url: data.spaceId ? `/s/${data.spaceId}/events/${doc.id}` : `/events/${doc.id}`,
+        metadata: {
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          spaceId: data.spaceId,
+          spaceName: data.spaceName,
+          location: data.location,
+          attendeeCount: data.attendeeCount || 0,
+        },
+        relevanceScore: 100,
+      });
+    }
+
+    // Also search by location if we have room
+    if (results.length < limit) {
+      const locationSnapshot = await dbAdmin
+        .collection('events')
+        .where('campusId', '==', campusId)
+        .where('location_lowercase', '>=', lowercaseQuery)
+        .where('location_lowercase', '<=', lowercaseQuery + '\uf8ff')
+        .limit(limit - results.length)
+        .get();
+
+      for (const doc of locationSnapshot.docs) {
+        if (results.some(r => r.id === doc.id)) continue;
+
+        const data = doc.data();
+        const startTime = data.startTime?.toDate?.() || new Date(data.startTime);
+        const endTime = data.endTime?.toDate?.() || new Date(data.endTime);
+        const now = new Date();
+        if (endTime < now) continue;
+
+        results.push({
+          id: doc.id,
+          title: data.title || 'Unnamed Event',
+          description: data.description,
+          type: 'event',
+          category: 'events',
+          url: data.spaceId ? `/s/${data.spaceId}/events/${doc.id}` : `/events/${doc.id}`,
+          metadata: {
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            spaceId: data.spaceId,
+            spaceName: data.spaceName,
+            location: data.location,
+            attendeeCount: data.attendeeCount || 0,
+          },
+          relevanceScore: 80, // Location match
+        });
+      }
+    }
+  } catch (error) {
+    logger.error('Error searching events', { error: String(error), query });
+  }
+
+  return results;
+}
+
+/**
  * Search tools collection
  */
 async function searchTools(
@@ -488,6 +581,9 @@ export async function GET(request: NextRequest) {
     if (category === 'all' || category === 'tools') {
       searchPromises.push(searchTools(query, campusId, limit));
     }
+    if (category === 'all' || category === 'events') {
+      searchPromises.push(searchEvents(query, campusId, limit));
+    }
 
     // Execute all searches in parallel
     const searchResults = await Promise.all(searchPromises);
@@ -516,7 +612,7 @@ export async function GET(request: NextRequest) {
       metadata: {
         searchDurationMs: searchDuration,
         searchedCategories: category === 'all'
-          ? ['spaces', 'people', 'posts', 'tools']
+          ? ['spaces', 'people', 'events', 'posts', 'tools']
           : [category]
       },
       suggestions: query.length >= 3 ? generateSuggestions(query, finalResults) : []
@@ -544,6 +640,7 @@ function generateSuggestions(query: string, results: SearchResult[]): string[] {
   if (types.size > 1) {
     if (types.has('space')) suggestions.push(`${query} in spaces`);
     if (types.has('person')) suggestions.push(`${query} people`);
+    if (types.has('event')) suggestions.push(`${query} events`);
     if (types.has('tool')) suggestions.push(`${query} tools`);
   }
 

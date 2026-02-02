@@ -34,6 +34,7 @@ import {
   PlacedToolDeactivatedEvent,
   PlacedToolsReorderedEvent,
   PlacedToolStateUpdatedEvent,
+  SpaceLifecycleChangedEvent,
   SpaceStatusChangedEvent,
   SpaceWentLiveEvent,
   type SpacePublishStatus,
@@ -97,6 +98,44 @@ export type ActivationStatus = 'ghost' | 'gathering' | 'open';
  * Once reached, chat and full community features unlock
  */
 export const DEFAULT_ACTIVATION_THRESHOLD = 10;
+
+/**
+ * Unified space lifecycle state (ADR-007)
+ * Consolidates status, publishStatus, and activationStatus into single enum
+ *
+ * State machine transitions:
+ * SEEDED → CLAIMED (claim)
+ * CLAIMED → PENDING | LIVE (submit/approve)
+ * PENDING → LIVE | CLAIMED (approve/reject)
+ * LIVE → SUSPENDED | ARCHIVED
+ * SUSPENDED → LIVE | ARCHIVED
+ */
+export enum SpaceLifecycleState {
+  /** Created by system (seeded from UBLinked), unclaimed */
+  SEEDED = 'seeded',
+  /** Owner assigned, setting up (stealth mode) */
+  CLAIMED = 'claimed',
+  /** Awaiting quorum activation or approval */
+  PENDING = 'pending',
+  /** Active, visible, fully operational */
+  LIVE = 'live',
+  /** Temporarily disabled by admin action */
+  SUSPENDED = 'suspended',
+  /** Permanently inactive, archived */
+  ARCHIVED = 'archived',
+}
+
+/**
+ * Valid state transitions map
+ */
+const VALID_LIFECYCLE_TRANSITIONS: Record<SpaceLifecycleState, SpaceLifecycleState[]> = {
+  [SpaceLifecycleState.SEEDED]: [SpaceLifecycleState.CLAIMED],
+  [SpaceLifecycleState.CLAIMED]: [SpaceLifecycleState.PENDING, SpaceLifecycleState.LIVE],
+  [SpaceLifecycleState.PENDING]: [SpaceLifecycleState.LIVE, SpaceLifecycleState.CLAIMED],
+  [SpaceLifecycleState.LIVE]: [SpaceLifecycleState.SUSPENDED, SpaceLifecycleState.ARCHIVED],
+  [SpaceLifecycleState.SUSPENDED]: [SpaceLifecycleState.LIVE, SpaceLifecycleState.ARCHIVED],
+  [SpaceLifecycleState.ARCHIVED]: [], // Terminal state
+};
 
 /**
  * Get default governance model based on space type
@@ -247,8 +286,15 @@ interface EnhancedSpaceProps {
    * - stealth: Space is being set up, only visible to leaders
    * - live: Space is publicly visible and active
    * - rejected: Leader request was rejected
+   * @deprecated Use lifecycleState instead
    */
   publishStatus: SpacePublishStatus;
+  /**
+   * Unified lifecycle state (ADR-007)
+   * Consolidates status, publishStatus, activationStatus into single state machine
+   * @see SpaceLifecycleState
+   */
+  lifecycleState?: SpaceLifecycleState;
   /** When the space went live (stealth → live) */
   wentLiveAt?: Date;
   /**
@@ -640,6 +686,127 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
    */
   get publishStatus(): SpacePublishStatus {
     return this.props.publishStatus;
+  }
+
+  // ============================================================
+  // Lifecycle State Machine (ADR-007)
+  // ============================================================
+
+  /**
+   * Get the unified lifecycle state
+   * Computes from legacy fields if not explicitly set
+   */
+  get lifecycleState(): SpaceLifecycleState {
+    // If explicitly set, use it
+    if (this.props.lifecycleState) {
+      return this.props.lifecycleState;
+    }
+    // Otherwise, compute from legacy fields
+    return this.computeLifecycleState();
+  }
+
+  /**
+   * Compute lifecycle state from legacy status fields
+   * Used during migration and for backwards compatibility
+   */
+  private computeLifecycleState(): SpaceLifecycleState {
+    // Archived check (isActive === false or explicit status)
+    if (!this.props.isActive) {
+      return SpaceLifecycleState.ARCHIVED;
+    }
+
+    // Suspended check would need an explicit flag
+    // For now, we don't have a suspended status in legacy system
+
+    // Live check: published and active
+    if (this.props.publishStatus === 'live' && this.props.activationStatus === 'open') {
+      return SpaceLifecycleState.LIVE;
+    }
+
+    // Pending check: gathering members or waiting for approval
+    if (this.props.activationStatus === 'gathering') {
+      return SpaceLifecycleState.PENDING;
+    }
+
+    // Claimed check: has owner but not yet live
+    if (this.props.status === 'claimed' || this.props.createdBy) {
+      return SpaceLifecycleState.CLAIMED;
+    }
+
+    // Default: seeded (pre-seeded, unclaimed)
+    return SpaceLifecycleState.SEEDED;
+  }
+
+  /**
+   * Check if a transition to the target state is valid
+   */
+  canTransitionTo(targetState: SpaceLifecycleState): boolean {
+    const currentState = this.lifecycleState;
+    const validTargets = VALID_LIFECYCLE_TRANSITIONS[currentState];
+    return validTargets.includes(targetState);
+  }
+
+  /**
+   * Transition to a new lifecycle state
+   * @throws Error if transition is invalid
+   */
+  transitionTo(targetState: SpaceLifecycleState): Result<void> {
+    if (!this.canTransitionTo(targetState)) {
+      return Result.fail(
+        `Invalid lifecycle transition: ${this.lifecycleState} → ${targetState}`
+      );
+    }
+
+    const previousState = this.lifecycleState;
+    this.props.lifecycleState = targetState;
+
+    // Sync legacy fields for backwards compatibility
+    this.syncLegacyFieldsFromLifecycle(targetState);
+
+    // Add domain event for state change
+    this.addDomainEvent(
+      new SpaceLifecycleChangedEvent(
+        this.spaceId.value,
+        previousState,
+        targetState,
+        new Date()
+      )
+    );
+
+    return Result.ok();
+  }
+
+  /**
+   * Sync legacy status fields when lifecycle state changes
+   * Ensures backwards compatibility with existing code
+   */
+  private syncLegacyFieldsFromLifecycle(state: SpaceLifecycleState): void {
+    switch (state) {
+      case SpaceLifecycleState.SEEDED:
+        this.props.status = 'unclaimed';
+        this.props.publishStatus = 'stealth';
+        this.props.activationStatus = 'ghost';
+        break;
+      case SpaceLifecycleState.CLAIMED:
+        this.props.status = 'claimed';
+        this.props.publishStatus = 'stealth';
+        break;
+      case SpaceLifecycleState.PENDING:
+        this.props.activationStatus = 'gathering';
+        break;
+      case SpaceLifecycleState.LIVE:
+        this.props.publishStatus = 'live';
+        this.props.activationStatus = 'open';
+        this.props.isActive = true;
+        break;
+      case SpaceLifecycleState.SUSPENDED:
+        // Keep other fields, just mark as inactive temporarily
+        // Could add explicit suspended flag in future
+        break;
+      case SpaceLifecycleState.ARCHIVED:
+        this.props.isActive = false;
+        break;
+    }
   }
 
   /**

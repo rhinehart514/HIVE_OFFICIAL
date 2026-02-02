@@ -9,7 +9,7 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { notifyEventRsvp } from '@/lib/notification-service';
+import { notifyEventRsvp, notifyRsvpConfirmation } from '@/lib/notification-service';
 import { getServerSpaceRepository } from '@hive/core/server';
 
 const RSVPSchema = z.object({
@@ -189,7 +189,33 @@ export const POST = withAuthValidationAndErrors(
           });
         } catch (notifyError) {
           // Don't fail the RSVP if notification fails
-          logger.warn('Failed to send RSVP notification', {
+          logger.warn('Failed to send RSVP notification to organizer', {
+            error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+            eventId,
+            spaceId,
+          });
+        }
+      }
+
+      // Send RSVP confirmation to attendee (only for 'going' or 'maybe')
+      if (body.status !== 'not_going') {
+        try {
+          const spaceName = validation.space?.name?.value || 'Space';
+          const eventStart = load.eventData.startTime?.toDate?.()
+            || (load.eventData.startTime ? new Date(load.eventData.startTime) : undefined);
+
+          await notifyRsvpConfirmation({
+            attendeeId: userId,
+            eventId,
+            eventTitle: load.eventData.title || 'Event',
+            spaceId,
+            spaceName,
+            rsvpStatus: body.status === 'going' ? 'going' : 'maybe',
+            eventStart,
+          });
+        } catch (notifyError) {
+          // Don't fail the RSVP if confirmation notification fails
+          logger.warn('Failed to send RSVP confirmation to attendee', {
             error: notifyError instanceof Error ? notifyError.message : String(notifyError),
             eventId,
             spaceId,

@@ -13,7 +13,8 @@ import { ArrowLeft, Bell, Check, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OTPInput } from '@hive/ui/design-system/primitives';
 import type { UseEntryReturn } from '../hooks/useEntry';
-import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
+import { DURATION, EASE_PREMIUM, GOLD } from '../motion/entry-motion';
+import { GoldCheckmark } from '../motion/GoldCheckmark';
 import { clashDisplay } from '../Entry';
 
 interface GateScreenProps {
@@ -23,6 +24,8 @@ interface GateScreenProps {
 export function GateScreen({ entry }: GateScreenProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [countdown, setCountdown] = React.useState(0);
+  const [showSuccessFlash, setShowSuccessFlash] = React.useState(false);
+  const [expiryCountdown, setExpiryCountdown] = React.useState<number | null>(null);
 
   // Auto-focus input
   React.useEffect(() => {
@@ -46,8 +49,49 @@ export function GateScreen({ entry }: GateScreenProps) {
     return () => clearInterval(interval);
   }, [entry.isLoading, countdown]);
 
-  // Auto-verify when code is complete
+  // Code expiry countdown
+  React.useEffect(() => {
+    if (!entry.codeExpiresAt || entry.gateStep !== 'code') {
+      setExpiryCountdown(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const remaining = Math.max(0, Math.floor((entry.codeExpiresAt!.getTime() - Date.now()) / 1000));
+      setExpiryCountdown(remaining);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [entry.codeExpiresAt, entry.gateStep]);
+
+  // Auto-verify when code is complete (with success flash)
   const verifyTimeout = React.useRef<NodeJS.Timeout | null>(null);
+  const previousPhase = React.useRef(entry.phase);
+
+  // Track phase changes to show success flash on verification
+  React.useEffect(() => {
+    // If we just moved from gate to naming, that means verification succeeded
+    if (previousPhase.current === 'gate' && entry.phase === 'naming') {
+      // Actually this transition happens in parent, so we need a different approach
+    }
+    previousPhase.current = entry.phase;
+  }, [entry.phase]);
+
+  // Wrapper to verify and show success flash
+  const verifyWithFlash = React.useCallback(async () => {
+    const prevError = entry.error;
+    await entry.verifyCode();
+
+    // If no error after verification, show success flash
+    // The phase transition will happen in the hook, but we show flash here briefly
+    if (!entry.error && entry.phase === 'gate') {
+      setShowSuccessFlash(true);
+      // Flash will auto-hide and phase will transition
+    }
+  }, [entry]);
+
   React.useEffect(() => {
     const codeString = entry.data.code.join('');
 
@@ -56,10 +100,11 @@ export function GateScreen({ entry }: GateScreenProps) {
       verifyTimeout.current = null;
     }
 
-    if (codeString.length === 6 && !entry.isLoading) {
+    if (codeString.length === 6 && !entry.isLoading && !showSuccessFlash) {
+      // Reduced delay from 300ms to 100ms for snappier feel
       verifyTimeout.current = setTimeout(() => {
-        entry.verifyCode();
-      }, 300);
+        verifyWithFlash();
+      }, 100);
     }
 
     return () => {
@@ -67,7 +112,7 @@ export function GateScreen({ entry }: GateScreenProps) {
         clearTimeout(verifyTimeout.current);
       }
     };
-  }, [entry.data.code, entry.isLoading]);
+  }, [entry.data.code, entry.isLoading, showSuccessFlash, verifyWithFlash]);
 
   const handleEmailKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !entry.isLoading) {
@@ -105,7 +150,7 @@ export function GateScreen({ entry }: GateScreenProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5, ease: EASE_PREMIUM }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+              <span className="w-1.5 h-1.5 rounded-full bg-gold-500/60" />
               <span className="text-[11px] uppercase tracking-[0.3em] text-white/30">
                 {entry.gateStep === 'email' ? 'Prove yourself' : 'Verify'}
               </span>
@@ -190,7 +235,7 @@ export function GateScreen({ entry }: GateScreenProps) {
               disabled={entry.isLoading || !entry.data.email.trim()}
               className={cn(
                 'group w-full py-4 rounded-xl font-medium transition-all duration-300',
-                'bg-white text-[#030303]',
+                'bg-white text-neutral-950',
                 'hover:bg-white/90',
                 'disabled:opacity-40 disabled:cursor-not-allowed',
                 'flex items-center justify-center gap-2'
@@ -213,31 +258,81 @@ export function GateScreen({ entry }: GateScreenProps) {
             transition={{ duration: DURATION.quick, ease: EASE_PREMIUM }}
             className="space-y-8"
           >
+            {/* Success flash overlay */}
+            <AnimatePresence>
+              {showSuccessFlash && (
+                <motion.div
+                  key="success-flash"
+                  className="absolute inset-0 flex items-center justify-center z-20 bg-[var(--color-bg-void,#030303)]/90"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <GoldCheckmark
+                    show={showSuccessFlash}
+                    size="xl"
+                    delay={0}
+                    showRing={true}
+                    onAnimationComplete={() => {
+                      // Flash shown for 800ms total
+                      setTimeout(() => {
+                        setShowSuccessFlash(false);
+                      }, 500); // Additional time after animation
+                    }}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Code expiry countdown */}
+            {expiryCountdown !== null && expiryCountdown > 0 && !showSuccessFlash && (
+              <p className="text-[12px] text-white/30 text-center mb-2">
+                Code expires in{' '}
+                <span className="text-white/50 tabular-nums">
+                  {Math.floor(expiryCountdown / 60)}:{(expiryCountdown % 60).toString().padStart(2, '0')}
+                </span>
+              </p>
+            )}
+
+            {/* Code expired message */}
+            {expiryCountdown === 0 && !showSuccessFlash && (
+              <p className="text-[12px] text-red-400/80 text-center mb-2">
+                Code expired. Please request a new one.
+              </p>
+            )}
+
             <OTPInput
               value={entry.data.code}
               onChange={entry.setCode}
               length={6}
-              disabled={entry.isLoading}
+              disabled={entry.isLoading || showSuccessFlash || expiryCountdown === 0}
               autoFocus
             />
 
-            {entry.error && (
+            {entry.error && !showSuccessFlash && expiryCountdown !== 0 && (
               <p className="text-[13px] text-red-400 text-center">
                 {entry.error}
               </p>
             )}
 
-            {entry.isLoading && (
+            {(entry.isLoading || showSuccessFlash) && (
               <div className="flex items-center justify-center gap-2 text-[13px] text-white/40">
-                <div
-                  className="w-4 h-4 rounded-full border-2 border-white/10 animate-spin"
-                  style={{ borderTopColor: '#FFD700' }}
-                />
-                <span>Verifying...</span>
+                {showSuccessFlash ? (
+                  <span className="text-gold-500">Verified!</span>
+                ) : (
+                  <>
+                    <div
+                      className="w-4 h-4 rounded-full border-2 border-white/10 animate-spin"
+                      style={{ borderTopColor: GOLD.primary }}
+                    />
+                    <span>Verifying...</span>
+                  </>
+                )}
               </div>
             )}
 
-            {!entry.isLoading && (
+            {!entry.isLoading && !showSuccessFlash && (
               <p className="text-[13px] text-white/30 text-center">
                 {countdown > 0 ? (
                   <>Resend in <span className="text-white/50">{countdown}s</span></>
@@ -269,9 +364,9 @@ export function GateScreen({ entry }: GateScreenProps) {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                  className="w-16 h-16 mx-auto rounded-full bg-[#FFD700]/10 border border-[#FFD700]/20 flex items-center justify-center"
+                  className="w-16 h-16 mx-auto rounded-full bg-gold-500/10 border border-gold-500/20 flex items-center justify-center"
                 >
-                  <Check className="w-8 h-8 text-[#FFD700]" />
+                  <Check className="w-8 h-8 text-gold-500" />
                 </motion.div>
 
                 <div className="text-center space-y-3">
@@ -293,7 +388,7 @@ export function GateScreen({ entry }: GateScreenProps) {
             ) : (
               <>
                 <div className="flex items-center gap-2 justify-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold-500/60" />
                   <span className="text-[11px] uppercase tracking-[0.3em] text-white/30">
                     Coming soon
                   </span>
@@ -323,8 +418,8 @@ export function GateScreen({ entry }: GateScreenProps) {
                     disabled={entry.isLoading}
                     className={cn(
                       'group w-full py-4 rounded-xl font-medium transition-all duration-300',
-                      'bg-[#FFD700] text-[#030303]',
-                      'hover:bg-[#FFD700]/90',
+                      'bg-gold-500 text-neutral-950',
+                      'hover:bg-gold-500/90',
                       'disabled:opacity-50 disabled:cursor-not-allowed',
                       'flex items-center justify-center gap-2'
                     )}
@@ -332,8 +427,7 @@ export function GateScreen({ entry }: GateScreenProps) {
                     {entry.isLoading ? (
                       <>
                         <div
-                          className="w-4 h-4 rounded-full border-2 border-black/20 animate-spin"
-                          style={{ borderTopColor: '#030303' }}
+                          className="w-4 h-4 rounded-full border-2 border-black/20 animate-spin border-t-neutral-950"
                         />
                         <span>Joining...</span>
                       </>

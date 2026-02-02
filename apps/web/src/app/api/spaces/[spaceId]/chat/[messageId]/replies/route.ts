@@ -34,7 +34,7 @@ const SendReplySchema = z.object({
  * Create permission check callback for SpaceChatService
  */
 function createPermissionChecker(): CheckPermissionFn {
-  return async (userId: string, spaceId: string, requiredRole: 'member' | 'leader' | 'owner' | 'read') => {
+  return async (userId: string, spaceId: string, requiredRole: 'member' | 'admin' | 'owner' | 'read') => {
     if (requiredRole === 'read') {
       const memberCheck = await checkSpacePermission(spaceId, userId, 'member');
       if (memberCheck.hasPermission) {

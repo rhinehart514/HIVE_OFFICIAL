@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@hive/ui";
 import { CompactModeSwitcher } from "./ModeSwitcher";
@@ -54,8 +56,6 @@ const Crown = TrophyIcon;
 const HeartPulse = HeartIcon;
 
 interface AdminSidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
   pendingCounts?: {
     builderRequests: number;
     flaggedContent: number;
@@ -73,12 +73,14 @@ const navigationItems = [
     id: "overview",
     label: "Overview",
     icon: LayoutDashboard,
+    href: "/dashboard",
     description: "Platform overview and key metrics",
   },
   {
     id: "users",
     label: "Users",
     icon: Users,
+    href: "/users",
     description: "User management and search",
     badgeKey: "userReports" as const,
   },
@@ -86,18 +88,21 @@ const navigationItems = [
     id: "spaces",
     label: "Spaces",
     icon: Hash,
+    href: "/spaces",
     description: "Space management and configuration",
   },
   {
     id: "schools",
     label: "Schools",
     icon: GraduationCap,
+    href: "/schools",
     description: "Multi-campus school configuration",
   },
   {
     id: "content",
-    label: "Content",
+    label: "Moderation",
     icon: FileText,
+    href: "/moderation",
     description: "Content moderation and flags",
     badgeKey: "flaggedContent" as const,
   },
@@ -105,6 +110,7 @@ const navigationItems = [
     id: "builders",
     label: "HiveLab",
     icon: Wrench,
+    href: "/builder-requests",
     description: "Builder approval queue",
     badgeKey: "builderRequests" as const,
   },
@@ -112,18 +118,21 @@ const navigationItems = [
     id: "analytics",
     label: "Analytics",
     icon: BarChart3,
+    href: "/analytics",
     description: "Platform analytics and insights",
   },
   {
     id: "flags",
     label: "Flags",
     icon: Flag,
+    href: "/flags",
     description: "Feature flag management",
   },
   {
     id: "system",
     label: "System",
     icon: Settings,
+    href: "/system",
     description: "System settings and configuration",
   },
 ];
@@ -133,6 +142,7 @@ const crossSliceItems = [
     id: "claims",
     label: "Leader Claims",
     icon: Crown,
+    href: "/spaces/claims",
     description: "Leader verification queue",
     badgeKey: "pendingClaims" as const,
   },
@@ -140,24 +150,28 @@ const crossSliceItems = [
     id: "leaderHealth",
     label: "Leader Health",
     icon: HeartPulse,
+    href: "/leader-health",
     description: "Leader activation and health metrics",
   },
   {
     id: "spaceHealth",
     label: "Space Health",
     icon: Rocket,
+    href: "/spaces/health",
     description: "Launch readiness and space metrics",
   },
   {
     id: "toolReview",
     label: "Tool Review",
     icon: Layers,
+    href: "/tool-review",
     description: "HiveLab tool approval queue",
   },
   {
     id: "onboardingFunnel",
     label: "Onboarding",
     icon: UserPlus,
+    href: "/onboarding",
     description: "Onboarding funnel analytics",
   },
 ];
@@ -167,6 +181,7 @@ const secondaryItems = [
     id: "alerts",
     label: "Alerts",
     icon: Bell,
+    href: "/system/alerts",
     description: "Alert configuration",
     badgeKey: "alerts" as const,
   },
@@ -174,34 +189,43 @@ const secondaryItems = [
     id: "health",
     label: "Health",
     icon: Activity,
+    href: "/system/health",
     description: "System health monitoring",
   },
   {
     id: "logs",
     label: "Logs",
     icon: ScrollText,
+    href: "/system/logs",
     description: "Activity logs and audit trail",
   },
   {
     id: "security",
     label: "Security",
     icon: Shield,
+    href: "/security",
     description: "Security settings",
   },
 ];
 
 export function AdminSidebar({
-  activeTab,
-  onTabChange,
   pendingCounts,
   currentMode = "operations",
   onModeChange,
 }: AdminSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const pathname = usePathname();
 
   const getBadgeCount = (key?: keyof NonNullable<typeof pendingCounts>) => {
     if (!key || !pendingCounts) return 0;
     return pendingCounts[key] || 0;
+  };
+
+  const isActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard" || pathname === "/";
+    }
+    return pathname === href || pathname.startsWith(href + "/");
   };
 
   return (
@@ -298,24 +322,24 @@ export function AdminSidebar({
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const badge = item.badgeKey ? getBadgeCount(item.badgeKey) : 0;
-          const isActive = activeTab === item.id;
+          const active = isActive(item.href);
 
           return (
-            <button
+            <Link
               key={item.id}
-              onClick={() => onTabChange(item.id)}
+              href={item.href}
               className={`
                 group relative flex items-center w-full rounded-lg transition-all duration-150
                 ${isCollapsed ? "justify-center p-2" : "gap-3 px-3 py-2"}
                 ${
-                  isActive
+                  active
                     ? "bg-[#FFD700]/10 text-[#FFD700]"
                     : "text-white/50 hover:text-white hover:bg-white/5"
                 }
               `}
               title={isCollapsed ? item.label : undefined}
             >
-              <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-[#FFD700]" : ""}`} />
+              <Icon className={`h-5 w-5 flex-shrink-0 ${active ? "text-[#FFD700]" : ""}`} />
 
               {!isCollapsed && (
                 <>
@@ -346,7 +370,7 @@ export function AdminSidebar({
                   )}
                 </div>
               )}
-            </button>
+            </Link>
           );
         })}
 
@@ -361,24 +385,24 @@ export function AdminSidebar({
             {crossSliceItems.map((item) => {
               const Icon = item.icon;
               const badge = item.badgeKey ? getBadgeCount(item.badgeKey) : 0;
-              const isActive = activeTab === item.id;
+              const active = isActive(item.href);
 
               return (
-                <button
+                <Link
                   key={item.id}
-                  onClick={() => onTabChange(item.id)}
+                  href={item.href}
                   className={`
                     group relative flex items-center w-full rounded-lg transition-all duration-150
                     ${isCollapsed ? "justify-center p-2" : "gap-3 px-3 py-2"}
                     ${
-                      isActive
+                      active
                         ? "bg-[#FFD700]/10 text-[#FFD700]"
                         : "text-white/50 hover:text-white hover:bg-white/5"
                     }
                   `}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-[#FFD700]" : ""}`} />
+                  <Icon className={`h-5 w-5 flex-shrink-0 ${active ? "text-[#FFD700]" : ""}`} />
 
                   {!isCollapsed && (
                     <>
@@ -409,7 +433,7 @@ export function AdminSidebar({
                       )}
                     </div>
                   )}
-                </button>
+                </Link>
               );
             })}
           </div>
@@ -426,24 +450,24 @@ export function AdminSidebar({
             {secondaryItems.map((item) => {
               const Icon = item.icon;
               const badge = item.badgeKey ? getBadgeCount(item.badgeKey) : 0;
-              const isActive = activeTab === item.id;
+              const active = isActive(item.href);
 
               return (
-                <button
+                <Link
                   key={item.id}
-                  onClick={() => onTabChange(item.id)}
+                  href={item.href}
                   className={`
                     group relative flex items-center w-full rounded-lg transition-all duration-150
                     ${isCollapsed ? "justify-center p-2" : "gap-3 px-3 py-2"}
                     ${
-                      isActive
+                      active
                         ? "bg-[#FFD700]/10 text-[#FFD700]"
                         : "text-white/50 hover:text-white hover:bg-white/5"
                     }
                   `}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-[#FFD700]" : ""}`} />
+                  <Icon className={`h-5 w-5 flex-shrink-0 ${active ? "text-[#FFD700]" : ""}`} />
 
                   {!isCollapsed && (
                     <>
@@ -471,7 +495,7 @@ export function AdminSidebar({
                       <span className="text-sm text-white">{item.label}</span>
                     </div>
                   )}
-                </button>
+                </Link>
               );
             })}
           </div>

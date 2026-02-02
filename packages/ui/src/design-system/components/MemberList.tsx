@@ -95,7 +95,9 @@ import { cn } from '../../lib/utils';
 import { Text } from '../primitives';
 import { SimpleAvatar, getInitials } from '../primitives/Avatar';
 
-type MemberRole = 'leader' | 'moderator' | 'member';
+// Role hierarchy: owner > admin > moderator > member
+// Note: Legacy data may have 'leader' which maps to 'admin'
+type MemberRole = 'owner' | 'admin' | 'moderator' | 'member';
 type PresenceStatus = 'online' | 'away' | 'offline' | 'dnd';
 
 export interface Member {
@@ -153,8 +155,10 @@ export interface MemberListProps extends VariantProps<typeof memberListVariants>
 }
 
 // Role display config
+// Note: Legacy 'leader' data should be mapped to 'admin' before display
 const roleConfig: Record<MemberRole, { icon: string; label: string; color: string }> = {
-  leader: { icon: '👑', label: 'Leader', color: 'var(--life-gold)' },
+  owner: { icon: '👑', label: 'Owner', color: 'var(--life-gold)' },
+  admin: { icon: '⭐', label: 'Admin', color: 'var(--life-gold)' },
   moderator: { icon: '🛡️', label: 'Mod', color: '#888888' },
   member: { icon: '', label: 'Member', color: 'transparent' },
 };
@@ -276,9 +280,10 @@ const MemberList: React.FC<MemberListProps> = ({
 
   // Full variant
   // Group members by role if enabled
+  // Note: owners and admins grouped as 'leaders', legacy 'leader' data also included
   const groupedMembers = groupByRole
     ? {
-        leaders: members.filter((m) => m.role === 'leader'),
+        leaders: members.filter((m) => m.role === 'owner' || m.role === 'admin' || (m.role as string) === 'leader'),
         moderators: members.filter((m) => m.role === 'moderator'),
         members: members.filter((m) => m.role === 'member'),
       }

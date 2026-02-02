@@ -76,6 +76,16 @@ export interface AppSurfaceProps {
   layout: "full" | "centered" | "sidebar";
   /** Additional CSS classes */
   className?: string;
+  /** Runtime state from useToolRuntime (or empty if uncontrolled) */
+  state?: Record<string, unknown>;
+  /** Callback when element state changes */
+  onElementChange?: (instanceId: string, data: unknown) => void;
+  /** Callback when element triggers an action */
+  onElementAction?: (instanceId: string, action: string, payload: unknown) => void;
+  /** Space ID for context */
+  spaceId?: string;
+  /** Whether current user is a space leader */
+  isSpaceLeader?: boolean;
 }
 
 // ============================================================================
@@ -158,6 +168,11 @@ export function AppSurface({
   capabilities,
   layout,
   className,
+  state: externalState,
+  onElementChange,
+  onElementAction,
+  spaceId,
+  isSpaceLeader = false,
 }: AppSurfaceProps) {
   // Get elements from tool data
   const elements = useMemo(() => {
@@ -167,26 +182,27 @@ export function AppSurface({
     return tool.elements || compositionElements;
   }, [tool.composition, tool.elements]);
 
-  // Placeholder state management - in real usage this would come from useToolRuntime
-  // The actual implementation will use the hook at the page level and pass runtime props
-  const [state] = React.useState<Record<string, unknown>>({});
+  // Use external state if provided, otherwise empty object
+  const state = externalState ?? {};
 
-  // Handle element state changes
+  // Handle element state changes - forward to parent if provided
   const handleElementChange = React.useCallback(
     (instanceId: string, data: unknown) => {
-      console.log("Element change:", instanceId, data);
-      // State updates handled by useToolRuntime in actual implementation
+      if (onElementChange) {
+        onElementChange(instanceId, data);
+      }
     },
-    []
+    [onElementChange]
   );
 
-  // Handle element actions
+  // Handle element actions - forward to parent if provided
   const handleElementAction = React.useCallback(
     (instanceId: string, action: string, payload: unknown) => {
-      console.log("Element action:", instanceId, action, payload);
-      // Actions handled by useToolRuntime in actual implementation
+      if (onElementAction) {
+        onElementAction(instanceId, action, payload);
+      }
     },
-    []
+    [onElementAction]
   );
 
   // Layout wrapper based on config
@@ -218,8 +234,8 @@ export function AppSurface({
             onElementAction={handleElementAction}
             context={{
               deploymentId: deployment.id,
-              spaceId: undefined, // Will be injected at page level
-              isSpaceLeader: false, // Will be determined from membership
+              spaceId,
+              isSpaceLeader,
             }}
             className="h-full p-4"
           />

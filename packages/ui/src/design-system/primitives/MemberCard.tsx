@@ -24,16 +24,24 @@ const glassCardSurface = {
 };
 
 // LOCKED: Role colors
+// Role hierarchy: owner > admin > moderator > member
+// Note: 'leader' kept for backwards compatibility, styled same as 'admin'
 const ROLE_COLORS = {
-  leader: {
+  owner: {
     bg: 'bg-[#D4AF37]/20',
     text: 'text-[#D4AF37]',
     border: 'border-[#D4AF37]/30',
   },
   admin: {
-    bg: 'bg-blue-500/20',
-    text: 'text-blue-400',
-    border: 'border-blue-500/30',
+    bg: 'bg-[#D4AF37]/15',
+    text: 'text-[#D4AF37]/80',
+    border: 'border-[#D4AF37]/25',
+  },
+  // Legacy 'leader' treated same as admin
+  leader: {
+    bg: 'bg-[#D4AF37]/15',
+    text: 'text-[#D4AF37]/80',
+    border: 'border-[#D4AF37]/25',
   },
   moderator: {
     bg: 'bg-purple-500/20',
@@ -150,7 +158,9 @@ const presenceDotVariants = cva(
 );
 
 // Types
-export type MemberRole = 'leader' | 'admin' | 'moderator' | 'member';
+// Role hierarchy: owner > admin > moderator > member
+// Note: Legacy data may have 'leader' which maps to 'admin' styling
+export type MemberRole = 'owner' | 'admin' | 'moderator' | 'member';
 export type PresenceStatus = 'online' | 'away' | 'offline';
 
 export interface MemberCardData {
@@ -192,12 +202,14 @@ export interface MemberCardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 // Default role icons
-const DefaultRoleIcon: React.FC<{ role: MemberRole; className?: string }> = ({
+// Note: Uses MemberRole | string to handle legacy 'leader' data
+const DefaultRoleIcon: React.FC<{ role: MemberRole | string; className?: string }> = ({
   role,
   className,
 }) => {
   switch (role) {
-    case 'leader':
+    case 'owner':
+      // Crown icon for owners
       return (
         <svg
           className={cn('w-3 h-3', className)}
@@ -208,6 +220,8 @@ const DefaultRoleIcon: React.FC<{ role: MemberRole; className?: string }> = ({
         </svg>
       );
     case 'admin':
+    case 'leader': // Legacy support - treat 'leader' as admin
+      // Shield icon for admins
       return (
         <svg
           className={cn('w-3 h-3', className)}
@@ -218,6 +232,7 @@ const DefaultRoleIcon: React.FC<{ role: MemberRole; className?: string }> = ({
         </svg>
       );
     case 'moderator':
+      // Lock icon for moderators
       return (
         <svg
           className={cn('w-3 h-3', className)}
@@ -412,10 +427,10 @@ const MemberCard = React.forwardRef<HTMLDivElement, MemberCardProps>(
                 <p className="text-sm font-medium text-white truncate">
                   {member.name}
                 </p>
-                {showRole && member.role === 'leader' && (
+                {showRole && (member.role === 'owner' || member.role === 'admin' || (member.role as string) === 'leader') && (
                   <DefaultRoleIcon
-                    role="leader"
-                    className={cn('w-3 h-3 shrink-0', ROLE_COLORS.leader.text)}
+                    role={member.role}
+                    className={cn('w-3 h-3 shrink-0', ROLE_COLORS[member.role as keyof typeof ROLE_COLORS]?.text)}
                   />
                 )}
               </div>

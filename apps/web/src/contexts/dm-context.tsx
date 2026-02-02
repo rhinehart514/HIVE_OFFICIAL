@@ -63,6 +63,7 @@ interface DMState {
 }
 
 interface DMContextValue extends DMState {
+  openPanel: () => void;
   openConversation: (recipientId: string) => Promise<void>;
   openConversationById: (conversationId: string) => Promise<void>;
   closePanel: () => void;
@@ -304,6 +305,15 @@ export function DMProvider({ children }: DMProviderProps) {
     [conversations, fetchMessages, connectToStream]
   );
 
+  // Open panel (shows conversation list)
+  const openPanel = React.useCallback(() => {
+    setIsPanelOpen(true);
+    // Don't set active conversation - this will show the list view
+    setActiveConversationId(null);
+    setActiveConversation(null);
+    setMessages([]);
+  }, []);
+
   // Close panel
   const closePanel = React.useCallback(() => {
     setIsPanelOpen(false);
@@ -405,6 +415,7 @@ export function DMProvider({ children }: DMProviderProps) {
     isLoadingConversations,
     isLoadingMessages,
     isSending,
+    openPanel,
     openConversation,
     openConversationById,
     closePanel,

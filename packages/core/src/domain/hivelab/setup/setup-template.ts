@@ -534,6 +534,18 @@ export class SetupTemplate {
   }
 
   /**
+   * Update orchestration rules
+   */
+  updateOrchestration(orchestration: OrchestrationRule[]): void {
+    if (this.props.isSystem) {
+      throw new Error('Cannot update orchestration on system templates');
+    }
+
+    this.props.orchestration = [...orchestration];
+    this.props.updatedAt = new Date();
+  }
+
+  /**
    * Set featured status
    */
   setFeatured(featured: boolean): void {
