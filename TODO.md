@@ -2,7 +2,53 @@
 
 **Goal:** Rebuild all frontend UI system-by-system, full stack.
 **Approach:** For each system — audit current state, define target, design options, build, ship, move on.
-**Updated:** 2026-02-01
+**Updated:** 2026-02-02
+
+---
+
+## CRITICAL: Design Audit Results
+
+**Full audit:** `docs/DESIGN_AUDIT.md`
+**Screenshots:** `.playwright-mcp/audit/`
+
+### The Problem
+
+HIVE ships as **two different products**:
+1. Marketing (`/`, `/about`, `/enter`) — Premium, cinematic, motion-rich
+2. App shell (`/home`, `/explore`, `/lab`, `/s/*`) — Static, broken, generic
+
+**The motion system exists (667 lines). The app shell uses none of it.**
+
+### P0: Make It Work
+
+| Issue | Route | Status |
+|-------|-------|--------|
+| Blank page (opacity stuck) | `/home`, `/me` | **FIXED** ✓ |
+| Duplicate space cards | `/explore` | **FIXED** ✓ |
+| "1 members" grammar | `/explore` SpaceCard | **FIXED** ✓ |
+| Category labels raw | `/explore` SpaceCard | **FIXED** ✓ |
+| API 401 errors | `/api/explore/people` | Broken |
+| API 500 errors | `/api/explore/events`, `/api/explore/tools` | Broken |
+| React hooks crash | `/s/[handle]` | Broken |
+| Route missing | `/you` | 404 |
+| Sidebar nav broken | All app shell | Buttons don't navigate |
+| Missing redirects | `/spaces/*` → `/s/*` | Should 301 |
+
+### P1: Motion Parity
+
+Every component in app shell needs:
+- `revealVariants` — Card/list entrances
+- `staggerContainerVariants` — List stagger
+- `cardHoverVariants` — Interactive cards
+- `pageTransitionVariants` — Route changes
+
+**Reference:** `/about` page (working), `packages/tokens/src/motion.ts`
+
+### P2: Consistency
+
+- Kill emojis in tabs OR use everywhere
+- Standardize error states (playful vs professional)
+- Apply glass treatment to app shell cards
 
 ---
 
@@ -10,19 +56,37 @@
 
 | # | System | Why This Order | Status |
 |---|--------|----------------|--------|
-| 1 | **Spaces** | The core. If this works, HIVE works. | COMPLETE |
+| 0 | **Foundation** | APIs broken, routes 404, motion missing | **CRITICAL** |
+| 1 | **Spaces** | The core. If this works, HIVE works. | BLOCKED (API errors) |
 | 2 | **Entry** | The gate. First impression. | COMPLETE |
 | 3 | **Notifications** | Re-engagement loop. Currently broken. | NOT STARTED |
 | 4 | **Profiles** | Social glue. Identity system. | NOT STARTED |
 | 5 | **Events/Calendar** | Coordination feature. RSVP broken. | NOT STARTED |
-| 6 | **Discovery** | Growth. Browse mode missing. | NOT STARTED |
+| 6 | **Discovery** | Growth. Browse mode missing. | BLOCKED (API errors) |
 | 7 | **HiveLab** | Builder tools. AI generation broken. | COMPLETE |
 
 ---
 
 ## Active System
 
-**Notifications** — Next priority: re-engagement loop
+**System 0: Foundation** — Fix what's broken before building new
+
+### Foundation Tasks
+
+| # | Task | Status |
+|---|------|--------|
+| 1 | Fix `/api/explore/people` 401 | NOT STARTED |
+| 2 | Fix `/api/explore/events` 500 | NOT STARTED |
+| 3 | Fix `/api/explore/tools` 500 | NOT STARTED |
+| 4 | Fix Space detail React hooks error | NOT STARTED |
+| 5 | Implement `/you` route | NOT STARTED |
+| 6 | Fix sidebar navigation (client-side routing) | NOT STARTED |
+| 7 | Add `/spaces/*` → `/s/*` redirects | NOT STARTED |
+| 8 | Apply motion to Explore page cards | NOT STARTED |
+| 9 | Apply motion to Lab page | NOT STARTED |
+| 10 | Apply motion to Home page | NOT STARTED |
+| 11 | Standardize icon system (kill emojis) | NOT STARTED |
+| 12 | Standardize error states | NOT STARTED |
 
 ---
 
@@ -764,4 +828,15 @@ COMPLETE — All subsystems verified and production-ready
 - **Marked COMPLETE:**
   - Spaces (was "IN PROGRESS")
   - Entry (was "NOT STARTED")
-- **Next priority:** Notifications system
+- **DESIGN AUDIT (evening)** — External design review via Playwright
+  - **Screenshots captured:** 13 pages documented in `.playwright-mcp/audit/`
+  - **Critical finding:** Marketing vs app shell are two different products
+  - **Motion system:** 667 lines of tokens exist, 0 used in app shell
+  - **Broken routes:** `/you` (404), `/s/*` (hooks crash), sidebar nav (broken)
+  - **API failures:** People (401), Events (500), Tools (500)
+  - **Documentation created:** `docs/DESIGN_AUDIT.md`
+  - **Priority changed:** Foundation fixes before new features
+  - **Status updates:**
+    - Spaces: COMPLETE → BLOCKED (API errors prevent Space pages)
+    - Discovery: NOT STARTED → BLOCKED (API errors)
+    - Added System 0: Foundation (12 tasks)
