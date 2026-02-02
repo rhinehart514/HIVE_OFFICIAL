@@ -14,6 +14,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Tilt, GlassSurface, Badge, MOTION } from '@hive/ui/design-system/primitives';
+import { CATEGORY_LABELS, SpaceCategoryEnum } from '@hive/core';
 import { cn } from '@/lib/utils';
 
 export interface SpaceCardData {
@@ -88,7 +89,7 @@ export function SpaceCard({ space, index = 0 }: SpaceCardProps) {
               {/* Footer */}
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-3 text-label text-white/30">
-                  <span>{space.memberCount} members</span>
+                  <span>{space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}</span>
                   {lastActiveText && (
                     <>
                       <span>·</span>
@@ -99,7 +100,7 @@ export function SpaceCard({ space, index = 0 }: SpaceCardProps) {
 
                 {space.category && (
                   <Badge variant="neutral" size="sm">
-                    {space.category}
+                    {CATEGORY_LABELS[space.category as SpaceCategoryEnum] || space.category}
                   </Badge>
                 )}
               </div>

@@ -329,15 +329,24 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
   // Transform spaces for API response using unified DTO presenter
   const transformedSpaces = toSpaceBrowseDTOList(visibleSpaces, userSpaceIds, enrichment);
 
+  // Deduplicate by slug (handles multiple docs with same slug but different IDs)
+  const seenSlugs = new Set<string>();
+  const deduplicatedSpaces = transformedSpaces.filter(space => {
+    const key = space.slug || space.id; // Fall back to id if no slug
+    if (seenSlugs.has(key)) return false;
+    seenSlugs.add(key);
+    return true;
+  });
+
   // Apply sorting based on sort parameter
   // This handles all sort types including when category filter is applied
   if (sort === 'newest') {
-    transformedSpaces.sort((a, b) =>
+    deduplicatedSpaces.sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   } else if (sort === 'trending' || sort === 'popular') {
     // Sort by trending score (falls back to member count)
-    transformedSpaces.sort((a, b) => {
+    deduplicatedSpaces.sort((a, b) => {
       // Primary: member count (proxy for trending/popular)
       const memberDiff = (b.memberCount || 0) - (a.memberCount || 0);
       if (memberDiff !== 0) return memberDiff;
@@ -348,11 +357,11 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
   // 'recommended' sort is already handled by repository query
 
   // Apply cursor-based pagination
-  let paginatedSpaces = transformedSpaces;
+  let paginatedSpaces = deduplicatedSpaces;
   if (cursor) {
-    const cursorIndex = transformedSpaces.findIndex(s => s.id === cursor);
+    const cursorIndex = deduplicatedSpaces.findIndex(s => s.id === cursor);
     if (cursorIndex !== -1) {
-      paginatedSpaces = transformedSpaces.slice(cursorIndex + 1);
+      paginatedSpaces = deduplicatedSpaces.slice(cursorIndex + 1);
     }
   }
 
@@ -366,7 +375,7 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
   // Create response with cache headers
   const response = respond.success({
     spaces: resultSpaces,
-    totalCount: transformedSpaces.length,
+    totalCount: deduplicatedSpaces.length,
     hasMore,
     nextCursor
   });

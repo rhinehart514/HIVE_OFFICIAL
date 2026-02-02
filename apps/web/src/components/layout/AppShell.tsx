@@ -506,18 +506,10 @@ export function AppShell({ children }: AppShellProps) {
         {/* Page Content - ChatGPT style for standard pages, full-width for wide pages */}
         <div className="min-h-screen pb-20 lg:pb-0">
           <div className={isWideContentPage ? 'h-full' : 'max-w-3xl mx-auto px-8 py-6'}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={pathname}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15, ease: EASE }}
-                className={isWideContentPage ? 'h-full' : undefined}
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
+            {/* Animation removed for reliability - nested motion wrappers caused opacity:0 stuck state */}
+            <div className={isWideContentPage ? 'h-full' : undefined}>
+              {children}
+            </div>
           </div>
         </div>
       </main>
