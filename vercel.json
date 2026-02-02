@@ -11,15 +11,15 @@
     },
     {
       "path": "/api/cron/automations",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/tool-automations",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/cron/setup-orchestration",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 2 * * *"
     }
   ],
   "headers": [
