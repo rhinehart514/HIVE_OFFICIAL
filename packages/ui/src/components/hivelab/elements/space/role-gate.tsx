@@ -20,14 +20,28 @@ export function RoleGateElement({ config, context, children }: ElementProps & { 
     ? allowedRoles.some(r => ['leader', 'admin', 'moderator'].includes(r))
     : allowedRoles.includes('member') || allowedRoles.includes('all');
 
-  if (!context?.spaceId) {
+  // Preview mode: show mock gated content in IDE
+  const isPreviewMode = !context?.spaceId;
+  if (isPreviewMode) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          <TrophyIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p>Role Gate requires space context</p>
-        </CardContent>
-      </Card>
+      <div className="relative">
+        <Badge variant="outline" className="absolute -top-2 -right-2 text-xs bg-background z-10">
+          leader (preview)
+        </Badge>
+        {children || (
+          <Card className="border-primary/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <TrophyIcon className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Gated Content</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This content is visible to: {allowedRoles.join(', ')}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     );
   }
 

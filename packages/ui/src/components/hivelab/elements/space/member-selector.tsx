@@ -24,16 +24,15 @@ export function MemberSelectorElement({ config, data, onChange, context, onActio
   const [selected, setSelected] = useState<string[]>([]);
   const members: Member[] = data?.members || [];
 
-  if (!context?.spaceId) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          <UserPlusIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p>Member Selector requires space context</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Preview mode: show mock data in IDE
+  const isPreviewMode = !context?.spaceId;
+  const mockMembers: Member[] = [
+    { id: 'mock-1', name: 'Alex Chen' },
+    { id: 'mock-2', name: 'Jordan Lee' },
+    { id: 'mock-3', name: 'Sam Wilson' },
+    { id: 'mock-4', name: 'Riley Brooks' },
+  ];
+  const displayMembers = isPreviewMode ? mockMembers : members;
 
   const handleToggle = (memberId: string) => {
     const newSelected = selected.includes(memberId)
@@ -48,18 +47,19 @@ export function MemberSelectorElement({ config, data, onChange, context, onActio
   };
 
   return (
-    <Card>
+    <Card className={isPreviewMode ? 'border-dashed border-primary/30' : ''}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <UserPlusIcon className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium text-sm">Select Members</span>
+          {isPreviewMode && <Badge variant="outline" className="text-xs text-primary">Preview</Badge>}
           {selected.length > 0 && (
             <Badge variant="default" className="ml-auto">{selected.length} selected</Badge>
           )}
         </div>
 
         <div className="space-y-2 max-h-64 overflow-y-auto">
-          {members.map((member) => {
+          {displayMembers.map((member) => {
             const isSelected = selected.includes(member.id);
             return (
               <button

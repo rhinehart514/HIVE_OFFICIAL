@@ -777,54 +777,67 @@ COMPLETE — Narrative entry flow shipped 2026-02-01
 ## System 5: Events/Calendar
 
 ### Current State
-**Overall: 80% production-ready.** Calendar view complete, event creation/RSVP working.
+**Overall: 95% production-ready.** Spaces-first calendar showing events from user's spaces.
+
+#### Design Direction
+**Agreed approach:** Spaces-first, feed-later
+- Spaces are the product (not feed)
+- Events live IN spaces
+- Calendar is aggregation view of space events
+- Personal event creation removed — use Google Calendar
 
 #### What Works End-to-End
-- Calendar view showing user's RSVPs grouped by day
-- Event creation within spaces
-- RSVP flow (going/maybe/not going)
+- Read-only calendar aggregating events from user's spaces
+- View modes (day/week/month) with navigation
+- Event type filtering
+- RSVP flow from calendar modal
+- Event details with space badge (prominent)
 - Event reminders (24hr, 1hr before)
 - RSVP confirmation notifications
-- Organizer notifications on RSVP
 - Event cards in space feed
+- Events tab in /explore for discovery
 
-#### What's Partially Working
-- Google Calendar sync (API exists, OAuth needs setup)
-
-#### What's Stubbed/Missing
-- Canvas calendar integration (deferred)
+#### What Was Removed (Intentionally)
+- Personal event creation — complexity, low value, use Google Calendar
+- Calendar integrations modal — coming soon theater, killed
+- Edit/delete for personal events — no personal events
+- Sync button — dead feature
 
 ### Target State
 - [x] User can view their upcoming events in one place
 - [x] User can RSVP to events
 - [x] User gets reminders before events
 - [x] Organizer is notified of RSVPs
-- [ ] Google Calendar sync (V2)
+- [x] Calendar shows space badge on each event
+- [x] Empty state guides to explore/join spaces
 
 ### Pages
 | Route | Purpose | Current Status |
 |-------|---------|----------------|
-| `/me/calendar` | Your upcoming events | COMPLETE |
+| `/me/calendar` | Aggregation view (space events) | COMPLETE |
 | `/s/[handle]` | Event cards in space feed | COMPLETE |
+| `/explore?tab=events` | Browse all campus events | COMPLETE |
 
 ### APIs
 | Endpoint | Purpose | Current Status |
 |----------|---------|----------------|
-| `/api/calendar` | User's calendar events | COMPLETE |
+| `/api/calendar` | User's space events (read-only) | COMPLETE |
 | `/api/events` | List events (browse) | COMPLETE |
 | `/api/spaces/[id]/events` | Space events CRUD | COMPLETE |
 | `/api/spaces/[id]/events/[eventId]/rsvp` | RSVP actions | COMPLETE |
 | `/api/search` | Search events by query | COMPLETE |
 
-### Work
-- [x] Audit current implementation
-- [x] Calendar view at `/me/calendar`
-- [x] Event search in unified search API
-- [x] RSVP confirmation notifications
-- [ ] Google Calendar OAuth (V2)
+### Files Modified (2026-02-02)
+| File | Change |
+|------|--------|
+| `apps/web/src/app/me/calendar/page.tsx` | Removed Add Event, Sync, integrations modal, edit modal |
+| `apps/web/src/hooks/use-calendar.ts` | Removed addEvent, updateEvent, deleteEvent, integrations |
+| `apps/web/src/app/api/calendar/route.ts` | Removed POST handler, space events only |
+| `apps/web/src/components/calendar/calendar-components.tsx` | Enhanced space badges on EventCard |
+| `apps/web/src/components/ui/CalendarEmptyState.tsx` | Guides to explore, no create event CTA |
 
 ### Status
-**80% COMPLETE** — Calendar and RSVP loop working. Google sync V2.
+**95% COMPLETE** — Spaces-first calendar shipped. Phase 2 (activity feed) deferred post-launch.
 
 ---
 

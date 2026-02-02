@@ -13,6 +13,7 @@
 
 import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   DeployTakeover,
   Skeleton,
@@ -52,6 +53,7 @@ export default function ToolDeployPage({ params }: Props) {
   const { toolId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   // Extract context from query params (carried over from creation)
   const contextType = searchParams.get('context'); // 'space' or 'profile'
@@ -151,8 +153,9 @@ export default function ToolDeployPage({ params }: Props) {
 
   // Handle view in space
   const handleViewInSpace = useCallback((spaceHandle: string) => {
-    router.push(`/spaces/${spaceHandle}`);
-  }, [router]);
+    queryClient.invalidateQueries({ queryKey: ['space-tools'] });
+    router.push(`/s/${spaceHandle}`);
+  }, [router, queryClient]);
 
   // Handle back navigation
   const handleBack = useCallback(() => {

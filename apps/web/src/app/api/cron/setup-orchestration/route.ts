@@ -20,6 +20,7 @@ const CRON_SECRET = process.env.CRON_SECRET;
 interface OrchestrationResult {
   deploymentId: string;
   ruleId: string;
+  triggerType: 'time_relative' | 'data_condition';
   success: boolean;
   error?: string;
 }
@@ -119,6 +120,7 @@ export async function POST(request: Request) {
           results.push({
             deploymentId,
             ruleId: rule.id,
+            triggerType: 'time_relative',
             success: true,
           });
 
@@ -147,11 +149,150 @@ export async function POST(request: Request) {
           results.push({
             deploymentId,
             ruleId: rule.id,
+            triggerType: 'time_relative',
             success: false,
             error: error instanceof Error ? error.message : String(error),
           });
 
           logger.error('Setup orchestration time trigger failed', {
+            deploymentId,
+            ruleId: rule.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+      // Process data_condition triggers
+      for (const rule of orchestrationRules) {
+        if (rule.trigger?.type !== 'data_condition') continue;
+        if (rule.runOnce && executedRules.includes(rule.id)) continue;
+
+        const trigger = rule.trigger;
+        const dataPath = trigger.dataPath as string;
+        const operator = trigger.operator as string;
+        const targetValue = trigger.value;
+
+        // Get actual value from shared data
+        const actualValue = getNestedValue(sharedData, dataPath);
+        if (actualValue === undefined) continue;
+
+        // Evaluate condition
+        let conditionMet = false;
+        switch (operator) {
+          case 'eq':
+            conditionMet = actualValue === targetValue;
+            break;
+          case 'neq':
+            conditionMet = actualValue !== targetValue;
+            break;
+          case 'gt':
+            conditionMet = typeof actualValue === 'number' && actualValue > (targetValue as number);
+            break;
+          case 'gte':
+            conditionMet = typeof actualValue === 'number' && actualValue >= (targetValue as number);
+            break;
+          case 'lt':
+            conditionMet = typeof actualValue === 'number' && actualValue < (targetValue as number);
+            break;
+          case 'lte':
+            conditionMet = typeof actualValue === 'number' && actualValue <= (targetValue as number);
+            break;
+          case 'contains':
+            if (Array.isArray(actualValue)) {
+              conditionMet = actualValue.includes(targetValue);
+            } else if (typeof actualValue === 'string') {
+              conditionMet = actualValue.includes(targetValue as string);
+            }
+            break;
+          case 'exists':
+            conditionMet = actualValue !== undefined && actualValue !== null;
+            break;
+        }
+
+        if (!conditionMet) continue;
+
+        // Check cooldown - don't re-trigger within 1 hour
+        const lastTriggered = orchestrationState.lastTriggered?.[rule.id];
+        if (lastTriggered) {
+          const lastTriggerTime = new Date(lastTriggered);
+          const hoursSinceLastTrigger = (now.getTime() - lastTriggerTime.getTime()) / (1000 * 60 * 60);
+          if (hoursSinceLastTrigger < 1) continue;
+        }
+
+        try {
+          // Execute the rule's actions
+          for (const action of rule.actions || []) {
+            await executeOrchestrationAction(
+              action,
+              deploymentId,
+              deployment,
+              sharedData
+            );
+          }
+
+          // Mark rule as executed
+          const updates: Record<string, unknown> = {
+            [`orchestrationState.lastTriggered.${rule.id}`]: now.toISOString(),
+          };
+
+          if (rule.runOnce) {
+            updates[`orchestrationState.executedRules`] = FieldValue.arrayUnion(rule.id);
+          }
+
+          // Add log entry
+          const logEntry = {
+            ruleId: rule.id,
+            ruleName: rule.name,
+            timestamp: now.toISOString(),
+            triggerType: 'data_condition',
+            success: true,
+            actionsExecuted: (rule.actions || []).map((a: { type: string }) => a.type),
+            conditionMet: { dataPath, operator, targetValue, actualValue },
+          };
+          updates[`orchestrationState.executionLog`] = FieldValue.arrayUnion(logEntry);
+
+          await deploymentDoc.ref.update(updates);
+
+          results.push({
+            deploymentId,
+            ruleId: rule.id,
+            triggerType: 'data_condition',
+            success: true,
+          });
+
+          logger.info('Setup orchestration data condition executed', {
+            deploymentId,
+            ruleId: rule.id,
+            ruleName: rule.name,
+            dataPath,
+            operator,
+            targetValue,
+            actualValue,
+          });
+        } catch (error) {
+          // Log failure
+          const logEntry = {
+            ruleId: rule.id,
+            ruleName: rule.name,
+            timestamp: now.toISOString(),
+            triggerType: 'data_condition',
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+
+          await deploymentDoc.ref.update({
+            [`orchestrationState.executionLog`]: FieldValue.arrayUnion(logEntry),
+          });
+
+          results.push({
+            deploymentId,
+            ruleId: rule.id,
+            triggerType: 'data_condition',
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          });
+
+          logger.error('Setup orchestration data condition failed', {
             deploymentId,
             ruleId: rule.id,
             error: error instanceof Error ? error.message : String(error),

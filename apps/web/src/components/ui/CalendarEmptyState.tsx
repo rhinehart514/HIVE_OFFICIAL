@@ -3,24 +3,24 @@
 /**
  * CalendarEmptyState - Contextual empty states for calendar views
  *
- * Three states per DESIGN_GAPS.md:
- * 1. No events for timeframe - "No events this week"
- * 2. No events of type - "No [type] events"
- * 3. New user - "Your schedule starts here"
+ * Shows events from user's spaces. Guides users to join spaces or explore
+ * if they don't have events yet.
+ *
+ * @version 2.0.0 - Spaces-first calendar (Feb 2026)
  */
 
 import * as React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Calendar, CalendarPlus, Filter, Sparkles } from 'lucide-react';
-import { Button, Text } from '@hive/ui/design-system/primitives';
+import { Calendar, Filter, Users } from 'lucide-react';
+import { Button } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 
-export type CalendarEmptyVariant = 'day' | 'week' | 'month' | 'filtered' | 'new_user';
+export type CalendarEmptyVariant = 'day' | 'week' | 'month' | 'filtered';
 
 interface CalendarEmptyStateProps {
   variant: CalendarEmptyVariant;
   filterType?: string;
-  onCreateEvent?: () => void;
   className?: string;
 }
 
@@ -30,45 +30,33 @@ const VARIANT_CONFIG: Record<
     icon: React.ElementType;
     title: string;
     subtitle: string;
-    showCreateCta: boolean;
   }
 > = {
   day: {
     icon: Calendar,
     title: 'Nothing scheduled today',
-    subtitle: 'Your day is wide open. Add an event or browse what\'s happening on campus.',
-    showCreateCta: true,
+    subtitle: 'Your day is open. Events from your spaces will appear here.',
   },
   week: {
     icon: Calendar,
     title: 'No events this week',
-    subtitle: 'Your week looks clear. Create something or explore campus events.',
-    showCreateCta: true,
+    subtitle: 'Your week is clear. Join spaces to see their upcoming events.',
   },
   month: {
     icon: Calendar,
     title: 'No events this month',
-    subtitle: 'A blank slate. Start planning by adding your first event.',
-    showCreateCta: true,
+    subtitle: 'No upcoming events. Explore spaces to find what\'s happening.',
   },
   filtered: {
     icon: Filter,
     title: 'No matching events',
     subtitle: 'Try adjusting your filter to see more events.',
-    showCreateCta: false,
-  },
-  new_user: {
-    icon: CalendarPlus,
-    title: 'Your schedule starts here',
-    subtitle: 'Add events, sync your campus calendar, and never miss what matters.',
-    showCreateCta: true,
   },
 };
 
 export function CalendarEmptyState({
   variant,
   filterType,
-  onCreateEvent,
   className,
 }: CalendarEmptyStateProps) {
   const config = VARIANT_CONFIG[variant];
@@ -118,34 +106,26 @@ export function CalendarEmptyState({
         {subtitle}
       </motion.p>
 
-      {/* CTAs */}
-      {config.showCreateCta && onCreateEvent && (
+      {/* CTA - Explore spaces */}
+      {variant !== 'filtered' && (
         <motion.div
           className="flex items-center gap-3"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, delay: 0.25 }}
         >
-          <Button
-            onClick={onCreateEvent}
-            className="bg-[var(--life-gold)] text-[var(--bg-ground)] hover:bg-[var(--life-gold)]/90"
-          >
-            <CalendarPlus className="w-4 h-4 mr-2" />
-            Add Event
+          <Button asChild variant="secondary">
+            <Link href="/explore?tab=events">
+              <Calendar className="w-4 h-4 mr-2" />
+              Browse Events
+            </Link>
           </Button>
-        </motion.div>
-      )}
-
-      {/* New user decoration */}
-      {variant === 'new_user' && (
-        <motion.div
-          className="mt-8 flex items-center gap-2 text-label text-white/20"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Calendar sync coming soon</span>
+          <Button asChild variant="ghost">
+            <Link href="/explore">
+              <Users className="w-4 h-4 mr-2" />
+              Find Spaces
+            </Link>
+          </Button>
         </motion.div>
       )}
     </motion.div>

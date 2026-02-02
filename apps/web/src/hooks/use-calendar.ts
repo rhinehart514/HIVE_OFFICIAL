@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * useCalendar - Read-only calendar hook for space events
+ *
+ * Fetches events from spaces the user is a member of.
+ * Personal event creation removed — use Google Calendar for personal events.
+ *
+ * @version 2.0.0 - Spaces-first calendar (Feb 2026)
+ */
+
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { logger } from "@/lib/logger";
 
@@ -26,15 +35,6 @@ export interface CalendarEvent {
     id: string;
     name: string;
   };
-}
-
-export interface CalendarIntegration {
-  id: string;
-  name: string;
-  type: 'google' | 'outlook' | 'apple' | 'canvas';
-  isConnected: boolean;
-  lastSync?: string;
-  eventCount?: number;
 }
 
 export type ViewMode = 'month' | 'week' | 'day';
@@ -107,12 +107,11 @@ export function useCalendar(options: UseCalendarOptions = {}) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [integrations, setIntegrations] = useState<CalendarIntegration[]>([]);
   const [eventTypeFilter, setEventTypeFilter] = useState<EventTypeFilter>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch calendar data
+  // Fetch calendar data (space events only)
   useEffect(() => {
     const fetchCalendarEvents = async () => {
       setIsLoading(true);
@@ -140,10 +139,9 @@ export function useCalendar(options: UseCalendarOptions = {}) {
             startTime: String(eventData.startDate || ''),
             endTime: String(eventData.endDate || ''),
             location: String(eventData.location || ''),
-            type: eventData.type === 'personal' ? 'event' : (eventData.type as CalendarEvent['type']) || 'event',
-            color: eventData.type === 'personal' ? 'var(--hive-status-info)' :
-                  eventData.type === 'space' ? 'var(--hive-status-success)' : 'var(--hive-status-warning)',
-            source: eventData.type === 'personal' ? 'hive' : (eventData.source as CalendarEvent['source']) || 'hive',
+            type: eventData.type === 'space' ? 'event' : (eventData.type as CalendarEvent['type']) || 'event',
+            color: eventData.type === 'space' ? 'var(--hive-status-success)' : 'var(--hive-status-warning)',
+            source: (eventData.source as CalendarEvent['source']) || 'hive',
             rsvpStatus: eventData.canEdit ? 'going' : 'interested',
             space: eventData.spaceName ? {
               id: String(eventData.spaceId || ''),
@@ -153,20 +151,12 @@ export function useCalendar(options: UseCalendarOptions = {}) {
           };
         });
 
-        const defaultIntegrations: CalendarIntegration[] = [
-          { id: 'google', name: 'Google Calendar', type: 'google', isConnected: false },
-          { id: 'canvas', name: 'Canvas LMS', type: 'canvas', isConnected: false },
-          { id: 'outlook', name: 'Outlook Calendar', type: 'outlook', isConnected: false }
-        ];
-
         setEvents(transformedEvents);
-        setIntegrations(defaultIntegrations);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         logger.error('Error fetching calendar events', { error: errorMessage });
         setError(errorMessage);
         setEvents([]);
-        setIntegrations([]);
       } finally {
         setIsLoading(false);
       }
@@ -236,34 +226,7 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     setCurrentDate(new Date());
   }, []);
 
-  // Event mutations - API-backed create
-  const addEvent = useCallback(async (event: CalendarEvent): Promise<CalendarEvent> => {
-    const response = await fetch('/api/calendar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: event.title,
-        description: event.description,
-        startDate: event.startTime,
-        endDate: event.endTime,
-        location: event.location,
-        isAllDay: false,
-      }),
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || 'Failed to create event');
-    }
-    const data = await response.json();
-    const createdEvent: CalendarEvent = {
-      ...event,
-      id: data.event.id,
-    };
-    setEvents(prev => [createdEvent, ...prev]);
-    return createdEvent;
-  }, []);
-
+  // RSVP update for space events
   const updateEventRSVP = useCallback(async (eventId: string, status: CalendarEvent['rsvpStatus'], spaceId?: string) => {
     // Find the event to get its spaceId if not provided
     const event = events.find(e => e.id === eventId);
@@ -309,44 +272,6 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     }
   }, [events]);
 
-  const removeEvent = useCallback((eventId: string) => {
-    setEvents(prev => prev.filter(event => event.id !== eventId));
-  }, []);
-
-  // API-backed update event
-  const updateEvent = useCallback(async (eventId: string, updates: Partial<CalendarEvent>) => {
-    const response = await fetch(`/api/calendar/${eventId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: updates.title,
-        description: updates.description,
-        startDate: updates.startTime,
-        endDate: updates.endTime,
-        location: updates.location,
-      }),
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to update event');
-    }
-    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, ...updates } : e));
-  }, []);
-
-  // API-backed delete event
-  const deleteEvent = useCallback(async (eventId: string) => {
-    const response = await fetch(`/api/calendar/${eventId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to delete event');
-    }
-    setEvents(prev => prev.filter(e => e.id !== eventId));
-  }, []);
-
   // View title
   const viewTitle = useMemo(() => {
     switch (viewMode) {
@@ -364,7 +289,6 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     currentDate,
     viewMode,
     events,
-    integrations,
     eventTypeFilter,
     isLoading,
     error,
@@ -381,10 +305,6 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     setEventTypeFilter,
     navigateDate,
     goToToday,
-    addEvent,
     updateEventRSVP,
-    removeEvent,
-    updateEvent,
-    deleteEvent,
   };
 }

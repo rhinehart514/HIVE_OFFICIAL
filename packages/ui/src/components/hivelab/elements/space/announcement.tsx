@@ -19,16 +19,8 @@ export function AnnouncementElement({ config, data, onChange, onAction, context 
   const [message, setMessage] = useState(data?.message || '');
   const [isSending, setIsSending] = useState(false);
 
-  if (!context?.spaceId) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          <BellIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p>Announcement requires space context</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Preview mode: show functional preview in IDE
+  const isPreviewMode = !context?.spaceId;
 
   const handleSend = async () => {
     if (!message.trim()) return;
@@ -47,11 +39,12 @@ export function AnnouncementElement({ config, data, onChange, onAction, context 
   };
 
   return (
-    <Card className="border-amber-500/30 bg-amber-500/5">
+    <Card className={`border-amber-500/30 bg-amber-500/5 ${isPreviewMode ? 'border-dashed' : ''}`}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <BellIcon className="h-4 w-4 text-amber-500" />
           <span className="font-medium text-sm">Announcement</span>
+          {isPreviewMode && <Badge variant="outline" className="text-xs text-primary">Preview</Badge>}
           {config.pinned && <Badge variant="outline" className="text-xs">Pinned</Badge>}
         </div>
 

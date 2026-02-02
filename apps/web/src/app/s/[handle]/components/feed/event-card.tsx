@@ -29,6 +29,11 @@ export interface EventCardEvent {
   virtualLink?: string;
   rsvpCount: number;
   userRsvp?: 'going' | 'maybe' | 'not_going' | null;
+  // Optional space info for cross-space contexts (e.g., home page)
+  spaceName?: string;
+  spaceHandle?: string;
+  spaceId?: string;
+  isLive?: boolean;
 }
 
 interface EventCardProps {
@@ -106,6 +111,21 @@ export function EventCard({
       }}
       onClick={onClick}
     >
+      {/* Space badge (when showing in cross-space context like home) */}
+      {event.spaceName && (
+        <div className="flex items-center gap-2 mb-3">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-gold)]/10 text-[var(--color-gold)] truncate max-w-[200px]">
+            {event.spaceName}
+          </span>
+          {event.isLive && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/10 text-red-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+              Live
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Header: Icon + Title + Time badge */}
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-lg bg-[var(--color-gold)]/10 flex-shrink-0">
@@ -117,7 +137,7 @@ export function EventCard({
             <h3 className="text-sm font-medium text-white truncate">
               {event.title}
             </h3>
-            {timeUntil && (
+            {timeUntil && !event.isLive && (
               <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-gold)]/10 text-[var(--color-gold)]">
                 {timeUntil}
               </span>

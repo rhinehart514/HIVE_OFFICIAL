@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { ClockIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../../design-system/primitives';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, Badge } from '../../../../design-system/primitives';
 import { Button } from '../../../../design-system/primitives';
 import type { ElementProps } from '../../../../lib/hivelab/element-system';
 
@@ -94,44 +94,59 @@ export function AvailabilityHeatmapElement({ config, context, onChange, onAction
     onAction?.('select_slot', { dayOfWeek: day, hour });
   };
 
-  if (!context?.spaceId) {
-    return (
-      <Card>
-        <CardContent className="p-4 text-center text-sm text-muted-foreground">
-          <ClockIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p>Connect to a space to see member availability</p>
-        </CardContent>
-      </Card>
-    );
+  // Preview mode: show mock heatmap data in IDE
+  const isPreviewMode = !context?.spaceId;
+  const mockHeatmapData: HeatmapCell[] = [];
+  const mockSuggestions: Suggestion[] = [
+    { dayOfWeek: 2, hour: 14, duration: 60, score: 0.85, label: 'Tuesday 2PM' },
+    { dayOfWeek: 4, hour: 10, duration: 60, score: 0.78, label: 'Thursday 10AM' },
+    { dayOfWeek: 1, hour: 15, duration: 60, score: 0.72, label: 'Monday 3PM' },
+  ];
+  // Generate mock heatmap scores
+  for (let day = 0; day < 7; day++) {
+    for (let hour = startHour; hour < endHour; hour++) {
+      // Weekday business hours get higher scores
+      const isWeekday = day >= 1 && day <= 5;
+      const isBusinessHour = hour >= 9 && hour <= 17;
+      let score = Math.random() * 0.3;
+      if (isWeekday && isBusinessHour) score = 0.4 + Math.random() * 0.5;
+      else if (isWeekday) score = 0.2 + Math.random() * 0.3;
+      mockHeatmapData.push({ hour, dayOfWeek: day, available: Math.round(score * 8), total: 8, score });
+    }
   }
+  const displayHeatmap = isPreviewMode ? mockHeatmapData : heatmapData;
+  const displaySuggestions = isPreviewMode ? mockSuggestions : suggestions;
+  const displayMemberCount = isPreviewMode ? 12 : memberCount;
+  const displayConnectedCount = isPreviewMode ? 8 : connectedCount;
 
   return (
-    <Card>
+    <Card className={isPreviewMode ? 'border-dashed border-primary/30' : ''}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ClockIcon className="h-4 w-4 text-primary" />
             <CardTitle className="text-sm font-medium">Member Availability</CardTitle>
+            {isPreviewMode && <Badge variant="outline" className="text-xs text-primary">Preview</Badge>}
           </div>
           <Button
             onClick={() => onAction?.('refresh', {})}
             variant="ghost"
             size="sm"
-            disabled={isLoading}
+            disabled={isLoading || isPreviewMode}
           >
-            <ArrowPathIcon className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+            <ArrowPathIcon className={`h-3 w-3 ${isLoading && !isPreviewMode ? 'animate-spin' : ''}`} />
           </Button>
         </div>
         <CardDescription className="text-xs">
-          {connectedCount} of {memberCount} members sharing calendars
+          {displayConnectedCount} of {displayMemberCount} members sharing calendars
         </CardDescription>
       </CardHeader>
       <CardContent className="p-3">
-        {isLoading ? (
+        {isLoading && !isPreviewMode ? (
           <div className="py-6 text-center">
             <ArrowPathIcon className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
           </div>
-        ) : connectedCount === 0 ? (
+        ) : displayConnectedCount === 0 && !isPreviewMode ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
             <ClockIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
             <p>No members have connected their calendars yet</p>
@@ -156,7 +171,7 @@ export function AvailabilityHeatmapElement({ config, context, onChange, onAction
                       {formatHour(hour)}
                     </div>
                     {dayNames.map((_, day) => {
-                      const cell = heatmapData.find(h => h.dayOfWeek === day && h.hour === hour);
+                      const cell = displayHeatmap.find(h => h.dayOfWeek === day && h.hour === hour);
                       const score = cell?.score || 0;
                       const isSelected = selectedSlot?.day === day && selectedSlot?.hour === hour;
                       return (
@@ -188,11 +203,11 @@ export function AvailabilityHeatmapElement({ config, context, onChange, onAction
             </div>
 
             {/* Suggestions */}
-            {config.showSuggestions && suggestions.length > 0 && (
+            {config.showSuggestions && displaySuggestions.length > 0 && (
               <div className="mt-4 pt-3 border-t border-border">
                 <p className="text-xs font-medium mb-2">Best Times</p>
                 <div className="space-y-1">
-                  {suggestions.slice(0, 3).map((s, i) => (
+                  {displaySuggestions.slice(0, 3).map((s, i) => (
                     <div
                       key={i}
                       className="flex items-center justify-between text-xs p-2 rounded bg-emerald-500/10 cursor-pointer hover:bg-emerald-500/20"

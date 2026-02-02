@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
-import { Card, CardContent } from '../../../../design-system/primitives';
+import { Card, CardContent, Badge } from '../../../../design-system/primitives';
 import type { ElementProps } from '../../../../lib/hivelab/element-system';
 
 export function SpaceStatsElement({ config, data, context, onChange, onAction }: ElementProps) {
@@ -51,17 +51,19 @@ export function SpaceStatsElement({ config, data, context, onChange, onAction }:
     fetchStats();
   }, [context?.spaceId]);
 
-  if (!context?.spaceId) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          <ChartBarIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p>Space Stats requires space context</p>
-          <p className="text-xs mt-1">Deploy to a space to see metrics</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Preview mode: show mock data in IDE
+  const isPreviewMode = !context?.spaceId;
+  const mockStats: Record<string, number> = {
+    members: 42,
+    posts: 156,
+    events: 8,
+    engagement: 73,
+    membersTrend: 12,
+    postsTrend: 8,
+    eventsTrend: -2,
+    engagementTrend: 15,
+  };
+  const displayStats = isPreviewMode ? mockStats : stats;
 
   const metricLabels: Record<string, string> = {
     members: 'Members',
@@ -77,14 +79,15 @@ export function SpaceStatsElement({ config, data, context, onChange, onAction }:
   };
 
   return (
-    <Card className="bg-gradient-to-br from-primary/5 to-transparent">
+    <Card className={`bg-gradient-to-br from-primary/5 to-transparent ${isPreviewMode ? 'border-dashed border-primary/30' : ''}`}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <ChartBarIcon className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium text-sm">Space Analytics</span>
+          {isPreviewMode && <Badge variant="outline" className="text-xs text-primary">Preview</Badge>}
         </div>
 
-        {isLoading ? (
+        {isLoading && !isPreviewMode ? (
           <div className="grid grid-cols-2 gap-3 animate-pulse">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="p-3 bg-background rounded-lg border">
@@ -103,11 +106,11 @@ export function SpaceStatsElement({ config, data, context, onChange, onAction }:
                 }`}
                 onClick={() => handleMetricClick(metric)}
               >
-                <div className="text-2xl font-bold">{stats[metric] ?? 0}</div>
+                <div className="text-2xl font-bold">{displayStats[metric] ?? 0}</div>
                 <div className="text-xs text-muted-foreground">{metricLabels[metric] || metric}</div>
-                {config.showTrends && stats[`${metric}Trend`] !== undefined && (
-                  <div className={`text-xs mt-1 ${stats[`${metric}Trend`] >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {stats[`${metric}Trend`] >= 0 ? '+' : ''}{stats[`${metric}Trend`]}%
+                {config.showTrends && displayStats[`${metric}Trend`] !== undefined && (
+                  <div className={`text-xs mt-1 ${displayStats[`${metric}Trend`] >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {displayStats[`${metric}Trend`] >= 0 ? '+' : ''}{displayStats[`${metric}Trend`]}%
                   </div>
                 )}
               </div>

@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
-import { Card, CardContent } from '../../../../design-system/primitives';
+import { Card, CardContent, Badge } from '../../../../design-system/primitives';
 import type { ElementProps } from '../../../../lib/hivelab/element-system';
 
 interface Post {
@@ -78,17 +78,14 @@ export function SpaceFeedElement({ config, data, context, onChange, onAction }: 
     fetchPosts();
   }, [context?.spaceId, maxPosts]);
 
-  if (!context?.spaceId) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p>Space Feed requires space context</p>
-          <p className="text-xs mt-1">Deploy to a space to see posts</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Preview mode: show mock data in IDE
+  const isPreviewMode = !context?.spaceId;
+  const mockPosts: Post[] = [
+    { id: 'mock-1', content: 'Just finished the design system update! Check out the new components in Figma.', authorName: 'Alex Chen', timeAgo: '2h ago', likes: 8, comments: 3 },
+    { id: 'mock-2', content: 'Reminder: team retrospective tomorrow at 3pm. Please add your topics to the shared doc.', authorName: 'Jordan Lee', timeAgo: '5h ago', likes: 12, comments: 5 },
+    { id: 'mock-3', content: 'Great work on the launch everyone! 🎉', authorName: 'Sam Wilson', timeAgo: '1d ago', likes: 24, comments: 8 },
+  ];
+  const displayPosts = isPreviewMode ? mockPosts : posts;
 
   const handlePostClick = (post: Post) => {
     setSelectedPost(post.id);
@@ -97,14 +94,15 @@ export function SpaceFeedElement({ config, data, context, onChange, onAction }: 
   };
 
   return (
-    <Card>
+    <Card className={isPreviewMode ? 'border-dashed border-primary/30' : ''}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium text-sm">Recent Posts</span>
+          {isPreviewMode && <Badge variant="outline" className="text-xs text-primary">Preview</Badge>}
         </div>
 
-        {isLoading ? (
+        {isLoading && !isPreviewMode ? (
           <div className="py-4 animate-pulse space-y-3">
             {[1, 2].map((i) => (
               <div key={i} className="p-3 border rounded-lg">
@@ -117,14 +115,14 @@ export function SpaceFeedElement({ config, data, context, onChange, onAction }: 
               </div>
             ))}
           </div>
-        ) : posts.length === 0 ? (
+        ) : displayPosts.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
             <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
             <p>No posts yet</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {posts.slice(0, maxPosts).map((post, index) => (
+            {displayPosts.slice(0, maxPosts).map((post, index) => (
               <div
                 key={post.id || index}
                 className={`p-3 border rounded-lg cursor-pointer transition-all ${

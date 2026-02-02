@@ -52,6 +52,9 @@ import {
   type FeedSection,
 } from '../feed/feed-tokens';
 
+// Event card from space components
+import { EventCard, type EventCardEvent } from '../s/[handle]/components/feed/event-card';
+
 // Welcome overlay for first-time users
 import { WelcomeOverlay } from '../spaces/components/WelcomeOverlay';
 
@@ -87,6 +90,8 @@ interface EventData {
   rsvpCount?: number;
   isGoing?: boolean;
   isLive?: boolean;
+  location?: string;
+  isOnline?: boolean;
 }
 
 interface ToolData {
@@ -236,18 +241,37 @@ function TodaySection({
   unreadSpaces,
   loading,
   density,
+  onRsvp,
 }: {
   events: EventData[];
   unreadSpaces: SpaceData[];
   loading: boolean;
   density: ReturnType<typeof useFeedDensity>['config'];
+  onRsvp: (eventId: string, spaceId: string, status: 'going' | 'not_going') => void;
 }) {
   const router = useRouter();
   const hierarchy = FEED_HIERARCHY.primary;
 
+  // Convert EventData to EventCardEvent
+  const toEventCardEvent = (event: EventData): EventCardEvent => ({
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    startDate: event.startDate,
+    endDate: event.endDate,
+    location: event.location,
+    isOnline: event.isOnline,
+    rsvpCount: event.rsvpCount || 0,
+    userRsvp: event.isGoing ? 'going' : null,
+    spaceName: event.spaceName,
+    spaceHandle: event.spaceHandle,
+    spaceId: event.spaceId,
+    isLive: event.isLive,
+  });
+
   if (loading) {
     return (
-      <Section section="today" title="Today">
+      <Section section="today" title="Happening Soon">
         <div className={cn('space-y-3', density.cardGap)}>
           {[1, 2].map((i) => (
             <div
@@ -278,94 +302,34 @@ function TodaySection({
 
   if (!hasContent) {
     return (
-      <Section section="today" title="Today">
+      <Section section="today" title="Happening Soon">
         <FeedEmptyState variant="today" />
       </Section>
     );
   }
 
-  return (
-    <Section section="today" title="Today">
-      <div className={cn('space-y-3', density.cardGap)}>
-        {/* Live events first */}
-        {events
-          .filter((e) => e.isLive)
-          .map((event) => (
-            <Tilt key={event.id} intensity={density.tiltIntensity}>
-              <button
-                type="button"
-                onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
-                className="w-full text-left"
-              >
-                <GlassSurface
-                  intensity="subtle"
-                  className={cn(
-                    'rounded-xl border border-gold-500/20',
-                    density.cardPadding
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gold-500/10 flex items-center justify-center">
-                      <span className="w-2 h-2 rounded-full bg-gold-500 animate-pulse" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-body font-medium text-white truncate">
-                          {event.title}
-                        </span>
-                        <Badge variant="gold" size="sm">
-                          Live
-                        </Badge>
-                      </div>
-                      <p className="text-label text-white/50 mt-0.5">
-                        {event.spaceName}
-                        {event.rsvpCount ? ` · ${event.rsvpCount} attending` : ''}
-                      </p>
-                    </div>
-                  </div>
-                </GlassSurface>
-              </button>
-            </Tilt>
-          ))}
+  // Sort: live events first, then by start date
+  const sortedEvents = [...events].sort((a, b) => {
+    if (a.isLive && !b.isLive) return -1;
+    if (!a.isLive && b.isLive) return 1;
+    return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+  });
 
-        {/* Today's events */}
-        {events
-          .filter((e) => !e.isLive)
-          .map((event) => (
-            <Tilt key={event.id} intensity={density.tiltIntensity}>
-              <button
-                type="button"
-                onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
-                className="w-full text-left"
-              >
-                <GlassSurface
-                  intensity="subtle"
-                  className={cn('rounded-xl', density.cardPadding)}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                      <Calendar className="w-5 h-5 text-white/40" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-body font-medium text-white truncate">
-                          {event.title}
-                        </span>
-                        <span className="text-label-sm text-white/40">
-                          {formatEventTime(event.startDate)}
-                        </span>
-                      </div>
-                      <p className="text-label text-white/50 mt-0.5">
-                        {event.spaceName}
-                        {event.isGoing && " · You're going"}
-                        {event.rsvpCount ? ` · ${event.rsvpCount} going` : ''}
-                      </p>
-                    </div>
-                  </div>
-                </GlassSurface>
-              </button>
-            </Tilt>
-          ))}
+  return (
+    <Section section="today" title="Happening Soon">
+      <div className={cn('space-y-3', density.cardGap)}>
+        {/* Events using EventCard */}
+        {sortedEvents.map((event) => (
+          <EventCard
+            key={event.id}
+            event={toEventCardEvent(event)}
+            onRsvp={(status) => {
+              const newStatus = status === 'going' ? 'going' : 'not_going';
+              onRsvp(event.id, event.spaceId, newStatus);
+            }}
+            onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
+          />
+        ))}
 
         {/* Unread messages */}
         {unreadSpaces.map((space) => (
@@ -504,18 +468,37 @@ function ThisWeekSection({
   events,
   loading,
   density,
+  onRsvp,
 }: {
   events: EventData[];
   loading: boolean;
   density: ReturnType<typeof useFeedDensity>['config'];
+  onRsvp: (eventId: string, spaceId: string, status: 'going' | 'not_going') => void;
 }) {
   const router = useRouter();
   const maxItems = density.maxItems.events;
 
+  // Convert EventData to EventCardEvent
+  const toEventCardEvent = (event: EventData): EventCardEvent => ({
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    startDate: event.startDate,
+    endDate: event.endDate,
+    location: event.location,
+    isOnline: event.isOnline,
+    rsvpCount: event.rsvpCount || 0,
+    userRsvp: event.isGoing ? 'going' : null,
+    spaceName: event.spaceName,
+    spaceHandle: event.spaceHandle,
+    spaceId: event.spaceId,
+    isLive: event.isLive,
+  });
+
   if (loading) {
     return (
       <Section section="events" title="This Week" action="All events" actionHref="/explore?tab=events">
-        <div className={cn('space-y-2', density.cardGap)}>
+        <div className={cn('space-y-3', density.cardGap)}>
           {[1, 2].map((i) => (
             <div
               key={i}
@@ -543,35 +526,17 @@ function ThisWeekSection({
 
   return (
     <Section section="events" title="This Week" action="All events" actionHref="/explore?tab=events">
-      <div className={cn('space-y-2', density.cardGap)}>
+      <div className={cn('space-y-3', density.cardGap)}>
         {events.slice(0, maxItems).map((event) => (
-          <button
+          <EventCard
             key={event.id}
-            type="button"
+            event={toEventCardEvent(event)}
+            onRsvp={(status) => {
+              const newStatus = status === 'going' ? 'going' : 'not_going';
+              onRsvp(event.id, event.spaceId, newStatus);
+            }}
             onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
-            className="w-full text-left"
-          >
-            <GlassSurface
-              intensity="subtle"
-              interactive
-              className={cn('rounded-xl', density.cardPadding)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-body-sm font-medium text-white truncate">
-                      {event.title}
-                    </span>
-                  </div>
-                  <p className="text-label-sm text-white/40 mt-0.5">
-                    {event.spaceName} · {formatEventTime(event.startDate)}
-                    {event.rsvpCount ? ` · ${event.rsvpCount} going` : ''}
-                  </p>
-                </div>
-                <span className="text-white/20">→</span>
-              </div>
-            </GlassSurface>
-          </button>
+          />
         ))}
       </div>
     </Section>
@@ -839,6 +804,51 @@ export default function HomePage() {
     setHasSeenWelcome(true);
   };
 
+  // RSVP handler for events
+  const handleEventRsvp = async (eventId: string, spaceId: string, status: 'going' | 'not_going') => {
+    try {
+      const res = await fetch(`/api/spaces/${spaceId}/events/${eventId}/rsvp`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      if (res.ok) {
+        // Optimistic update for today events
+        setTodayEvents((prev) =>
+          prev.map((e) =>
+            e.id === eventId
+              ? {
+                  ...e,
+                  isGoing: status === 'going',
+                  rsvpCount: status === 'going'
+                    ? (e.rsvpCount || 0) + 1
+                    : Math.max(0, (e.rsvpCount || 0) - 1),
+                }
+              : e
+          )
+        );
+        // Optimistic update for week events
+        setWeekEvents((prev) =>
+          prev.map((e) =>
+            e.id === eventId
+              ? {
+                  ...e,
+                  isGoing: status === 'going',
+                  rsvpCount: status === 'going'
+                    ? (e.rsvpCount || 0) + 1
+                    : Math.max(0, (e.rsvpCount || 0) - 1),
+                }
+              : e
+          )
+        );
+      }
+    } catch (error) {
+      logger.error('Failed to RSVP to event', { component: 'HomePage', eventId }, error instanceof Error ? error : undefined);
+    }
+  };
+
   // Fetch feed data
   useEffect(() => {
     if (authLoading || !user) return;
@@ -882,6 +892,9 @@ export default function HomePage() {
               spaceHandle: e.spaceHandle as string | undefined,
               rsvpCount: e.rsvpCount as number | undefined,
               isGoing: e.isGoing as boolean | undefined,
+              isLive: e.isLive as boolean | undefined,
+              location: e.location as string | undefined,
+              isOnline: e.isOnline as boolean | undefined,
             })
           );
 
@@ -1083,6 +1096,7 @@ export default function HomePage() {
               unreadSpaces={unreadSpaces}
               loading={loadingStates.events}
               density={densityConfig}
+              onRsvp={handleEventRsvp}
             />
 
             <YourSpacesSection
@@ -1095,6 +1109,7 @@ export default function HomePage() {
               events={weekEvents}
               loading={loadingStates.events}
               density={densityConfig}
+              onRsvp={handleEventRsvp}
             />
 
             <YourCreationsSection

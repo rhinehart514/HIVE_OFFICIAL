@@ -243,13 +243,26 @@ export function EventCard({ event, onClick, index = 0 }: EventCardProps) {
         }`}
         onClick={onClick}
       >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <div className={`w-3 h-3 rounded-full ${getTypeColor(event.type)}`} />
-            <span className="text-lg">{getTypeIcon(event.type)}</span>
+        {/* Space badge - prominent at top */}
+        {event.space && (
+          <div className="flex items-center justify-between mb-3">
+            <Badge variant="gold" className="text-label">
+              📍 {event.space.name}
+            </Badge>
+            {event.isConflict && <ExclamationTriangleIcon className="h-4 w-4 text-[var(--hive-status-error)]" />}
           </div>
-          {event.isConflict && <ExclamationTriangleIcon className="h-4 w-4 text-[var(--hive-status-error)]" />}
-        </div>
+        )}
+
+        {/* Header without space - just type indicator */}
+        {!event.space && (
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${getTypeColor(event.type)}`} />
+              <span className="text-lg">{getTypeIcon(event.type)}</span>
+            </div>
+            {event.isConflict && <ExclamationTriangleIcon className="h-4 w-4 text-[var(--hive-status-error)]" />}
+          </div>
+        )}
 
         <h3 className="text-label font-semibold text-[var(--text-primary)] mb-2 leading-tight">{event.title}</h3>
 
@@ -271,15 +284,16 @@ export function EventCard({ event, onClick, index = 0 }: EventCardProps) {
           {event.attendees && event.attendees.length > 0 && (
             <div className="flex items-center space-x-2">
               <UsersIcon className="h-3 w-3" />
-              <span>{event.attendees.length} attendees</span>
+              <span>{event.attendees.length} attending</span>
             </div>
           )}
-
-          {event.space && <div className="text-life-gold text-label">{event.space.name}</div>}
         </div>
 
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border-subtle)]">
-          <Badge variant="secondary" className="text-label capitalize">{event.source}</Badge>
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${getTypeColor(event.type)}`} />
+            <span className="text-label text-[var(--text-tertiary)] capitalize">{event.type}</span>
+          </div>
           {event.rsvpStatus && (
             <Badge
               variant={event.rsvpStatus === 'going' ? 'success' : 'secondary'}

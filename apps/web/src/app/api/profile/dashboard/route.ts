@@ -208,45 +208,110 @@ export const GET = withAuthAndErrors(async (
       connections: [], // Would need to query connections collection
     };
 
-    // Get upcoming events from spaces - OPTIMIZED: Use Promise.all to batch queries
-    const upcomingEvents = [];
-    const topSpaces = spaceMemberships.docs.slice(0, 3);
+    // Get upcoming events from flat /events collection
+    const upcomingEvents: Array<{
+      id: string;
+      title: string;
+      description: string;
+      startDate: string;
+      endDate?: string;
+      type: string;
+      spaceId: string;
+      spaceName: string;
+      spaceHandle: string;
+      rsvpCount: number;
+      isGoing: boolean;
+      isLive: boolean;
+      location?: string;
+      isOnline?: boolean;
+    }> = [];
 
-    if (topSpaces.length > 0) {
-      // Run all event queries in parallel instead of sequentially
-      const eventQueries = topSpaces.map(async (spaceDoc) => {
+    const userSpaceIds = spaceMemberships.docs.map(doc => doc.id);
+
+    if (userSpaceIds.length > 0) {
+      // Query flat /events collection for events in user's spaces
+      // Firestore 'in' queries support up to 30 values
+      const spaceChunks = [];
+      for (let i = 0; i < userSpaceIds.length; i += 30) {
+        spaceChunks.push(userSpaceIds.slice(i, i + 30));
+      }
+
+      const eventQueries = spaceChunks.map(async (spaceIds) => {
         const eventsSnapshot = await dbAdmin
-          .collection('spaces')
-          .doc(spaceDoc.id)
           .collection('events')
+          .where('spaceId', 'in', spaceIds)
           .where('startDate', '>', now.toISOString())
           .orderBy('startDate')
-          .limit(2)
+          .limit(10)
           .get();
 
-        return eventsSnapshot.docs.map(eventDoc => {
-          const eventData = eventDoc.data();
-          const spaceData = spaceDoc.data();
-          const startDate = new Date(eventData.startDate);
-          const endDate = eventData.endDate ? new Date(eventData.endDate) : null;
-          return {
-            id: eventDoc.id,
-            title: eventData.title,
-            description: eventData.description || '',
-            startDate: eventData.startDate,
-            endDate: eventData.endDate,
-            type: eventData.type || 'event',
-            spaceId: spaceDoc.id,
-            spaceName: spaceData.name,
-            spaceHandle: spaceData.slug || spaceData.handle || spaceDoc.id,
-            isLive: startDate <= now && (!endDate || endDate > now),
-          };
-        });
+        return eventsSnapshot.docs;
       });
 
-      // Wait for all queries to complete
       const eventResults = await Promise.all(eventQueries);
-      upcomingEvents.push(...eventResults.flat());
+      const allEventDocs = eventResults.flat();
+
+      // Get RSVP status for all events in parallel
+      const eventIds = allEventDocs.map(doc => doc.id);
+      const rsvpQueries = eventIds.map(async (eventId) => {
+        const rsvpId = `${eventId}_${userId}`;
+        const rsvpDoc = await dbAdmin.collection('rsvps').doc(rsvpId).get();
+        return { eventId, isGoing: rsvpDoc.exists && rsvpDoc.data()?.status === 'going' };
+      });
+
+      // Get RSVP counts for all events
+      const rsvpCountQueries = eventIds.map(async (eventId) => {
+        const countSnapshot = await dbAdmin
+          .collection('rsvps')
+          .where('eventId', '==', eventId)
+          .where('status', '==', 'going')
+          .get();
+        return { eventId, count: countSnapshot.size };
+      });
+
+      const [rsvpStatuses, rsvpCounts] = await Promise.all([
+        Promise.all(rsvpQueries),
+        Promise.all(rsvpCountQueries),
+      ]);
+
+      const rsvpStatusMap = new Map(rsvpStatuses.map(r => [r.eventId, r.isGoing]));
+      const rsvpCountMap = new Map(rsvpCounts.map(r => [r.eventId, r.count]));
+
+      // Create space lookup from memberships
+      const spaceDataMap = new Map(
+        spaceMemberships.docs.map(doc => [doc.id, doc.data()])
+      );
+
+      for (const eventDoc of allEventDocs) {
+        const eventData = eventDoc.data();
+        const spaceData = spaceDataMap.get(eventData.spaceId);
+        if (!spaceData) continue;
+
+        const startDate = new Date(eventData.startDate);
+        const endDate = eventData.endDate ? new Date(eventData.endDate) : null;
+
+        upcomingEvents.push({
+          id: eventDoc.id,
+          title: eventData.title,
+          description: eventData.description || '',
+          startDate: eventData.startDate,
+          endDate: eventData.endDate,
+          type: eventData.type || 'event',
+          spaceId: eventData.spaceId,
+          spaceName: spaceData.name,
+          spaceHandle: spaceData.slug || spaceData.handle || eventData.spaceId,
+          rsvpCount: rsvpCountMap.get(eventDoc.id) || 0,
+          isGoing: rsvpStatusMap.get(eventDoc.id) || false,
+          isLive: startDate <= now && (!endDate || endDate > now),
+          location: eventData.location,
+          isOnline: eventData.isOnline,
+        });
+      }
+
+      // Sort by startDate
+      upcomingEvents.sort((a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      );
     }
 
     // Get user stats - prefer DDD data, fallback to Firestore

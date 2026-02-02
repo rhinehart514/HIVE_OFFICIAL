@@ -66,17 +66,15 @@ export function SpaceEventsElement({ config, data, context, onChange, onAction }
     fetchEvents();
   }, [context?.spaceId]);
 
-  if (!context?.spaceId) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p>Space Events requires space context</p>
-          <p className="text-xs mt-1">Deploy to a space to see events</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Preview mode: show mock data in IDE
+  const isPreviewMode = !context?.spaceId;
+  const now = new Date();
+  const mockEvents: SpaceEvent[] = [
+    { id: 'mock-1', title: 'Weekly Standup', date: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(), rsvpCount: 12, location: 'Zoom' },
+    { id: 'mock-2', title: 'Design Review', date: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString(), rsvpCount: 8, location: 'Room 301' },
+    { id: 'mock-3', title: 'Team Social', date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(), rsvpCount: 18 },
+  ];
+  const displayEvents = isPreviewMode ? mockEvents : events;
 
   const handleEventClick = (event: SpaceEvent) => {
     setSelectedEvent(event.id);
@@ -94,14 +92,15 @@ export function SpaceEventsElement({ config, data, context, onChange, onAction }
   };
 
   return (
-    <Card>
+    <Card className={isPreviewMode ? 'border-dashed border-primary/30' : ''}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium text-sm">Upcoming Events</span>
+          {isPreviewMode && <Badge variant="outline" className="text-xs text-primary">Preview</Badge>}
         </div>
 
-        {isLoading ? (
+        {isLoading && !isPreviewMode ? (
           <div className="space-y-3">
             {[1, 2].map((i) => (
               <div key={i} className="p-3 border rounded-lg">
@@ -110,7 +109,7 @@ export function SpaceEventsElement({ config, data, context, onChange, onAction }
               </div>
             ))}
           </div>
-        ) : events.length === 0 ? (
+        ) : displayEvents.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -130,7 +129,7 @@ export function SpaceEventsElement({ config, data, context, onChange, onAction }
         ) : (
           <div className="space-y-3">
             <AnimatePresence initial={false}>
-              {events.slice(0, maxEvents).map((event, index) => (
+              {displayEvents.slice(0, maxEvents).map((event, index) => (
                 <motion.div
                   key={event.id || index}
                   initial={{ opacity: 0, y: 10 }}

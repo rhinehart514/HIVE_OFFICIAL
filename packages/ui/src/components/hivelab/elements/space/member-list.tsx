@@ -66,17 +66,15 @@ export function MemberListElement({ config, data, context, onChange, onAction }:
     fetchMembers();
   }, [context?.spaceId]);
 
-  if (!context?.spaceId) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          <UsersIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p>Member List requires space context</p>
-          <p className="text-xs mt-1">Deploy to a space to see members</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Preview mode: show mock data in IDE
+  const isPreviewMode = !context?.spaceId;
+  const mockMembers: Member[] = [
+    { id: 'mock-1', name: 'Alex Chen', role: 'leader', joinedAt: '2025-09-15' },
+    { id: 'mock-2', name: 'Jordan Lee', role: 'admin', joinedAt: '2025-10-02' },
+    { id: 'mock-3', name: 'Sam Wilson', role: 'member', joinedAt: '2025-11-20' },
+    { id: 'mock-4', name: 'Riley Brooks', role: 'member', joinedAt: '2025-12-05' },
+  ];
+  const displayMembers = isPreviewMode ? mockMembers : members;
 
   const handleMemberClick = (member: Member) => {
     setSelectedMember(member.id);
@@ -85,17 +83,18 @@ export function MemberListElement({ config, data, context, onChange, onAction }:
   };
 
   return (
-    <Card>
+    <Card className={isPreviewMode ? 'border-dashed border-primary/30' : ''}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <UsersIcon className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium text-sm">Space Members</span>
+            {isPreviewMode && <Badge variant="outline" className="text-xs text-primary">Preview</Badge>}
           </div>
-          <Badge variant="outline">{isLoading ? '...' : members.length}</Badge>
+          <Badge variant="outline">{isLoading ? '...' : displayMembers.length}</Badge>
         </div>
 
-        {isLoading ? (
+        {isLoading && !isPreviewMode ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3 p-2">
@@ -107,7 +106,7 @@ export function MemberListElement({ config, data, context, onChange, onAction }:
               </div>
             ))}
           </div>
-        ) : members.length === 0 ? (
+        ) : displayMembers.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -127,7 +126,7 @@ export function MemberListElement({ config, data, context, onChange, onAction }:
         ) : (
           <div className="space-y-2">
             <AnimatePresence initial={false}>
-              {members.slice(0, maxMembers).map((member, index) => (
+              {displayMembers.slice(0, maxMembers).map((member, index) => (
                 <motion.div
                   key={member.id || index}
                   initial={{ opacity: 0, x: -15 }}
