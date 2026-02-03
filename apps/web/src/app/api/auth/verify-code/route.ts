@@ -1,13 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from "zod";
 import { createHash } from 'crypto';
-import { SignJWT } from 'jose';
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
 import { auditAuthEvent } from "@/lib/production-auth";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
-import { SESSION_CONFIG, getEncodedSessionSecret } from "@/lib/session";
+import { SESSION_CONFIG, createTokenPair, setTokenPairCookies } from "@/lib/session";
 import { validateOrigin } from "@/lib/security-middleware";
 import { isDevAuthBypassAllowed, getDevUserId } from "@/lib/dev-auth-bypass";
 
@@ -269,6 +268,7 @@ export const POST = withValidation(
 
 /**
  * Create session and return response with cookie
+ * Uses access/refresh token pair for secure token refresh
  */
 async function createSessionResponse(
   email: string,
@@ -337,25 +337,16 @@ async function createSessionResponse(
     userId = `dev-${email.replace(/[^a-zA-Z0-9]/g, '-')}`;
   }
 
-  // Create session token using centralized secure secret
-  const secret = getEncodedSessionSecret();
-
-  const sessionToken = await new SignJWT({
+  // Create token pair (access + refresh tokens)
+  const tokens = await createTokenPair({
     userId,
     email,
     campusId,
     isAdmin,
     onboardingCompleted: !needsOnboarding,
-    verifiedAt: new Date().toISOString(),
-    sessionId: `session-${Date.now()}`,
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(userId)
-    .setIssuedAt()
-    .setExpirationTime('30d')
-    .sign(secret);
+  });
 
-  // Create response
+  // Create response with token expiration info
   const response = NextResponse.json({
     success: true,
     needsOnboarding,
@@ -365,21 +356,18 @@ async function createSessionResponse(
       campusId,
       onboardingCompleted: !needsOnboarding,
     },
+    // Include expiration for client-side refresh scheduling
+    expiresIn: tokens.accessTokenExpiresIn,
   });
 
-  // Set session cookie
-  response.cookies.set('hive_session', sessionToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    path: '/',
-  });
+  // Set both access and refresh cookies
+  setTokenPairCookies(response, tokens, { isAdmin });
 
   logger.info('Session created via code verification', {
     userId,
     needsOnboarding,
     isDevMode,
+    accessTokenExpiresIn: tokens.accessTokenExpiresIn,
   });
 
   return response;

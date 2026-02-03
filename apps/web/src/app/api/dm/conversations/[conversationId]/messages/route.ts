@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getSession } from '@/lib/session';
 import { dbAdmin as db } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 /**
  * DM Messages API
@@ -125,7 +126,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       nextCursor: hasMore ? docs[docs.length - 1].id : null,
     });
   } catch (error) {
-    console.error('Failed to fetch messages:', error);
+    logger.error('Failed to fetch DM messages', {
+      action: 'dm_messages_list',
+      endpoint: '/api/dm/conversations/[conversationId]/messages',
+    }, error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: 'Failed to fetch messages' },
       { status: 500 }
@@ -267,7 +271,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error('Failed to send message:', error);
+    logger.error('Failed to send DM message', {
+      action: 'dm_message_send',
+      endpoint: '/api/dm/conversations/[conversationId]/messages',
+    }, error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: 'Failed to send message' },
       { status: 500 }

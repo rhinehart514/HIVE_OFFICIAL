@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { isRitualsEnabled, type UserFeatureContext } from "@/lib/feature-flags";
+import { RitualsComingSoon } from "./coming-soon";
 
 /**
  * Rituals Layout - Gates rituals behind RITUALS_V1 feature flag
  *
- * When rituals are disabled (default for soft launch), redirects to home.
+ * When rituals are disabled (default for soft launch), shows Coming Soon page.
  * When enabled, renders the rituals pages normally.
  */
 export default async function RitualsLayout({
@@ -39,8 +39,8 @@ export default async function RitualsLayout({
   const ritualsEnabled = await isRitualsEnabled(userContext);
 
   if (!ritualsEnabled) {
-    // Rituals are disabled - redirect to home
-    redirect("/");
+    // Rituals are disabled - show Coming Soon page
+    return <RitualsComingSoon />;
   }
 
   return <>{children}</>;

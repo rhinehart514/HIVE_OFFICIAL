@@ -29,6 +29,7 @@ export interface CalendarEvent {
   attendees?: string[];
   isConflict?: boolean;
   conflictsWith?: string[];
+  conflictSeverity?: 'overlap' | 'adjacent' | 'close';
   rsvpStatus?: 'going' | 'interested' | 'not_going';
   tools?: string[];
   space?: {
@@ -144,6 +145,9 @@ export function useCalendar(options: UseCalendarOptions = {}) {
             color: eventData.type === 'space' ? 'var(--hive-status-success)' : 'var(--hive-status-warning)',
             source: (eventData.source as CalendarEvent['source']) || 'hive',
             rsvpStatus: eventData.canEdit ? 'going' : 'interested',
+            isConflict: Boolean(eventData.isConflict),
+            conflictsWith: Array.isArray(eventData.conflictsWith) ? eventData.conflictsWith.map(String) : undefined,
+            conflictSeverity: eventData.conflictSeverity as CalendarEvent['conflictSeverity'],
             space: eventData.spaceName ? {
               id: String(eventData.spaceId || ''),
               name: String(eventData.spaceName)

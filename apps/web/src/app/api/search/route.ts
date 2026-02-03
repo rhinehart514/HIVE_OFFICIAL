@@ -39,7 +39,123 @@ interface SearchResult {
 type SearchCategory = 'spaces' | 'tools' | 'people' | 'posts' | 'events' | 'all';
 
 /**
- * Search spaces collection
+ * Relevance scoring weights
+ * Tuned for campus discovery use case
+ */
+const SCORING_WEIGHTS = {
+  // Text match quality
+  EXACT_MATCH: 100,
+  PREFIX_MATCH: 80,
+  CONTAINS_MATCH: 60,
+  PARTIAL_WORD_MATCH: 40,
+  CATEGORY_MATCH: 30,
+
+  // Recency boost (decays over time)
+  RECENCY_MAX_BOOST: 25,
+  RECENCY_HALF_LIFE_DAYS: 14, // After 2 weeks, recency boost is halved
+
+  // Engagement/popularity
+  ENGAGEMENT_MAX_BOOST: 30,
+  VERIFIED_BOOST: 15,
+
+  // Activity signals
+  ACTIVE_RECENTLY_BOOST: 10, // Was active in last 7 days
+};
+
+/**
+ * Calculate text match quality score
+ */
+function calculateTextMatchScore(
+  text: string,
+  query: string,
+  isTitle: boolean = false
+): number {
+  const textLower = text.toLowerCase();
+  const queryLower = query.toLowerCase();
+
+  // Exact match (title equals query)
+  if (textLower === queryLower) {
+    return SCORING_WEIGHTS.EXACT_MATCH;
+  }
+
+  // Prefix match (starts with query)
+  if (textLower.startsWith(queryLower)) {
+    return SCORING_WEIGHTS.PREFIX_MATCH;
+  }
+
+  // Word-boundary match (query appears at start of a word)
+  const wordBoundaryRegex = new RegExp(`\\b${queryLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+  if (wordBoundaryRegex.test(text)) {
+    return isTitle ? SCORING_WEIGHTS.CONTAINS_MATCH + 10 : SCORING_WEIGHTS.CONTAINS_MATCH;
+  }
+
+  // Contains match (query appears anywhere)
+  if (textLower.includes(queryLower)) {
+    return SCORING_WEIGHTS.PARTIAL_WORD_MATCH;
+  }
+
+  return 0;
+}
+
+/**
+ * Calculate recency boost using exponential decay
+ * More recent content gets higher scores, with smooth decay over time
+ */
+function calculateRecencyBoost(timestamp: Date | undefined | null): number {
+  if (!timestamp) return 0;
+
+  const now = Date.now();
+  const itemTime = timestamp.getTime();
+  const daysSinceCreated = (now - itemTime) / (1000 * 60 * 60 * 24);
+
+  // Exponential decay: score = max * (0.5 ^ (days / halfLife))
+  const decayFactor = Math.pow(0.5, daysSinceCreated / SCORING_WEIGHTS.RECENCY_HALF_LIFE_DAYS);
+  return Math.round(SCORING_WEIGHTS.RECENCY_MAX_BOOST * decayFactor);
+}
+
+/**
+ * Calculate engagement/popularity boost
+ * Uses logarithmic scaling to prevent very popular items from dominating
+ */
+function calculateEngagementBoost(metrics: {
+  memberCount?: number;
+  likeCount?: number;
+  commentCount?: number;
+  viewCount?: number;
+  rsvpCount?: number;
+  deploymentCount?: number;
+}): number {
+  // Weighted engagement score
+  const engagementScore =
+    (metrics.memberCount || 0) * 2 +
+    (metrics.likeCount || 0) * 1 +
+    (metrics.commentCount || 0) * 1.5 +
+    (metrics.viewCount || 0) * 0.1 +
+    (metrics.rsvpCount || 0) * 2 +
+    (metrics.deploymentCount || 0) * 3;
+
+  // Logarithmic scaling: log10(score + 1) * multiplier
+  // This gives diminishing returns for very high engagement
+  if (engagementScore <= 0) return 0;
+
+  const logScore = Math.log10(engagementScore + 1);
+  return Math.min(SCORING_WEIGHTS.ENGAGEMENT_MAX_BOOST, Math.round(logScore * 10));
+}
+
+/**
+ * Convert Firestore timestamp to Date safely
+ */
+function toDate(timestamp: unknown): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === 'string') return new Date(timestamp);
+  const maybeTs = timestamp as { toDate?: () => Date };
+  if (maybeTs && typeof maybeTs.toDate === 'function') return maybeTs.toDate();
+  return null;
+}
+
+/**
+ * Search spaces collection with relevance ranking
  */
 async function searchSpaces(
   query: string,
@@ -48,66 +164,127 @@ async function searchSpaces(
 ): Promise<SearchResult[]> {
   const results: SearchResult[] = [];
   const lowercaseQuery = query.toLowerCase();
+  const seenIds = new Set<string>();
 
   try {
-    // Search by name_lowercase prefix
+    // Search by name_lowercase prefix - most likely to be relevant
     const nameSnapshot = await dbAdmin
       .collection('spaces')
       .where('campusId', '==', campusId)
       .where('isActive', '==', true)
       .where('name_lowercase', '>=', lowercaseQuery)
       .where('name_lowercase', '<=', lowercaseQuery + '\uf8ff')
-      .limit(limit)
+      .limit(limit * 2) // Fetch more to allow for scoring and re-ranking
       .get();
 
     for (const doc of nameSnapshot.docs) {
+      if (seenIds.has(doc.id)) continue;
+      seenIds.add(doc.id);
+
       const data = doc.data();
+      const name = data.name || 'Unnamed Space';
+      const memberCount = data.memberCount || data.metrics?.memberCount || 0;
+      const createdAt = toDate(data.createdAt);
+      const lastActivityAt = toDate(data.lastActivityAt || data.updatedAt);
+      const isVerified = data.isVerified || data.status === 'verified';
+
+      // Calculate composite relevance score
+      let relevanceScore = 0;
+
+      // Text match quality (primary signal)
+      relevanceScore += calculateTextMatchScore(name, query, true);
+
+      // Description match adds to score
+      if (data.description) {
+        const descScore = calculateTextMatchScore(data.description, query, false);
+        relevanceScore += Math.round(descScore * 0.5); // Weight description less than title
+      }
+
+      // Recency boost
+      relevanceScore += calculateRecencyBoost(createdAt);
+
+      // Engagement boost (member count is primary engagement metric for spaces)
+      relevanceScore += calculateEngagementBoost({ memberCount });
+
+      // Verified spaces get a boost
+      if (isVerified) {
+        relevanceScore += SCORING_WEIGHTS.VERIFIED_BOOST;
+      }
+
+      // Recently active boost
+      if (lastActivityAt) {
+        const daysSinceActivity = (Date.now() - lastActivityAt.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceActivity < 7) {
+          relevanceScore += SCORING_WEIGHTS.ACTIVE_RECENTLY_BOOST;
+        }
+      }
+
       results.push({
         id: doc.id,
-        title: data.name || 'Unnamed Space',
+        title: name,
         description: data.description,
         type: 'space',
         category: 'spaces',
         url: data.slug ? `/spaces/s/${data.slug}` : `/spaces/${doc.id}`,
         metadata: {
-          memberCount: data.memberCount || data.metrics?.memberCount || 0,
+          memberCount,
           category: data.category,
-          type: data.type
+          type: data.type,
+          isVerified,
+          lastActivityAt: lastActivityAt?.toISOString()
         },
-        relevanceScore: 100 // Exact prefix match
+        relevanceScore
       });
     }
 
     // Also search by category if query matches known categories
-    const categoryMatches = ['student_org', 'residential', 'greek_life', 'university_org', 'academic']
-      .filter(cat => cat.includes(lowercaseQuery));
+    const categoryMatches = ['student_organizations', 'university_organizations', 'greek_life', 'campus_living', 'hive_exclusive']
+      .filter(cat => cat.toLowerCase().includes(lowercaseQuery) || lowercaseQuery.includes(cat.split('_')[0]));
 
-    if (categoryMatches.length > 0 && results.length < limit) {
+    if (categoryMatches.length > 0 && results.length < limit * 2) {
       const categorySnapshot = await dbAdmin
         .collection('spaces')
         .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .where('category', 'in', categoryMatches)
-        .limit(limit - results.length)
+        .orderBy('memberCount', 'desc')
+        .limit(limit)
         .get();
 
       for (const doc of categorySnapshot.docs) {
-        // Avoid duplicates
-        if (results.some(r => r.id === doc.id)) continue;
+        if (seenIds.has(doc.id)) continue;
+        seenIds.add(doc.id);
 
         const data = doc.data();
+        const name = data.name || 'Unnamed Space';
+        const memberCount = data.memberCount || data.metrics?.memberCount || 0;
+        const createdAt = toDate(data.createdAt);
+        const isVerified = data.isVerified || data.status === 'verified';
+
+        // Category match gets lower base score
+        let relevanceScore = SCORING_WEIGHTS.CATEGORY_MATCH;
+
+        // Still apply engagement and recency boosts
+        relevanceScore += calculateRecencyBoost(createdAt);
+        relevanceScore += calculateEngagementBoost({ memberCount });
+
+        if (isVerified) {
+          relevanceScore += SCORING_WEIGHTS.VERIFIED_BOOST;
+        }
+
         results.push({
           id: doc.id,
-          title: data.name || 'Unnamed Space',
+          title: name,
           description: data.description,
           type: 'space',
           category: 'spaces',
           url: data.slug ? `/spaces/s/${data.slug}` : `/spaces/${doc.id}`,
           metadata: {
-            memberCount: data.memberCount || data.metrics?.memberCount || 0,
-            category: data.category
+            memberCount,
+            category: data.category,
+            isVerified
           },
-          relevanceScore: 70 // Category match
+          relevanceScore
         });
       }
     }
@@ -115,11 +292,13 @@ async function searchSpaces(
     logger.error('Error searching spaces', { error: String(error), query });
   }
 
-  return results;
+  // Sort by relevance and return top results
+  results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  return results.slice(0, limit);
 }
 
 /**
- * Search profiles collection
+ * Search profiles collection with relevance ranking
  * @param viewerContext - Optional viewer context for ghost mode filtering
  */
 async function searchProfiles(
@@ -133,7 +312,7 @@ async function searchProfiles(
 
   // Collect profile IDs to batch-fetch privacy settings for ghost mode
   const profileIds: string[] = [];
-  const profileData: Map<string, { doc: FirebaseFirestore.QueryDocumentSnapshot; score: number }> = new Map();
+  const profileData: Map<string, { doc: FirebaseFirestore.QueryDocumentSnapshot; matchType: 'handle' | 'name' }> = new Map();
 
   try {
     // Search by handle prefix (handles are lowercase)
@@ -151,7 +330,7 @@ async function searchProfiles(
       // Respect privacy settings
       if (data.privacy?.profileVisibility === 'private') continue;
       profileIds.push(doc.id);
-      profileData.set(doc.id, { doc, score: 100 });
+      profileData.set(doc.id, { doc, matchType: 'handle' });
     }
 
     // Search by displayName_lowercase if we have room
@@ -171,7 +350,7 @@ async function searchProfiles(
         const data = doc.data();
         if (data.privacy?.profileVisibility === 'private') continue;
         profileIds.push(doc.id);
-        profileData.set(doc.id, { doc, score: 90 });
+        profileData.set(doc.id, { doc, matchType: 'name' });
       }
     }
 
@@ -187,10 +366,8 @@ async function searchProfiles(
       });
     }
 
-    // Process profiles with ghost mode filtering
+    // Process profiles with ghost mode filtering and relevance scoring
     for (const profileId of profileIds) {
-      if (results.length >= limit) break;
-
       const entry = profileData.get(profileId);
       if (!entry) continue;
 
@@ -209,31 +386,77 @@ async function searchProfiles(
         }
       }
 
+      // Calculate composite relevance score
+      let relevanceScore = 0;
+
+      // Text match quality
+      const handle = data.handle || '';
+      const displayName = data.displayName || '';
+
+      if (entry.matchType === 'handle') {
+        relevanceScore += calculateTextMatchScore(handle, query, true);
+      } else {
+        relevanceScore += calculateTextMatchScore(displayName, query, true);
+      }
+
+      // Bio match adds secondary signal
+      if (data.bio) {
+        const bioScore = calculateTextMatchScore(data.bio, query, false);
+        relevanceScore += Math.round(bioScore * 0.3);
+      }
+
+      // Recency boost based on account creation
+      const createdAt = toDate(data.createdAt);
+      relevanceScore += calculateRecencyBoost(createdAt);
+
+      // Engagement boost (follower count is primary engagement metric for profiles)
+      relevanceScore += calculateEngagementBoost({
+        memberCount: data.followerCount || 0
+      });
+
+      // Recently active users get a boost
+      const lastActiveAt = toDate(data.lastActiveAt || data.lastLoginAt);
+      if (lastActiveAt) {
+        const daysSinceActive = (Date.now() - lastActiveAt.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceActive < 7) {
+          relevanceScore += SCORING_WEIGHTS.ACTIVE_RECENTLY_BOOST;
+        }
+      }
+
+      // Verified users get a boost
+      if (data.isVerified) {
+        relevanceScore += SCORING_WEIGHTS.VERIFIED_BOOST;
+      }
+
       results.push({
         id: profileId,
-        title: data.displayName || data.handle || 'Anonymous',
-        description: data.bio || `${data.major || ''} • ${data.graduationYear || ''}`.trim(),
+        title: displayName || handle || 'Anonymous',
+        description: data.bio || `${data.major || ''} ${data.graduationYear ? '• ' + data.graduationYear : ''}`.trim(),
         type: 'person',
         category: 'people',
-        url: data.handle ? `/user/${data.handle}` : `/profile/${profileId}`,
+        url: handle ? `/user/${handle}` : `/profile/${profileId}`,
         metadata: {
           handle: data.handle,
           photoURL: data.photoURL,
           major: data.major,
-          year: entry.score === 100 ? data.graduationYear : undefined
+          year: data.graduationYear,
+          followerCount: data.followerCount || 0,
+          isVerified: data.isVerified
         },
-        relevanceScore: entry.score
+        relevanceScore
       });
     }
   } catch (error) {
     logger.error('Error searching profiles', { error: String(error), query });
   }
 
-  return results;
+  // Sort by relevance and return top results
+  results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  return results.slice(0, limit);
 }
 
 /**
- * Search posts collection
+ * Search posts collection with relevance ranking
  * Uses ContentModerationService for consistent moderation checks
  */
 async function searchPosts(
@@ -243,6 +466,7 @@ async function searchPosts(
 ): Promise<SearchResult[]> {
   const results: SearchResult[] = [];
   const lowercaseQuery = query.toLowerCase();
+  const seenIds = new Set<string>();
 
   try {
     // Search by title if posts have titles
@@ -256,58 +480,115 @@ async function searchPosts(
       .get();
 
     for (const doc of titleSnapshot.docs) {
-      if (results.length >= limit) break;
+      if (seenIds.has(doc.id)) continue;
+      seenIds.add(doc.id);
+
       const data = doc.data();
       // Use ContentModerationService for consistent moderation checks
       if (ContentModerationService.isHidden(data)) continue;
 
+      const title = data.title || data.content?.substring(0, 50) || 'Post';
+      const createdAt = toDate(data.createdAt);
+
+      // Get engagement metrics (handle legacy field names)
+      const likes = data.engagement?.likes || data.likeCount || data.likes || 0;
+      const comments = data.engagement?.comments || data.commentCount || 0;
+      const views = data.engagement?.views || data.viewCount || 0;
+
+      // Calculate composite relevance score
+      let relevanceScore = 0;
+
+      // Text match quality
+      relevanceScore += calculateTextMatchScore(title, query, true);
+
+      // Content match adds secondary signal
+      if (data.content) {
+        const contentScore = calculateTextMatchScore(data.content, query, false);
+        relevanceScore += Math.round(contentScore * 0.4);
+      }
+
+      // Recency is very important for posts
+      relevanceScore += calculateRecencyBoost(createdAt);
+
+      // Engagement boost
+      relevanceScore += calculateEngagementBoost({
+        likeCount: likes,
+        commentCount: comments,
+        viewCount: views
+      });
+
+      // Pinned posts get a boost
+      if (data.isPinned) {
+        relevanceScore += 20;
+      }
+
       results.push({
         id: doc.id,
-        title: data.title || data.content?.substring(0, 50) || 'Post',
+        title,
         description: data.content?.substring(0, 150),
         type: 'post',
         category: 'posts',
         url: data.spaceId ? `/spaces/${data.spaceId}?post=${doc.id}` : `/posts/${doc.id}`,
         metadata: {
           authorId: data.authorId,
+          authorName: data.authorName,
           spaceId: data.spaceId,
-          likes: data.likes || data.engagement?.likes || 0,
-          createdAt: data.createdAt
+          spaceName: data.spaceName,
+          likes,
+          comments,
+          createdAt: createdAt?.toISOString()
         },
-        relevanceScore: 80
+        relevanceScore
       });
     }
 
     // Search by tags if available
     // BOUNDED QUERY: Cap at 100 docs to prevent OOM
-    if (results.length < limit) {
+    if (results.length < limit * 2) {
       const tagSnapshot = await dbAdmin
         .collection('posts')
         .where('campusId', '==', campusId)
         .where('tags', 'array-contains', lowercaseQuery)
-        .limit(Math.min((limit - results.length) * 2, 100))
+        .limit(Math.min(limit * 2, 100))
         .get();
 
       for (const doc of tagSnapshot.docs) {
-        if (results.length >= limit) break;
-        if (results.some(r => r.id === doc.id)) continue;
+        if (seenIds.has(doc.id)) continue;
+        seenIds.add(doc.id);
 
         const data = doc.data();
         // Use ContentModerationService for consistent moderation checks
         if (ContentModerationService.isHidden(data)) continue;
 
+        const title = data.title || data.content?.substring(0, 50) || 'Post';
+        const createdAt = toDate(data.createdAt);
+        const likes = data.engagement?.likes || data.likeCount || data.likes || 0;
+        const comments = data.engagement?.comments || data.commentCount || 0;
+
+        // Tag match gets lower base score
+        let relevanceScore = SCORING_WEIGHTS.CATEGORY_MATCH;
+
+        // Still apply recency and engagement boosts
+        relevanceScore += calculateRecencyBoost(createdAt);
+        relevanceScore += calculateEngagementBoost({
+          likeCount: likes,
+          commentCount: comments
+        });
+
         results.push({
           id: doc.id,
-          title: data.title || data.content?.substring(0, 50) || 'Post',
+          title,
           description: data.content?.substring(0, 150),
           type: 'post',
           category: 'posts',
           url: data.spaceId ? `/spaces/${data.spaceId}?post=${doc.id}` : `/posts/${doc.id}`,
           metadata: {
             authorId: data.authorId,
-            tags: data.tags
+            tags: data.tags,
+            likes,
+            createdAt: createdAt?.toISOString()
           },
-          relevanceScore: 60 // Tag match
+          relevanceScore
         });
       }
     }
@@ -315,11 +596,14 @@ async function searchPosts(
     logger.error('Error searching posts', { error: String(error), query });
   }
 
-  return results;
+  // Sort by relevance and return top results
+  results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  return results.slice(0, limit);
 }
 
 /**
- * Search events collection
+ * Search events collection with relevance ranking
+ * Events get special treatment: upcoming events rank higher
  */
 async function searchEvents(
   query: string,
@@ -328,6 +612,8 @@ async function searchEvents(
 ): Promise<SearchResult[]> {
   const results: SearchResult[] = [];
   const lowercaseQuery = query.toLowerCase();
+  const seenIds = new Set<string>();
+  const now = new Date();
 
   try {
     // Search by title prefix
@@ -336,71 +622,127 @@ async function searchEvents(
       .where('campusId', '==', campusId)
       .where('title_lowercase', '>=', lowercaseQuery)
       .where('title_lowercase', '<=', lowercaseQuery + '\uf8ff')
-      .limit(limit)
+      .limit(limit * 2)
       .get();
 
     for (const doc of titleSnapshot.docs) {
+      if (seenIds.has(doc.id)) continue;
+      seenIds.add(doc.id);
+
       const data = doc.data();
+      const startTime = toDate(data.startTime);
+      const endTime = toDate(data.endTime);
+
       // Only include future or ongoing events
-      const startTime = data.startTime?.toDate?.() || new Date(data.startTime);
-      const endTime = data.endTime?.toDate?.() || new Date(data.endTime);
-      const now = new Date();
-      if (endTime < now) continue;
+      if (endTime && endTime < now) continue;
+
+      const title = data.title || 'Unnamed Event';
+      const rsvpCount = data.rsvpCount || data.attendeeCount || 0;
+
+      // Calculate composite relevance score
+      let relevanceScore = 0;
+
+      // Text match quality
+      relevanceScore += calculateTextMatchScore(title, query, true);
+
+      // Description match
+      if (data.description) {
+        const descScore = calculateTextMatchScore(data.description, query, false);
+        relevanceScore += Math.round(descScore * 0.4);
+      }
+
+      // For events, "recency" means how soon the event is happening
+      // Events happening sooner should rank higher
+      if (startTime) {
+        const daysUntilEvent = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysUntilEvent <= 0) {
+          // Event is happening now - maximum boost
+          relevanceScore += SCORING_WEIGHTS.RECENCY_MAX_BOOST;
+        } else if (daysUntilEvent <= 7) {
+          // Within a week - high boost
+          relevanceScore += Math.round(SCORING_WEIGHTS.RECENCY_MAX_BOOST * 0.8);
+        } else if (daysUntilEvent <= 30) {
+          // Within a month - moderate boost with decay
+          const factor = 1 - (daysUntilEvent - 7) / 23; // Linear decay from day 7 to day 30
+          relevanceScore += Math.round(SCORING_WEIGHTS.RECENCY_MAX_BOOST * 0.5 * factor);
+        }
+      }
+
+      // Engagement boost (RSVP count)
+      relevanceScore += calculateEngagementBoost({ rsvpCount });
 
       results.push({
         id: doc.id,
-        title: data.title || 'Unnamed Event',
+        title,
         description: data.description,
         type: 'event',
         category: 'events',
         url: data.spaceId ? `/s/${data.spaceId}/events/${doc.id}` : `/events/${doc.id}`,
         metadata: {
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
+          startTime: startTime?.toISOString(),
+          endTime: endTime?.toISOString(),
           spaceId: data.spaceId,
           spaceName: data.spaceName,
           location: data.location,
-          attendeeCount: data.attendeeCount || 0,
+          rsvpCount,
+          isVirtual: data.isVirtual
         },
-        relevanceScore: 100,
+        relevanceScore
       });
     }
 
     // Also search by location if we have room
-    if (results.length < limit) {
+    if (results.length < limit * 2) {
       const locationSnapshot = await dbAdmin
         .collection('events')
         .where('campusId', '==', campusId)
         .where('location_lowercase', '>=', lowercaseQuery)
         .where('location_lowercase', '<=', lowercaseQuery + '\uf8ff')
-        .limit(limit - results.length)
+        .limit(limit)
         .get();
 
       for (const doc of locationSnapshot.docs) {
-        if (results.some(r => r.id === doc.id)) continue;
+        if (seenIds.has(doc.id)) continue;
+        seenIds.add(doc.id);
 
         const data = doc.data();
-        const startTime = data.startTime?.toDate?.() || new Date(data.startTime);
-        const endTime = data.endTime?.toDate?.() || new Date(data.endTime);
-        const now = new Date();
-        if (endTime < now) continue;
+        const startTime = toDate(data.startTime);
+        const endTime = toDate(data.endTime);
+
+        if (endTime && endTime < now) continue;
+
+        const title = data.title || 'Unnamed Event';
+        const rsvpCount = data.rsvpCount || data.attendeeCount || 0;
+
+        // Location match gets lower base score
+        let relevanceScore = SCORING_WEIGHTS.PARTIAL_WORD_MATCH;
+
+        // Still apply time-based and engagement boosts
+        if (startTime) {
+          const daysUntilEvent = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+          if (daysUntilEvent <= 7) {
+            relevanceScore += Math.round(SCORING_WEIGHTS.RECENCY_MAX_BOOST * 0.6);
+          }
+        }
+
+        relevanceScore += calculateEngagementBoost({ rsvpCount });
 
         results.push({
           id: doc.id,
-          title: data.title || 'Unnamed Event',
+          title,
           description: data.description,
           type: 'event',
           category: 'events',
           url: data.spaceId ? `/s/${data.spaceId}/events/${doc.id}` : `/events/${doc.id}`,
           metadata: {
-            startTime: startTime.toISOString(),
-            endTime: endTime.toISOString(),
+            startTime: startTime?.toISOString(),
+            endTime: endTime?.toISOString(),
             spaceId: data.spaceId,
             spaceName: data.spaceName,
             location: data.location,
-            attendeeCount: data.attendeeCount || 0,
+            rsvpCount
           },
-          relevanceScore: 80, // Location match
+          relevanceScore
         });
       }
     }
@@ -408,11 +750,13 @@ async function searchEvents(
     logger.error('Error searching events', { error: String(error), query });
   }
 
-  return results;
+  // Sort by relevance and return top results
+  results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  return results.slice(0, limit);
 }
 
 /**
- * Search tools collection
+ * Search tools collection with relevance ranking
  */
 async function searchTools(
   query: string,
@@ -421,6 +765,7 @@ async function searchTools(
 ): Promise<SearchResult[]> {
   const results: SearchResult[] = [];
   const lowercaseQuery = query.toLowerCase();
+  const seenIds = new Set<string>();
 
   try {
     // Search by name_lowercase
@@ -429,17 +774,60 @@ async function searchTools(
       .where('name_lowercase', '>=', lowercaseQuery)
       .where('name_lowercase', '<=', lowercaseQuery + '\uf8ff')
       .where('isPublic', '==', true)
-      .limit(limit)
+      .limit(limit * 2)
       .get();
 
     for (const doc of nameSnapshot.docs) {
+      if (seenIds.has(doc.id)) continue;
+      seenIds.add(doc.id);
+
       const data = doc.data();
       // Filter by campus if tool has campusId
       if (data.campusId && data.campusId !== campusId) continue;
 
+      const name = data.name || 'Unnamed Tool';
+      const createdAt = toDate(data.createdAt);
+      const lastUsedAt = toDate(data.lastUsedAt);
+      const deploymentCount = data.deploymentCount || 0;
+      const usageCount = data.usageCount || data.analytics?.views || 0;
+
+      // Calculate composite relevance score
+      let relevanceScore = 0;
+
+      // Text match quality
+      relevanceScore += calculateTextMatchScore(name, query, true);
+
+      // Description match
+      if (data.description) {
+        const descScore = calculateTextMatchScore(data.description, query, false);
+        relevanceScore += Math.round(descScore * 0.4);
+      }
+
+      // Recency boost (when tool was created)
+      relevanceScore += calculateRecencyBoost(createdAt);
+
+      // Engagement boost (deployment and usage count are key metrics for tools)
+      relevanceScore += calculateEngagementBoost({
+        deploymentCount,
+        viewCount: usageCount
+      });
+
+      // Recently used tools get a boost
+      if (lastUsedAt) {
+        const daysSinceUsed = (Date.now() - lastUsedAt.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceUsed < 7) {
+          relevanceScore += SCORING_WEIGHTS.ACTIVE_RECENTLY_BOOST;
+        }
+      }
+
+      // Verified/official tools get a boost
+      if (data.isVerified || data.isTemplate) {
+        relevanceScore += SCORING_WEIGHTS.VERIFIED_BOOST;
+      }
+
       results.push({
         id: doc.id,
-        title: data.name || 'Unnamed Tool',
+        title: name,
         description: data.description,
         type: 'tool',
         category: 'tools',
@@ -447,43 +835,65 @@ async function searchTools(
         metadata: {
           type: data.type,
           creatorId: data.creatorId,
-          deploymentCount: data.deploymentCount || 0,
-          rating: data.rating
+          creatorName: data.creatorName,
+          deploymentCount,
+          usageCount,
+          rating: data.rating,
+          isTemplate: data.isTemplate
         },
-        relevanceScore: 100
+        relevanceScore
       });
     }
 
     // Search by type/category
-    const toolTypes = ['poll', 'form', 'calculator', 'timer', 'scheduler', 'tracker']
-      .filter(t => t.includes(lowercaseQuery));
+    const toolTypes = ['poll', 'form', 'calculator', 'timer', 'scheduler', 'tracker', 'survey', 'quiz']
+      .filter(t => t.includes(lowercaseQuery) || lowercaseQuery.includes(t));
 
-    if (toolTypes.length > 0 && results.length < limit) {
+    if (toolTypes.length > 0 && results.length < limit * 2) {
       const typeSnapshot = await dbAdmin
         .collection('tools')
         .where('type', 'in', toolTypes)
         .where('isPublic', '==', true)
-        .limit(limit - results.length)
+        .orderBy('usageCount', 'desc')
+        .limit(limit)
         .get();
 
       for (const doc of typeSnapshot.docs) {
-        if (results.some(r => r.id === doc.id)) continue;
+        if (seenIds.has(doc.id)) continue;
+        seenIds.add(doc.id);
 
         const data = doc.data();
         if (data.campusId && data.campusId !== campusId) continue;
 
+        const name = data.name || 'Unnamed Tool';
+        const deploymentCount = data.deploymentCount || 0;
+
+        // Type match gets lower base score
+        let relevanceScore = SCORING_WEIGHTS.CATEGORY_MATCH;
+
+        // Still apply engagement boost (important for type-based searches)
+        relevanceScore += calculateEngagementBoost({
+          deploymentCount,
+          viewCount: data.usageCount || 0
+        });
+
+        if (data.isVerified || data.isTemplate) {
+          relevanceScore += SCORING_WEIGHTS.VERIFIED_BOOST;
+        }
+
         results.push({
           id: doc.id,
-          title: data.name || 'Unnamed Tool',
+          title: name,
           description: data.description,
           type: 'tool',
           category: 'tools',
           url: `/tools/${doc.id}`,
           metadata: {
             type: data.type,
-            creatorId: data.creatorId
+            creatorId: data.creatorId,
+            deploymentCount
           },
-          relevanceScore: 70
+          relevanceScore
         });
       }
     }
@@ -491,7 +901,9 @@ async function searchTools(
     logger.error('Error searching tools', { error: String(error), query });
   }
 
-  return results;
+  // Sort by relevance and return top results
+  results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+  return results.slice(0, limit);
 }
 
 export async function GET(request: NextRequest) {

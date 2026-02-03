@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getSession } from '@/lib/session';
 import { dbAdmin as db } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 /**
  * DM Conversations API
@@ -122,7 +123,10 @@ export async function GET(request: NextRequest) {
       nextCursor: hasMore ? docs[docs.length - 1].id : null,
     });
   } catch (error) {
-    console.error('Failed to fetch DM conversations:', error);
+    logger.error('Failed to fetch DM conversations', {
+      action: 'dm_conversations_list',
+      endpoint: '/api/dm/conversations',
+    }, error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: 'Failed to fetch conversations' },
       { status: 500 }
@@ -245,7 +249,10 @@ export async function POST(request: NextRequest) {
       isNew: true,
     });
   } catch (error) {
-    console.error('Failed to create DM conversation:', error);
+    logger.error('Failed to create DM conversation', {
+      action: 'dm_conversation_create',
+      endpoint: '/api/dm/conversations',
+    }, error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: 'Failed to create conversation' },
       { status: 500 }

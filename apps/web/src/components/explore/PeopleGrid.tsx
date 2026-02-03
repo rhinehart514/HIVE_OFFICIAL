@@ -11,7 +11,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Users } from 'lucide-react';
+import { Users, Search, UserPlus } from 'lucide-react';
 import { GlassSurface, SimpleAvatar, Badge, Button } from '@hive/ui/design-system/primitives';
 import { MOTION, revealVariants, staggerContainerVariants, cardHoverVariants } from '@hive/tokens';
 import { cn } from '@/lib/utils';
@@ -45,37 +45,89 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
     );
   }
 
-  // Empty state with HIVE personality
+  // Empty state with helpful guidance
   if (people.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
-        className="text-center py-16"
+        className="flex flex-col items-center justify-center py-16 px-4"
       >
-        {searchQuery ? (
-          <>
-            <p className="text-white/40 text-body mb-2">
-              No one matches "{searchQuery}"
-            </p>
-            <p className="text-white/25 text-body-sm">
-              Try a different name or major
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="text-white/40 text-body mb-2">
-              No classmates found yet
-            </p>
-            <p className="text-white/25 text-body-sm mb-4">
-              Join some spaces to see people with shared interests
-            </p>
+        <GlassSurface
+          intensity="subtle"
+          className="p-8 rounded-xl max-w-md w-full text-center"
+        >
+          {/* Icon */}
+          <motion.div
+            className="w-14 h-14 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-5"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
+          >
+            {searchQuery ? (
+              <Search className="w-6 h-6 text-white/30" />
+            ) : (
+              <UserPlus className="w-6 h-6 text-white/30" />
+            )}
+          </motion.div>
+
+          {/* Title */}
+          <motion.h3
+            className="text-body-lg font-medium text-white/80 mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.15 }}
+          >
+            {searchQuery
+              ? `No one matches "${searchQuery}"`
+              : 'Find your people'}
+          </motion.h3>
+
+          {/* Subtitle */}
+          <motion.p
+            className="text-body-sm text-white/40 mb-6 max-w-xs mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.2 }}
+          >
+            {searchQuery
+              ? 'Try adjusting your search or filters to find more classmates'
+              : 'Join spaces to discover people with shared interests. The more you participate, the more connections you\'ll make.'}
+          </motion.p>
+
+          {/* Actions */}
+          <motion.div
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.25 }}
+          >
             <Button variant="default" size="sm" asChild>
-              <Link href="/explore?tab=spaces">Browse Spaces</Link>
+              <Link href="/explore?tab=spaces">
+                <Users className="w-4 h-4 mr-1.5" />
+                Browse Spaces
+              </Link>
             </Button>
-          </>
-        )}
+            {searchQuery && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/explore?tab=people">Clear Search</Link>
+              </Button>
+            )}
+          </motion.div>
+
+          {/* Helpful hint */}
+          {!searchQuery && (
+            <motion.p
+              className="text-label text-white/25 mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, delay: 0.3 }}
+            >
+              Tip: Filter by major or year to find classmates
+            </motion.p>
+          )}
+        </GlassSurface>
       </motion.div>
     );
   }

@@ -12,7 +12,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
  * - Short-lived access tokens (15 min) with automatic refresh
  * - Refresh tokens (7 days) stored in httpOnly cookies
  * - Cross-tab synchronization via localStorage events
- * - Automatic token refresh before expiration
+ * - Proactive token refresh before expiration (2 min buffer)
+ * - Visibility-aware refresh (refreshes when tab becomes visible)
  *
  * Benefits:
  * - Works identically in dev and production
@@ -23,8 +24,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
  */
 
 // Token refresh configuration
-const TOKEN_REFRESH_INTERVAL = 10 * 60 * 1000; // Check every 10 minutes
-const TOKEN_REFRESH_BUFFER = 2 * 60 * 1000; // Refresh 2 minutes before expiry
+const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000; // Refresh 2 minutes before expiry
+const MIN_REFRESH_INTERVAL_MS = 30 * 1000; // Minimum 30 seconds between refresh attempts
+const FALLBACK_REFRESH_INTERVAL_MS = 10 * 60 * 1000; // Fallback: check every 10 minutes if no expiration info
 
 export interface AuthUser {
   uid: string;
@@ -52,6 +54,13 @@ export interface AuthError {
   message: string;
 }
 
+export interface SessionInfo {
+  issuedAt: string;
+  expiresAt?: number;
+  expiresIn?: number;
+  canRefresh?: boolean;
+}
+
 export interface UseAuthReturn {
   user: AuthUser | null;
   isLoading: boolean;
@@ -65,34 +74,37 @@ export interface UseAuthReturn {
   getAuthToken?: () => Promise<string>;
   canAccessFeature: (feature: string) => boolean;
   hasValidSession: () => boolean;
-  session: { issuedAt: string } | null;
+  session: SessionInfo | null;
   // Token status
   isRefreshing: boolean;
 }
 
 // Cache for session data to avoid unnecessary fetches
-let sessionCache: { user: AuthUser | null; timestamp: number } | null = null;
+let sessionCache: { user: AuthUser | null; sessionInfo: SessionInfo | null; timestamp: number } | null = null;
 const CACHE_TTL = 30000; // 30 seconds
 
 export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<AuthError | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Track refresh timer
+  // Track refresh timer and last refresh attempt
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
+  const lastRefreshAttemptRef = useRef<number>(0);
 
   const clearError = useCallback(() => setError(null), []);
 
   /**
    * Fetch session from /api/auth/me
+   * Returns both user data and session info (including expiration)
    */
-  const fetchSession = useCallback(async (skipCache = false): Promise<AuthUser | null> => {
+  const fetchSession = useCallback(async (skipCache = false): Promise<{ user: AuthUser | null; sessionInfo: SessionInfo | null }> => {
     // Check cache first (client-side only)
     if (typeof window !== "undefined" && !skipCache && sessionCache && Date.now() - sessionCache.timestamp < CACHE_TTL) {
-      return sessionCache.user;
+      return { user: sessionCache.user, sessionInfo: sessionCache.sessionInfo };
     }
 
     try {
@@ -131,18 +143,26 @@ export function useAuth(): UseAuthReturn {
           },
         };
 
+        // Extract session info with expiration data
+        const sessionData: SessionInfo = {
+          issuedAt: data.session?.verifiedAt || new Date().toISOString(),
+          expiresAt: data.session?.expiresAt,
+          expiresIn: data.session?.expiresIn,
+          canRefresh: data.session?.canRefresh,
+        };
+
         // Update cache
         if (typeof window !== "undefined") {
-          sessionCache = { user: authUser, timestamp: Date.now() };
+          sessionCache = { user: authUser, sessionInfo: sessionData, timestamp: Date.now() };
         }
-        return authUser;
+        return { user: authUser, sessionInfo: sessionData };
       }
 
       // Not authenticated
       if (typeof window !== "undefined") {
-        sessionCache = { user: null, timestamp: Date.now() };
+        sessionCache = { user: null, sessionInfo: null, timestamp: Date.now() };
       }
-      return null;
+      return { user: null, sessionInfo: null };
 
     } catch (err) {
       // Re-throw to allow caller to handle
@@ -156,8 +176,9 @@ export function useAuth(): UseAuthReturn {
   const refreshUser = useCallback(async (): Promise<void> => {
     try {
       setIsLoading(true);
-      const userData = await fetchSession(true);
+      const { user: userData, sessionInfo: sessInfo } = await fetchSession(true);
       setUser(userData);
+      setSessionInfo(sessInfo);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -170,6 +191,8 @@ export function useAuth(): UseAuthReturn {
   /**
    * Refresh the access token using the refresh token
    * Returns true if successful, false otherwise
+   *
+   * Security: Prevents rapid refresh attempts (min 30s between attempts)
    */
   const refreshToken = useCallback(async (): Promise<boolean> => {
     // Prevent concurrent refresh attempts
@@ -177,7 +200,14 @@ export function useAuth(): UseAuthReturn {
       return false;
     }
 
+    // Prevent rapid refresh attempts
+    const now = Date.now();
+    if (now - lastRefreshAttemptRef.current < MIN_REFRESH_INTERVAL_MS) {
+      return false;
+    }
+
     isRefreshingRef.current = true;
+    lastRefreshAttemptRef.current = now;
     setIsRefreshing(true);
 
     try {
@@ -193,10 +223,15 @@ export function useAuth(): UseAuthReturn {
         // Refresh failed - user needs to re-authenticate
         if (response.status === 401) {
           setUser(null);
+          setSessionInfo(null);
           sessionCache = null;
-          // Broadcast logout to other tabs
+          // Broadcast session expiration to other tabs
           if (typeof window !== "undefined") {
             localStorage.setItem("hive_auth_event", `session_expired_${Date.now()}`);
+            // Redirect to login after a brief delay to allow state cleanup
+            setTimeout(() => {
+              window.location.href = "/enter?reason=session_expired";
+            }, 100);
           }
         }
         return false;
@@ -204,15 +239,17 @@ export function useAuth(): UseAuthReturn {
 
       const data = await response.json();
 
-      if (data.success && data.user) {
-        // Refresh the user data after token refresh
-        await fetchSession(true);
+      if (data.success) {
+        // Refresh the user data and session info after token refresh
+        const { user: userData, sessionInfo: sessInfo } = await fetchSession(true);
+        setUser(userData);
+        setSessionInfo(sessInfo);
         return true;
       }
 
       return false;
-    } catch (err) {
-      // Network error or other issue
+    } catch {
+      // Network error or other issue - don't clear session, let retry happen
       return false;
     } finally {
       isRefreshingRef.current = false;
@@ -221,22 +258,60 @@ export function useAuth(): UseAuthReturn {
   }, [fetchSession]);
 
   /**
-   * Setup automatic token refresh
+   * Setup automatic token refresh based on expiration time
+   * Uses proactive refresh (2 minutes before expiry) when expiration info is available
+   * Falls back to periodic refresh if no expiration info
    */
   const setupTokenRefresh = useCallback(() => {
     // Clear existing timer
     if (refreshTimerRef.current) {
-      clearInterval(refreshTimerRef.current);
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
     }
 
-    // Set up periodic refresh check
-    refreshTimerRef.current = setInterval(async () => {
-      // Only refresh if user is authenticated
+    // Only set up refresh if user is authenticated and refresh is possible
+    if (!user || !sessionInfo?.canRefresh) {
+      return;
+    }
+
+    // Calculate when to refresh
+    let refreshDelay: number;
+
+    if (sessionInfo.expiresAt) {
+      // Proactive refresh: 2 minutes before token expires
+      const timeUntilExpiry = sessionInfo.expiresAt - Date.now();
+      refreshDelay = Math.max(
+        MIN_REFRESH_INTERVAL_MS, // At least 30 seconds from now
+        timeUntilExpiry - TOKEN_REFRESH_BUFFER_MS // 2 minutes before expiry
+      );
+    } else if (sessionInfo.expiresIn !== undefined) {
+      // Use expiresIn (seconds) if expiresAt not available
+      const timeUntilExpiry = sessionInfo.expiresIn * 1000;
+      refreshDelay = Math.max(
+        MIN_REFRESH_INTERVAL_MS,
+        timeUntilExpiry - TOKEN_REFRESH_BUFFER_MS
+      );
+    } else {
+      // Fallback to periodic refresh every 10 minutes
+      refreshDelay = FALLBACK_REFRESH_INTERVAL_MS;
+    }
+
+    // Schedule the refresh
+    refreshTimerRef.current = setTimeout(async () => {
       if (user && !isRefreshingRef.current) {
-        await refreshToken();
+        const success = await refreshToken();
+        // If refresh succeeded, setupTokenRefresh will be called again via useEffect
+        // If it failed but user still exists (network error), set up fallback retry
+        if (!success && user) {
+          refreshTimerRef.current = setTimeout(() => {
+            if (user && !isRefreshingRef.current) {
+              refreshToken();
+            }
+          }, MIN_REFRESH_INTERVAL_MS * 2); // Retry in 1 minute
+        }
       }
-    }, TOKEN_REFRESH_INTERVAL);
-  }, [user, refreshToken]);
+    }, refreshDelay);
+  }, [user, sessionInfo, refreshToken]);
 
   /**
    * Logout - calls logout endpoint and clears state
@@ -272,9 +347,10 @@ export function useAuth(): UseAuthReturn {
 
     const initAuth = async () => {
       try {
-        const userData = await fetchSession();
+        const { user: userData, sessionInfo: sessInfo } = await fetchSession();
         if (mounted) {
           setUser(userData);
+          setSessionInfo(sessInfo);
           setError(null);
         }
       } catch (err) {
@@ -282,8 +358,9 @@ export function useAuth(): UseAuthReturn {
         if (err instanceof Error && err.message.includes('401')) {
           const refreshed = await refreshToken();
           if (refreshed && mounted) {
-            const userData = await fetchSession(true);
+            const { user: userData, sessionInfo: sessInfo } = await fetchSession(true);
             setUser(userData);
+            setSessionInfo(sessInfo);
             setError(null);
             return;
           }
@@ -293,6 +370,7 @@ export function useAuth(): UseAuthReturn {
           const message = err instanceof Error ? err.message : String(err);
           setError({ code: "INIT_ERROR", message });
           setUser(null);
+          setSessionInfo(null);
         }
       } finally {
         if (mounted) {
@@ -311,13 +389,19 @@ export function useAuth(): UseAuthReturn {
         if (value.startsWith('session_expired_') || value.startsWith('logout_')) {
           if (mounted) {
             setUser(null);
+            setSessionInfo(null);
             sessionCache = null;
+            // Redirect to login
+            window.location.href = "/enter?reason=session_expired";
           }
           return;
         }
         // Another tab logged in - refresh
-        fetchSession(true).then(userData => {
-          if (mounted) setUser(userData);
+        fetchSession(true).then(({ user: userData, sessionInfo: sessInfo }) => {
+          if (mounted) {
+            setUser(userData);
+            setSessionInfo(sessInfo);
+          }
         }).catch(() => {
           // Silently handle cross-tab sync errors
         });
@@ -341,18 +425,26 @@ export function useAuth(): UseAuthReturn {
    * Also handles visibility changes to refresh when tab becomes visible
    */
   useEffect(() => {
-    if (user) {
+    if (user && sessionInfo) {
       setupTokenRefresh();
     }
 
     // Handle visibility change - refresh when tab becomes visible after being hidden
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && user && !isRefreshingRef.current) {
-        // Tab became visible - check if we should refresh
+      if (document.visibilityState === 'visible' && user && sessionInfo?.canRefresh && !isRefreshingRef.current) {
+        // Tab became visible - check if token is close to expiring or has expired
+        if (sessionInfo.expiresAt) {
+          const timeUntilExpiry = sessionInfo.expiresAt - Date.now();
+          // If token expires in less than 5 minutes or already expired, refresh immediately
+          if (timeUntilExpiry < 5 * 60 * 1000) {
+            await refreshToken();
+            return;
+          }
+        }
+
+        // Fallback: if more than 5 minutes since last cache update, refresh
         const lastRefresh = sessionCache?.timestamp || 0;
         const timeSinceRefresh = Date.now() - lastRefresh;
-
-        // If more than 5 minutes since last activity, refresh proactively
         if (timeSinceRefresh > 5 * 60 * 1000) {
           await refreshToken();
         }
@@ -365,14 +457,14 @@ export function useAuth(): UseAuthReturn {
 
     return () => {
       if (refreshTimerRef.current) {
-        clearInterval(refreshTimerRef.current);
+        clearTimeout(refreshTimerRef.current);
         refreshTimerRef.current = null;
       }
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
     };
-  }, [user, setupTokenRefresh, refreshToken]);
+  }, [user, sessionInfo, setupTokenRefresh, refreshToken]);
 
   return {
     user,
@@ -387,7 +479,7 @@ export function useAuth(): UseAuthReturn {
     getAuthToken: user?.getIdToken,
     canAccessFeature: (_feature: string) => !!user, // User must be authenticated
     hasValidSession: () => !!user && !isLoading,
-    session: user ? { issuedAt: new Date().toISOString() } : null,
+    session: sessionInfo,
     // Token status
     isRefreshing,
   };

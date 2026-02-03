@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifySession, type SessionData } from "@/lib/session";
+import { verifySession, type SessionData, SESSION_CONFIG, getEncodedSessionSecret } from "@/lib/session";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
+import { decodeJwt } from 'jose';
 
 /**
  * Unified Session Endpoint
@@ -11,12 +12,33 @@ import { enforceRateLimit } from "@/lib/secure-rate-limiter";
  * This is the SINGLE source of truth for authentication state.
  * It reads the httpOnly JWT cookie and returns user data.
  *
+ * Features:
  * - Works identically in dev and production
  * - No localStorage, no Bearer tokens, no Firebase client SDK
  * - Stateless JWT verification (scalable)
+ * - Returns token expiration info for proactive client-side refresh
  */
 
 const SESSION_COOKIE_NAME = 'hive_session';
+const REFRESH_COOKIE_NAME = 'hive_refresh';
+
+/**
+ * Extract token expiration time from JWT without full verification
+ * (verification already done by verifySession)
+ */
+function getTokenExpirationInfo(token: string): { expiresAt: number; expiresIn: number } | null {
+  try {
+    const payload = decodeJwt(token);
+    if (payload.exp) {
+      const expiresAt = payload.exp * 1000; // Convert to milliseconds
+      const expiresIn = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000)); // Seconds until expiry
+      return { expiresAt, expiresIn };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   // Rate limit: 100 requests per minute for session checks
@@ -55,6 +77,10 @@ export async function GET(request: NextRequest) {
     // Fetch fresh user data from Firestore
     const userData = await fetchUserProfile(session);
 
+    // Get token expiration info for client-side refresh scheduling
+    const tokenExpiration = getTokenExpirationInfo(sessionCookie.value);
+    const hasRefreshToken = !!request.cookies.get(REFRESH_COOKIE_NAME)?.value;
+
     return NextResponse.json({
       authenticated: true,
       user: userData,
@@ -62,6 +88,13 @@ export async function GET(request: NextRequest) {
         sessionId: session.sessionId,
         verifiedAt: session.verifiedAt,
         isAdmin: session.isAdmin || false,
+        // Token expiration info for proactive refresh
+        ...(tokenExpiration && {
+          expiresAt: tokenExpiration.expiresAt,
+          expiresIn: tokenExpiration.expiresIn,
+        }),
+        // Whether refresh is possible (refresh token exists)
+        canRefresh: hasRefreshToken,
       }
     });
 

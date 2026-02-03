@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { logger } from '../structured-logger';
+import { logger, extractErrorContext } from '../structured-logger';
 import type { z } from 'zod';
 
 /**
@@ -9,6 +9,7 @@ export interface ApiErrorResponse {
   error: string;
   code?: string;
   details?: unknown;
+  requestId?: string;
 }
 
 /**
@@ -20,24 +21,72 @@ export type ApiHandler = (
 ) => Promise<Response>;
 
 /**
+ * Extract user context from request for error logging
+ */
+function extractRequestContext(request: Request): {
+  method: string;
+  path: string;
+  userId?: string;
+  requestId: string;
+} {
+  const url = new URL(request.url);
+  const requestId = request.headers.get('x-request-id') ||
+    `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  // Try to extract userId from various sources (set by auth middleware)
+  const requestWithUser = request as Request & { user?: { uid?: string } };
+  const userId = requestWithUser.user?.uid;
+
+  return {
+    method: request.method,
+    path: url.pathname,
+    requestId,
+    ...(userId && { userId }),
+  };
+}
+
+/**
  * Wraps an API handler with error handling
  */
 export function withErrorHandling(
   handler: ApiHandler
 ): ApiHandler {
   return async (request: Request, context: unknown) => {
+    const startTime = Date.now();
+    const requestContext = extractRequestContext(request);
+
     try {
       return await handler(request, context);
     } catch (error: unknown) {
-      logger.error('API error', { component: 'error-handler' }, error instanceof Error ? error : undefined);
+      const duration = Date.now() - startTime;
+      const errorInfo = extractErrorContext(error);
+
+      logger.error(`API error: ${errorInfo.message}`, {
+        ...requestContext,
+        duration,
+        action: 'api_error',
+        component: 'error-handler',
+        errorCode: errorInfo.code,
+        errorContext: errorInfo.context,
+      });
 
       const message = error instanceof Error ? error.message : 'Internal server error';
       const status = (error as { status?: number })?.status || 500;
+      const code = (error as { code?: string })?.code || 'INTERNAL_ERROR';
 
-      return NextResponse.json(
-        { error: message },
+      const response = NextResponse.json(
+        {
+          error: message,
+          code,
+          requestId: requestContext.requestId,
+        },
         { status }
       );
+
+      // Add request ID header for tracing
+      response.headers.set('X-Request-ID', requestContext.requestId);
+
+      return response;
     }
   };
 }

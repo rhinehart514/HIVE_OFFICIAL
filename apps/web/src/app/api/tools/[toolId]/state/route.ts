@@ -4,6 +4,7 @@ import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
+import { logger } from "@/lib/logger";
 
 // Schema for tool state update requests
 const ToolStateSchema = z.object({
@@ -164,7 +165,14 @@ export const POST = withAuthValidationAndErrors(
         userId
       ).catch(err => {
         // Non-blocking - log but don't fail the request
-        console.warn('Threshold automation trigger failed:', err instanceof Error ? err.message : String(err));
+        logger.warn('Threshold automation trigger failed', {
+          action: 'threshold_automation_trigger',
+          deploymentId,
+          toolId,
+          spaceId,
+          userId,
+          errorMessage: err instanceof Error ? err.message : String(err),
+        });
       });
     }
 
@@ -317,7 +325,9 @@ async function triggerThresholdAutomations(
         runCount: FieldValue.increment(1),
       });
 
-      console.log(`Threshold automation triggered: ${automation.name}`, {
+      logger.info('Threshold automation triggered', {
+        action: 'threshold_automation_success',
+        automationName: automation.name,
         deploymentId,
         automationId: doc.id,
         path,
@@ -331,10 +341,11 @@ async function triggerThresholdAutomations(
         lastRun: now.toISOString(),
       });
 
-      console.error('Threshold automation failed:', {
+      logger.error('Threshold automation failed', {
+        action: 'threshold_automation_error',
         automationId: doc.id,
-        error: error instanceof Error ? error.message : String(error),
-      });
+        deploymentId,
+      }, error instanceof Error ? error : undefined);
     }
   }
 }

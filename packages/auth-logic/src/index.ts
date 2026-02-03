@@ -7,7 +7,7 @@
 
 // Main auth hook - fetches from /api/auth/me
 export { useAuth } from './hooks/use-auth';
-export type { AuthUser, AuthError, UseAuthReturn } from './hooks/use-auth';
+export type { AuthUser, AuthError, UseAuthReturn, SessionInfo } from './hooks/use-auth';
 
 // Legacy exports for backward compatibility (can be removed later)
 export { FirebaseErrorHandler, useFirebaseErrorHandler } from './firebase-error-handler';

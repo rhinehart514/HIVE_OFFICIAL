@@ -737,45 +737,103 @@ function EmptyState({
   tab: TabType;
   onBrowseSpaces: () => void;
 }) {
-  const messages: Record<TabType, { title: string; description: string }> = {
+  const messages: Record<TabType, { title: string; description: string; hint?: string; showCta?: boolean; ctaLabel?: string }> = {
     all: {
-      title: 'No connections yet',
-      description: 'Join spaces to meet people and build your network',
+      title: 'Build your network',
+      description: 'Join spaces and engage with others to make connections. Your classmates are waiting to meet you.',
+      hint: 'Connections form naturally through shared spaces and interests',
+      showCta: true,
+      ctaLabel: 'Find Your Spaces',
     },
     friends: {
       title: 'No friends yet',
-      description: 'Send friend requests to people you connect with',
+      description: 'Send friend requests to people you meet in spaces. Friends can see more of each other\'s activity.',
+      hint: 'Look for the "Add Friend" button on profiles',
+      showCta: true,
+      ctaLabel: 'Find Classmates',
     },
     following: {
       title: 'Not following anyone',
-      description: 'Follow people to see their activity',
+      description: 'Follow interesting people to stay updated on their posts and events. It\'s a great way to learn from builders.',
+      hint: 'Check out the "People" tab to discover who to follow',
+      showCta: true,
+      ctaLabel: 'Discover People',
     },
     followers: {
       title: 'No followers yet',
-      description: 'As you participate in spaces, people will follow you',
+      description: 'As you participate in spaces and share your work, people will start following you.',
+      hint: 'Post in spaces and engage with the community to grow your audience',
+      showCta: false,
     },
     requests: {
-      title: 'No pending requests',
-      description: 'Friend requests will appear here',
+      title: 'All caught up',
+      description: 'No pending friend requests right now. When someone wants to connect, you\'ll see it here.',
+      hint: 'You can also send requests to people you want to connect with',
+      showCta: true,
+      ctaLabel: 'Find Classmates',
     },
   };
 
-  const { title, description } = messages[tab];
+  const { title, description, hint, showCta, ctaLabel } = messages[tab];
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-        <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <motion.div
+      className="flex flex-col items-center justify-center py-16 text-center"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+    >
+      <motion.div
+        className="w-16 h-16 rounded-xl bg-white/[0.04] flex items-center justify-center mb-5"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.2, delay: 0.1 }}
+      >
+        <svg className="w-7 h-7 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
-      </div>
-      <h3 className="text-lg font-medium text-white/60 mb-1">{title}</h3>
-      <p className="text-sm text-white/40 max-w-sm mb-6">{description}</p>
-      {tab === 'all' && (
-        <Button variant="cta" onClick={onBrowseSpaces}>
-          Browse Spaces
-        </Button>
+      </motion.div>
+
+      <motion.h3
+        className="text-body-lg font-medium text-white/80 mb-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, delay: 0.15 }}
+      >
+        {title}
+      </motion.h3>
+
+      <motion.p
+        className="text-body-sm text-white/40 max-w-sm mb-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2, delay: 0.2 }}
+      >
+        {description}
+      </motion.p>
+
+      {hint && (
+        <motion.p
+          className="text-label text-white/25 max-w-xs mb-6 italic"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2, delay: 0.25 }}
+        >
+          {hint}
+        </motion.p>
       )}
-    </div>
+
+      {showCta && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.3 }}
+        >
+          <Button variant="cta" onClick={onBrowseSpaces}>
+            {ctaLabel}
+          </Button>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }

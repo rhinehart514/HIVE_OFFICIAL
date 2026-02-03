@@ -157,7 +157,7 @@ export const POST = withAdminPermission<RouteContext>('manage_users', async (req
       adminId,
       targetUserId: userId,
       reason,
-      duration,
+      suspensionDuration: duration,
     });
 
     return respond.success({

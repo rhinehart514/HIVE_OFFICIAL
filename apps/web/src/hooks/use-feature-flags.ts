@@ -21,7 +21,7 @@ export const FEATURE_FLAGS = {
   GHOST_MODE: 'ghost_mode',
   REALTIME_FEED: 'realtime_feed',
   CALENDAR_SYNC: 'calendar_sync',
-  RITUALS: 'rituals',
+  RITUALS: 'rituals_v1',
 } as const;
 
 export type FeatureFlagId = typeof FEATURE_FLAGS[keyof typeof FEATURE_FLAGS];
@@ -142,4 +142,8 @@ export function useDMsEnabled(): { enabled: boolean; isLoading: boolean } {
 
 export function useConnectionsEnabled(): { enabled: boolean; isLoading: boolean } {
   return useFeatureFlag(FEATURE_FLAGS.ENABLE_CONNECTIONS);
+}
+
+export function useRitualsEnabled(): { enabled: boolean; isLoading: boolean } {
+  return useFeatureFlag(FEATURE_FLAGS.RITUALS);
 }

@@ -62,7 +62,7 @@ class ApiClient {
           action: 'api_error',
           url,
           status,
-          duration: `${Math.round(duration)}ms`
+          duration: Math.round(duration)
         });
       } catch {
         // Silently ignore toast dispatch errors

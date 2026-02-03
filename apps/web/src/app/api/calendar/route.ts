@@ -14,6 +14,88 @@ import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { withAuth, type AuthContext } from '@/lib/api-auth-middleware';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
+// 15-minute buffer for close proximity detection
+const CLOSE_BUFFER_MS = 15 * 60 * 1000;
+
+/**
+ * Detect conflicts between events
+ * - overlap: Events whose time ranges overlap
+ * - adjacent: Events that end/start at the exact same time
+ * - close: Events within 15 minutes of each other
+ */
+function detectConflicts(events: CalendarEvent[]): CalendarEvent[] {
+  const conflictMap = new Map<string, { ids: string[]; severity: 'overlap' | 'adjacent' | 'close' }>();
+
+  for (let i = 0; i < events.length; i++) {
+    const eventA = events[i];
+    const aStart = new Date(eventA.startDate).getTime();
+    const aEnd = new Date(eventA.endDate).getTime();
+
+    for (let j = i + 1; j < events.length; j++) {
+      const eventB = events[j];
+      const bStart = new Date(eventB.startDate).getTime();
+      const bEnd = new Date(eventB.endDate).getTime();
+
+      let severity: 'overlap' | 'adjacent' | 'close' | null = null;
+
+      // Check for overlap (A starts before B ends AND A ends after B starts)
+      if (aStart < bEnd && aEnd > bStart) {
+        severity = 'overlap';
+      }
+      // Check for adjacent (A ends exactly when B starts or vice versa)
+      else if (aEnd === bStart || bEnd === aStart) {
+        severity = 'adjacent';
+      }
+      // Check for close proximity (within 15 minutes)
+      else if (
+        (aEnd + CLOSE_BUFFER_MS >= bStart && aEnd <= bStart) ||
+        (bEnd + CLOSE_BUFFER_MS >= aStart && bEnd <= aStart)
+      ) {
+        severity = 'close';
+      }
+
+      if (severity) {
+        // Record conflict for event A
+        const existingA = conflictMap.get(eventA.id);
+        if (existingA) {
+          existingA.ids.push(eventB.id);
+          // Upgrade severity if needed (overlap > adjacent > close)
+          if (severity === 'overlap' || (severity === 'adjacent' && existingA.severity === 'close')) {
+            existingA.severity = severity;
+          }
+        } else {
+          conflictMap.set(eventA.id, { ids: [eventB.id], severity });
+        }
+
+        // Record conflict for event B
+        const existingB = conflictMap.get(eventB.id);
+        if (existingB) {
+          existingB.ids.push(eventA.id);
+          if (severity === 'overlap' || (severity === 'adjacent' && existingB.severity === 'close')) {
+            existingB.severity = severity;
+          }
+        } else {
+          conflictMap.set(eventB.id, { ids: [eventA.id], severity });
+        }
+      }
+    }
+  }
+
+  // Apply conflict data to events
+  return events.map(event => {
+    const conflict = conflictMap.get(event.id);
+    if (conflict) {
+      return {
+        ...event,
+        isConflict: true,
+        conflictsWith: conflict.ids,
+        conflictSeverity: conflict.severity,
+      };
+    }
+    return event;
+  });
+}
+
 // Event type for calendar display (space events only)
 interface CalendarEvent {
   id: string;
@@ -30,6 +112,10 @@ interface CalendarEvent {
   canEdit: boolean;
   eventType?: string;
   organizerName?: string;
+  // Conflict detection fields
+  isConflict?: boolean;
+  conflictsWith?: string[];
+  conflictSeverity?: 'overlap' | 'adjacent' | 'close';
 }
 
 // GET - Fetch calendar events (space events only)
@@ -102,7 +188,10 @@ export const GET = withAuth(async (request, authContext: AuthContext) => {
       new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     );
 
-    return NextResponse.json({ events: allEvents });
+    // Detect conflicts between events
+    const eventsWithConflicts = detectConflicts(allEvents);
+
+    return NextResponse.json({ events: eventsWithConflicts });
   } catch (error) {
     logger.error(
       `Error fetching calendar events at /api/calendar`,

@@ -9,7 +9,7 @@ import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
-import { createSession, setSessionCookie, getSession, SESSION_CONFIG } from '@/lib/session';
+import { createTokenPair, setTokenPairCookies, getSession, SESSION_CONFIG } from '@/lib/session';
 import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction, validateHandleFormat } from '@/lib/handle-service';
 import { logger } from '@/lib/logger';
 import { SecureSchemas } from '@/lib/secure-input-validation';
@@ -154,8 +154,8 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
       return respond.error(formatResult.error || 'Invalid handle format', 'BAD_REQUEST', { status: 400 });
     }
 
-    // Re-issue session cookie with onboarding completed state
-    const newToken = await createSession({
+    // Re-issue token pair with onboarding completed state
+    const tokens = await createTokenPair({
       userId,
       email: email || '',
       campusId,
@@ -173,10 +173,11 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
         onboardingCompleted: true
       },
       devMode: true,
-      message: 'Onboarding completed in development mode (no Firestore)'
+      message: 'Onboarding completed in development mode (no Firestore)',
+      expiresIn: tokens.accessTokenExpiresIn,
     });
 
-    setSessionCookie(response, newToken, { isAdmin });
+    setTokenPairCookies(response, tokens, { isAdmin });
     return response;
   }
 
@@ -360,9 +361,9 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
       endpoint: '/api/auth/complete-onboarding'
     });
 
-    // Re-issue session cookie with onboardingCompleted: true
+    // Re-issue token pair with onboardingCompleted: true
     // This is CRITICAL - without this flag, middleware will redirect back to /onboarding
-    const newToken = await createSession({
+    const tokens = await createTokenPair({
       userId,
       email: email || '',
       campusId,
@@ -375,6 +376,7 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
       user: { id: userId, email, onboardingCompleted: true },
       deprecated: true,
       deprecationMessage: DEPRECATION_MESSAGE,
+      expiresIn: tokens.accessTokenExpiresIn,
     });
 
     // Add deprecation header
@@ -382,7 +384,7 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
     response.headers.set('Deprecation', 'true');
     response.headers.set('Link', '</api/auth/complete-entry>; rel="successor-version"');
 
-    setSessionCookie(response, newToken, { isAdmin });
+    setTokenPairCookies(response, tokens, { isAdmin });
     return response;
 
   } catch (e) {

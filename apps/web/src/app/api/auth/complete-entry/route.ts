@@ -5,7 +5,7 @@ import { createHash } from 'crypto';
 import { FieldValue } from 'firebase-admin/firestore';
 import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
-import { createSession, setSessionCookie, getSession, SESSION_CONFIG } from '@/lib/session';
+import { createTokenPair, setTokenPairCookies, getSession, SESSION_CONFIG } from '@/lib/session';
 import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction, validateHandleFormat } from '@/lib/handle-service';
 import { logger } from '@/lib/logger';
 import { SecureSchemas } from '@/lib/secure-input-validation';
@@ -142,7 +142,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       return respond.error(formatResult.error || 'Invalid handle format', 'BAD_REQUEST', { status: 400 });
     }
 
-    const newToken = await createSession({
+    const tokens = await createTokenPair({
       userId,
       email: email || '',
       campusId,
@@ -162,9 +162,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       },
       redirect: '/spaces',
       devMode: true,
+      expiresIn: tokens.accessTokenExpiresIn,
     });
 
-    setSessionCookie(response, newToken, { isAdmin });
+    setTokenPairCookies(response, tokens, { isAdmin });
     return response;
   }
 
@@ -507,8 +508,8 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       });
     }
 
-    // Re-issue session cookie with completed state
-    const newToken = await createSession({
+    // Re-issue token pair with completed state
+    const tokens = await createTokenPair({
       userId,
       email: email || '',
       campusId,
@@ -528,9 +529,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         ...(avatarUrl && { avatarUrl }),
       },
       redirect: '/spaces',
+      expiresIn: tokens.accessTokenExpiresIn,
     });
 
-    setSessionCookie(response, newToken, { isAdmin });
+    setTokenPairCookies(response, tokens, { isAdmin });
     return response;
 
   } catch (e) {

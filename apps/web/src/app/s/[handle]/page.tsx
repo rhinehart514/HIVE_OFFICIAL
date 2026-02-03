@@ -54,6 +54,7 @@ import {
 } from './components';
 import { useTypingIndicator } from '@/hooks/use-presence';
 import { GatheringThreshold } from './components/threshold';
+import { ThreadPanel } from './components/feed/thread-panel';
 import {
   BoardsSidebar,
   UnifiedActivityFeed,
@@ -86,6 +87,9 @@ export default function SpacePageUnified() {
     authorName: string;
     content: string;
   } | null>(null);
+
+  // Thread panel state - driven by URL param
+  const [activeThreadId, setActiveThreadId] = React.useState<string | null>(null);
 
   // Detect first entry to this space for ArrivalTransition
   React.useEffect(() => {
@@ -133,6 +137,50 @@ export default function SpacePageUnified() {
   // Typing indicator hook - contextId is spaceId/boardId for per-board tracking
   const typingContextId = space?.id && activeBoard ? `${space.id}/${activeBoard}` : '';
   const { typingUsers, setTyping } = useTypingIndicator(typingContextId);
+
+  // Sync thread state with URL on mount and URL changes
+  React.useEffect(() => {
+    const threadParam = new URLSearchParams(window.location.search).get('thread');
+    setActiveThreadId(threadParam);
+  }, []);
+
+  // Get parent message for thread panel
+  const threadParentMessage = React.useMemo(() => {
+    if (!activeThreadId) return null;
+    const msg = messages.find(m => m.id === activeThreadId);
+    if (!msg) return null;
+    return {
+      id: msg.id,
+      authorId: msg.authorId,
+      authorName: msg.authorName,
+      authorAvatarUrl: msg.authorAvatarUrl,
+      content: msg.content,
+      timestamp: typeof msg.timestamp === 'string' ? msg.timestamp : new Date(msg.timestamp).toISOString(),
+      reactions: msg.reactions?.map(r => ({
+        emoji: r.emoji,
+        count: r.count,
+        userReacted: r.hasReacted,
+      })),
+      replyCount: msg.replyCount,
+    };
+  }, [activeThreadId, messages]);
+
+  // Close thread panel and update URL
+  const handleCloseThread = React.useCallback(() => {
+    setActiveThreadId(null);
+    const params = new URLSearchParams(window.location.search);
+    params.delete('thread');
+    const newUrl = params.toString() ? `/s/${handle}?${params.toString()}` : `/s/${handle}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [handle]);
+
+  // Open thread panel and update URL
+  const handleOpenThread = React.useCallback((messageId: string) => {
+    setActiveThreadId(messageId);
+    const params = new URLSearchParams(window.location.search);
+    params.set('thread', messageId);
+    window.history.replaceState(null, '', `/s/${handle}?${params.toString()}`);
+  }, [handle]);
 
   // ============================================
   // ALL HOOKS MUST BE CALLED BEFORE ANY RETURNS
@@ -183,6 +231,8 @@ export default function SpacePageUnified() {
       })),
       replyCount: msg.replyCount,
       attachments: msg.attachments,
+      isEdited: msg.isEdited,
+      editedAt: msg.editedAt,
     }));
   }, [messages]);
 
@@ -376,6 +426,34 @@ export default function SpacePageUnified() {
     } catch (error) {
       logger.error('Failed to delete message', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
       toast.error(error instanceof Error ? error.message : 'Failed to delete message');
+    }
+  };
+
+  // Handle message editing
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    if (!space?.id || !activeBoard) return;
+
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/chat/${messageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: newContent,
+          boardId: activeBoard,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error?.message || 'Failed to edit message');
+      }
+
+      // Refresh to update the feed
+      await refreshSpace();
+      toast.success('Message updated');
+    } catch (error) {
+      logger.error('Failed to edit message', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+      toast.error(error instanceof Error ? error.message : 'Failed to edit message');
     }
   };
 
@@ -641,10 +719,9 @@ export default function SpacePageUnified() {
                     logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
                   }
                 }}
-                onReply={(messageId) => {
-                  router.push(`/s/${handle}?board=${activeBoard}&thread=${messageId}`);
-                }}
+                onReply={(messageId) => handleOpenThread(messageId)}
                 onDelete={handleDeleteMessage}
+                onEdit={handleEditMessage}
                 canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
                 onReport={handleReportMessage}
               />
@@ -921,6 +998,16 @@ export default function SpacePageUnified() {
           onClose={() => setShowModerationPanel(false)}
           spaceId={space.id}
           spaceName={space.name}
+        />
+
+        {/* Thread Reply Panel */}
+        <ThreadPanel
+          parentMessage={threadParentMessage}
+          isOpen={!!activeThreadId && !!threadParentMessage}
+          onClose={handleCloseThread}
+          spaceId={space.id}
+          currentUserId={user?.id || ''}
+          boardId={activeBoard}
         />
 
         {/* Report Content Modal */}

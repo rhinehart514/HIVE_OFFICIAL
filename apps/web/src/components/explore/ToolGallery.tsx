@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Wrench } from 'lucide-react';
+import { Wrench, Search, Sparkles } from 'lucide-react';
 import { Tilt, GlassSurface, Badge, Button } from '@hive/ui/design-system/primitives';
 import { MOTION, revealVariants, staggerContainerVariants, cardHoverVariants } from '@hive/tokens';
 import { cn } from '@/lib/utils';
@@ -43,26 +43,89 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
     );
   }
 
-  // Empty state
+  // Empty state with helpful guidance
   if (tools.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
-        className="text-center py-16"
+        className="flex flex-col items-center justify-center py-16 px-4"
       >
-        <p className="text-white/40 text-body mb-2">
-          {searchQuery
-            ? `No tools match "${searchQuery}"`
-            : 'No tools available'}
-        </p>
-        <p className="text-white/25 text-body-sm mb-4">
-          Build one in HiveLab
-        </p>
-        <Button variant="default" size="sm" asChild>
-          <Link href="/lab/new">Create Tool</Link>
-        </Button>
+        <GlassSurface
+          intensity="subtle"
+          className="p-8 rounded-xl max-w-md w-full text-center"
+        >
+          {/* Icon */}
+          <motion.div
+            className="w-14 h-14 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-5"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
+          >
+            {searchQuery ? (
+              <Search className="w-6 h-6 text-white/30" />
+            ) : (
+              <Sparkles className="w-6 h-6 text-white/30" />
+            )}
+          </motion.div>
+
+          {/* Title */}
+          <motion.h3
+            className="text-body-lg font-medium text-white/80 mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.15 }}
+          >
+            {searchQuery
+              ? `No tools match "${searchQuery}"`
+              : 'The lab is empty'}
+          </motion.h3>
+
+          {/* Subtitle */}
+          <motion.p
+            className="text-body-sm text-white/40 mb-6 max-w-xs mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.2 }}
+          >
+            {searchQuery
+              ? 'Try a different search or browse all available tools'
+              : 'Be the first to build something useful for your campus. Create polls, forms, or custom tools for your spaces.'}
+          </motion.p>
+
+          {/* Actions */}
+          <motion.div
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.25 }}
+          >
+            <Button variant="cta" size="sm" asChild>
+              <Link href="/lab/new">
+                <Wrench className="w-4 h-4 mr-1.5" />
+                Create a Tool
+              </Link>
+            </Button>
+            {searchQuery && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/explore?tab=tools">Browse All</Link>
+              </Button>
+            )}
+          </motion.div>
+
+          {/* Helpful hint */}
+          {!searchQuery && (
+            <motion.p
+              className="text-label text-white/25 mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, delay: 0.3 }}
+            >
+              Tools you build can be deployed to any space
+            </motion.p>
+          )}
+        </GlassSurface>
       </motion.div>
     );
   }

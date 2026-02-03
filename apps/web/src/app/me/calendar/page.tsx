@@ -19,17 +19,14 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
-  CheckIcon,
   FunnelIcon,
 } from "@heroicons/react/24/outline";
 import { EventDetailsModal } from "@/components/events/event-details-modal";
-import { PageContainer, CalendarLoadingSkeleton, EventCard } from "@/components/calendar/calendar-components";
+import { PageContainer, CalendarLoadingSkeleton, EventCard, ConflictResolutionPanel } from "@/components/calendar/calendar-components";
 import { CalendarEmptyState } from "@/components/ui/CalendarEmptyState";
 import {
   useCalendar,
   type CalendarEvent,
-  formatTime,
-  formatDate,
   getEventDataType,
 } from "@/hooks/use-calendar";
 
@@ -37,7 +34,6 @@ import {
 const ChevronLeft = ChevronLeftIcon;
 const ChevronRight = ChevronRightIcon;
 const AlertTriangle = ExclamationTriangleIcon;
-const Check = CheckIcon;
 const Filter = FunnelIcon;
 
 export default function CalendarPage() {
@@ -62,6 +58,7 @@ export default function CalendarPage() {
   // Local UI state for modals
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [showConflicts, setShowConflicts] = useState(false);
+  const [isResolvingConflict, setIsResolvingConflict] = useState(false);
 
   // Memoize selected event data for modal
   const selectedEventData = useMemo(() => {
@@ -233,31 +230,28 @@ export default function CalendarPage() {
 
         {/* Conflicts Modal */}
         <HiveModal open={showConflicts} onOpenChange={setShowConflicts} size="lg">
-          <div className="space-y-4">
-            <h2 className="text-heading-sm text-[var(--text-primary)] mb-4">Schedule Conflicts</h2>
-            {conflictEvents.length === 0 ? (
-              <div className="text-center py-8">
-                <Check className="h-12 w-12 text-[var(--hive-status-success)] mx-auto mb-3" />
-                <p className="text-body text-[var(--text-secondary)]">No conflicts detected</p>
-                <p className="text-body-sm text-[var(--text-muted)] mt-1">Your schedule is clear</p>
-              </div>
-            ) : (
-              conflictEvents.map((event) => (
-                <div key={event.id} className="p-4 bg-[var(--hive-status-error)]/10 border border-[var(--hive-status-error)]/30 rounded-lg">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-label font-semibold text-[var(--text-primary)]">{event.title}</h3>
-                    <AlertTriangle className="h-5 w-5 text-[var(--hive-status-error)]" />
-                  </div>
-                  <p className="text-body-sm text-[var(--text-tertiary)] mb-3">
-                    {formatDate(event.startTime)} • {formatTime(event.startTime)} - {formatTime(event.endTime)}
-                  </p>
-                  <p className="text-label text-[var(--text-muted)]">
-                    Conflict resolution coming soon
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
+          <ConflictResolutionPanel
+            events={events}
+            conflictEvents={conflictEvents}
+            onResolve={async (eventId, status, spaceId) => {
+              setIsResolvingConflict(true);
+              try {
+                await updateEventRSVP(eventId, status, spaceId);
+                // If all conflicts are resolved, close the modal
+                const remainingConflicts = conflictEvents.filter(
+                  e => e.id !== eventId && e.rsvpStatus !== 'not_going'
+                );
+                if (remainingConflicts.length === 0 && status === 'not_going') {
+                  toast.success('All conflicts resolved', 'Your schedule is now clear.');
+                }
+              } catch (error) {
+                toast.error('Failed to update RSVP', 'Please try again.');
+              } finally {
+                setIsResolvingConflict(false);
+              }
+            }}
+            isResolving={isResolvingConflict}
+          />
         </HiveModal>
 
         {/* Event Details Modal */}

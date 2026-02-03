@@ -90,6 +90,10 @@ export interface ChatMessage {
   isPinned?: boolean;
   replyCount?: number;
   attachments?: ChatAttachment[];
+  /** Whether message has been edited */
+  isEdited?: boolean;
+  /** When the message was last edited (ISO timestamp) */
+  editedAt?: string;
 }
 
 export interface SpaceMember {

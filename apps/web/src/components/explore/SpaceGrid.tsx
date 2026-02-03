@@ -10,8 +10,11 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Users, Plus, Search } from 'lucide-react';
 import { SpaceCard, type SpaceCardData } from './SpaceCard';
 import { GhostSpaceCard, type GhostSpaceData } from './GhostSpaceCard';
+import { Button, GlassSurface } from '@hive/ui/design-system/primitives';
 import { MOTION, revealVariants, staggerContainerVariants } from '@hive/tokens';
 
 export interface SpaceGridProps {
@@ -38,25 +41,95 @@ export function SpaceGrid({
     );
   }
 
-  // Empty state
+  // Empty state with helpful guidance
   if (spaces.length === 0 && ghostSpaces.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
-        className="text-center py-16"
+        className="flex flex-col items-center justify-center py-16 px-4"
       >
-        <p className="text-white/40 text-body mb-2">
-          {searchQuery
-            ? `No spaces match "${searchQuery}"`
-            : 'No spaces yet'}
-        </p>
-        <p className="text-white/25 text-body-sm">
-          {searchQuery
-            ? 'Try a different search'
-            : 'Be the first to start a space'}
-        </p>
+        <GlassSurface
+          intensity="subtle"
+          className="p-8 rounded-xl max-w-md w-full text-center"
+        >
+          {/* Icon */}
+          <motion.div
+            className="w-14 h-14 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-5"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
+          >
+            {searchQuery ? (
+              <Search className="w-6 h-6 text-white/30" />
+            ) : (
+              <Users className="w-6 h-6 text-white/30" />
+            )}
+          </motion.div>
+
+          {/* Title */}
+          <motion.h3
+            className="text-body-lg font-medium text-white/80 mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.15 }}
+          >
+            {searchQuery
+              ? `No spaces match "${searchQuery}"`
+              : 'Your campus is waiting'}
+          </motion.h3>
+
+          {/* Subtitle */}
+          <motion.p
+            className="text-body-sm text-white/40 mb-6 max-w-xs mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.2 }}
+          >
+            {searchQuery
+              ? 'Try a different search term or browse all spaces'
+              : 'Be the first to create a space for your community, club, or interest group'}
+          </motion.p>
+
+          {/* Actions */}
+          <motion.div
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.25 }}
+          >
+            {searchQuery ? (
+              <Button variant="default" size="sm" asChild>
+                <Link href="/explore">Browse All Spaces</Link>
+              </Button>
+            ) : (
+              <>
+                <Button variant="cta" size="sm" asChild>
+                  <Link href="/spaces/new">
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Create a Space
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/explore?tab=people">Find Classmates</Link>
+                </Button>
+              </>
+            )}
+          </motion.div>
+
+          {/* Helpful hint */}
+          {!searchQuery && (
+            <motion.p
+              className="text-label text-white/25 mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, delay: 0.3 }}
+            >
+              Clubs, study groups, and communities all start here
+            </motion.p>
+          )}
+        </GlassSurface>
       </motion.div>
     );
   }

@@ -15,6 +15,7 @@ import {
   toSetupTemplateDetailDTO,
 } from '@hive/core/server';
 import type { OrchestrationRule } from '@hive/core';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // Response Helpers
@@ -221,7 +222,10 @@ export async function PUT(
       message: 'Template updated successfully',
     });
   } catch (error) {
-    console.error('Error updating setup template:', error);
+    logger.error('Error updating setup template', {
+      action: 'setup_template_update',
+      endpoint: '/api/setups/templates/[id]',
+    }, error instanceof Error ? error : undefined);
     return errorResponse('Failed to update setup template', 500);
   }
 }
@@ -306,7 +310,10 @@ export async function PATCH(
       message: 'Orchestration rules updated successfully',
     });
   } catch (error) {
-    console.error('Error updating orchestration rules:', error);
+    logger.error('Error updating orchestration rules', {
+      action: 'orchestration_rules_update',
+      endpoint: '/api/setups/templates/[id]',
+    }, error instanceof Error ? error : undefined);
     return errorResponse('Failed to update orchestration rules', 500);
   }
 }
@@ -367,7 +374,10 @@ export async function DELETE(
       message: `Template "${template.name}" deleted successfully`,
     });
   } catch (error) {
-    console.error('Error deleting setup template:', error);
+    logger.error('Error deleting setup template', {
+      action: 'setup_template_delete',
+      endpoint: '/api/setups/templates/[id]',
+    }, error instanceof Error ? error : undefined);
     return errorResponse('Failed to delete setup template', 500);
   }
 }

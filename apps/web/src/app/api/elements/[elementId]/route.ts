@@ -9,6 +9,7 @@ import {
   getElementById,
   type ElementSpec,
 } from '@hive/core';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // Response Helpers
@@ -137,7 +138,10 @@ export async function GET(
 
     return jsonResponse({ element: dto });
   } catch (error) {
-    console.error('Error getting element:', error);
+    logger.error('Error getting element', {
+      action: 'element_get',
+      endpoint: '/api/elements/[elementId]',
+    }, error instanceof Error ? error : undefined);
     return errorResponse('Failed to get element', 500);
   }
 }

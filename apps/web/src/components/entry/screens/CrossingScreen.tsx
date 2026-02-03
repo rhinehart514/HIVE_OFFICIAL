@@ -10,6 +10,7 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Search, X, Loader2, ArrowRight } from 'lucide-react';
+import { EntryEmptyState } from '../primitives/EntryEmptyState';
 import { cn } from '@/lib/utils';
 import type { UseEntryReturn } from '../hooks/useEntry';
 import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
@@ -282,9 +283,14 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
           </AnimatePresence>
 
           {filteredInterests.length === 0 && (
-            <p className="text-[13px] text-white/40 py-8 w-full text-center">
-              No interests match "{search}"
-            </p>
+            <EntryEmptyState
+              variant="interests"
+              searchQuery={search}
+              onClearSearch={() => {
+                setSearch('');
+                searchInputRef.current?.focus();
+              }}
+            />
           )}
         </div>
       </div>

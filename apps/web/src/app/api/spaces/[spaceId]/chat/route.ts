@@ -202,7 +202,8 @@ export const GET = withAuthAndErrors(async (
       componentData: dto.componentData,
       systemAction: dto.systemAction,
       timestamp: dto.timestamp,
-      editedAt: dto.editedAt,
+      isEdited: dto.editedAt !== undefined,
+      editedAt: dto.editedAt ? new Date(dto.editedAt as number).toISOString() : undefined,
       isDeleted: dto.isDeleted,
       isPinned: dto.isPinned,
       reactions: reactions.map(r => ({

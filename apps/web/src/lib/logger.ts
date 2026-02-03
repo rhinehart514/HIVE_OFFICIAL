@@ -6,6 +6,8 @@
  * - Contextual metadata
  * - Server and client environments
  * - Production-safe logging (no sensitive data leakage)
+ * - Request timing and performance tracking
+ * - Structured JSON output for log aggregation
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -14,7 +16,13 @@ interface LogContext {
   component?: string;
   action?: string;
   userId?: string;
+  campusId?: string;
   endpoint?: string;
+  requestId?: string;
+  duration?: number;
+  statusCode?: number;
+  method?: string;
+  path?: string;
   metadata?: Record<string, unknown>;
   [key: string]: unknown;
 }
@@ -31,10 +39,23 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 const isServer = typeof window === 'undefined';
 
 /**
- * Format log message with timestamp and level
+ * Format log as structured JSON for production, human-readable for development
  */
 function formatLog(level: LogLevel, message: string, context?: LogContext): string {
   const timestamp = new Date().toISOString();
+
+  // In production, output structured JSON for log aggregators
+  if (!isDevelopment && isServer) {
+    const logEntry = {
+      timestamp,
+      level: level.toUpperCase(),
+      message,
+      ...context,
+    };
+    return JSON.stringify(logEntry);
+  }
+
+  // In development, output human-readable format
   const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
 
   if (context && Object.keys(context).length > 0) {
@@ -199,6 +220,142 @@ export function logSecurityEvent(
   } else {
     logger.info(`Security event: ${eventType}`, context);
   }
+}
+
+/**
+ * API Request Logger - Creates a logger with automatic request context
+ * Use this at the start of API routes for consistent request logging
+ */
+export interface ApiRequestLogger {
+  /** Log the start of an API request */
+  start: (message?: string, extra?: Record<string, unknown>) => void;
+  /** Log the successful end of an API request with timing */
+  end: (message?: string, extra?: Record<string, unknown>) => void;
+  /** Log an error during request processing */
+  fail: (error: Error | string, extra?: Record<string, unknown>) => void;
+  /** Log info during request processing */
+  info: (message: string, extra?: Record<string, unknown>) => void;
+  /** Log warning during request processing */
+  warn: (message: string, extra?: Record<string, unknown>) => void;
+  /** Get current request duration in ms */
+  getDuration: () => number;
+}
+
+/**
+ * Create a logger for an API request with automatic timing and context
+ */
+export function createApiRequestLogger(
+  method: string,
+  path: string,
+  options: {
+    requestId?: string;
+    userId?: string;
+    campusId?: string;
+  } = {}
+): ApiRequestLogger {
+  const startTime = Date.now();
+  const { requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, userId, campusId } = options;
+
+  const baseContext: LogContext = {
+    method,
+    path,
+    requestId,
+    ...(userId && { userId }),
+    ...(campusId && { campusId }),
+  };
+
+  return {
+    start(message = 'Request started', extra = {}) {
+      logger.info(message, { ...baseContext, ...extra, action: 'request_start' });
+    },
+
+    end(message = 'Request completed', extra = {}) {
+      const duration = Date.now() - startTime;
+      logger.info(message, {
+        ...baseContext,
+        ...extra,
+        duration,
+        action: 'request_end',
+      });
+    },
+
+    fail(error: Error | string, extra = {}) {
+      const duration = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : error;
+      const errorStack = error instanceof Error ? error.stack : undefined;
+
+      logger.error(`Request failed: ${errorMessage}`, {
+        ...baseContext,
+        ...extra,
+        duration,
+        action: 'request_error',
+        errorMessage,
+        ...(errorStack && isDevelopment && { errorStack }),
+      });
+    },
+
+    info(message: string, extra = {}) {
+      logger.info(message, { ...baseContext, ...extra });
+    },
+
+    warn(message: string, extra = {}) {
+      logger.warn(message, { ...baseContext, ...extra });
+    },
+
+    getDuration() {
+      return Date.now() - startTime;
+    },
+  };
+}
+
+/**
+ * Wrap an error with context for better debugging
+ * Use this when catching errors to preserve context
+ */
+export function wrapError(
+  error: unknown,
+  context: {
+    action: string;
+    userId?: string;
+    resourceId?: string;
+    extra?: Record<string, unknown>;
+  }
+): Error {
+  const originalError = error instanceof Error ? error : new Error(String(error));
+  const wrappedMessage = `[${context.action}] ${originalError.message}`;
+
+  const wrappedError = new Error(wrappedMessage);
+  wrappedError.stack = originalError.stack;
+  (wrappedError as Error & { context: typeof context }).context = context;
+
+  return wrappedError;
+}
+
+/**
+ * Extract error context for logging
+ */
+export function extractErrorContext(error: unknown): {
+  message: string;
+  code?: string;
+  stack?: string;
+  context?: Record<string, unknown>;
+} {
+  if (error instanceof Error) {
+    const errorWithContext = error as Error & {
+      code?: string;
+      context?: Record<string, unknown>;
+    };
+    return {
+      message: error.message,
+      code: errorWithContext.code,
+      stack: isDevelopment ? error.stack : undefined,
+      context: errorWithContext.context,
+    };
+  }
+
+  return {
+    message: String(error),
+  };
 }
 
 // Export types for consumers
