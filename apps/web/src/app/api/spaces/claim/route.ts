@@ -28,6 +28,7 @@ import {
   getServerSpaceRepository,
 } from '@hive/core/server';
 import { ProfileId, type LeaderProofType, getSystemTemplateForCategory } from '@hive/core';
+import { createBulkNotifications } from '@/lib/notification-service';
 
 const claimSpaceSchema = z.object({
   spaceId: z.string().min(1, "Space ID is required"),
@@ -211,6 +212,14 @@ export const POST = withAuthValidationAndErrors(
         endpoint: '/api/spaces/claim',
       });
 
+      // Notify waitlist members that a leader has claimed the space (non-blocking)
+      notifyWaitlistMembersOfClaim(spaceId, campusId, space.name.value, userName).catch(err => {
+        logger.warn('[claim] Failed to notify waitlist members', {
+          error: err instanceof Error ? err.message : String(err),
+          spaceId,
+        });
+      });
+
       return respond.created(
         {
           claimId: claimRef.id,
@@ -284,3 +293,54 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
     });
   }
 });
+
+/**
+ * Notify waitlist members when a space has been claimed by a leader.
+ * This is a meaningful signal -- it means the space is about to become active.
+ */
+async function notifyWaitlistMembersOfClaim(
+  spaceId: string,
+  campusId: string,
+  spaceName: string,
+  claimerName: string
+): Promise<void> {
+  // Find all waitlist members for this space
+  const waitlistSnapshot = await dbAdmin.collection('spaceWaitlists')
+    .where('spaceId', '==', spaceId)
+    .where('campusId', '==', campusId)
+    .get();
+
+  if (waitlistSnapshot.empty) {
+    logger.debug('[claim] No waitlist members to notify', { spaceId });
+    return;
+  }
+
+  const waitlistUserIds = waitlistSnapshot.docs.map(doc => doc.data().userId as string);
+
+  const notifiedCount = await createBulkNotifications(waitlistUserIds, {
+    type: 'space_join',
+    category: 'spaces',
+    title: `${spaceName} now has a leader!`,
+    body: `${claimerName} claimed ${spaceName}. The space is getting set up -- join now to be a founding member.`,
+    actionUrl: `/spaces/${spaceId}`,
+    metadata: {
+      spaceId,
+      spaceName,
+      actorName: claimerName,
+    },
+  });
+
+  // Mark waitlist members as notified
+  const batch = dbAdmin.batch();
+  waitlistSnapshot.docs.forEach(doc => {
+    batch.update(doc.ref, { notified: true, notifiedAt: new Date().toISOString() });
+  });
+  await batch.commit();
+
+  logger.info('[claim] Waitlist members notified of space claim', {
+    spaceId,
+    spaceName,
+    waitlistCount: waitlistUserIds.length,
+    notifiedCount,
+  });
+}

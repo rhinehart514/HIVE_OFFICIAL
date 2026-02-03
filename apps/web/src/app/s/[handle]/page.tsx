@@ -651,10 +651,7 @@ export default function SpacePageUnified() {
                   router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
                 },
                 onViewFull: (tool) => {
-                  // Navigate to full app view (only for tools that support app mode)
-                  if (tool.surfaceModes?.app) {
-                    router.push(`/lab/${tool.toolId}`);
-                  }
+                  router.push(`/lab/${tool.toolId}`);
                 },
                 onAddTool: () => {
                   const params = new URLSearchParams({ spaceId: space.id, deploy: 'sidebar' });
@@ -911,6 +908,30 @@ export default function SpacePageUnified() {
                     onBoardDelete={space.isLeader ? async (boardId) => {
                       // Open confirmation dialog for board deletion
                       setShowDeleteBoardConfirm(boardId);
+                    } : undefined}
+                    onTransferOwnership={space.userRole === 'owner' ? async (newOwnerId) => {
+                      try {
+                        const response = await fetch(`/api/spaces/${space.id}/transfer-ownership`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ newOwnerId }),
+                        });
+                        if (!response.ok) {
+                          const data = await response.json().catch(() => ({}));
+                          throw new Error(data.error?.message || 'Failed to transfer ownership');
+                        }
+                        const data = await response.json();
+                        setShowSettingsModal(false);
+                        await refreshSpace();
+                        toast.success(
+                          'Ownership transferred',
+                          `${data.data?.transfer?.newOwnerName || 'New owner'} is now the owner. You are now an admin.`
+                        );
+                      } catch (error) {
+                        logger.error('Failed to transfer ownership', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+                        toast.error('Transfer failed', error instanceof Error ? error.message : 'Please try again');
+                        throw error;
+                      }
                     } : undefined}
                     onLeave={async () => {
                       try {

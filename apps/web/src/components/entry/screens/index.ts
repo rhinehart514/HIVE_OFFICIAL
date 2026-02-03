@@ -1,7 +1,8 @@
-// 4-phase entry flow screens
+// 5-phase entry flow screens
 export { GateScreen } from './GateScreen';
 export { NamingScreen } from './NamingScreen';
 export { FieldScreen } from './FieldScreen';
+export { BelongingScreen } from './BelongingScreen';
 export { CrossingScreen } from './CrossingScreen';
 
 // Legacy exports (deprecated, use new screens)

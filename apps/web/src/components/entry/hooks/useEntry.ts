@@ -4,27 +4,40 @@ import { useOnboardingAnalytics } from '@hive/hooks';
 /**
  * Entry Flow State Machine
  *
- * 4-phase flow: Gate → Naming → Field → Crossing
+ * 5-phase flow: Gate → Naming → Field → Belonging → Crossing
  *
  * Gate: Email verification (email → code → waitlist)
  * Naming: THE WEDGE - Real identity claim (first/last name)
  * Field: Year (required) + Major (optional)
+ * Belonging: Community identities + residence type (all optional)
  * Crossing: Interests selection (2-5 required)
  *
  * Analytics mapping:
  * - gate (email/code) → 'welcome'
  * - naming → 'name'
  * - field → 'academics'
+ * - belonging → (no analytics step, lightweight)
  * - crossing → 'handle'
  */
 
-export type EntryPhase = 'gate' | 'naming' | 'field' | 'crossing';
+export type EntryPhase = 'gate' | 'naming' | 'field' | 'belonging' | 'crossing';
 export type GateStep = 'email' | 'code' | 'waitlist';
 export type FieldStep = 'year' | 'major';
 
 export interface WaitlistSchoolInfo {
   id: string;
   name: string;
+}
+
+export type ResidenceType = 'on-campus' | 'off-campus' | 'commuter';
+
+export interface CommunityIdentities {
+  international: boolean;
+  transfer: boolean;
+  firstGen: boolean;
+  commuter: boolean;
+  graduate: boolean;
+  veteran: boolean;
 }
 
 export interface EntryData {
@@ -39,6 +52,11 @@ export interface EntryData {
   // Field
   graduationYear: number | null;
   major: string;
+
+  // Belonging
+  communityIdentities: CommunityIdentities;
+  residenceType: ResidenceType | null;
+  residentialSpaceId: string | null;
 
   // Crossing
   interests: string[];
@@ -107,6 +125,12 @@ export interface UseEntryReturn extends EntryState {
   submitYear: () => void;
   submitField: () => void;
 
+  // Belonging actions
+  toggleCommunityIdentity: (key: keyof CommunityIdentities) => void;
+  setResidenceType: (type: ResidenceType | null) => void;
+  setResidentialSpaceId: (id: string | null) => void;
+  submitBelonging: () => void;
+
   // Legacy aliases (for backward compatibility)
   /** @deprecated Use submitField instead */
   submitClaim: () => void;
@@ -129,6 +153,16 @@ const initialData: EntryData = {
   lastName: '',
   graduationYear: null,
   major: '',
+  communityIdentities: {
+    international: false,
+    transfer: false,
+    firstGen: false,
+    commuter: false,
+    graduate: false,
+    veteran: false,
+  },
+  residenceType: null,
+  residentialSpaceId: null,
   interests: [],
   handleOverride: null,
 };
@@ -284,9 +318,13 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       analytics.trackStepStarted('academics');
     }
 
-    // Field → crossing transition
-    if (phase === 'crossing' && prevPhase.current === 'field') {
+    // Field → belonging transition
+    if (phase === 'belonging' && prevPhase.current === 'field') {
       analytics.trackStepCompleted('academics');
+    }
+
+    // Belonging → crossing transition
+    if (phase === 'crossing' && (prevPhase.current === 'belonging' || prevPhase.current === 'field')) {
       analytics.trackStepStarted('handle');
     }
 
@@ -560,7 +598,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     setFieldStep('major');
   };
 
-  // Field phase: Submit field (major optional), advance to crossing
+  // Field phase: Submit field (major optional), advance to belonging
   const submitField = () => {
     // Year is required, major is optional
     if (data.graduationYear === null) {
@@ -569,7 +607,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     }
 
     setError(null);
-    setPhase('crossing');
+    setPhase('belonging');
   };
 
   // Legacy alias: submitClaim advances to crossing (used by legacy ClaimScreen)
@@ -578,6 +616,38 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       setError('Enter your name');
       return;
     }
+    setError(null);
+    setPhase('crossing');
+  };
+
+  // Belonging phase: Toggle community identity checkbox
+  const toggleCommunityIdentity = (key: keyof CommunityIdentities) => {
+    setData((d) => ({
+      ...d,
+      communityIdentities: {
+        ...d.communityIdentities,
+        [key]: !d.communityIdentities[key],
+      },
+    }));
+  };
+
+  // Belonging phase: Set residence type
+  const setResidenceType = (type: ResidenceType | null) => {
+    setData((d) => ({
+      ...d,
+      residenceType: type,
+      // Clear residential space if not on-campus
+      residentialSpaceId: type === 'on-campus' ? d.residentialSpaceId : null,
+    }));
+  };
+
+  // Belonging phase: Set residential space ID
+  const setResidentialSpaceId = (id: string | null) => {
+    setData((d) => ({ ...d, residentialSpaceId: id }));
+  };
+
+  // Belonging phase: Submit and advance to crossing (all fields optional)
+  const submitBelonging = () => {
     setError(null);
     setPhase('crossing');
   };
@@ -610,6 +680,9 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     setSuggestedHandles([]);
 
     try {
+      // Build community identities - only include if any are true
+      const hasAnyIdentity = Object.values(data.communityIdentities).some(Boolean);
+
       const res = await fetch('/api/auth/complete-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -620,6 +693,11 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
           major: data.major || null,
           graduationYear: data.graduationYear || null,
           interests: data.interests,
+          // Community identities (optional)
+          ...(hasAnyIdentity && { communityIdentities: data.communityIdentities }),
+          // Residence (optional)
+          ...(data.residenceType && { residenceType: data.residenceType }),
+          ...(data.residentialSpaceId && { residentialSpaceId: data.residentialSpaceId }),
           // Use override handle if user selected a suggestion
           ...(data.handleOverride && { handle: data.handleOverride }),
         }),
@@ -660,6 +738,9 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     cancelRequest();
 
     if (phase === 'crossing') {
+      // Back to belonging
+      setPhase('belonging');
+    } else if (phase === 'belonging') {
       // Back to field (major step)
       setPhase('field');
       setFieldStep('major');
@@ -768,6 +849,12 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     setMajor,
     submitYear,
     submitField,
+
+    // Belonging actions
+    toggleCommunityIdentity,
+    setResidenceType,
+    setResidentialSpaceId,
+    submitBelonging,
 
     // Crossing actions
     toggleInterest,

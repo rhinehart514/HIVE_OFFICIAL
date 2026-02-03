@@ -19,6 +19,7 @@ import { ViewerContext } from '@hive/core/domain/shared/value-objects/viewer-con
 // Event-board auto-linking
 import { autoLinkEventToBoard, findEventBoard } from "@/lib/event-board-auto-link";
 import { isContentHidden } from "@/lib/content-moderation";
+import { notifySpaceEventCreated } from "@/lib/notification-service";
 
 const GetEventsSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
@@ -384,6 +385,46 @@ export const POST = withAuthValidationAndErrors(
           spaceId,
         });
       }
+
+      // Notify space members about the new event (async, non-blocking)
+      const spaceName = permCheck.space?.name || 'a space';
+      (async () => {
+        try {
+          // Get creator name for notification
+          const creatorDoc = await dbAdmin.collection('users').doc(userId).get();
+          const creatorName = creatorDoc.exists
+            ? (creatorDoc.data()?.fullName as string) || 'Someone'
+            : 'Someone';
+
+          // Get active space members, limited to 100
+          const membersSnapshot = await dbAdmin.collection('spaceMembers')
+            .where('spaceId', '==', spaceId)
+            .where('campusId', '==', campusId)
+            .where('isActive', '==', true)
+            .limit(100)
+            .get();
+
+          const memberIds = membersSnapshot.docs.map(doc => doc.data().userId);
+
+          if (memberIds.length > 0) {
+            await notifySpaceEventCreated({
+              memberIds,
+              creatorId: userId,
+              creatorName,
+              eventId: eventRef.id,
+              eventTitle: body.title,
+              spaceId,
+              spaceName,
+            });
+          }
+        } catch (notifyError) {
+          logger.warn('Failed to send event creation notifications', {
+            error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+            eventId: eventRef.id,
+            spaceId,
+          });
+        }
+      })();
 
       return respond.created({
         event: {

@@ -23,7 +23,10 @@ const GetEventsSchema = z.object({
   upcoming: z.coerce.boolean().default(true),
   myEvents: z.coerce.boolean().default(false),
   spaceId: z.string().optional(),
-  campusWide: z.coerce.boolean().optional(), // Filter for campus-wide events only
+  campusWide: z.coerce.boolean().optional(),
+  search: z.string().max(100).optional(),
+  from: z.string().optional(), // ISO date string: filter events starting on or after this date
+  to: z.string().optional(),   // ISO date string: filter events starting on or before this date
 });
 
 export const GET = withOptionalAuth(async (
@@ -41,15 +44,40 @@ export const GET = withOptionalAuth(async (
       Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
 
+    // Parse date range filters
+    const now = new Date();
+    const fromDate = queryParams.from ? new Date(queryParams.from) : null;
+    const toDate = queryParams.to ? new Date(queryParams.to) : null;
+    const hasSearch = queryParams.search && queryParams.search.trim().length > 0;
+    const searchLower = hasSearch ? queryParams.search!.toLowerCase().trim() : '';
+
+    // When searching, fetch more results so post-query text filtering still
+    // yields enough matches. The limit is applied after filtering.
+    const fetchLimit = hasSearch
+      ? Math.min(queryParams.limit * 5, 500)
+      : queryParams.limit;
+
     // Build query for campus-wide events
     // First try with campusId filter, then fall back to include imported events
     let query: FirebaseFirestore.Query = dbAdmin
       .collection("events")
       .where("campusId", "==", campusId);
 
-    // Filter by upcoming/past
-    const now = new Date();
-    if (queryParams.upcoming) {
+    // Date filtering: explicit from/to range takes priority over upcoming flag
+    if (fromDate && toDate) {
+      query = query
+        .where("startDate", ">=", fromDate)
+        .where("startDate", "<=", toDate)
+        .orderBy("startDate", "asc");
+    } else if (fromDate) {
+      query = query
+        .where("startDate", ">=", fromDate)
+        .orderBy("startDate", "asc");
+    } else if (toDate) {
+      query = query
+        .where("startDate", "<=", toDate)
+        .orderBy("startDate", "desc");
+    } else if (queryParams.upcoming) {
       query = query.where("startDate", ">=", now).orderBy("startDate", "asc");
     } else {
       query = query.where("startDate", "<", now).orderBy("startDate", "desc");
@@ -70,7 +98,7 @@ export const GET = withOptionalAuth(async (
       query = query.where("isCampusWide", "==", true);
     }
 
-    query = query.offset(queryParams.offset).limit(queryParams.limit);
+    query = query.offset(queryParams.offset).limit(fetchLimit);
 
     let eventsSnapshot = await query.get();
 
@@ -85,7 +113,20 @@ export const GET = withOptionalAuth(async (
         .collection("events")
         .where("spaceId", "==", queryParams.spaceId);
 
-      if (queryParams.upcoming) {
+      if (fromDate && toDate) {
+        fallbackQuery = fallbackQuery
+          .where("startDate", ">=", fromDate)
+          .where("startDate", "<=", toDate)
+          .orderBy("startDate", "asc");
+      } else if (fromDate) {
+        fallbackQuery = fallbackQuery
+          .where("startDate", ">=", fromDate)
+          .orderBy("startDate", "asc");
+      } else if (toDate) {
+        fallbackQuery = fallbackQuery
+          .where("startDate", "<=", toDate)
+          .orderBy("startDate", "desc");
+      } else if (queryParams.upcoming) {
         fallbackQuery = fallbackQuery.where("startDate", ">=", now).orderBy("startDate", "asc");
       } else {
         fallbackQuery = fallbackQuery.where("startDate", "<", now).orderBy("startDate", "desc");
@@ -95,7 +136,7 @@ export const GET = withOptionalAuth(async (
         fallbackQuery = fallbackQuery.where("type", "==", queryParams.type);
       }
 
-      fallbackQuery = fallbackQuery.offset(queryParams.offset).limit(queryParams.limit);
+      fallbackQuery = fallbackQuery.offset(queryParams.offset).limit(fetchLimit);
       eventsSnapshot = await fallbackQuery.get();
     }
     // Get user's spaces for membership-based filtering
@@ -201,6 +242,23 @@ export const GET = withOptionalAuth(async (
         continue;
       }
 
+      // Server-side text search: match against title, description, and tags
+      if (searchLower) {
+        const title = (eventData.title || '').toLowerCase();
+        const description = (eventData.description || '').toLowerCase();
+        const tags: string[] = Array.isArray(eventData.tags) ? eventData.tags : [];
+        const tagsMatch = tags.some((tag: string) => String(tag).toLowerCase().includes(searchLower));
+
+        if (!title.includes(searchLower) && !description.includes(searchLower) && !tagsMatch) {
+          continue;
+        }
+      }
+
+      // Enforce original limit after all filters
+      if (events.length >= queryParams.limit) {
+        break;
+      }
+
       const organizer = eventData.organizerId ? organizerMap.get(eventData.organizerId) : null;
 
       // Use batch-fetched RSVP status (no per-event query)
@@ -262,16 +320,20 @@ export const GET = withOptionalAuth(async (
       });
     }
 
+    // When searching, hasMore is based on whether we filled the requested limit
+    // (there may be more matching results beyond our fetchLimit window)
+    const resultsFull = events.length >= queryParams.limit;
+    const moreInSnapshot = eventsSnapshot.size >= fetchLimit;
+
     return respond.success({
       events,
-      hasMore: eventsSnapshot.size === queryParams.limit,
+      hasMore: resultsFull || moreInSnapshot,
       pagination: {
         limit: queryParams.limit,
         offset: queryParams.offset,
-        nextOffset:
-          eventsSnapshot.size === queryParams.limit
-            ? queryParams.offset + queryParams.limit
-            : null,
+        nextOffset: resultsFull
+          ? queryParams.offset + queryParams.limit
+          : null,
       },
     });
   } catch (error) {

@@ -26,9 +26,14 @@ import {
   Pencil,
   X,
   Zap,
+  ArrowRightLeft,
+  Crown,
+  ChevronDown,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Text, Button, toast, AutomationsPanel, AutomationBuilderModal, type AutomationItem, type AutomationData } from '@hive/ui';
+import { Text, Button, toast, ConfirmDialog, AutomationsPanel, AutomationBuilderModal, type AutomationItem, type AutomationData } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 import { InviteLinkModal } from '@/components/spaces/invite-link-modal';
 import { MemberManagement } from './member-management';
@@ -72,10 +77,11 @@ interface SpaceSettingsProps {
   onLeave?: () => Promise<void>;
   onBoardDelete?: (boardId: string) => Promise<void>;
   onBoardUpdate?: (boardId: string, updates: { name?: string; description?: string; isVisible?: boolean }) => Promise<void>;
+  onTransferOwnership?: (newOwnerId: string) => Promise<void>;
   className?: string;
 }
 
-export function SpaceSettings({ space, boards = [], isLeader = false, currentUserId, currentUserRole = 'member', onUpdate, onDelete, onLeave, onBoardDelete, onBoardUpdate, className }: SpaceSettingsProps) {
+export function SpaceSettings({ space, boards = [], isLeader = false, currentUserId, currentUserRole = 'member', onUpdate, onDelete, onLeave, onBoardDelete, onBoardUpdate, onTransferOwnership, className }: SpaceSettingsProps) {
   const [activeSection, setActiveSection] = React.useState<'general' | 'contact' | 'members' | 'boards' | 'automations' | 'danger'>('general');
   const [isSaving, setIsSaving] = React.useState(false);
   const [isLeaving, setIsLeaving] = React.useState(false);
@@ -91,6 +97,76 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
   const [showAutomationBuilder, setShowAutomationBuilder] = React.useState(false);
   const [showTemplates, setShowTemplates] = React.useState(false);
   const [editingAutomation, setEditingAutomation] = React.useState<AutomationData | null>(null);
+
+  // Transfer ownership state
+  const isOwner = currentUserRole === 'owner';
+  const [transferCandidates, setTransferCandidates] = React.useState<Array<{ id: string; name: string; username: string; avatar?: string; role: string }>>([]);
+  const [isLoadingCandidates, setIsLoadingCandidates] = React.useState(false);
+  const [selectedTransferTarget, setSelectedTransferTarget] = React.useState<string | null>(null);
+  const [showTransferConfirm, setShowTransferConfirm] = React.useState(false);
+  const [isTransferring, setIsTransferring] = React.useState(false);
+  const [showTransferDropdown, setShowTransferDropdown] = React.useState(false);
+  const transferDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Load eligible transfer candidates (admins and moderators first)
+  React.useEffect(() => {
+    if (activeSection === 'danger' && isOwner && onTransferOwnership && transferCandidates.length === 0) {
+      setIsLoadingCandidates(true);
+      fetch(`/api/spaces/${space.id}/members?limit=100`, { credentials: 'include' })
+        .then(res => res.ok ? res.json() : { data: { members: [] } })
+        .then(data => {
+          const allMembers = data.data?.members || data.members || [];
+          const eligible = allMembers
+            .filter((m: { id?: string; userId?: string; membership?: { role?: string } }) => {
+              const memberId = m.id || m.userId;
+              return memberId !== currentUserId;
+            })
+            .map((m: { id?: string; userId?: string; profile?: { displayName?: string; handle?: string; avatar?: string }; name?: string; username?: string; avatar?: string; membership?: { role?: string }; role?: string }) => ({
+              id: m.id || m.userId || '',
+              name: m.profile?.displayName || m.name || 'Unknown',
+              username: m.profile?.handle || m.username || '',
+              avatar: m.profile?.avatar || m.avatar,
+              role: m.membership?.role || m.role || 'member',
+            }))
+            .sort((a: { role: string }, b: { role: string }) => {
+              const order: Record<string, number> = { admin: 0, moderator: 1, member: 2 };
+              return (order[a.role] ?? 3) - (order[b.role] ?? 3);
+            });
+          setTransferCandidates(eligible);
+        })
+        .catch(() => setTransferCandidates([]))
+        .finally(() => setIsLoadingCandidates(false));
+    }
+  }, [activeSection, isOwner, onTransferOwnership, space.id, currentUserId, transferCandidates.length]);
+
+  // Close transfer dropdown on outside click
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (transferDropdownRef.current && !transferDropdownRef.current.contains(event.target as Node)) {
+        setShowTransferDropdown(false);
+      }
+    }
+    if (showTransferDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showTransferDropdown]);
+
+  const selectedCandidate = transferCandidates.find(c => c.id === selectedTransferTarget);
+
+  const handleTransferOwnership = async () => {
+    if (!onTransferOwnership || !selectedTransferTarget) return;
+    setIsTransferring(true);
+    try {
+      await onTransferOwnership(selectedTransferTarget);
+      setShowTransferConfirm(false);
+      setSelectedTransferTarget(null);
+    } catch {
+      // Error handled by caller
+    } finally {
+      setIsTransferring(false);
+    }
+  };
 
   const handleLeave = async () => {
     if (!onLeave) return;
@@ -1005,6 +1081,152 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                   </div>
                 )}
 
+                {/* Transfer Ownership - Only for owner */}
+                {isOwner && onTransferOwnership && (
+                  <div className="p-4 rounded-xl bg-amber-500/[0.06] border border-amber-500/20">
+                    <div className="flex items-start gap-3 mb-4">
+                      <ArrowRightLeft className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <Text weight="medium" className="text-amber-400 mb-1">
+                          Transfer Ownership
+                        </Text>
+                        <Text size="sm" className="text-amber-400/70">
+                          Hand off ownership to another member. You will become an admin.
+                          This cannot be undone without the new owner's consent.
+                        </Text>
+                      </div>
+                    </div>
+
+                    {/* Candidate selector */}
+                    <div className="mb-3">
+                      <Text size="xs" weight="medium" tone="muted" className="mb-2 block">
+                        Select new owner
+                      </Text>
+
+                      {isLoadingCandidates ? (
+                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                          <Loader2 className="w-4 h-4 animate-spin text-white/40" />
+                          <Text size="sm" tone="muted">Loading members...</Text>
+                        </div>
+                      ) : transferCandidates.length === 0 ? (
+                        <div className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                          <Text size="sm" tone="muted">No eligible members found</Text>
+                        </div>
+                      ) : (
+                        <div className="relative" ref={transferDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => setShowTransferDropdown(!showTransferDropdown)}
+                            className={cn(
+                              'w-full flex items-center justify-between px-3 py-2.5',
+                              'rounded-xl text-sm text-left',
+                              'bg-white/[0.04] border border-white/[0.08]',
+                              'hover:bg-white/[0.06] transition-colors',
+                              showTransferDropdown && 'ring-2 ring-white/20'
+                            )}
+                          >
+                            {selectedCandidate ? (
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-white/[0.08] flex items-center justify-center text-xs font-medium text-white/60 overflow-hidden flex-shrink-0">
+                                  {selectedCandidate.avatar ? (
+                                    <img src={selectedCandidate.avatar} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    selectedCandidate.name.charAt(0).toUpperCase()
+                                  )}
+                                </div>
+                                <span className="text-white">{selectedCandidate.name}</span>
+                                <span className={cn(
+                                  'text-xs px-1.5 py-0.5 rounded-md',
+                                  selectedCandidate.role === 'admin' ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]' :
+                                  selectedCandidate.role === 'moderator' ? 'bg-blue-400/10 text-blue-400' :
+                                  'bg-white/[0.06] text-white/50'
+                                )}>
+                                  {selectedCandidate.role === 'admin' ? 'Leader' : selectedCandidate.role === 'moderator' ? 'Mod' : 'Member'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-white/30">Choose a member...</span>
+                            )}
+                            <ChevronDown className={cn(
+                              'w-4 h-4 text-white/40 transition-transform',
+                              showTransferDropdown && 'rotate-180'
+                            )} />
+                          </button>
+
+                          <AnimatePresence>
+                            {showTransferDropdown && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -4 }}
+                                transition={{ duration: 0.15 }}
+                                className={cn(
+                                  'absolute left-0 right-0 top-full mt-1 z-50',
+                                  'max-h-[240px] overflow-y-auto',
+                                  'rounded-xl border border-white/[0.08] bg-[#1A1A18] shadow-xl',
+                                  'py-1'
+                                )}
+                              >
+                                {transferCandidates.map((candidate) => (
+                                  <button
+                                    key={candidate.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedTransferTarget(candidate.id);
+                                      setShowTransferDropdown(false);
+                                    }}
+                                    className={cn(
+                                      'w-full flex items-center gap-2 px-3 py-2 text-left',
+                                      'hover:bg-white/[0.04] transition-colors',
+                                      selectedTransferTarget === candidate.id && 'bg-white/[0.06]'
+                                    )}
+                                  >
+                                    <div className="w-6 h-6 rounded-md bg-white/[0.08] flex items-center justify-center text-xs font-medium text-white/60 overflow-hidden flex-shrink-0">
+                                      {candidate.avatar ? (
+                                        <img src={candidate.avatar} alt="" className="w-full h-full object-cover" />
+                                      ) : (
+                                        candidate.name.charAt(0).toUpperCase()
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <Text size="sm" weight="medium" className="truncate">{candidate.name}</Text>
+                                      {candidate.username && (
+                                        <Text size="xs" tone="muted" className="font-mono truncate">@{candidate.username}</Text>
+                                      )}
+                                    </div>
+                                    <span className={cn(
+                                      'text-xs px-1.5 py-0.5 rounded-md flex-shrink-0',
+                                      candidate.role === 'admin' ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]' :
+                                      candidate.role === 'moderator' ? 'bg-blue-400/10 text-blue-400' :
+                                      'bg-white/[0.06] text-white/50'
+                                    )}>
+                                      {candidate.role === 'admin' ? 'Leader' : candidate.role === 'moderator' ? 'Mod' : 'Member'}
+                                    </span>
+                                    {selectedTransferTarget === candidate.id && (
+                                      <Check className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                                    )}
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowTransferConfirm(true)}
+                      disabled={!selectedTransferTarget || isTransferring}
+                      className="text-amber-400 hover:bg-amber-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Crown className="w-4 h-4 mr-2" />
+                      Transfer Ownership
+                    </Button>
+                  </div>
+                )}
+
                 {/* Delete Space - Only for leaders */}
                 {isLeader && onDelete && (
                   <div className="p-4 rounded-xl bg-red-500/[0.06] border border-red-500/20">
@@ -1060,6 +1282,22 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
           />
         )}
       </AnimatePresence>
+
+      {/* Transfer Ownership Confirmation */}
+      <ConfirmDialog
+        open={showTransferConfirm}
+        onOpenChange={setShowTransferConfirm}
+        variant="warning"
+        title="Transfer ownership?"
+        description={
+          selectedCandidate
+            ? `You are about to make ${selectedCandidate.name} the owner of "${space.name}". You will be demoted to admin. Only the new owner can reverse this.`
+            : 'Select a member to transfer ownership to.'
+        }
+        confirmText={isTransferring ? 'Transferring...' : 'Transfer Ownership'}
+        onConfirm={handleTransferOwnership}
+        loading={isTransferring}
+      />
 
       {/* Automation Builder Modal */}
       {showAutomationBuilder && (

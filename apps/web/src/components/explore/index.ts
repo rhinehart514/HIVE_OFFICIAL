@@ -10,4 +10,4 @@ export { GhostSpaceCard, type GhostSpaceData, type GhostSpaceCardProps } from '.
 export { SpaceGrid, type SpaceGridProps } from './SpaceGrid';
 export { PeopleGrid, type PersonData, type PeopleGridProps } from './PeopleGrid';
 export { EventList, type EventData, type EventListProps } from './EventList';
-export { ToolGallery, type ToolData, type ToolGalleryProps } from './ToolGallery';
+export { ToolGallery, type ToolData, type ToolGalleryProps, type DeployedSpace } from './ToolGallery';

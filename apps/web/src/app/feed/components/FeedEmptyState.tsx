@@ -10,7 +10,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Calendar, Users, Sparkles, Wrench, Compass } from 'lucide-react';
+import { Calendar, Users, Sparkles, Wrench, Compass, Inbox } from 'lucide-react';
 import { GlassSurface, Button, MOTION } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 export type EmptyStateVariant =
   | 'today'
   | 'spaces'
+  | 'activity'
   | 'events'
   | 'creations'
   | 'discover'
@@ -49,6 +50,12 @@ const EMPTY_CONFIG: Record<EmptyStateVariant, EmptyStateConfig> = {
     title: 'No spaces yet',
     message: 'Join communities that match your interests.',
     action: { label: 'Explore spaces', href: '/explore?tab=spaces' },
+  },
+  activity: {
+    icon: Inbox,
+    title: 'All caught up',
+    message: 'No new activity in your spaces. Check back later.',
+    action: null,
   },
   events: {
     icon: Calendar,

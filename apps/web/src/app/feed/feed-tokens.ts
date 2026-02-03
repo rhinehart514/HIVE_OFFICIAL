@@ -69,6 +69,7 @@ interface DensityConfig {
   cardGap: string;
   maxItems: {
     spaces: number;
+    activity: number;
     events: number;
     tools: number;
     discover: number;
@@ -90,6 +91,7 @@ export const FEED_DENSITY: Record<FeedDensity, DensityConfig> = {
     cardGap: 'gap-2',
     maxItems: {
       spaces: 4,
+      activity: 10,
       events: 6,
       tools: 4,
       discover: 3,
@@ -102,6 +104,7 @@ export const FEED_DENSITY: Record<FeedDensity, DensityConfig> = {
     cardGap: 'gap-3',
     maxItems: {
       spaces: 3,
+      activity: 8,
       events: 4,
       tools: 3,
       discover: 2,
@@ -114,6 +117,7 @@ export const FEED_DENSITY: Record<FeedDensity, DensityConfig> = {
     cardGap: 'gap-4',
     maxItems: {
       spaces: 2,
+      activity: 6,
       events: 3,
       tools: 2,
       discover: 2,
@@ -129,6 +133,7 @@ export const FEED_DENSITY: Record<FeedDensity, DensityConfig> = {
 export type FeedSection =
   | 'today'
   | 'spaces'
+  | 'activity'
   | 'events'
   | 'creations'
   | 'discover';
@@ -139,6 +144,7 @@ export type FeedSection =
 export const SECTION_PRIORITY: Record<FeedSection, FeedPriority> = {
   today: 'primary',
   spaces: 'secondary',
+  activity: 'secondary',
   events: 'secondary',
   creations: 'tertiary',
   discover: 'tertiary',
@@ -154,6 +160,7 @@ export const SECTION_PRIORITY: Record<FeedSection, FeedPriority> = {
 export const SECTION_DELAYS: Record<FeedSection, number> = {
   today: 0.1,
   spaces: 0.2,
+  activity: 0.25,
   events: 0.3,
   creations: 0.4,
   discover: 0.5,
@@ -181,7 +188,7 @@ export function getSectionDelay(section: FeedSection): number {
  * Get max items for a section based on density.
  */
 export function getMaxItems(
-  section: 'spaces' | 'events' | 'tools' | 'discover',
+  section: 'spaces' | 'activity' | 'events' | 'tools' | 'discover',
   density: FeedDensity
 ): number {
   return FEED_DENSITY[density].maxItems[section];

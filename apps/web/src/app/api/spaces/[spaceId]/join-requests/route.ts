@@ -11,7 +11,7 @@ import {
 } from '@/lib/middleware';
 import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
-import { createNotification } from '@/lib/notification-service';
+import { createNotification, notifySpaceJoin } from '@/lib/notification-service';
 
 /**
  * Space Join Requests Management API (for space leaders)
@@ -343,6 +343,15 @@ export const PATCH = withAuthValidationAndErrors(
         },
       });
 
+      // Notify other space leaders about the new member (non-blocking)
+      notifyOtherLeadersOfJoin(spaceId, campusId, requestData.userId, userId).catch(err => {
+        logger.warn('[join-requests] Failed to notify leaders of approved join', {
+          error: err instanceof Error ? err.message : String(err),
+          spaceId,
+          newMemberId: requestData.userId,
+        });
+      });
+
       // Trigger member_join automations (non-blocking)
       triggerMemberJoinAutomations(spaceId, campusId, requestData.userId).catch(err => {
         logger.warn('[join-requests] Failed to trigger member_join automations', {
@@ -538,4 +547,59 @@ async function executeWelcomeAutomation(
     },
     campusId,
   });
+}
+
+/**
+ * Notify other space leaders when a join request is approved
+ * Excludes the approving leader (they already know)
+ */
+async function notifyOtherLeadersOfJoin(
+  spaceId: string,
+  campusId: string,
+  newMemberId: string,
+  approverId: string
+): Promise<void> {
+  // Get new member's display name
+  const userDoc = await dbAdmin.collection('users').doc(newMemberId).get();
+  const userData = userDoc.data();
+  const memberName = userData?.fullName || userData?.displayName || 'Someone';
+
+  // Get space name
+  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+  const spaceName = spaceDoc.data()?.name || 'a space';
+
+  // Find other space leaders/admins (excluding the approver)
+  const leadersSnapshot = await dbAdmin.collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('campusId', '==', campusId)
+    .where('role', 'in', ['owner', 'admin', 'moderator'])
+    .where('isActive', '==', true)
+    .get();
+
+  if (leadersSnapshot.empty) return;
+
+  // Notify each leader except the approver
+  const notifyPromises = leadersSnapshot.docs
+    .filter(doc => doc.data().userId !== approverId)
+    .map(doc => {
+      const leaderUserId = doc.data().userId;
+      return notifySpaceJoin({
+        leaderUserId,
+        newMemberId,
+        newMemberName: memberName,
+        spaceId,
+        spaceName,
+      });
+    });
+
+  if (notifyPromises.length > 0) {
+    await Promise.all(notifyPromises);
+
+    logger.info('[join-requests] Other leaders notified of approved join', {
+      spaceId,
+      newMemberId,
+      approverId,
+      notifiedCount: notifyPromises.length,
+    });
+  }
 }

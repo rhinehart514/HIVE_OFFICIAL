@@ -182,11 +182,12 @@ async function fetchPeople(search?: string, filters?: PeopleFilters): Promise<Pe
   }));
 }
 
-async function fetchEvents(): Promise<EventData[]> {
+async function fetchEvents(search?: string): Promise<EventData[]> {
   const params = new URLSearchParams({
     upcoming: 'true',
-    limit: '20',
+    limit: '30',
   });
+  if (search) params.set('search', search);
 
   const response = await fetch(`/api/events?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch events');
@@ -248,14 +249,19 @@ async function fetchTools(search?: string): Promise<ToolData[]> {
     stats?: { installs?: number };
     metadata?: { featured?: boolean };
     isOfficial?: boolean;
+    deploymentCount?: number;
+    deployedSpaces?: { id: string; name: string; handle: string }[];
+    createdByName?: string;
   }) => ({
     id: t.id,
     name: t.name,
     description: t.description,
     icon: t.thumbnailUrl || t.iconUrl || undefined,
     category: t.category || 'General',
-    deployCount: t.stats?.installs || 0,
+    deployCount: t.deploymentCount || t.stats?.installs || 0,
     isOfficial: t.metadata?.featured || t.isOfficial || false,
+    deployedSpaces: t.deployedSpaces || [],
+    createdByName: t.createdByName,
   }));
 }
 
@@ -319,17 +325,8 @@ function ExploreContent() {
             break;
           }
           case 'events': {
-            const e = await fetchEvents();
-            // Client-side filter for events (API doesn't support search yet)
-            if (debouncedQuery) {
-              const q = debouncedQuery.toLowerCase();
-              setEvents(e.filter(ev =>
-                ev.title.toLowerCase().includes(q) ||
-                ev.description?.toLowerCase().includes(q)
-              ));
-            } else {
-              setEvents(e);
-            }
+            const e = await fetchEvents(debouncedQuery);
+            setEvents(e);
             break;
           }
           case 'tools': {

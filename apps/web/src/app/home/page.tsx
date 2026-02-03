@@ -9,9 +9,10 @@
  * Sections (priority order):
  * 1. Today (events + unread messages) — PRIMARY
  * 2. Your Spaces (navigation tiles with activity dots) — SECONDARY
- * 3. This Week (upcoming events) — SECONDARY
- * 4. Your Creations (HiveLab tools) — TERTIARY
- * 5. Discover (recommendations) — TERTIARY
+ * 3. Recent Activity (cross-space activity feed) — SECONDARY
+ * 4. This Week (upcoming events) — SECONDARY
+ * 5. Your Creations (HiveLab tools) — TERTIARY
+ * 6. Discover (recommendations) — TERTIARY
  *
  * Includes welcome overlay for first-time users from /spaces.
  *
@@ -30,6 +31,9 @@ import {
   Wrench,
   Sparkles,
   Building2,
+  UserPlus,
+  CalendarPlus,
+  Package,
 } from 'lucide-react';
 import {
   Tilt,
@@ -113,6 +117,19 @@ interface RecommendedSpace {
   category?: string;
 }
 
+interface ActivityItemData {
+  id: string;
+  type: 'new_messages' | 'member_joined' | 'event_created' | 'tool_deployed';
+  spaceId: string;
+  spaceName: string;
+  spaceHandle: string;
+  actorId?: string;
+  actorName?: string;
+  count?: number;
+  title?: string;
+  timestamp: string;
+}
+
 interface FeedUpdateData {
   hasNewPosts: boolean;
   newPostCount: number;
@@ -184,6 +201,41 @@ function formatTimeSince(dateString: string): string {
   if (diffDays === 1) return 'yesterday';
   if (diffDays < 7) return `${diffDays} days ago`;
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function getTimePeriod(dateString: string): 'Today' | 'Yesterday' | 'This Week' | 'Earlier' {
+  const date = new Date(dateString);
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
+  const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  if (date >= todayStart) return 'Today';
+  if (date >= yesterdayStart) return 'Yesterday';
+  if (date >= weekStart) return 'This Week';
+  return 'Earlier';
+}
+
+function groupActivityByTime(items: ActivityItemData[]): Map<string, ActivityItemData[]> {
+  const groups = new Map<string, ActivityItemData[]>();
+  const order = ['Today', 'Yesterday', 'This Week', 'Earlier'];
+
+  for (const item of items) {
+    const period = getTimePeriod(item.timestamp);
+    const existing = groups.get(period) || [];
+    existing.push(item);
+    groups.set(period, existing);
+  }
+
+  // Return in order
+  const ordered = new Map<string, ActivityItemData[]>();
+  for (const period of order) {
+    const items = groups.get(period);
+    if (items && items.length > 0) {
+      ordered.set(period, items);
+    }
+  }
+  return ordered;
 }
 
 // ============================================
@@ -455,6 +507,144 @@ function YourSpacesSection({
             </GlassSurface>
           </Link>
         </Tilt>
+      </div>
+    </Section>
+  );
+}
+
+// ============================================
+// RECENT ACTIVITY SECTION
+// ============================================
+
+function ActivityIcon({ type }: { type: ActivityItemData['type'] }) {
+  switch (type) {
+    case 'new_messages':
+      return <MessageCircle className="w-4 h-4 text-white/40" />;
+    case 'member_joined':
+      return <UserPlus className="w-4 h-4 text-white/40" />;
+    case 'event_created':
+      return <CalendarPlus className="w-4 h-4 text-white/40" />;
+    case 'tool_deployed':
+      return <Package className="w-4 h-4 text-white/40" />;
+  }
+}
+
+function activityDescription(item: ActivityItemData): string {
+  switch (item.type) {
+    case 'new_messages':
+      return `${item.count} new message${(item.count || 0) > 1 ? 's' : ''} in ${item.spaceName}`;
+    case 'member_joined':
+      return `${item.actorName || 'Someone'} joined ${item.spaceName}`;
+    case 'event_created':
+      return `${item.actorName ? item.actorName + ' created' : 'New event'} "${item.title}" in ${item.spaceName}`;
+    case 'tool_deployed':
+      return `${item.actorName ? item.actorName + ' deployed' : 'New tool'} ${item.title ? '"' + item.title + '"' : 'a tool'} to ${item.spaceName}`;
+  }
+}
+
+function RecentActivitySection({
+  activity,
+  loading,
+  density,
+}: {
+  activity: ActivityItemData[];
+  loading: boolean;
+  density: ReturnType<typeof useFeedDensity>['config'];
+}) {
+  const router = useRouter();
+  const maxItems = density.maxItems.activity;
+
+  if (loading) {
+    return (
+      <Section section="activity" title="Recent Activity">
+        <div className={cn('space-y-2', density.cardGap)}>
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className={cn(
+                'rounded-lg bg-white/[0.02] border border-white/[0.06] animate-pulse',
+                'px-3 py-2.5'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-md bg-white/[0.04]" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-3/4 bg-white/[0.06] rounded" />
+                  <div className="h-2.5 w-1/3 bg-white/[0.04] rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+    );
+  }
+
+  if (activity.length === 0) {
+    return (
+      <Section section="activity" title="Recent Activity">
+        <FeedEmptyState variant="activity" compact />
+      </Section>
+    );
+  }
+
+  const grouped = groupActivityByTime(activity.slice(0, maxItems));
+  const totalCount = activity.length;
+  const showSeeAll = totalCount > maxItems;
+
+  return (
+    <Section section="activity" title="Recent Activity">
+      <div className={cn('space-y-4', density.cardGap)}>
+        {Array.from(grouped.entries()).map(([period, items]) => (
+          <div key={period}>
+            <p className="text-label-sm text-white/30 uppercase tracking-wider mb-2">
+              {period}
+            </p>
+            <div className="space-y-1">
+              {items.map((item) => (
+                <motion.button
+                  key={item.id}
+                  type="button"
+                  onClick={() => router.push(`/s/${item.spaceHandle}`)}
+                  className={cn(
+                    'w-full text-left flex items-center gap-3 rounded-lg',
+                    'px-3 py-2.5',
+                    'hover:bg-white/[0.04] transition-colors',
+                    'group'
+                  )}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: MOTION.duration.quick,
+                    ease: MOTION.ease.premium,
+                  }}
+                >
+                  <div className="w-7 h-7 rounded-md bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                    <ActivityIcon type={item.type} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-body-sm text-white/80 truncate group-hover:text-white transition-colors">
+                      {activityDescription(item)}
+                    </p>
+                  </div>
+                  <span className="text-label-sm text-white/25 flex-shrink-0">
+                    {formatTimeSince(item.timestamp)}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {showSeeAll && (
+          <button
+            type="button"
+            onClick={() => router.push('/feed')}
+            className="text-label text-white/30 hover:text-white/50 transition-colors w-full text-center py-1"
+          >
+            See all activity →
+          </button>
+        )}
       </div>
     </Section>
   );
@@ -770,12 +960,14 @@ export default function HomePage() {
   const [weekEvents, setWeekEvents] = useState<EventData[]>([]);
   const [tools, setTools] = useState<ToolData[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendedSpace[]>([]);
+  const [activityItems, setActivityItems] = useState<ActivityItemData[]>([]);
   const [unreadSpaces, setUnreadSpaces] = useState<SpaceData[]>([]);
   const [feedUpdate, setFeedUpdate] = useState<FeedUpdateData | null>(null);
 
   // Partial loading states
   const [loadingStates, setLoadingStates] = useState({
     spaces: true,
+    activity: true,
     events: true,
     tools: true,
     feedUpdate: true,
@@ -855,6 +1047,7 @@ export default function HomePage() {
 
     setLoadingStates({
       spaces: true,
+      activity: true,
       events: true,
       tools: true,
       feedUpdate: true,
@@ -920,6 +1113,19 @@ export default function HomePage() {
       .catch((error) => logger.error('Failed to fetch tools', { component: 'HomePage' }, error instanceof Error ? error : undefined))
       .finally(() => setLoadingStates((prev) => ({ ...prev, tools: false })));
 
+    // Fetch activity feed
+    fetch('/api/activity-feed?limit=20', { credentials: 'include' })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data?.activity) {
+            setActivityItems(data.data.activity);
+          }
+        }
+      })
+      .catch((error) => logger.error('Failed to fetch activity feed', { component: 'HomePage' }, error instanceof Error ? error : undefined))
+      .finally(() => setLoadingStates((prev) => ({ ...prev, activity: false })));
+
     // Fetch feed updates
     fetch('/api/feed/updates?action=check', { credentials: 'include' })
       .then(async (res) => {
@@ -949,17 +1155,18 @@ export default function HomePage() {
     return () => clearTimeout(markViewedTimeout);
   }, [authLoading, user]);
 
-  const allDataLoaded = !loadingStates.spaces && !loadingStates.events && !loadingStates.tools;
+  const allDataLoaded = !loadingStates.spaces && !loadingStates.activity && !loadingStates.events && !loadingStates.tools;
 
   const isAllEmpty = useMemo(() => {
     if (!allDataLoaded) return false;
     const hasToday = todayEvents.length > 0 || unreadSpaces.length > 0;
     const hasSpaces = spaces.length > 0;
+    const hasActivity = activityItems.length > 0;
     const hasWeek = weekEvents.length > 0;
     const hasCreations = (user?.isBuilder ?? false) && tools.length > 0;
     const hasDiscover = recommendations.length > 0;
-    return !hasToday && !hasSpaces && !hasWeek && !hasCreations && !hasDiscover;
-  }, [allDataLoaded, todayEvents, unreadSpaces, spaces, weekEvents, tools, recommendations, user?.isBuilder]);
+    return !hasToday && !hasSpaces && !hasActivity && !hasWeek && !hasCreations && !hasDiscover;
+  }, [allDataLoaded, todayEvents, unreadSpaces, spaces, activityItems, weekEvents, tools, recommendations, user?.isBuilder]);
 
   // Loading state
   if (authLoading || !densityLoaded || hasSeenWelcome === null) {
@@ -1102,6 +1309,12 @@ export default function HomePage() {
             <YourSpacesSection
               spaces={spaces}
               loading={loadingStates.spaces}
+              density={densityConfig}
+            />
+
+            <RecentActivitySection
+              activity={activityItems}
+              loading={loadingStates.activity}
               density={densityConfig}
             />
 

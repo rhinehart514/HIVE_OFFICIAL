@@ -155,7 +155,7 @@ function HoverActions({
             'hover:bg-white/[0.08]',
             'text-white/40 hover:text-white/60'
           )}
-          title="View full"
+          title="View in Lab"
         >
           <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
         </button>
@@ -177,9 +177,6 @@ export function SidebarToolCard({
   onViewFull,
 }: SidebarToolCardProps) {
   const [isHovered, setIsHovered] = React.useState(false);
-
-  // Check if tool supports full app mode
-  const supportsApp = tool.surfaceModes?.app ?? false;
 
   // Display name (use override if set)
   const displayName = tool.titleOverride || tool.name;
@@ -240,7 +237,7 @@ export function SidebarToolCard({
             key="actions"
             onRun={onRun}
             onViewFull={onViewFull}
-            showViewFull={supportsApp}
+            showViewFull={!!onViewFull}
           />
         ) : (
           tool.activityCount !== undefined &&

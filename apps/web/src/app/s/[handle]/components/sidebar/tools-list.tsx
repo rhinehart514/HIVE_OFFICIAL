@@ -10,7 +10,8 @@
  */
 
 import * as React from 'react';
-import { Wrench, Plus, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Wrench, Plus, Loader2, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SidebarToolCard } from '@/components/spaces/sidebar-tool-card';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
@@ -97,6 +98,21 @@ export function ToolsList({
           <p className="text-xs text-white/30">No tools yet</p>
         </div>
       )}
+
+      {/* Browse more tools link */}
+      <Link
+        href="/explore?tab=tools"
+        className={cn(
+          'flex items-center gap-2 px-3 py-1.5 rounded-lg',
+          'text-xs text-white/30 hover:text-white/60',
+          'hover:bg-white/[0.04]',
+          'transition-colors duration-150',
+          tools.length > 0 && 'mt-1'
+        )}
+      >
+        <Compass className="w-3.5 h-3.5" />
+        <span>Browse more tools</span>
+      </Link>
     </div>
   );
 }

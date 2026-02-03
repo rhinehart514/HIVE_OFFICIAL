@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useAuth } from "@hive/auth-logic";
 import { toast } from "@hive/ui";
 import { logger } from "@/lib/logger";
@@ -126,8 +126,10 @@ export function useEvents() {
   const [filter, setFilter] = useState<TimeFilter>('all');
   const [eventType, setEventType] = useState<EventTypeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEventDetails, setShowEventDetails] = useState<string | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -136,14 +138,72 @@ export function useEvents() {
   const authResult = useAuth();
   const { user } = mounted ? authResult : { user: null };
 
-  // Fetch events
+  // Debounce search query (300ms)
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [searchQuery]);
+
+  // Build API query params from current filter state
+  const buildApiParams = useCallback((): URLSearchParams => {
+    const params = new URLSearchParams();
+    params.set('limit', '50');
+    params.set('upcoming', 'true');
+
+    // Text search
+    if (debouncedSearch.trim()) {
+      params.set('search', debouncedSearch.trim());
+    }
+
+    // Event type filter
+    if (eventType !== 'all') {
+      params.set('type', eventType);
+    }
+
+    // Time-based filters: send date range to the server
+    const now = new Date();
+    switch (filter) {
+      case 'today': {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        params.set('from', startOfDay.toISOString());
+        params.set('to', endOfDay.toISOString());
+        break;
+      }
+      case 'week': {
+        const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        params.set('from', now.toISOString());
+        params.set('to', nextWeek.toISOString());
+        break;
+      }
+      case 'month': {
+        const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        params.set('from', now.toISOString());
+        params.set('to', nextMonth.toISOString());
+        break;
+      }
+      case 'my_events':
+        params.set('myEvents', 'true');
+        break;
+    }
+
+    return params;
+  }, [debouncedSearch, eventType, filter]);
+
+  // Fetch events from API whenever filters change
   useEffect(() => {
     if (!mounted) return;
 
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/events?limit=100&upcoming=true');
+        const params = buildApiParams();
+        const response = await fetch(`/api/events?${params.toString()}`);
         if (!response.ok) throw new Error('Failed to fetch events');
 
         const data = await response.json() as { events?: unknown[] };
@@ -212,54 +272,14 @@ export function useEvents() {
     };
 
     fetchEvents();
-  }, [mounted]);
+  }, [mounted, buildApiParams]);
 
-  // Filter and search events
+  // Events are already filtered server-side; just sort chronologically
   const filteredEvents = useMemo(() => {
-    let filtered = events;
-    const now = new Date();
-
-    switch (filter) {
-      case 'today':
-        filtered = filtered.filter(event => new Date(event.datetime.start).toDateString() === now.toDateString());
-        break;
-      case 'week': {
-        const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(event => {
-          const eventDate = new Date(event.datetime.start);
-          return eventDate >= now && eventDate <= nextWeek;
-        });
-        break;
-      }
-      case 'month': {
-        const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(event => {
-          const eventDate = new Date(event.datetime.start);
-          return eventDate >= now && eventDate <= nextMonth;
-        });
-        break;
-      }
-      case 'my_events':
-        filtered = filtered.filter(event => event.rsvpStatus === 'going' || event.organizer.id === user?.id);
-        break;
-    }
-
-    if (eventType !== 'all') {
-      filtered = filtered.filter(event => event.type === eventType);
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(event =>
-        event.title.toLowerCase().includes(query) ||
-        event.description.toLowerCase().includes(query) ||
-        event.tags.some(tag => tag.toLowerCase().includes(query)) ||
-        event.organizer.name.toLowerCase().includes(query)
-      );
-    }
-
-    return filtered.sort((a, b) => new Date(a.datetime.start).getTime() - new Date(b.datetime.start).getTime());
-  }, [events, filter, eventType, searchQuery, user?.id]);
+    return [...events].sort(
+      (a, b) => new Date(a.datetime.start).getTime() - new Date(b.datetime.start).getTime()
+    );
+  }, [events]);
 
   // Handlers
   const handleRSVP = useCallback((eventId: string, status: 'going' | 'interested' | 'not_going') => {

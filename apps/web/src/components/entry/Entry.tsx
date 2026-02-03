@@ -3,13 +3,14 @@
 /**
  * Entry - The Threshold
  *
- * 4 phases (same URL):
- * 1. Gate     → Email + code verification
- * 2. Naming   → First/last name (THE WEDGE)
- * 3. Field    → Year + major (morphing screen)
- * 4. Crossing → Interests selection
+ * 5 phases (same URL):
+ * 1. Gate      → Email + code verification
+ * 2. Naming    → First/last name (THE WEDGE)
+ * 3. Field     → Year + major (morphing screen)
+ * 4. Belonging → Community identities + residence (all optional)
+ * 5. Crossing  → Interests selection
  *
- * Narrative Arc: Outsider → Proven → Named → Claimed → Arrived
+ * Narrative Arc: Outsider → Proven → Named → Claimed → Belonging → Arrived
  * Design: Clash Display typography, gold accents, editorial feel
  */
 
@@ -26,6 +27,7 @@ import { DURATION, EASE_PREMIUM, GOLD } from './motion/entry-motion';
 import { GateScreen } from './screens/GateScreen';
 import { NamingScreen } from './screens/NamingScreen';
 import { FieldScreen } from './screens/FieldScreen';
+import { BelongingScreen } from './screens/BelongingScreen';
 import { CrossingScreen } from './screens/CrossingScreen';
 
 // Clash Display font
@@ -114,7 +116,7 @@ export function Entry() {
         <main className="flex-1 flex items-center justify-center px-6 md:px-12 lg:px-24 pb-12">
           <div className={cn(
             'w-full',
-            entry.phase === 'field' ? 'max-w-2xl' : 'max-w-md'
+            (entry.phase === 'field' || entry.phase === 'belonging') ? 'max-w-2xl' : 'max-w-md'
           )}>
             <AnimatePresence mode="wait">
               {entry.phase === 'gate' && (
@@ -153,6 +155,18 @@ export function Entry() {
                 </motion.div>
               )}
 
+              {entry.phase === 'belonging' && (
+                <motion.div
+                  key="belonging"
+                  initial={{ opacity: 0, y: 24, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }}
+                  transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
+                >
+                  <BelongingScreen entry={entry} />
+                </motion.div>
+              )}
+
               {entry.phase === 'crossing' && (
                 <motion.div
                   key="crossing"
@@ -168,11 +182,11 @@ export function Entry() {
           </div>
         </main>
 
-        {/* 4-dot progress indicator */}
+        {/* 5-dot progress indicator */}
         <footer className="p-6">
           <div className="flex justify-center gap-2">
-            {(['gate', 'naming', 'field', 'crossing'] as EntryPhase[]).map((phase, i) => {
-              const phaseOrder = ['gate', 'naming', 'field', 'crossing'];
+            {(['gate', 'naming', 'field', 'belonging', 'crossing'] as EntryPhase[]).map((phase, i) => {
+              const phaseOrder = ['gate', 'naming', 'field', 'belonging', 'crossing'];
               const currentIndex = phaseOrder.indexOf(entry.phase);
               const thisIndex = phaseOrder.indexOf(phase);
 

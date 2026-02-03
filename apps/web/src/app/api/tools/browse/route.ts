@@ -140,10 +140,72 @@ export const GET = withOptionalAuth(async (
           }
         }
 
+        // Fetch active deployments for this tool to show which spaces use it
+        let deployedSpaces: { id: string; name: string; handle: string }[] = [];
+        let deploymentCount = toolData.deploymentCount || 0;
+        try {
+          const deploymentsSnapshot = await dbAdmin
+            .collection("deployedTools")
+            .where("toolId", "==", doc.id)
+            .where("campusId", "==", campusId)
+            .where("status", "==", "active")
+            .where("deployedTo", "==", "space")
+            .limit(10)
+            .get();
+
+          if (!deploymentsSnapshot.empty) {
+            // Use the actual active deployment count if we have it
+            if (deploymentCount < deploymentsSnapshot.size) {
+              deploymentCount = deploymentsSnapshot.size;
+            }
+
+            // Collect unique space IDs
+            const spaceIds = new Set<string>();
+            for (const depDoc of deploymentsSnapshot.docs) {
+              const depData = depDoc.data();
+              if (depData.targetId) {
+                spaceIds.add(depData.targetId);
+              }
+            }
+
+            // Fetch space names in parallel
+            const spaceEntries = await Promise.all(
+              Array.from(spaceIds).slice(0, 5).map(async (spaceId) => {
+                try {
+                  const spaceDoc = await dbAdmin.collection("spaces").doc(spaceId).get();
+                  if (spaceDoc.exists) {
+                    const spaceData = spaceDoc.data();
+                    return {
+                      id: spaceId,
+                      name: normalizeText(spaceData?.name) || "Unknown Space",
+                      handle: normalizeText(spaceData?.slug) || normalizeText(spaceData?.handle) || spaceId,
+                    };
+                  }
+                } catch {
+                  // Skip spaces that fail to load
+                }
+                return null;
+              })
+            );
+
+            deployedSpaces = spaceEntries.filter(
+              (s): s is NonNullable<typeof s> => s !== null
+            );
+          }
+        } catch (error) {
+          logger.warn("Failed to fetch tool deployments", {
+            toolId: doc.id,
+            error: { error: error instanceof Error ? error.message : String(error) },
+            endpoint: "/api/tools/browse",
+          });
+        }
+
         return {
           id: doc.id,
           ...toolData,
           createdByName,
+          deploymentCount,
+          deployedSpaces,
           stats: {
             views: 0,
             uses: 0,

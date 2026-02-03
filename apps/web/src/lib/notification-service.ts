@@ -22,6 +22,7 @@ export type NotificationType =
   | 'space_role_change' // Your role changed in a space
   | 'builder_approved'  // Your builder request was approved
   | 'builder_rejected'  // Your builder request was rejected
+  | 'space_event_created' // New event created in a space you're in
   | 'event_reminder'    // Event starting soon
   | 'event_rsvp'        // Someone RSVPd to your event
   | 'connection_new'    // New connection
@@ -520,6 +521,39 @@ export async function notifyEventRsvp(params: {
       rsvpStatus: params.rsvpStatus,
     },
   });
+}
+
+/**
+ * Notify space members about a new event
+ */
+export async function notifySpaceEventCreated(params: {
+  memberIds: string[];
+  creatorId: string;
+  creatorName: string;
+  eventId: string;
+  eventTitle: string;
+  spaceId: string;
+  spaceName: string;
+}): Promise<number> {
+  const notificationParams: Omit<CreateNotificationParams, 'userId'> = {
+    type: 'space_event_created',
+    category: 'events',
+    title: `New event in ${params.spaceName}: ${params.eventTitle}`,
+    body: `Created by ${params.creatorName}`,
+    actionUrl: `/s/${params.spaceId}/events/${params.eventId}`,
+    metadata: {
+      actorId: params.creatorId,
+      actorName: params.creatorName,
+      eventId: params.eventId,
+      eventTitle: params.eventTitle,
+      spaceId: params.spaceId,
+      spaceName: params.spaceName,
+    },
+  };
+
+  // Don't notify the creator
+  const recipientIds = params.memberIds.filter(id => id !== params.creatorId);
+  return createBulkNotifications(recipientIds, notificationParams);
 }
 
 /**

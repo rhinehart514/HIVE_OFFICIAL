@@ -20,6 +20,7 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
+import { notifySpaceJoin } from '@/lib/notification-service';
 
 export const POST = withAuthAndErrors(async (
   request,
@@ -146,6 +147,15 @@ export const POST = withAuthAndErrors(async (
       userId,
       inviteId: inviteDoc.id,
       endpoint: '/api/spaces/invite/[code]/redeem',
+    });
+
+    // Notify space leaders about new member (non-blocking)
+    notifySpaceLeadersOfJoin(spaceId, campusId, userId).catch(err => {
+      logger.warn('Failed to send space join notifications from invite redeem', {
+        error: err instanceof Error ? err.message : String(err),
+        spaceId,
+        userId,
+      });
     });
 
     // Trigger member_join automations (non-blocking)
@@ -308,5 +318,53 @@ async function executeWelcomeAutomation(
       triggeredBy: newMemberId,
     },
     campusId,
+  });
+}
+
+/**
+ * Notify space leaders when a new member joins via invite code
+ */
+async function notifySpaceLeadersOfJoin(
+  spaceId: string,
+  campusId: string,
+  userId: string
+): Promise<void> {
+  // Get user's display name
+  const userDoc = await dbAdmin.collection('users').doc(userId).get();
+  const userData = userDoc.data();
+  const userName = userData?.fullName || userData?.displayName || 'Someone';
+
+  // Get space name
+  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+  const spaceName = spaceDoc.data()?.name || 'a space';
+
+  // Find space leaders/admins to notify
+  const leadersSnapshot = await dbAdmin.collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('campusId', '==', campusId)
+    .where('role', 'in', ['owner', 'admin', 'leader'])
+    .where('isActive', '==', true)
+    .get();
+
+  if (leadersSnapshot.empty) return;
+
+  // Notify each leader (notifySpaceJoin already filters out the joining user)
+  const notifyPromises = leadersSnapshot.docs.map(doc => {
+    const leaderUserId = doc.data().userId;
+    return notifySpaceJoin({
+      leaderUserId,
+      newMemberId: userId,
+      newMemberName: userName,
+      spaceId,
+      spaceName,
+    });
+  });
+
+  await Promise.all(notifyPromises);
+
+  logger.info('Space leaders notified of invite join', {
+    spaceId,
+    userId,
+    leaderCount: leadersSnapshot.size,
   });
 }
