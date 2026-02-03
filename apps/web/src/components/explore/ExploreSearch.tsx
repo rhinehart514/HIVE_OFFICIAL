@@ -12,10 +12,20 @@ import { motion } from 'framer-motion';
 import { Input, MOTION } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 
+export type ExploreSearchScope = 'spaces' | 'people' | 'events' | 'tools';
+
+const SCOPE_LABELS: Record<ExploreSearchScope, string> = {
+  spaces: 'in Spaces',
+  people: 'in People',
+  events: 'in Events',
+  tools: 'in Tools',
+};
+
 export interface ExploreSearchProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  scope?: ExploreSearchScope;
   className?: string;
 }
 
@@ -23,6 +33,7 @@ export function ExploreSearch({
   value,
   onChange,
   placeholder = 'Search spaces, people, events...',
+  scope,
   className,
 }: ExploreSearchProps) {
   const [isFocused, setIsFocused] = React.useState(false);
@@ -63,6 +74,15 @@ export function ExploreSearch({
         </svg>
       </div>
 
+      {/* Scope indicator */}
+      {scope && (
+        <div className="absolute left-11 top-1/2 -translate-y-1/2 pointer-events-none">
+          <span className="text-[11px] font-medium text-white/30 bg-white/[0.06] px-1.5 py-0.5 rounded">
+            {SCOPE_LABELS[scope]}
+          </span>
+        </div>
+      )}
+
       {/* Input */}
       <Input
         type="text"
@@ -71,7 +91,10 @@ export function ExploreSearch({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
-        className="w-full h-14 pl-12 pr-4 text-body-lg rounded-2xl"
+        className={cn(
+          'w-full h-14 pr-4 text-body-lg rounded-2xl',
+          scope ? 'pl-[7.5rem]' : 'pl-12'
+        )}
       />
 
       {/* Clear button */}

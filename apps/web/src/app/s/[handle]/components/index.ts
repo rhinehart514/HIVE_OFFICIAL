@@ -39,3 +39,4 @@ export { ToolCard, type ToolCardTool } from './feed/tool-card';
 export { TypingIndicator } from './feed/typing-indicator';
 export { ThreadPanel } from './feed/thread-panel';
 export { AnalyticsPanel } from './analytics-panel';
+export { SearchOverlay } from './search-overlay';

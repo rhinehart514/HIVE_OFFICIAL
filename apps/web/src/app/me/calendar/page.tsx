@@ -12,7 +12,7 @@
 // Force dynamic rendering to avoid SSG issues with auth context
 export const dynamic = 'force-dynamic';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button, HiveModal, toast } from "@hive/ui";
 import { useAuth } from "@hive/auth-logic";
 import {
@@ -59,6 +59,45 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [showConflicts, setShowConflicts] = useState(false);
   const [isResolvingConflict, setIsResolvingConflict] = useState(false);
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const tag = (document.activeElement?.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        navigateDate('prev');
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        navigateDate('next');
+        break;
+      case 't':
+        e.preventDefault();
+        goToToday();
+        break;
+      case 'd':
+        e.preventDefault();
+        setViewMode('day');
+        break;
+      case 'w':
+        e.preventDefault();
+        setViewMode('week');
+        break;
+      case 'm':
+        e.preventDefault();
+        setViewMode('month');
+        break;
+    }
+  }, [navigateDate, goToToday, setViewMode]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   // Memoize selected event data for modal
   const selectedEventData = useMemo(() => {
@@ -190,20 +229,35 @@ export default function CalendarPage() {
           </div>
 
           {/* Event Type Filter */}
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-[var(--text-tertiary)]" />
-            <select
-              value={eventTypeFilter}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEventTypeFilter(e.target.value as CalendarEvent['type'] | 'all')}
-              className="bg-[var(--surface-elevated)] border border-[var(--border-subtle)] rounded-lg px-3 py-1 text-[var(--text-primary)] text-body-sm focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
-            >
-              <option value="all">All Events</option>
-              <option value="event">Campus Events</option>
-              <option value="class">Classes</option>
-              <option value="assignment">Assignments</option>
-              <option value="meeting">Meetings</option>
-              <option value="personal">Personal</option>
-            </select>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-[var(--text-tertiary)]" />
+              <select
+                value={eventTypeFilter}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEventTypeFilter(e.target.value as CalendarEvent['type'] | 'all')}
+                className="bg-[var(--surface-elevated)] border border-[var(--border-subtle)] rounded-lg px-3 py-1 text-[var(--text-primary)] text-body-sm focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
+              >
+                <option value="all">All Events</option>
+                <option value="event">Campus Events</option>
+                <option value="class">Classes</option>
+                <option value="assignment">Assignments</option>
+                <option value="meeting">Meetings</option>
+                <option value="personal">Personal</option>
+              </select>
+            </div>
+
+            {/* Keyboard Shortcut Hints */}
+            <span className="hidden md:flex items-center gap-2 text-xs text-white/20">
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">&larr;</kbd>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">&rarr;</kbd>
+              <span>navigate</span>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">t</kbd>
+              <span>today</span>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">d</kbd>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">w</kbd>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">m</kbd>
+              <span>view</span>
+            </span>
           </div>
         </div>
 

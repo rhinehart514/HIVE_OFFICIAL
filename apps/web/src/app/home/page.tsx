@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import {
+  ArrowRight,
   Calendar,
   MessageCircle,
   Wrench,
@@ -840,16 +841,19 @@ function DiscoverSection({
   recommendations,
   loading,
   density,
+  titleOverride,
 }: {
   recommendations: RecommendedSpace[];
   loading: boolean;
   density: ReturnType<typeof useFeedDensity>['config'];
+  titleOverride?: string;
 }) {
+  const title = titleOverride || 'Discover';
   const maxItems = density.maxItems.discover;
 
   if (loading) {
     return (
-      <Section section="discover" title="Discover">
+      <Section section="discover" title={title}>
         <div className={cn('space-y-3', density.cardGap)}>
           <div className={cn(
             'rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse',
@@ -865,14 +869,14 @@ function DiscoverSection({
 
   if (recommendations.length === 0) {
     return (
-      <Section section="discover" title="Discover" action="Explore" actionHref="/explore">
+      <Section section="discover" title={title} action="Explore" actionHref="/explore">
         <FeedEmptyState variant="discover" compact />
       </Section>
     );
   }
 
   return (
-    <Section section="discover" title="Discover" action="Explore" actionHref="/explore">
+    <Section section="discover" title={title} action="Explore" actionHref="/explore">
       <div className={cn('space-y-3', density.cardGap)}>
         {recommendations.slice(0, maxItems).map((space) => (
           <Tilt key={space.id} intensity={density.tiltIntensity}>
@@ -901,6 +905,48 @@ function DiscoverSection({
         ))}
       </div>
     </Section>
+  );
+}
+
+// ============================================
+// NEW USER CTA
+// ============================================
+
+function NewUserCTA() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: MOTION.duration.standard,
+        delay: SECTION_DELAYS.spaces,
+        ease: MOTION.ease.premium,
+      }}
+      className="mb-10"
+    >
+      <Link href="/explore">
+        <GlassSurface
+          intensity="subtle"
+          interactive
+          className="rounded-xl p-6 border border-white/[0.08] group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gold-500/10 flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-6 h-6 text-gold-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-body font-semibold text-white">
+                Join your first space to unlock your campus
+              </p>
+              <p className="text-label text-white/40 mt-0.5">
+                Spaces are where students organize, build, and connect.
+              </p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+          </div>
+        </GlassSurface>
+      </Link>
+    </motion.div>
   );
 }
 
@@ -1207,6 +1253,8 @@ export default function HomePage() {
 
   const firstName = user?.displayName?.split(' ')[0] || user?.fullName?.split(' ')[0] || '';
 
+  const isNewUser = !loadingStates.spaces && (!spaces || spaces.length === 0);
+
   // Page-level empty state
   if (isAllEmpty) {
     return (
@@ -1298,45 +1346,96 @@ export default function HomePage() {
       <main className="max-w-5xl mx-auto px-6 py-8">
         <div className={cn('grid lg:grid-cols-[1fr_280px]', densityConfig.sectionGap)}>
           <div>
-            <TodaySection
-              events={todayEvents}
-              unreadSpaces={unreadSpaces}
-              loading={loadingStates.events}
-              density={densityConfig}
-              onRsvp={handleEventRsvp}
-            />
+            {isNewUser ? (
+              <>
+                {/* New user order: Today -> CTA -> Discover -> This Week -> Creations -> Spaces -> Activity */}
+                <TodaySection
+                  events={todayEvents}
+                  unreadSpaces={unreadSpaces}
+                  loading={loadingStates.events}
+                  density={densityConfig}
+                  onRsvp={handleEventRsvp}
+                />
 
-            <YourSpacesSection
-              spaces={spaces}
-              loading={loadingStates.spaces}
-              density={densityConfig}
-            />
+                <NewUserCTA />
 
-            <RecentActivitySection
-              activity={activityItems}
-              loading={loadingStates.activity}
-              density={densityConfig}
-            />
+                <DiscoverSection
+                  recommendations={recommendations}
+                  loading={loadingStates.events}
+                  density={densityConfig}
+                  titleOverride="Find Your First Space"
+                />
 
-            <ThisWeekSection
-              events={weekEvents}
-              loading={loadingStates.events}
-              density={densityConfig}
-              onRsvp={handleEventRsvp}
-            />
+                <ThisWeekSection
+                  events={weekEvents}
+                  loading={loadingStates.events}
+                  density={densityConfig}
+                  onRsvp={handleEventRsvp}
+                />
 
-            <YourCreationsSection
-              tools={tools}
-              loading={loadingStates.tools}
-              isBuilder={user?.isBuilder ?? false}
-              density={densityConfig}
-            />
+                <YourCreationsSection
+                  tools={tools}
+                  loading={loadingStates.tools}
+                  isBuilder={user?.isBuilder ?? false}
+                  density={densityConfig}
+                />
 
-            <DiscoverSection
-              recommendations={recommendations}
-              loading={loadingStates.events}
-              density={densityConfig}
-            />
+                <YourSpacesSection
+                  spaces={spaces}
+                  loading={loadingStates.spaces}
+                  density={densityConfig}
+                />
+
+                <RecentActivitySection
+                  activity={activityItems}
+                  loading={loadingStates.activity}
+                  density={densityConfig}
+                />
+              </>
+            ) : (
+              <>
+                {/* Returning user order: Today -> Spaces -> Activity -> This Week -> Creations -> Discover */}
+                <TodaySection
+                  events={todayEvents}
+                  unreadSpaces={unreadSpaces}
+                  loading={loadingStates.events}
+                  density={densityConfig}
+                  onRsvp={handleEventRsvp}
+                />
+
+                <YourSpacesSection
+                  spaces={spaces}
+                  loading={loadingStates.spaces}
+                  density={densityConfig}
+                />
+
+                <RecentActivitySection
+                  activity={activityItems}
+                  loading={loadingStates.activity}
+                  density={densityConfig}
+                />
+
+                <ThisWeekSection
+                  events={weekEvents}
+                  loading={loadingStates.events}
+                  density={densityConfig}
+                  onRsvp={handleEventRsvp}
+                />
+
+                <YourCreationsSection
+                  tools={tools}
+                  loading={loadingStates.tools}
+                  isBuilder={user?.isBuilder ?? false}
+                  density={densityConfig}
+                />
+
+                <DiscoverSection
+                  recommendations={recommendations}
+                  loading={loadingStates.events}
+                  density={densityConfig}
+                />
+              </>
+            )}
           </div>
 
           <aside className="hidden lg:block">

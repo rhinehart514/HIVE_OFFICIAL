@@ -55,6 +55,7 @@ import {
 import { useTypingIndicator } from '@/hooks/use-presence';
 import { GatheringThreshold } from './components/threshold';
 import { ThreadPanel } from './components/feed/thread-panel';
+import { SearchOverlay } from './components/search-overlay';
 import {
   BoardsSidebar,
   UnifiedActivityFeed,
@@ -79,6 +80,7 @@ export default function SpacePageUnified() {
   const [showDeleteSpaceConfirm, setShowDeleteSpaceConfirm] = React.useState(false);
   const [showDeleteBoardConfirm, setShowDeleteBoardConfirm] = React.useState<string | null>(null);
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
+  const [searchOpen, setSearchOpen] = React.useState(false);
   const [isCreatingBoard, setIsCreatingBoard] = React.useState(false);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
   const [isDeletingBoard, setIsDeletingBoard] = React.useState(false);
@@ -212,7 +214,8 @@ export default function SpacePageUnified() {
     boardIds: (boards || []).map((b) => b.id),
     activeBoard: activeBoard || boards?.[0]?.id || 'general',
     onBoardChange: setActiveBoard,
-    enabled: !showSettingsModal && !showMembersPanel && !showBoardModal && !!space?.isMember,
+    onOpenSearch: () => setSearchOpen(true),
+    enabled: !showSettingsModal && !showMembersPanel && !showBoardModal && !searchOpen && !!space?.isMember,
   });
 
   // Transform messages to Message type (called unconditionally)
@@ -1019,6 +1022,14 @@ export default function SpacePageUnified() {
           onClose={() => setShowModerationPanel(false)}
           spaceId={space.id}
           spaceName={space.name}
+        />
+
+        {/* Search Overlay (Cmd+K) */}
+        <SearchOverlay
+          isOpen={searchOpen}
+          onClose={() => setSearchOpen(false)}
+          spaceId={space.id}
+          spaceHandle={space.handle}
         />
 
         {/* Thread Reply Panel */}

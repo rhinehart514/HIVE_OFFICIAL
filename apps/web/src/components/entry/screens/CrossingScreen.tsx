@@ -143,7 +143,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
       <div className="space-y-4 mb-8">
         <button
           onClick={entry.goBack}
-          className="flex items-center gap-2 text-[13px] text-white/30 hover:text-white/50 transition-colors mb-4"
+          className="flex items-center gap-2 text-[13px] text-white/30 hover:text-white/50 transition-colors mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -187,12 +187,12 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search interests..."
-            className="flex-1 bg-transparent text-[15px] text-white placeholder:text-white/30 focus:outline-none"
+            className="flex-1 bg-transparent text-[15px] text-white placeholder:text-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
           />
           {search && (
             <button
               onClick={clearSearch}
-              className="text-white/40 hover:text-white/60 transition-colors"
+              className="text-white/40 hover:text-white/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-md"
             >
               <X className="w-4 h-4" />
             </button>
@@ -207,6 +207,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
           className={cn(
             'px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all duration-200',
             'border',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
             activeCategory === null
               ? 'bg-white text-neutral-950 border-white'
               : 'bg-white/[0.03] text-white/50 border-white/10 hover:bg-white/[0.06] hover:text-white/70'
@@ -226,6 +227,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
               className={cn(
                 'px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all duration-200',
                 'border flex items-center gap-1.5',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
                 activeCategory === cat.id
                   ? 'bg-white text-neutral-950 border-white'
                   : 'bg-white/[0.03] text-white/50 border-white/10 hover:bg-white/[0.06] hover:text-white/70'
@@ -271,6 +273,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
                     'px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-300',
                     'border',
                     'disabled:opacity-30 disabled:cursor-not-allowed',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
                     isSelected
                       ? 'bg-gold-500 text-neutral-950 border-gold-500'
                       : 'bg-white/[0.03] text-white/60 border-white/10 hover:bg-white/[0.06] hover:text-white/80 hover:border-white/20'
@@ -318,7 +321,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   onClick={() => handleToggle(interest)}
-                  className="group px-3 py-1.5 rounded-full text-[13px] font-medium bg-gold-500/10 text-gold-500 border border-gold-500/20 flex items-center gap-1.5 hover:bg-gold-500/15 transition-all"
+                  className="group px-3 py-1.5 rounded-full text-[13px] font-medium bg-gold-500/10 text-gold-500 border border-gold-500/20 flex items-center gap-1.5 hover:bg-gold-500/15 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
                   {interest}
                   <span className="text-gold-500/50 group-hover:text-gold-500">
@@ -346,7 +349,8 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
                   className={cn(
                     'px-4 py-2 rounded-lg text-[14px] font-medium transition-all duration-200',
                     'bg-gold-500/10 text-gold-500 border border-gold-500/30',
-                    'hover:bg-gold-500/20 hover:border-gold-500/50'
+                    'hover:bg-gold-500/20 hover:border-gold-500/50',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black'
                   )}
                 >
                   @{handle}
@@ -367,7 +371,8 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
             ? 'bg-gold-500 text-neutral-950 hover:bg-gold-500/90'
             : 'bg-white/10 text-white/40',
           'disabled:cursor-not-allowed',
-          'flex items-center justify-center gap-2'
+          'flex items-center justify-center gap-2',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black'
         )}
       >
         {entry.isLoading ? (

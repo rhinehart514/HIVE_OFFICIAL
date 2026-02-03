@@ -376,7 +376,15 @@ function ExploreContent() {
           <ExploreSearch
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder={`Search ${activeTab}...`}
+            scope={activeTab}
+            placeholder={
+              {
+                spaces: 'Search spaces by name or category...',
+                people: 'Search by name, major, or interest...',
+                events: 'Search events by title or location...',
+                tools: 'Search tools by name or type...',
+              }[activeTab]
+            }
           />
         </div>
 

@@ -92,7 +92,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
       <div className="flex items-center justify-between mb-8">
         <motion.button
           onClick={entry.goBack}
-          className="flex items-center gap-2 text-[13px] text-white/30 hover:text-white/50 transition-colors"
+          className="flex items-center gap-2 text-[13px] text-white/30 hover:text-white/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
@@ -168,6 +168,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                       className={cn(
                         'px-8 py-5 rounded-xl text-xl font-medium transition-all duration-300',
                         'border-2',
+                        'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
                         isSelected
                           ? 'bg-gold-500/10 border-gold-500/60 text-gold-500'
                           : 'bg-white/[0.02] border-white/10 text-white/50 hover:border-white/25 hover:text-white/70 hover:bg-white/[0.04]'
@@ -202,6 +203,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                   className={cn(
                     'group px-8 py-4 rounded-xl font-medium transition-all duration-300',
                     'flex items-center gap-2',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
                     entry.data.graduationYear !== null
                       ? 'bg-white text-neutral-950 hover:bg-white/90'
                       : 'bg-white/10 text-white/30 cursor-not-allowed'
@@ -282,7 +284,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                       onFocus={() => setMajorFocused(true)}
                       onBlur={handleMajorBlur}
                       placeholder="Search majors..."
-                      className="flex-1 bg-transparent text-lg text-white placeholder:text-white/25 focus:outline-none"
+                      className="flex-1 bg-transparent text-lg text-white placeholder:text-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
                     />
                     {entry.data.major && (
                       <Check className="w-5 h-5 text-gold-500" />
@@ -307,7 +309,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                             transition={{ delay: i * 0.03 }}
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => handleMajorSelect(m)}
-                            className="w-full px-5 py-3 text-left text-[15px] text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors"
+                            className="w-full px-5 py-3 text-left text-[15px] text-white/60 hover:bg-white/[0.05] hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                           >
                             {m}
                           </motion.button>
@@ -335,7 +337,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: DURATION.quick + i * 0.04, duration: DURATION.fast, ease: EASE_PREMIUM }}
                             onClick={() => handleMajorSelect(m)}
-                            className="px-4 py-2 rounded-lg text-[13px] text-white/50 bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:text-white/70 hover:border-white/20 transition-all"
+                            className="px-4 py-2 rounded-lg text-[13px] text-white/50 bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:text-white/70 hover:border-white/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                           >
                             {m}
                           </motion.button>
@@ -358,6 +360,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                   className={cn(
                     'group px-8 py-4 rounded-xl font-medium transition-all duration-300',
                     'flex items-center gap-2',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
                     entry.data.major
                       ? 'bg-white text-neutral-950 hover:bg-white/90'
                       : 'bg-white/10 text-white/50 hover:bg-white/15'

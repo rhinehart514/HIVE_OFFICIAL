@@ -53,7 +53,7 @@ export function NamingScreen({ entry }: NamingScreenProps) {
       {/* Back button */}
       <motion.button
         onClick={entry.goBack}
-        className="flex items-center gap-2 text-[13px] text-white/30 hover:text-white/50 transition-colors"
+        className="flex items-center gap-2 text-[13px] text-white/30 hover:text-white/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
@@ -119,7 +119,7 @@ export function NamingScreen({ entry }: NamingScreenProps) {
               'w-full px-5 py-4 rounded-xl',
               'bg-white/[0.03] border-2 transition-all duration-300',
               'text-[16px] text-white placeholder:text-white/25',
-              'focus:outline-none',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
               entry.data.firstName
                 ? 'border-gold-500/40 bg-gold-500/[0.02]'
                 : 'border-white/10 focus:border-white/25 focus:bg-white/[0.05]'
@@ -143,7 +143,7 @@ export function NamingScreen({ entry }: NamingScreenProps) {
               'w-full px-5 py-4 rounded-xl',
               'bg-white/[0.03] border-2 transition-all duration-300',
               'text-[16px] text-white placeholder:text-white/25',
-              'focus:outline-none',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
               entry.data.lastName
                 ? 'border-gold-500/40 bg-gold-500/[0.02]'
                 : 'border-white/10 focus:border-white/25 focus:bg-white/[0.05]'
@@ -245,6 +245,7 @@ export function NamingScreen({ entry }: NamingScreenProps) {
           className={cn(
             'group px-8 py-4 rounded-xl font-medium transition-all duration-300',
             'flex items-center gap-2',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
             canContinue
               ? 'bg-white text-neutral-950 hover:bg-white/90'
               : 'bg-white/10 text-white/30 cursor-not-allowed'

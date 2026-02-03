@@ -90,7 +90,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
         {(entry.gateStep === 'code' || entry.gateStep === 'waitlist') && !entry.waitlistSuccess && (
           <button
             onClick={entry.goBack}
-            className="flex items-center gap-2 text-[13px] text-white/30 hover:text-white/50 transition-colors mb-6"
+            className="flex items-center gap-2 text-[13px] text-white/30 hover:text-white/50 transition-colors mb-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
@@ -178,6 +178,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
                 'bg-white/[0.03] border-2 border-white/10',
                 'text-[16px] text-white placeholder:text-white/25',
                 'focus:outline-none focus:border-white/20 focus:bg-white/[0.05]',
+                'focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
                 'transition-all duration-300'
               )}
             />
@@ -196,7 +197,8 @@ export function ProveScreen({ entry }: ProveScreenProps) {
                 'bg-white text-neutral-950',
                 'hover:bg-white/90',
                 'disabled:opacity-40 disabled:cursor-not-allowed',
-                'flex items-center justify-center gap-2'
+                'flex items-center justify-center gap-2',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black'
               )}
             >
               <span>{entry.isLoading ? 'Sending...' : 'Continue'}</span>
@@ -251,7 +253,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
                 ) : (
                   <button
                     onClick={handleResend}
-                    className="text-white/50 hover:text-white/70 transition-colors"
+                    className="text-white/50 hover:text-white/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
                   >
                     Resend code
                   </button>
@@ -293,7 +295,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
 
                 <button
                   onClick={entry.goBack}
-                  className="w-full text-[13px] text-white/30 hover:text-white/50 transition-colors"
+                  className="w-full text-[13px] text-white/30 hover:text-white/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
                 >
                   Try a different email
                 </button>
@@ -337,7 +339,8 @@ export function ProveScreen({ entry }: ProveScreenProps) {
                       'bg-gold-500 text-neutral-950',
                       'hover:bg-gold-500/90',
                       'disabled:opacity-50 disabled:cursor-not-allowed',
-                      'flex items-center justify-center gap-2'
+                      'flex items-center justify-center gap-2',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black'
                     )}
                   >
                     {entry.isLoading ? (
@@ -355,7 +358,7 @@ export function ProveScreen({ entry }: ProveScreenProps) {
 
                   <button
                     onClick={entry.goBack}
-                    className="w-full text-[13px] text-white/30 hover:text-white/50 transition-colors py-2"
+                    className="w-full text-[13px] text-white/30 hover:text-white/50 transition-colors py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
                   >
                     Try a different email
                   </button>
