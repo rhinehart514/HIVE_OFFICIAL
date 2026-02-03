@@ -143,7 +143,7 @@ export default function NewSetupPage() {
       }
 
       const { template } = await response.json();
-      router.push(`/tools/setups/${template.id}/builder`);
+      router.push(`/lab/setups/${template.id}/builder`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create setup');
     } finally {
@@ -161,7 +161,7 @@ export default function NewSetupPage() {
           transition={{ duration: 0.3, ease: EASE }}
         >
           <Link
-            href="/tools/setups"
+            href="/lab/setups"
             className="inline-flex items-center gap-2 text-sm transition-colors mb-8"
             style={{ color: COLORS.textSecondary }}
             onMouseEnter={(e) => (e.currentTarget.style.color = COLORS.text)}

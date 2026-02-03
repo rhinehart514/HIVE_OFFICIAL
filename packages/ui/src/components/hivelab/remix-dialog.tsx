@@ -160,7 +160,7 @@ export function RemixDialog({
               <button
                 onClick={() => {
                   if (createdToolId) {
-                    onSuccess?.(createdToolId, `/tools/${createdToolId}`);
+                    onSuccess?.(createdToolId, `/lab/${createdToolId}`);
                   }
                   onClose();
                 }}

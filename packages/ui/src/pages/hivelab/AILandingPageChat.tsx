@@ -381,7 +381,7 @@ export function AILandingPageChat({
       setShowSignupGate(true);
     } else {
       // Handle authenticated deploy
-      router.push(`/tools/${state.composition?.id}/deploy`);
+      router.push(`/lab/${state.composition?.id}/deploy`);
     }
   };
 
@@ -395,7 +395,7 @@ export function AILandingPageChat({
           JSON.stringify(state.composition)
         );
       }
-      router.push(`/tools/${state.composition.id}/edit`);
+      router.push(`/lab/${state.composition.id}/edit`);
     }
   };
 

@@ -64,7 +64,7 @@ const ADMIN_ROUTES = ['/admin'];
 export const ROUTE_REDIRECTS: Record<string, string> = {
   // Alias routes
   '/browse': '/spaces',
-  '/build': '/tools/create',
+  '/build': '/lab/create',
   // Settings section shortcuts
   '/settings/privacy': '/settings?section=privacy',
   '/settings/security': '/settings?section=account',

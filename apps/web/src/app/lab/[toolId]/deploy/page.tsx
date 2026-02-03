@@ -148,7 +148,7 @@ export default function ToolDeployPage({ params }: Props) {
   // Handle takeover close - navigate back
   const handleClose = useCallback(() => {
     setIsTakeoverOpen(false);
-    router.push(`/tools/${toolId}`);
+    router.push(`/lab/${toolId}`);
   }, [router, toolId]);
 
   // Handle view in space
@@ -159,7 +159,7 @@ export default function ToolDeployPage({ params }: Props) {
 
   // Handle back navigation
   const handleBack = useCallback(() => {
-    router.push(`/tools/${toolId}`);
+    router.push(`/lab/${toolId}`);
   }, [router, toolId]);
 
   if (!isClient || isLoading) {
@@ -182,7 +182,7 @@ export default function ToolDeployPage({ params }: Props) {
         <div className="text-center space-y-4">
           <p className="text-[var(--hive-status-error)]">{error || 'Tool not found'}</p>
           <button
-            onClick={() => router.push('/tools')}
+            onClick={() => router.push('/lab')}
             className="text-[var(--hive-brand-primary)] hover:underline"
           >
             Back to Tools

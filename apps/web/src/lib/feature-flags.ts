@@ -655,4 +655,17 @@ export async function isHiveLabVisible(
   return false;
 }
 
+/**
+ * Check if Ghost Mode is enabled for a user
+ */
+export async function isGhostModeEnabled(
+  userContext: UserFeatureContext
+): Promise<boolean> {
+  const result = await featureFlagService.isFeatureEnabled(
+    HIVE_FEATURE_FLAGS.PROFILE_GHOST_MODE,
+    userContext
+  );
+  return result.enabled;
+}
+
 import 'server-only';

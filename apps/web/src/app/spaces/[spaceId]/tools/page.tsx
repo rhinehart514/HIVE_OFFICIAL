@@ -236,7 +236,7 @@ function ToolCard({
                     style={{ backgroundColor: COLORS.surface, borderColor: COLORS.border }}
                   >
                     <Link
-                      href={`/tools/${tool.toolId}`}
+                      href={`/lab/${tool.toolId}`}
                       className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 transition-colors"
                       style={{ color: COLORS.text }}
                     >
@@ -369,7 +369,7 @@ export default function SpaceToolsPage() {
           </div>
           {space.canManageTools && (
             <Button
-              onClick={() => router.push('/tools/templates')}
+              onClick={() => router.push('/lab/templates')}
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -396,7 +396,7 @@ export default function SpaceToolsPage() {
               Add tools to enhance your space with polls, RSVPs, countdowns, and more.
             </p>
             {space.canManageTools && (
-              <Button onClick={() => router.push('/tools/templates')}>
+              <Button onClick={() => router.push('/lab/templates')}>
                 Browse Tools
               </Button>
             )}

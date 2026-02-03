@@ -320,12 +320,12 @@ export default function ToolPreviewPageRoute({ params }: Props) {
 
   // Handle back navigation
   const handleBack = () => {
-    router.push(`/tools/${toolId}`);
+    router.push(`/lab/${toolId}`);
   };
 
   // Handle edit navigation
   const handleEdit = () => {
-    router.push(`/tools/${toolId}`);
+    router.push(`/lab/${toolId}`);
   };
 
   // Handle run tool
@@ -340,7 +340,7 @@ export default function ToolPreviewPageRoute({ params }: Props) {
 
   // Handle open settings
   const handleOpenSettings = () => {
-    router.push(`/tools/${toolId}?deploy=true`);
+    router.push(`/lab/${toolId}?deploy=true`);
   };
 
   // Clear ripple effect
@@ -474,7 +474,7 @@ export default function ToolPreviewPageRoute({ params }: Props) {
         >
           <p className="text-[var(--hive-status-error)]">{error || 'Tool not found'}</p>
           <button
-            onClick={() => router.push('/tools')}
+            onClick={() => router.push('/lab')}
             className="text-[var(--hive-brand-primary)] hover:underline"
           >
             Back to Tools

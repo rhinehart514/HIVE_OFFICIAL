@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
+import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge, useToast } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import { AcademicCapIcon, HomeIcon, UsersIcon, HeartIcon, ShieldCheckIcon, CheckCircleIcon, Cog6ToothIcon, EyeIcon, MagnifyingGlassIcon, ArrowPathIcon, CircleStackIcon, CalendarIcon, BuildingOfficeIcon, MapPinIcon, StarIcon, GlobeAltIcon, EllipsisVerticalIcon, ChartBarIcon, ArrowTrendingUpIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 
@@ -222,6 +222,7 @@ const SpaceCard: React.FC<{
   onAudit: () => void;
 }> = ({ space, onViewDetails, onEdit, onAudit }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const { toast } = useToast();
   const categoryRule = SPACE_CATEGORY_RULES[space.category];
   const subtypeRule = categoryRule.allowedSubtypes.find(s => s.value === space.subtype);
   
@@ -423,6 +424,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
   enableFeatureFlag = true
 }) => {
   const { admin } = useAdminAuth();
+  const { toast } = useToast();
   const [spaces, setSpaces] = useState<ValidHiveSpace[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ValidSpaceCategory | 'all'>('all');
@@ -675,8 +677,8 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
                 <SpaceCard
                   key={space.id}
                   space={space}
-                  onViewDetails={() => { /* TODO: Navigate to space details */ }}
-                  onEdit={() => { /* TODO: Open space editor */ }}
+                  onViewDetails={() => toast.info('Coming soon', 'Space details view is under development')}
+                  onEdit={() => toast.info('Coming soon', 'Space editor is under development')}
                   onAudit={() => onAuditSpace?.(space.id)}
                 />
               ))}

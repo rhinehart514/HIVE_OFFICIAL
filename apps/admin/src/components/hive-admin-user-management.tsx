@@ -6,7 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
+import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge, useToast } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import { UsersIcon, UserPlusIcon, ShieldCheckIcon, TrophyIcon, ExclamationTriangleIcon, CheckCircleIcon, NoSymbolIcon, EyeIcon, EnvelopeIcon, HeartIcon, ChartBarIcon, ArrowTrendingUpIcon, ClockIcon, AcademicCapIcon, HomeIcon, BoltIcon, MagnifyingGlassIcon, ArrowPathIcon, EllipsisVerticalIcon, PencilSquareIcon, TrashIcon, GlobeAltIcon, ArrowDownTrayIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
@@ -479,6 +479,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
   enableFeatureFlag = true
 }) => {
   const { admin } = useAdminAuth();
+  const { toast } = useToast();
   const [users, setUsers] = useState<HiveAdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
@@ -1050,7 +1051,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
         </div>
       )}
 
-      {/* Edit Modal - Placeholder */}
+      {/* Edit Modal - Not Available State */}
       {showEditModal && selectedUser && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-[var(--bg-void)] border border-white/[0.08] rounded-xl max-w-md w-full">
@@ -1064,11 +1065,19 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
               </button>
             </div>
             <div className="p-6">
-              <p className="text-white/50 text-center py-8">
-                User editing functionality coming soon.
-              </p>
+              <div className="text-center py-8">
+                <ExclamationTriangleIcon className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Feature Not Available</h3>
+                <p className="text-white/50">
+                  User editing functionality is currently under development.
+                </p>
+              </div>
               <Button
-                onClick={() => { setShowEditModal(false); setSelectedUser(null); }}
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedUser(null);
+                  toast.info('Coming soon', 'User editing will be available in a future update');
+                }}
                 className="w-full bg-white/[0.08] hover:bg-white/[0.12]"
               >
                 Close

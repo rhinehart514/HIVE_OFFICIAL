@@ -1,8 +1,18 @@
 "use client";
 
-import { Button } from "@hive/ui";
+import { Button, useToast } from "@hive/ui";
 
 export function FlagQueue() {
+  const { toast } = useToast();
+
+  const handleDismiss = () => {
+    toast.info('Coming soon', 'Dismiss functionality is under development');
+  };
+
+  const handleRemove = () => {
+    toast.info('Coming soon', 'Remove functionality is under development');
+  };
+
   return (
     <div className="space-y-4">
       <div className="text-sm text-white/50">No flagged content to review</div>
@@ -27,10 +37,10 @@ export function FlagQueue() {
               </div>
             </div>
             <div className="flex gap-2 ml-4">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleDismiss}>
                 Dismiss
               </Button>
-              <Button variant="destructive" size="sm">
+              <Button variant="destructive" size="sm" onClick={handleRemove}>
                 Remove
               </Button>
             </div>

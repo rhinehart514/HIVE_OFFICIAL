@@ -2,13 +2,16 @@
  * Single Dining Location API
  *
  * GET /api/campus/dining/[id] - Get a specific dining location with full details
+ *
+ * SECURITY: campusId is derived from authenticated user session, not query params
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
-import { getDefaultCampusId } from '@/lib/campus-context';
+import { getCampusId as getCampusIdFromRequest, getDefaultCampusId, getCampusFromEmail } from '@/lib/campus-context';
+import { getCurrentUser } from '@/lib/server-auth';
 import {
   type DiningLocation,
   isDiningLocationOpen,
@@ -27,10 +30,25 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const { id } = await context.params;
-    const { searchParams } = new URL(request.url);
 
-    // Support campusId query param for multi-campus
-    const campusId = searchParams.get('campusId') || getDefaultCampusId();
+    // SECURITY: Get campusId from authenticated user session, not query params
+    // Falls back to default for unauthenticated users (dining info is semi-public)
+    let campusId: string;
+    try {
+      campusId = await getCampusIdFromRequest(request);
+    } catch {
+      // For unauthenticated users viewing dining info, use default campus
+      const user = await getCurrentUser(request);
+      if (user?.email) {
+        try {
+          campusId = getCampusFromEmail(user.email);
+        } catch {
+          campusId = getDefaultCampusId();
+        }
+      } else {
+        campusId = getDefaultCampusId();
+      }
+    }
 
     if (!id) {
       return NextResponse.json(

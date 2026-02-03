@@ -43,7 +43,7 @@ export default function ToolsError({
           </Button>
           <Button
             variant="outline"
-            onClick={() => window.location.href = '/tools/create'}
+            onClick={() => window.location.href = '/lab/create'}
             className="gap-2"
           >
             <WrenchIcon className="h-4 w-4" />

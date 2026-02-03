@@ -98,10 +98,10 @@ export function StudioHeader({
   const handleBack = () => {
     if (hasUnsavedChanges) {
       if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
-        router.push('/tools');
+        router.push('/lab');
       }
     } else {
-      router.push('/tools');
+      router.push('/lab');
     }
   };
 

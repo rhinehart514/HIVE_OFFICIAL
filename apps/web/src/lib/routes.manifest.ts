@@ -403,7 +403,7 @@ export const routeManifest: Record<string, RouteOwnership> = {
 export const canonicalRedirects: Record<string, string> = {
   // Alias routes
   '/browse': '/spaces',
-  '/build': '/tools/create',
+  '/build': '/lab/create',
   // Settings section shortcuts
   '/settings/privacy': '/settings?section=privacy',
   '/settings/security': '/settings?section=account',

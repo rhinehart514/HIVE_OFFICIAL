@@ -341,7 +341,7 @@ export default function ToolStudioPage({ params }: Props) {
       }
 
       // Clean up URL
-      window.history.replaceState({}, '', `/tools/${toolId}`);
+      window.history.replaceState({}, '', `/lab/${toolId}`);
       return;
     }
 
@@ -406,7 +406,7 @@ export default function ToolStudioPage({ params }: Props) {
       );
       if (!confirmLeave) return;
     }
-    router.push('/tools');
+    router.push('/lab');
   }, [router, hasUnsavedChanges]);
 
   // Handle deploy via modal
@@ -515,7 +515,7 @@ export default function ToolStudioPage({ params }: Props) {
             This tool may have been deleted or you don't have access to it.
           </p>
           <button
-            onClick={() => router.push('/tools')}
+            onClick={() => router.push('/lab')}
             className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-lg font-medium hover:bg-[var(--life-gold)]/90 transition-colors"
           >
             Back to Tools

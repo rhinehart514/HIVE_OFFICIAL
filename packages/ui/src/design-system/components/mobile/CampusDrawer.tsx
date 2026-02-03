@@ -187,7 +187,7 @@ export function CampusDrawer({
       if (onToolClick) {
         onToolClick(toolId);
       } else {
-        router.push(`/tools/${toolId}`);
+        router.push(`/lab/${toolId}`);
       }
       setDrawerState('closed');
     },

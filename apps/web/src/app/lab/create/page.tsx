@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * /tools/create Redirect
+ * /lab/create Redirect
  *
- * This route is deprecated. All tool creation now happens on /tools.
- * This page handles legacy sessionStorage prompts and redirects to the new flow.
+ * This route is deprecated. All tool creation now happens on /lab/new.
+ * This page handles legacy sessionStorage prompts and redirects to the canonical route.
  */
 
 import { useEffect } from 'react';
@@ -28,7 +28,7 @@ export default function CreateToolRedirect() {
     if (template) params.set('template', template);
 
     const query = params.toString();
-    router.replace(`/tools${query ? `?${query}` : ''}`);
+    router.replace(`/lab/new${query ? `?${query}` : ''}`);
   }, [router]);
 
   // Minimal loading state while redirecting

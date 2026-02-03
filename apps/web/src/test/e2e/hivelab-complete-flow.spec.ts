@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('HiveLab Landing Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tools');
+    await page.goto('/lab');
     await page.waitForLoadState('networkidle');
   });
 
@@ -62,15 +62,15 @@ test.describe('HiveLab Landing Page', () => {
     }
   });
 
-  test('should redirect /hivelab to /tools', async ({ page }) => {
+  test('should redirect /hivelab to /lab', async ({ page }) => {
     await page.goto('/hivelab');
-    await expect(page).toHaveURL('/tools');
+    await expect(page).toHaveURL('/lab');
   });
 });
 
 test.describe('Template Click Flow', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tools');
+    await page.goto('/lab');
     await page.waitForLoadState('networkidle');
   });
 
@@ -79,33 +79,33 @@ test.describe('Template Click Flow', () => {
     await page.getByText(/see all templates/i).click();
 
     // Should navigate to templates page
-    await expect(page).toHaveURL('/tools/templates');
+    await expect(page).toHaveURL('/lab/templates');
   });
 
   test('?template= param triggers tool creation', async ({ page }) => {
     // Navigate with template param
-    await page.goto('/tools?template=quick-poll');
+    await page.goto('/lab?template=quick-poll');
 
     // Should show loading state then redirect to IDE
     // Wait for redirect (may take a moment for tool creation)
-    await page.waitForURL(/\/tools\/[a-zA-Z0-9_]+/, { timeout: 15000 });
+    await page.waitForURL(/\/lab\/[a-zA-Z0-9_]+/, { timeout: 15000 });
 
-    // Should be on a tool page (not /tools anymore)
-    expect(page.url()).toMatch(/\/tools\/[a-zA-Z0-9_]+/);
+    // Should be on a tool page (not /lab anymore)
+    expect(page.url()).toMatch(/\/lab\/[a-zA-Z0-9_]+/);
   });
 
   test('invalid template param shows error and redirects', async ({ page }) => {
-    await page.goto('/tools?template=nonexistent-template-xyz');
+    await page.goto('/lab?template=nonexistent-template-xyz');
 
-    // Should stay on /tools (cleaned URL) and possibly show toast
+    // Should stay on /lab (cleaned URL) and possibly show toast
     await page.waitForTimeout(2000);
-    expect(page.url()).toContain('/tools');
+    expect(page.url()).toContain('/lab');
   });
 });
 
 test.describe('Templates Gallery Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tools/templates');
+    await page.goto('/lab/templates');
     await page.waitForLoadState('networkidle');
   });
 
@@ -129,7 +129,7 @@ test.describe('Templates Gallery Page', () => {
     const templateCard = page.locator('[data-testid="template-card"]').first();
     if (await templateCard.isVisible()) {
       await templateCard.click();
-      // Should navigate to /tools?template= or directly create
+      // Should navigate to /lab?template= or directly create
       await page.waitForTimeout(2000);
     }
   });
@@ -144,7 +144,7 @@ test.describe('HiveLab IDE', () => {
     await page.setViewportSize({ width: 375, height: 667 });
 
     // Create a temporary tool ID for testing
-    await page.goto('/tools/test-mobile-gate');
+    await page.goto('/lab/test-mobile-gate');
     await page.waitForLoadState('networkidle');
 
     // Should show "Desktop Required" message
@@ -154,14 +154,14 @@ test.describe('HiveLab IDE', () => {
   });
 
   test('IDE page loads without errors', async ({ page }) => {
-    await page.goto('/tools');
+    await page.goto('/lab');
     await expect(page).not.toHaveURL(/error/);
   });
 });
 
 test.describe('Your Tools Section', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/tools');
+    await page.goto('/lab');
     await page.waitForLoadState('networkidle');
   });
 
@@ -179,7 +179,7 @@ test.describe('Performance', () => {
   test('tools landing page loads quickly', async ({ page }) => {
     const startTime = Date.now();
 
-    await page.goto('/tools');
+    await page.goto('/lab');
     await page.waitForLoadState('domcontentloaded');
 
     const loadTime = Date.now() - startTime;
@@ -191,7 +191,7 @@ test.describe('Performance', () => {
   test('templates page loads quickly', async ({ page }) => {
     const startTime = Date.now();
 
-    await page.goto('/tools/templates');
+    await page.goto('/lab/templates');
     await page.waitForLoadState('domcontentloaded');
 
     const loadTime = Date.now() - startTime;
@@ -203,7 +203,7 @@ test.describe('Performance', () => {
 
 test.describe('Accessibility', () => {
   test('templates have accessible names', async ({ page }) => {
-    await page.goto('/tools');
+    await page.goto('/lab');
     await page.waitForLoadState('networkidle');
 
     // Template buttons should be keyboard accessible
@@ -214,7 +214,7 @@ test.describe('Accessibility', () => {
   });
 
   test('AI prompt is keyboard accessible', async ({ page }) => {
-    await page.goto('/tools');
+    await page.goto('/lab');
     await page.waitForLoadState('networkidle');
 
     // Textarea should be focusable
@@ -228,7 +228,7 @@ test.describe('Mobile Responsive', () => {
   test.use({ viewport: { width: 375, height: 667 } });
 
   test('landing page is usable on mobile', async ({ page }) => {
-    await page.goto('/tools');
+    await page.goto('/lab');
     await page.waitForLoadState('networkidle');
 
     // Title should be visible
@@ -239,7 +239,7 @@ test.describe('Mobile Responsive', () => {
   });
 
   test('templates page is usable on mobile', async ({ page }) => {
-    await page.goto('/tools/templates');
+    await page.goto('/lab/templates');
     await page.waitForLoadState('networkidle');
 
     // Page should load

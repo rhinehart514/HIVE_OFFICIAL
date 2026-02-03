@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSession } from '@/lib/session';
 import { dbAdmin as db } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
+import { isDMsEnabled } from '@/lib/feature-flags';
 
 /**
  * DM Conversations API
@@ -74,6 +75,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check feature flag
+    const dmsEnabled = await isDMsEnabled({ userId: session.userId, schoolId: session.campusId });
+    if (!dmsEnabled) {
+      return NextResponse.json({ error: 'Feature not available' }, { status: 403 });
+    }
+
     const userId = session.userId;
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
@@ -143,6 +150,12 @@ export async function POST(request: NextRequest) {
     const session = await getSession(request);
     if (!session?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check feature flag
+    const dmsEnabled = await isDMsEnabled({ userId: session.userId, schoolId: session.campusId });
+    if (!dmsEnabled) {
+      return NextResponse.json({ error: 'Feature not available' }, { status: 403 });
     }
 
     const body = await request.json();

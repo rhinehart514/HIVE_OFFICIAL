@@ -134,13 +134,13 @@ export default function ElementGalleryPage() {
             </Link>
 
             <div className="flex items-center gap-3">
-              <Link href="/tools">
+              <Link href="/lab">
                 <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
                   <WrenchIcon className="w-4 h-4 mr-2" />
                   My Tools
                 </Button>
               </Link>
-              <Link href="/tools/create">
+              <Link href="/lab/create">
                 <Button size="sm" className="bg-[var(--hive-gold-cta)] text-black hover:brightness-110">
                   Create Tool
                 </Button>
@@ -335,7 +335,7 @@ export default function ElementGalleryPage() {
             AI helps you build faster.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link href="/tools/create">
+            <Link href="/lab/create">
               <Button size="lg" className="bg-[var(--hive-gold-cta)] text-black hover:brightness-110">
                 <SparklesIcon className="w-4 h-4 mr-2" />
                 Start Building

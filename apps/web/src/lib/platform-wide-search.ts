@@ -452,7 +452,7 @@ export class HivePlatformSearchEngine {
       type: 'tool',
       title: toolData.name ?? 'Unknown Tool',
       description: toolData.description ?? 'No description available',
-      url: `/tools/${toolData.id ?? 'unknown'}`,
+      url: `/lab/${toolData.id ?? 'unknown'}`,
       score: this.calculateRelevanceScore(toolData, query, 'tool'),
       metadata: {
         slice: 'tools',
@@ -472,7 +472,7 @@ export class HivePlatformSearchEngine {
         highlights: this.extractHighlights(toolData, query)
       },
       actions: [
-        { type: 'view', label: 'View Tool', url: `/tools/${toolData.id ?? 'unknown'}` },
+        { type: 'view', label: 'View Tool', url: `/lab/${toolData.id ?? 'unknown'}` },
         { type: 'deploy', label: 'Deploy' },
         { type: 'share', label: 'Share' }
       ]
@@ -776,7 +776,7 @@ export class HivePlatformSearchEngine {
     if (partial.startsWith('/')) {
       const commands = [
         { text: '/spaces', category: 'navigation' },
-        { text: '/tools', category: 'navigation' },
+        { text: '/lab', category: 'navigation' },
         { text: '/profile', category: 'navigation' },
         { text: '/create-space', category: 'action' },
         { text: '/create-tool', category: 'action' }

@@ -78,8 +78,8 @@ export default function NewToolPage() {
     // Redirect to login if not authenticated
     if (!user) {
       const returnUrl = prompt
-        ? `/tools/new?prompt=${encodeURIComponent(prompt)}`
-        : '/tools/new';
+        ? `/lab/new?prompt=${encodeURIComponent(prompt)}`
+        : '/lab/new';
       router.push(`/enter?redirect=${encodeURIComponent(returnUrl)}`);
       return;
     }
@@ -112,7 +112,7 @@ export default function NewToolPage() {
         }
 
         // Navigate to IDE
-        router.replace(`/tools/${toolId}?${params.toString()}`);
+        router.replace(`/lab/${toolId}?${params.toString()}`);
       } catch (error) {
         logger.error('Failed to create tool', { component: 'NewToolPage' }, error instanceof Error ? error : undefined);
         setStatus('error');
@@ -148,7 +148,7 @@ export default function NewToolPage() {
           </p>
           <div className="flex gap-3 justify-center">
             <button
-              onClick={() => router.push('/tools')}
+              onClick={() => router.push('/lab')}
               className="px-4 py-2 text-white/60 hover:text-white transition-colors"
             >
               Back to HiveLab

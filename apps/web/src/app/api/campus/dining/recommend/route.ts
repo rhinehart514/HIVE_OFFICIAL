@@ -18,6 +18,8 @@
  * - maxWalkTime: Maximum acceptable walk time in minutes
  * - priceMax: Maximum price range (1-4)
  * - mood: 'quick', 'sit-down', 'healthy', 'comfort', 'late-night'
+ *
+ * SECURITY: campusId is derived from authenticated user session, not query params
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -25,7 +27,8 @@ import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
-import { getDefaultCampusId } from '@/lib/campus-context';
+import { getCampusId as getCampusIdFromRequest, getDefaultCampusId, getCampusFromEmail } from '@/lib/campus-context';
+import { getCurrentUser } from '@/lib/server-auth';
 import {
   type DiningLocation,
   type DiningLocationStatus,
@@ -37,9 +40,8 @@ import {
   estimateWalkingTime,
 } from '@hive/core';
 
-// Query param schema
+// Query param schema - campusId removed for security
 const RecommendQuerySchema = z.object({
-  campusId: z.string().optional(), // For multi-campus support
   dietary: z.string().optional(),
   lat: z.coerce.number().optional(),
   lng: z.coerce.number().optional(),
@@ -78,7 +80,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     const params = RecommendQuerySchema.parse({
-      campusId: searchParams.get('campusId') || undefined,
       dietary: searchParams.get('dietary') || undefined,
       lat: searchParams.get('lat') || undefined,
       lng: searchParams.get('lng') || undefined,
@@ -87,8 +88,24 @@ export async function GET(request: NextRequest) {
       mood: searchParams.get('mood') || undefined,
     });
 
-    // Use provided campusId or default
-    const campusId = params.campusId || getDefaultCampusId();
+    // SECURITY: Get campusId from authenticated user session, not query params
+    // Falls back to default for unauthenticated users (dining info is semi-public)
+    let campusId: string;
+    try {
+      campusId = await getCampusIdFromRequest(request);
+    } catch {
+      // For unauthenticated users viewing dining recommendations, use default campus
+      const user = await getCurrentUser(request);
+      if (user?.email) {
+        try {
+          campusId = getCampusFromEmail(user.email);
+        } catch {
+          campusId = getDefaultCampusId();
+        }
+      } else {
+        campusId = getDefaultCampusId();
+      }
+    }
 
     // Fetch all active dining locations
     const snapshot = await dbAdmin

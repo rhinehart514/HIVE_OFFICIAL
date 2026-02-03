@@ -881,7 +881,7 @@ export function useProfilePageState(): UseProfilePageStateReturn {
   }, [router]);
 
   const handleToolClick = React.useCallback((toolId: string) => {
-    router.push(`/tools/${toolId}`);
+    router.push(`/lab/${toolId}`);
   }, [router]);
 
   // Send friend request

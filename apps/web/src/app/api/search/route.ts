@@ -831,7 +831,7 @@ async function searchTools(
         description: data.description,
         type: 'tool',
         category: 'tools',
-        url: `/tools/${doc.id}`,
+        url: `/lab/${doc.id}`,
         metadata: {
           type: data.type,
           creatorId: data.creatorId,
@@ -887,7 +887,7 @@ async function searchTools(
           description: data.description,
           type: 'tool',
           category: 'tools',
-          url: `/tools/${doc.id}`,
+          url: `/lab/${doc.id}`,
           metadata: {
             type: data.type,
             creatorId: data.creatorId,
@@ -940,19 +940,18 @@ export async function GET(request: NextRequest) {
     const category = (searchParams.get('category') || 'all') as SearchCategory;
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
 
-    // Get campusId from query param, user auth, or default
+    // SECURITY: Get campusId from user auth session, not query params
+    // This prevents cross-campus data access
     const user = await getCurrentUser(request);
-    let campusId = searchParams.get('campusId');
-    if (!campusId) {
-      if (user?.email) {
-        try {
-          campusId = getCampusFromEmail(user.email);
-        } catch {
-          campusId = getDefaultCampusId();
-        }
-      } else {
+    let campusId: string;
+    if (user?.email) {
+      try {
+        campusId = getCampusFromEmail(user.email);
+      } catch {
         campusId = getDefaultCampusId();
       }
+    } else {
+      campusId = getDefaultCampusId();
     }
 
     if (!query || query.length < 2) {

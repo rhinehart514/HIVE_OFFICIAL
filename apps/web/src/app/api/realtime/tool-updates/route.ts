@@ -878,7 +878,7 @@ async function notifyAffectedUsers(updateEvent: ToolUpdateEvent, userIds: string
         spaceId: updateEvent.spaceId,
         metadata: {
           priority: 'normal',
-          actionUrl: `/tools/${updateEvent.toolId}${updateEvent.deploymentId ? `?deployment=${updateEvent.deploymentId}` : ''}`,
+          actionUrl: `/lab/${updateEvent.toolId}${updateEvent.deploymentId ? `?deployment=${updateEvent.deploymentId}` : ''}`,
           category: 'tool_update',
           tags: ['tool', updateEvent.updateType]
         },

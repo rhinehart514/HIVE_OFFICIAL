@@ -4,12 +4,13 @@
  * GET /api/campus/dining - List all dining locations with status
  *
  * Query params:
- * - campusId: Campus ID for multi-campus support (defaults to ub-buffalo)
  * - type: Filter by location type (dining-hall, cafe, etc.)
  * - dietary: Filter by dietary options (vegetarian, vegan, halal, etc.)
  * - openNow: If true, only return currently open locations
  * - sortBy: Sort by 'name', 'distance', 'closing-soon' (requires lat/lng for distance)
  * - lat, lng: User coordinates for distance calculation
+ *
+ * SECURITY: campusId is derived from authenticated user session, not query params
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -17,7 +18,8 @@ import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
-import { getDefaultCampusId } from '@/lib/campus-context';
+import { getCampusId as getCampusIdFromRequest, getDefaultCampusId } from '@/lib/campus-context';
+import { getCurrentUser } from '@/lib/server-auth';
 import {
   type DiningLocation,
   type DiningLocationStatus,
@@ -28,9 +30,8 @@ import {
   estimateWalkingTime,
 } from '@hive/core';
 
-// Query param schema
+// Query param schema - campusId removed for security
 const DiningQuerySchema = z.object({
-  campusId: z.string().optional(), // For multi-campus support
   type: z.enum(['dining-hall', 'food-court', 'cafe', 'restaurant', 'convenience', 'food-truck']).optional(),
   dietary: z.string().optional(), // Comma-separated list
   openNow: z.enum(['true', 'false']).optional(),
@@ -50,7 +51,6 @@ export async function GET(request: NextRequest) {
 
     // Parse and validate query params
     const params = DiningQuerySchema.parse({
-      campusId: searchParams.get('campusId') || undefined,
       type: searchParams.get('type') || undefined,
       dietary: searchParams.get('dietary') || undefined,
       openNow: searchParams.get('openNow') || undefined,
@@ -59,8 +59,25 @@ export async function GET(request: NextRequest) {
       lng: searchParams.get('lng') || undefined,
     });
 
-    // Use provided campusId or default
-    const campusId = params.campusId || getDefaultCampusId();
+    // SECURITY: Get campusId from authenticated user session, not query params
+    // Falls back to default for unauthenticated users (dining info is semi-public)
+    let campusId: string;
+    try {
+      campusId = await getCampusIdFromRequest(request);
+    } catch {
+      // For unauthenticated users viewing dining info, use default campus
+      const user = await getCurrentUser(request);
+      if (user?.email) {
+        const { getCampusFromEmail } = await import('@/lib/campus-context');
+        try {
+          campusId = getCampusFromEmail(user.email);
+        } catch {
+          campusId = getDefaultCampusId();
+        }
+      } else {
+        campusId = getDefaultCampusId();
+      }
+    }
 
     // Fetch all dining locations for campus
     const diningRef = dbAdmin.collection(`campusData/${campusId}/dining`);

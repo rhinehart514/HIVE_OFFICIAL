@@ -478,7 +478,7 @@ export default function PlacementDetailPage() {
             </div>
             {detail.tool && (
               <Link
-                href={`/tools/${detail.tool.id}`}
+                href={`/lab/${detail.tool.id}`}
                 className="flex items-center gap-2 hover:underline"
                 style={{ color: COLORS.gold }}
               >

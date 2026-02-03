@@ -532,7 +532,7 @@ export default function ToolRunsPage() {
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
-    router.push(`/enter?from=/tools/${toolId}/runs`);
+    router.push(`/enter?from=/lab/${toolId}/runs`);
     return null;
   }
 
@@ -548,7 +548,7 @@ export default function ToolRunsPage() {
   const handleRerun = React.useCallback((run: ToolRun) => {
     // Navigate to the tool with the input pre-filled
     const encodedInput = encodeURIComponent(JSON.stringify(run.input || run.inputSummary));
-    router.push(`/tools/${toolId}?input=${encodedInput}`);
+    router.push(`/lab/${toolId}?input=${encodedInput}`);
   }, [toolId, router]);
 
   return (
@@ -558,7 +558,7 @@ export default function ToolRunsPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Link
-              href={`/tools/${toolId}`}
+              href={`/lab/${toolId}`}
               className="p-2 -ml-2 rounded-lg transition-colors"
               style={{ color: COLORS.textSecondary }}
               onMouseEnter={(e) => {
@@ -580,7 +580,7 @@ export default function ToolRunsPage() {
             </div>
           </div>
           <button
-            onClick={() => router.push(`/tools/${toolId}`)}
+            onClick={() => router.push(`/lab/${toolId}`)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
               backgroundColor: COLORS.gold,
@@ -646,7 +646,7 @@ export default function ToolRunsPage() {
               Run your tool to see history here
             </p>
             <button
-              onClick={() => router.push(`/tools/${toolId}`)}
+              onClick={() => router.push(`/lab/${toolId}`)}
               className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
               style={{
                 backgroundColor: COLORS.gold,

@@ -6,7 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
+import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge, useToast } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import { ChartBarIcon, UsersIcon, BoltIcon, ChatBubbleLeftIcon, ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon, GlobeAltIcon, DevicePhoneMobileIcon, ComputerDesktopIcon, DeviceTabletIcon, MapPinIcon, HeartIcon, ArrowDownTrayIcon, ArrowPathIcon, ArrowUpIcon, ArrowDownIcon, MinusIcon, AcademicCapIcon, HomeIcon } from '@heroicons/react/24/outline';
 
@@ -193,6 +193,7 @@ const SpaceCategoryCard: React.FC<{
   category: SpaceCategoryAnalytics;
   onViewDetails: () => void;
 }> = ({ category, onViewDetails }) => {
+  const { toast } = useToast();
   const getCategoryIcon = (cat: ValidSpaceCategory) => {
     switch (cat) {
       case 'student_organizations': return <HeartIcon className="w-5 h-5" />;
@@ -278,6 +279,7 @@ const ViolationAlert: React.FC<{
   violations: ViolationAnalytics;
   onViewDetails: () => void;
 }> = ({ violations, onViewDetails }) => {
+  const { toast } = useToast();
   if (violations.pendingViolations === 0) {
     return (
       <Card className="border-green-500/30 bg-green-500/5">
@@ -340,6 +342,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
   enableFeatureFlag = true
 }) => {
   const { admin } = useAdminAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('24h');
   const [realTimeEnabled, setRealTimeEnabled] = useState(true);
@@ -610,7 +613,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
       {violationData && (
         <ViolationAlert
           violations={violationData}
-          onViewDetails={() => { /* TODO: Navigate to violation details */ }}
+          onViewDetails={() => toast.info('Coming soon', 'Violation details view is under development')}
         />
       )}
 
@@ -628,7 +631,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             <SpaceCategoryCard
               key={category.category}
               category={category}
-              onViewDetails={() => { /* TODO: Navigate to category details */ }}
+              onViewDetails={() => toast.info('Coming soon', 'Category details view is under development')}
             />
           ))}
         </div>

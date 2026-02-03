@@ -535,7 +535,7 @@ export default function ToolAnalyticsPage({ params }: Props) {
 
   // Handle share
   const handleShare = useCallback(() => {
-    router.push(`/tools/${toolId}?deploy=true`);
+    router.push(`/lab/${toolId}?deploy=true`);
   }, [router, toolId]);
 
   // Check if empty state
@@ -594,7 +594,7 @@ export default function ToolAnalyticsPage({ params }: Props) {
               Try Again
             </Button>
             <button
-              onClick={() => router.push('/tools')}
+              onClick={() => router.push('/lab')}
               className="text-[var(--hive-brand-primary)] hover:underline"
             >
               Back to Tools
@@ -622,7 +622,7 @@ export default function ToolAnalyticsPage({ params }: Props) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(`/tools/${toolId}`)}
+              onClick={() => router.push(`/lab/${toolId}`)}
               className="text-[var(--hive-text-secondary)]"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />

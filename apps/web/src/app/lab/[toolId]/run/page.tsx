@@ -25,7 +25,7 @@ export default function ToolRunRedirectPage() {
 
   useEffect(() => {
     // Build redirect URL with mode=use
-    const redirectUrl = new URL(`/tools/${toolId}`, window.location.origin);
+    const redirectUrl = new URL(`/lab/${toolId}`, window.location.origin);
     redirectUrl.searchParams.set('mode', 'use');
 
     // Preserve relevant query params

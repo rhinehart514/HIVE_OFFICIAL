@@ -185,7 +185,7 @@ export async function navigateToBrowse(page: Page): Promise<void> {
  * Navigate to HiveLab tool builder
  */
 export async function navigateToHiveLab(page: Page): Promise<void> {
-  await page.goto('/tools/create');
+  await page.goto('/lab/create');
   await page.waitForLoadState('networkidle');
 }
 

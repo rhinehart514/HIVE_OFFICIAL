@@ -25,16 +25,16 @@ import {
 
 // ============================================================================
 // GET /api/templates - Public route with optional auth
+// SECURITY: campusId is derived from authenticated user session, not query params
 // ============================================================================
 
 export const GET = withErrors(
   async (request, _context, respond) => {
     const searchParams = new URL(request.url).searchParams;
 
-    // Parse query params
+    // Parse query params - campusId removed for security
     const category = searchParams.get('category') as TemplateCategory | null;
     const visibility = searchParams.get('visibility') as TemplateVisibility | null;
-    const campusId = searchParams.get('campusId');
     const creatorId = searchParams.get('creatorId');
     const spaceId = searchParams.get('spaceId');
     const tags = searchParams.get('tags')?.split(',').filter(Boolean);
@@ -45,6 +45,7 @@ export const GET = withErrors(
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
     const cursor = searchParams.get('cursor') || undefined;
 
+    // SECURITY: Get campusId from authenticated user session, not query params
     // Try to get user info for visibility filtering (optional auth)
     let userId: string | undefined;
     let userCampusId: string | undefined;
@@ -63,7 +64,7 @@ export const GET = withErrors(
     const result = await repo.findMany({
       category: category || undefined,
       visibility: visibility || undefined,
-      campusId: campusId || userCampusId || undefined,
+      campusId: userCampusId || undefined, // SECURITY: Only use session campusId, not query param
       creatorId: creatorId || undefined,
       spaceId: spaceId || undefined,
       tags,

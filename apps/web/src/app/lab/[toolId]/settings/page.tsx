@@ -6,5 +6,5 @@ import { redirect } from 'next/navigation';
  */
 export default async function SettingsRedirectPage({ params }: { params: Promise<{ toolId: string }> }) {
   const { toolId } = await params;
-  redirect(`/tools/${toolId}?settings=true`);
+  redirect(`/lab/${toolId}?settings=true`);
 }

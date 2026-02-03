@@ -219,7 +219,7 @@ export default function TemplateGalleryPage() {
                   My Tools
                 </Button>
               </Link>
-              <Link href="/lab/create">
+              <Link href="/lab/new">
                 <Button size="sm" className="bg-[var(--hive-gold-cta)] text-black hover:brightness-110">
                   <PlusIcon className="w-4 h-4 mr-1" />
                   Create Tool
@@ -335,7 +335,7 @@ export default function TemplateGalleryPage() {
                     Clear search
                   </Button>
                 ) : null}
-                <Link href="/lab/create">
+                <Link href="/lab/new">
                   <Button className="bg-white/10 hover:bg-white/20 text-white">
                     <PlusIcon className="w-4 h-4 mr-1" />
                     Build from Scratch
@@ -417,7 +417,7 @@ export default function TemplateGalleryPage() {
             Build your own tool from scratch using our visual builder and 27 building blocks.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link href="/lab/create">
+            <Link href="/lab/new">
               <Button size="lg" className="bg-[var(--hive-gold-cta)] text-black hover:brightness-110">
                 <SparklesIcon className="w-4 h-4 mr-2" />
                 Start Building

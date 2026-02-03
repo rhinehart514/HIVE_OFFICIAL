@@ -98,7 +98,7 @@ export const POST = withAuthAndErrors(
           remixedFromTemplateId: templateId,
         },
         message: 'Tool created from template successfully',
-        redirectUrl: `/tools/${toolId}`,
+        redirectUrl: `/lab/${toolId}`,
       },
       { status: 201 }
     );

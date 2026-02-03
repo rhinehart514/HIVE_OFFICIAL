@@ -218,7 +218,7 @@ export default function SetupBuilderPage() {
         <div className="text-center">
           <AlertCircle className="h-12 w-12 mx-auto mb-4" style={{ color: COLORS.error }} />
           <p className="text-lg mb-4" style={{ color: COLORS.text }}>Setup not found</p>
-          <Link href="/tools/setups" className="text-sm" style={{ color: COLORS.gold }}>
+          <Link href="/lab/setups" className="text-sm" style={{ color: COLORS.gold }}>
             Back to Setups
           </Link>
         </div>
@@ -235,7 +235,7 @@ export default function SetupBuilderPage() {
           <p className="text-sm mb-4" style={{ color: COLORS.textSecondary }}>
             You can deploy this setup to a space or create your own custom setup.
           </p>
-          <Link href={`/tools/setups/${setupId}`} className="text-sm" style={{ color: COLORS.gold }}>
+          <Link href={`/lab/setups/${setupId}`} className="text-sm" style={{ color: COLORS.gold }}>
             View Setup Details
           </Link>
         </div>
@@ -256,7 +256,7 @@ export default function SetupBuilderPage() {
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <Link
-              href={`/tools/setups/${setupId}`}
+              href={`/lab/setups/${setupId}`}
               className="p-2 rounded-lg transition-colors"
               style={{ backgroundColor: 'transparent' }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = `${COLORS.gold}10`)}

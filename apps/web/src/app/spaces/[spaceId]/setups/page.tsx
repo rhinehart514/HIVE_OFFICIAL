@@ -207,7 +207,7 @@ export default function SpaceSetupsPage() {
             </div>
           </div>
           <Button
-            onClick={() => router.push('/tools/setups')}
+            onClick={() => router.push('/lab/setups')}
             className="flex items-center gap-2"
           >
             <Layers className="h-4 w-4" />
@@ -232,7 +232,7 @@ export default function SpaceSetupsPage() {
             <p className="text-sm mb-6" style={{ color: COLORS.textSecondary }}>
               Setups are bundles of tools with orchestration rules for events, campaigns, and workflows.
             </p>
-            <Button onClick={() => router.push('/tools/setups')}>
+            <Button onClick={() => router.push('/lab/setups')}>
               Browse Setups
             </Button>
           </motion.div>

@@ -653,7 +653,7 @@ export default function SpacePageUnified() {
                 onViewFull: (tool) => {
                   // Navigate to full app view (only for tools that support app mode)
                   if (tool.surfaceModes?.app) {
-                    router.push(`/lab/tools/${tool.toolId}`);
+                    router.push(`/lab/${tool.toolId}`);
                   }
                 },
                 onAddTool: () => {

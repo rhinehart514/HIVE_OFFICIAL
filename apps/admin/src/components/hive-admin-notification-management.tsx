@@ -6,7 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
+import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge, useToast } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import { BellIcon, ExclamationTriangleIcon, XCircleIcon, ClockIcon, PaperAirplaneIcon, UserIcon, GlobeAltIcon, ShieldCheckIcon, BoltIcon, CalendarIcon, HeartIcon, FlagIcon, MagnifyingGlassIcon, ArrowPathIcon, EyeIcon, PencilSquareIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpIcon, ArrowDownIcon, ArrowUturnLeftIcon, ViewfinderCircleIcon, ChartBarIcon, DocumentTextIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
 
@@ -208,6 +208,7 @@ const NotificationCard: React.FC<{
   onResend: () => void;
 }> = ({ notification, onViewDetails, onEdit, onCancel, onResend }) => {
   const [showMetrics, setShowMetrics] = useState(false);
+  const { toast } = useToast();
 
   const getTypeIcon = (type: NotificationType) => {
     switch (type) {
@@ -455,11 +456,12 @@ const QuickStatsCard: React.FC<{
 
 export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationManagementProps> = ({
   // onSendNotification,
-  // onCreateCampaign, 
+  // onCreateCampaign,
   // onUpdateTemplate,
   enableFeatureFlag = true
 }) => {
   const { admin } = useAdminAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [notifications, setNotifications] = useState<HiveNotification[]>([]);
   const [campaigns, setCampaigns] = useState<NotificationCampaign[]>([]);
@@ -753,10 +755,10 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
                   <NotificationCard
                     key={notification.id}
                     notification={notification}
-                    onViewDetails={() => { /* TODO: Navigate to notification details */ }}
-                    onEdit={() => { /* TODO: Open notification editor */ }}
-                    onCancel={() => { /* TODO: Open cancel confirmation */ }}
-                    onResend={() => { /* TODO: Trigger resend */ }}
+                    onViewDetails={() => toast.info('Coming soon', 'Notification details view is under development')}
+                    onEdit={() => toast.info('Coming soon', 'Notification editor is under development')}
+                    onCancel={() => toast.info('Coming soon', 'Cancel confirmation is under development')}
+                    onResend={() => toast.info('Coming soon', 'Resend functionality is under development')}
                   />
                 ))}
               </div>

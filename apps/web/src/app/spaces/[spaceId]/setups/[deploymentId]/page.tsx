@@ -608,7 +608,7 @@ export default function SetupDeploymentDetailPage() {
             </span>
             <span>by {deployment.deployedBy}</span>
             <Link
-              href={`/tools/setups/${deployment.templateId}`}
+              href={`/lab/setups/${deployment.templateId}`}
               className="hover:text-white transition-colors"
             >
               View template →

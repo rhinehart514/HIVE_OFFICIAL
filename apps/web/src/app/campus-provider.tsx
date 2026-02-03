@@ -82,7 +82,7 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
   const routeAtmosphere = React.useMemo<AtmosphereLevel>(() => {
     if (!pathname) return 'spaces';
 
-    if (pathname.startsWith('/tools')) {
+    if (pathname.startsWith('/lab')) {
       return 'workshop';
     }
 
@@ -146,7 +146,7 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
           // Post composer will be implemented post-launch
         }}
         onCreateEvent={() => router.push('/events/create')}
-        onCreateTool={() => router.push('/tools/create')}
+        onCreateTool={() => router.push('/lab/new')}
         onCreateSpace={() => router.push('/spaces/new')}
         isBuilder={user.isBuilder}
         isQuickCreateOpen={isQuickCreateOpen}
@@ -182,10 +182,10 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
             router.push(`/spaces/${spaceId}`);
           }
         }}
-        onToolClick={(toolId: string) => router.push(`/tools/${toolId}`)}
+        onToolClick={(toolId: string) => router.push(`/lab/${toolId}`)}
         onSpaceReorder={setSpaceOrder}
         onBrowseMoreSpaces={() => router.push('/spaces')}
-        onBrowseMoreTools={() => router.push('/tools')}
+        onBrowseMoreTools={() => router.push('/lab')}
       />
 
       {/* Campus Drawer (Mobile) */}
@@ -221,7 +221,7 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
           { id: 'notifications', label: 'Notifications', category: 'Navigation', shortcut: ['G', 'N'], onSelect: () => router.push('/me/notifications') },
           { id: 'settings', label: 'Settings', category: 'Navigation', shortcut: ['G', ','], onSelect: () => router.push('/me/settings') },
           ...(user.isBuilder ? [
-            { id: 'tools', label: 'HiveLab', category: 'Navigation', shortcut: ['G', 'H'], onSelect: () => router.push('/tools') },
+            { id: 'tools', label: 'HiveLab', category: 'Navigation', shortcut: ['G', 'H'], onSelect: () => router.push('/lab') },
           ] : []),
           // Actions
           { id: 'create-space', label: 'Create Space', category: 'Actions', featured: true, onSelect: () => router.push('/spaces/new') },

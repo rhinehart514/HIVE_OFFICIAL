@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import type * as admin from 'firebase-admin';
 import { getCampusId } from '@/lib/campus-context';
+import { isGhostModeEnabled } from '@/lib/feature-flags';
 
 // Ghost Mode quick toggle and status
 export async function GET(request: NextRequest) {
@@ -16,6 +17,12 @@ export async function GET(request: NextRequest) {
     }
 
     const campusId = await getCampusId(request);
+
+    // Check feature flag
+    const ghostModeFeatureEnabled = await isGhostModeEnabled({ userId: user.uid, schoolId: campusId });
+    if (!ghostModeFeatureEnabled) {
+      return NextResponse.json({ error: 'Feature not available' }, { status: 403 });
+    }
 
     const { searchParams } = new URL(request.url);
     const checkUserId = searchParams.get('userId');
@@ -87,6 +94,12 @@ export async function POST(request: NextRequest) {
     }
 
     const campusId = await getCampusId(request);
+
+    // Check feature flag
+    const ghostModeFeatureEnabled = await isGhostModeEnabled({ userId: user.uid, schoolId: campusId });
+    if (!ghostModeFeatureEnabled) {
+      return NextResponse.json({ error: 'Feature not available' }, { status: 403 });
+    }
 
     const body = await request.json();
     const { enabled, level, duration } = body;

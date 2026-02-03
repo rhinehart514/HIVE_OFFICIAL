@@ -57,7 +57,7 @@ const NotificationsIcon = () => (
 const defaultNavItems: NavItem[] = [
   { id: 'home', label: 'Home', href: '/', icon: <HomeIcon /> },
   { id: 'spaces', label: 'Spaces', href: '/spaces', icon: <SpacesIcon />, badge: 3 },
-  { id: 'tools', label: 'HiveLab', href: '/tools', icon: <ToolsIcon /> },
+  { id: 'tools', label: 'HiveLab', href: '/lab', icon: <ToolsIcon /> },
   { id: 'profile', label: 'Profile', href: '/profile', icon: <ProfileIcon /> },
   { id: 'notifications', label: 'Notifications', href: '/notifications', icon: <NotificationsIcon />, badge: 12 },
   { id: 'settings', label: 'Settings', href: '/settings', icon: <SettingsIcon /> },
@@ -226,7 +226,7 @@ export const WithBadges: Story = {
       { id: 'home', label: 'Home', href: '/', icon: <HomeIcon /> },
       { id: 'spaces', label: 'Spaces', href: '/spaces', icon: <SpacesIcon />, badge: 5 },
       { id: 'notifications', label: 'Notifications', href: '/notifications', icon: <NotificationsIcon />, badge: 99 },
-      { id: 'tools', label: 'HiveLab', href: '/tools', icon: <ToolsIcon />, badge: 2 },
+      { id: 'tools', label: 'HiveLab', href: '/lab', icon: <ToolsIcon />, badge: 2 },
     ],
     user: defaultUser,
     activeRoute: '/spaces',

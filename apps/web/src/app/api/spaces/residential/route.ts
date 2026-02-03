@@ -2,18 +2,38 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
+import { getCampusId as getCampusIdFromRequest, getDefaultCampusId, getCampusFromEmail } from '@/lib/campus-context';
+import { getCurrentUser } from '@/lib/server-auth';
 
 /**
  * GET /api/spaces/residential
  *
  * Returns residential spaces for a campus (for entry flow dropdown).
- * No auth required - this is public data for the entry form.
+ * This is semi-public data for the entry form - users may be authenticated
+ * or in the process of onboarding.
  *
- * Query params:
- *   campusId: Campus ID (default: 'ub-buffalo')
+ * SECURITY: campusId is derived from authenticated user session when available,
+ * falls back to default for unauthenticated onboarding users.
  */
 export async function GET(request: NextRequest) {
-  const campusId = request.nextUrl.searchParams.get('campusId') || 'ub-buffalo';
+  // SECURITY: Get campusId from authenticated user session, not query params
+  // Falls back to default for users in onboarding flow who may not be fully authenticated
+  let campusId: string;
+  try {
+    campusId = await getCampusIdFromRequest(request);
+  } catch {
+    // For unauthenticated users in onboarding, try to get from bearer token or use default
+    const user = await getCurrentUser(request);
+    if (user?.email) {
+      try {
+        campusId = getCampusFromEmail(user.email);
+      } catch {
+        campusId = getDefaultCampusId();
+      }
+    } else {
+      campusId = getDefaultCampusId();
+    }
+  }
 
   // Dev mode - return mock data if Firebase not configured
   if (!isFirebaseConfigured) {

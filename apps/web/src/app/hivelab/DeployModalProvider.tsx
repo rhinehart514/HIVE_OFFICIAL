@@ -56,7 +56,7 @@ export function DeployModalProvider({ toolId, children }: { toolId?: string; chi
   const handleDeploy = async (config: { targetType: string; targetId: string; surface?: string; permissions: unknown; settings: unknown }) => {
     if (!toolId) {
       setOpen(false);
-      router.push('/tools');
+      router.push('/lab');
       return;
     }
     const res = await apiClient.post('/api/tools/deploy', {
@@ -69,17 +69,17 @@ export function DeployModalProvider({ toolId, children }: { toolId?: string; chi
     });
     if (res.ok) {
       setOpen(false);
-      router.push(`/tools/${toolId}/analytics`);
+      router.push(`/lab/${toolId}/analytics`);
     }
   };
 
   return (
     <div className="relative">
       {children}
-      {/* Floating launch button when a toolId is present; otherwise route to /tools */}
+      {/* Floating launch button when a toolId is present; otherwise route to /lab */}
       <button
         type="button"
-        onClick={() => (toolId ? setOpen(true) : router.push('/tools'))}
+        onClick={() => (toolId ? setOpen(true) : router.push('/lab'))}
         className="fixed bottom-6 right-6 z-50 rounded-full px-5 py-3 bg-[var(--hive-brand-primary)] text-hive-brand-on-gold shadow-lg hover:bg-hive-brand-hover"
         aria-label="Launch on campus"
       >

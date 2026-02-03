@@ -46,7 +46,7 @@ export default function ToolDetailError({
           </button>
           <button
             type="button"
-            onClick={() => window.location.href = '/tools'}
+            onClick={() => window.location.href = '/lab'}
             className="workshop-btn gap-2"
           >
             <ArrowLeftIcon className="h-4 w-4" />

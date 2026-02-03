@@ -43,7 +43,7 @@ export default function ElementsError({
           </Button>
           <Button
             variant="outline"
-            onClick={() => window.location.href = '/tools'}
+            onClick={() => window.location.href = '/lab'}
             className="gap-2"
           >
             <HomeIcon className="h-4 w-4" />

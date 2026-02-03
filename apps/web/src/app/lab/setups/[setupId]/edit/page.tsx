@@ -543,7 +543,7 @@ export default function EditSetupPage() {
         <p className="text-lg mb-4" style={{ color: COLORS.text }}>
           Setup not found
         </p>
-        <Link href="/tools/setups" className="text-sm" style={{ color: COLORS.gold }}>
+        <Link href="/lab/setups" className="text-sm" style={{ color: COLORS.gold }}>
           Back to Setups
         </Link>
       </div>
@@ -563,7 +563,7 @@ export default function EditSetupPage() {
           Create a copy to customize orchestration rules
         </p>
         <Link
-          href={`/tools/setups/${setupId}`}
+          href={`/lab/setups/${setupId}`}
           className="text-sm"
           style={{ color: COLORS.gold }}
         >
@@ -580,7 +580,7 @@ export default function EditSetupPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Link
-              href={`/tools/setups/${setupId}`}
+              href={`/lab/setups/${setupId}`}
               className="p-2 rounded-lg hover:bg-white/5 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" style={{ color: COLORS.textSecondary }} />

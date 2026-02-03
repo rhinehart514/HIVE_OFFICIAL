@@ -230,7 +230,7 @@ export function CampusDock({
       if (onToolClick) {
         onToolClick(toolId);
       } else {
-        router.push(`/tools/${toolId}`);
+        router.push(`/lab/${toolId}`);
       }
     },
     [onToolClick, router]

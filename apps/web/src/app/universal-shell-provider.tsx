@@ -75,8 +75,8 @@ const COMPACT_SHELL_ROUTES = [
   '/s/*',                     // Space residence (unified view)
   '/spaces/*/chat',           // Space chat (real-time messaging)
   '/spaces/*/boards/*',       // Board view within space
-  '/tools/*/edit',            // Tool IDE (code editing)
-  '/tools/*/preview',         // Tool preview
+  '/lab/*/edit',              // Tool IDE (code editing)
+  '/lab/*/preview',           // Tool preview
 ];
 
 // Routes that use Focus Flow archetype (wizard/form, no shell)
@@ -96,12 +96,12 @@ const FOCUS_FLOW_ROUTES = [
   '/spaces/*/event/new',      // Create event in space
 
   // Tools (IDE is full-screen, landing shows shell)
-  '/tools/new',               // New tool creation (transitional)
-  '/tools/create',            // Create tool wizard
-  '/tools/*/deploy',          // Deploy tool flow
-  '/tools/*/run',             // Tool execution (full immersion)
-  '/tools/*/edit',            // Tool editing (legacy redirect)
-  '/tools/*/preview',         // Tool preview
+  '/lab/new',                 // New tool creation (transitional)
+  '/lab/create',              // Create tool wizard
+  '/lab/*/deploy',            // Deploy tool flow
+  '/lab/*/run',               // Tool execution (full immersion)
+  '/lab/*/edit',              // Tool editing (legacy redirect)
+  '/lab/*/preview',           // Tool preview
 
   // Events
   '/events/*/checkin',        // Event check-in flow

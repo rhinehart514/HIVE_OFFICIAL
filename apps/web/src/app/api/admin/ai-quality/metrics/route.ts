@@ -5,6 +5,9 @@
  *
  * Returns aggregated metrics for AI generation quality.
  * Requires admin authentication.
+ *
+ * SECURITY: campusId is derived from admin's authenticated session, not query params.
+ * Admins can only view metrics for their associated campus unless they are super_admin.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -21,7 +24,6 @@ import {
  *
  * Query params:
  * - period: 'hour' | 'day' | 'week' | 'month' (default: 'day')
- * - campusId: optional filter by campus
  */
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +36,10 @@ export async function GET(request: NextRequest) {
     // Parse query params
     const { searchParams } = new URL(request.url);
     const period = (searchParams.get('period') || 'day') as 'hour' | 'day' | 'week' | 'month';
-    const campusId = searchParams.get('campusId') || undefined;
+
+    // SECURITY: Use campusId from admin's authenticated session, not query params
+    // This prevents admins from accessing metrics for campuses they don't manage
+    const campusId = auth.campusId;
 
     // Calculate date range
     const now = new Date();
