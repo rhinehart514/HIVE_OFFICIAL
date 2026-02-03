@@ -24,6 +24,7 @@ export {
   ProfileIdentityHeroSkeleton,
   type ProfileIdentityHeroUser,
   type ProfileIdentityHeroProps,
+  type ProfileBadge,
 } from './ProfileIdentityHero';
 
 // Zone 2: Activity Cards (Building, Leading, Organizing)

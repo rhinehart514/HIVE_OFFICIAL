@@ -50,7 +50,7 @@ export default function SettingsError({
           </Button>
           <Button
             variant="secondary"
-            onClick={() => window.location.href = '/profile'}
+            onClick={() => window.location.href = '/me'}
             aria-label="Go to your profile"
             className="gap-2 border-white/20 text-white hover:bg-white/10"
           >

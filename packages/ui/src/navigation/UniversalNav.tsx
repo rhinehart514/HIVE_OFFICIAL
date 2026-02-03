@@ -149,7 +149,7 @@ export const CommandPalette: React.FC<{ open: boolean; onOpenChange: (open: bool
     { id: 'discover', label: 'Open Discover', action: () => router.push('/spaces?tab=discover'), icon: '🔍' },
     { id: 'spaces', label: 'Browse Spaces', action: () => router.push('/spaces'), icon: '🧭' },
     { id: 'create-space', label: 'Create Space', action: () => router.push('/spaces/create'), icon: '➕' },
-    { id: 'profile', label: 'My Profile', action: () => router.push('/profile'), icon: '👤' },
+    { id: 'profile', label: 'My Profile', action: () => router.push('/me'), icon: '👤' },
     { id: 'settings', label: 'Settings', action: () => router.push('/settings'), icon: '⚙️' },
   ];
 

@@ -478,7 +478,7 @@ const DEFAULT_NAV_ITEMS: ShellNavItem[] = [
   { id: "feed", label: "Feed", icon: "≡", href: "/feed" },
   { id: "spaces", label: "Spaces", icon: "□", href: "/spaces" },
   { id: "hivelab", label: "HiveLab", icon: "⚙", href: "/lab" },
-  { id: "profile", label: "Profile", icon: "👤", href: "/profile" },
+  { id: "profile", label: "Profile", icon: "👤", href: "/me" },
 ];
 
 export const Shell: React.FC<ShellProps> = ({

@@ -255,7 +255,7 @@ export type {
   OTPInputProps, EmailInputProps, AuthSuccessStateProps,
   SpaceHeaderProps, SpaceHeaderCompactProps, MembershipState,
   // Profile - 3-Zone Layout Types (New)
-  ProfileIdentityHeroUser, ProfileIdentityHeroProps,
+  ProfileIdentityHeroUser, ProfileIdentityHeroProps, ProfileBadge,
   ProfileActivityTool, ProfileActivityCardProps,
   ProfileLeadershipSpace, ProfileLeadershipCardProps,
   ProfileEvent, ProfileEventCardProps,

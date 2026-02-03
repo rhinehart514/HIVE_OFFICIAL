@@ -1078,6 +1078,7 @@ export type {
   // 3-Zone Profile Layout Types (New)
   ProfileIdentityHeroUser,
   ProfileIdentityHeroProps,
+  ProfileBadge,
   ProfileActivityTool,
   ProfileActivityCardProps,
   ProfileLeadershipSpace,

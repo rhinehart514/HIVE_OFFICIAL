@@ -482,7 +482,7 @@ function YourSpacesSection({
                 <div className="flex items-center gap-2 text-label-sm text-white/40">
                   {space.memberCount && <span>{space.memberCount} members</span>}
                   {(space.unreadCount ?? 0) > 0 && (
-                    <Badge variant="gold" size="sm">
+                    <Badge variant="gold" size="sm" className="animate-pulse-gold shadow-glow-sm">
                       {space.unreadCount}
                     </Badge>
                   )}

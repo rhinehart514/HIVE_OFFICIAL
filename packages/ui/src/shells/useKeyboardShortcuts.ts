@@ -52,7 +52,7 @@ const NAVIGATION_SHORTCUTS: Record<string, string> = {
   s: '/spaces',
   c: '/calendar',
   h: '/tools', // HiveLab
-  p: '/profile',
+  p: '/me',
   n: '/notifications',
   ',': '/settings',
 };
@@ -197,7 +197,7 @@ function getPathLabel(path: string): string {
     '/spaces': 'Spaces',
     '/calendar': 'Calendar',
     '/tools': 'HiveLab',
-    '/profile': 'Profile',
+    '/me': 'Profile',
     '/notifications': 'Notifications',
     '/settings': 'Settings',
   };

@@ -281,7 +281,7 @@ export function UniversalShell({
     if (onProfileClick) {
       onProfileClick();
     } else {
-      router.push('/profile');
+      router.push('/me');
     }
   }, [onProfileClick, router]);
 

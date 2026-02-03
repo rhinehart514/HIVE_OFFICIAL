@@ -17,11 +17,32 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MoreHorizontal, Flag } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import { Badge, type BadgeVariant } from '../../primitives/Badge';
 import { ConnectButton, type ConnectionState } from './ConnectButton';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+export interface ProfileBadge {
+  id: string;
+  type: string;
+  name: string;
+  description: string;
+  displayOrder?: number;
+}
+
+const BADGE_CONFIG: Record<string, { icon: string; variant: BadgeVariant }> = {
+  builder: { icon: '\u{1F6E0}\u{FE0F}', variant: 'neutral' },
+  student_leader: { icon: '\u{1F451}', variant: 'neutral' },
+  contributor: { icon: '\u2B50', variant: 'neutral' },
+  early_adopter: { icon: '\u{1F680}', variant: 'gold' },
+  founding_leader: { icon: '\u{1F6E1}\u{FE0F}', variant: 'gold' },
+  founding_member: { icon: '\u{1F48E}', variant: 'gold' },
+  verified_leader: { icon: '\u2713', variant: 'neutral' },
+};
+
+const MAX_DISPLAYED_BADGES = 5;
 
 export interface ProfileIdentityHeroUser {
   id: string;
@@ -39,6 +60,8 @@ export interface ProfileIdentityHeroProps {
   isOwnProfile: boolean;
   isOnline?: boolean;
   profileIncomplete?: boolean;
+  /** User achievement badges to display below bio */
+  badges?: ProfileBadge[];
   /** Connection state with this user (ignored for own profile) */
   connectionState?: ConnectionState;
   /** Request ID for pending friend requests */
@@ -79,6 +102,7 @@ export function ProfileIdentityHero({
   isOwnProfile,
   isOnline = false,
   profileIncomplete = false,
+  badges,
   connectionState = 'none',
   pendingRequestId,
   isConnectionLoading = false,
@@ -103,6 +127,14 @@ export function ProfileIdentityHero({
   if (user.classYear) credentials.push(`'${user.classYear.slice(-2)}`);
   if (user.campusName) credentials.push(user.campusName);
   const credentialsText = credentials.join(' · ');
+
+  // Sort badges by displayOrder and limit to max
+  const displayBadges = React.useMemo(() => {
+    if (!badges || badges.length === 0) return [];
+    return [...badges]
+      .sort((a, b) => (a.displayOrder ?? 999) - (b.displayOrder ?? 999))
+      .slice(0, MAX_DISPLAYED_BADGES);
+  }, [badges]);
 
   return (
     <motion.div
@@ -227,6 +259,26 @@ export function ProfileIdentityHero({
                 >
                   Add a bio to help others know who you are →
                 </p>
+              </div>
+            )}
+
+            {/* Badges */}
+            {displayBadges.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                {displayBadges.map((badge) => {
+                  const config = BADGE_CONFIG[badge.type];
+                  return (
+                    <Badge
+                      key={badge.id}
+                      variant={config?.variant ?? 'neutral'}
+                      size="sm"
+                      title={`${badge.name} — ${badge.description}`}
+                    >
+                      <span className="mr-0.5">{config?.icon ?? '\u2726'}</span>
+                      {badge.name}
+                    </Badge>
+                  );
+                })}
               </div>
             )}
 
