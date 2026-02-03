@@ -15,7 +15,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SmilePlus, MessageSquare, MoreHorizontal, Trash2, Pencil, Check, X } from 'lucide-react';
+import { SmilePlus, MessageSquare, MoreHorizontal, Trash2, Pencil, Check, X, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { SPACE_COMPONENTS, spaceTypographyClasses } from '@hive/tokens';
@@ -62,6 +62,8 @@ interface MessageItemProps {
   onDelete?: () => void;
   /** Edit handler (only for own messages) */
   onEdit?: (newContent: string) => void;
+  /** Report handler */
+  onReport?: () => void;
 }
 
 export function MessageItem({
@@ -72,9 +74,11 @@ export function MessageItem({
   onReply,
   onDelete,
   onEdit,
+  onReport,
 }: MessageItemProps) {
   const [isHovered, setIsHovered] = React.useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
+  const [showMoreMenu, setShowMoreMenu] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
   const [editContent, setEditContent] = React.useState(message.content);
   const editInputRef = React.useRef<HTMLTextAreaElement>(null);
@@ -372,13 +376,50 @@ export function MessageItem({
                   </button>
                 )}
 
-                {/* More options */}
-                <button
-                  className="p-1.5 hover:bg-white/[0.08] rounded transition-colors"
-                  title="More options"
-                >
-                  <MoreHorizontal className="w-4 h-4 text-white/50" />
-                </button>
+                {/* More options (Report, etc.) */}
+                {onReport && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowMoreMenu(!showMoreMenu)}
+                      className="p-1.5 hover:bg-white/[0.08] rounded transition-colors"
+                      title="More options"
+                      data-testid="message-actions-button"
+                    >
+                      <MoreHorizontal className="w-4 h-4 text-white/50" />
+                    </button>
+                    {showMoreMenu && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowMoreMenu(false)}
+                        />
+                        <div
+                          className={cn(
+                            'absolute right-0 top-full mt-1 z-20',
+                            'bg-[#1a1a1b] border border-white/[0.08] rounded-xl shadow-lg',
+                            'py-1 min-w-[120px]'
+                          )}
+                        >
+                          <button
+                            onClick={() => {
+                              onReport();
+                              setShowMoreMenu(false);
+                            }}
+                            className={cn(
+                              'w-full px-3 py-1.5 text-left text-sm',
+                              'text-white/60 hover:text-white hover:bg-white/[0.06]',
+                              'flex items-center gap-2'
+                            )}
+                            data-testid="report-button"
+                          >
+                            <Flag className="w-3.5 h-3.5" />
+                            Report
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </motion.div>

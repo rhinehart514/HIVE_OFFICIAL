@@ -39,6 +39,7 @@ interface MessageFeedProps {
   onReact?: (messageId: string, emoji: string) => void;
   onReply?: (messageId: string) => void;
   onDelete?: (messageId: string) => void;
+  onReport?: (messageId: string, authorName: string, content: string) => void;
   /** Permission check */
   canDeleteMessage?: (messageId: string, authorId: string) => boolean;
   className?: string;
@@ -56,6 +57,7 @@ export function MessageFeed({
   onReact,
   onReply,
   onDelete,
+  onReport,
   canDeleteMessage,
   className,
 }: MessageFeedProps) {
@@ -197,6 +199,11 @@ export function MessageFeed({
                           onDelete={
                             onDelete && canDeleteMessage?.(message.id, message.authorId)
                               ? () => onDelete(message.id)
+                              : undefined
+                          }
+                          onReport={
+                            onReport
+                              ? () => onReport(message.id, message.authorName, message.content)
                               : undefined
                           }
                         />

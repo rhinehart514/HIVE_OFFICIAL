@@ -13,12 +13,13 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { Tilt, GlassSurface, MOTION } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
+import { Building2, BookOpen, Rocket, Target, Sparkles, type LucideIcon } from 'lucide-react';
 
 export interface SpaceTemplate {
   id: string;
   name: string;
   description: string;
-  icon: string;
+  icon: LucideIcon;
   /** Default settings for this template */
   defaults?: {
     category?: string;
@@ -54,11 +55,14 @@ export function TemplateCard({ template, selected, onSelect }: TemplateCardProps
             {/* Icon */}
             <div
               className={cn(
-                'w-12 h-12 rounded-lg flex items-center justify-center text-2xl',
+                'w-12 h-12 rounded-lg flex items-center justify-center',
                 selected ? 'bg-[var(--life-gold)]/10' : 'bg-white/[0.04]'
               )}
             >
-              {template.icon}
+              <template.icon className={cn(
+                'w-6 h-6',
+                selected ? 'text-[var(--life-gold)]' : 'text-white/60'
+              )} />
             </div>
 
             {/* Content */}
@@ -110,35 +114,35 @@ export const SPACE_TEMPLATES: SpaceTemplate[] = [
     id: 'org',
     name: 'Student Org',
     description: 'For clubs, organizations, and official groups',
-    icon: '🏛️',
+    icon: Building2,
     defaults: { category: 'academic', privacy: 'open' },
   },
   {
     id: 'study',
     name: 'Study Group',
     description: 'For courses, study sessions, and academic collaboration',
-    icon: '📚',
+    icon: BookOpen,
     defaults: { category: 'academic', privacy: 'approval' },
   },
   {
     id: 'project',
     name: 'Project Team',
     description: 'For hackathons, startups, and collaborative projects',
-    icon: '🚀',
+    icon: Rocket,
     defaults: { category: 'professional', privacy: 'invite' },
   },
   {
     id: 'club',
     name: 'Club / Interest',
     description: 'For hobbies, interests, and casual communities',
-    icon: '🎯',
+    icon: Target,
     defaults: { category: 'social', privacy: 'open' },
   },
   {
     id: 'blank',
     name: 'Blank Canvas',
     description: 'Start from scratch with full control',
-    icon: '✨',
+    icon: Sparkles,
     defaults: { privacy: 'approval' },
   },
 ];

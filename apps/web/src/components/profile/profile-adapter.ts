@@ -236,7 +236,7 @@ export const profileApiResponseToProfileSystem = (payload: ProfileV2ApiResponse)
       blockedUsers: [],
     },
     presence: {
-      vibe: profile.presence?.status === 'online' ? '🎯 Thriving' : '😮‍💨 Surviving',
+      vibe: profile.presence?.status === 'online' ? 'Thriving' : 'Chilling',
       vibeUpdatedAt: now,
       lastActive: toDate(profile.presence?.lastSeen ?? Date.now()),
       isOnline: profile.presence?.status === 'online',
@@ -300,7 +300,7 @@ export function toProfileSystemFromMinimal(specLike: Record<string, unknown>): P
     },
     connections: { friends: [], connections: [], pendingRequests: [], blockedUsers: [] },
     presence: {
-      vibe: ((specLike.presence as Record<string, unknown> | undefined)?.vibe as string) || '🎯 Thriving',
+      vibe: ((specLike.presence as Record<string, unknown> | undefined)?.vibe as string) || 'Thriving',
       vibeUpdatedAt: now,
       lastActive: now,
       isOnline: true,

@@ -22,10 +22,13 @@ import {
   ProfileConnectionFooter,
   ProfileOverflowChip,
   ProfileToolModal,
+  ReportContentModal,
+  toast,
   type ProfileActivityTool,
   type ProfileLeadershipSpace,
   type ProfileEvent,
   type ProfileSpacePillSpace,
+  type ReportContentInput,
 } from '@hive/ui';
 import { MOTION } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
@@ -208,6 +211,7 @@ export default function ProfilePageContent() {
   // Inline expansion state
   const [showAllTools, setShowAllTools] = React.useState(false);
   const [showAllSpaces, setShowAllSpaces] = React.useState(false);
+  const [showReportModal, setShowReportModal] = React.useState(false);
 
   const {
     handle,
@@ -248,6 +252,27 @@ export default function ProfilePageContent() {
       openConversation(profileId);
     }
   }, [profileId, isOwnProfile, openConversation]);
+
+  // Report handler
+  const handleReportProfile = React.useCallback(() => {
+    setShowReportModal(true);
+  }, []);
+
+  // Submit report to API
+  const handleSubmitReport = async (data: ReportContentInput) => {
+    const response = await fetch('/api/content/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to submit report');
+    }
+
+    toast.success('Report submitted');
+  };
 
   // ============================================================================
   // Loading/Error States
@@ -351,6 +376,7 @@ export default function ProfilePageContent() {
             onRejectRequest={handleRejectRequest}
             onUnfriend={handleUnfriend}
             onMessage={handleMessage}
+            onReport={!isOwnProfile ? handleReportProfile : undefined}
           />
         </motion.section>
 
@@ -525,6 +551,16 @@ export default function ProfilePageContent() {
         onUpdateVisibility={isOwnProfile ? handleToolUpdateVisibility : undefined}
         onRemove={isOwnProfile ? handleToolRemove : undefined}
         isOwner={isOwnProfile}
+      />
+
+      {/* Report Profile Modal */}
+      <ReportContentModal
+        open={showReportModal}
+        onOpenChange={setShowReportModal}
+        contentId={profileId || ''}
+        contentType="profile"
+        authorName={heroUser?.fullName}
+        onSubmit={handleSubmitReport}
       />
     </div>
   );

@@ -353,16 +353,21 @@ export default function RitualsPage() {
           </div>
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              { icon: "📚", name: "Study Streak", desc: "Log 2 hours of studying daily", participants: "1,247" },
-              { icon: "🏃", name: "Move Daily", desc: "Exercise or walk 30+ minutes", participants: "892" },
-              { icon: "🎯", name: "Goal Getter", desc: "Complete 3 tasks from your to-do list", participants: "2,103" },
-              { icon: "💬", name: "Connect Week", desc: "Have a meaningful conversation each day", participants: "456" },
+              { icon: "BookOpen", name: "Study Streak", desc: "Log 2 hours of studying daily", participants: "1,247", color: "text-blue-400" },
+              { icon: "Activity", name: "Move Daily", desc: "Exercise or walk 30+ minutes", participants: "892", color: "text-green-400" },
+              { icon: "Target", name: "Goal Getter", desc: "Complete 3 tasks from your to-do list", participants: "2,103", color: "text-amber-400" },
+              { icon: "MessageSquare", name: "Connect Week", desc: "Have a meaningful conversation each day", participants: "456", color: "text-purple-400" },
             ].map((ritual) => (
               <div
                 key={ritual.name}
                 className="flex items-center gap-4 p-5 bg-white/[0.02] border border-white/[0.06] rounded-2xl"
               >
-                <span className="text-3xl">{ritual.icon}</span>
+                <div className={`w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center ${ritual.color}`}>
+                  {ritual.icon === "BookOpen" && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}
+                  {ritual.icon === "Activity" && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>}
+                  {ritual.icon === "Target" && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth={1.5} /><circle cx="12" cy="12" r="6" strokeWidth={1.5} /><circle cx="12" cy="12" r="2" strokeWidth={1.5} /></svg>}
+                  {ritual.icon === "MessageSquare" && <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>}
+                </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-white">{ritual.name}</h3>
                   <p className="text-sm text-white/50">{ritual.desc}</p>

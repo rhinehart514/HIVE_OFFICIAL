@@ -103,14 +103,15 @@ export const getEventTypeColor = (type: EventData['type']) => {
   }
 };
 
-export const getEventTypeIcon = (type: EventData['type']) => {
+/** Returns Lucide icon name for event type - use with dynamic icon rendering */
+export const getEventTypeIcon = (type: EventData['type']): string => {
   switch (type) {
-    case 'academic': return '📚';
-    case 'social': return '🎉';
-    case 'professional': return '💼';
-    case 'recreational': return '🎮';
-    case 'official': return '🏛️';
-    default: return '📅';
+    case 'academic': return 'BookOpen';
+    case 'social': return 'PartyPopper';
+    case 'professional': return 'Briefcase';
+    case 'recreational': return 'Gamepad2';
+    case 'official': return 'Building2';
+    default: return 'Calendar';
   }
 };
 

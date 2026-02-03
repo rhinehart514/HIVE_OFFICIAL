@@ -29,6 +29,14 @@ import {
   VideoCameraIcon,
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
+import {
+  BookOpen,
+  PartyPopper,
+  Gamepad2,
+  Drama,
+  Users,
+  Monitor,
+} from "lucide-react";
 
 export interface CreateEventData {
   title: string;
@@ -47,12 +55,12 @@ export interface CreateEventModalProps {
 }
 
 const EVENT_TYPES = [
-  { value: "academic", label: "Academic", icon: "📚" },
-  { value: "social", label: "Social", icon: "🎉" },
-  { value: "recreational", label: "Recreational", icon: "🎮" },
-  { value: "cultural", label: "Cultural", icon: "🎭" },
-  { value: "meeting", label: "Meeting", icon: "👥" },
-  { value: "virtual", label: "Virtual", icon: "💻" },
+  { value: "academic", label: "Academic", icon: BookOpen },
+  { value: "social", label: "Social", icon: PartyPopper },
+  { value: "recreational", label: "Recreational", icon: Gamepad2 },
+  { value: "cultural", label: "Cultural", icon: Drama },
+  { value: "meeting", label: "Meeting", icon: Users },
+  { value: "virtual", label: "Virtual", icon: Monitor },
 ] as const;
 
 const LOCATION_TYPES = [
@@ -246,21 +254,24 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             <div className="space-y-2">
               <Label className="text-sm font-medium text-white/80">Event Type</Label>
               <div className="grid grid-cols-5 gap-2">
-                {EVENT_TYPES.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => handleInputChange("type", type.value)}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
-                      formData.type === type.value
-                        ? "border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/10"
-                        : "border-white/10 hover:border-white/20 bg-white/[0.02]"
-                    }`}
-                  >
-                    <span className="text-xl">{type.icon}</span>
-                    <span className="text-xs text-white/60">{type.label}</span>
-                  </button>
-                ))}
+                {EVENT_TYPES.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <button
+                      key={type.value}
+                      type="button"
+                      onClick={() => handleInputChange("type", type.value)}
+                      className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
+                        formData.type === type.value
+                          ? "border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/10"
+                          : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 text-white/80" />
+                      <span className="text-xs text-white/60">{type.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

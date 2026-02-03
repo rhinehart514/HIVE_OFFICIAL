@@ -12,7 +12,7 @@
 
 import * as React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { X, Trash2, MoreHorizontal } from 'lucide-react';
+import { X, Trash2, MoreHorizontal, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, Text, getInitials } from '@hive/ui/design-system/primitives';
 import type { ChatMessage } from '../hooks/use-space-residence-state';
@@ -31,6 +31,13 @@ interface ChatMessagesProps {
    * Optional callback to delete a message
    */
   onDeleteMessage?: (messageId: string) => Promise<void>;
+  /**
+   * Optional callback to report a message
+   * @param messageId - The message ID
+   * @param authorName - The author's display name
+   * @param content - The message content (for preview)
+   */
+  onReportMessage?: (messageId: string, authorName: string, content: string) => void;
 }
 
 export function ChatMessages({
@@ -39,6 +46,7 @@ export function ChatMessages({
   className,
   canDeleteMessage,
   onDeleteMessage,
+  onReportMessage,
 }: ChatMessagesProps) {
   const [lightboxImage, setLightboxImage] = React.useState<string | null>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -89,6 +97,7 @@ export function ChatMessages({
               onImageClick={setLightboxImage}
               canDelete={canDeleteMessage?.(message.authorId) ?? false}
               onDelete={onDeleteMessage}
+              onReport={onReportMessage}
             />
           );
         })}
@@ -124,9 +133,10 @@ interface MessageRowProps {
   onImageClick?: (url: string) => void;
   canDelete?: boolean;
   onDelete?: (messageId: string) => Promise<void>;
+  onReport?: (messageId: string, authorName: string, content: string) => void;
 }
 
-function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete }: MessageRowProps) {
+function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete, onReport }: MessageRowProps) {
   const [showActions, setShowActions] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
@@ -151,6 +161,7 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete }: 
         'hover:bg-white/[0.02] -mx-2 px-2 py-1 rounded-lg',
         'transition-colors'
       )}
+      data-testid="message-row"
     >
       {/* Avatar (only for first in group) */}
       <div className="w-8 flex-shrink-0">
@@ -233,7 +244,7 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete }: 
       </div>
 
       {/* Actions (on hover) */}
-      {canDelete && onDelete && (
+      {((canDelete && onDelete) || onReport) && (
         <div className="absolute right-2 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="relative">
             <button
@@ -242,6 +253,7 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete }: 
                 'p-1 rounded hover:bg-white/[0.08] transition-colors',
                 'text-white/40 hover:text-white/60'
               )}
+              data-testid="message-actions-button"
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>
@@ -258,19 +270,40 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete }: 
                   'bg-[#1a1a1b] border border-white/[0.08] rounded-xl shadow-lg',
                   'py-1 min-w-[120px]'
                 )}>
-                  <button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className={cn(
-                      'w-full px-3 py-1.5 text-left text-sm',
-                      'text-red-400 hover:bg-red-500/10',
-                      'flex items-center gap-2',
-                      'disabled:opacity-50'
-                    )}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    {isDeleting ? 'Deleting...' : 'Delete'}
-                  </button>
+                  {/* Report action - available for all users */}
+                  {onReport && (
+                    <button
+                      onClick={() => {
+                        onReport(message.id, message.authorName, message.content || '');
+                        setShowActions(false);
+                      }}
+                      className={cn(
+                        'w-full px-3 py-1.5 text-left text-sm',
+                        'text-white/60 hover:text-white hover:bg-white/[0.06]',
+                        'flex items-center gap-2'
+                      )}
+                      data-testid="report-button"
+                    >
+                      <Flag className="w-3.5 h-3.5" />
+                      Report
+                    </button>
+                  )}
+                  {/* Delete action - only for authorized users */}
+                  {canDelete && onDelete && (
+                    <button
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className={cn(
+                        'w-full px-3 py-1.5 text-left text-sm',
+                        'text-red-400 hover:bg-red-500/10',
+                        'flex items-center gap-2',
+                        'disabled:opacity-50'
+                      )}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      {isDeleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -279,7 +312,7 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete }: 
       )}
 
       {/* Timestamp on hover (for grouped messages) */}
-      {!showAuthor && !canDelete && (
+      {!showAuthor && !((canDelete && onDelete) || onReport) && (
         <div className="w-12 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           <Text size="xs" tone="muted" className="text-right">
             {new Date(message.timestamp).toLocaleTimeString([], {

@@ -2016,6 +2016,15 @@ export type {
 
 export { ProfileToolModal } from "./design-system/components/profile";
 
+// Moderation components
+export {
+  ReportContentModal,
+  type ReportContentModalProps,
+  type ReportContentInput,
+  type ReportContentType,
+  type ReportCategory,
+} from "./design-system/components/moderation";
+
 // Grid layout from design-system
 export { Grid } from "./design-system/templates/Grid";
 

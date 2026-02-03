@@ -88,7 +88,7 @@ Every component in app shell needs:
 
 | # | System | Why This Order | Status |
 |---|--------|----------------|--------|
-| 0 | **Foundation** | APIs broken, routes 404, motion missing | **10/12 DONE** |
+| 0 | **Foundation** | APIs broken, routes 404, motion missing | **COMPLETE** |
 | 1 | **Spaces** | The core. If this works, HIVE works. | **COMPLETE** |
 | 2 | **Entry** | The gate. First impression. | **COMPLETE** |
 | 3 | **Notifications** | Re-engagement loop. | **85% COMPLETE** |
@@ -102,7 +102,7 @@ Every component in app shell needs:
 
 ## Active System
 
-**System 0: Foundation** — 10/12 tasks complete. Remaining: icon standardization, error states.
+**System 0: Foundation** — 12/12 tasks complete. All foundation work done.
 
 ### Foundation Tasks
 
@@ -118,8 +118,8 @@ Every component in app shell needs:
 | 8 | Apply motion to Explore page cards | **DONE** ✓ (stagger + reveal + hover) |
 | 9 | Apply motion to Lab page | **VERIFIED** ✓ (already using tokens) |
 | 10 | Apply motion to Home page | **DONE** ✓ (fixed MOTION.duration.standard) |
-| 11 | Standardize icon system (kill emojis) | NOT STARTED |
-| 12 | Standardize error states | NOT STARTED |
+| 11 | Standardize icon system (kill emojis) | **DONE** ✓ (Lucide icons everywhere) |
+| 12 | Standardize error states | **DONE** ✓ (ErrorBoundary with context-aware messaging) |
 
 ---
 

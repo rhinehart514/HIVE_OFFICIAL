@@ -29,7 +29,7 @@ import {
   ArrivalTransition,
   ArrivalZone,
 } from '@hive/ui/design-system/primitives';
-import { ConfirmDialog } from '@hive/ui';
+import { ConfirmDialog, ReportContentModal, type ReportContentInput } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { useSpaceResidenceState, useKeyboardNav } from './hooks';
 import {
@@ -81,6 +81,11 @@ export default function SpacePageUnified() {
   const [isCreatingBoard, setIsCreatingBoard] = React.useState(false);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
   const [isDeletingBoard, setIsDeletingBoard] = React.useState(false);
+  const [reportModal, setReportModal] = React.useState<{
+    messageId: string;
+    authorName: string;
+    content: string;
+  } | null>(null);
 
   // Detect first entry to this space for ArrivalTransition
   React.useEffect(() => {
@@ -374,6 +379,30 @@ export default function SpacePageUnified() {
     }
   };
 
+  // Handle message reporting
+  const handleReportMessage = (messageId: string, authorName: string, content: string) => {
+    setReportModal({ messageId, authorName, content });
+  };
+
+  // Submit report to API
+  const handleSubmitReport = async (data: ReportContentInput) => {
+    const response = await fetch('/api/content/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...data,
+        spaceId: space?.id,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to submit report');
+    }
+
+    toast.success('Report submitted');
+  };
+
   // Loading state
   if (isLoading) {
     return <SpacePageSkeleton />;
@@ -617,6 +646,7 @@ export default function SpacePageUnified() {
                 }}
                 onDelete={handleDeleteMessage}
                 canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
+                onReport={handleReportMessage}
               />
             )}
           </MainContent>
@@ -891,6 +921,18 @@ export default function SpacePageUnified() {
           onClose={() => setShowModerationPanel(false)}
           spaceId={space.id}
           spaceName={space.name}
+        />
+
+        {/* Report Content Modal */}
+        <ReportContentModal
+          open={!!reportModal}
+          onOpenChange={(open) => !open && setReportModal(null)}
+          contentId={reportModal?.messageId || ''}
+          contentType="message"
+          spaceId={space.id}
+          authorName={reportModal?.authorName}
+          contentPreview={reportModal?.content}
+          onSubmit={handleSubmitReport}
         />
       </motion.div>
     </AnimatePresence>

@@ -1270,6 +1270,19 @@ export type {
 } from './SpacePanel';
 
 // ============================================
+// MODERATION COMPONENTS
+// User-facing moderation interfaces
+// ============================================
+
+export {
+  ReportContentModal,
+  type ReportContentModalProps,
+  type ReportContentInput,
+  type ReportContentType,
+  type ReportCategory,
+} from './moderation';
+
+// ============================================
 // CORE PRIMITIVES - REMOVED (Already exported from primitives/)
 // These were causing duplicate export errors
 // Use: import { Button } from '@hive/ui/design-system/primitives'

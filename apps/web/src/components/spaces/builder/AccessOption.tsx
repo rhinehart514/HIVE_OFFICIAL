@@ -13,6 +13,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { GlassSurface, MOTION } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
+import { Globe, Hand, Lock, type LucideIcon } from 'lucide-react';
 
 export type PrivacyLevel = 'open' | 'approval' | 'invite';
 
@@ -20,7 +21,7 @@ export interface AccessOptionData {
   id: PrivacyLevel;
   name: string;
   description: string;
-  icon: string;
+  icon: LucideIcon;
 }
 
 export interface AccessOptionProps {
@@ -66,7 +67,10 @@ export function AccessOption({ option, selected, onSelect }: AccessOptionProps) 
           </div>
 
           {/* Icon */}
-          <div className="text-xl">{option.icon}</div>
+          <option.icon className={cn(
+            'w-5 h-5',
+            selected ? 'text-[var(--life-gold)]' : 'text-white/60'
+          )} />
 
           {/* Content */}
           <div className="flex-1 min-w-0">
@@ -97,18 +101,18 @@ export const ACCESS_OPTIONS: AccessOptionData[] = [
     id: 'open',
     name: 'Open',
     description: 'Anyone can join without approval',
-    icon: '🌐',
+    icon: Globe,
   },
   {
     id: 'approval',
     name: 'Request to Join',
     description: 'Members need approval to join',
-    icon: '✋',
+    icon: Hand,
   },
   {
     id: 'invite',
     name: 'Invite Only',
     description: 'Only invited members can join',
-    icon: '🔒',
+    icon: Lock,
   },
 ];

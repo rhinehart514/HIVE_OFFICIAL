@@ -215,7 +215,7 @@ export function createHiveProfile(
     },
     // Add default presence for new users
     presence: {
-      vibe: '🌟 New to HIVE',
+      vibe: 'New to HIVE',
       vibeUpdatedAt: new Date(),
       lastActive: new Date(),
       isOnline: true,

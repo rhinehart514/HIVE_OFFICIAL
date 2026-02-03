@@ -55,14 +55,15 @@ export const getTypeColor = (type: CalendarEvent['type']) => {
   }
 };
 
-export const getTypeIcon = (type: CalendarEvent['type']) => {
+/** Returns Lucide icon name for calendar event type - use with dynamic icon rendering */
+export const getTypeIcon = (type: CalendarEvent['type']): string => {
   switch (type) {
-    case 'event': return '🎉';
-    case 'class': return '📚';
-    case 'assignment': return '📝';
-    case 'meeting': return '💼';
-    case 'personal': return '👤';
-    default: return '📅';
+    case 'event': return 'PartyPopper';
+    case 'class': return 'BookOpen';
+    case 'assignment': return 'FileText';
+    case 'meeting': return 'Briefcase';
+    case 'personal': return 'User';
+    default: return 'Calendar';
   }
 };
 

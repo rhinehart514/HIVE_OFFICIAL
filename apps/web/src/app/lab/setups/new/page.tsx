@@ -48,7 +48,19 @@ const CATEGORIES = [
   { id: 'governance', label: 'Governance', icon: Users, color: '#8B5CF6', description: 'Elections, decisions, and member management' },
 ];
 
-const ICONS = ['📅', '🏆', '⚡', '🗳️', '👥', '🎯', '📊', '🔔', '🎪', '📝'];
+// Icon options using Lucide icon names for consistent rendering
+const ICON_OPTIONS = [
+  { name: 'Calendar', icon: Calendar },
+  { name: 'Trophy', icon: Trophy },
+  { name: 'Zap', icon: Sparkles },
+  { name: 'Vote', icon: Vote },
+  { name: 'Users', icon: Users },
+  { name: 'Target', icon: GitBranch },
+  { name: 'BarChart', icon: Layers },
+  { name: 'Bell', icon: AlertCircle },
+  { name: 'Layout', icon: Layers },
+  { name: 'FileText', icon: ArrowRight },
+] as const;
 
 interface FormData {
   name: string;
@@ -67,7 +79,7 @@ export default function NewSetupPage() {
   const [formData, setFormData] = React.useState<FormData>({
     name: '',
     description: '',
-    icon: '📅',
+    icon: 'Calendar',
     category: '',
     tags: [],
   });
@@ -264,19 +276,22 @@ export default function NewSetupPage() {
                     Icon
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {ICONS.map((icon) => (
-                      <button
-                        key={icon}
-                        onClick={() => updateField('icon', icon)}
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all"
-                        style={{
-                          backgroundColor: formData.icon === icon ? `${COLORS.gold}20` : 'transparent',
-                          border: `1px solid ${formData.icon === icon ? COLORS.gold : COLORS.border}`,
-                        }}
-                      >
-                        {icon}
-                      </button>
-                    ))}
+                    {ICON_OPTIONS.map((opt) => {
+                      const IconComponent = opt.icon;
+                      return (
+                        <button
+                          key={opt.name}
+                          onClick={() => updateField('icon', opt.name)}
+                          className="w-10 h-10 rounded-lg flex items-center justify-center transition-all"
+                          style={{
+                            backgroundColor: formData.icon === opt.name ? `${COLORS.gold}20` : 'transparent',
+                            border: `1px solid ${formData.icon === opt.name ? COLORS.gold : COLORS.border}`,
+                          }}
+                        >
+                          <IconComponent className="h-5 w-5" style={{ color: formData.icon === opt.name ? COLORS.gold : COLORS.textSecondary }} />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </motion.div>
@@ -396,7 +411,10 @@ export default function NewSetupPage() {
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{formData.icon}</span>
+                      {(() => {
+                        const IconComp = ICON_OPTIONS.find(o => o.name === formData.icon)?.icon || Calendar;
+                        return <IconComp className="h-6 w-6" style={{ color: COLORS.gold }} />;
+                      })()}
                       <span className="font-medium" style={{ color: COLORS.text }}>{formData.name}</span>
                     </div>
                     <p style={{ color: COLORS.textSecondary }}>{formData.description}</p>

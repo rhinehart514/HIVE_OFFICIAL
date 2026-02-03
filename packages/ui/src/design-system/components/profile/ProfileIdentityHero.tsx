@@ -14,7 +14,8 @@
  */
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MoreHorizontal, Flag } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { ConnectButton, type ConnectionState } from './ConnectButton';
 
@@ -54,6 +55,7 @@ export interface ProfileIdentityHeroProps {
   onRejectRequest?: (requestId: string) => Promise<void>;
   onUnfriend?: () => Promise<void>;
   onMessage?: () => void;
+  onReport?: () => void;
   className?: string;
 }
 
@@ -88,10 +90,12 @@ export function ProfileIdentityHero({
   onRejectRequest,
   onUnfriend,
   onMessage,
+  onReport,
   className,
 }: ProfileIdentityHeroProps) {
   const initials = getInitials(user.fullName);
   const [imageLoaded, setImageLoaded] = React.useState(false);
+  const [showMoreMenu, setShowMoreMenu] = React.useState(false);
 
   // Build credentials string
   const credentials: string[] = [];
@@ -290,6 +294,65 @@ export function ProfileIdentityHero({
                     >
                       Message
                     </motion.button>
+                  )}
+
+                  {/* More options (Report) */}
+                  {onReport && (
+                    <div className="relative">
+                      <motion.button
+                        onClick={() => setShowMoreMenu(!showMoreMenu)}
+                        className="p-2.5 rounded-full transition-colors"
+                        style={{
+                          backgroundColor: 'transparent',
+                          color: 'var(--text-tertiary)',
+                        }}
+                        whileHover={{
+                          backgroundColor: 'rgba(255,255,255,0.06)',
+                        }}
+                        whileTap={{ opacity: 0.8 }}
+                        aria-label="More options"
+                      >
+                        <MoreHorizontal className="w-5 h-5" />
+                      </motion.button>
+
+                      <AnimatePresence>
+                        {showMoreMenu && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setShowMoreMenu(false)}
+                            />
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className={cn(
+                                'absolute right-0 top-full mt-2 z-20',
+                                'bg-[#1a1a1b] border border-white/[0.08] rounded-xl shadow-lg',
+                                'py-1 min-w-[140px]'
+                              )}
+                            >
+                              <button
+                                onClick={() => {
+                                  onReport();
+                                  setShowMoreMenu(false);
+                                }}
+                                className={cn(
+                                  'w-full px-4 py-2 text-left text-sm',
+                                  'text-white/60 hover:text-white hover:bg-white/[0.06]',
+                                  'flex items-center gap-2'
+                                )}
+                                data-testid="report-profile-button"
+                              >
+                                <Flag className="w-4 h-4" />
+                                Report Profile
+                              </button>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   )}
                 </>
               )}
