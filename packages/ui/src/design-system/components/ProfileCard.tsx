@@ -12,6 +12,7 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { cn } from '../../lib/utils';
 import {
   Card,
@@ -502,7 +503,7 @@ const ProfileCardFull: React.FC<ProfileCardFullProps> = ({
             className="w-36 h-48 flex items-center justify-center overflow-hidden"
           >
             {avatar ? (
-              <img src={avatar} alt={name} className="w-full h-full object-cover" />
+              <Image src={avatar} alt={name} width={144} height={192} className="object-cover" sizes="144px" />
             ) : (
               <Text size="lg" className="text-4xl text-white/40">
                 {initials}

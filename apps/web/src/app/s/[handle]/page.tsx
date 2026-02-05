@@ -16,6 +16,7 @@
  */
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -29,17 +30,13 @@ import {
   ArrivalTransition,
   ArrivalZone,
 } from '@hive/ui/design-system/primitives';
-import { ConfirmDialog, ReportContentModal, type ReportContentInput } from '@hive/ui';
+import { toast, type ReportContentInput } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { useSpaceResidenceState, useKeyboardNav } from './hooks';
 import {
   SpaceHeader,
   SpaceThreshold,
   ChatInput,
-  BoardCreationModal,
-  MembersList,
-  SpaceSettings,
-  SpaceInfoDrawer,
   BoardEmptyState,
   getBoardType,
   SpaceLayout,
@@ -47,22 +44,60 @@ import {
   MainContent,
   MessageFeed,
   TypingIndicator,
-  ModerationPanel,
   type Member,
   type Board,
   type OnlineMember,
 } from './components';
 import { useTypingIndicator } from '@/hooks/use-presence';
 import { GatheringThreshold } from './components/threshold';
-import { ThreadPanel } from './components/feed/thread-panel';
-import { SearchOverlay } from './components/search-overlay';
 import {
   BoardsSidebar,
   UnifiedActivityFeed,
   type FeedItem,
 } from '@/components/spaces';
-import { CreateEventModal, type CreateEventData } from '@/components/events/create-event-modal';
-import { toast } from '@hive/ui';
+import type { CreateEventData } from '@/components/events/create-event-modal';
+
+// Dynamic imports — conditionally rendered components (modals, drawers, panels, overlays)
+const BoardCreationModal = dynamic(() =>
+  import('./components/board-creation-modal').then(m => ({ default: m.BoardCreationModal })),
+  { ssr: false }
+);
+const MembersList = dynamic(() =>
+  import('./components/members-list').then(m => ({ default: m.MembersList })),
+  { ssr: false }
+);
+const SpaceSettings = dynamic(() =>
+  import('./components/space-settings').then(m => ({ default: m.SpaceSettings })),
+  { ssr: false }
+);
+const SpaceInfoDrawer = dynamic(() =>
+  import('./components/space-info-drawer').then(m => ({ default: m.SpaceInfoDrawer })),
+  { ssr: false }
+);
+const ModerationPanel = dynamic(() =>
+  import('./components/moderation-panel').then(m => ({ default: m.ModerationPanel })),
+  { ssr: false }
+);
+const ThreadPanel = dynamic(() =>
+  import('./components/feed/thread-panel').then(m => ({ default: m.ThreadPanel })),
+  { ssr: false }
+);
+const SearchOverlay = dynamic(() =>
+  import('./components/search-overlay').then(m => ({ default: m.SearchOverlay })),
+  { ssr: false }
+);
+const CreateEventModal = dynamic(() =>
+  import('@/components/events/create-event-modal').then(m => ({ default: m.CreateEventModal })),
+  { ssr: false }
+);
+const ConfirmDialog = dynamic(() =>
+  import('@hive/ui').then(m => ({ default: m.ConfirmDialog })),
+  { ssr: false }
+);
+const ReportContentModal = dynamic(() =>
+  import('@hive/ui').then(m => ({ default: m.ReportContentModal })),
+  { ssr: false }
+);
 
 export default function SpacePageUnified() {
   const params = useParams();
@@ -135,6 +170,78 @@ export default function SpacePageUnified() {
 
   // Permissions hook for message deletion
   const { canDeleteMessage } = usePermissions(space?.id, user?.id);
+
+  // Space mute state
+  const [isSpaceMuted, setIsSpaceMuted] = React.useState(false);
+
+  // Load mute state from notification preferences
+  React.useEffect(() => {
+    if (!user || !space?.id) return;
+
+    const loadMuteState = async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch('/api/profile/notifications/preferences', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const prefs = await res.json();
+          const spaceSetting = prefs?.spaceSettings?.[space.id];
+          if (spaceSetting?.muted) {
+            // Check if muteUntil has expired
+            if (spaceSetting.muteUntil) {
+              const muteEnd = new Date(spaceSetting.muteUntil);
+              setIsSpaceMuted(muteEnd > new Date());
+            } else {
+              setIsSpaceMuted(true);
+            }
+          } else {
+            setIsSpaceMuted(false);
+          }
+        }
+      } catch {
+        // Non-critical - default to unmuted
+      }
+    };
+
+    loadMuteState();
+  }, [user, space?.id]);
+
+  const handleMuteChange = React.useCallback(async (muteUntil: string | null) => {
+    if (!user || !space?.id) return;
+
+    const newMuted = muteUntil !== null;
+    setIsSpaceMuted(newMuted);
+
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('/api/profile/notifications/preferences', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          spaceSettings: {
+            [space.id]: {
+              muted: newMuted,
+              muteUntil: muteUntil,
+            },
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        setIsSpaceMuted(!newMuted); // Revert on failure
+        toast.error('Failed to update notification settings');
+      } else {
+        toast.success(newMuted ? 'Notifications muted' : 'Notifications unmuted');
+      }
+    } catch {
+      setIsSpaceMuted(!newMuted);
+      toast.error('Failed to update notification settings');
+    }
+  }, [user, space?.id]);
 
   // Typing indicator hook - contextId is spaceId/boardId for per-board tracking
   const typingContextId = space?.id && activeBoard ? `${space.id}/${activeBoard}` : '';
@@ -626,6 +733,8 @@ export default function SpacePageUnified() {
                 onCreateEventClick={() => setShowEventModal(true)}
                 onModerationClick={() => setShowModerationPanel(true)}
                 canModerate={space.isLeader || space.userRole === 'moderator' || space.userRole === 'admin'}
+                isMuted={isSpaceMuted}
+                onMuteChange={handleMuteChange}
                 className="w-full border-b-0"
               />
             </div>

@@ -48,7 +48,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+    const campusId = user.email ? deriveCampusFromEmail(user.email) : undefined;
+    if (!campusId) {
+      return NextResponse.json(ApiResponseHelper.error("Campus identification required", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
+    }
 
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 30);

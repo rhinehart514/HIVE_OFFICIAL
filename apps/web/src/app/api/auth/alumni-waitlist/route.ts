@@ -58,7 +58,13 @@ export async function POST(request: NextRequest) {
     }
 
     const { spaces } = validation.data;
-    const campusId = session.campusId || 'ub-buffalo';
+    if (!session.campusId) {
+      return NextResponse.json(
+        ApiResponseHelper.error('Campus identification required', 'UNAUTHORIZED'),
+        { status: HttpStatus.UNAUTHORIZED }
+      );
+    }
+    const campusId = session.campusId;
 
     // Store in Firestore
     if (isFirebaseConfigured) {

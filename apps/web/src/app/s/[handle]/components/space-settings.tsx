@@ -4,9 +4,10 @@
  * SpaceSettings - Space configuration panel
  * CREATED: Jan 21, 2026
  * UPDATED: Jan 25, 2026 - Added board management, invite links
+ * UPDATED: Feb 3, 2026 - Added Moderation, Join Requests, Analytics tabs
  *
  * Settings panel for space leaders to manage their space.
- * Sections: General, Members, Boards, Danger Zone
+ * Sections: General, Contact, Members, Moderation, Requests, Boards, Automations, Analytics, Danger Zone
  */
 
 import * as React from 'react';
@@ -31,12 +32,23 @@ import {
   ChevronDown,
   Check,
   Loader2,
+  Shield,
+  UserCheck,
+  BarChart3,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Inbox,
+  Wrench,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Text, Button, toast, ConfirmDialog, AutomationsPanel, AutomationBuilderModal, type AutomationItem, type AutomationData } from '@hive/ui';
+import { Text, Button, toast, ConfirmDialog, AutomationsPanel, AutomationBuilderModal, Avatar, AvatarImage, AvatarFallback, getInitials, AddWidgetModal, type AutomationItem, type AutomationData, type AddWidgetInputUI, type QuickTemplateUI, type ExistingTool } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 import { InviteLinkModal } from '@/components/spaces/invite-link-modal';
 import { MemberManagement } from './member-management';
+import { ModerationPanel } from './moderation-panel';
+import { AnalyticsPanel } from './analytics-panel';
 
 interface Board {
   id: string;
@@ -82,7 +94,7 @@ interface SpaceSettingsProps {
 }
 
 export function SpaceSettings({ space, boards = [], isLeader = false, currentUserId, currentUserRole = 'member', onUpdate, onDelete, onLeave, onBoardDelete, onBoardUpdate, onTransferOwnership, className }: SpaceSettingsProps) {
-  const [activeSection, setActiveSection] = React.useState<'general' | 'contact' | 'members' | 'boards' | 'automations' | 'danger'>('general');
+  const [activeSection, setActiveSection] = React.useState<'general' | 'contact' | 'members' | 'moderation' | 'requests' | 'boards' | 'tools' | 'automations' | 'analytics' | 'danger'>('general');
   const [isSaving, setIsSaving] = React.useState(false);
   const [isLeaving, setIsLeaving] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -97,6 +109,32 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
   const [showAutomationBuilder, setShowAutomationBuilder] = React.useState(false);
   const [showTemplates, setShowTemplates] = React.useState(false);
   const [editingAutomation, setEditingAutomation] = React.useState<AutomationData | null>(null);
+
+  // Moderation panel state
+  const [showModerationPanel, setShowModerationPanel] = React.useState(false);
+
+  // Analytics panel state
+  const [showAnalyticsPanel, setShowAnalyticsPanel] = React.useState(false);
+
+  // Tools state
+  const [showAddToolModal, setShowAddToolModal] = React.useState(false);
+  const [spaceTools, setSpaceTools] = React.useState<ExistingTool[]>([]);
+  const [spaceToolsLoading, setSpaceToolsLoading] = React.useState(false);
+
+  // Join requests state
+  const [joinRequests, setJoinRequests] = React.useState<Array<{
+    id: string;
+    userId: string;
+    status: string;
+    message?: string;
+    createdAt: string | null;
+    user: { id: string; displayName: string; handle?: string; avatarUrl?: string } | null;
+  }>>([]);
+  const [joinRequestsLoading, setJoinRequestsLoading] = React.useState(false);
+  const [joinRequestActionId, setJoinRequestActionId] = React.useState<string | null>(null);
+
+  const isAdminOrOwner = currentUserRole === 'owner' || currentUserRole === 'admin';
+  const isModeratorOrAbove = isAdminOrOwner || currentUserRole === 'moderator';
 
   // Transfer ownership state
   const isOwner = currentUserRole === 'owner';
@@ -239,6 +277,62 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
     setEditingBoardId(null);
   };
 
+  // Fetch space tools when section is active
+  React.useEffect(() => {
+    if (activeSection === 'tools' && isLeader && spaceTools.length === 0) {
+      setSpaceToolsLoading(true);
+      fetch(`/api/spaces/${space.id}/tools`, { credentials: 'include' })
+        .then(res => res.ok ? res.json() : { tools: [] })
+        .then(data => {
+          const tools = data.data?.tools || data.tools || [];
+          setSpaceTools(tools.map((t: { id: string; name: string; description?: string; emoji?: string }) => ({
+            id: t.id,
+            name: t.name,
+            description: t.description,
+            icon: t.emoji,
+          })));
+        })
+        .catch(() => setSpaceTools([]))
+        .finally(() => setSpaceToolsLoading(false));
+    }
+  }, [activeSection, isLeader, space.id, spaceTools.length]);
+
+  const handleQuickDeploy = async (template: QuickTemplateUI) => {
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/tools`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ templateId: template.id, name: template.name }),
+      });
+      if (!response.ok) throw new Error('Failed to deploy tool');
+      const data = await response.json();
+      const newTool = data.data?.tool || data.tool;
+      if (newTool) {
+        setSpaceTools(prev => [...prev, { id: newTool.id, name: newTool.name, description: newTool.description, icon: newTool.emoji }]);
+      }
+      toast.success('Tool deployed', `"${template.name}" has been added to your space`);
+    } catch {
+      toast.error('Failed to deploy tool', 'Please try again');
+    }
+  };
+
+  const handleDeployExistingTool = async (toolId: string) => {
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/tools/deploy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ toolId }),
+      });
+      if (!response.ok) throw new Error('Failed to deploy tool');
+      toast.success('Tool deployed to space');
+      setSpaceTools([]);
+    } catch {
+      toast.error('Failed to deploy tool', 'Please try again');
+    }
+  };
+
   // Fetch automations when section is active
   React.useEffect(() => {
     if (activeSection === 'automations' && isLeader && automations.length === 0) {
@@ -278,6 +372,73 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
       toast.error('Failed to save automation');
       throw new Error('Failed to save automation');
     }
+  };
+
+  // Fetch join requests when section is active
+  const fetchJoinRequests = React.useCallback(async () => {
+    setJoinRequestsLoading(true);
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/join-requests?status=pending`, { credentials: 'include' });
+      if (response.ok) {
+        const data = await response.json();
+        setJoinRequests(data.data?.requests || []);
+      } else {
+        setJoinRequests([]);
+      }
+    } catch {
+      setJoinRequests([]);
+    } finally {
+      setJoinRequestsLoading(false);
+    }
+  }, [space.id]);
+
+  const spaceIsPrivate = !(space.isPublic ?? true);
+
+  React.useEffect(() => {
+    if (activeSection === 'requests' && isModeratorOrAbove && spaceIsPrivate) {
+      fetchJoinRequests();
+    }
+  }, [activeSection, isModeratorOrAbove, spaceIsPrivate, fetchJoinRequests]);
+
+  // Handle join request approval/rejection
+  const handleJoinRequestAction = async (requestId: string, action: 'approve' | 'reject') => {
+    setJoinRequestActionId(requestId);
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/join-requests`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ requestId, action }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Action failed');
+      }
+
+      toast.success(
+        action === 'approve' ? 'Request approved' : 'Request declined',
+        action === 'approve' ? 'Member has been added to the space' : 'The request has been declined'
+      );
+
+      // Remove from local list
+      setJoinRequests(prev => prev.filter(r => r.id !== requestId));
+    } catch {
+      toast.error('Action failed', 'Please try again');
+    } finally {
+      setJoinRequestActionId(null);
+    }
+  };
+
+  // Handle moderation nav click - open panel as overlay
+  const handleModerationNavClick = () => {
+    setActiveSection('moderation');
+    setShowModerationPanel(true);
+  };
+
+  // Handle analytics nav click - open panel as overlay
+  const handleAnalyticsNavClick = () => {
+    setActiveSection('analytics');
+    setShowAnalyticsPanel(true);
   };
 
   // Form state - General
@@ -367,6 +528,22 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             icon={<Users className="w-4 h-4" />}
             label="Members"
           />
+          {isModeratorOrAbove && (
+            <SettingsNavItem
+              active={activeSection === 'moderation'}
+              onClick={handleModerationNavClick}
+              icon={<Shield className="w-4 h-4" />}
+              label="Moderation"
+            />
+          )}
+          {isModeratorOrAbove && !(space.isPublic ?? true) && (
+            <SettingsNavItem
+              active={activeSection === 'requests'}
+              onClick={() => setActiveSection('requests')}
+              icon={<UserCheck className="w-4 h-4" />}
+              label="Requests"
+            />
+          )}
           <SettingsNavItem
             active={activeSection === 'boards'}
             onClick={() => setActiveSection('boards')}
@@ -375,10 +552,26 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
           />
           {isLeader && (
             <SettingsNavItem
+              active={activeSection === 'tools'}
+              onClick={() => setActiveSection('tools')}
+              icon={<Wrench className="w-4 h-4" />}
+              label="Tools"
+            />
+          )}
+          {isLeader && (
+            <SettingsNavItem
               active={activeSection === 'automations'}
               onClick={() => setActiveSection('automations')}
               icon={<Zap className="w-4 h-4" />}
               label="Automations"
+            />
+          )}
+          {isAdminOrOwner && (
+            <SettingsNavItem
+              active={activeSection === 'analytics'}
+              onClick={handleAnalyticsNavClick}
+              icon={<BarChart3 className="w-4 h-4" />}
+              label="Analytics"
             />
           )}
           <SettingsNavItem
@@ -593,6 +786,192 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                   currentUserRole={currentUserRole}
                 />
               )}
+            </>
+          )}
+
+          {activeSection === 'moderation' && isModeratorOrAbove && (
+            <>
+              <h2
+                className="text-title-lg font-semibold text-white mb-2"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                Moderation
+              </h2>
+              <Text size="sm" tone="muted" className="mb-8">
+                Review flagged content and manage community guidelines
+              </Text>
+
+              <div
+                className="p-6 rounded-xl bg-white/[0.02] border border-white/[0.06] cursor-pointer hover:bg-white/[0.04] transition-colors"
+                onClick={() => setShowModerationPanel(true)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-white/[0.04]">
+                    <Shield className="w-6 h-6 text-white/60" />
+                  </div>
+                  <div className="flex-1">
+                    <Text weight="medium" className="mb-1">Open Moderation Queue</Text>
+                    <Text size="sm" tone="muted">
+                      Review and act on flagged or hidden content in your space
+                    </Text>
+                  </div>
+                  <ChevronDown className="w-5 h-5 text-white/30 -rotate-90" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeSection === 'requests' && isModeratorOrAbove && spaceIsPrivate && (
+            <>
+              <h2
+                className="text-title-lg font-semibold text-white mb-2"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                Join Requests
+              </h2>
+              <Text size="sm" tone="muted" className="mb-8">
+                Review and manage pending membership requests
+              </Text>
+
+              {joinRequestsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-white/40" />
+                </div>
+              ) : joinRequests.length === 0 ? (
+                <div className="text-center py-12 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                  <Inbox className="w-10 h-10 mx-auto mb-4 text-white/20" />
+                  <Text weight="medium" className="text-white/60 mb-1">
+                    No pending requests
+                  </Text>
+                  <Text size="sm" tone="muted">
+                    New join requests from prospective members will appear here
+                  </Text>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Text size="xs" weight="medium" className="uppercase tracking-wider text-white/40 px-1">
+                    Pending ({joinRequests.length})
+                  </Text>
+                  {joinRequests.map((request) => {
+                    const isProcessing = joinRequestActionId === request.id;
+                    return (
+                      <motion.div
+                        key={request.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2, ease: MOTION.ease.premium }}
+                        className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar size="default">
+                            {request.user?.avatarUrl && (
+                              <AvatarImage src={request.user.avatarUrl} />
+                            )}
+                            <AvatarFallback>
+                              {request.user ? getInitials(request.user.displayName) : '?'}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="flex-1 min-w-0">
+                            <Text size="sm" weight="medium" className="truncate">
+                              {request.user?.displayName || 'Unknown User'}
+                            </Text>
+                            {request.user?.handle && (
+                              <Text size="xs" tone="muted" className="font-mono truncate">
+                                @{request.user.handle}
+                              </Text>
+                            )}
+                            {request.createdAt && (
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <Clock className="w-3 h-3 text-white/30" />
+                                <Text size="xs" tone="muted">
+                                  {new Date(request.createdAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                  })}
+                                </Text>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleJoinRequestAction(request.id, 'reject')}
+                              disabled={isProcessing}
+                              className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
+                            >
+                              {isProcessing && joinRequestActionId === request.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <XCircle className="w-4 h-4 mr-1.5" />
+                              )}
+                              Decline
+                            </Button>
+                            <Button
+                              variant="cta"
+                              size="sm"
+                              onClick={() => handleJoinRequestAction(request.id, 'approve')}
+                              disabled={isProcessing}
+                            >
+                              {isProcessing && joinRequestActionId === request.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                              ) : (
+                                <CheckCircle className="w-4 h-4 mr-1.5" />
+                              )}
+                              Approve
+                            </Button>
+                          </div>
+                        </div>
+
+                        {request.message && (
+                          <div className="mt-3 p-3 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+                            <Text size="xs" tone="muted" className="mb-1">Message</Text>
+                            <Text size="sm" className="text-white/70">
+                              {request.message}
+                            </Text>
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeSection === 'analytics' && isAdminOrOwner && (
+            <>
+              <h2
+                className="text-title-lg font-semibold text-white mb-2"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                Analytics
+              </h2>
+              <Text size="sm" tone="muted" className="mb-8">
+                Understand your space's growth and engagement
+              </Text>
+
+              <div
+                className="p-6 rounded-xl bg-white/[0.02] border border-white/[0.06] cursor-pointer hover:bg-white/[0.04] transition-colors"
+                onClick={() => setShowAnalyticsPanel(true)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-white/[0.04]">
+                    <BarChart3 className="w-6 h-6 text-white/60" />
+                  </div>
+                  <div className="flex-1">
+                    <Text weight="medium" className="mb-1">Open Analytics Dashboard</Text>
+                    <Text size="sm" tone="muted">
+                      View member growth, engagement metrics, and activity insights
+                    </Text>
+                  </div>
+                  <ChevronDown className="w-5 h-5 text-white/30 -rotate-90" />
+                </div>
+              </div>
             </>
           )}
 
@@ -933,6 +1312,99 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                 <Text size="sm" tone="muted" className="mt-4">
                   Only space leaders can manage boards
                 </Text>
+              )}
+            </>
+          )}
+
+          {activeSection === 'tools' && isLeader && (
+            <>
+              <h2
+                className="text-title-lg font-semibold text-white mb-2"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                Tools
+              </h2>
+              <Text size="sm" tone="muted" className="mb-8">
+                Add interactive tools to engage your members
+              </Text>
+
+              {/* Deployed tools list */}
+              {spaceToolsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-white/40" />
+                </div>
+              ) : spaceTools.length === 0 ? (
+                <div className="text-center py-12 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                  <Wrench className="w-10 h-10 mx-auto mb-4 text-white/20" />
+                  <Text weight="medium" className="text-white/60 mb-1">
+                    No tools deployed yet
+                  </Text>
+                  <Text size="sm" tone="muted" className="mb-6 max-w-sm mx-auto">
+                    Add polls, sign-ups, countdowns, and more to make your space interactive.
+                  </Text>
+                  <div className="flex items-center justify-center gap-3">
+                    <Button
+                      variant="cta"
+                      size="default"
+                      onClick={() => setShowAddToolModal(true)}
+                    >
+                      <Wrench className="w-4 h-4 mr-2" />
+                      Add Tool
+                    </Button>
+                    <a
+                      href={`/lab?space=${space.handle}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white/60 hover:text-white/80 transition-colors"
+                    >
+                      Open HiveLab
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Text size="sm" weight="medium" tone="muted">
+                      {spaceTools.length} {spaceTools.length === 1 ? 'tool' : 'tools'} deployed
+                    </Text>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAddToolModal(true)}
+                    >
+                      <Wrench className="w-3 h-3 mr-1.5" />
+                      Add
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {spaceTools.map((tool) => (
+                      <div
+                        key={tool.id}
+                        className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-3"
+                      >
+                        <span className="text-xl">{tool.icon || '🔧'}</span>
+                        <div className="flex-1 min-w-0">
+                          <Text size="sm" weight="medium" className="truncate">
+                            {tool.name}
+                          </Text>
+                          {tool.description && (
+                            <Text size="xs" tone="muted" className="truncate">
+                              {tool.description}
+                            </Text>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-4 border-t border-white/[0.06]">
+                    <a
+                      href={`/lab?space=${space.handle}`}
+                      className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/60 transition-colors"
+                    >
+                      Build custom tools in HiveLab
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
               )}
             </>
           )}
@@ -1312,6 +1784,36 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
           mode={editingAutomation ? 'edit' : 'create'}
         />
       )}
+
+      {/* Moderation Panel Overlay */}
+      <ModerationPanel
+        isOpen={showModerationPanel}
+        onClose={() => setShowModerationPanel(false)}
+        spaceId={space.id}
+        spaceName={space.name}
+      />
+
+      {/* Analytics Panel Overlay */}
+      <AnalyticsPanel
+        isOpen={showAnalyticsPanel}
+        onClose={() => setShowAnalyticsPanel(false)}
+        spaceId={space.id}
+      />
+
+      {/* Add Tool Modal */}
+      <AddWidgetModal
+        open={showAddToolModal}
+        onClose={() => setShowAddToolModal(false)}
+        onOpenChange={setShowAddToolModal}
+        onQuickDeploy={handleQuickDeploy}
+        userTools={spaceTools}
+        isLoadingTools={spaceToolsLoading}
+        onDeployExistingTool={handleDeployExistingTool}
+        onOpenHiveLab={() => {
+          setShowAddToolModal(false);
+          window.location.href = `/lab?space=${space.handle}`;
+        }}
+      />
 
       {/* Automation Templates Picker */}
       {showTemplates && (

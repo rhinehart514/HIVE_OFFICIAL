@@ -328,6 +328,15 @@ export const POST = withAuthValidationAndErrors(
       });
     });
 
+    // Detect @mentions and create notifications (non-blocking)
+    processMentions(spaceId, messageId, data.content, userId, data.boardId).catch(err => {
+      logger.warn('Mention processing failed', {
+        error: err instanceof Error ? err.message : String(err),
+        spaceId,
+        messageId,
+      });
+    });
+
     return respond.success({
       message: "Message sent",
       messageId,
@@ -335,6 +344,105 @@ export const POST = withAuthValidationAndErrors(
     }, { status: 201 });
   }
 );
+
+/**
+ * Parse @mentions from message text and create notifications for mentioned users.
+ * Only notifies users who are members of the space and not the sender.
+ */
+async function processMentions(
+  spaceId: string,
+  messageId: string,
+  content: string,
+  senderId: string,
+  boardId: string
+): Promise<void> {
+  // Extract unique handles from @mentions
+  const mentionRegex = /@(\w+)/g;
+  const handles = new Set<string>();
+  let match;
+  while ((match = mentionRegex.exec(content)) !== null) {
+    handles.add(match[1].toLowerCase());
+  }
+
+  if (handles.size === 0) return;
+
+  const { createNotification } = await import('@/lib/notification-service');
+
+  // Look up sender profile for notification text
+  const senderDoc = await dbAdmin.collection('profiles').doc(senderId).get();
+  const senderName = senderDoc.exists
+    ? (senderDoc.data()?.displayName || 'Someone')
+    : 'Someone';
+
+  // Look up space info for notification metadata
+  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+  const spaceData = spaceDoc.exists ? spaceDoc.data() : null;
+  const spaceName = spaceData?.name || 'a space';
+  const spaceHandle = spaceData?.handle || spaceId;
+
+  // Get all space member user IDs for membership checks
+  const membersSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('isActive', '==', true)
+    .get();
+
+  const memberUserIds = new Set(membersSnapshot.docs.map(d => d.data().userId));
+
+  // For each handle, look up the user and create a notification
+  for (const handle of handles) {
+    try {
+      // Find user by handle
+      const userQuery = await dbAdmin
+        .collection('profiles')
+        .where('handle', '==', handle)
+        .limit(1)
+        .get();
+
+      if (userQuery.empty) continue;
+
+      const mentionedUserId = userQuery.docs[0].id;
+
+      // Skip self-mentions
+      if (mentionedUserId === senderId) continue;
+
+      // Skip if not a member of the space
+      if (!memberUserIds.has(mentionedUserId)) continue;
+
+      await createNotification({
+        userId: mentionedUserId,
+        type: 'mention',
+        category: 'social',
+        title: `${senderName} mentioned you`,
+        body: content.substring(0, 100),
+        actionUrl: `/s/${spaceHandle}`,
+        metadata: {
+          spaceId,
+          spaceName,
+          actorId: senderId,
+          actorName: senderName,
+          messageId,
+          boardId,
+        },
+      });
+
+      logger.info('Mention notification created', {
+        mentionedUserId,
+        senderId,
+        spaceId,
+        messageId,
+        handle,
+      });
+    } catch (error) {
+      logger.warn('Failed to process mention', {
+        handle,
+        error: error instanceof Error ? error.message : String(error),
+        spaceId,
+        messageId,
+      });
+    }
+  }
+}
 
 /**
  * Trigger keyword-based automations for a message

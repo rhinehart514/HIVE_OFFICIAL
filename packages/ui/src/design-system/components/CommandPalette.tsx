@@ -41,7 +41,28 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
+import { commandPaletteOverlay, commandPaletteContent } from '../../lib/motion-variants';
+
+// ============================================
+// CVA VARIANTS
+// ============================================
+
+const commandItemVariants = cva(
+  'relative flex w-full items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 cursor-pointer',
+  {
+    variants: {
+      variant: {
+        default: 'hover:bg-white/[0.04]',
+        featured: 'bg-white/[0.02] hover:bg-white/[0.06]',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
 
 // ============================================
 // TYPES
@@ -285,10 +306,10 @@ export const CommandPalette = React.forwardRef<HTMLDivElement, CommandPalettePro
           <>
             {/* Backdrop - Apple/OpenAI frosted glass */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              variants={commandPaletteOverlay}
+              initial="initial"
+              animate="animate"
+              exit="exit"
               className="fixed inset-0 z-50"
               style={{
                 background: 'rgba(0, 0, 0, 0.6)',
@@ -301,10 +322,10 @@ export const CommandPalette = React.forwardRef<HTMLDivElement, CommandPalettePro
             {/* Palette */}
             <motion.div
               ref={ref}
-              initial={{ opacity: 0, scale: 0.95, y: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -20 }}
-              transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+              variants={commandPaletteContent}
+              initial="initial"
+              animate="animate"
+              exit="exit"
               className={cn(
                 'fixed left-1/2 top-[20%] z-50 w-full max-w-xl -translate-x-1/2',
                 className
@@ -392,11 +413,8 @@ export const CommandPalette = React.forwardRef<HTMLDivElement, CommandPalettePro
                               onClick={() => handleSelect(item)}
                               onMouseEnter={() => setSelectedIndex(globalIndex)}
                               className={cn(
-                                'flex w-full items-center gap-3 px-4 py-2.5 text-left',
-                                'transition-all duration-150',
-                                isSelected
-                                  ? 'bg-[var(--color-bg-hover)]'
-                                  : 'hover:bg-[var(--color-bg-hover)]/50'
+                                commandItemVariants({ variant: item.featured ? 'featured' : 'default' }),
+                                isSelected && 'bg-[var(--color-bg-hover)]'
                               )}
                               style={isSelected ? {
                                 boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.04)',

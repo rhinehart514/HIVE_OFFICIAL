@@ -202,7 +202,7 @@
   }
 
   .glass-subtle {
-    background: rgba(20, 19, 18, 0.6);
+    background: var(--glass-bg);
     backdrop-filter: blur(var(--blur-subtle));
     -webkit-backdrop-filter: blur(var(--blur-subtle));
   }

@@ -1,72 +1,60 @@
 'use client';
 
 /**
- * /home — Unified Dashboard (Home)
+ * /home — Activity Stream
  *
- * Merged Feed + Spaces into single unified experience.
- * This is the primary landing after authentication.
+ * Single-column focused home page. Replaces the 6-section dashboard
+ * with a clean activity stream that answers "what should I do?"
  *
- * Sections (priority order):
- * 1. Today (events + unread messages) — PRIMARY
- * 2. Your Spaces (navigation tiles with activity dots) — SECONDARY
- * 3. Recent Activity (cross-space activity feed) — SECONDARY
- * 4. This Week (upcoming events) — SECONDARY
- * 5. Your Creations (HiveLab tools) — TERTIARY
- * 6. Discover (recommendations) — TERTIARY
+ * Sections (in order):
+ * 1. Greeting header with today's date
+ * 2. Happening Now — active users across spaces (if any)
+ * 3. Up Next — next event within 24 hours (if any)
+ * 4. Your Spaces — grid with unread badges, online counts
+ * 5. Recent Activity — last 10 activities across spaces
+ * 6. Suggested — one space recommendation (once per day)
  *
- * Includes welcome overlay for first-time users from /spaces.
+ * New users (0 spaces): greeting + empty state + recommendations
  *
- * @version 1.0.0 - IA Unification (Jan 2026)
+ * @version 2.0.0 - Activity Stream redesign (Feb 2026)
  */
 
 import * as React from 'react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@hive/auth-logic';
 import {
-  ArrowRight,
   Calendar,
   MessageCircle,
-  Wrench,
-  Sparkles,
-  Building2,
   UserPlus,
   CalendarPlus,
   Package,
+  Users,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 import {
-  Tilt,
   GlassSurface,
   GradientText,
   Badge,
+  Button,
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  getInitials,
 } from '@hive/ui/design-system/primitives';
-import { MOTION, staggerContainerVariants, revealVariants, cardHoverVariants } from '@hive/tokens';
+import {
+  MOTION,
+  staggerContainerVariants,
+  revealVariants,
+  cardHoverVariants,
+} from '@hive/tokens';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
-
-// Feed components (shared)
-import { FeedEmptyState } from '../feed/components/FeedEmptyState';
-import { DensityToggle } from '../feed/components/DensityToggle';
-import { useFeedDensity } from '../feed/hooks/useFeedDensity';
-import {
-  FEED_HIERARCHY,
-  SECTION_PRIORITY,
-  SECTION_DELAYS,
-  type FeedSection,
-} from '../feed/feed-tokens';
-
-// Event card from space components
-import { EventCard, type EventCardEvent } from '../s/[handle]/components/feed/event-card';
-
-// Welcome overlay for first-time users
-import { WelcomeOverlay } from '../spaces/components/WelcomeOverlay';
-
-// Storage keys
-const STORAGE_KEY_WELCOME = 'hive-welcome-completed';
-const STORAGE_KEY_ENTRY_DATE = 'hive-entry-completed-at';
-const ONBOARDING_DAYS = 7;
+import { queryKeys } from '@/lib/query-keys';
 
 // ============================================
 // TYPES
@@ -77,10 +65,12 @@ interface SpaceData {
   name: string;
   handle?: string;
   description?: string;
+  avatarUrl?: string;
   memberCount?: number;
   onlineCount?: number;
   unreadCount?: number;
   role?: string;
+  lastActivityAt?: string;
 }
 
 interface EventData {
@@ -99,16 +89,6 @@ interface EventData {
   isOnline?: boolean;
 }
 
-interface ToolData {
-  id: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  status: string;
-  responseCount?: number;
-  deployCount?: number;
-}
-
 interface RecommendedSpace {
   id: string;
   name: string;
@@ -116,6 +96,7 @@ interface RecommendedSpace {
   reason: string;
   memberCount: number;
   category?: string;
+  matchScore?: number;
 }
 
 interface ActivityItemData {
@@ -131,54 +112,9 @@ interface ActivityItemData {
   timestamp: string;
 }
 
-interface FeedUpdateData {
-  hasNewPosts: boolean;
-  newPostCount: number;
-  lastViewedAt: string | null;
-  lastPostAt: string | null;
-}
-
 // ============================================
 // HELPERS
 // ============================================
-
-function isToday(dateString: string): boolean {
-  const date = new Date(dateString);
-  const today = new Date();
-  return (
-    date.getFullYear() === today.getFullYear() &&
-    date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate()
-  );
-}
-
-function isThisWeek(dateString: string): boolean {
-  const date = new Date(dateString);
-  const now = new Date();
-  const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  return date > now && date <= weekFromNow;
-}
-
-function formatEventTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffHours < 0) return 'Past';
-  if (diffHours < 1) return 'Starting soon';
-  if (diffHours < 24) return `In ${diffHours}h`;
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays < 7) {
-    return (
-      date.toLocaleDateString('en-US', { weekday: 'short' }) +
-      ' ' +
-      date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    );
-  }
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -187,7 +123,15 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
-function formatTimeSince(dateString: string): string {
+function getTodayDate(): string {
+  return new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -195,326 +139,306 @@ function formatTimeSince(dateString: string): string {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMinutes < 5) return 'just now';
-  if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
-  if (diffHours === 1) return '1 hour ago';
-  if (diffHours < 24) return `${diffHours} hours ago`;
+  if (diffMinutes < 1) return 'just now';
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays === 1) return 'yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function getTimePeriod(dateString: string): 'Today' | 'Yesterday' | 'This Week' | 'Earlier' {
+function formatEventTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
-  const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const diffMs = date.getTime() - now.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
-  if (date >= todayStart) return 'Today';
-  if (date >= yesterdayStart) return 'Yesterday';
-  if (date >= weekStart) return 'This Week';
-  return 'Earlier';
+  if (diffMinutes < 0) return 'Happening now';
+  if (diffMinutes < 60) return `In ${diffMinutes}m`;
+  if (diffHours < 24) {
+    return `In ${diffHours}h · ${date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    })}`;
+  }
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
-function groupActivityByTime(items: ActivityItemData[]): Map<string, ActivityItemData[]> {
-  const groups = new Map<string, ActivityItemData[]>();
-  const order = ['Today', 'Yesterday', 'This Week', 'Earlier'];
-
-  for (const item of items) {
-    const period = getTimePeriod(item.timestamp);
-    const existing = groups.get(period) || [];
-    existing.push(item);
-    groups.set(period, existing);
-  }
-
-  // Return in order
-  const ordered = new Map<string, ActivityItemData[]>();
-  for (const period of order) {
-    const items = groups.get(period);
-    if (items && items.length > 0) {
-      ordered.set(period, items);
-    }
-  }
-  return ordered;
+function isWithin24Hours(dateString: string): boolean {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  return diffMs > 0 && diffMs < 24 * 60 * 60 * 1000;
 }
 
 // ============================================
-// SECTION WRAPPER
+// SECTION: HEADER
 // ============================================
 
-interface SectionProps {
-  section: FeedSection;
-  title: string;
-  action?: string;
-  actionHref?: string;
-  children: React.ReactNode;
-  className?: string;
+function HomeHeader({ firstName }: { firstName: string }) {
+  return (
+    <motion.header
+      className="mb-8"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: MOTION.duration.standard / 1000,
+        ease: MOTION.ease.premium,
+      }}
+    >
+      <h1 className="text-title-lg font-semibold text-white tracking-tight">
+        {getGreeting()}
+        {firstName && (
+          <>
+            , <GradientText variant="gold">{firstName}</GradientText>
+          </>
+        )}
+      </h1>
+      <p className="text-body text-white/40 mt-1">{getTodayDate()}</p>
+    </motion.header>
+  );
 }
 
-function Section({ section, title, action, actionHref, children, className }: SectionProps) {
-  const hierarchy = FEED_HIERARCHY[SECTION_PRIORITY[section]];
-  const delay = SECTION_DELAYS[section];
+// ============================================
+// SECTION: HAPPENING NOW
+// ============================================
+
+function HappeningNow({ spaces }: { spaces: SpaceData[] }) {
+  const totalOnline = spaces.reduce(
+    (sum, s) => sum + (s.onlineCount ?? 0),
+    0
+  );
+  const activeSpaceCount = spaces.filter(
+    (s) => (s.onlineCount ?? 0) > 0
+  ).length;
+
+  if (totalOnline === 0) return null;
+
+  return (
+    <motion.div
+      className="mb-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{
+        duration: MOTION.duration.standard / 1000,
+        delay: 0.1,
+        ease: MOTION.ease.premium,
+      }}
+    >
+      <div className="flex items-center gap-2 px-1">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="text-body-sm text-white/50">
+          {totalOnline} {totalOnline === 1 ? 'person' : 'people'} active across{' '}
+          {activeSpaceCount} {activeSpaceCount === 1 ? 'space' : 'spaces'}
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// SECTION: UP NEXT
+// ============================================
+
+function UpNext({
+  event,
+  onRsvp,
+}: {
+  event: EventData;
+  onRsvp: (
+    eventId: string,
+    spaceId: string,
+    status: 'going' | 'not_going'
+  ) => void;
+}) {
+  const router = useRouter();
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 20 }}
+      className="mb-8"
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: MOTION.duration.standard,
-        delay,
+        duration: MOTION.duration.standard / 1000,
+        delay: 0.15,
         ease: MOTION.ease.premium,
       }}
-      className={cn('mb-10', className)}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h2 className={cn('tracking-wide', hierarchy.title)}>
-          {title}
-        </h2>
-        {action && actionHref && (
-          <Link
-            href={actionHref}
-            className="text-label text-white/30 hover:text-white/50 transition-colors"
-          >
-            {action} →
-          </Link>
-        )}
-      </div>
-      {children}
+      <h2 className="text-label text-white/40 uppercase tracking-wider mb-3">
+        Up Next
+      </h2>
+      <motion.button
+        type="button"
+        onClick={() =>
+          router.push(`/s/${event.spaceHandle || event.spaceId}`)
+        }
+        className="w-full text-left"
+        initial="rest"
+        whileHover="hover"
+        variants={cardHoverVariants}
+      >
+        <GlassSurface
+          intensity="subtle"
+          interactive
+          className="rounded-xl p-4 border border-white/[0.08]"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-11 h-11 rounded-lg bg-gold-500/10 flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-5 h-5 text-gold-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-body font-medium text-white truncate">
+                {event.title}
+              </p>
+              <p className="text-body-sm text-white/50 mt-0.5">
+                {formatEventTime(event.startDate)} · {event.spaceName}
+              </p>
+              {event.rsvpCount !== undefined && event.rsvpCount > 0 && (
+                <p className="text-label text-white/30 mt-1">
+                  {event.rsvpCount} going
+                </p>
+              )}
+            </div>
+            {!event.isGoing && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRsvp(event.id, event.spaceId, 'going');
+                }}
+                className="text-gold-500/70 hover:text-gold-500 hover:bg-gold-500/10 flex-shrink-0"
+              >
+                RSVP
+              </Button>
+            )}
+            {event.isGoing && (
+              <Badge
+                variant="gold"
+                size="sm"
+                className="flex-shrink-0"
+              >
+                Going
+              </Badge>
+            )}
+          </div>
+        </GlassSurface>
+      </motion.button>
     </motion.section>
   );
 }
 
 // ============================================
-// TODAY SECTION
+// SECTION: YOUR SPACES
 // ============================================
 
-function TodaySection({
-  events,
-  unreadSpaces,
-  loading,
-  density,
-  onRsvp,
-}: {
-  events: EventData[];
-  unreadSpaces: SpaceData[];
-  loading: boolean;
-  density: ReturnType<typeof useFeedDensity>['config'];
-  onRsvp: (eventId: string, spaceId: string, status: 'going' | 'not_going') => void;
-}) {
-  const router = useRouter();
-  const hierarchy = FEED_HIERARCHY.primary;
-
-  // Convert EventData to EventCardEvent
-  const toEventCardEvent = (event: EventData): EventCardEvent => ({
-    id: event.id,
-    title: event.title,
-    description: event.description,
-    startDate: event.startDate,
-    endDate: event.endDate,
-    location: event.location,
-    isOnline: event.isOnline,
-    rsvpCount: event.rsvpCount || 0,
-    userRsvp: event.isGoing ? 'going' : null,
-    spaceName: event.spaceName,
-    spaceHandle: event.spaceHandle,
-    spaceId: event.spaceId,
-    isLive: event.isLive,
-  });
-
-  if (loading) {
-    return (
-      <Section section="today" title="Happening Soon">
-        <div className={cn('space-y-3', density.cardGap)}>
-          {[1, 2].map((i) => (
-            <div
-              key={i}
-              className={cn(
-                'rounded-xl animate-pulse',
-                density.cardPadding,
-                hierarchy.cardBg,
-                'border',
-                hierarchy.cardBorder
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white/[0.04]" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-3/4 bg-white/[0.06] rounded" />
-                  <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
-    );
-  }
-
-  const hasContent = events.length > 0 || unreadSpaces.length > 0;
-
-  if (!hasContent) {
-    return (
-      <Section section="today" title="Happening Soon">
-        <FeedEmptyState variant="today" />
-      </Section>
-    );
-  }
-
-  // Sort: live events first, then by start date
-  const sortedEvents = [...events].sort((a, b) => {
-    if (a.isLive && !b.isLive) return -1;
-    if (!a.isLive && b.isLive) return 1;
-    return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
-  });
-
+function YourSpaces({ spaces }: { spaces: SpaceData[] }) {
   return (
-    <Section section="today" title="Happening Soon">
-      <div className={cn('space-y-3', density.cardGap)}>
-        {/* Events using EventCard */}
-        {sortedEvents.map((event) => (
-          <EventCard
-            key={event.id}
-            event={toEventCardEvent(event)}
-            onRsvp={(status) => {
-              const newStatus = status === 'going' ? 'going' : 'not_going';
-              onRsvp(event.id, event.spaceId, newStatus);
-            }}
-            onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
-          />
-        ))}
-
-        {/* Unread messages */}
-        {unreadSpaces.map((space) => (
-          <Tilt key={space.id} intensity={density.tiltIntensity}>
-            <button
-              type="button"
-              onClick={() => router.push(`/s/${space.handle || space.id}`)}
-              className="w-full text-left"
-            >
-              <GlassSurface
-                intensity="subtle"
-                className={cn('rounded-xl', density.cardPadding)}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                    <MessageCircle className="w-5 h-5 text-white/40" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-body font-medium text-white truncate">
-                        {space.unreadCount} new in {space.name}
-                      </span>
-                      <span className="w-2 h-2 rounded-full bg-gold-500" />
-                    </div>
-                    <p className="text-label text-white/50 mt-0.5">Jump back in →</p>
-                  </div>
-                </div>
-              </GlassSurface>
-            </button>
-          </Tilt>
-        ))}
+    <motion.section
+      className="mb-8"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: MOTION.duration.standard / 1000,
+        delay: 0.2,
+        ease: MOTION.ease.premium,
+      }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-label text-white/40 uppercase tracking-wider">
+          Your Spaces
+        </h2>
+        <Link
+          href="/explore"
+          className="text-label text-white/30 hover:text-white/50 transition-colors"
+        >
+          Browse all
+        </Link>
       </div>
-    </Section>
-  );
-}
 
-// ============================================
-// YOUR SPACES SECTION
-// ============================================
-
-function YourSpacesSection({
-  spaces,
-  loading,
-  density,
-}: {
-  spaces: SpaceData[];
-  loading: boolean;
-  density: ReturnType<typeof useFeedDensity>['config'];
-}) {
-  const maxItems = density.maxItems.spaces;
-
-  if (loading) {
-    return (
-      <Section section="spaces" title="Your Spaces" action="Browse" actionHref="/explore">
-        <div className={cn('grid grid-cols-2 md:grid-cols-4', density.cardGap)}>
-          {Array.from({ length: maxItems + 1 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
-            />
-          ))}
-        </div>
-      </Section>
-    );
-  }
-
-  if (spaces.length === 0) {
-    return (
-      <Section section="spaces" title="Your Spaces" action="Browse" actionHref="/explore">
-        <FeedEmptyState variant="spaces" />
-      </Section>
-    );
-  }
-
-  return (
-    <Section section="spaces" title="Your Spaces" action="Browse" actionHref="/explore">
-      <div className={cn('grid grid-cols-2 md:grid-cols-4', density.cardGap)}>
-        {spaces.slice(0, maxItems).map((space) => (
-          <Tilt key={space.id} intensity={density.tiltIntensity + 1}>
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+        variants={staggerContainerVariants}
+        initial="initial"
+        animate="animate"
+      >
+        {spaces.map((space) => (
+          <motion.div key={space.id} variants={revealVariants}>
             <Link href={`/s/${space.handle || space.id}`}>
-              <GlassSurface
-                intensity="subtle"
-                interactive
-                className={cn(
-                  'aspect-square rounded-xl flex flex-col justify-between',
-                  density.cardPadding
-                )}
+              <motion.div
+                initial="rest"
+                whileHover="hover"
+                variants={cardHoverVariants}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-body-sm font-medium text-white truncate flex-1">
-                    {space.name}
-                  </span>
-                  {(space.onlineCount ?? 0) > 0 && (
-                    <span className="w-2 h-2 rounded-full bg-gold-500 animate-pulse" />
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-label-sm text-white/40">
-                  {space.memberCount && <span>{space.memberCount} members</span>}
-                  {(space.unreadCount ?? 0) > 0 && (
-                    <Badge variant="gold" size="sm" className="animate-pulse-gold shadow-glow-sm">
-                      {space.unreadCount}
-                    </Badge>
-                  )}
-                </div>
-              </GlassSurface>
-            </Link>
-          </Tilt>
-        ))}
+                <GlassSurface
+                  intensity="subtle"
+                  interactive
+                  className="rounded-xl p-4 border border-white/[0.06]"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar size="default" className="flex-shrink-0">
+                      {space.avatarUrl && (
+                        <AvatarImage src={space.avatarUrl} />
+                      )}
+                      <AvatarFallback className="text-sm bg-white/[0.06]">
+                        {getInitials(space.name)}
+                      </AvatarFallback>
+                    </Avatar>
 
-        {/* Browse tile */}
-        <Tilt intensity={density.tiltIntensity + 1}>
-          <Link href="/explore">
-            <GlassSurface
-              intensity="subtle"
-              interactive
-              className={cn(
-                'aspect-square rounded-xl flex flex-col items-center justify-center border-dashed',
-                density.cardPadding
-              )}
-            >
-              <span className="text-title-lg mb-2">+</span>
-              <span className="text-label text-white/40">Browse All</span>
-            </GlassSurface>
-          </Link>
-        </Tilt>
-      </div>
-    </Section>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-body-sm font-medium text-white truncate">
+                          {space.name}
+                        </span>
+                        {(space.unreadCount ?? 0) > 0 && (
+                          <Badge
+                            variant="gold"
+                            size="sm"
+                            className="animate-pulse-gold shadow-glow-sm flex-shrink-0"
+                          >
+                            {space.unreadCount}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {(space.onlineCount ?? 0) > 0 && (
+                          <span className="flex items-center gap-1 text-label-sm text-emerald-400/70">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            {space.onlineCount} online
+                          </span>
+                        )}
+                        {space.lastActivityAt && (
+                          <span className="text-label-sm text-white/25">
+                            {formatRelativeTime(space.lastActivityAt)}
+                          </span>
+                        )}
+                        {!(space.onlineCount ?? 0) &&
+                          !space.lastActivityAt &&
+                          space.memberCount && (
+                            <span className="text-label-sm text-white/25">
+                              {space.memberCount} members
+                            </span>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                </GlassSurface>
+              </motion.div>
+            </Link>
+          </motion.div>
+        ))}
+      </motion.div>
+    </motion.section>
   );
 }
 
 // ============================================
-// RECENT ACTIVITY SECTION
+// SECTION: RECENT ACTIVITY
 // ============================================
 
 function ActivityIcon({ type }: { type: ActivityItemData['type'] }) {
@@ -543,447 +467,358 @@ function activityDescription(item: ActivityItemData): string {
   }
 }
 
-function RecentActivitySection({
-  activity,
-  loading,
-  density,
+function RecentActivity({ activity }: { activity: ActivityItemData[] }) {
+  const router = useRouter();
+  const items = activity.slice(0, 10);
+
+  if (items.length === 0) return null;
+
+  return (
+    <motion.section
+      className="mb-8"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: MOTION.duration.standard / 1000,
+        delay: 0.25,
+        ease: MOTION.ease.premium,
+      }}
+    >
+      <h2 className="text-label text-white/40 uppercase tracking-wider mb-3">
+        Recent Activity
+      </h2>
+
+      <motion.div
+        className="space-y-0.5"
+        variants={staggerContainerVariants}
+        initial="initial"
+        animate="animate"
+      >
+        {items.map((item) => (
+          <motion.button
+            key={item.id}
+            type="button"
+            onClick={() => router.push(`/s/${item.spaceHandle}`)}
+            className={cn(
+              'w-full text-left flex items-center gap-3 rounded-lg',
+              'px-3 py-2.5',
+              'hover:bg-white/[0.04] transition-colors',
+              'group'
+            )}
+            variants={revealVariants}
+          >
+            <div className="w-7 h-7 rounded-md bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+              <ActivityIcon type={item.type} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-body-sm text-white/70 truncate group-hover:text-white/90 transition-colors">
+                {activityDescription(item)}
+              </p>
+            </div>
+            <span className="text-label-sm text-white/20 flex-shrink-0">
+              {formatRelativeTime(item.timestamp)}
+            </span>
+          </motion.button>
+        ))}
+      </motion.div>
+    </motion.section>
+  );
+}
+
+// ============================================
+// SECTION: SUGGESTED
+// ============================================
+
+function Suggested({ space }: { space: RecommendedSpace }) {
+  return (
+    <motion.section
+      className="mb-8"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: MOTION.duration.standard / 1000,
+        delay: 0.3,
+        ease: MOTION.ease.premium,
+      }}
+    >
+      <h2 className="text-label text-white/40 uppercase tracking-wider mb-3">
+        Suggested for You
+      </h2>
+      <Link href={`/s/${space.handle}`}>
+        <motion.div
+          initial="rest"
+          whileHover="hover"
+          variants={cardHoverVariants}
+        >
+          <GlassSurface
+            intensity="subtle"
+            interactive
+            className="rounded-xl p-4 border border-white/[0.06]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-white/40" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-body font-medium text-white truncate">
+                  {space.name}
+                </p>
+                <p className="text-label text-white/40 mt-0.5">
+                  {space.reason} · {space.memberCount} members
+                </p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-white/20 flex-shrink-0" />
+            </div>
+          </GlassSurface>
+        </motion.div>
+      </Link>
+    </motion.section>
+  );
+}
+
+// ============================================
+// NEW USER EMPTY STATE
+// ============================================
+
+function NewUserState({
+  recommendations,
+  loadingRecs,
 }: {
-  activity: ActivityItemData[];
-  loading: boolean;
-  density: ReturnType<typeof useFeedDensity>['config'];
+  recommendations: RecommendedSpace[];
+  loadingRecs: boolean;
 }) {
   const router = useRouter();
-  const maxItems = density.maxItems.activity;
+  const [joiningSpaceId, setJoiningSpaceId] = useState<string | null>(null);
+  const [joinedSpaceIds, setJoinedSpaceIds] = useState<Set<string>>(new Set());
 
-  if (loading) {
-    return (
-      <Section section="activity" title="Recent Activity">
-        <div className={cn('space-y-2', density.cardGap)}>
-          {[1, 2, 3].map((i) => (
+  const handleJoinSpace = useCallback(
+    async (space: RecommendedSpace) => {
+      if (joiningSpaceId || joinedSpaceIds.has(space.id)) return;
+
+      setJoiningSpaceId(space.id);
+
+      try {
+        const res = await fetch('/api/spaces/join-v2', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            spaceId: space.id,
+            joinMethod: 'manual',
+          }),
+        });
+
+        if (res.ok) {
+          const newJoined = new Set(joinedSpaceIds);
+          newJoined.add(space.id);
+          setJoinedSpaceIds(newJoined);
+
+          // First space joined - redirect into it
+          if (joinedSpaceIds.size === 0) {
+            router.push(`/s/${space.handle}`);
+            return;
+          }
+        } else {
+          logger.error(
+            'Failed to join space',
+            { component: 'NewUserState', spaceId: space.id },
+            undefined
+          );
+        }
+      } catch (error) {
+        logger.error(
+          'Failed to join space',
+          { component: 'NewUserState', spaceId: space.id },
+          error instanceof Error ? error : undefined
+        );
+      } finally {
+        setJoiningSpaceId(null);
+      }
+    },
+    [joiningSpaceId, joinedSpaceIds, router]
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: MOTION.duration.standard / 1000,
+        delay: 0.15,
+        ease: MOTION.ease.premium,
+      }}
+    >
+      {/* Header message */}
+      <div className="text-center mb-8">
+        <div className="w-14 h-14 rounded-2xl bg-gold-500/10 flex items-center justify-center mx-auto mb-4">
+          <Users className="w-7 h-7 text-gold-500" />
+        </div>
+        <h2 className="text-body-lg font-semibold text-white mb-1">
+          Find your first space
+        </h2>
+        <p className="text-body-sm text-white/40 max-w-sm mx-auto">
+          Spaces are where students organize, build, and connect. Join one to get started.
+        </p>
+      </div>
+
+      {/* Recommended spaces with join buttons */}
+      {!loadingRecs && recommendations.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: MOTION.duration.standard / 1000,
+            delay: 0.3,
+            ease: MOTION.ease.premium,
+          }}
+        >
+          <h2 className="text-label text-white/40 uppercase tracking-wider mb-3">
+            Recommended for You
+          </h2>
+          <motion.div
+            className="space-y-3"
+            variants={staggerContainerVariants}
+            initial="initial"
+            animate="animate"
+          >
+            {recommendations.slice(0, 5).map((space) => {
+              const isJoining = joiningSpaceId === space.id;
+              const hasJoined = joinedSpaceIds.has(space.id);
+
+              return (
+                <motion.div key={space.id} variants={revealVariants}>
+                  <motion.div
+                    initial="rest"
+                    whileHover="hover"
+                    variants={cardHoverVariants}
+                  >
+                    <GlassSurface
+                      intensity="subtle"
+                      interactive
+                      className="rounded-xl p-4 border border-white/[0.06]"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="w-5 h-5 text-white/40" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-body font-medium text-white truncate">
+                            {space.name}
+                          </p>
+                          <p className="text-label text-white/40 mt-0.5">
+                            {space.reason} · {space.memberCount} members
+                          </p>
+                        </div>
+                        {hasJoined ? (
+                          <Badge
+                            variant="gold"
+                            size="sm"
+                            className="flex-shrink-0"
+                          >
+                            Joined
+                          </Badge>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleJoinSpace(space);
+                            }}
+                            disabled={isJoining}
+                            className="text-gold-500/70 hover:text-gold-500 hover:bg-gold-500/10 flex-shrink-0"
+                          >
+                            {isJoining ? 'Joining...' : 'Join'}
+                          </Button>
+                        )}
+                      </div>
+                    </GlassSurface>
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+
+          {/* Explore all CTA */}
+          <div className="mt-6 text-center">
+            <Button variant="cta" size="lg" asChild>
+              <Link href="/explore">
+                Explore All Spaces
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </motion.section>
+      )}
+
+      {/* No recommendations - just show CTA */}
+      {!loadingRecs && recommendations.length === 0 && (
+        <div className="text-center">
+          <Button variant="cta" size="lg" asChild>
+            <Link href="/explore">
+              Explore Spaces
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Link>
+          </Button>
+        </div>
+      )}
+
+      {loadingRecs && (
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className={cn(
-                'rounded-lg bg-white/[0.02] border border-white/[0.06] animate-pulse',
-                'px-3 py-2.5'
-              )}
+              className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-4 animate-pulse"
             >
               <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-md bg-white/[0.04]" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3 w-3/4 bg-white/[0.06] rounded" />
-                  <div className="h-2.5 w-1/3 bg-white/[0.04] rounded" />
+                <div className="w-10 h-10 rounded-lg bg-white/[0.04]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-3/4 bg-white/[0.06] rounded" />
+                  <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
                 </div>
+                <div className="h-8 w-14 bg-white/[0.04] rounded-lg" />
               </div>
             </div>
           ))}
         </div>
-      </Section>
-    );
-  }
-
-  if (activity.length === 0) {
-    return (
-      <Section section="activity" title="Recent Activity">
-        <FeedEmptyState variant="activity" compact />
-      </Section>
-    );
-  }
-
-  const grouped = groupActivityByTime(activity.slice(0, maxItems));
-  const totalCount = activity.length;
-  const showSeeAll = totalCount > maxItems;
-
-  return (
-    <Section section="activity" title="Recent Activity">
-      <div className={cn('space-y-4', density.cardGap)}>
-        {Array.from(grouped.entries()).map(([period, items]) => (
-          <div key={period}>
-            <p className="text-label-sm text-white/30 uppercase tracking-wider mb-2">
-              {period}
-            </p>
-            <div className="space-y-1">
-              {items.map((item) => (
-                <motion.button
-                  key={item.id}
-                  type="button"
-                  onClick={() => router.push(`/s/${item.spaceHandle}`)}
-                  className={cn(
-                    'w-full text-left flex items-center gap-3 rounded-lg',
-                    'px-3 py-2.5',
-                    'hover:bg-white/[0.04] transition-colors',
-                    'group'
-                  )}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: MOTION.duration.quick,
-                    ease: MOTION.ease.premium,
-                  }}
-                >
-                  <div className="w-7 h-7 rounded-md bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-                    <ActivityIcon type={item.type} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-body-sm text-white/80 truncate group-hover:text-white transition-colors">
-                      {activityDescription(item)}
-                    </p>
-                  </div>
-                  <span className="text-label-sm text-white/25 flex-shrink-0">
-                    {formatTimeSince(item.timestamp)}
-                  </span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {showSeeAll && (
-          <button
-            type="button"
-            onClick={() => router.push('/feed')}
-            className="text-label text-white/30 hover:text-white/50 transition-colors w-full text-center py-1"
-          >
-            See all activity →
-          </button>
-        )}
-      </div>
-    </Section>
-  );
-}
-
-// ============================================
-// THIS WEEK SECTION
-// ============================================
-
-function ThisWeekSection({
-  events,
-  loading,
-  density,
-  onRsvp,
-}: {
-  events: EventData[];
-  loading: boolean;
-  density: ReturnType<typeof useFeedDensity>['config'];
-  onRsvp: (eventId: string, spaceId: string, status: 'going' | 'not_going') => void;
-}) {
-  const router = useRouter();
-  const maxItems = density.maxItems.events;
-
-  // Convert EventData to EventCardEvent
-  const toEventCardEvent = (event: EventData): EventCardEvent => ({
-    id: event.id,
-    title: event.title,
-    description: event.description,
-    startDate: event.startDate,
-    endDate: event.endDate,
-    location: event.location,
-    isOnline: event.isOnline,
-    rsvpCount: event.rsvpCount || 0,
-    userRsvp: event.isGoing ? 'going' : null,
-    spaceName: event.spaceName,
-    spaceHandle: event.spaceHandle,
-    spaceId: event.spaceId,
-    isLive: event.isLive,
-  });
-
-  if (loading) {
-    return (
-      <Section section="events" title="This Week" action="All events" actionHref="/explore?tab=events">
-        <div className={cn('space-y-3', density.cardGap)}>
-          {[1, 2].map((i) => (
-            <div
-              key={i}
-              className={cn(
-                'rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse',
-                density.cardPadding
-              )}
-            >
-              <div className="h-4 w-3/4 bg-white/[0.06] rounded mb-2" />
-              <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
-            </div>
-          ))}
-        </div>
-      </Section>
-    );
-  }
-
-  if (events.length === 0) {
-    return (
-      <Section section="events" title="This Week" action="All events" actionHref="/explore?tab=events">
-        <FeedEmptyState variant="events" compact />
-      </Section>
-    );
-  }
-
-  return (
-    <Section section="events" title="This Week" action="All events" actionHref="/explore?tab=events">
-      <div className={cn('space-y-3', density.cardGap)}>
-        {events.slice(0, maxItems).map((event) => (
-          <EventCard
-            key={event.id}
-            event={toEventCardEvent(event)}
-            onRsvp={(status) => {
-              const newStatus = status === 'going' ? 'going' : 'not_going';
-              onRsvp(event.id, event.spaceId, newStatus);
-            }}
-            onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
-          />
-        ))}
-      </div>
-    </Section>
-  );
-}
-
-// ============================================
-// YOUR CREATIONS SECTION
-// ============================================
-
-function YourCreationsSection({
-  tools,
-  loading,
-  isBuilder,
-  density,
-}: {
-  tools: ToolData[];
-  loading: boolean;
-  isBuilder: boolean;
-  density: ReturnType<typeof useFeedDensity>['config'];
-}) {
-  const maxItems = density.maxItems.tools;
-
-  if (!isBuilder) return null;
-
-  if (loading) {
-    return (
-      <Section section="creations" title="Your Creations" action="Lab" actionHref="/lab">
-        <div className={cn('grid grid-cols-2 md:grid-cols-4', density.cardGap)}>
-          {Array.from({ length: maxItems + 1 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
-            />
-          ))}
-        </div>
-      </Section>
-    );
-  }
-
-  if (tools.length === 0) {
-    return (
-      <Section section="creations" title="Your Creations" action="Lab" actionHref="/lab">
-        <FeedEmptyState variant="creations" />
-      </Section>
-    );
-  }
-
-  return (
-    <Section section="creations" title="Your Creations" action="Lab" actionHref="/lab">
-      <div className={cn('grid grid-cols-2 md:grid-cols-4', density.cardGap)}>
-        {tools.slice(0, maxItems).map((tool) => (
-          <Tilt key={tool.id} intensity={density.tiltIntensity + 1}>
-            <Link href={`/lab/${tool.id}`}>
-              <GlassSurface
-                intensity="subtle"
-                interactive
-                className={cn(
-                  'aspect-square rounded-xl flex flex-col justify-between',
-                  density.cardPadding
-                )}
-              >
-                <span className="flex items-center justify-center">
-                  {tool.icon ? (
-                    <span className="text-title">{tool.icon}</span>
-                  ) : (
-                    <Wrench className="w-6 h-6 text-white/40" />
-                  )}
-                </span>
-                <div>
-                  <p className="text-body-sm font-medium text-white truncate">
-                    {tool.name}
-                  </p>
-                  {tool.responseCount !== undefined && tool.responseCount > 0 && (
-                    <p className="text-label-sm text-white/40 mt-0.5">
-                      {tool.responseCount} responses
-                    </p>
-                  )}
-                </div>
-              </GlassSurface>
-            </Link>
-          </Tilt>
-        ))}
-
-        {/* Create tile */}
-        <Tilt intensity={density.tiltIntensity + 1}>
-          <Link href="/lab/new">
-            <GlassSurface
-              intensity="subtle"
-              interactive
-              className={cn(
-                'aspect-square rounded-xl flex flex-col items-center justify-center border-dashed',
-                density.cardPadding
-              )}
-            >
-              <span className="text-title-lg mb-2">+</span>
-              <span className="text-label text-white/40">Create Tool</span>
-            </GlassSurface>
-          </Link>
-        </Tilt>
-      </div>
-    </Section>
-  );
-}
-
-// ============================================
-// DISCOVER SECTION
-// ============================================
-
-function DiscoverSection({
-  recommendations,
-  loading,
-  density,
-  titleOverride,
-}: {
-  recommendations: RecommendedSpace[];
-  loading: boolean;
-  density: ReturnType<typeof useFeedDensity>['config'];
-  titleOverride?: string;
-}) {
-  const title = titleOverride || 'Discover';
-  const maxItems = density.maxItems.discover;
-
-  if (loading) {
-    return (
-      <Section section="discover" title={title}>
-        <div className={cn('space-y-3', density.cardGap)}>
-          <div className={cn(
-            'rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse',
-            density.cardPadding
-          )}>
-            <div className="h-4 w-3/4 bg-white/[0.06] rounded mb-2" />
-            <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
-          </div>
-        </div>
-      </Section>
-    );
-  }
-
-  if (recommendations.length === 0) {
-    return (
-      <Section section="discover" title={title} action="Explore" actionHref="/explore">
-        <FeedEmptyState variant="discover" compact />
-      </Section>
-    );
-  }
-
-  return (
-    <Section section="discover" title={title} action="Explore" actionHref="/explore">
-      <div className={cn('space-y-3', density.cardGap)}>
-        {recommendations.slice(0, maxItems).map((space) => (
-          <Tilt key={space.id} intensity={density.tiltIntensity}>
-            <Link href={`/s/${space.handle}`}>
-              <GlassSurface
-                intensity="subtle"
-                interactive
-                className={cn('rounded-xl', density.cardPadding)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white/40" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-body font-medium text-white truncate">
-                      {space.name}
-                    </p>
-                    <p className="text-label text-white/50 mt-0.5">
-                      {space.reason} · {space.memberCount} members
-                    </p>
-                  </div>
-                </div>
-              </GlassSurface>
-            </Link>
-          </Tilt>
-        ))}
-      </div>
-    </Section>
-  );
-}
-
-// ============================================
-// NEW USER CTA
-// ============================================
-
-function NewUserCTA() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: MOTION.duration.standard,
-        delay: SECTION_DELAYS.spaces,
-        ease: MOTION.ease.premium,
-      }}
-      className="mb-10"
-    >
-      <Link href="/explore">
-        <GlassSurface
-          intensity="subtle"
-          interactive
-          className="rounded-xl p-6 border border-white/[0.08] group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gold-500/10 flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-6 h-6 text-gold-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-body font-semibold text-white">
-                Join your first space to unlock your campus
-              </p>
-              <p className="text-label text-white/40 mt-0.5">
-                Spaces are where students organize, build, and connect.
-              </p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-          </div>
-        </GlassSurface>
-      </Link>
+      )}
     </motion.div>
   );
 }
 
 // ============================================
-// QUICK ACTIONS SIDEBAR
+// LOADING SKELETON
 // ============================================
 
-function QuickActions() {
+function HomeSkeleton() {
   return (
-    <GlassSurface intensity="subtle" className="p-5 rounded-xl">
-      <h3 className="text-label font-medium text-white/40 tracking-wide mb-4">
-        Quick Actions
-      </h3>
-      <div className="space-y-2">
-        <Link
-          href="/lab/new"
-          className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
-        >
-          <Wrench className="w-5 h-5 text-white/40" />
-          <span className="text-body-sm text-white/70">Build a Tool</span>
-        </Link>
-        <Link
-          href="/explore"
-          className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
-        >
-          <Building2 className="w-5 h-5 text-white/40" />
-          <span className="text-body-sm text-white/70">Find Spaces</span>
-        </Link>
-        <Link
-          href="/explore?tab=events"
-          className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
-        >
-          <Calendar className="w-5 h-5 text-white/40" />
-          <span className="text-body-sm text-white/70">Browse Events</span>
-        </Link>
+    <div className="min-h-screen bg-foundation-gray-1000">
+      <div className="max-w-2xl mx-auto px-6 py-10">
+        {/* Header skeleton */}
+        <div className="mb-8">
+          <div className="h-8 w-64 bg-white/[0.06] rounded animate-pulse" />
+          <div className="h-4 w-40 bg-white/[0.04] rounded mt-2 animate-pulse" />
+        </div>
+        {/* Cards skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-4 animate-pulse"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white/[0.04]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-3/4 bg-white/[0.06] rounded" />
+                  <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </GlassSurface>
+    </div>
   );
 }
 
@@ -994,465 +829,271 @@ function QuickActions() {
 export default function HomePage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const { density, setDensity, config: densityConfig, isLoaded: densityLoaded } = useFeedDensity();
+  const queryClient = useQueryClient();
 
-  // Welcome overlay state
-  const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean | null>(null);
-  const [isInOnboarding, setIsInOnboarding] = useState(false);
-
-  // Data states
-  const [spaces, setSpaces] = useState<SpaceData[]>([]);
-  const [todayEvents, setTodayEvents] = useState<EventData[]>([]);
-  const [weekEvents, setWeekEvents] = useState<EventData[]>([]);
-  const [tools, setTools] = useState<ToolData[]>([]);
-  const [recommendations, setRecommendations] = useState<RecommendedSpace[]>([]);
-  const [activityItems, setActivityItems] = useState<ActivityItemData[]>([]);
-  const [unreadSpaces, setUnreadSpaces] = useState<SpaceData[]>([]);
-  const [feedUpdate, setFeedUpdate] = useState<FeedUpdateData | null>(null);
-
-  // Partial loading states
-  const [loadingStates, setLoadingStates] = useState({
-    spaces: true,
-    activity: true,
-    events: true,
-    tools: true,
-    feedUpdate: true,
+  // Fetch spaces via React Query
+  const { data: spacesData, isLoading: loadingSpaces } = useQuery({
+    queryKey: queryKeys.home.mySpaces(),
+    queryFn: async () => {
+      const res = await fetch('/api/profile/my-spaces', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch spaces');
+      const data = await res.json();
+      return (data.spaces || []) as SpaceData[];
+    },
+    staleTime: 1000 * 60 * 2,
+    enabled: !!user && !authLoading,
   });
 
-  // Check localStorage for welcome/onboarding state
-  useEffect(() => {
-    const welcomed = localStorage.getItem(STORAGE_KEY_WELCOME) === 'true';
-    setHasSeenWelcome(welcomed);
-
-    const entryDate = localStorage.getItem(STORAGE_KEY_ENTRY_DATE);
-    if (entryDate) {
-      const daysSinceEntry = (Date.now() - parseInt(entryDate, 10)) / (1000 * 60 * 60 * 24);
-      setIsInOnboarding(daysSinceEntry < ONBOARDING_DAYS);
-    } else if (!welcomed) {
-      localStorage.setItem(STORAGE_KEY_ENTRY_DATE, Date.now().toString());
-      setIsInOnboarding(true);
-    }
-  }, []);
-
-  const completeWelcome = () => {
-    localStorage.setItem(STORAGE_KEY_WELCOME, 'true');
-    if (!localStorage.getItem(STORAGE_KEY_ENTRY_DATE)) {
-      localStorage.setItem(STORAGE_KEY_ENTRY_DATE, Date.now().toString());
-    }
-    setHasSeenWelcome(true);
-  };
-
-  // RSVP handler for events
-  const handleEventRsvp = async (eventId: string, spaceId: string, status: 'going' | 'not_going') => {
-    try {
-      const res = await fetch(`/api/spaces/${spaceId}/events/${eventId}/rsvp`, {
-        method: 'POST',
+  // Fetch dashboard (events + recommendations) via React Query
+  const { data: dashboardData, isLoading: loadingDashboard } = useQuery({
+    queryKey: queryKeys.home.dashboard(true),
+    queryFn: async () => {
+      const res = await fetch('/api/profile/dashboard?includeRecommendations=true', {
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
       });
+      if (!res.ok) throw new Error('Failed to fetch dashboard');
+      const raw = await res.json();
+      const dashboard = raw.dashboard || {};
 
-      if (res.ok) {
-        // Optimistic update for today events
-        setTodayEvents((prev) =>
-          prev.map((e) =>
-            e.id === eventId
-              ? {
-                  ...e,
-                  isGoing: status === 'going',
-                  rsvpCount: status === 'going'
-                    ? (e.rsvpCount || 0) + 1
-                    : Math.max(0, (e.rsvpCount || 0) - 1),
-                }
-              : e
-          )
-        );
-        // Optimistic update for week events
-        setWeekEvents((prev) =>
-          prev.map((e) =>
-            e.id === eventId
-              ? {
-                  ...e,
-                  isGoing: status === 'going',
-                  rsvpCount: status === 'going'
-                    ? (e.rsvpCount || 0) + 1
-                    : Math.max(0, (e.rsvpCount || 0) - 1),
-                }
-              : e
-          )
-        );
-      }
-    } catch (error) {
-      logger.error('Failed to RSVP to event', { component: 'HomePage', eventId }, error instanceof Error ? error : undefined);
-    }
+      const events: EventData[] = (dashboard.upcomingEvents || []).map(
+        (e: Record<string, unknown>) => ({
+          id: e.id as string,
+          title: e.title as string,
+          description: e.description as string | undefined,
+          startDate: e.startDate as string,
+          endDate: e.endDate as string | undefined,
+          spaceId: e.spaceId as string,
+          spaceName: e.spaceName as string,
+          spaceHandle: e.spaceHandle as string | undefined,
+          rsvpCount: e.rsvpCount as number | undefined,
+          isGoing: e.isGoing as boolean | undefined,
+          isLive: e.isLive as boolean | undefined,
+          location: e.location as string | undefined,
+          isOnline: e.isOnline as boolean | undefined,
+        })
+      );
+
+      const recommendations: RecommendedSpace[] =
+        dashboard.recommendations?.spaces || [];
+
+      return { events, recommendations };
+    },
+    staleTime: 1000 * 60 * 2,
+    enabled: !!user && !authLoading,
+  });
+
+  // Fetch activity feed via React Query
+  const { data: activityData, isLoading: loadingActivity } = useQuery({
+    queryKey: queryKeys.home.activity(10),
+    queryFn: async () => {
+      const res = await fetch('/api/activity-feed?limit=10', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch activity feed');
+      const data = await res.json();
+      return (data.data?.activity || []) as ActivityItemData[];
+    },
+    staleTime: 1000 * 60 * 2,
+    enabled: !!user && !authLoading,
+  });
+
+  // Derive data from query results
+  const spaces = spacesData ?? [];
+  const allEvents = dashboardData?.events ?? [];
+  const recommendations = dashboardData?.recommendations ?? [];
+  const activityItems = activityData ?? [];
+
+  const loadingStates = {
+    spaces: loadingSpaces,
+    dashboard: loadingDashboard,
+    activity: loadingActivity,
   };
 
-  // Fetch feed data
+  // Mark feed as viewed after 5 seconds
   useEffect(() => {
     if (authLoading || !user) return;
 
-    setLoadingStates({
-      spaces: true,
-      activity: true,
-      events: true,
-      tools: true,
-      feedUpdate: true,
-    });
-
-    // Fetch spaces
-    fetch('/api/profile/my-spaces', { credentials: 'include' })
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json();
-          const allSpaces = (data.spaces || []) as SpaceData[];
-          setSpaces(allSpaces);
-          setUnreadSpaces(allSpaces.filter((s: SpaceData) => (s.unreadCount ?? 0) > 0));
-        }
-      })
-      .catch((error) => logger.error('Failed to fetch spaces', { component: 'HomePage' }, error instanceof Error ? error : undefined))
-      .finally(() => setLoadingStates((prev) => ({ ...prev, spaces: false })));
-
-    // Fetch dashboard
-    fetch('/api/profile/dashboard?includeRecommendations=true', { credentials: 'include' })
-      .then(async (res) => {
-        if (res.ok) {
-          const dashboardData = await res.json();
-          const dashboard = dashboardData.dashboard || {};
-
-          const allEvents: EventData[] = (dashboard.upcomingEvents || []).map(
-            (e: Record<string, unknown>) => ({
-              id: e.id as string,
-              title: e.title as string,
-              description: e.description as string | undefined,
-              startDate: e.startDate as string,
-              endDate: e.endDate as string | undefined,
-              spaceId: e.spaceId as string,
-              spaceName: e.spaceName as string,
-              spaceHandle: e.spaceHandle as string | undefined,
-              rsvpCount: e.rsvpCount as number | undefined,
-              isGoing: e.isGoing as boolean | undefined,
-              isLive: e.isLive as boolean | undefined,
-              location: e.location as string | undefined,
-              isOnline: e.isOnline as boolean | undefined,
-            })
-          );
-
-          setTodayEvents(allEvents.filter((e) => isToday(e.startDate)));
-          setWeekEvents(allEvents.filter((e) => !isToday(e.startDate) && isThisWeek(e.startDate)));
-
-          if (dashboard.recommendations?.spaces) {
-            setRecommendations(dashboard.recommendations.spaces);
-          }
-        }
-      })
-      .catch((error) => logger.error('Failed to fetch dashboard', { component: 'HomePage' }, error instanceof Error ? error : undefined))
-      .finally(() => setLoadingStates((prev) => ({ ...prev, events: false })));
-
-    // Fetch tools
-    fetch('/api/tools?limit=10', { credentials: 'include' })
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json();
-          setTools(data.tools || []);
-        }
-      })
-      .catch((error) => logger.error('Failed to fetch tools', { component: 'HomePage' }, error instanceof Error ? error : undefined))
-      .finally(() => setLoadingStates((prev) => ({ ...prev, tools: false })));
-
-    // Fetch activity feed
-    fetch('/api/activity-feed?limit=20', { credentials: 'include' })
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data?.activity) {
-            setActivityItems(data.data.activity);
-          }
-        }
-      })
-      .catch((error) => logger.error('Failed to fetch activity feed', { component: 'HomePage' }, error instanceof Error ? error : undefined))
-      .finally(() => setLoadingStates((prev) => ({ ...prev, activity: false })));
-
-    // Fetch feed updates
-    fetch('/api/feed/updates?action=check', { credentials: 'include' })
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data?.update) {
-            setFeedUpdate({
-              hasNewPosts: data.data.update.hasNewPosts,
-              newPostCount: data.data.update.newPostCount,
-              lastViewedAt: data.data.update.lastCheckedAt,
-              lastPostAt: data.data.update.lastPostAt,
-            });
-          }
-        }
-      })
-      .catch((error) => logger.error('Failed to fetch feed updates', { component: 'HomePage' }, error instanceof Error ? error : undefined))
-      .finally(() => setLoadingStates((prev) => ({ ...prev, feedUpdate: false })));
-
-    // Mark feed as viewed after 5 seconds
     const markViewedTimeout = setTimeout(() => {
       fetch('/api/feed/updates?action=mark_viewed&itemIds=feed_view', {
         method: 'POST',
         credentials: 'include',
-      }).catch((error) => logger.error('Failed to mark feed as viewed', { component: 'HomePage' }, error instanceof Error ? error : undefined));
+      }).catch((error) =>
+        logger.error(
+          'Failed to mark feed as viewed',
+          { component: 'HomePage' },
+          error instanceof Error ? error : undefined
+        )
+      );
     }, 5000);
 
     return () => clearTimeout(markViewedTimeout);
   }, [authLoading, user]);
 
-  const allDataLoaded = !loadingStates.spaces && !loadingStates.activity && !loadingStates.events && !loadingStates.tools;
+  // RSVP handler
+  const handleEventRsvp = useCallback(
+    async (
+      eventId: string,
+      spaceId: string,
+      status: 'going' | 'not_going'
+    ) => {
+      try {
+        const res = await fetch(
+          `/api/spaces/${spaceId}/events/${eventId}/rsvp`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+          }
+        );
 
-  const isAllEmpty = useMemo(() => {
-    if (!allDataLoaded) return false;
-    const hasToday = todayEvents.length > 0 || unreadSpaces.length > 0;
-    const hasSpaces = spaces.length > 0;
-    const hasActivity = activityItems.length > 0;
-    const hasWeek = weekEvents.length > 0;
-    const hasCreations = (user?.isBuilder ?? false) && tools.length > 0;
-    const hasDiscover = recommendations.length > 0;
-    return !hasToday && !hasSpaces && !hasActivity && !hasWeek && !hasCreations && !hasDiscover;
-  }, [allDataLoaded, todayEvents, unreadSpaces, spaces, activityItems, weekEvents, tools, recommendations, user?.isBuilder]);
+        if (res.ok) {
+          // Optimistically update the dashboard cache
+          queryClient.setQueryData(
+            queryKeys.home.dashboard(true),
+            (prev: { events: EventData[]; recommendations: RecommendedSpace[] } | undefined) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                events: prev.events.map((e) =>
+                  e.id === eventId
+                    ? {
+                        ...e,
+                        isGoing: status === 'going',
+                        rsvpCount:
+                          status === 'going'
+                            ? (e.rsvpCount || 0) + 1
+                            : Math.max(0, (e.rsvpCount || 0) - 1),
+                      }
+                    : e
+                ),
+              };
+            }
+          );
+        }
+      } catch (error) {
+        logger.error(
+          'Failed to RSVP to event',
+          { component: 'HomePage', eventId },
+          error instanceof Error ? error : undefined
+        );
+      }
+    },
+    [queryClient]
+  );
+
+  // Derived data
+  const firstName = useMemo(
+    () =>
+      user?.displayName?.split(' ')[0] ||
+      user?.fullName?.split(' ')[0] ||
+      '',
+    [user?.displayName, user?.fullName]
+  );
+
+  const isNewUser = useMemo(
+    () => !loadingStates.spaces && spaces.length === 0,
+    [loadingStates.spaces, spaces.length]
+  );
+
+  const nextEvent = useMemo(() => {
+    const upcoming = allEvents
+      .filter((e) => isWithin24Hours(e.startDate) || e.isLive)
+      .sort(
+        (a, b) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      );
+    return upcoming[0] || null;
+  }, [allEvents]);
+
+  // Pick one recommendation to show (first one that user hasn't joined)
+  const suggestedSpace = useMemo(() => {
+    if (isNewUser || recommendations.length === 0) return null;
+    const spaceIds = new Set(spaces.map((s) => s.id));
+    return recommendations.find((r) => !spaceIds.has(r.id)) || null;
+  }, [recommendations, spaces, isNewUser]);
 
   // Loading state
-  if (authLoading || !densityLoaded || hasSeenWelcome === null) {
-    return (
-      <div className="min-h-screen bg-foundation-gray-1000">
-        <div className="max-w-5xl mx-auto px-6 py-10">
-          <div className="h-10 w-64 bg-white/[0.06] rounded mb-8 animate-pulse" />
-          <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
-            <div className="space-y-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="space-y-3">
-                  <div className="h-4 w-24 bg-white/[0.04] rounded" />
-                  <div className="h-32 bg-white/[0.02] border border-white/[0.06] rounded-xl animate-pulse" />
-                </div>
-              ))}
-            </div>
-            <div className="hidden lg:block">
-              <div className="h-48 bg-white/[0.02] border border-white/[0.06] rounded-xl animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show welcome overlay for first-time users
-  if (!hasSeenWelcome && user) {
-    const firstName = user.fullName?.split(' ')[0] || 'Builder';
-    return (
-      <WelcomeOverlay
-        firstName={firstName}
-        major={user.major}
-        graduationYear={user.graduationYear}
-        onComplete={completeWelcome}
-      />
-    );
-  }
-
-  const firstName = user?.displayName?.split(' ')[0] || user?.fullName?.split(' ')[0] || '';
-
-  const isNewUser = !loadingStates.spaces && (!spaces || spaces.length === 0);
-
-  // Page-level empty state
-  if (isAllEmpty) {
-    return (
-      <div className="min-h-screen bg-foundation-gray-1000">
-        <div className="border-b border-white/[0.06]">
-          <div className="max-w-5xl mx-auto px-6 py-6">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
-            >
-              <h1 className="text-title-lg font-semibold text-white">
-                {getGreeting()}
-                {firstName && (
-                  <>
-                    , <GradientText variant="gold">{firstName}</GradientText>
-                  </>
-                )}
-              </h1>
-              <p className="text-body text-white/50 mt-1">
-                Here's what's happening in your world
-              </p>
-            </motion.div>
-          </div>
-        </div>
-
-        <main className="max-w-xl mx-auto px-6 py-16">
-          <FeedEmptyState variant="page" />
-        </main>
-      </div>
-    );
+  if (authLoading) {
+    return <HomeSkeleton />;
   }
 
   return (
     <div className="min-h-screen bg-foundation-gray-1000">
-      {/* Header */}
-      <div className="border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6 py-6">
-          <div className="flex items-start justify-between">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
-            >
-              <h1 className="text-title-lg font-semibold text-white">
-                {getGreeting()}
-                {firstName && (
-                  <>
-                    , <GradientText variant="gold">{firstName}</GradientText>
-                  </>
-                )}
-              </h1>
-              {feedUpdate && feedUpdate.hasNewPosts && feedUpdate.newPostCount > 0 ? (
-                <motion.p
-                  className="text-body text-white/50 mt-1 flex items-center gap-2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-gold-500 animate-pulse" />
-                    <span className="text-gold-500">
-                      {feedUpdate.newPostCount} new
-                    </span>
-                  </span>
-                  {feedUpdate.lastViewedAt && (
-                    <span>since you were here {formatTimeSince(feedUpdate.lastViewedAt)}</span>
-                  )}
-                </motion.p>
-              ) : (
-                <p className="text-body text-white/50 mt-1">
-                  Here's what's happening in your world
-                </p>
-              )}
-            </motion.div>
+      <main className="max-w-2xl mx-auto px-6 py-10">
+        {/* 1. Header */}
+        <HomeHeader firstName={firstName} />
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <DensityToggle value={density} onChange={setDensity} />
-            </motion.div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <main className="max-w-5xl mx-auto px-6 py-8">
-        <div className={cn('grid lg:grid-cols-[1fr_280px]', densityConfig.sectionGap)}>
-          <div>
-            {isNewUser ? (
-              <>
-                {/* New user order: Today -> CTA -> Discover -> This Week -> Creations -> Spaces -> Activity */}
-                <TodaySection
-                  events={todayEvents}
-                  unreadSpaces={unreadSpaces}
-                  loading={loadingStates.events}
-                  density={densityConfig}
-                  onRsvp={handleEventRsvp}
-                />
-
-                <NewUserCTA />
-
-                <DiscoverSection
-                  recommendations={recommendations}
-                  loading={loadingStates.events}
-                  density={densityConfig}
-                  titleOverride="Find Your First Space"
-                />
-
-                <ThisWeekSection
-                  events={weekEvents}
-                  loading={loadingStates.events}
-                  density={densityConfig}
-                  onRsvp={handleEventRsvp}
-                />
-
-                <YourCreationsSection
-                  tools={tools}
-                  loading={loadingStates.tools}
-                  isBuilder={user?.isBuilder ?? false}
-                  density={densityConfig}
-                />
-
-                <YourSpacesSection
-                  spaces={spaces}
-                  loading={loadingStates.spaces}
-                  density={densityConfig}
-                />
-
-                <RecentActivitySection
-                  activity={activityItems}
-                  loading={loadingStates.activity}
-                  density={densityConfig}
-                />
-              </>
-            ) : (
-              <>
-                {/* Returning user order: Today -> Spaces -> Activity -> This Week -> Creations -> Discover */}
-                <TodaySection
-                  events={todayEvents}
-                  unreadSpaces={unreadSpaces}
-                  loading={loadingStates.events}
-                  density={densityConfig}
-                  onRsvp={handleEventRsvp}
-                />
-
-                <YourSpacesSection
-                  spaces={spaces}
-                  loading={loadingStates.spaces}
-                  density={densityConfig}
-                />
-
-                <RecentActivitySection
-                  activity={activityItems}
-                  loading={loadingStates.activity}
-                  density={densityConfig}
-                />
-
-                <ThisWeekSection
-                  events={weekEvents}
-                  loading={loadingStates.events}
-                  density={densityConfig}
-                  onRsvp={handleEventRsvp}
-                />
-
-                <YourCreationsSection
-                  tools={tools}
-                  loading={loadingStates.tools}
-                  isBuilder={user?.isBuilder ?? false}
-                  density={densityConfig}
-                />
-
-                <DiscoverSection
-                  recommendations={recommendations}
-                  loading={loadingStates.events}
-                  density={densityConfig}
-                />
-              </>
+        {isNewUser ? (
+          /* New user path */
+          <NewUserState
+            recommendations={recommendations}
+            loadingRecs={loadingStates.dashboard}
+          />
+        ) : (
+          /* Returning user path */
+          <>
+            {/* 2. Happening Now */}
+            {!loadingStates.spaces && (
+              <HappeningNow spaces={spaces} />
             )}
-          </div>
 
-          <aside className="hidden lg:block">
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{
-                duration: MOTION.duration.standard,
-                delay: 0.3,
-                ease: MOTION.ease.premium,
-              }}
-              className="sticky top-24"
-            >
-              <QuickActions />
-            </motion.div>
-          </aside>
-        </div>
+            {/* 3. Up Next */}
+            {!loadingStates.dashboard && nextEvent && (
+              <UpNext event={nextEvent} onRsvp={handleEventRsvp} />
+            )}
+
+            {/* 4. Your Spaces */}
+            {loadingStates.spaces ? (
+              <div className="mb-8">
+                <div className="h-4 w-24 bg-white/[0.04] rounded mb-3" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-4 animate-pulse"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white/[0.04]" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-3/4 bg-white/[0.06] rounded" />
+                          <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              spaces.length > 0 && <YourSpaces spaces={spaces} />
+            )}
+
+            {/* 5. Recent Activity */}
+            {loadingStates.activity ? (
+              <div className="mb-8">
+                <div className="h-4 w-28 bg-white/[0.04] rounded mb-3" />
+                <div className="space-y-1">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 px-3 py-2.5"
+                    >
+                      <div className="w-7 h-7 rounded-md bg-white/[0.04] animate-pulse" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3 w-3/4 bg-white/[0.04] rounded animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <RecentActivity activity={activityItems} />
+            )}
+
+            {/* 6. Suggested */}
+            {!loadingStates.dashboard && suggestedSpace && (
+              <Suggested space={suggestedSpace} />
+            )}
+          </>
+        )}
       </main>
     </div>
   );

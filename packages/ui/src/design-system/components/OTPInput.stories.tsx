@@ -3,7 +3,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import * as React from 'react';
 import { OTPInput } from './OTPInput';
-import { Focus } from '../templates/Focus';
 
 /**
  * OTPInput — Premium 6-digit verification code input
@@ -347,66 +346,6 @@ export const ProgressiveGoldDemo: Story = {
   },
 };
 
-/**
- * In Focus Template — Real usage context
- */
-export const InFocusTemplate: Story = {
-  render: function FocusTemplateStory() {
-    const [value, setValue] = React.useState(['', '', '', '', '', '']);
-    const [isVerifying, setIsVerifying] = React.useState(false);
-    const [error, setError] = React.useState<string | undefined>();
-
-    const handleComplete = async (code: string) => {
-      setError(undefined);
-      setIsVerifying(true);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      if (code === '123456') {
-        alert('Success! Code verified.');
-      } else {
-        setError('Invalid code. Try 123456.');
-      }
-      setIsVerifying(false);
-    };
-
-    return (
-      <Focus
-        mode="form"
-        atmosphere="landing"
-        logo={{ position: 'center', variant: 'icon' }}
-        background="ambient"
-        maxWidth="xs"
-      >
-        <div className="space-y-6">
-          <div className="text-center space-y-2">
-            <h1 className="text-xl font-semibold text-white">Verify your email</h1>
-            <p className="text-body text-white/50">
-              We sent a code to you@buffalo.edu
-            </p>
-          </div>
-          <OTPInput
-            value={value}
-            onChange={setValue}
-            onComplete={handleComplete}
-            isVerifying={isVerifying}
-            error={error}
-          />
-          <button
-            className="w-full text-body-sm text-white/40 hover:text-white/60"
-            onClick={() => {
-              setValue(['', '', '', '', '', '']);
-              setError(undefined);
-            }}
-          >
-            Didn't receive a code? Resend
-          </button>
-        </div>
-      </Focus>
-    );
-  },
-};
 
 /**
  * Paste Behavior Demo

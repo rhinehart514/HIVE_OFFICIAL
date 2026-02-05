@@ -16,28 +16,10 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { EASE_PREMIUM } from '../layout-tokens';
-
-// ============================================
-// MOTION CONSTANTS (About-page aligned)
-// ============================================
-
-/** Duration scale */
-const DURATION = {
-  instant: 0,
-  fast: 0.15,
-  quick: 0.25,
-  smooth: 0.4,
-  gentle: 0.6,
-  slow: 0.8,
-  dramatic: 1.0,
-} as const;
-
-/** Spring configs */
-const SPRING_GENTLE = { stiffness: 200, damping: 25 };
-const SPRING_SNAPPY = { stiffness: 400, damping: 30 };
+import { easingArrays, durationSeconds, springPresets, SPRING_SNAP_NAV, staggerContainerVariants, staggerPresets } from '@hive/tokens';
 
 // ============================================
 // TOKENS
@@ -70,8 +52,8 @@ export const SIDEBAR_TOKENS = {
   goldDim: 'rgba(255, 215, 0, 0.5)',
 
   // Motion
-  spring: SPRING_SNAPPY,
-  springSoft: SPRING_GENTLE,
+  spring: springPresets.snappy,
+  springSoft: springPresets.default,
 } as const;
 
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121212]';
@@ -85,7 +67,7 @@ const itemEntranceVariants: Variants = {
   initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    transition: { duration: DURATION.smooth, ease: EASE_PREMIUM },
+    transition: { duration: durationSeconds.smooth, ease: easingArrays.default },
   },
 };
 
@@ -145,9 +127,9 @@ export function GlobalSidebar({
         initial={{ opacity: 0, x: -8 }}
         animate={{ opacity: 1, x: 0, width }}
         transition={{
-          opacity: { duration: 0.3, ease: EASE_PREMIUM },
-          x: { duration: 0.3, ease: EASE_PREMIUM },
-          width: { duration: 0.2, ease: EASE_PREMIUM },
+          opacity: { duration: durationSeconds.standard, ease: easingArrays.default },
+          x: { ...SPRING_SNAP_NAV },
+          width: { ...SPRING_SNAP_NAV },
         }}
         style={{
           top: SIDEBAR_TOKENS.margin,
@@ -209,7 +191,7 @@ export function IdentityCard({ name, handle, avatarUrl, onProfileClick }: Identi
           }}
         >
           {avatarUrl ? (
-            <img src={avatarUrl} alt={name || 'Profile'} className="w-full h-full object-cover" />
+            <Image src={avatarUrl} alt={name || 'Profile'} width={32} height={32} className="object-cover" sizes="32px" priority />
           ) : (
             <span style={{ color: SIDEBAR_TOKENS.textSecondary, fontSize: 13, fontWeight: 600 }}>
               {name?.charAt(0)?.toUpperCase() || '?'}
@@ -264,7 +246,14 @@ export interface NavCardProps {
 export function NavCard({ children }: NavCardProps) {
   return (
     <nav className="px-3 py-1">
-      <div className="space-y-0.5">{children}</div>
+      <motion.div
+        className="space-y-0.5"
+        variants={staggerContainerVariants}
+        initial="initial"
+        animate="animate"
+      >
+        {children}
+      </motion.div>
     </nav>
   );
 }
@@ -395,7 +384,12 @@ export function SpacesCard({ children, onBrowseClick }: SpacesCardProps) {
       )}
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto px-3 space-y-0.5">
+      <motion.div
+        className="flex-1 overflow-y-auto px-3 space-y-0.5"
+        variants={staggerContainerVariants}
+        initial="initial"
+        animate="animate"
+      >
         {hasChildren ? children : (
           !collapsed && (
             <div className="py-6 text-center">
@@ -405,7 +399,7 @@ export function SpacesCard({ children, onBrowseClick }: SpacesCardProps) {
             </div>
           )
         )}
-      </div>
+      </motion.div>
 
       {/* Browse button */}
       {onBrowseClick && (
@@ -491,7 +485,7 @@ export function SpaceItem({ name, avatarUrl, emoji, isActive, hasUnread, onClick
         }}
       >
         {avatarUrl ? (
-          <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+          <Image src={avatarUrl} alt={name} width={24} height={24} className="object-cover" sizes="24px" priority />
         ) : emoji ? (
           <span style={{ fontSize: 11 }}>{emoji}</span>
         ) : (
@@ -542,12 +536,13 @@ export function SidebarCollapseToggle() {
         style={{ color: SIDEBAR_TOKENS.textMuted }}
         title={collapsed ? 'Expand sidebar [' : 'Collapse sidebar ['}
       >
-        <span
-          className="text-body-sm transition-transform duration-200"
-          style={{ transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        <motion.span
+          className="text-body-sm"
+          animate={{ rotate: collapsed ? 180 : 0 }}
+          transition={springPresets.snappy}
         >
           «
-        </span>
+        </motion.span>
         {!collapsed && (
           <span className="text-label-sm font-medium">Collapse</span>
         )}
@@ -560,21 +555,50 @@ export function SidebarCollapseToggle() {
 // NAV ICONS
 // ============================================
 
-export function FeedIcon({ className }: { className?: string }) {
+export function HomeNavIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
   );
 }
 
-export function BrowseIcon({ className }: { className?: string }) {
+export function ExploreNavIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 0v0zm3.21 5.79l-1.68 5.04-5.04 1.68 1.68-5.04 5.04-1.68z" />
     </svg>
   );
 }
+
+export function SpacesNavIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <rect x="3" y="3" width="8" height="8" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="13" y="3" width="8" height="8" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="3" y="13" width="8" height="8" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="13" y="13" width="8" height="8" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function LabNavIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+    </svg>
+  );
+}
+
+export function YouNavIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  );
+}
+
+export { HomeNavIcon as FeedIcon, ExploreNavIcon as BrowseIcon, SpacesNavIcon as RoomsIcon, YouNavIcon as ProfileIcon };
 
 export function ToolsIcon({ className }: { className?: string }) {
   return (
@@ -589,14 +613,6 @@ export function SettingsIcon({ className }: { className?: string }) {
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  );
-}
-
-export function ProfileIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
     </svg>
   );
 }

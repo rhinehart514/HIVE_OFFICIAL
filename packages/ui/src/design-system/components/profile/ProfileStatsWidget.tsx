@@ -14,7 +14,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
-import { EASE_PREMIUM as EASE } from '../../layout-tokens';
+import { easingArrays } from '@hive/tokens';
 
 export interface ProfileStatsWidgetProps {
   spacesCount: number;
@@ -95,7 +95,7 @@ export function ProfileStatsWidget({
               className="flex flex-col items-center text-center"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.4, ease: EASE }}
+              transition={{ delay: index * 0.05, duration: 0.4, ease: easingArrays.default }}
             >
               {/* Icon */}
               <span className="text-lg mb-2">{stat.icon}</span>

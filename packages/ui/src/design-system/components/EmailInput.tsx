@@ -26,7 +26,6 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EASE_PREMIUM } from '../layout-tokens';
 
 // ============================================
 // TYPES

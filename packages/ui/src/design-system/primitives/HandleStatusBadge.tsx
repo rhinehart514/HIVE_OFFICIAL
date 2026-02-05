@@ -14,7 +14,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { EASE_PREMIUM } from '../layout-tokens';
+import { easingArrays } from '@hive/tokens';
 
 export type HandleBadgeStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
@@ -98,7 +98,7 @@ function HandleStatusBadge({
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 4 }}
-          transition={{ duration: 0.15, ease: EASE_PREMIUM }}
+          transition={{ duration: 0.15, ease: easingArrays.default }}
           className="flex items-center justify-center gap-2"
         >
           {Icon && (
@@ -125,7 +125,7 @@ function HandleStatusBadge({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: EASE_PREMIUM }}
+            transition={{ duration: 0.2, ease: easingArrays.default }}
             className="overflow-hidden"
           >
             <div className="flex flex-wrap items-center justify-center gap-2 pt-1">

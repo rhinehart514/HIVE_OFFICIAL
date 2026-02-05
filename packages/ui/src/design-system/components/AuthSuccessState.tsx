@@ -24,7 +24,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { EASE_PREMIUM } from '../layout-tokens';
+import { easingArrays } from '@hive/tokens';
 
 // ============================================
 // TYPES
@@ -94,7 +94,7 @@ export function AuthSuccessState({
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: EASE_PREMIUM }}
+        transition={{ duration: 0.5, ease: easingArrays.default }}
         className="space-y-6"
       >
         {/* Main headline with check */}

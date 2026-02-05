@@ -107,7 +107,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
     return respond.error('Session not found', 'UNAUTHORIZED', { status: 401 });
   }
 
-  const campusId = session.campusId || 'ub-buffalo';
+  if (!session.campusId) {
+    return respond.error('Campus identification required', 'UNAUTHORIZED', { status: 401 });
+  }
+  const campusId = session.campusId;
   const email = session.email;
   const isAdmin = session.isAdmin || false;
 
@@ -160,7 +163,8 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         firstName: body.firstName.trim(),
         lastName: body.lastName.trim(),
       },
-      redirect: '/spaces',
+      autoJoinedSpaces: [],
+      redirect: '/home',
       devMode: true,
       expiresIn: tokens.accessTokenExpiresIn,
     });
@@ -198,6 +202,9 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
 
   // Track the final handle (may be modified inside transaction, needs to be accessible in catch)
   let finalHandle = normalizedHandle;
+
+  // Track auto-joined spaces for the response (populated inside transaction)
+  const autoJoinedSpaces: Array<{ id: string; handle: string; name: string }> = [];
 
   try {
     // Start Gravatar check early but don't await - fire and forget
@@ -320,6 +327,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
 
       // Pre-fetch and validate residential space if provided
       let validatedResidentialSpaceId: string | null = null;
+      let residentialSpaceData: FirebaseFirestore.DocumentData | undefined;
       if (body.residentialSpaceId && body.residenceType === 'on-campus') {
         const residentialSpaceDoc = await transaction.get(
           dbAdmin.collection('spaces').doc(body.residentialSpaceId)
@@ -329,6 +337,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
           // Validate space belongs to user's campus and is a residential space
           if (spaceData?.campusId === campusId && spaceData?.identityType === 'residential') {
             validatedResidentialSpaceId = body.residentialSpaceId;
+            residentialSpaceData = spaceData;
           } else {
             logger.warn('Invalid residential space', {
               spaceId: body.residentialSpaceId,
@@ -411,6 +420,13 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
 
             // Save majorSpaceId to user profile
             transaction.update(userRef, { majorSpaceId });
+
+            // Track for response
+            autoJoinedSpaces.push({
+              id: majorSpaceId,
+              handle: (majorSpaceData.slug as string) || (majorSpaceData.handle as string) || majorSpaceId,
+              name: (majorSpaceData.name as string) || '',
+            });
           } else {
             // Add to waitlist
             const waitlistRef = dbAdmin.collection('spaceWaitlists').doc(`${majorSpaceId}_${userId}`);
@@ -433,6 +449,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         if (!snapshot.empty) {
           const communitySpace = snapshot.docs[0];
           const communitySpaceId = communitySpace?.id;
+          const communitySpaceData = communitySpace?.data();
 
           if (communitySpaceId) {
             communitySpaceIds.push(communitySpaceId);
@@ -456,6 +473,15 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
               memberCount: FieldValue.increment(1),
               'metrics.memberCount': FieldValue.increment(1),
             });
+
+            // Track for response
+            if (communitySpaceData) {
+              autoJoinedSpaces.push({
+                id: communitySpaceId,
+                handle: (communitySpaceData.slug as string) || (communitySpaceData.handle as string) || communitySpaceId,
+                name: (communitySpaceData.name as string) || '',
+              });
+            }
           }
         }
       }
@@ -488,6 +514,15 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
 
         // Save as homeSpaceId
         transaction.update(userRef, { homeSpaceId: validatedResidentialSpaceId });
+
+        // Track for response
+        if (residentialSpaceData) {
+          autoJoinedSpaces.push({
+            id: validatedResidentialSpaceId,
+            handle: (residentialSpaceData.slug as string) || (residentialSpaceData.handle as string) || validatedResidentialSpaceId,
+            name: (residentialSpaceData.name as string) || '',
+          });
+        }
       }
     });
 
@@ -517,6 +552,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       onboardingCompleted: true,
     });
 
+    // Determine best redirect: first auto-joined space or home
+    const firstSpace = autoJoinedSpaces[0];
+    const redirect = firstSpace ? `/s/${firstSpace.handle}` : '/home';
+
     const response = NextResponse.json({
       success: true,
       user: {
@@ -528,7 +567,8 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         lastName: body.lastName.trim(),
         ...(avatarUrl && { avatarUrl }),
       },
-      redirect: '/spaces',
+      autoJoinedSpaces,
+      redirect,
       expiresIn: tokens.accessTokenExpiresIn,
     });
 

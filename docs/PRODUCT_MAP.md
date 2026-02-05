@@ -1,7 +1,7 @@
 # HIVE Product Map & Information Architecture
 
 > **Purpose:** Master document for all page structure, navigation, layouts, and user journeys.
-> **Last Updated:** January 2026
+> **Last Updated:** 2026-01-17
 > **Status:** Redesign in progress
 
 ---

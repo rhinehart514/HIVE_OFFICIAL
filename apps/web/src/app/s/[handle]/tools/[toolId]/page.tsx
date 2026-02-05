@@ -230,13 +230,13 @@ function ToolContent({
 
   return (
     <motion.div
-      className="min-h-screen bg-[#0A0A09]"
+      className="min-h-screen bg-[var(--bg-ground)]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#0A0A09]/95 backdrop-blur-xl border-b border-white/[0.06]">
+      <div className="sticky top-0 z-10 bg-[var(--bg-ground)]/95 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -286,7 +286,7 @@ function ToolContent({
           </div>
         )}
 
-        <div className="bg-[#111110] rounded-2xl border border-white/[0.06] p-6">
+        <div className="bg-[var(--bg-surface)] rounded-2xl border border-white/[0.06] p-6">
           {elements.length > 0 ? (
             <ToolCanvas
               elements={elements}
@@ -388,7 +388,7 @@ export default function SpaceToolPage() {
   // Loading state
   if (authLoading || spaceLoading || deploymentLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0A09] p-6">
+      <div className="min-h-screen bg-[var(--bg-ground)] p-6">
         {/* Header skeleton */}
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-4 mb-8">
@@ -408,7 +408,7 @@ export default function SpaceToolPage() {
   // Error: Space not found
   if (spaceError || !space) {
     return (
-      <div className="min-h-screen bg-[#0A0A09] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[var(--bg-ground)] flex items-center justify-center p-6">
         <motion.div
           className="max-w-md text-center"
           initial={{ opacity: 0, y: 20 }}
@@ -430,7 +430,7 @@ export default function SpaceToolPage() {
   // Error: Deployment not found
   if (deploymentError || !deployment) {
     return (
-      <div className="min-h-screen bg-[#0A0A09] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[var(--bg-ground)] flex items-center justify-center p-6">
         <motion.div
           className="max-w-md text-center"
           initial={{ opacity: 0, y: 20 }}

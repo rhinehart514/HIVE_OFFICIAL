@@ -9,6 +9,7 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { useCampusOptional } from './CampusProvider';
@@ -158,7 +159,7 @@ function SpacePreview({ data, onNavigate }: { data: SpacePreviewData; onNavigate
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg bg-[var(--bg-elevated)] overflow-hidden flex-shrink-0">
           {data.avatar ? (
-            <img src={data.avatar} alt="" className="w-full h-full object-cover" />
+            <Image src={data.avatar} alt="" width={40} height={40} className="object-cover" sizes="40px" />
           ) : (
             <span className="w-full h-full flex items-center justify-center text-sm font-medium text-[var(--text-muted)]">
               {data.name[0]?.toUpperCase()}

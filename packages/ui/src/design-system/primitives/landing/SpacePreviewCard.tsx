@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../../lib/utils';
 import { BorderBeam } from '../../../components/motion-primitives/border-beam';
@@ -67,7 +68,7 @@ export function SpacePreviewCard({
       {/* Avatar */}
       <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center overflow-hidden">
         {avatar ? (
-          <img src={avatar} alt={name} className="w-full h-full object-cover" />
+          <Image src={avatar} alt={name} width={40} height={40} className="object-cover" sizes="40px" />
         ) : (
           <span className="text-label-sm font-bold text-white/60">
             {shortName || name.slice(0, 2).toUpperCase()}

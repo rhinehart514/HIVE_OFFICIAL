@@ -73,24 +73,5 @@ export const Z_INDEX = {
   toast: 80,
 } as const;
 
-// Animation Timings (ms)
-export const DURATION = {
-  instant: 0,
-  fast: 100,
-  normal: 200,
-  slow: 300,
-  slower: 500,
-} as const;
-
-// Easing Curves
-export const EASE = {
-  default: [0.25, 0.1, 0.25, 1], // CSS ease
-  out: [0, 0, 0.2, 1], // ease-out
-  in: [0.4, 0, 1, 1], // ease-in
-  inOut: [0.4, 0, 0.2, 1], // ease-in-out
-  spring: [0.175, 0.885, 0.32, 1.275], // Bounce effect
-  premium: [0.22, 1, 0.36, 1], // HIVE signature - smooth deceleration
-} as const;
-
-// Standalone export for direct import (matches entry-motion.ts)
+/** @deprecated Use `easingArrays.default` from '@hive/tokens' */
 export const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;

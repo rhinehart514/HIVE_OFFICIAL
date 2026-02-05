@@ -144,6 +144,44 @@ function shouldSendNotification(
 }
 
 /**
+ * Check if a space is muted for a specific user
+ */
+async function isSpaceMutedForUser(userId: string, spaceId: string): Promise<boolean> {
+  try {
+    const prefsDoc = await dbAdmin.collection('notificationPreferences').doc(userId).get();
+    if (!prefsDoc.exists) return false;
+
+    const prefs = prefsDoc.data();
+    const spaceSetting = prefs?.spaceSettings?.[spaceId];
+    if (!spaceSetting?.muted) return false;
+
+    // Check if muteUntil has expired
+    if (spaceSetting.muteUntil) {
+      const muteEnd = new Date(spaceSetting.muteUntil);
+      if (muteEnd <= new Date()) {
+        // Mute has expired - clean up asynchronously
+        dbAdmin.collection('notificationPreferences').doc(userId).update({
+          [`spaceSettings.${spaceId}.muted`]: false,
+          [`spaceSettings.${spaceId}.muteUntil`]: null,
+        }).catch(() => {
+          // Non-critical cleanup
+        });
+        return false;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    logger.error('Error checking space mute status', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      spaceId,
+    });
+    return false;
+  }
+}
+
+/**
  * Create a notification for a user
  */
 export async function createNotification(params: CreateNotificationParams): Promise<string | null> {
@@ -160,6 +198,16 @@ export async function createNotification(params: CreateNotificationParams): Prom
     if (!shouldSendNotification(preferences, category)) {
       logger.debug('Notification blocked by preferences', { userId, type, category });
       return null;
+    }
+
+    // Check per-space mute settings
+    if (metadata?.spaceId) {
+      const spaceId = metadata.spaceId as string;
+      const isSpaceMuted = await isSpaceMutedForUser(userId, spaceId);
+      if (isSpaceMuted) {
+        logger.debug('Notification blocked by space mute', { userId, type, spaceId });
+        return null;
+      }
     }
 
     // Check for duplicate notifications (same type/actor within 1 hour)

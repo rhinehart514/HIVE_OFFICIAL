@@ -105,10 +105,23 @@ Next.js 15 (App Router) · TypeScript · Firebase (Firestore, Auth, Storage) · 
 
 | Topic | Location |
 |-------|----------|
-| System details & game plans | `docs/SYSTEMS.md` |
+| **Systems** | |
+| Identity (Entry, Auth, Profile) | `docs/systems/IDENTITY.md` |
+| Spaces (Communities, Chat) | `docs/systems/SPACES.md` |
+| Tools (HiveLab, Automations) | `docs/systems/TOOLS.md` |
+| Awareness (Home, Notifications) | `docs/systems/AWARENESS.md` |
+| Discovery (Explore, Search) | `docs/systems/DISCOVERY.md` |
+| **UX Specs** | |
+| Identity UX | `docs/systems/IDENTITY_UX.md` |
+| Spaces UX | `docs/systems/SPACES_UX.md` |
+| Tools UX | `docs/systems/TOOLS_UX.md` |
+| Awareness UX | `docs/systems/AWARENESS_UX.md` |
+| Discovery UX | `docs/systems/DISCOVERY_UX.md` |
+| **Standards** | |
 | Quality standards | `docs/QUALITY_STANDARDS.md` |
-| Platform audit | `docs/PLATFORM_AUDIT.md` |
 | Database schema | `docs/DATABASE_SCHEMA.md` |
 | IA rules | `docs/IA_INVARIANTS.md` |
 | Visual direction | `docs/VISUAL_DIRECTION.md` |
+| Design system | `docs/design-system/INDEX.md` |
+| Strategic lenses | `docs/STRATEGIC_LENSES.md` |
 | Current priorities | `TODO.md` |

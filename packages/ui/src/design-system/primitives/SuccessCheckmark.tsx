@@ -12,7 +12,7 @@
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { EASE_PREMIUM } from '../layout-tokens';
+import { easingArrays } from '@hive/tokens';
 
 export interface SuccessCheckmarkProps {
   /** Size variant */
@@ -103,7 +103,7 @@ function SuccessCheckmark({
               ? {
                   duration: 0.8,
                   delay: delay + 0.2,
-                  ease: EASE_PREMIUM,
+                  ease: easingArrays.default,
                 }
               : { duration: 0 }
           }
@@ -137,7 +137,7 @@ function SuccessCheckmark({
           transition={
             shouldAnimate
               ? {
-                  pathLength: { duration: 0.4, delay, ease: EASE_PREMIUM },
+                  pathLength: { duration: 0.4, delay, ease: easingArrays.default },
                   opacity: { duration: 0.2, delay },
                 }
               : { duration: 0 }
@@ -174,7 +174,7 @@ function SuccessCheckmark({
           transition={
             shouldAnimate
               ? {
-                  pathLength: { duration: 0.4, delay: delay + 0.1, ease: EASE_PREMIUM },
+                  pathLength: { duration: 0.4, delay: delay + 0.1, ease: easingArrays.default },
                   opacity: { duration: 0.2, delay: delay + 0.1 },
                 }
               : { duration: 0 }
@@ -196,7 +196,7 @@ function SuccessCheckmark({
               ? {
                   duration: 0.4,
                   delay: delay + 0.1,
-                  ease: EASE_PREMIUM,
+                  ease: easingArrays.default,
                 }
               : { duration: 0 }
           }

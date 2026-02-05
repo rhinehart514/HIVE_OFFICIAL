@@ -237,22 +237,15 @@ export async function getCampusId(request: NextRequest): Promise<string> {
  * Use when you already have auth context from validateApiAuth
  */
 export function getCampusIdFromAuth(auth: AuthContext): string {
-  // Auth context should have campusId set during auth
   if (auth.campusId) {
     return auth.campusId;
   }
 
-  // Fallback: derive from email if campusId not in auth context
   if (auth.email) {
-    try {
-      return getCampusFromEmail(auth.email);
-    } catch {
-      logger.warn('Could not determine campus from email, using default', { component: 'campus-context', email: auth.email });
-      return DEFAULT_CAMPUS_ID;
-    }
+    return getCampusFromEmail(auth.email);
   }
 
-  return DEFAULT_CAMPUS_ID;
+  throw new Error('Campus identification required: no campusId or recognized email domain');
 }
 
 /**
@@ -269,15 +262,10 @@ export function getCampusIdFromSession(session: SessionData | null): string {
   }
 
   if (session.email) {
-    try {
-      return getCampusFromEmail(session.email);
-    } catch {
-      logger.warn('Could not determine campus from email, using default', { component: 'campus-context', email: session.email });
-      return DEFAULT_CAMPUS_ID;
-    }
+    return getCampusFromEmail(session.email);
   }
 
-  return DEFAULT_CAMPUS_ID;
+  throw new Error('Campus identification required: no campusId or recognized email domain in session');
 }
 
 /**

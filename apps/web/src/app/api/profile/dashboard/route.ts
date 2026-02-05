@@ -349,34 +349,110 @@ export const GET = withAuthAndErrors(async (
 
     // Add recommendations if requested
     if (includeRecommendations) {
-      // Get spaces the user is not a member of for recommendations
+      // Fetch user interests and major for scoring
+      let userInterests: string[] = [];
+      let userMajor: string | undefined;
+
+      if (profileResult.isSuccess) {
+        const profile = profileResult.getValue();
+        userInterests = (profile as unknown as Record<string, unknown>).interests as string[] || [];
+        userMajor = (profile as unknown as Record<string, unknown>).major as string | undefined;
+      }
+
+      // Fallback: read from user doc if DDD profile didn't have interests
+      if (userInterests.length === 0) {
+        const userDocForInterests = await dbAdmin.collection('users').doc(userId).get();
+        const userDocData = userDocForInterests.data();
+        if (userDocData) {
+          userInterests = (userDocData.interests as string[]) || [];
+          userMajor = userMajor || (userDocData.major as string | undefined);
+        }
+      }
+
+      // Get active spaces on campus for scoring
       const allSpacesSnapshot = await dbAdmin
         .collection('spaces')
         .where('campusId', '==', campusId)
         .where('isActive', '==', true)
-        .orderBy('memberCount', 'desc') // Order by popularity
-        .limit(10) // Reduced from 20 to improve performance
+        .orderBy('memberCount', 'desc')
+        .limit(30)
         .get();
 
-      const userSpaceIds = new Set(spaceMemberships.docs.map(doc => doc.id));
-      const recommendedSpaces = allSpacesSnapshot.docs
-        .filter(doc => !userSpaceIds.has(doc.id))
-        .slice(0, 3)
+      const joinedSpaceIds = new Set(spaceMemberships.docs.map(doc => doc.id));
+      const normalizedInterests = userInterests.map(i => i.toLowerCase());
+
+      const scoredSpaces = allSpacesSnapshot.docs
+        .filter(doc => !joinedSpaceIds.has(doc.id))
         .map(doc => {
-          const data = doc.data();
+          const spaceData = doc.data();
+          const spaceName = ((spaceData.name as string) || '').toLowerCase();
+          const spaceDescription = ((spaceData.description as string) || '').toLowerCase();
+          const spaceCategory = ((spaceData.category as string) || '').toLowerCase();
+          const spaceText = `${spaceName} ${spaceDescription}`;
+
+          let score = 0;
+          let bestReason = '';
+
+          // +3 if category matches an interest
+          for (const interest of normalizedInterests) {
+            if (spaceCategory.includes(interest) || interest.includes(spaceCategory)) {
+              score += 3;
+              if (!bestReason) {
+                bestReason = `Matches your interest in ${userInterests[normalizedInterests.indexOf(interest)]}`;
+              }
+              break;
+            }
+          }
+
+          // +2 if name or description contains interest keyword
+          for (const interest of normalizedInterests) {
+            if (spaceText.includes(interest)) {
+              score += 2;
+              if (!bestReason) {
+                bestReason = `Matches your interest in ${userInterests[normalizedInterests.indexOf(interest)]}`;
+              }
+              break;
+            }
+          }
+
+          // +1 if major matches category or name
+          if (userMajor) {
+            const normalizedMajor = userMajor.toLowerCase();
+            if (spaceText.includes(normalizedMajor) || spaceCategory.includes(normalizedMajor)) {
+              score += 1;
+              if (!bestReason) {
+                bestReason = `Popular with ${userMajor} students`;
+              }
+            }
+          }
+
+          // Base score from popularity (0.1-0.5 range so interest matching always wins)
+          const memberCount = (spaceData.memberCount as number) || 0;
+          score += Math.min(0.5, memberCount / 1000);
+
+          if (!bestReason) {
+            bestReason = memberCount > 50
+              ? `Popular on campus · ${memberCount} members`
+              : 'Active on campus';
+          }
+
           return {
             id: doc.id,
-            name: data.name,
-            reason: 'Popular in your network',
-            memberCount: data.memberCount || 0,
-            matchScore: Math.random() * 0.3 + 0.7, // Mock match score
+            name: spaceData.name as string,
+            handle: (spaceData.slug as string) || (spaceData.handle as string) || doc.id,
+            reason: bestReason,
+            memberCount,
+            matchScore: Math.min(1, score / 6),
+            category: spaceCategory,
           };
-        });
+        })
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 5);
 
       (dashboard as Record<string, unknown>)['recommendations'] = {
-        spaces: recommendedSpaces,
-        events: [], // Would need more complex logic
-        connections: [], // Would need user matching logic
+        spaces: scoredSpaces,
+        events: [],
+        connections: [],
       };
     }
 

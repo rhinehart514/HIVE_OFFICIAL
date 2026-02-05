@@ -14,11 +14,11 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessageItem, type Message } from './message-item';
 import { UnreadDivider } from './unread-divider';
-import { CHAT_SPACING, spaceMotionVariants } from '@hive/tokens';
+import { CHAT_SPACING, spaceMotionVariants, SPACE_MOTION } from '@hive/tokens';
 
 interface MessageFeedProps {
   messages: Message[];
@@ -65,6 +65,9 @@ export function MessageFeed({
 }: MessageFeedProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [showUnreadDivider, setShowUnreadDivider] = React.useState(true);
+  const [isAtBottom, setIsAtBottom] = React.useState(true);
+  const [newMessagesBelowCount, setNewMessagesBelowCount] = React.useState(0);
+  const prevMessageCountRef = React.useRef(messages.length);
 
   // Parse lastReadAt to Date
   const lastReadDate = React.useMemo(() => {
@@ -86,15 +89,45 @@ export function MessageFeed({
     return -1;
   }, [messages, lastReadDate, unreadCount]);
 
+  // Track new messages arriving while scrolled up
+  React.useEffect(() => {
+    const newCount = messages.length - prevMessageCountRef.current;
+    if (newCount > 0 && !isAtBottom) {
+      setNewMessagesBelowCount((prev) => prev + newCount);
+    }
+    prevMessageCountRef.current = messages.length;
+  }, [messages.length, isAtBottom]);
+
+  // Reset new messages count when user scrolls to bottom
+  React.useEffect(() => {
+    if (isAtBottom) {
+      setNewMessagesBelowCount(0);
+    }
+  }, [isAtBottom]);
+
+  // Check if scrolled to bottom (within 80px threshold)
+  const checkIfAtBottom = React.useCallback(() => {
+    if (!containerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    setIsAtBottom(distanceFromBottom < 80);
+  }, []);
+
   // Scroll to bottom on new messages (if already at bottom)
   const scrollToBottom = React.useCallback(() => {
     if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
     }
+    setNewMessagesBelowCount(0);
   }, []);
 
-  // Handle scroll for infinite loading
+  // Handle scroll for infinite loading + bottom detection
   const handleScroll = React.useCallback(() => {
+    checkIfAtBottom();
+
     if (!containerRef.current || isLoadingMore || !hasMore || !onLoadMore) return;
 
     const { scrollTop } = containerRef.current;
@@ -102,7 +135,7 @@ export function MessageFeed({
     if (scrollTop < 100) {
       onLoadMore();
     }
-  }, [isLoadingMore, hasMore, onLoadMore]);
+  }, [isLoadingMore, hasMore, onLoadMore, checkIfAtBottom]);
 
   // Dismiss unread divider handler
   const handleDismissUnread = React.useCallback(() => {
@@ -226,6 +259,41 @@ export function MessageFeed({
 
       {/* Bottom padding for input visibility */}
       <div className="h-4" />
+
+      {/* Scroll to latest floating button */}
+      <AnimatePresence>
+        {!isAtBottom && (
+          <motion.button
+            initial={{ opacity: 0, y: 12, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{
+              duration: SPACE_MOTION.messageAppear.duration / 1000,
+              ease: SPACE_MOTION.hover.ease,
+            }}
+            onClick={scrollToBottom}
+            className={cn(
+              'sticky bottom-4 left-1/2 -translate-x-1/2 z-10',
+              'flex items-center gap-1.5',
+              'px-3 py-1.5 rounded-full',
+              'bg-white/[0.1] backdrop-blur-md',
+              'border border-white/[0.08]',
+              'text-xs font-medium text-white/70',
+              'hover:bg-white/[0.14] hover:text-white/90',
+              'transition-colors duration-150',
+              'shadow-lg shadow-black/20',
+              'mx-auto w-fit'
+            )}
+          >
+            <ArrowDown className="w-3.5 h-3.5" />
+            {newMessagesBelowCount > 0 ? (
+              <span>{newMessagesBelowCount} new</span>
+            ) : (
+              <span>Latest</span>
+            )}
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -274,7 +274,7 @@ export function SpaceOrbit({
             {/* Avatar */}
             <Avatar
               size="sm"
-              className={`shrink-0 ${isLeader ? 'ring-2 ring-[#FFD700]/50' : ''}`}
+              className={`shrink-0 ${isLeader ? 'ring-2 ring-gold-500/50' : ''}`}
             >
               {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
               <AvatarFallback className="text-xs bg-white/[0.06]">

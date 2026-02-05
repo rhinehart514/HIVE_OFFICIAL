@@ -91,14 +91,14 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-4">
       <h2 className={`text-xs font-medium uppercase tracking-wider ${
-        isGold ? 'text-[#FFD700]/70' : 'text-white/40'
+        isGold ? 'text-gold-500/70' : 'text-white/40'
       }`}>
         {title}
       </h2>
       {showProgress && progress !== undefined && (
         <div className="flex items-center gap-3">
           <ProgressDots progress={progress} />
-          <span className="text-xs text-[#FFD700]/50">
+          <span className="text-xs text-gold-500/50">
             {progress}/3
           </span>
         </div>
@@ -164,7 +164,7 @@ export function HubOnboarding({
           >
             <Link
               href="/spaces/browse"
-              className="inline-flex items-center gap-2 text-sm text-[#FFD700]/60 hover:text-[#FFD700]/80 transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-gold-500/60 hover:text-gold-500/80 transition-colors"
             >
               {identityProgress === 0
                 ? 'Start by finding your spaces'

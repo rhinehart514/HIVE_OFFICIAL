@@ -122,6 +122,54 @@ export const UserIcon: React.FC<ShellIconProps> = ({
 );
 
 /**
+ * Compass/Explore icon
+ */
+export const CompassIcon: React.FC<ShellIconProps> = ({
+  className,
+  size = defaultProps.size,
+  strokeWidth = defaultProps.strokeWidth,
+}) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={strokeWidth}
+      d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 0v0zm3.21 5.79l-1.68 5.04-5.04 1.68 1.68-5.04 5.04-1.68z"
+    />
+  </svg>
+);
+
+/**
+ * Spaces icon — Grid of 4 squares representing rooms/community
+ */
+export const SpacesIcon: React.FC<ShellIconProps> = ({
+  className,
+  size = defaultProps.size,
+  strokeWidth = defaultProps.strokeWidth,
+}) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <rect x="3" y="3" width="8" height="8" rx="2" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="13" y="3" width="8" height="8" rx="2" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="3" y="13" width="8" height="8" rx="2" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="13" y="13" width="8" height="8" rx="2" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+/**
  * Beaker/HiveLab icon
  */
 export const BeakerIcon: React.FC<ShellIconProps> = ({
@@ -499,8 +547,12 @@ export const HashIcon: React.FC<ShellIconProps> = ({
 export const NAV_ICONS: Record<string, React.FC<ShellIconProps>> = {
   feed: HomeIcon,
   home: HomeIcon,
-  spaces: UsersIcon,
+  explore: CompassIcon,
+  compass: CompassIcon,
+  spaces: SpacesIcon,
   profile: UserIcon,
+  you: UserIcon,
+  lab: BeakerIcon,
   hivelab: BeakerIcon,
   build: BeakerIcon,
   notifications: BellIcon,

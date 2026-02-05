@@ -14,7 +14,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
-import { EASE_PREMIUM as EASE } from '../../layout-tokens';
+import { easingArrays } from '@hive/tokens';
 
 export interface FeaturedTool {
   id: string;
@@ -177,7 +177,7 @@ export function ProfileFeaturedToolCard({
               border: '1px solid rgba(255, 255, 255, 0.08)',
             }}
             animate={{ scale: isHovered ? 1.05 : 1 }}
-            transition={{ duration: 0.3, ease: EASE }}
+            transition={{ duration: 0.3, ease: easingArrays.default }}
           >
             {tool.emoji || '🔧'}
           </motion.div>

@@ -6,7 +6,6 @@ const nextConfig = {
   transpilePackages: [
     '@hive/ui',
     '@hive/tokens',
-    '@hive/utilities',
     '@hive/firebase',
     '@hive/core',
   ],

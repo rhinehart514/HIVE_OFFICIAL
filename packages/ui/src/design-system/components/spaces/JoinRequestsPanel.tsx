@@ -10,6 +10,7 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 
@@ -77,7 +78,7 @@ function UserAvatar({ user }: { user: JoinRequestUser | null }) {
   return (
     <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/[0.08] flex items-center justify-center flex-shrink-0">
       {user?.avatarUrl ? (
-        <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
+        <Image src={user.avatarUrl} alt={user.displayName} width={40} height={40} className="object-cover" sizes="40px" />
       ) : (
         <span className="text-sm font-medium text-white/60">{monogram}</span>
       )}

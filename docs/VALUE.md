@@ -1,6 +1,6 @@
 # HIVE Value Proposition
 
-**Last Updated**: December 2024
+**Last Updated:** 2025-12-22
 
 ---
 

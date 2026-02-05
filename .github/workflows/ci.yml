@@ -113,7 +113,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
-        run: pnpm build
+        run: pnpm --filter=@hive/web... build
         env:
           # Required for Next.js build
           NEXT_TELEMETRY_DISABLED: 1

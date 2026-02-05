@@ -13,6 +13,7 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { usePresence, useOnlineUsers } from '@/hooks/use-presence';
 import type { Board, SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@hive/ui';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 
@@ -183,6 +184,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  // Presence: heartbeat handled by usePresence(), online users by useOnlineUsers()
+  usePresence();
+  const { onlineUsers: campusOnlineUsers } = useOnlineUsers();
 
   // URL-driven board selection
   const initialBoard = searchParams.get('board') || 'general';
@@ -496,90 +501,25 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     loadMembers();
   }, [space?.id, space?.isMember]);
 
-  // Update user's own presence when viewing space (heartbeat)
+  // Derive online members from campus-wide presence data crossed with space members
   React.useEffect(() => {
-    if (!space?.id || !space.isMember) return;
+    if (!allMembers.length || !campusOnlineUsers.length) return;
 
-    const updatePresence = async (status: 'online' | 'offline' = 'online') => {
-      try {
-        await fetch('/api/realtime/presence', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status,
-            activity: {
-              type: 'viewing',
-              context: {
-                spaceId: space.id,
-                spaceName: space.name,
-              },
-            },
-          }),
-        });
-      } catch {
-        // Silent fail - presence updates are non-critical
-      }
-    };
+    const memberIds = new Set(allMembers.map((m) => m.id));
+    const onlineMembersList = campusOnlineUsers
+      .filter((u) => memberIds.has(u.userId))
+      .map((u) => ({
+        id: u.userId,
+        handle: u.handle,
+        name: u.name,
+        avatar: u.avatar,
+      }));
 
-    // Set online when entering space
-    updatePresence('online');
-
-    // Send heartbeat every 60 seconds to stay "online"
-    const heartbeatInterval = setInterval(() => updatePresence('online'), 60000);
-
-    // Set offline when leaving
-    return () => {
-      clearInterval(heartbeatInterval);
-      updatePresence('offline');
-    };
-  }, [space?.id, space?.isMember, space?.name]);
-
-  // Real-time presence polling - updates online count every 30 seconds
-  React.useEffect(() => {
-    if (!space?.id || !space.isMember) return;
-
-    const fetchPresence = async () => {
-      try {
-        const response = await fetch(`/api/realtime/presence?spaceId=${space.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          const spacePresence = data.spacePresence;
-          if (spacePresence) {
-            // Update online count from presence data
-            setSpace((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    onlineCount: spacePresence.statistics?.totalOnline || prev.onlineCount,
-                  }
-                : null
-            );
-            // Update online members list for the panel
-            if (spacePresence.activeUsers && spacePresence.activeUsers.length > 0) {
-              setOnlineMembers(
-                spacePresence.activeUsers.map((u: { userId: string; userName: string; status: string }) => ({
-                  id: u.userId,
-                  name: u.userName,
-                  avatarUrl: undefined, // Presence API doesn't include avatars
-                  status: u.status,
-                }))
-              );
-            }
-          }
-        }
-      } catch {
-        // Silent fail - presence polling is non-critical
-      }
-    };
-
-    // Initial fetch
-    fetchPresence();
-
-    // Poll every 30 seconds
-    const interval = setInterval(fetchPresence, 30000);
-
-    return () => clearInterval(interval);
-  }, [space?.id, space?.isMember]);
+    setOnlineMembers(onlineMembersList);
+    setSpace((prev) =>
+      prev ? { ...prev, onlineCount: onlineMembersList.length } : null
+    );
+  }, [allMembers, campusOnlineUsers]);
 
   // Update URL when board changes
   const setActiveBoard = React.useCallback(

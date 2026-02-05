@@ -28,6 +28,7 @@ import {
   SPACES_MOTION,
   SPACES_GOLD,
   getEnergyDotCount,
+  durationSeconds,
 } from '@hive/ui/tokens';
 import type { IdentityClaim } from '../hooks/useSpacesHQ';
 
@@ -107,11 +108,11 @@ function EnergyDots({ count, pulse = false }: { count: number; pulse?: boolean }
             scale: pulse ? [1, 1.2, 1] : 1,
           }}
           transition={{
-            opacity: { duration: 0.3, delay: i * SPACES_MOTION.energy.dotDelay },
+            opacity: { duration: durationSeconds.standard, delay: i * SPACES_MOTION.energy.dotDelay },
             scale: pulse ? {
               duration: SPACES_MOTION.energy.pulseDuration,
               repeat: Infinity,
-              delay: i * 0.2,
+              delay: i * durationSeconds.quick,
             } : undefined,
           }}
         />
@@ -215,7 +216,7 @@ function IdentityCard({
           animate={{
             opacity: isHovered ? 0.08 : 0,
           }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: durationSeconds.quick }}
           style={{
             background: `radial-gradient(ellipse at center, ${
               isHot ? SPACES_GOLD.glow : 'rgba(255,255,255,0.3)'
@@ -255,7 +256,7 @@ function IdentityCard({
           </div>
         ) : (
           <div className="flex-1 flex items-center">
-            <p className={`text-sm italic ${showGoldHint ? 'text-[#FFD700]/50' : 'text-white/30'}`}>
+            <p className={`text-sm italic ${showGoldHint ? 'text-gold-500/50' : 'text-white/30'}`}>
               {config.emptyText}
             </p>
           </div>
@@ -280,7 +281,7 @@ function IdentityCard({
           ) : (
             <span className={`
               text-xs flex items-center gap-1
-              ${showGoldHint ? 'text-[#FFD700]/60' : 'text-white/40'}
+              ${showGoldHint ? 'text-gold-500/60' : 'text-white/40'}
             `}>
               Claim
               <ChevronRight size={12} />
@@ -294,7 +295,7 @@ function IdentityCard({
             className="absolute bottom-5 right-5"
             initial={{ opacity: 0, x: -5 }}
             animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : -5 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: durationSeconds.quick }}
           >
             <ChevronRight size={16} className="text-white/40" />
           </motion.div>

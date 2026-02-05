@@ -100,6 +100,33 @@ export const queryKeys = {
     rsvps: (eventId: string) =>
       [...queryKeys.events.detail(eventId), "rsvps"] as const,
   },
+
+  // ============================================================
+  // Home
+  // ============================================================
+  home: {
+    all: ['home'] as const,
+    mySpaces: () => [...queryKeys.home.all, 'my-spaces'] as const,
+    dashboard: (includeRecommendations?: boolean) => [...queryKeys.home.all, 'dashboard', { includeRecommendations }] as const,
+    activity: (limit?: number) => [...queryKeys.home.all, 'activity', limit ?? 10] as const,
+  },
+
+  // ============================================================
+  // Notifications
+  // ============================================================
+  notifications: {
+    all: ['notifications'] as const,
+    unreadCount: () => [...queryKeys.notifications.all, 'unread-count'] as const,
+    list: (filters?: { limit?: number }) => [...queryKeys.notifications.all, 'list', filters ?? {}] as const,
+  },
+
+  // ============================================================
+  // Browse
+  // ============================================================
+  browse: {
+    all: ['browse'] as const,
+    search: (query: string, filters?: Record<string, unknown>) => [...queryKeys.browse.all, 'search', query, filters ?? {}] as const,
+  },
 } as const;
 
 /**

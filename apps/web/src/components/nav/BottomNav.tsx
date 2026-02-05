@@ -4,7 +4,7 @@
  * BottomNav — Mobile Navigation Bar
  *
  * Fixed bottom navigation for mobile devices.
- * 4-pillar structure: Home | Explore | Lab | You
+ * 4-pillar structure: Home | Spaces | Lab | You
  */
 
 import { usePathname, useRouter } from 'next/navigation';

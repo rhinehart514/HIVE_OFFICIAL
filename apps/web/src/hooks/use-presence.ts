@@ -20,14 +20,15 @@ import { logger } from '@/lib/logger';
 
 // TTL for presence data: 90 minutes in milliseconds
 const PRESENCE_TTL_MS = 90 * 60 * 1000;
-// Consider stale after 3 minutes without heartbeat (30s heartbeat * 6)
-const STALE_THRESHOLD_MS = 3 * 60 * 1000;
+// Consider stale after 5 minutes without heartbeat
+const STALE_THRESHOLD_MS = 5 * 60 * 1000;
 
 interface PresenceData {
   userId: string;
   status: 'online' | 'away' | 'offline';
   lastSeen: Date;
-  expiresAt: Date; // TTL field for automatic cleanup
+  lastHeartbeat: Date;
+  expiresAt: Date;
   campusId: string;
   deviceInfo?: {
     browser?: string;
@@ -55,7 +56,9 @@ export function usePresence() {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const campusId = user.campusId || 'ub-buffalo';
+    if (!user.campusId) return;
+
+    const campusId = user.campusId;
     const userPresenceRef = doc(db, 'presence', user.uid);
 
     // Function to update presence
@@ -68,7 +71,8 @@ export function usePresence() {
           userId: user.uid,
           status,
           lastSeen: serverTimestamp(),
-          expiresAt, // TTL field - Firestore TTL policy can auto-delete expired docs
+          lastHeartbeat: serverTimestamp(),
+          expiresAt,
           campusId,
           deviceInfo: {
             browser: navigator.userAgent,
@@ -131,12 +135,11 @@ export function usePresence() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('pagehide', handlePageHide);
 
-    // Send heartbeat every 30 seconds to keep alive
     const heartbeatInterval = setInterval(() => {
       if (!document.hidden && navigator.onLine) {
         updatePresence('online');
       }
-    }, 30000);
+    }, 60000);
 
     // Cleanup (React unmount)
     return () => {
@@ -148,7 +151,7 @@ export function usePresence() {
       window.removeEventListener('pagehide', handlePageHide);
       clearInterval(heartbeatInterval);
     };
-  }, [user?.uid]);
+  }, [user?.uid, user?.campusId]);
 
   return { isOnline };
 }
@@ -163,7 +166,13 @@ export function useOnlineUsers(spaceId?: string) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const campusId = user?.campusId || 'ub-buffalo';
+    if (!user?.campusId) {
+      setOnlineUsers([]);
+      setLoading(false);
+      return;
+    }
+
+    const campusId = user.campusId;
     const constraints = [
       where('campusId', '==', campusId),
       where('status', 'in', ['online', 'away'])
@@ -188,19 +197,17 @@ export function useOnlineUsers(spaceId?: string) {
         snapshot.docs.forEach((doc) => {
           const presence = doc.data() as PresenceData;
 
-          // Filter out stale presence (no heartbeat in 3+ minutes)
-          let lastSeenTime: number;
-          if (presence.lastSeen && typeof presence.lastSeen === 'object' && 'toMillis' in presence.lastSeen) {
-            lastSeenTime = (presence.lastSeen as { toMillis: () => number }).toMillis();
-          } else if (presence.lastSeen instanceof Date) {
-            lastSeenTime = presence.lastSeen.getTime();
+          const heartbeatField = presence.lastHeartbeat || presence.lastSeen;
+          let heartbeatTime: number;
+          if (heartbeatField && typeof heartbeatField === 'object' && 'toMillis' in heartbeatField) {
+            heartbeatTime = (heartbeatField as { toMillis: () => number }).toMillis();
+          } else if (heartbeatField instanceof Date) {
+            heartbeatTime = heartbeatField.getTime();
           } else {
-            // Can't determine lastSeen, consider stale
             return;
           }
 
-          if (now - lastSeenTime > STALE_THRESHOLD_MS) {
-            // Stale presence - user likely closed tab without cleanup
+          if (now - heartbeatTime > STALE_THRESHOLD_MS) {
             return;
           }
 
@@ -338,6 +345,66 @@ export function useTypingIndicator(contextId: string) {
 }
 
 /**
+ * Hook to count users active within the last 24 hours on a campus
+ * Uses lastHeartbeat from presence data to determine activity
+ */
+export function useActiveTodayCount() {
+  const { user } = useAuth();
+  const [activeTodayCount, setActiveTodayCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.campusId) {
+      setActiveTodayCount(0);
+      setLoading(false);
+      return;
+    }
+
+    const campusId = user.campusId;
+    const presenceRef = collection(db, 'presence');
+    const q = query(presenceRef, where('campusId', '==', campusId));
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const now = Date.now();
+        const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+        let count = 0;
+
+        snapshot.docs.forEach((docSnap) => {
+          const data = docSnap.data();
+          const heartbeatField = data.lastHeartbeat || data.lastSeen;
+
+          let heartbeatTime: number;
+          if (heartbeatField && typeof heartbeatField === 'object' && 'toMillis' in heartbeatField) {
+            heartbeatTime = (heartbeatField as { toMillis: () => number }).toMillis();
+          } else if (heartbeatField instanceof Date) {
+            heartbeatTime = heartbeatField.getTime();
+          } else {
+            return;
+          }
+
+          if (now - heartbeatTime <= twentyFourHoursMs) {
+            count++;
+          }
+        });
+
+        setActiveTodayCount(count);
+        setLoading(false);
+      },
+      (error) => {
+        logger.error('Failed to get active today count', { error: { error: error instanceof Error ? error.message : String(error) } });
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.campusId]);
+
+  return { activeTodayCount, loading };
+}
+
+/**
  * Get user's current online status
  */
 export function useUserStatus(userId: string) {
@@ -355,29 +422,27 @@ export function useUserStatus(userId: string) {
         if (docSnap.exists()) {
           const data = docSnap.data() as PresenceData;
 
-          // Check if presence is stale (no heartbeat in 3+ minutes)
-          let lastSeenTime: number;
-          if (data.lastSeen && typeof data.lastSeen === 'object' && 'toMillis' in data.lastSeen) {
-            lastSeenTime = (data.lastSeen as { toMillis: () => number }).toMillis();
-          } else if (data.lastSeen instanceof Date) {
-            lastSeenTime = data.lastSeen.getTime();
+          const heartbeatField = data.lastHeartbeat || data.lastSeen;
+          let heartbeatTime: number;
+          if (heartbeatField && typeof heartbeatField === 'object' && 'toMillis' in heartbeatField) {
+            heartbeatTime = (heartbeatField as { toMillis: () => number }).toMillis();
+          } else if (heartbeatField instanceof Date) {
+            heartbeatTime = heartbeatField.getTime();
           } else {
-            // Can't determine lastSeen, consider offline
             setStatus('offline');
             setLastSeen(null);
             return;
           }
 
           const now = Date.now();
-          if (now - lastSeenTime > STALE_THRESHOLD_MS) {
-            // Stale presence - treat as offline
+          if (now - heartbeatTime > STALE_THRESHOLD_MS) {
             setStatus('offline');
-            setLastSeen(new Date(lastSeenTime));
+            setLastSeen(new Date(heartbeatTime));
             return;
           }
 
           setStatus(data.status);
-          setLastSeen(new Date(lastSeenTime));
+          setLastSeen(new Date(heartbeatTime));
         } else {
           setStatus('offline');
           setLastSeen(null);

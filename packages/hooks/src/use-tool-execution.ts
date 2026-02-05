@@ -256,7 +256,7 @@ export function useToolExecution(
     if (!enableRealtime || !deploymentId) return;
 
     const connectSSE = () => {
-      const url = new URL('/api/realtime/tool-updates', window.location.origin);
+      const url = new URL('/api/tools/updates', window.location.origin);
       url.searchParams.set('deploymentId', deploymentId);
       if (spaceId) {
         url.searchParams.set('spaceId', spaceId);

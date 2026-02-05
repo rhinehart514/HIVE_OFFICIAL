@@ -10,6 +10,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useState, useEffect, useRef } from 'react';
+import { durationSeconds, easingArrays } from '@hive/tokens';
 
 import { cn } from '../lib/utils';
 
@@ -83,16 +84,16 @@ const NavButton: React.FC<{
     default: cn(
       'flex items-center gap-3 px-4 py-3 rounded-lg font-medium',
       isActive
-        ? 'bg-[var(--hive-gold)]/10 text-[var(--hive-gold)] border-l-4 border-[var(--hive-gold)]'
+        ? 'bg-white/[0.04] text-white border-l-2 border-[var(--hive-gold)]'
         : 'text-white/60 hover:text-white hover:bg-white/5'
     ),
     compact: cn(
-      'p-2 rounded-lg',
-      isActive ? 'bg-[var(--hive-gold)] text-black' : 'text-white/60 hover:text-white'
+      'relative p-2 rounded-lg',
+      isActive ? 'bg-white/[0.04] text-white' : 'text-white/60 hover:text-white'
     ),
     mobile: cn(
       'flex flex-col items-center justify-center p-3 min-w-[60px]',
-      isActive ? 'text-[var(--hive-gold)]' : 'text-white/60'
+      isActive ? 'text-white' : 'text-white/60'
     )
   };
 
@@ -128,9 +129,14 @@ const NavButton: React.FC<{
         </span>
       )}
 
+      {/* Active Indicator for Compact */}
+      {variant === 'compact' && isActive && (
+        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-[var(--hive-gold)] rounded-full" />
+      )}
+
       {/* Active Indicator for Mobile */}
       {variant === 'mobile' && isActive && (
-        <span className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[var(--hive-gold)] rounded-full" />
+        <span className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-4 h-0.5 bg-[var(--hive-gold)] rounded-full" />
       )}
     </button>
   );
@@ -145,11 +151,11 @@ export const CommandPalette: React.FC<{ open: boolean; onOpenChange: (open: bool
   const shouldReduce = useReducedMotion();
 
   const commands = [
-    { id: 'home', label: 'Go to Home', action: () => router.push('/feed'), icon: '🏠' },
-    { id: 'discover', label: 'Open Discover', action: () => router.push('/spaces?tab=discover'), icon: '🔍' },
-    { id: 'spaces', label: 'Browse Spaces', action: () => router.push('/spaces'), icon: '🧭' },
+    { id: 'home', label: 'Go to Home', action: () => router.push('/home'), icon: '🏠' },
+    { id: 'spaces', label: 'Spaces', action: () => router.push('/spaces'), icon: '🏘️' },
+    { id: 'lab', label: 'Lab', action: () => router.push('/lab'), icon: '🧪' },
+    { id: 'you', label: 'Your Profile', action: () => router.push('/me'), icon: '👤' },
     { id: 'create-space', label: 'Create Space', action: () => router.push('/spaces/create'), icon: '➕' },
-    { id: 'profile', label: 'My Profile', action: () => router.push('/me'), icon: '👤' },
     { id: 'settings', label: 'Settings', action: () => router.push('/settings'), icon: '⚙️' },
   ];
 
@@ -193,7 +199,7 @@ export const CommandPalette: React.FC<{ open: boolean; onOpenChange: (open: bool
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: shouldReduce ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: shouldReduce ? 0 : durationSeconds.snap, ease: easingArrays.default }}
           aria-modal
           role="dialog"
         >
@@ -202,7 +208,7 @@ export const CommandPalette: React.FC<{ open: boolean; onOpenChange: (open: bool
             initial={{ y: shouldReduce ? 0 : -8, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: shouldReduce ? 0 : -8, opacity: 0 }}
-            transition={{ duration: shouldReduce ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: shouldReduce ? 0 : durationSeconds.quick, ease: easingArrays.default }}
           >
             <div className="border-b border-white/10 p-4">
               <input
@@ -227,8 +233,8 @@ export const CommandPalette: React.FC<{ open: boolean; onOpenChange: (open: bool
                   className={cn(
                     'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left',
                     index === selectedIndex
-                      ? 'bg-[var(--hive-gold)]/10 text-[var(--hive-gold)]'
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                      ? 'bg-white/[0.06] text-white'
+                      : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
                   )}
                 >
                   <span className="text-xl">{cmd.icon}</span>
@@ -266,7 +272,7 @@ export const Breadcrumbs: React.FC<{
           {item.path ? (
             <button
               onClick={() => router.push(item.path!)}
-              className="text-white/60 hover:text-[var(--hive-gold)] transition-colors"
+              className="text-white/60 hover:text-white transition-colors"
             >
               {item.label}
             </button>
@@ -295,7 +301,7 @@ export const TabNav: React.FC<{
           className={cn(
             'flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all',
             activeTab === tab.id
-              ? 'bg-[var(--hive-gold)] text-black shadow-lg'
+              ? 'bg-white/[0.08] text-white shadow-lg'
               : 'text-white/60 hover:text-white hover:bg-white/5'
           )}
         >

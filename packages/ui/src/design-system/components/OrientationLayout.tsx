@@ -32,7 +32,9 @@
 
 import * as React from 'react';
 import { motion, type Variants, type Transition } from 'framer-motion';
-import { EASE_PREMIUM as EASE } from '../layout-tokens';
+import { easingArrays } from '@hive/tokens';
+
+const EASE = easingArrays.default;
 
 // LOCKED: Stagger delays
 const DELAYS = {

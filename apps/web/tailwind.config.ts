@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import { hiveTailwindConfig, breakpointValues } from '@hive/tokens';
 
 const config: Config = {
   content: [
@@ -9,77 +10,32 @@ const config: Config = {
   // Dark-only mode - no light theme toggle needed
   darkMode: 'class',
   theme: {
+    // Override default screens with token breakpoints
+    screens: breakpointValues,
     extend: {
+      // Spread all token-driven config (colors, spacing, fontSize, fontFamily,
+      // fontWeight, lineHeight, letterSpacing, borderRadius, boxShadow,
+      // backdropBlur, transitionDuration, transitionTimingFunction,
+      // animation, keyframes, height, width)
+      ...hiveTailwindConfig,
+
+      // Web-specific font family overrides (display + manifesto not in tokens)
       fontFamily: {
+        ...hiveTailwindConfig.fontFamily,
         sans: ['var(--hive-font-sans)', 'Geist Sans', 'system-ui', 'sans-serif'],
         display: ['var(--hive-font-display)', 'Space Grotesk', 'system-ui', 'sans-serif'],
         mono: ['var(--hive-font-mono)', 'JetBrains Mono', 'monospace'],
         manifesto: ['var(--hive-font-manifesto)', 'Clash Display', 'system-ui', 'sans-serif'],
       },
+
+      // Web-specific color overrides (glass, overlay, gold shorthand not in tokens)
       colors: {
-        // Gold - primary brand accent
+        ...hiveTailwindConfig.colors,
+        // Gold shorthand for direct usage (e.g. text-gold-500)
         gold: {
           500: '#FFD700',
           400: '#FFE033',
           600: '#E6C200',
-        },
-        // Foundation colors - Neutral gray scale (Apple-inspired)
-        foundation: {
-          black: '#000000',
-          white: '#FFFFFF',
-          gray: {
-            1000: '#0A0A0A',  // bgBase
-            900: '#141414',   // bgSurface
-            800: '#1A1A1A',   // bgElevated
-            750: '#242424',   // bgActive
-            700: '#2A2A2A',   // borderDefault
-            600: '#3A3A3A',   // borderHover
-            500: '#4A4A4A',   // borderStrong
-            400: '#52525B',   // textDisabled
-            350: '#71717A',   // textPlaceholder
-            300: '#818187',   // textSubtle
-            200: '#A1A1A6',   // textSecondary
-            100: '#D4D4D8',
-            50: '#FAFAFA',    // textPrimary
-          },
-          gold: {
-            500: '#FFD700',
-          },
-        },
-        // Semantic colors using CSS variables
-        background: {
-          base: 'var(--hive-bg-base)',
-          surface: 'var(--hive-bg-surface)',
-          elevated: 'var(--hive-bg-elevated)',
-          active: 'var(--hive-bg-active)',
-          // Legacy aliases
-          primary: 'var(--hive-background-primary)',
-          secondary: 'var(--hive-background-secondary)',
-          tertiary: 'var(--hive-background-tertiary)',
-        },
-        text: {
-          primary: 'var(--hive-text-primary)',
-          secondary: 'var(--hive-text-secondary)',
-          subtle: 'var(--hive-text-subtle)',
-          placeholder: 'var(--hive-text-placeholder)',
-          disabled: 'var(--hive-text-disabled)',
-          inverse: 'var(--hive-text-inverse)',
-        },
-        border: {
-          default: 'var(--hive-border-default)',
-          hover: 'var(--hive-border-hover)',
-          strong: 'var(--hive-border-strong)',
-          focus: 'var(--hive-border-focus)',
-        },
-        brand: {
-          primary: 'var(--hive-brand-primary)',
-          hover: 'var(--hive-brand-hover)',
-        },
-        status: {
-          success: 'var(--hive-status-success)',
-          warning: 'var(--hive-status-warning)',
-          error: 'var(--hive-status-error)',
-          info: 'var(--hive-status-info)',
         },
         // Glass surfaces - semi-transparent overlays
         glass: {
@@ -100,39 +56,10 @@ const config: Config = {
           prominent: 'rgba(255, 255, 255, 0.30)',
         },
       },
-      fontSize: {
-        // Label scale - fine print, timestamps, badges
-        'label-xs': ['10px', { lineHeight: '1.4' }],
-        'label-sm': ['11px', { lineHeight: '1.4' }],
-        'label': ['12px', { lineHeight: '1.4' }],
-        // Body scale - conversation, content
-        'body-sm': ['13px', { lineHeight: '1.5' }],
-        'body': ['14px', { lineHeight: '1.5' }],
-        'body-lg': ['16px', { lineHeight: '1.5' }],
-        // Title scale - section headers, card titles
-        'title-sm': ['18px', { lineHeight: '1.3' }],
-        'title': ['20px', { lineHeight: '1.3' }],
-        'title-lg': ['24px', { lineHeight: '1.2' }],
-        // Heading scale - page titles
-        'heading-sm': ['28px', { lineHeight: '1.2' }],
-        'heading': ['32px', { lineHeight: '1.1' }],
-        'heading-lg': ['40px', { lineHeight: '1.1' }],
-        // Display scale - hero sections
-        'display-sm': ['48px', { lineHeight: '1' }],
-        'display': ['56px', { lineHeight: '1' }],
-        'display-lg': ['64px', { lineHeight: '1' }],
-      },
-      borderRadius: {
-        none: '0',
-        sm: '4px',
-        DEFAULT: '8px',
-        md: '8px',
-        lg: '12px',
-        xl: '16px',
-        '2xl': '24px',
-        full: '9999px',
-      },
+
+      // Web-specific shadow aliases (hive-prefixed CSS var references)
       boxShadow: {
+        ...hiveTailwindConfig.boxShadow,
         'hive-sm': 'var(--hive-shadow-sm)',
         'hive-md': 'var(--hive-shadow-md)',
         'hive-lg': 'var(--hive-shadow-lg)',
@@ -143,12 +70,15 @@ const config: Config = {
         'hive-level2': 'var(--hive-shadow-level2)',
         'hive-level3': 'var(--hive-shadow-level3)',
       },
+
+      // Web-specific blur aliases
       blur: {
         'hive-sm': 'var(--hive-blur-sm)',
         'hive-md': 'var(--hive-blur-md)',
         'hive-lg': 'var(--hive-blur-lg)',
         'hive-xl': 'var(--hive-blur-xl)',
       },
+
       // Perspective utilities for 3D transforms (motion primitives)
       perspective: {
         none: 'none',
@@ -175,6 +105,16 @@ const config: Config = {
         '.transform-style-3d': { transformStyle: 'preserve-3d' },
         '.backface-visible': { backfaceVisibility: 'visible' },
         '.backface-hidden': { backfaceVisibility: 'hidden' },
+      });
+    },
+    // Safe area inset utilities for mobile viewport handling
+    function({ addUtilities }: { addUtilities: (utilities: Record<string, Record<string, string>>) => void }) {
+      addUtilities({
+        '.pb-safe': { 'padding-bottom': 'env(safe-area-inset-bottom, 0px)' },
+        '.pt-safe': { 'padding-top': 'env(safe-area-inset-top, 0px)' },
+        '.pl-safe': { 'padding-left': 'env(safe-area-inset-left, 0px)' },
+        '.pr-safe': { 'padding-right': 'env(safe-area-inset-right, 0px)' },
+        '.mb-safe': { 'margin-bottom': 'env(safe-area-inset-bottom, 0px)' },
       });
     },
   ],

@@ -2,7 +2,7 @@
 
 What's missing or incomplete in the design system.
 
-**Last Updated:** January 2026
+**Last Updated:** 2026-02-01
 
 ---
 

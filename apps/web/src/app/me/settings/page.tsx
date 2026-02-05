@@ -16,7 +16,8 @@ import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import { logger } from '@/lib/structured-logger';
-import { toast, EASE_PREMIUM } from '@hive/ui';
+import { toast } from '@hive/ui';
+import { fadeInUpVariants, staggerContainerVariants, staggerItemVariants } from '@hive/ui/lib/motion-variants';
 import { Card, Button, Text } from '@hive/ui/design-system/primitives';
 import { ProfileContextProvider, useProfileContext } from '@/components/profile/ProfileContextProvider';
 import { ProfileSection } from '@/app/settings/components/profile-section';
@@ -30,14 +31,6 @@ import { useSettingsState } from '@/app/settings/hooks/use-settings-state';
 import { useProfileForm } from '@/app/settings/hooks/use-profile-form';
 import { useDataExport } from '@/app/settings/hooks/use-data-export';
 import type { UserSpace } from '@/app/settings/types';
-
-const EASE = EASE_PREMIUM;
-
-const fadeIn = (delay: number) => ({
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35, delay, ease: EASE },
-});
 
 type SettingsSection = 'profile' | 'notifications' | 'privacy' | 'account' | null;
 
@@ -265,7 +258,7 @@ function SettingsContent() {
     return (
       <div className="min-h-screen w-full overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-8 md:py-10">
-          <motion.div className="mb-8" {...fadeIn(0)}>
+          <motion.div className="mb-8" variants={fadeInUpVariants} initial="initial" animate="animate">
             <button
               onClick={() => setActiveSection(null)}
               className="text-sm text-white/40 hover:text-white/60 transition-colors"
@@ -274,7 +267,7 @@ function SettingsContent() {
             </button>
           </motion.div>
 
-          <motion.div {...fadeIn(0.08)}>
+          <motion.div variants={fadeInUpVariants} initial="initial" animate="animate">
             {activeSection === 'profile' && (
               <div className="space-y-8">
                 <ProfileSection
@@ -354,7 +347,7 @@ function SettingsContent() {
   return (
     <div className="min-h-screen w-full overflow-y-auto">
       <div className="max-w-3xl mx-auto px-6 py-8 md:py-10">
-        <motion.section className="mb-8" {...fadeIn(0)}>
+        <motion.section className="mb-8" variants={fadeInUpVariants} initial="initial" animate="animate">
           <h1
             className="text-heading-sm md:text-heading font-semibold text-white mb-1"
             style={{ letterSpacing: '-0.02em' }}
@@ -368,86 +361,94 @@ function SettingsContent() {
 
         <CompletionCard />
 
-        <motion.section className="mb-16" {...fadeIn(0.08)}>
-          <div
+        <motion.section className="mb-16" variants={staggerContainerVariants} initial="hidden" animate="visible">
+          <motion.div
             className="grid gap-3 md:grid-cols-2 p-4 -mx-4 rounded-2xl"
             style={{ backgroundColor: 'rgba(255,255,255,0.015)' }}
           >
-            <Card
-              as="button"
-              elevation="resting"
-              interactive
-              onClick={() => setActiveSection('profile')}
-              className="text-left"
-            >
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
-                  Profile
-                </span>
-                <span className="text-white/30">→</span>
-              </div>
-              <Text size="sm" className="text-white/60">
-                Name, bio, interests
-              </Text>
-            </Card>
+            <motion.div variants={staggerItemVariants}>
+              <Card
+                as="button"
+                elevation="resting"
+                interactive
+                onClick={() => setActiveSection('profile')}
+                className="text-left"
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
+                    Profile
+                  </span>
+                  <span className="text-white/30">→</span>
+                </div>
+                <Text size="sm" className="text-white/60">
+                  Name, bio, interests
+                </Text>
+              </Card>
+            </motion.div>
 
-            <Card
-              as="button"
-              elevation="resting"
-              interactive
-              onClick={() => setActiveSection('notifications')}
-              className="text-left"
-            >
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
-                  Notifications
-                </span>
-                <span className="text-white/30">→</span>
-              </div>
-              <Text size="sm" className="text-white/60">
-                Email, push, quiet hours
-              </Text>
-            </Card>
+            <motion.div variants={staggerItemVariants}>
+              <Card
+                as="button"
+                elevation="resting"
+                interactive
+                onClick={() => setActiveSection('notifications')}
+                className="text-left"
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
+                    Notifications
+                  </span>
+                  <span className="text-white/30">→</span>
+                </div>
+                <Text size="sm" className="text-white/60">
+                  Email, push, quiet hours
+                </Text>
+              </Card>
+            </motion.div>
 
-            <Card
-              as="button"
-              elevation="resting"
-              interactive
-              onClick={() => setActiveSection('privacy')}
-              className="text-left"
-            >
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
-                  Privacy
-                </span>
-                <span className="text-white/30">→</span>
-              </div>
-              <Text size="sm" className="text-white/60">
-                Visibility, permissions
-              </Text>
-            </Card>
+            <motion.div variants={staggerItemVariants}>
+              <Card
+                as="button"
+                elevation="resting"
+                interactive
+                onClick={() => setActiveSection('privacy')}
+                className="text-left"
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
+                    Privacy
+                  </span>
+                  <span className="text-white/30">→</span>
+                </div>
+                <Text size="sm" className="text-white/60">
+                  Visibility, permissions
+                </Text>
+              </Card>
+            </motion.div>
 
-            <Card
-              as="button"
-              elevation="resting"
-              interactive
-              onClick={() => setActiveSection('account')}
-              className="text-left"
-            >
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
-                  Account
-                </span>
-                <span className="text-white/30">→</span>
-              </div>
-              <Text size="sm" className="text-white/60">
-                Calendar, data, security
-              </Text>
-            </Card>
-          </div>
+            <motion.div variants={staggerItemVariants}>
+              <Card
+                as="button"
+                elevation="resting"
+                interactive
+                onClick={() => setActiveSection('account')}
+                className="text-left"
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
+                    Account
+                  </span>
+                  <span className="text-white/30">→</span>
+                </div>
+                <Text size="sm" className="text-white/60">
+                  Calendar, data, security
+                </Text>
+              </Card>
+            </motion.div>
+          </motion.div>
         </motion.section>
 
-        <motion.section {...fadeIn(0.12)}>
+        <motion.section variants={fadeInUpVariants} initial="initial" animate="animate">
           <div className="flex flex-col gap-3">
             <Button
               variant="secondary"

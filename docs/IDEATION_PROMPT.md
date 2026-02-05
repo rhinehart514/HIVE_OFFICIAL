@@ -1,4 +1,5 @@
 # Ideation
+**Last Updated:** 2026-02-01
 
 Use this when exploring a new surface or feature. Not for bug fixes or known implementations.
 

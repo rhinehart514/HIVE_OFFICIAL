@@ -1,36 +1,37 @@
 "use client";
 
 /**
- * ProfilePageContent - Handle-based Profile Page
+ * ProfilePageContent - Belonging-First Profile Layout
  *
- * Renders the full profile using handle-based URL.
- * This is the canonical profile view for /u/[handle] URLs.
+ * Zone 1: Identity (unchanged) - Avatar, name, handle, bio, badges
+ * Zone 2: Belonging (NEW) - Spaces they're part of, upcoming events, shared spaces
+ * Zone 3: Activity (simplified) - Active days stat, tools (conditional)
  *
- * @version 1.0.0 - IA Unification (Jan 2026)
+ * @version 2.0.0 - Belonging-First Redesign (Feb 2026)
  */
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { Wrench, ArrowRight } from 'lucide-react';
 import {
   ProfileIdentityHero,
   ProfileActivityCard,
-  ProfileLeadershipCard,
+  ProfileBelongingSpaceCard,
+  ProfileSharedBanner,
   ProfileEventCard,
-  ProfileSpacePill,
-  ProfileConnectionFooter,
   ProfileOverflowChip,
   ProfileToolModal,
   ReportContentModal,
   toast,
+  type BelongingSpace,
   type ProfileActivityTool,
-  type ProfileLeadershipSpace,
   type ProfileEvent,
-  type ProfileSpacePillSpace,
   type ReportContentInput,
 } from '@hive/ui';
 import { MOTION } from '@hive/ui/design-system/primitives';
+import { staggerContainerVariants, staggerItemVariants as tokenStaggerItemVariants, fadeInUpVariants } from '@hive/ui/lib/motion-variants';
 import { cn } from '@/lib/utils';
 import { useProfileByHandle } from './hooks';
 import { useDM } from '@/contexts/dm-context';
@@ -40,38 +41,33 @@ import { useDMsEnabled, useConnectionsEnabled } from '@/hooks/use-feature-flags'
 // Constants
 // ============================================================================
 
-const MAX_TOOLS_VISIBLE = 3;
-const MAX_LEADERSHIP_VISIBLE = 3;
-const MAX_EVENTS_VISIBLE = 2;
 const MAX_SPACES_VISIBLE = 6;
+const MAX_EVENTS_VISIBLE = 3;
+const MAX_TOOLS_VISIBLE = 3;
 
-const EASE_PREMIUM: [number, number, number, number] = [0.22, 1, 0.36, 1];
-
-// ============================================================================
-// Animation Variants
-// ============================================================================
-
+// Animation variants mapped to hidden/visible keys for compatibility with parent orchestration
 const containerVariants = {
-  hidden: { opacity: 0 },
+  hidden: staggerContainerVariants.initial,
   visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
+    ...staggerContainerVariants.animate,
   },
 };
 
 const zoneVariants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: fadeInUpVariants.initial,
+  visible: fadeInUpVariants.animate,
+};
+
+const staggerGridVariants = {
+  hidden: staggerContainerVariants.initial,
   visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: EASE_PREMIUM,
-    },
+    ...staggerContainerVariants.animate,
   },
+};
+
+const staggerItemVariants = {
+  hidden: tokenStaggerItemVariants.initial,
+  visible: tokenStaggerItemVariants.animate,
 };
 
 // ============================================================================
@@ -198,6 +194,34 @@ function ProfileErrorState({ onRetry }: { onRetry: () => void }) {
 }
 
 // ============================================================================
+// Utility: Compute active days this month
+// ============================================================================
+
+function computeActiveDaysThisMonth(
+  contributions: Array<{ date: string; count: number }>
+): number {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  return contributions.filter((c) => {
+    if (c.count <= 0) return false;
+    const d = new Date(c.date);
+    return d.getFullYear() === year && d.getMonth() === month;
+  }).length;
+}
+
+function formatActiveDays(days: number): string {
+  if (days === 0) return 'No activity this month';
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  // We can't easily check "active today" without knowing if today's date is in contributions,
+  // but the count is sufficient for display
+  if (days === 1) return 'Active 1 day this month';
+  return `Active ${days} days this month`;
+}
+
+// ============================================================================
 // Component
 // ============================================================================
 
@@ -209,8 +233,8 @@ export default function ProfilePageContent() {
   const { enabled: connectionsEnabled } = useConnectionsEnabled();
 
   // Inline expansion state
-  const [showAllTools, setShowAllTools] = React.useState(false);
   const [showAllSpaces, setShowAllSpaces] = React.useState(false);
+  const [showAllTools, setShowAllTools] = React.useState(false);
   const [showReportModal, setShowReportModal] = React.useState(false);
 
   const {
@@ -231,6 +255,9 @@ export default function ProfilePageContent() {
     selectedTool,
     organizingEvents,
     sharedSpacesCount,
+    sharedSpaceNames,
+    mutualFriendsCount,
+    activityContributions,
     handleEditProfile,
     handleToolModalClose,
     handleToolUpdateVisibility,
@@ -285,7 +312,58 @@ export default function ProfilePageContent() {
   if (!profileData || !heroUser) return <ProfileNotFoundState handle={handle} />;
 
   // ============================================================================
-  // Data Transformations
+  // Data Transformations - Zone 2: Belonging
+  // ============================================================================
+
+  // Build belonging spaces: sorted by leader first, then by name
+  const belongingSpaces: BelongingSpace[] = profileSpaces
+    .map((space) => {
+      // Find full space data from profileData for memberCount
+      const fullSpace = profileData.spaces.find((s) => s.id === space.id);
+      const isLeader = space.isLeader ?? false;
+      let role: BelongingSpace['role'] = 'member';
+      if (fullSpace) {
+        if (fullSpace.role === 'owner') role = 'owner';
+        else if (fullSpace.role === 'admin' || fullSpace.role === 'Lead') role = 'leader';
+      } else if (isLeader) {
+        role = 'leader';
+      }
+
+      return {
+        id: space.id,
+        name: space.name,
+        emoji: space.emoji,
+        role,
+        memberCount: fullSpace?.memberCount,
+        isShared: space.isShared ?? false,
+      };
+    })
+    .sort((a, b) => {
+      // Leaders first
+      const aLeader = a.role !== 'member' ? 1 : 0;
+      const bLeader = b.role !== 'member' ? 1 : 0;
+      if (aLeader !== bLeader) return bLeader - aLeader;
+      // Then alphabetical
+      return a.name.localeCompare(b.name);
+    });
+
+  const visibleSpaces = showAllSpaces ? belongingSpaces : belongingSpaces.slice(0, MAX_SPACES_VISIBLE);
+  const overflowSpacesCount = showAllSpaces ? 0 : Math.max(0, belongingSpaces.length - MAX_SPACES_VISIBLE);
+
+  // Events: upcoming events they've RSVP'd to or are organizing
+  const upcomingEvents: ProfileEvent[] = organizingEvents
+    .slice(0, MAX_EVENTS_VISIBLE)
+    .map((event) => ({
+      id: event.id,
+      name: event.title,
+      date: event.dateDisplay,
+      emoji: event.emoji,
+      rsvpCount: event.attendeeCount,
+      spaceName: event.spaceName || undefined,
+    }));
+
+  // ============================================================================
+  // Data Transformations - Zone 3: Activity (Simplified)
   // ============================================================================
 
   const activityTools: ProfileActivityTool[] = profileTools
@@ -298,53 +376,21 @@ export default function ProfilePageContent() {
       spaceName: (tool as unknown as { spaceName?: string }).spaceName,
     }));
 
-  const leadershipSpaces: ProfileLeadershipSpace[] = spacesLed.map((space) => {
-    const spaceWithTenure = space as unknown as { tenure?: number; tenureLabel?: string };
-    return {
-      id: space.id,
-      name: space.name,
-      emoji: undefined,
-      memberCount: space.memberCount || 0,
-      tenure: spaceWithTenure.tenureLabel,
-      role: (space.role === 'Lead' ? 'admin' : space.role) as 'owner' | 'admin',
-    };
-  });
+  const visibleTools = showAllTools ? activityTools : activityTools.slice(0, MAX_TOOLS_VISIBLE);
+  const overflowToolsCount = showAllTools ? 0 : Math.max(0, activityTools.length - MAX_TOOLS_VISIBLE);
 
-  const spacePills: ProfileSpacePillSpace[] = profileSpaces.map((space) => ({
-    id: space.id,
-    name: space.name,
-    emoji: space.emoji,
-    isLeader: space.isLeader,
-  }));
-
-  const profileOrganizingEvents: ProfileEvent[] = organizingEvents.map((event) => ({
-    id: event.id,
-    name: event.title,
-    date: event.dateDisplay,
-    emoji: event.emoji,
-    rsvpCount: event.attendeeCount,
-    spaceName: event.spaceName || undefined,
-  }));
-
-  const mutualConnectionsCount = profileConnections.length;
+  const activeDaysThisMonth = computeActiveDaysThisMonth(activityContributions);
+  const activeDaysText = formatActiveDays(activeDaysThisMonth);
 
   // ============================================================================
   // Computed Display Logic
   // ============================================================================
 
-  const visibleTools = showAllTools ? activityTools : activityTools.slice(0, MAX_TOOLS_VISIBLE);
-  const overflowToolsCount = showAllTools ? 0 : activityTools.length - MAX_TOOLS_VISIBLE;
-
-  const visibleLeadership = leadershipSpaces.slice(0, MAX_LEADERSHIP_VISIBLE);
-  const visibleEvents = profileOrganizingEvents.slice(0, MAX_EVENTS_VISIBLE);
-
-  const visibleSpaces = showAllSpaces ? spacePills : spacePills.slice(0, MAX_SPACES_VISIBLE);
-  const overflowSpacesCount = showAllSpaces ? 0 : spacePills.length - MAX_SPACES_VISIBLE;
-
-  const hasActivity = activityTools.length > 0 || leadershipSpaces.length > 0 || profileOrganizingEvents.length > 0;
-  const hasSpaces = spacePills.length > 0;
-
-  const profileIncomplete = isOwnProfile && !heroUser.bio;
+  const hasSpaces = belongingSpaces.length > 0;
+  const hasUpcomingEvents = upcomingEvents.length > 0;
+  const hasTools = activityTools.length > 0;
+  const hasBelonging = hasSpaces || hasUpcomingEvents;
+  const hasActivity = hasTools || activeDaysThisMonth > 0;
 
   // ============================================================================
   // Render
@@ -358,13 +404,13 @@ export default function ProfilePageContent() {
         initial="hidden"
         animate="visible"
       >
-        {/* ZONE 1: IDENTITY (Hero) */}
+        {/* ZONE 1: IDENTITY (Hero) - Unchanged */}
         <motion.section variants={zoneVariants}>
           <ProfileIdentityHero
             user={heroUser}
             isOwnProfile={isOwnProfile}
             isOnline={heroPresence.isOnline}
-            profileIncomplete={profileIncomplete}
+            profileIncomplete={isOwnProfile && !heroUser.bio}
             connectionState={connectionState}
             pendingRequestId={pendingRequestId}
             isConnectionLoading={isConnectionLoading}
@@ -380,7 +426,7 @@ export default function ProfilePageContent() {
           />
         </motion.section>
 
-        {/* ZONE 2: ACTIVITY */}
+        {/* ZONE 2: BELONGING */}
         <motion.section variants={zoneVariants} className="mt-6">
           <div
             className="p-6 sm:p-8"
@@ -390,16 +436,163 @@ export default function ProfilePageContent() {
               boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
             }}
           >
-            {hasActivity ? (
+            {hasBelonging ? (
               <div className="space-y-6">
-                {visibleTools.length > 0 && (
+                {/* Shared Spaces Banner (only on other people's profiles) */}
+                {!isOwnProfile && (sharedSpacesCount > 0 || mutualFriendsCount > 0) && (
+                  <ProfileSharedBanner
+                    sharedSpaceNames={sharedSpaceNames}
+                    sharedSpacesCount={sharedSpacesCount}
+                    mutualConnectionsCount={mutualFriendsCount}
+                  />
+                )}
+
+                {/* Spaces Grid */}
+                {hasSpaces && (
                   <div>
                     <h3
                       className="text-xs font-semibold uppercase tracking-wider mb-4"
                       style={{ color: 'var(--text-tertiary)' }}
                     >
-                      Building
+                      Spaces
                     </h3>
+                    <motion.div
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                      variants={staggerGridVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {visibleSpaces.map((space) => (
+                        <motion.div key={space.id} variants={staggerItemVariants}>
+                          <ProfileBelongingSpaceCard
+                            space={space}
+                            onClick={() => handleSpaceClick(space.id)}
+                          />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                    {overflowSpacesCount > 0 && (
+                      <div className="mt-3 flex justify-center">
+                        <ProfileOverflowChip
+                          count={overflowSpacesCount}
+                          label="more spaces"
+                          onClick={() => setShowAllSpaces(true)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Upcoming Events */}
+                {hasUpcomingEvents && (
+                  <div>
+                    <h3
+                      className="text-xs font-semibold uppercase tracking-wider mb-4"
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      Upcoming Events
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {upcomingEvents.map((event) => (
+                        <ProfileEventCard
+                          key={event.id}
+                          event={event}
+                          onClick={() => router.push(`/events/${event.id}`)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Empty state: guide the user to join spaces */
+              <div
+                className="py-10 text-center"
+                style={{
+                  border: '1px dashed var(--border-default)',
+                  borderRadius: '16px',
+                }}
+              >
+                <span className="text-2xl block mb-3">&#127968;</span>
+                <p
+                  className="text-sm font-medium mb-1"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {isOwnProfile ? 'Join spaces to build your profile' : 'No spaces yet'}
+                </p>
+                {isOwnProfile && (
+                  <p
+                    className="text-[13px]"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  >
+                    Your spaces, events, and communities show up here
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </motion.section>
+
+        {/* ZONE 3: ACTIVITY (Simplified) */}
+        {(hasActivity || isOwnProfile) && (
+          <motion.section variants={zoneVariants} className="mt-6">
+            <div
+              className="p-6 sm:p-8"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderRadius: '24px',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+              }}
+            >
+              <div className="space-y-6">
+                {/* Active days stat */}
+                {activeDaysThisMonth > 0 && (
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                    >
+                      <span
+                        className="text-sm"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        &#9889;
+                      </span>
+                    </div>
+                    <p
+                      className="text-sm font-medium"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {activeDaysText}
+                    </p>
+                  </div>
+                )}
+
+                {/* Tools (conditional - only show if user has created tools) */}
+                {hasTools && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3
+                        className="text-xs font-semibold uppercase tracking-wider"
+                        style={{ color: 'var(--text-tertiary)' }}
+                      >
+                        Tools Built
+                      </h3>
+                      {isOwnProfile && (
+                        <div className="flex items-center gap-3">
+                          <Link
+                            href="/lab"
+                            className="text-xs font-medium transition-colors flex items-center gap-1"
+                            style={{ color: 'var(--text-tertiary)' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+                          >
+                            View all in HiveLab
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {visibleTools.map((tool) => (
                         <ProfileActivityCard
@@ -417,130 +610,71 @@ export default function ProfilePageContent() {
                         />
                       )}
                     </div>
+                    {isOwnProfile && (
+                      <div className="mt-4 flex justify-center">
+                        <Link
+                          href="/lab"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                          style={{
+                            color: 'var(--text-secondary)',
+                            backgroundColor: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.06)',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                          }}
+                        >
+                          <Wrench className="w-3.5 h-3.5" />
+                          Create New Tool
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {visibleLeadership.length > 0 && (
-                  <div>
-                    <h3
-                      className="text-xs font-semibold uppercase tracking-wider mb-4"
-                      style={{ color: 'var(--text-tertiary)' }}
+                {/* Build something prompt (own profile, no tools) */}
+                {isOwnProfile && !hasTools && (
+                  <div className="flex items-center gap-3 py-3">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
                     >
-                      Leading
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {visibleLeadership.map((space) => (
-                        <ProfileLeadershipCard
-                          key={space.id}
-                          space={space}
-                          onClick={() => handleSpaceClick(space.id)}
-                        />
-                      ))}
+                      <Wrench className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
                     </div>
-                  </div>
-                )}
-
-                {visibleEvents.length > 0 && (
-                  <div>
-                    <h3
-                      className="text-xs font-semibold uppercase tracking-wider mb-4"
-                      style={{ color: 'var(--text-tertiary)' }}
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href="/lab"
+                        className="text-sm font-medium transition-colors"
+                        style={{ color: 'var(--text-secondary)' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                      >
+                        Build a tool for your spaces
+                      </Link>
+                      <p
+                        className="text-[13px] mt-0.5"
+                        style={{ color: 'var(--text-tertiary)' }}
+                      >
+                        Polls, sign-ups, countdowns, and more
+                      </p>
+                    </div>
+                    <Link
+                      href="/lab"
+                      className="flex-shrink-0"
                     >
-                      Organizing
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {visibleEvents.map((event) => (
-                        <ProfileEventCard
-                          key={event.id}
-                          event={event}
-                          onClick={() => router.push(`/events/${event.id}`)}
-                        />
-                      ))}
-                    </div>
+                      <ArrowRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                    </Link>
                   </div>
                 )}
               </div>
-            ) : (
-              <div
-                className="py-8 text-center"
-                style={{
-                  border: '1px dashed var(--border-default)',
-                  borderRadius: '16px',
-                }}
-              >
-                <p
-                  className="text-sm"
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
-                  Just getting started...
-                </p>
-              </div>
-            )}
-          </div>
-        </motion.section>
-
-        {/* ZONE 3: CAMPUS PRESENCE */}
-        <motion.section variants={zoneVariants} className="mt-6">
-          <div
-            className="p-6 sm:p-8"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: '24px',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
-            }}
-          >
-            {hasSpaces && (
-              <div className="mb-6">
-                <h3
-                  className="text-xs font-semibold uppercase tracking-wider mb-4"
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
-                  Spaces
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {visibleSpaces.map((space) => (
-                    <ProfileSpacePill
-                      key={space.id}
-                      space={space}
-                      onClick={() => handleSpaceClick(space.id)}
-                    />
-                  ))}
-                  {overflowSpacesCount > 0 && (
-                    <ProfileOverflowChip
-                      count={overflowSpacesCount}
-                      onClick={() => setShowAllSpaces(true)}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-
-            {!isOwnProfile && (
-              <ProfileConnectionFooter
-                userName={heroUser.fullName}
-                sharedSpacesCount={sharedSpacesCount}
-                mutualConnectionsCount={mutualConnectionsCount}
-              />
-            )}
-
-            {!hasSpaces && (
-              <div
-                className="py-6 text-center"
-                style={{
-                  border: '1px dashed var(--border-default)',
-                  borderRadius: '16px',
-                }}
-              >
-                <p
-                  className="text-sm"
-                  style={{ color: 'var(--text-tertiary)' }}
-                >
-                  No spaces yet
-                </p>
-              </div>
-            )}
-          </div>
-        </motion.section>
+            </div>
+          </motion.section>
+        )}
       </motion.div>
 
       {/* Tool Modal */}

@@ -13,6 +13,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MessageSquare } from 'lucide-react';
@@ -23,7 +24,7 @@ import { useAuth } from '@hive/auth-logic';
 import { cn } from '@/lib/utils';
 import { useDM } from '@/contexts/dm-context';
 import { useDMsEnabled } from '@/hooks/use-feature-flags';
-import { NAV_ITEMS, BOTTOM_ITEMS, isNavItemActive, type NavItem } from '@/lib/navigation';
+import { NAV_ITEMS, isNavItemActive, type NavItem } from '@/lib/navigation';
 
 
 // Premium easing from design system
@@ -196,7 +197,7 @@ function Sidebar({ onNavigate }: SidebarProps) {
             {/* Avatar */}
             <div className="w-8 h-8 rounded-full overflow-hidden border border-white/[0.08] flex-shrink-0 bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
               {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                <Image src={user.avatarUrl} alt="" width={32} height={32} className="object-cover" sizes="32px" priority />
               ) : (
                 <span className="text-body-sm font-semibold text-white/60">
                   {user.displayName?.charAt(0) || user.fullName?.charAt(0) || 'U'}
@@ -357,20 +358,13 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                   </button>
                 )}
 
-                {/* Settings */}
-                {BOTTOM_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.href)}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/[0.03] transition-colors"
-                    >
-                      <Icon size={20} />
-                      <span className="text-body font-medium">{item.label}</span>
-                    </button>
-                  );
-                })}
+                <button
+                  onClick={() => handleNavClick('/settings')}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/[0.03] transition-colors"
+                >
+                  <SettingsIcon size={20} />
+                  <span className="text-body font-medium">Settings</span>
+                </button>
 
                 {user && (
                   <button

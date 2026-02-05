@@ -16,11 +16,16 @@ import { X, Trash2, MoreHorizontal, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, Text, getInitials } from '@hive/ui/design-system/primitives';
 import type { ChatMessage } from '../hooks/use-space-residence-state';
+import { UnreadDivider } from './feed/unread-divider';
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
   isLoading?: boolean;
   className?: string;
+  /** Timestamp of last read message */
+  lastReadAt?: Date | string | null;
+  /** Number of unread messages */
+  unreadCount?: number;
   /**
    * Optional function to check if user can delete a message
    * @param authorId - The author ID of the message
@@ -44,12 +49,32 @@ export function ChatMessages({
   messages,
   isLoading,
   className,
+  lastReadAt,
+  unreadCount = 0,
   canDeleteMessage,
   onDeleteMessage,
   onReportMessage,
 }: ChatMessagesProps) {
   const [lightboxImage, setLightboxImage] = React.useState<string | null>(null);
+  const [showUnreadDivider, setShowUnreadDivider] = React.useState(true);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Parse lastReadAt to Date
+  const lastReadDate = React.useMemo(() => {
+    if (!lastReadAt) return null;
+    return typeof lastReadAt === 'string' ? new Date(lastReadAt) : lastReadAt;
+  }, [lastReadAt]);
+
+  // Find unread divider position
+  const unreadDividerIndex = React.useMemo(() => {
+    if (!lastReadDate || unreadCount === 0) return -1;
+    for (let i = 0; i < messages.length; i++) {
+      if (messages[i].timestamp > lastReadDate.getTime()) {
+        return i;
+      }
+    }
+    return -1;
+  }, [messages, lastReadDate, unreadCount]);
 
   // Auto-scroll to bottom on new messages
   React.useEffect(() => {
@@ -88,17 +113,30 @@ export function ChatMessages({
           const showAuthor = !prevMessage || prevMessage.authorId !== message.authorId;
           const timeDiff = prevMessage ? message.timestamp - prevMessage.timestamp : Infinity;
           const showTimestamp = timeDiff > 300000; // 5 minutes
+          const showDividerBefore = showUnreadDivider && index === unreadDividerIndex;
 
           return (
-            <MessageRow
-              key={message.id}
-              message={message}
-              showAuthor={showAuthor || showTimestamp}
-              onImageClick={setLightboxImage}
-              canDelete={canDeleteMessage?.(message.authorId) ?? false}
-              onDelete={onDeleteMessage}
-              onReport={onReportMessage}
-            />
+            <React.Fragment key={message.id}>
+              {showDividerBefore && (
+                <UnreadDivider
+                  count={unreadCount}
+                  onDismiss={() => {
+                    setShowUnreadDivider(false);
+                    if (scrollRef.current) {
+                      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                    }
+                  }}
+                />
+              )}
+              <MessageRow
+                message={message}
+                showAuthor={showAuthor || showTimestamp || showDividerBefore}
+                onImageClick={setLightboxImage}
+                canDelete={canDeleteMessage?.(message.authorId) ?? false}
+                onDelete={onDeleteMessage}
+                onReport={onReportMessage}
+              />
+            </React.Fragment>
           );
         })}
       </div>

@@ -3,7 +3,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import * as React from 'react';
 import { AuthSuccessState, AuthSuccessStateCompact } from './AuthSuccessState';
-import { Focus } from '../templates/Focus';
 
 /**
  * AuthSuccessState — Minimal success celebration
@@ -170,54 +169,6 @@ export const CompactCustomMessage: Story = {
   ),
 };
 
-/**
- * In Focus Template — Real usage
- */
-export const InFocusTemplate: Story = {
-  render: function FocusTemplateStory() {
-    const [showSuccess, setShowSuccess] = React.useState(false);
-
-    if (showSuccess) {
-      return (
-        <Focus
-          mode="portal"
-          atmosphere="landing"
-          logo={{ position: 'hidden' }}
-          background="ambient"
-          maxWidth="sm"
-        >
-          <AuthSuccessState
-            onAnimationComplete={() => {
-              // In real app: router.push('/feed')
-              console.log('Redirect triggered');
-            }}
-          />
-        </Focus>
-      );
-    }
-
-    return (
-      <Focus
-        mode="portal"
-        atmosphere="landing"
-        logo={{ position: 'center', variant: 'icon' }}
-        background="ambient"
-        maxWidth="sm"
-      >
-        <div className="space-y-6 text-center">
-          <h1 className="text-xl font-semibold text-white">Demo</h1>
-          <p className="text-body text-white/50">Click to see success state</p>
-          <button
-            onClick={() => setShowSuccess(true)}
-            className="px-6 py-3 rounded-xl bg-white text-black font-medium"
-          >
-            Trigger Success
-          </button>
-        </div>
-      </Focus>
-    );
-  },
-};
 
 /**
  * Animation Sequence — Watch the timing

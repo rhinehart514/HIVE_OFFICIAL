@@ -1,22 +1,20 @@
 /**
  * Shared Navigation Config
  *
- * 4-Pillar IA (Jan 2026):
- * - Home: Unified dashboard (merged Feed + Spaces)
- * - Explore: Discovery hub
- * - Lab: Builder dashboard
+ * 4-Pillar IA (Feb 2026):
+ * - Home: Dashboard + discovery (merged Feed + Explore)
+ * - Spaces: Your communities + residences
+ * - Lab: Build tools for your spaces
  * - You: Own profile + settings
  */
 
-import type { LucideIcon } from 'lucide-react';
-import { Compass } from 'lucide-react';
-import { HomeIcon, BeakerIcon, UserIcon, SettingsIcon } from '@hive/ui';
+import { HomeIcon, SpacesIcon, BeakerIcon, UserIcon } from '@hive/ui';
 
 export interface NavItem {
   id: string;
   label: string;
   href: string;
-  icon: LucideIcon | React.ElementType;
+  icon: React.ElementType;
   matchPattern?: RegExp;
 }
 
@@ -26,14 +24,14 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Home',
     href: '/home',
     icon: HomeIcon,
-    matchPattern: /^\/home(\/|$)|^\/feed(\/|$)|^\/spaces(\/|$)/,
+    matchPattern: /^\/home(\/|$)|^\/feed(\/|$)|^\/explore(\/|$)/,
   },
   {
-    id: 'explore',
-    label: 'Explore',
-    href: '/explore',
-    icon: Compass,
-    matchPattern: /^\/explore(\/|$)/,
+    id: 'spaces',
+    label: 'Spaces',
+    href: '/spaces',
+    icon: SpacesIcon,
+    matchPattern: /^\/spaces(\/|$)|^\/s\/(\/|$)/,
   },
   {
     id: 'lab',
@@ -47,16 +45,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'You',
     href: '/me',
     icon: UserIcon,
-    matchPattern: /^\/me(\/|$)|^\/profile(\/|$)|^\/u\//,
-  },
-];
-
-export const BOTTOM_ITEMS: NavItem[] = [
-  {
-    id: 'settings',
-    label: 'Settings',
-    href: '/me/settings',
-    icon: SettingsIcon,
+    matchPattern: /^\/me(\/|$)|^\/profile(\/|$)|^\/settings(\/|$)|^\/u\//,
   },
 ];
 

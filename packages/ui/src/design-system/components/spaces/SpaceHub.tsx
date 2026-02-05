@@ -23,13 +23,13 @@ import {
   LiveDotOnly,
   ActivityHeartbeatStrip,
 } from '../../primitives';
-import { EASE_PREMIUM as EASE } from '../../layout-tokens';
+import { easingArrays } from '@hive/tokens';
 
 // Layer 3: Micro-motion - entrance only, subtle
 const fadeIn = (delay: number) => ({
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35, delay, ease: EASE },
+  transition: { duration: 0.35, delay, ease: easingArrays.default },
 });
 
 export type SpaceMode = 'hub' | 'chat' | 'events' | 'tools' | 'members';

@@ -22,6 +22,7 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -168,6 +169,12 @@ function SpaceAvatar({ name, iconUrl, isVerified, size = 'md' }: SpaceAvatarProp
     lg: 'w-16 h-16',
   };
 
+  const sizePx = {
+    sm: 40,
+    md: 48,
+    lg: 64,
+  };
+
   const textSizes = {
     sm: 'text-sm',
     md: 'text-lg',
@@ -185,7 +192,7 @@ function SpaceAvatar({ name, iconUrl, isVerified, size = 'md' }: SpaceAvatarProp
         )}
       >
         {iconUrl ? (
-          <img src={iconUrl} alt={`${name} icon`} className="w-full h-full object-cover" />
+          <Image src={iconUrl} alt={`${name} icon`} width={sizePx[size]} height={sizePx[size]} className="object-cover" sizes={`${sizePx[size]}px`} />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-700 to-neutral-800">
             <span className={cn('font-bold text-white', textSizes[size])}>{monogram}</span>

@@ -562,6 +562,15 @@ export function getUserEmail(request: AuthenticatedRequest): string {
  * Campus ID is now GUARANTEED by the auth middleware - no fallback needed
  */
 export function getCampusId(request: AuthenticatedRequest): string {
-  // Campus is guaranteed by middleware enforcement
   return request.user.campusId;
+}
+
+/**
+ * Require campus ID from user email - returns campusId or null
+ * Use in routes that manually authenticate (not using withAuth middleware).
+ * Returns null when campus cannot be determined, caller should return 401.
+ */
+export function requireCampusFromEmail(email: string | undefined): string | null {
+  if (!email) return null;
+  return deriveCampusFromEmail(email) || null;
 }

@@ -3,7 +3,6 @@ import * as React from 'react';
 
 import { Button } from '../../design-system/primitives';
 import { Card } from '../../design-system/primitives';
-import { Grid } from '../../design-system/templates/Grid';
 
 export interface ToolAnalyticsData {
   overview: {
@@ -178,25 +177,25 @@ export function ToolAnalyticsPage({
         {/* Overview Metrics */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-6">Overview</h2>
-          <Grid columns={{ sm: 1, md: 2, lg: 4 }} gap="lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard title="Total Usage" value={analytics.overview.totalUsage} change={12} icon={ChartBarIcon} />
             <MetricCard title="Active Users" value={analytics.overview.activeUsers} change={8} icon={UsersIcon} />
             <MetricCard title="Average Rating" value={analytics.overview.avgRating} change={5} icon={StarIcon} format="rating" />
             <MetricCard title="Total Downloads" value={analytics.overview.downloads} change={-2} icon={ArrowDownTrayIcon} />
-          </Grid>
+          </div>
         </div>
 
         {/* Usage Charts */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-6">Usage Analytics</h2>
-          <Grid columns={{ sm: 1, md: 2 }} gap="lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SimpleChart data={dailyUsageData} title="Daily Usage" />
             <SimpleChart data={spaceUsageData} title="Usage by Space" />
-          </Grid>
+          </div>
         </div>
 
         {/* Feature Usage & User Feedback */}
-        <Grid columns={{ sm: 1, md: 2 }} gap="lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h2 className="text-2xl font-bold text-white mb-6">Feature Usage</h2>
             <SimpleChart data={featureUsageData} title="Most Used Features" />
@@ -237,7 +236,7 @@ export function ToolAnalyticsPage({
               </Button>
             </div>
           </div>
-        </Grid>
+        </div>
 
         {/* Performance Insights */}
         <Card className="p-8 bg-gradient-to-r from-[rgba(255,215,0,0.05)] to-[rgba(255,215,0,0.02)] border-[rgba(255,215,0,0.1)]">

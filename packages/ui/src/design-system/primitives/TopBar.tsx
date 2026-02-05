@@ -15,7 +15,10 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { SPRING_SNAP_NAV } from '@hive/tokens';
 
 // ============================================
 // TOKENS
@@ -47,21 +50,21 @@ export interface TopBarProps {
 
 export function TopBar({ children, className, leftOffset = 0 }: TopBarProps) {
   return (
-    <header
+    <motion.header
       className={cn(
         'fixed top-0 right-0 z-50 flex items-center justify-between px-4',
-        'transition-[left] duration-200 ease-out',
         className
       )}
+      animate={{ left: leftOffset }}
+      transition={SPRING_SNAP_NAV}
       style={{
-        left: leftOffset,
         height: TOPBAR_TOKENS.height,
         background: TOPBAR_TOKENS.bg,
         borderBottom: `1px solid ${TOPBAR_TOKENS.border}`,
       }}
     >
       {children}
-    </header>
+    </motion.header>
   );
 }
 
@@ -304,7 +307,7 @@ export function TopBarProfile({ name, avatarUrl, onClick }: TopBarProfileProps) 
       title={name || 'Profile'}
     >
       {avatarUrl ? (
-        <img src={avatarUrl} alt={name} className="w-7 h-7 rounded-lg object-cover" />
+        <Image src={avatarUrl} alt={name || 'Profile'} width={28} height={28} className="rounded-lg object-cover" sizes="28px" />
       ) : (
         <div
           className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-semibold"

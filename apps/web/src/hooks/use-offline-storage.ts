@@ -231,11 +231,11 @@ export function useOfflineSync(options: SyncOptions = {}): SyncState & { sync: (
     async (mutation: PendingMutation): Promise<boolean> => {
       try {
         // Map mutation types to API endpoints
-        const endpoints: Record<PendingMutation['type'], { method: string; url: string }> = {
+        const endpoints: Record<PendingMutation['type'], { method: string; url: string | ((payload: Record<string, unknown>) => string) }> = {
           join_space: { method: 'POST', url: '/api/spaces/join-v2' },
           leave_space: { method: 'POST', url: '/api/spaces/leave' },
           create_post: { method: 'POST', url: '/api/feed' },
-          send_message: { method: 'POST', url: '/api/realtime/chat' },
+          send_message: { method: 'POST', url: (payload) => `/api/spaces/${payload.spaceId}/chat` },
           rsvp_event: { method: 'POST', url: '/api/events/rsvp' },
         };
 
@@ -244,7 +244,11 @@ export function useOfflineSync(options: SyncOptions = {}): SyncState & { sync: (
           return false;
         }
 
-        const response = await fetch(endpoint.url, {
+        const resolvedUrl = typeof endpoint.url === 'function'
+          ? endpoint.url(mutation.payload)
+          : endpoint.url;
+
+        const response = await fetch(resolvedUrl, {
           method: endpoint.method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(mutation.payload),

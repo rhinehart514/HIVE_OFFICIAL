@@ -13,10 +13,11 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Video, Users, Check, Clock } from 'lucide-react';
+import { Calendar, MapPin, Video, Users, Check, Clock, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@hive/ui';
 import { SPACE_COMPONENTS, SPACE_COLORS } from '@hive/tokens';
+import { MOTION, durationSeconds } from '@hive/tokens';
 
 export interface EventCardEvent {
   id: string;
@@ -77,19 +78,21 @@ export function EventCard({
     });
   }, [event.startDate]);
 
-  // Time until event
-  const timeUntil = React.useMemo(() => {
+  // Time until event with urgency detection
+  const { timeUntil, isStartingSoon } = React.useMemo(() => {
     const start = new Date(event.startDate);
     const now = new Date();
     const diffMs = start.getTime() - now.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMs < 0) return null; // Event has passed
-    if (diffHours < 1) return 'Starting soon';
-    if (diffHours < 24) return `In ${diffHours}h`;
-    if (diffDays < 7) return `In ${diffDays}d`;
-    return null;
+    if (diffMs < 0) return { timeUntil: null, isStartingSoon: false };
+    if (diffMinutes <= 15) return { timeUntil: 'Starting soon!', isStartingSoon: true };
+    if (diffHours < 1) return { timeUntil: `In ${diffMinutes}m`, isStartingSoon: false };
+    if (diffHours < 24) return { timeUntil: `In ${diffHours}h`, isStartingSoon: false };
+    if (diffDays < 7) return { timeUntil: `In ${diffDays}d`, isStartingSoon: false };
+    return { timeUntil: null, isStartingSoon: false };
   }, [event.startDate]);
 
   return (
@@ -99,9 +102,11 @@ export function EventCard({
       className={cn(
         'rounded-xl',
         'bg-white/[0.02] hover:bg-white/[0.04]',
-        'border border-white/[0.06] hover:border-white/[0.10]',
         'transition-all duration-150',
         'cursor-pointer',
+        isStartingSoon
+          ? 'border border-[var(--color-gold)]/20 hover:border-[var(--color-gold)]/30'
+          : 'border border-white/[0.06] hover:border-white/[0.10]',
         className
       )}
       style={{
@@ -138,9 +143,30 @@ export function EventCard({
               {event.title}
             </h3>
             {timeUntil && !event.isLive && (
-              <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-gold)]/10 text-[var(--color-gold)]">
-                {timeUntil}
-              </span>
+              isStartingSoon ? (
+                <motion.span
+                  animate={{
+                    boxShadow: [
+                      '0 0 0 0 rgba(255, 215, 0, 0)',
+                      '0 0 8px 2px rgba(255, 215, 0, 0.3)',
+                      '0 0 0 0 rgba(255, 215, 0, 0)',
+                    ],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: MOTION.ease.default,
+                  }}
+                  className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--color-gold)]/20 text-[var(--color-gold)]"
+                >
+                  <Zap className="w-2.5 h-2.5" />
+                  {timeUntil}
+                </motion.span>
+              ) : (
+                <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-gold)]/10 text-[var(--color-gold)]">
+                  {timeUntil}
+                </span>
+              )
             )}
           </div>
 

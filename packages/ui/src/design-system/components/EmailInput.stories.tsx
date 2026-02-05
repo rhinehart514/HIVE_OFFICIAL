@@ -3,7 +3,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import * as React from 'react';
 import { EmailInput, getFullEmail, isValidEmailUsername } from './EmailInput';
-import { Focus } from '../templates/Focus';
 
 /**
  * EmailInput — Campus email input with domain suffix
@@ -298,64 +297,6 @@ export const CustomPlaceholder: Story = {
   },
 };
 
-/**
- * In Focus Template — Real usage
- */
-export const InFocusTemplate: Story = {
-  render: function FocusTemplateStory() {
-    const [value, setValue] = React.useState('');
-    const [isLoading, setIsLoading] = React.useState(false);
-    const [error, setError] = React.useState<string | undefined>();
-
-    const handleSubmit = async () => {
-      // Validate
-      if (!isValidEmailUsername(value)) {
-        setError('Please enter a valid username');
-        return;
-      }
-
-      setError(undefined);
-      setIsLoading(true);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      setIsLoading(false);
-      alert(`Code sent to ${getFullEmail(value, 'buffalo.edu')}`);
-    };
-
-    return (
-      <Focus
-        mode="portal"
-        atmosphere="landing"
-        logo={{ position: 'center', variant: 'icon' }}
-        background="ambient"
-        maxWidth="sm"
-        footer={
-          <p className="text-body-sm text-white/30">
-            By continuing, you agree to our{' '}
-            <a href="#" className="underline hover:text-white/50">Terms</a>
-          </p>
-        }
-      >
-        <div className="space-y-6">
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-semibold text-white">Welcome to HIVE</h1>
-            <p className="text-body text-white/50">Enter your campus email to continue</p>
-          </div>
-          <EmailInput
-            value={value}
-            onChange={setValue}
-            domainSuffix="buffalo.edu"
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-            error={error}
-          />
-        </div>
-      </Focus>
-    );
-  },
-};
 
 /**
  * Interactive Validation

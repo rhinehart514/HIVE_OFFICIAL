@@ -23,7 +23,34 @@ export interface Member {
   // Note: Legacy data may have 'leader' which is treated as 'admin' for display
   role?: 'owner' | 'admin' | 'moderator' | 'member';
   isOnline?: boolean;
+  /** Timestamp of last heartbeat for activity status */
+  lastSeen?: Date | string | null;
   joinedAt?: string;
+}
+
+/**
+ * Format a timestamp into a relative activity label.
+ * Returns null if the timestamp is missing or very old (>30d).
+ */
+function formatActivityTime(lastSeen: Date | string | null | undefined): string | null {
+  if (!lastSeen) return null;
+
+  const date = typeof lastSeen === 'string' ? new Date(lastSeen) : lastSeen;
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+
+  if (diffMs < 0) return null;
+
+  const minutes = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  const days = Math.floor(diffMs / 86400000);
+
+  if (minutes < 1) return 'Active just now';
+  if (minutes < 60) return `Active ${minutes}m ago`;
+  if (hours < 24) return `Active ${hours}h ago`;
+  if (days <= 30) return `Last seen ${days}d ago`;
+
+  return null;
 }
 
 interface MembersListProps {
@@ -238,12 +265,24 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
           {member.avatarUrl && <AvatarImage src={member.avatarUrl} />}
           <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
         </Avatar>
-        {/* Online indicator - green for online, no indicator for offline */}
+        {/* Online indicator - green for online, grey for offline */}
         {member.isOnline ? (
           <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0A0A09]" />
-        ) : (
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-white/10 rounded-full border-2 border-[#0A0A09]" />
-        )}
+        ) : (() => {
+          // Show amber dot for recently active (< 1h), grey otherwise
+          const lastSeenDate = member.lastSeen
+            ? typeof member.lastSeen === 'string' ? new Date(member.lastSeen) : member.lastSeen
+            : null;
+          const recentlyActive = lastSeenDate && (Date.now() - lastSeenDate.getTime()) < 3600000;
+          return (
+            <span
+              className={cn(
+                'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#0A0A09]',
+                recentlyActive ? 'bg-amber-400/60' : 'bg-white/10'
+              )}
+            />
+          );
+        })()}
       </div>
 
       {/* Info */}
@@ -260,12 +299,24 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
         </Text>
       </div>
 
-      {/* Online status text */}
-      {member.isOnline && (
-        <Text size="xs" className="text-emerald-400/70 flex-shrink-0">
-          Online
-        </Text>
-      )}
+      {/* Activity status text */}
+      <div className="flex-shrink-0">
+        {member.isOnline ? (
+          <Text size="xs" className="text-emerald-400/70">
+            Online
+          </Text>
+        ) : (
+          (() => {
+            const activityLabel = formatActivityTime(member.lastSeen);
+            if (!activityLabel) return null;
+            return (
+              <Text size="xs" className="text-white/30">
+                {activityLabel}
+              </Text>
+            );
+          })()
+        )}
+      </div>
     </motion.button>
   );
 }

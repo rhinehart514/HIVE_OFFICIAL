@@ -5,14 +5,16 @@
  *
  * Floating sidebar with card-based sections:
  * - Identity Card: User avatar + name
+ * - Nav Card: Home, Spaces, Lab, You (4-pillar IA)
  * - Spaces Card: Your communities (scrollable)
- * - Nav Card: Feed, Browse, HiveLab, Settings (2x2 grid)
  *
- * @version 9.0.0 — Floating cards redesign
+ * @version 12.0.0 — Spaces pillar navigation (Explore folded into Home)
  */
 
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
+import { springPresets } from '@hive/tokens';
 import {
   TopBar,
   TopBarBreadcrumbs,
@@ -31,10 +33,10 @@ import {
   NavItem,
   SidebarSpacer,
   SidebarCollapseToggle,
-  FeedIcon,
-  BrowseIcon,
-  ToolsIcon,
-  SettingsIcon,
+  HomeNavIcon,
+  SpacesNavIcon,
+  LabNavIcon,
+  YouNavIcon,
   SIDEBAR_TOKENS,
 } from '../design-system/primitives/GlobalSidebar';
 import { CommandPalette, type CommandPaletteItem } from '../design-system/components/CommandPalette';
@@ -120,20 +122,24 @@ function useBreadcrumbs(pathname: string): BreadcrumbItem[] {
     const segments = pathname.split('/').filter(Boolean);
     const items: BreadcrumbItem[] = [];
 
-    if (segments[0] === 'spaces') {
+    if (segments[0] === 'home' || segments[0] === 'feed') {
+      items.push({ label: 'Home' });
+    } else if (segments[0] === 'spaces') {
       if (segments[1] === 'browse') {
-        items.push({ label: 'Campus' });
+        items.push({ label: 'Spaces' });
       } else if (segments[1]) {
         items.push({ label: 'Space' });
+      } else {
+        items.push({ label: 'Spaces' });
       }
-    } else if (segments[0] === 'tools') {
-      items.push({ label: 'HiveLab' });
-    } else if (segments[0] === 'feed') {
-      items.push({ label: 'Feed' });
-    } else if (segments[0] === 'profile') {
-      items.push({ label: 'Profile' });
+    } else if (segments[0] === 'explore') {
+      items.push({ label: 'Explore' });
+    } else if (segments[0] === 'me' || segments[0] === 'profile') {
+      items.push({ label: 'You' });
     } else if (segments[0] === 'settings') {
       items.push({ label: 'Settings' });
+    } else if (segments[0] === 'lab' || segments[0] === 'tools') {
+      items.push({ label: 'Lab' });
     }
 
     return items;
@@ -145,9 +151,10 @@ function useBreadcrumbs(pathname: string): BreadcrumbItem[] {
 // ============================================
 
 const DEFAULT_COMMAND_PALETTE_ITEMS: CommandPaletteItem[] = [
-  { id: 'nav-spaces', label: 'Spaces', description: 'Your campus, organized', category: 'Navigation' },
-  { id: 'nav-feed', label: 'Feed', description: 'See what\'s happening', category: 'Navigation' },
-  { id: 'nav-hivelab', label: 'HiveLab', description: 'Build tools', category: 'Navigation' },
+  { id: 'nav-home', label: 'Home', description: 'Your dashboard', category: 'Navigation' },
+  { id: 'nav-spaces', label: 'Spaces', description: 'Your communities and residences', category: 'Navigation' },
+  { id: 'nav-lab', label: 'Lab', description: 'Build tools for your spaces', category: 'Navigation' },
+  { id: 'nav-you', label: 'You', description: 'Your profile and settings', category: 'Navigation' },
   { id: 'nav-settings', label: 'Settings', description: 'Preferences', category: 'Navigation' },
 ];
 
@@ -163,10 +170,10 @@ interface MobileNavProps {
 
 function MobileNav({ pathname, onNavigate, notificationCount = 0 }: MobileNavProps) {
   const navItems = [
-    { id: 'feed', icon: <FeedIcon className="w-6 h-6" />, label: 'Feed', path: '/feed', badge: notificationCount },
-    { id: 'spaces', icon: <BrowseIcon className="w-6 h-6" />, label: 'Spaces', path: '/spaces' },
-    { id: 'hivelab', icon: <ToolsIcon className="w-6 h-6" />, label: 'HiveLab', path: '/tools' },
-    { id: 'settings', icon: <SettingsIcon className="w-6 h-6" />, label: 'Settings', path: '/settings' },
+    { id: 'home', icon: <HomeNavIcon className="w-6 h-6" />, label: 'Home', path: '/home', badge: notificationCount },
+    { id: 'spaces', icon: <SpacesNavIcon className="w-6 h-6" />, label: 'Spaces', path: '/spaces' },
+    { id: 'lab', icon: <LabNavIcon className="w-6 h-6" />, label: 'Lab', path: '/lab' },
+    { id: 'you', icon: <YouNavIcon className="w-6 h-6" />, label: 'You', path: '/me' },
   ];
 
   return (
@@ -181,16 +188,32 @@ function MobileNav({ pathname, onNavigate, notificationCount = 0 }: MobileNavPro
     >
       <ul className="flex items-center justify-around h-full px-4">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.path);
+          const isActive = item.id === 'home'
+            ? /^\/(home|feed|explore)(\/|$)/.test(pathname)
+            : item.id === 'spaces'
+              ? /^\/spaces(\/|$)|^\/s\//.test(pathname)
+              : item.id === 'you'
+                ? /^\/(me|profile|settings)(\/|$)/.test(pathname) || /^\/u\//.test(pathname)
+                : item.id === 'lab'
+                  ? /^\/lab(\/|$)/.test(pathname)
+                  : pathname.startsWith(item.path);
 
           return (
             <li key={item.id} className="flex-1">
               <button
                 onClick={() => onNavigate(item.path)}
-                className={cn('w-full flex flex-col items-center gap-1 py-2', FOCUS_RING)}
+                className={cn('relative w-full flex flex-col items-center gap-1 py-2', FOCUS_RING)}
               >
+                {isActive && (
+                  <motion.div
+                    layoutId="mobileActiveIndicator"
+                    className="absolute inset-0 rounded-lg"
+                    style={{ background: 'rgba(255, 255, 255, 0.06)' }}
+                    transition={springPresets.snappy}
+                  />
+                )}
                 <span
-                  className="relative"
+                  className="relative z-10"
                   style={{ color: isActive ? '#FAFAFA' : '#71717A' }}
                 >
                   {item.icon}
@@ -201,7 +224,7 @@ function MobileNav({ pathname, onNavigate, notificationCount = 0 }: MobileNavPro
                   )}
                 </span>
                 <span
-                  className="text-label-xs font-medium"
+                  className="relative z-10 text-label-xs font-medium"
                   style={{ color: isActive ? '#FAFAFA' : '#71717A' }}
                 >
                   {item.label}
@@ -314,9 +337,10 @@ export function UniversalShell({
       return;
     }
     const navigationMap: Record<string, string> = {
+      'nav-home': '/home',
       'nav-spaces': '/spaces',
-      'nav-feed': '/feed',
-      'nav-hivelab': '/tools',
+      'nav-lab': '/lab',
+      'nav-you': '/me',
       'nav-settings': '/settings',
     };
     const path = navigationMap[item.id];
@@ -352,11 +376,10 @@ export function UniversalShell({
     ? 0
     : (effectiveCollapsed ? SIDEBAR_TOKENS.collapsedWidth : SIDEBAR_TOKENS.width) + (SIDEBAR_TOKENS.margin * 2);
 
-  // Active states
-  const isOnFeed = pathname.startsWith('/feed');
-  const isOnBrowse = pathname.startsWith('/spaces/browse') || pathname === '/spaces';
-  const isOnTools = pathname.startsWith('/tools');
-  const isOnSettings = pathname.startsWith('/settings');
+  const isOnHome = /^\/(home|feed|explore)(\/|$)/.test(pathname);
+  const isOnSpaces = /^\/spaces(\/|$)|^\/s\//.test(pathname);
+  const isOnLab = /^\/lab(\/|$)/.test(pathname);
+  const isOnYou = /^\/(me|profile|settings)(\/|$)/.test(pathname) || /^\/u\//.test(pathname);
 
   const currentSpaceId = useMemo(() => {
     const match = pathname.match(/^\/spaces\/([^/]+)/);
@@ -387,29 +410,29 @@ export function UniversalShell({
           {/* Navigation - prominent at top */}
           <NavCard>
             <NavItem
-              icon={<FeedIcon className="w-5 h-5" />}
-              label="Feed"
-              isActive={isOnFeed}
+              icon={<HomeNavIcon className="w-5 h-5" />}
+              label="Home"
+              isActive={isOnHome}
               badge={notificationCount}
-              onClick={() => handleNavigate('/feed')}
+              onClick={() => handleNavigate('/home')}
             />
             <NavItem
-              icon={<BrowseIcon className="w-5 h-5" />}
+              icon={<SpacesNavIcon className="w-5 h-5" />}
               label="Spaces"
-              isActive={isOnBrowse}
+              isActive={isOnSpaces}
               onClick={() => handleNavigate('/spaces')}
             />
             <NavItem
-              icon={<ToolsIcon className="w-5 h-5" />}
-              label="HiveLab"
-              isActive={isOnTools}
-              onClick={() => handleNavigate('/tools')}
+              icon={<LabNavIcon className="w-5 h-5" />}
+              label="Lab"
+              isActive={isOnLab}
+              onClick={() => handleNavigate('/lab')}
             />
             <NavItem
-              icon={<SettingsIcon className="w-5 h-5" />}
-              label="Settings"
-              isActive={isOnSettings}
-              onClick={() => handleNavigate('/settings')}
+              icon={<YouNavIcon className="w-5 h-5" />}
+              label="You"
+              isActive={isOnYou}
+              onClick={() => handleNavigate('/me')}
             />
           </NavCard>
 

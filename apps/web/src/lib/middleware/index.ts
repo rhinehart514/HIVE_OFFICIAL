@@ -43,6 +43,7 @@ export {
   attachUser,
   // Campus isolation helpers (Phase 1.2)
   deriveCampusFromEmail,
+  requireCampusFromEmail,
   requireCampusMatch,
   type UserContext,
   type AuthenticatedRequest,
@@ -373,25 +374,23 @@ export function withOptionalAuth<T = RouteParams>(
         const { authAdmin } = await import('@/lib/firebase-admin');
         const decodedToken = await authAdmin.verifyIdToken(token);
 
-        // Derive campus from email
         const campusId = decodedToken.email
-          ? deriveCampusFromEmail(decodedToken.email) || 'ub-buffalo'
-          : 'ub-buffalo';
+          ? deriveCampusFromEmail(decodedToken.email)
+          : undefined;
 
-        // Create user context
-        const userContext: UserContext = {
-          uid: decodedToken.uid,
-          email: decodedToken.email || '',
-          campusId,
-          decodedToken
-        };
+        if (campusId) {
+          const userContext: UserContext = {
+            uid: decodedToken.uid,
+            email: decodedToken.email || '',
+            campusId,
+            decodedToken
+          };
 
-        // Attach via symbol for type-safe access
-        attachUser(request as import('next/server').NextRequest, userContext);
+          attachUser(request as import('next/server').NextRequest, userContext);
 
-        // Also attach to .user for backward compatibility
-        const reqWithUser = request as AuthenticatedRequest;
-        reqWithUser.user = userContext;
+          const reqWithUser = request as AuthenticatedRequest;
+          reqWithUser.user = userContext;
+        }
       }
     } catch {
       // Auth failed or missing - continue without auth

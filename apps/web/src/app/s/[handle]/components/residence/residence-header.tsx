@@ -38,6 +38,7 @@ interface ResidenceHeaderProps {
     avatarUrl?: string;
     onlineCount: number;
     memberCount: number;
+    activeTodayCount?: number;
     isVerified?: boolean;
     recentMessageCount?: number;
   };
@@ -186,6 +187,14 @@ export function ResidenceHeader({
               <span className="text-xs text-white/40">
                 {space.memberCount} members
               </span>
+              {(space.activeTodayCount != null && space.activeTodayCount > 0) && (
+                <>
+                  <span className="text-white/20">·</span>
+                  <span className="text-xs text-white/50">
+                    {space.activeTodayCount} active today
+                  </span>
+                </>
+              )}
               {space.onlineCount > 0 && (
                 <>
                   <span className="text-white/20">·</span>
@@ -195,7 +204,7 @@ export function ResidenceHeader({
                       style={{ backgroundColor: SPACES_GOLD.primary }}
                     />
                     <span className="text-xs" style={{ color: `${SPACES_GOLD.primary}99` }}>
-                      {space.onlineCount} here
+                      {space.onlineCount} here now
                     </span>
                   </div>
                 </>

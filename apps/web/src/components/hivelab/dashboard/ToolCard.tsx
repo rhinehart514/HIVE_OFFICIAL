@@ -10,9 +10,7 @@
 import { motion } from 'framer-motion';
 import { Clock, BarChart3, ChevronRight } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/hivelab/create-tool';
-import { MOTION } from '@hive/tokens';
-
-const EASE = MOTION.ease.premium;
+import { cardHoverVariants } from '@hive/tokens';
 
 export interface ToolData {
   id: string;
@@ -52,13 +50,8 @@ export function ToolCard({ tool, onClick, index = 0 }: ToolCardProps) {
 
   return (
     <motion.button
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.2,
-        delay: index * 0.05,
-        ease: EASE,
-      }}
+      whileHover={cardHoverVariants.hover}
+      whileTap={{ scale: 0.98 }}
       onClick={() => onClick(tool.id)}
       className="group relative flex flex-col items-start p-4 rounded-xl
         border border-[var(--ide-border-subtle)] bg-[var(--ide-surface-panel)]
@@ -115,13 +108,8 @@ interface NewToolCardProps {
 export function NewToolCard({ onClick, index = 0 }: NewToolCardProps) {
   return (
     <motion.button
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.2,
-        delay: index * 0.05,
-        ease: EASE,
-      }}
+      whileHover={cardHoverVariants.hover}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className="group flex flex-col items-center justify-center p-4 rounded-xl
         border border-dashed border-[var(--ide-border-subtle)] bg-transparent

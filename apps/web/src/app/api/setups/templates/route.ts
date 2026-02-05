@@ -229,7 +229,10 @@ export async function POST(request: NextRequest) {
     const { userId } = session;
 
     // Derive campusId from session or email
-    const campusId = session.campusId || (session.email ? deriveCampusFromEmail(session.email) : null) || 'ub-buffalo';
+    const campusId = session.campusId || (session.email ? deriveCampusFromEmail(session.email) : null);
+    if (!campusId) {
+      return errorResponse('Campus identification required', 401);
+    }
 
     // Get user profile for creator name
     const userDoc = await dbAdmin.collection('users').doc(userId).get();

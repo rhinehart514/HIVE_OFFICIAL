@@ -237,8 +237,6 @@ export {
   SPACING,
   RADIUS,
   Z_INDEX,
-  DURATION,
-  EASE,
   EASE_PREMIUM,
 } from "./design-system/layout-tokens";
 
@@ -681,9 +679,6 @@ export type { ProgressProps, CircularProgressProps } from "./design-system/primi
 export { CommandPalette } from "./design-system/components/CommandPalette";
 export type { CommandPaletteProps, CommandPaletteItem } from "./design-system/components/CommandPalette";
 
-// Focus Template (Jan 2026 - Auth/Onboarding)
-export { Focus, FocusStatic, useFocus, useFocusOptional, FocusHiveLogo, FocusProgressIndicator, FocusBackground } from "./design-system/templates/Focus";
-export type { FocusProps, FocusMode, FocusContextValue, FocusProgressProps, FocusLogoProps } from "./design-system/templates/Focus";
 
 // HiveLogo Component and Shell Icons (standalone for use anywhere)
 export {
@@ -691,6 +686,8 @@ export {
   HomeIcon,
   UsersIcon,
   UserIcon,
+  CompassIcon,
+  SpacesIcon,
   BeakerIcon,
   BellIcon,
   CalendarIcon,
@@ -1567,9 +1564,6 @@ export type { PageHeaderProps, SectionHeaderProps } from "./layout/page-header";
 export { CollapsiblePageHeader } from "./layout/collapsible-page-header";
 export type { CollapsiblePageHeaderProps, TabItem as HeaderTabItem } from "./layout/collapsible-page-header";
 
-// Auth/Onboarding Components - REMOVED (Use Focus template from design-system)
-// NOTE: AuthOnboardingLayout, OnboardingFrame were in atomic/ (now deleted)
-// Use Focus template from design-system/templates
 
 // HiveLab: Deployment modal
 export {
@@ -1889,6 +1883,9 @@ export {
   ProfileSpacePill,
   ProfileConnectionFooter,
   ProfileOverflowChip,
+  // Belonging-First Profile (v2 - Profile Redesign)
+  ProfileBelongingSpaceCard,
+  ProfileSharedBanner,
   // Legacy Profile Components
   ProfileCard,
   ProfileHero,
@@ -1920,6 +1917,10 @@ export type {
   ProfileSpacePillProps,
   ProfileConnectionFooterProps,
   ProfileOverflowChipProps,
+  // Belonging-First Profile Types (v2)
+  BelongingSpace,
+  ProfileBelongingSpaceCardProps,
+  ProfileSharedBannerProps,
   // Legacy Profile Types
   ProfileCardProps,
   ProfileHeroProps,
@@ -2026,8 +2027,6 @@ export {
   type ReportCategory,
 } from "./design-system/components/moderation";
 
-// Grid layout from design-system
-export { Grid } from "./design-system/templates/Grid";
 
 // ============================================
 // LEGACY TYPE ALIASES (Backwards Compatibility)

@@ -191,7 +191,7 @@ export function InterestsSection({
           {showSuggestions && filteredSuggestions.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="absolute top-full left-0 right-0 mt-1 py-1 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto"
+              className="absolute top-full left-0 right-0 mt-1 py-1 bg-[var(--bg-surface-hover)] border border-white/10 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto"
             >
               {filteredSuggestions.map((suggestion) => (
                 <button

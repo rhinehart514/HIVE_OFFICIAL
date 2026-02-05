@@ -1,7 +1,7 @@
 # HIVE Entity Relationship Diagram (ERD)
 
 > Complete database schema documentation for HIVE platform
-> Last updated: January 2026
+> **Last Updated:** 2026-01-20
 
 ## Overview
 

@@ -12,7 +12,7 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { EASE_PREMIUM } from '../layout-tokens';
+import { easingArrays } from '@hive/tokens';
 
 export interface CountdownTimerProps {
   /** Seconds remaining */
@@ -109,7 +109,7 @@ function CountdownTimer({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: EASE_PREMIUM }}
+            transition={{ duration: 0.2, ease: easingArrays.default }}
           >
             {completedContent}
           </motion.div>

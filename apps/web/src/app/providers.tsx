@@ -71,8 +71,14 @@ export function Providers({ children }: ProvidersProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute
-            refetchOnWindowFocus: false,
+            staleTime: 1000 * 60 * 2,        // 2 minutes default (up from 1 min)
+            gcTime: 1000 * 60 * 15,          // 15 minutes garbage collection
+            retry: 1,                         // Retry once (fail fast for auth errors)
+            refetchOnWindowFocus: 'always',   // Show cached data + silent refresh on tab focus
+            refetchOnReconnect: true,         // Refetch after network comes back
+          },
+          mutations: {
+            retry: 0,                         // Never retry mutations automatically
           },
         },
       })

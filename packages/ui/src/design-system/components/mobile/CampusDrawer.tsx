@@ -13,6 +13,7 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence, useDragControls, PanInfo } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { cn } from '../../../lib/utils';
@@ -422,7 +423,7 @@ export function CampusDrawer({
                     className="w-6 h-6 rounded-md bg-[var(--bg-elevated)] border border-[var(--bg-ground)] overflow-hidden"
                   >
                     {space.avatar ? (
-                      <img src={space.avatar} alt="" className="w-full h-full object-cover" />
+                      <Image src={space.avatar} alt="" width={24} height={24} className="object-cover" sizes="24px" />
                     ) : (
                       <span className="w-full h-full flex items-center justify-center text-[8px]">
                         {space.name[0]}

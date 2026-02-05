@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, MOTION, Button } from '@hive/ui/design-system/primitives';
+import { fadeInUpVariants, staggerContainerVariants, staggerItemVariants } from '@hive/ui/lib/motion-variants';
 import { useSpacesHQ } from '../hooks/useSpacesHQ';
 import { IdentityRow } from './IdentityRow';
 import { OrganizationsPanel } from './OrganizationsPanel';
@@ -198,12 +199,12 @@ function OnboardingBanner({ progress, onBrowse, isFirstWeek = false }: Onboardin
               <div
                 key={i}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  i < progress ? 'bg-[#FFD700]' : isFirstWeek ? 'bg-[#FFD700]/20' : 'bg-white/10'
+                  i < progress ? 'bg-gold-500' : isFirstWeek ? 'bg-gold-500/20' : 'bg-white/10'
                 }`}
               />
             ))}
           </div>
-          <span className={`text-body-sm ${isFirstWeek ? 'text-[#FFD700]/80' : 'text-white/60'}`}>
+          <span className={`text-body-sm ${isFirstWeek ? 'text-gold-500/80' : 'text-white/60'}`}>
             {remaining === 0
               ? 'Identity complete!'
               : isFirstWeek
@@ -215,7 +216,7 @@ function OnboardingBanner({ progress, onBrowse, isFirstWeek = false }: Onboardin
           onClick={onBrowse}
           className={`text-label transition-colors ${
             isFirstWeek
-              ? 'text-[#FFD700]/60 hover:text-[#FFD700]'
+              ? 'text-gold-500/60 hover:text-gold-500'
               : 'text-white/40 hover:text-white/60'
           }`}
         >
@@ -430,19 +431,24 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
       )}
 
       {/* Main content */}
-      <main className="flex-1 px-6 pb-8 flex flex-col gap-8">
+      <motion.main
+        className="flex-1 px-6 pb-8 flex flex-col gap-8"
+        variants={staggerContainerVariants}
+        initial="initial"
+        animate="animate"
+      >
         {/* Identity Row - more prominent during onboarding period */}
-        <section>
+        <motion.section variants={fadeInUpVariants}>
           <div className="flex items-center justify-between mb-4">
             <h2 className={`text-label uppercase tracking-wider ${
               isOnboarding && state === 'onboarding'
-                ? 'text-[#FFD700]/60'
+                ? 'text-gold-500/60'
                 : 'text-white/40'
             }`}>
               {isOnboarding && state === 'onboarding' ? 'Claim Your Identity' : 'Your Identity'}
             </h2>
             {isOnboarding && state === 'onboarding' && identityProgress > 0 && (
-              <span className="text-label text-[#FFD700]/40">
+              <span className="text-label text-gold-500/40">
                 {identityProgress}/3
               </span>
             )}
@@ -453,10 +459,10 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
             greekSpace={identityClaims.greek}
             isOnboarding={isOnboarding && state === 'onboarding'}
           />
-        </section>
+        </motion.section>
 
         {/* Your Organizations - full width */}
-        <section className="flex-1">
+        <motion.section className="flex-1" variants={fadeInUpVariants}>
           <h2 className="text-label text-white/40 uppercase tracking-wider mb-4">
             Your Organizations
           </h2>
@@ -466,10 +472,10 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
             onMuteSpace={handleMuteSpace}
             onLeaveSpace={handleLeaveSpace}
           />
-        </section>
+        </motion.section>
 
         {/* Browse link */}
-        <div className="pt-4 border-t border-white/[0.06]">
+        <motion.div className="pt-4 border-t border-white/[0.06]" variants={fadeInUpVariants}>
           <Link
             href="/spaces/browse"
             className="group flex items-center gap-2 text-body text-white/50 hover:text-white/80 transition-colors"
@@ -480,8 +486,8 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
               className="transition-transform group-hover:translate-x-1"
             />
           </Link>
-        </div>
-      </main>
+        </motion.div>
+      </motion.main>
 
       <SpaceCreationModal
         isOpen={showCreateModal}

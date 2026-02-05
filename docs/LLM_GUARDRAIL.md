@@ -1,4 +1,5 @@
 # HIVE AI Development Guardrail
+**Last Updated:** 2026-01-02
 
 **Purpose:** Prevent aesthetic drift, architectural drift, and scope creep when using AI coding assistants.
 

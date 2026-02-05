@@ -14,6 +14,7 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 
@@ -138,7 +139,7 @@ function ToolCard({ tool, onRun, onView, onRemove, canRemove }: ToolCardProps) {
             : 'bg-white/[0.06] text-[#A3A19E]',
         )}>
           {tool.iconUrl ? (
-            <img src={tool.iconUrl} alt="" className="w-6 h-6" />
+            <Image src={tool.iconUrl} alt="" width={24} height={24} sizes="24px" />
           ) : (
             icon
           )}

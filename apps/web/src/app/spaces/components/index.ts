@@ -5,7 +5,6 @@
  *
  * Primary API:
  * - SpacesHub: Main entry point, orchestrates all states
- * - WelcomeOverlay: First-time user welcome experience
  *
  * Internal Components (used by SpacesHub):
  * - HubShell, HubEmpty, HubOnboarding, HubActive
@@ -14,7 +13,6 @@
 
 // Main Components (use these)
 export { SpacesHub } from './spaces-hub';
-export { WelcomeOverlay } from './WelcomeOverlay';
 
 // Shell & State Views
 export { HubShell } from './hub-shell';

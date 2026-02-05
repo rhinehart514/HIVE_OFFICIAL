@@ -17,6 +17,7 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 
@@ -98,7 +99,7 @@ function SpaceIcon({ iconUrl, name }: { iconUrl?: string; name: string }) {
   return (
     <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/[0.08] border border-white/[0.08] flex items-center justify-center">
       {iconUrl ? (
-        <img src={iconUrl} alt={name} className="w-full h-full object-cover" />
+        <Image src={iconUrl} alt={name} width={80} height={80} className="object-cover" sizes="80px" />
       ) : (
         <span className="text-3xl font-bold text-white/60">{monogram}</span>
       )}
@@ -278,10 +279,12 @@ export function SpaceThreshold({
       {/* Banner */}
       <div className="relative h-48 w-full overflow-hidden">
         {space.bannerUrl ? (
-          <img
+          <Image
             src={space.bannerUrl}
             alt=""
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="100vw"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-white/[0.06] to-white/[0.02]" />

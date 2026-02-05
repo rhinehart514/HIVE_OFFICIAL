@@ -214,7 +214,13 @@ export async function GET(
     const secret = new TextEncoder().encode(process.env.SESSION_SECRET || '');
     const { payload } = await jwtVerify(sessionMatch[1], secret);
     const userId = payload.userId as string;
-    const campusId = (payload.campusId as string) || 'ub-buffalo';
+    const campusId = payload.campusId as string;
+    if (!campusId) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Campus identification required', code: 'UNAUTHORIZED' } },
+        { status: 401 }
+      );
+    }
 
     const params = await context.params;
     const spaceId = params.spaceId;
@@ -291,7 +297,13 @@ export async function DELETE(
     const secret = new TextEncoder().encode(process.env.SESSION_SECRET || '');
     const { payload } = await jwtVerify(sessionMatch[1], secret);
     const userId = payload.userId as string;
-    const campusId = (payload.campusId as string) || 'ub-buffalo';
+    const campusId = payload.campusId as string;
+    if (!campusId) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Campus identification required', code: 'UNAUTHORIZED' } },
+        { status: 401 }
+      );
+    }
 
     const params = await context.params;
     const spaceId = params.spaceId;

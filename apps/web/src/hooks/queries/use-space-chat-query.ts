@@ -187,10 +187,8 @@ export function useSendMessage(spaceId: string, boardId: string) {
       }
     },
     onSettled: () => {
-      // Refetch to ensure consistency
       queryClient.invalidateQueries({
         queryKey: queryKeys.spaces.chat(spaceId, boardId),
-        refetchType: 'none', // Don't refetch immediately, let stale time handle it
       });
     },
   });

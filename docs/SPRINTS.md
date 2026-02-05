@@ -1,4 +1,5 @@
 # Sprints
+**Last Updated:** 2026-02-01
 
 Detailed sprint tracking. TODO.md has current status only.
 

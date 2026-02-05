@@ -37,6 +37,7 @@ interface ResidenceViewProps {
     avatarUrl?: string;
     onlineCount: number;
     memberCount: number;
+    activeTodayCount?: number;
     isVerified?: boolean;
     recentMessageCount?: number;
   };

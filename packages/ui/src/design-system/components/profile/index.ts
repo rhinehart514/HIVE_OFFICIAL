@@ -61,6 +61,18 @@ export {
   type ProfileConnectionFooterProps,
 } from './ProfileConnectionFooter';
 
+// Belonging-First Components (v2 - Profile Redesign)
+export {
+  ProfileBelongingSpaceCard,
+  type BelongingSpace,
+  type ProfileBelongingSpaceCardProps,
+} from './ProfileBelongingSpaceCard';
+
+export {
+  ProfileSharedBanner,
+  type ProfileSharedBannerProps,
+} from './ProfileSharedBanner';
+
 // Shared
 export {
   ProfileOverflowChip,

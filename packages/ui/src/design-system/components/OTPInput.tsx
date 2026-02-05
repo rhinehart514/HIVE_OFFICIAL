@@ -25,7 +25,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { EASE_PREMIUM } from '../layout-tokens';
+import { easingArrays } from '@hive/tokens';
 
 // ============================================
 // TYPES
@@ -163,7 +163,7 @@ export function OTPInput({
               transition={{
                 delay: index * 0.06,
                 duration: 0.4,
-                ease: EASE_PREMIUM
+                ease: easingArrays.default
               }}
               className="relative"
             >
@@ -221,7 +221,7 @@ export function OTPInput({
                   },
                   backgroundColor: {
                     duration: 0.3,
-                    ease: EASE_PREMIUM
+                    ease: easingArrays.default
                   },
                   borderColor: {
                     duration: 0.2,

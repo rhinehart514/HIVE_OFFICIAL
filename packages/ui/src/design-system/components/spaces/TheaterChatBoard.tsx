@@ -15,6 +15,7 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from '../../../lib/utils';
@@ -357,7 +358,7 @@ function VirtualMessageRow({
               onClick={() => onAuthorClick?.(author.id)}
             >
               {author.avatarUrl ? (
-                <img src={author.avatarUrl} alt={author.name} className="w-full h-full object-cover" />
+                <Image src={author.avatarUrl} alt={author.name} width={40} height={40} className="object-cover" sizes="40px" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-[#6B6B70] text-sm font-medium">
                   {author.name.slice(0, 2).toUpperCase()}

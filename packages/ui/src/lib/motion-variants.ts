@@ -33,8 +33,8 @@ import {
  * Use for: Achievement unlocks, ritual completions, major milestones
  */
 export const TIER_1_DRAMATIC = {
-  duration: 0.7,
-  ease: [0.165, 0.84, 0.44, 1] as const,
+  duration: durationSeconds.dramatic,
+  ease: easingArrays.dramatic,
   spring: { stiffness: 300, damping: 15, mass: 1 },
 } as const;
 
@@ -44,8 +44,8 @@ export const TIER_1_DRAMATIC = {
  * Use for: Cards, filters, navigation, modals, most UI
  */
 export const TIER_2_STANDARD = {
-  duration: 0.3,
-  ease: [0.23, 1, 0.32, 1] as const,
+  duration: durationSeconds.standard,
+  ease: easingArrays.default,
   spring: { stiffness: 200, damping: 25, mass: 1 },
 } as const;
 
@@ -55,8 +55,8 @@ export const TIER_2_STANDARD = {
  * Use for: Hovers, focus states, toggles, subtle feedback
  */
 export const TIER_3_AMBIENT = {
-  duration: 0.15,
-  ease: [0.25, 0.1, 0.25, 1] as const,
+  duration: durationSeconds.snap,
+  ease: easingArrays.snap,
   spring: { stiffness: 400, damping: 30, mass: 0.5 },
 } as const;
 
@@ -66,9 +66,7 @@ export const TIER_3_AMBIENT = {
  * Use for: prefers-reduced-motion, static fallbacks
  */
 export const TIER_4_REDUCED = {
-  duration: 0.05,
-  ease: 'linear' as const,
-  spring: { stiffness: 1000, damping: 100, mass: 0 },
+  duration: 0,
 } as const;
 
 // ===== BUTTERY SPRING PRESETS =====

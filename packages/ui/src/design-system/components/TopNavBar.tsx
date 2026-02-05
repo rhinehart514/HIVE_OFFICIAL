@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -217,7 +218,7 @@ function ProfileButton({
         'bg-white/[0.06] border border-white/[0.06]'
       )}>
         {user?.avatarUrl ? (
-          <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+          <Image src={user.avatarUrl} alt="" width={32} height={32} className="object-cover" sizes="32px" priority />
         ) : (
           <span className="text-label font-medium text-[var(--color-text-muted)]">
             {(user?.name || 'U').charAt(0).toUpperCase()}

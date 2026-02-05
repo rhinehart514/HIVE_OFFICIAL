@@ -19,7 +19,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
-import { EASE_PREMIUM as EASE } from '../layout-tokens';
+import { easingArrays } from '@hive/tokens';
 
 // LOCKED: Spring animation config
 const springConfig = {
@@ -96,7 +96,7 @@ const itemAnimationVariants = {
     y: 0,
     transition: {
       duration: 0.5,
-      ease: EASE,
+      ease: easingArrays.default,
     },
   },
 };

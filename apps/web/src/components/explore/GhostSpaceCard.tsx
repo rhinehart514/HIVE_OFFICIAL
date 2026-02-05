@@ -16,8 +16,8 @@ import {
   Badge,
   Button,
   GradientText,
-  MOTION,
 } from '@hive/ui/design-system/primitives';
+import { revealVariants, cardHoverVariants } from '@hive/tokens';
 import { toast } from '@hive/ui';
 import { cn } from '@/lib/utils';
 import { BellIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -67,13 +67,9 @@ export function GhostSpaceCard({ space, index = 0 }: GhostSpaceCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: MOTION.duration.fast,
-        delay: index * 0.03,
-        ease: MOTION.ease.premium,
-      }}
+      variants={revealVariants}
+      whileHover={cardHoverVariants.hover}
+      whileTap={{ scale: 0.98 }}
     >
       <Tilt intensity={4}>
         <GlassSurface

@@ -177,7 +177,10 @@ export async function GET(request: NextRequest) {
     const includeConfig = searchParams.get('includeConfig') === 'true';
 
     // Derive campusId from user's email
-    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+    const campusId = user.email ? deriveCampusFromEmail(user.email) : undefined;
+    if (!campusId) {
+      return NextResponse.json(ApiResponseHelper.error("Campus identification required", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
+    }
 
     // Build user context
     const userContext = await buildUserContext(user.uid, campusId);
@@ -253,7 +256,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Derive campusId from user's email
-    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+    const campusId = user.email ? deriveCampusFromEmail(user.email) : undefined;
+    if (!campusId) {
+      return NextResponse.json(ApiResponseHelper.error("Campus identification required", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
+    }
 
     // Build user context with custom overrides
     const baseUserContext = await buildUserContext(user.uid, campusId);

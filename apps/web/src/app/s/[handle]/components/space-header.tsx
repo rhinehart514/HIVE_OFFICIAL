@@ -14,11 +14,12 @@
  */
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
-import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Facebook, Linkedin, Youtube, ExternalLink, Calendar, Shield } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Facebook, Linkedin, Youtube, ExternalLink, Calendar, Shield, BellOff, Bell, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials, SpaceHealthBadge, getSpaceHealthLevel, type SpaceHealthLevel } from '@hive/ui';
 import { MOTION, durationSeconds } from '@hive/tokens';
+import { useAuth } from '@hive/auth-logic';
 
 type EnergyLevel = 'busy' | 'active' | 'quiet' | 'none';
 
@@ -57,6 +58,10 @@ interface SpaceHeaderProps {
   onModerationClick?: () => void;
   /** Whether user can moderate (owner, admin, or moderator role) */
   canModerate?: boolean;
+  /** Whether the space is currently muted */
+  isMuted?: boolean;
+  /** Callback when mute state changes. Returns the muteUntil ISO string or null to unmute. */
+  onMuteChange?: (muteUntil: string | null) => void;
   className?: string;
 }
 
@@ -94,6 +99,136 @@ function EnergyDots({ level }: { level: EnergyLevel }) {
   );
 }
 
+const MUTE_OPTIONS = [
+  { label: '1 hour', hours: 1 },
+  { label: '8 hours', hours: 8 },
+  { label: '24 hours', hours: 24 },
+  { label: 'Until I turn off', hours: null },
+] as const;
+
+function MuteDropdown({
+  isMuted,
+  onMuteChange,
+  spaceId,
+}: {
+  isMuted: boolean;
+  onMuteChange: (muteUntil: string | null) => void;
+  spaceId: string;
+}) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Close on click outside
+  React.useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  const handleMute = (hours: number | null) => {
+    if (hours === null) {
+      // Mute indefinitely - use a far-future date
+      const farFuture = new Date('2099-12-31T23:59:59Z');
+      onMuteChange(farFuture.toISOString());
+    } else {
+      const until = new Date(Date.now() + hours * 60 * 60 * 1000);
+      onMuteChange(until.toISOString());
+    }
+    setIsOpen(false);
+  };
+
+  const handleUnmute = () => {
+    onMuteChange(null);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          'px-2 transition-colors',
+          isMuted
+            ? 'text-[var(--color-gold)]/60 hover:text-[var(--color-gold)]'
+            : 'text-white/40 hover:text-white/60'
+        )}
+        title={isMuted ? 'Notifications muted' : 'Mute notifications'}
+      >
+        {isMuted ? (
+          <BellOff className="h-4 w-4" />
+        ) : (
+          <Bell className="h-4 w-4" />
+        )}
+      </Button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{
+              duration: durationSeconds.snap,
+              ease: MOTION.ease.default,
+            }}
+            className={cn(
+              'absolute right-0 top-full mt-1 z-50',
+              'w-48 py-1',
+              'rounded-xl',
+              'bg-[#1a1a1a] border border-white/[0.08]',
+              'shadow-lg shadow-black/30'
+            )}
+          >
+            {isMuted ? (
+              <button
+                onClick={handleUnmute}
+                className={cn(
+                  'w-full flex items-center gap-2 px-3 py-2 text-left',
+                  'text-xs text-white/60 hover:text-white hover:bg-white/[0.04]',
+                  'transition-colors'
+                )}
+              >
+                <Bell className="w-3.5 h-3.5" />
+                Unmute notifications
+              </button>
+            ) : (
+              <>
+                <div className="px-3 py-1.5">
+                  <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">
+                    Mute for
+                  </span>
+                </div>
+                {MUTE_OPTIONS.map((option) => (
+                  <button
+                    key={option.label}
+                    onClick={() => handleMute(option.hours)}
+                    className={cn(
+                      'w-full flex items-center gap-2 px-3 py-2 text-left',
+                      'text-xs text-white/60 hover:text-white hover:bg-white/[0.04]',
+                      'transition-colors'
+                    )}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    {option.label}
+                  </button>
+                ))}
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function SpaceHeader({
   space,
   isLeader = false,
@@ -105,6 +240,8 @@ export function SpaceHeader({
   onCreateEventClick,
   onModerationClick,
   canModerate = false,
+  isMuted = false,
+  onMuteChange,
   className,
 }: SpaceHeaderProps) {
   const energyLevel = getEnergyLevel(space.recentMessageCount);
@@ -283,6 +420,15 @@ export function SpaceHeader({
           >
             <Shield className="h-4 w-4" />
           </Button>
+        )}
+
+        {/* Mute notifications */}
+        {isMember && onMuteChange && (
+          <MuteDropdown
+            isMuted={isMuted}
+            onMuteChange={onMuteChange}
+            spaceId={space.id}
+          />
         )}
 
         {/* Settings */}

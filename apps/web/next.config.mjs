@@ -94,6 +94,7 @@ const nextConfig = {
   },
   // Fix module resolution for workspace packages
   experimental: {
+    reactCompiler: true,
     // Expanded for better tree-shaking (5-10% faster builds)
     optimizePackageImports: [
       '@hive/ui',

@@ -61,5 +61,8 @@ export {
   useUserTools,
 } from "./use-tools-query";
 
+// Notification queries
+export { useUnreadCount, useInvalidateUnreadCount } from "./use-unread-count";
+
 // Legacy export (deprecated, use useToolQuery instead)
 export { useToolRuntimeQuery, useToolStateMutation } from "./use-tool-runtime-query";

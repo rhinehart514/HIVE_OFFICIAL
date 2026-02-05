@@ -29,6 +29,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { MOTION, staggerPresets, durationSeconds } from '@hive/tokens';
+import { staggerContainerVariants, staggerItemVariants, fadeInUpVariants } from '@hive/ui/lib/motion-variants';
 import {
   BrandSpinner,
   getQuickTemplate,
@@ -414,9 +415,9 @@ export default function BuilderDashboard() {
           <>
             {/* Header */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: EASE }}
+              variants={fadeInUpVariants}
+              initial="initial"
+              animate="animate"
               className="flex items-center justify-between mb-6"
             >
               <h1 className="text-xl font-medium text-white">Your Lab</h1>
@@ -433,25 +434,33 @@ export default function BuilderDashboard() {
 
             {/* Your Tools Section */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05, ease: EASE }}
+              variants={fadeInUpVariants}
+              initial="initial"
+              animate="animate"
               className="mb-8"
             >
               <div className="text-xs font-medium text-white/40 tracking-wide mb-3">
                 Your Tools
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <motion.div
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+                variants={staggerContainerVariants}
+                initial="hidden"
+                animate="visible"
+              >
                 {(showAllTools ? userTools : userTools.slice(0, 7)).map((tool, index) => (
-                  <ToolCard
-                    key={tool.id}
-                    tool={tool}
-                    onClick={handleToolClick}
-                    index={index}
-                  />
+                  <motion.div key={tool.id} variants={staggerItemVariants}>
+                    <ToolCard
+                      tool={tool}
+                      onClick={handleToolClick}
+                      index={index}
+                    />
+                  </motion.div>
                 ))}
-                <NewToolCard onClick={handleNewTool} index={showAllTools ? userTools.length : Math.min(userTools.length, 7)} />
-              </div>
+                <motion.div variants={staggerItemVariants}>
+                  <NewToolCard onClick={handleNewTool} index={showAllTools ? userTools.length : Math.min(userTools.length, 7)} />
+                </motion.div>
+              </motion.div>
 
               {/* View all / collapse link if more than 7 tools */}
               {userTools.length > 7 && (
@@ -607,6 +616,56 @@ export default function BuilderDashboard() {
               >
                 Build tools your space will actually use
               </motion.p>
+            </motion.div>
+
+            {/* Why Build a Tool — Value prop for first-time visitors */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : 0.15, ease: EASE }}
+              className="mb-10 max-w-2xl mx-auto"
+            >
+              <div
+                className="rounded-2xl border p-6"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.02)',
+                  borderColor: 'rgba(255,255,255,0.06)',
+                }}
+              >
+                <p
+                  className="text-sm font-medium mb-4"
+                  style={{ color: 'var(--text-secondary, rgba(255,255,255,0.7))' }}
+                >
+                  Build interactive tools for your spaces — polls, sign-ups, generators, and more.
+                  No coding required.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: 'Engage members', desc: 'Polls, quizzes, and reactions that drive participation' },
+                    { label: 'Organize events', desc: 'RSVPs, countdowns, and sign-up sheets' },
+                    { label: 'Track progress', desc: 'Leaderboards, task lists, and group trackers' },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="p-3 rounded-xl"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+                    >
+                      <p
+                        className="text-xs font-medium mb-1"
+                        style={{ color: 'var(--text-primary, white)' }}
+                      >
+                        {item.label}
+                      </p>
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{ color: 'var(--text-tertiary, rgba(255,255,255,0.4))' }}
+                      >
+                        {item.desc}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </motion.div>
 
             {/* Quick Start Templates Grid (primary for new users) */}

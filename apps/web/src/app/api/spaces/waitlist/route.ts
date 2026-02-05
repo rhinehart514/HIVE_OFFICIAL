@@ -56,7 +56,10 @@ export const POST = withAuthValidationAndErrors(
       return respond.error('Session not found', 'UNAUTHORIZED', { status: 401 });
     }
 
-    const campusId = session.campusId || 'ub-buffalo';
+    if (!session.campusId) {
+      return respond.error('Campus identification required', 'UNAUTHORIZED', { status: 401 });
+    }
+    const campusId = session.campusId;
 
     if (!isFirebaseConfigured) {
       return respond.error(
