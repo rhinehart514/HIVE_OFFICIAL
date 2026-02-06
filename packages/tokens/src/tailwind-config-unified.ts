@@ -139,9 +139,12 @@ export const hiveTailwindColors = {
 // SPACING SYSTEM
 // ============================================================================
 
-export const hiveTailwindSpacing = {
-  ...spacing,
-};
+// Explicitly filter to only string values — prevents CJS/ESM interop from
+// leaking module namespace keys (spacing, layoutSizes, containers, default)
+// into the Tailwind config, which creates circular references in cloneDeep.
+export const hiveTailwindSpacing: Record<string, string> = Object.fromEntries(
+  Object.entries(spacing).filter(([, v]) => typeof v === 'string')
+);
 
 // ============================================================================
 // TYPOGRAPHY SYSTEM
