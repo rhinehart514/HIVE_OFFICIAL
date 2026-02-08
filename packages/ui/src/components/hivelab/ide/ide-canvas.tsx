@@ -798,6 +798,30 @@ function ElementNode({
         )}
       </AnimatePresence>
 
+      {/* AI-generated badge - subtle indicator at top-right */}
+      {!!element.config?.aiGenerated && (
+        <div
+          className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium pointer-events-none"
+          style={{
+            backgroundColor: 'rgba(212, 175, 55, 0.12)',
+            color: 'var(--hivelab-text-tertiary)',
+          }}
+        >
+          <svg
+            className="w-2.5 h-2.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z" />
+          </svg>
+          AI
+        </div>
+      )}
+
       {/* Figma-style: Visual preview as the main content, label appears on hover/selection */}
       <div className="relative h-full flex flex-col">
         {/* Floating label - only visible on hover or selection */}

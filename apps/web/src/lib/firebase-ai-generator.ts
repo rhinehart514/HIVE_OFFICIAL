@@ -128,6 +128,8 @@ FILTER ELEMENTS:
 ACTION ELEMENTS:
 - poll-element: Voting/polls for space members. Config: { question: string, options: string[], allowMultipleVotes: boolean, showResults: boolean, anonymousVoting: boolean }
 - rsvp-button: Event signup with capacity. Config: { eventName: string, maxAttendees: number, showCount: boolean, requireConfirmation: boolean, allowWaitlist: boolean, eventDate: string }
+- counter: Track counts (attendance, inventory, etc). Config: { label: string, min: number, max: number, step: number }
+- timer: Stopwatch for sessions/activities. Config: { label: string, showControls: boolean, countUp: boolean, showLapTimes: boolean }
 
 ## Context: Tools Live in Spaces
 - Tools are created FOR a specific Space (club, org, dorm, etc.)
@@ -135,16 +137,27 @@ ACTION ELEMENTS:
 - Tools can trigger actions in the Space (create posts, send notifications)
 - Consider the Space's purpose when generating tools
 
+## Layout
+Always use layout: "flow". This is the only supported layout mode.
+
 ## Guidelines
 
 1. Position elements logically (x: 0-600, y: 0-500, spaced ~150px apart vertically)
 2. Connect elements that pass data (search → result-list, filter → result-list, poll → leaderboard, etc.)
 3. Use meaningful instanceIds like "search-main", "results-1", "filter-type", "poll-voting"
 4. Set appropriate configs for the specific use case
-5. Keep tools focused - 3-6 elements typically
+5. Keep tools focused — default to 3-4 elements. Only go complex (5-6) if the user's description demands it.
 6. For events: combine countdown-timer + rsvp-button + form-builder
 7. For competitions: combine poll-element + leaderboard + countdown-timer
 8. For feedback: combine form-builder + result-list + chart-display
+9. For signups/scheduling: combine signup-sheet + countdown-timer
+10. For task tracking: combine checklist-tracker + countdown-timer
+11. Prioritize the most impactful elements first — a poll before a chart, a signup before a leaderboard.
+
+## Naming & Description
+- Generate short, human-friendly names. Not "Study Group Finder Tool" but "Study Buddy" or "Find Study Partners".
+- Descriptions should be one casual line. Not "A comprehensive tool for managing event registrations" but "Sign up for events and see who's going".
+- Match the vibe of college students talking to each other.
 
 ## Connection Types
 - data-flow: Data passes from output to input
@@ -154,7 +167,10 @@ ACTION ELEMENTS:
 - "hackathon registration" → form-builder + countdown-timer + rsvp-button + leaderboard
 - "weekly poll" → poll-element + chart-display
 - "study group finder" → search-input + filter-selector + result-list + user-selector
-- "event countdown" → countdown-timer + rsvp-button + notification-center
+- "event countdown" → countdown-timer + rsvp-button
+- "competition tracker" → poll-element + leaderboard + counter + countdown-timer
+- "feedback collector" → form-builder + result-list + chart-display
+- "attendance tracker" → counter + leaderboard + chart-display
 
 ## Iteration Mode
 
@@ -546,7 +562,7 @@ export async function* firebaseGenerateToolStreaming(
           id: element.instanceId || `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           type: element.elementId,
           name: element.elementId,
-          config: element.config || {},
+          config: { ...(element.config || {}), aiGenerated: true },
           position: element.position || { x: 100, y: 100 },
           size: element.size || { width: 300, height: 200 },
         },

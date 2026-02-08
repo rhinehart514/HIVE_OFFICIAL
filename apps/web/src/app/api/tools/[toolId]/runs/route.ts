@@ -9,7 +9,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 
 interface RunEntry {
   id: string;
-  status: 'completed' | 'failed' | 'pending';
+  status: 'success' | 'failed' | 'pending';
   startedAt: string;
   completedAt?: string;
   userId: string;
@@ -18,6 +18,7 @@ interface RunEntry {
   action?: string;
   elementType?: string;
   inputSummary?: string;
+  outputSummary?: string;
   duration?: number;
 }
 
@@ -59,7 +60,7 @@ export const GET = withAuthAndErrors(async (
   const status = url.searchParams.get('status'); // 'completed', 'failed', 'all'
 
   // Fetch analytics events for this tool (these represent "runs")
-  let query = dbAdmin
+  const query = dbAdmin
     .collection('analytics_events')
     .where('toolId', '==', toolId)
     .orderBy('timestamp', 'desc')
@@ -123,7 +124,8 @@ export const GET = withAuthAndErrors(async (
     const metadata = event.metadata || {};
 
     // Determine status from event data
-    let runStatus: 'completed' | 'failed' | 'pending' = 'completed';
+    // Use 'success' to match the client-side ToolRun interface
+    let runStatus: 'success' | 'failed' | 'pending' = 'success';
     if (event.status === 'failed' || metadata.error) {
       runStatus = 'failed';
     } else if (event.status === 'pending') {
@@ -153,17 +155,19 @@ export const GET = withAuthAndErrors(async (
       action: event.action || event.feature,
       elementType: event.elementType || (metadata.elementType as string),
       inputSummary: inputParts.join(' ') || undefined,
+      outputSummary: (metadata.outputSummary as string) || undefined,
       duration: event.duration || (metadata.duration as number),
     };
   });
 
-  // Filter by status if requested
-  const filteredRuns = status && status !== 'all'
-    ? runs.filter(r => r.status === status)
+  // Filter by status if requested (accept 'completed' as alias for 'success')
+  const normalizedStatus = status === 'completed' ? 'success' : status;
+  const filteredRuns = normalizedStatus && normalizedStatus !== 'all'
+    ? runs.filter(r => r.status === normalizedStatus)
     : runs;
 
   // Calculate summary stats
-  const completed = runs.filter(r => r.status === 'completed').length;
+  const completed = runs.filter(r => r.status === 'success').length;
   const failed = runs.filter(r => r.status === 'failed').length;
   const avgDuration = runs.length > 0
     ? Math.round(runs.reduce((sum, r) => sum + (r.duration || 0), 0) / runs.length)

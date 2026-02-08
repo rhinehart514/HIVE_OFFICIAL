@@ -17,7 +17,8 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { ToolSharedState } from "@hive/core";
+import type { ToolSharedState, ToolConnection, DataTransform } from "@hive/core";
+import { applyTransform, getValueAtPath } from "@hive/core";
 import { useToolStateRealtime } from "./use-tool-state-realtime";
 
 // ============================================================================
@@ -120,6 +121,12 @@ interface UseToolRuntimeReturn {
 const DEFAULT_AUTO_SAVE_DELAY = 2000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
+const CONNECTION_RESOLVE_TTL_MS = 300_000; // 5 minutes
+
+interface CachedConnectionValue {
+  value: unknown;
+  resolvedAt: number;
+}
 
 /**
  * Create empty shared state structure
@@ -407,6 +414,171 @@ export function useToolRuntime(
   useEffect(() => {
     void loadToolAndState();
   }, [loadToolAndState]);
+
+  // ============================================================================
+  // Resolve Cross-Tool Connections (Sprint 3)
+  // ============================================================================
+
+  const connectionCacheRef = useRef<Map<string, CachedConnectionValue>>(new Map());
+
+  useEffect(() => {
+    if (!tool || !effectiveDeploymentId || !spaceId || !enabled) return;
+
+    let cancelled = false;
+
+    async function resolveConnections() {
+      try {
+        // Fetch connections where this tool is the target
+        const connResp = await fetch(
+          `/api/tools/${effectiveDeploymentId}/connections`,
+          { credentials: 'include' }
+        );
+        if (!connResp.ok || cancelled) return;
+
+        const connData = await connResp.json();
+        const connections: ToolConnection[] = connData.connections || [];
+
+        // Filter to enabled incoming connections only
+        const incoming = connections.filter(
+          (c) => c.enabled && c.target.deploymentId === effectiveDeploymentId
+        );
+        if (incoming.length === 0) return;
+
+        // Group by source deployment to batch-fetch shared states
+        const sourceDeployments = new Map<string, ToolConnection[]>();
+        for (const conn of incoming) {
+          const existing = sourceDeployments.get(conn.source.deploymentId) || [];
+          existing.push(conn);
+          sourceDeployments.set(conn.source.deploymentId, existing);
+        }
+
+        // Resolve source values
+        const resolvedUpdates: Array<{
+          elementId: string;
+          inputPath: string;
+          value: unknown;
+        }> = [];
+
+        const now = Date.now();
+
+        await Promise.all(
+          Array.from(sourceDeployments.entries()).map(
+            async ([sourceDeploymentId, conns]) => {
+              // Check cache first - if all connections from this source are cached, skip fetch
+              const allCached = conns.every((c) => {
+                const cacheKey = `${c.source.deploymentId}:${c.source.path}`;
+                const cached = connectionCacheRef.current.get(cacheKey);
+                return cached && now - cached.resolvedAt < CONNECTION_RESOLVE_TTL_MS;
+              });
+
+              let sourceSharedState: Record<string, unknown> | null = null;
+
+              if (!allCached) {
+                try {
+                  // Fetch source tool's shared state
+                  // We need the toolId from the deployment - extract from the deploymentId
+                  // or fetch the with-state endpoint using the deployment
+                  const stateResp = await fetch(
+                    `/api/tools/state/${encodeURIComponent(sourceDeploymentId)}`,
+                    { credentials: 'include' }
+                  );
+                  if (stateResp.ok) {
+                    const stateData = await stateResp.json();
+                    sourceSharedState = stateData.data?.state || stateData.state || {};
+                  }
+                } catch {
+                  // Source tool state fetch failed - skip these connections
+                  return;
+                }
+              }
+
+              if (cancelled) return;
+
+              for (const conn of conns) {
+                const cacheKey = `${conn.source.deploymentId}:${conn.source.path}`;
+                const cached = connectionCacheRef.current.get(cacheKey);
+
+                let rawValue: unknown;
+
+                if (cached && now - cached.resolvedAt < CONNECTION_RESOLVE_TTL_MS) {
+                  rawValue = cached.value;
+                } else if (sourceSharedState) {
+                  rawValue = getValueAtPath(sourceSharedState, conn.source.path);
+                  // Cache the resolved value
+                  connectionCacheRef.current.set(cacheKey, {
+                    value: rawValue,
+                    resolvedAt: now,
+                  });
+                } else {
+                  continue;
+                }
+
+                const transformedValue = applyTransform(
+                  rawValue,
+                  conn.transform as DataTransform | undefined
+                );
+
+                resolvedUpdates.push({
+                  elementId: conn.target.elementId,
+                  inputPath: conn.target.inputPath,
+                  value: transformedValue,
+                });
+              }
+            }
+          )
+        );
+
+        if (cancelled || resolvedUpdates.length === 0) return;
+
+        // Inject resolved values into element configs
+        setTool((prev) => {
+          if (!prev) return prev;
+
+          const updatedElements = prev.elements.map((el) => {
+            const updates = resolvedUpdates.filter(
+              (u) => u.elementId === el.instanceId || u.elementId === el.elementId
+            );
+            if (updates.length === 0) return el;
+
+            let config = { ...el.config };
+            for (const update of updates) {
+              // Set value at the input path in config
+              const parts = update.inputPath.split('.');
+              if (parts.length === 1) {
+                config[parts[0]] = update.value;
+              } else {
+                // Deep set for nested paths
+                let current: Record<string, unknown> = config;
+                for (let i = 0; i < parts.length - 1; i++) {
+                  if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
+                    current[parts[i]] = {};
+                  }
+                  current[parts[i]] = { ...(current[parts[i]] as Record<string, unknown>) };
+                  current = current[parts[i]] as Record<string, unknown>;
+                }
+                current[parts[parts.length - 1]] = update.value;
+              }
+            }
+
+            return { ...el, config };
+          });
+
+          return { ...prev, elements: updatedElements };
+        });
+      } catch {
+        // Connection resolution is best-effort - don't fail the tool
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[useToolRuntime] Connection resolution failed');
+        }
+      }
+    }
+
+    void resolveConnections();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tool?.id, effectiveDeploymentId, spaceId, enabled]);
 
   // ============================================================================
   // Save State

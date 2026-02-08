@@ -16,6 +16,15 @@ export const ToolOriginalContextSchema = z.object({
   createdAt: z.date().nullable(),
 }).nullable().optional();
 
+export const RemixedFromSchema = z.object({
+  toolId: z.string(),
+  toolName: z.string(),
+  creatorId: z.string(),
+  creatorName: z.string(),
+}).nullable().optional();
+
+export type RemixedFrom = z.infer<typeof RemixedFromSchema>;
+
 export const ToolSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -24,6 +33,8 @@ export const ToolSchema = z.object({
   config: ToolConfigSchema.optional(),
   metadata: ToolMetadataSchema.optional(),
   originalContext: ToolOriginalContextSchema,
+  remixedFrom: RemixedFromSchema,
+  remixCount: z.number().default(0).optional(),
 });
 
 export type Tool = z.infer<typeof ToolSchema>;

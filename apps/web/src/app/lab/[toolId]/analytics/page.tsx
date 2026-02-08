@@ -712,8 +712,16 @@ export default function ToolAnalyticsPage({ params }: Props) {
               }}
             >
               <Card className="bg-[var(--hive-background-secondary)] border-[var(--hive-border-default)]">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle style={{ color: COLORS.textPrimary }}>Recent Feedback</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push(`/lab/${toolId}/feedback`)}
+                    className="text-[var(--hive-text-secondary)] text-xs"
+                  >
+                    View All
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   {analytics.feedback.length === 0 ? (

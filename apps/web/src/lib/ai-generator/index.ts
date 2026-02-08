@@ -184,7 +184,7 @@ export async function* mockGenerateToolStreaming(
         id: element.instanceId,
         type: element.elementId,
         name: element.elementId,
-        config: element.config,
+        config: { ...element.config, aiGenerated: true },
         position: element.position,
         size: element.size,
       },

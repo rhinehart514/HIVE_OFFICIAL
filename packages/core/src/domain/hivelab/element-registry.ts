@@ -727,6 +727,148 @@ const SPACE_ELEMENTS: ElementSpec[] = [
 ];
 
 /**
+ * New Elements - SignupSheet, ChecklistTracker, DirectoryList, QRCodeGenerator
+ */
+const NEW_ELEMENTS: ElementSpec[] = [
+  {
+    id: 'signup-sheet',
+    name: 'Signup Sheet',
+    description: 'Slot-based signups for office hours, volunteer shifts, study sessions. Shows capacity per slot with sign up / withdraw.',
+    category: 'action',
+    icon: '📋',
+    configSchema: {
+      slots: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            time: { type: 'string' },
+            capacity: { type: 'number' },
+          },
+        },
+      },
+      allowMultipleSignups: { type: 'boolean', default: false },
+      title: { type: 'string', default: 'Sign Up Sheet' },
+    },
+    defaultConfig: {
+      slots: [
+        { id: 'slot-1', name: 'Slot 1', time: '9:00 AM', capacity: 5 },
+        { id: 'slot-2', name: 'Slot 2', time: '10:00 AM', capacity: 5 },
+      ],
+      allowMultipleSignups: false,
+      title: 'Sign Up Sheet',
+    },
+    actions: ['signup', 'withdraw'],
+    outputs: ['signups', 'slotCounts'],
+    inputs: [],
+    useCases: ['office hours', 'volunteer shifts', 'study sessions', 'event roles', 'tutoring slots'],
+    defaultSize: { width: 320, height: 300 },
+    stateful: true,
+    realtime: true,
+  },
+  {
+    id: 'checklist-tracker',
+    name: 'Checklist Tracker',
+    description: 'Shared progress tracking with checkboxes, assignees, and completion info. Perfect for event prep, onboarding, semester goals.',
+    category: 'action',
+    icon: '✅',
+    configSchema: {
+      items: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            assignee: { type: 'string' },
+          },
+        },
+      },
+      allowMemberAdd: { type: 'boolean', default: false },
+      title: { type: 'string', default: 'Checklist' },
+    },
+    defaultConfig: {
+      items: [],
+      allowMemberAdd: false,
+      title: 'Checklist',
+    },
+    actions: ['toggle_complete', 'add_item', 'remove_item'],
+    outputs: ['completions', 'progress'],
+    inputs: [],
+    useCases: ['event prep', 'onboarding', 'semester goals', 'move-in checklist', 'project tracking'],
+    defaultSize: { width: 320, height: 280 },
+    stateful: true,
+    realtime: true,
+  },
+  {
+    id: 'directory-list',
+    name: 'Directory List',
+    description: 'Searchable member or contact directory with configurable fields. Renders as cards with search filtering.',
+    category: 'display',
+    icon: '📇',
+    configSchema: {
+      fields: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            key: { type: 'string' },
+            label: { type: 'string' },
+            type: { type: 'string', enum: ['text', 'email', 'phone', 'role'] },
+          },
+        },
+      },
+      entries: { type: 'array', items: { type: 'object' } },
+      useSpaceMembers: { type: 'boolean', default: false },
+      title: { type: 'string', default: 'Directory' },
+    },
+    defaultConfig: {
+      fields: [
+        { key: 'name', label: 'Name', type: 'text' },
+        { key: 'role', label: 'Role', type: 'role' },
+        { key: 'email', label: 'Email', type: 'email' },
+      ],
+      entries: [],
+      useSpaceMembers: false,
+      title: 'Directory',
+    },
+    actions: [],
+    outputs: [],
+    inputs: [],
+    useCases: ['officer directory', 'committee contacts', 'resource people', 'member directory', 'staff list'],
+    defaultSize: { width: 320, height: 350 },
+    stateful: false,
+    realtime: false,
+  },
+  {
+    id: 'qr-code-generator',
+    name: 'QR Code Generator',
+    description: 'Generate QR codes linking to the tool or custom URLs for physical distribution. Includes download as PNG.',
+    category: 'display',
+    icon: '📱',
+    configSchema: {
+      url: { type: 'string', default: '' },
+      size: { type: 'string', enum: ['sm', 'md', 'lg'], default: 'md' },
+      label: { type: 'string', default: '' },
+    },
+    defaultConfig: {
+      url: '',
+      size: 'md',
+      label: '',
+    },
+    actions: [],
+    outputs: [],
+    inputs: [],
+    useCases: ['club fair posters', 'classroom handouts', 'physical distribution', 'event flyers', 'tool sharing'],
+    defaultSize: { width: 280, height: 340 },
+    stateful: false,
+    realtime: false,
+  },
+];
+
+/**
  * Additional Universal Elements - Pure primitives
  */
 const ADDITIONAL_UNIVERSAL_ELEMENTS: ElementSpec[] = [
@@ -920,6 +1062,7 @@ export function generateElementCatalog(): Record<string, object> {
   ...CONNECTED_ELEMENTS,
   ...SPACE_ELEMENTS,
   ...ADDITIONAL_UNIVERSAL_ELEMENTS,
+  ...NEW_ELEMENTS,
 ].forEach(registerElement);
 
 // ═══════════════════════════════════════════════════════════════════
@@ -935,6 +1078,7 @@ export {
   CONNECTED_ELEMENTS,
   SPACE_ELEMENTS,
   ADDITIONAL_UNIVERSAL_ELEMENTS,
+  NEW_ELEMENTS,
 };
 
 /** Total count of registered elements */
@@ -947,14 +1091,14 @@ export const ELEMENT_IDS = Array.from(elementRegistry.keys());
 export const CATEGORY_COUNTS: Record<ElementCategory, number> = {
   input: INPUT_ELEMENTS.length + CONNECTED_ELEMENTS.filter(e => e.category === 'input').length + SPACE_ELEMENTS.filter(e => e.category === 'input').length,
   filter: FILTER_ELEMENTS.length,
-  display: DISPLAY_ELEMENTS.length + CONNECTED_ELEMENTS.filter(e => e.category === 'display').length + SPACE_ELEMENTS.filter(e => e.category === 'display').length + ADDITIONAL_UNIVERSAL_ELEMENTS.length,
-  action: ACTION_ELEMENTS.length + SPACE_ELEMENTS.filter(e => e.category === 'action').length,
+  display: DISPLAY_ELEMENTS.length + CONNECTED_ELEMENTS.filter(e => e.category === 'display').length + SPACE_ELEMENTS.filter(e => e.category === 'display').length + ADDITIONAL_UNIVERSAL_ELEMENTS.length + NEW_ELEMENTS.filter(e => e.category === 'display').length,
+  action: ACTION_ELEMENTS.length + SPACE_ELEMENTS.filter(e => e.category === 'action').length + NEW_ELEMENTS.filter(e => e.category === 'action').length,
   layout: LAYOUT_ELEMENTS.length,
 };
 
 /** Element tier counts */
 export const TIER_COUNTS = {
-  universal: INPUT_ELEMENTS.length + FILTER_ELEMENTS.length + DISPLAY_ELEMENTS.length + ACTION_ELEMENTS.length + ADDITIONAL_UNIVERSAL_ELEMENTS.length,
+  universal: INPUT_ELEMENTS.length + FILTER_ELEMENTS.length + DISPLAY_ELEMENTS.length + ACTION_ELEMENTS.length + ADDITIONAL_UNIVERSAL_ELEMENTS.length + NEW_ELEMENTS.length,
   connected: CONNECTED_ELEMENTS.length,
   space: SPACE_ELEMENTS.length,
   layout: LAYOUT_ELEMENTS.length,

@@ -416,7 +416,7 @@ export async function* generateToolStream(
 
     // Yield elements one by one
     for (const element of composition.elements) {
-      yield { type: 'element', data: element };
+      yield { type: 'element', data: { ...element, config: { ...(element.config || {}), aiGenerated: true } } };
       await new Promise(resolve => setTimeout(resolve, 100)); // Stagger for visual effect
     }
 

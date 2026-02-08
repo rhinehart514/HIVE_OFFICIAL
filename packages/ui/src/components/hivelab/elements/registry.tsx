@@ -32,6 +32,10 @@ import {
   NotificationCenterElement,
 } from './universal';
 
+// New elements imported directly to avoid circular dependency through barrel exports
+import { DirectoryListElement } from './universal/directory-list-element';
+import { QRCodeGeneratorElement } from './universal/qr-code-generator-element';
+
 // Interactive elements - engagement components
 import {
   CountdownTimerElement,
@@ -40,6 +44,8 @@ import {
   RsvpButtonElement,
   TimerElement,
   CounterElement,
+  SignupSheetElement,
+  ChecklistTrackerElement,
 } from './interactive';
 
 // Connected elements - data-bound components
@@ -102,6 +108,14 @@ export const ELEMENT_RENDERERS: Record<string, ElementRenderer> = {
   'leaderboard': LeaderboardElement,
   'counter': CounterElement,
   'timer': TimerElement,
+  'signup-sheet': SignupSheetElement,
+  'checklist-tracker': ChecklistTrackerElement,
+
+  // ----------------------------------------
+  // Display Elements - Universal (continued)
+  // ----------------------------------------
+  'directory-list': DirectoryListElement,
+  'qr-code-generator': QRCodeGeneratorElement,
 
   // ----------------------------------------
   // Connected tier - Data-bound elements
@@ -212,8 +226,8 @@ export function getElementsByCategory() {
   return {
     input: ['search-input', 'date-picker', 'user-selector', 'form-builder'],
     filter: ['filter-selector'],
-    display: ['result-list', 'chart-display', 'tag-cloud', 'map-view', 'notification-center', 'photo-gallery'],
-    action: ['poll-element', 'rsvp-button', 'countdown-timer', 'leaderboard', 'counter', 'timer'],
+    display: ['result-list', 'chart-display', 'tag-cloud', 'map-view', 'notification-center', 'photo-gallery', 'directory-list', 'qr-code-generator'],
+    action: ['poll-element', 'rsvp-button', 'countdown-timer', 'leaderboard', 'counter', 'timer', 'signup-sheet', 'checklist-tracker'],
     connected: ['event-picker', 'space-picker', 'connection-list', 'personalized-event-feed', 'dining-picker', 'study-spot-finder'],
     space: ['member-list', 'member-selector', 'space-events', 'space-feed', 'space-stats', 'announcement', 'role-gate', 'availability-heatmap'],
   };

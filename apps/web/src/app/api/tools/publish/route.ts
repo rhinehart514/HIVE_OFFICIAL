@@ -8,6 +8,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { validateToolForPublish } from '@/lib/tool-validation';
 
 const PublishRequestSchema = z.object({
   toolId: z.string(),
@@ -88,9 +89,13 @@ export const POST = withAuthValidationAndErrors(
         return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
 
-    // Check tool readiness
-    if (!toolData?.elements || toolData.elements.length === 0) {
-        return respond.error("Tool must have at least one element", "INVALID_INPUT", { status: 400 });
+    // Validate tool composition quality gate
+    const validation = validateToolForPublish(toolData as Record<string, unknown>);
+    if (!validation.valid) {
+      return respond.error("Tool failed publish validation", "VALIDATION_FAILED", {
+        status: 400,
+        details: { validationErrors: validation.errors },
+      });
     }
 
     // Check for existing publish request
@@ -169,6 +174,11 @@ export const POST = withAuthValidationAndErrors(
         tags: validatedData.tags
       }
     });
+
+      // Award builder XP for publishing (fire-and-forget)
+      import('@/lib/builder-xp').then(({ awardXP }) => {
+        awardXP(userId, 20, 'tool_published').catch(() => {});
+      });
 
       return respond.created({
       requestId: requestRef.id,

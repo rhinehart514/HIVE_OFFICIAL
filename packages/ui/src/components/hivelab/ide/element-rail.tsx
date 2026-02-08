@@ -14,8 +14,7 @@ import { OtherToolsPanel, type OtherToolData } from './other-tools-panel';
 import { AutomationsPanel, type AutomationSummary } from './automations-panel';
 import type { CanvasElement, Connection } from './types';
 
-// Feature flag: Automations are non-functional, hide UI until backend is ready
-const AUTOMATIONS_ENABLED = false;
+const AUTOMATIONS_ENABLED = true;
 
 // ============================================
 // HiveLab Element Rail - Uses CSS variables from globals.css

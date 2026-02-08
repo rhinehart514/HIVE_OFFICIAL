@@ -196,7 +196,10 @@ export function ToolRuntimeModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          'sm:max-w-2xl lg:max-w-3xl max-h-[85vh] p-0 gap-0 overflow-hidden',
+          'sm:max-w-xl md:max-w-2xl lg:max-w-3xl',
+          'max-h-[80vh] sm:max-h-[85vh]',
+          'p-0 gap-0 overflow-hidden',
+          'flex flex-col',
           glass.modal
         )}
       >
@@ -221,7 +224,7 @@ export function ToolRuntimeModal({
                   variant="ghost"
                   size="sm"
                   onClick={onExpandToFullPage}
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-white"
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Open in full page"
                 >
                   <ArrowTopRightOnSquareIcon className="h-4 w-4" />
@@ -237,7 +240,7 @@ export function ToolRuntimeModal({
         </DialogHeader>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -245,34 +248,43 @@ export function ToolRuntimeModal({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="flex items-center justify-center py-16"
               >
-                <div className="text-center">
-                  <ArrowPathIcon className="h-8 w-8 text-neutral-400 animate-spin mx-auto mb-3" />
+                <div className="text-center space-y-4">
+                  {/* Element-shaped skeleton for modal loading */}
+                  <div className="w-64 mx-auto space-y-3">
+                    <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse" />
+                    <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse w-3/4" />
+                    <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse w-1/2" />
+                  </div>
                   <p className="text-sm text-gray-400">Loading tool...</p>
                 </div>
               </motion.div>
             ) : error ? (
               <motion.div
                 key="error"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                 className="flex items-center justify-center py-16"
               >
                 <div className="text-center max-w-sm px-4">
                   <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
                     <ExclamationCircleIcon className="h-6 w-6 text-red-400" />
                   </div>
-                  <h3 className="text-base font-medium text-white mb-2">Failed to load</h3>
+                  <h3 className="text-base font-medium text-white mb-2">Something went wrong</h3>
                   <p className="text-sm text-gray-400 mb-4">{error}</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onOpenChange(false)}
-                  >
-                    Close
-                  </Button>
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onOpenChange(false)}
+                    >
+                      Close
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             ) : elements.length === 0 ? (
@@ -281,6 +293,7 @@ export function ToolRuntimeModal({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="flex items-center justify-center py-16"
               >
                 <div className="text-center max-w-sm px-4">
@@ -299,7 +312,7 @@ export function ToolRuntimeModal({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                transition={springPresets.snappy}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                 className="p-4"
                 style={{
                   backgroundColor:
@@ -330,7 +343,12 @@ export function ToolRuntimeModal({
 
         {/* Footer with actions */}
         <div className="px-4 py-3 border-t border-white/[0.08] flex justify-end gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="min-h-[44px] sm:min-h-0"
+          >
             Close
           </Button>
         </div>

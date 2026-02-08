@@ -22,6 +22,7 @@ import { extractedCollectionService } from '@/lib/services/extracted-collection.
 import { extractedTimelineService } from '@/lib/services/extracted-timeline.service';
 import { toolStateBroadcaster } from '@/lib/services/tool-state-broadcaster.service';
 import { getFirebaseConnectionRepository } from '@/lib/services/connection-repository.firebase';
+import { notifyToolMilestone } from '@/lib/notification-service';
 import type {
   ToolSharedState,
   ToolSharedEntity,
@@ -506,6 +507,297 @@ const actionHandlers: Record<string, ActionHandler> = {
           ...timerState,
           laps: [...(timerState.laps || []), currentElapsed],
         },
+      },
+    };
+  },
+
+  // =============================================================================
+  // SignupSheet Actions
+  // =============================================================================
+
+  async signup(context: ActionContext): Promise<ActionResult> {
+    const { elementId, data, userId, sharedState, spaceContext } = context;
+    const instanceId = elementId || 'signup-sheet';
+    const slotId = data.slotId as string;
+    if (!slotId) {
+      return { success: false, error: 'Missing slotId' };
+    }
+
+    const signupsKey = `${instanceId}:signups`;
+    const existingSignups = sharedState.collections[signupsKey] || {};
+
+    // Check if user already signed up for this slot
+    const alreadyInSlot = Object.values(existingSignups).some(
+      (entry) => {
+        const d = entry.data as Record<string, unknown>;
+        return d.slotId === slotId && d.userId === userId;
+      }
+    );
+    if (alreadyInSlot) {
+      return { success: false, error: 'Already signed up for this slot' };
+    }
+
+    // Get user display name
+    const userDisplayName =
+      (spaceContext?.members as { list?: Array<{ id: string; displayName?: string }> })?.list
+        ?.find(m => m.id === userId)?.displayName || 'Member';
+
+    const signupId = `${userId}_${slotId}_${Date.now()}`;
+
+    return {
+      success: true,
+      data: { action: 'signup', slotId, message: 'Signed up successfully' },
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [signupsKey]: {
+            [signupId]: {
+              id: signupId,
+              createdAt: new Date().toISOString(),
+              createdBy: userId,
+              data: {
+                slotId,
+                userId,
+                userName: userDisplayName,
+                signedUpAt: new Date().toISOString(),
+              },
+            },
+          },
+        },
+        timelineAppend: [
+          {
+            type: 'signup',
+            userId,
+            elementInstanceId: instanceId,
+            action: 'signup',
+            data: { slotId },
+          },
+        ],
+      },
+      userStateUpdate: {
+        participation: { [`${instanceId}:${slotId}:signedUp`]: true },
+      },
+    };
+  },
+
+  async withdraw(context: ActionContext): Promise<ActionResult> {
+    const { elementId, data, userId, sharedState } = context;
+    const instanceId = elementId || 'signup-sheet';
+    const slotId = data.slotId as string;
+    if (!slotId) {
+      return { success: false, error: 'Missing slotId' };
+    }
+
+    const signupsKey = `${instanceId}:signups`;
+    const existingSignups = sharedState.collections[signupsKey] || {};
+
+    // Find the user's signup entry for this slot
+    const entryToRemove = Object.entries(existingSignups).find(
+      ([, entry]) => {
+        const d = entry.data as Record<string, unknown>;
+        return d.slotId === slotId && d.userId === userId;
+      }
+    );
+
+    if (!entryToRemove) {
+      return { success: false, error: 'Not signed up for this slot' };
+    }
+
+    return {
+      success: true,
+      data: { action: 'withdraw', slotId, message: 'Withdrawn successfully' },
+      sharedStateUpdate: {
+        collectionDeletes: {
+          [signupsKey]: [entryToRemove[0]],
+        },
+        timelineAppend: [
+          {
+            type: 'withdraw',
+            userId,
+            elementInstanceId: instanceId,
+            action: 'withdraw',
+            data: { slotId },
+          },
+        ],
+      },
+      userStateUpdate: {
+        participation: { [`${instanceId}:${slotId}:signedUp`]: false },
+      },
+    };
+  },
+
+  // =============================================================================
+  // ChecklistTracker Actions
+  // =============================================================================
+
+  async toggle_complete(context: ActionContext): Promise<ActionResult> {
+    const { elementId, data, userId, sharedState, spaceContext } = context;
+    const instanceId = elementId || 'checklist';
+    const itemId = data.itemId as string;
+    const completed = data.completed as boolean;
+
+    if (!itemId) {
+      return { success: false, error: 'Missing itemId' };
+    }
+
+    const completionsKey = `${instanceId}:completions`;
+
+    // Get user display name
+    const userDisplayName =
+      (spaceContext?.members as { list?: Array<{ id: string; displayName?: string }> })?.list
+        ?.find(m => m.id === userId)?.displayName || 'Member';
+
+    if (completed) {
+      // Mark as complete
+      const completionId = `${itemId}_${userId}`;
+      return {
+        success: true,
+        data: { action: 'toggle_complete', itemId, completed: true },
+        sharedStateUpdate: {
+          collectionUpserts: {
+            [completionsKey]: {
+              [completionId]: {
+                id: completionId,
+                createdAt: new Date().toISOString(),
+                createdBy: userId,
+                data: {
+                  itemId,
+                  completedBy: userId,
+                  completedByName: userDisplayName,
+                  completedAt: new Date().toISOString(),
+                },
+              },
+            },
+          },
+          timelineAppend: [
+            {
+              type: 'checklist_complete',
+              userId,
+              elementInstanceId: instanceId,
+              action: 'toggle_complete',
+              data: { itemId, completed: true },
+            },
+          ],
+        },
+      };
+    } else {
+      // Mark as incomplete - find and remove the completion entry
+      const existingCompletions = sharedState.collections[completionsKey] || {};
+      const entryToRemove = Object.entries(existingCompletions).find(
+        ([, entry]) => {
+          const d = entry.data as Record<string, unknown>;
+          return d.itemId === itemId;
+        }
+      );
+
+      return {
+        success: true,
+        data: { action: 'toggle_complete', itemId, completed: false },
+        sharedStateUpdate: {
+          ...(entryToRemove ? {
+            collectionDeletes: {
+              [completionsKey]: [entryToRemove[0]],
+            },
+          } : {}),
+          timelineAppend: [
+            {
+              type: 'checklist_uncomplete',
+              userId,
+              elementInstanceId: instanceId,
+              action: 'toggle_complete',
+              data: { itemId, completed: false },
+            },
+          ],
+        },
+      };
+    }
+  },
+
+  async add_item(context: ActionContext): Promise<ActionResult> {
+    const { elementId, data, userId } = context;
+    const instanceId = elementId || 'checklist';
+    const title = data.title as string;
+
+    if (!title) {
+      return { success: false, error: 'Missing item title' };
+    }
+
+    const itemId = `item_${Date.now()}`;
+    const addedItemsKey = `${instanceId}:added_items`;
+
+    return {
+      success: true,
+      data: { action: 'add_item', itemId, title },
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [addedItemsKey]: {
+            [itemId]: {
+              id: itemId,
+              createdAt: new Date().toISOString(),
+              createdBy: userId,
+              data: {
+                id: itemId,
+                title,
+                addedBy: userId,
+              },
+            },
+          },
+        },
+        timelineAppend: [
+          {
+            type: 'checklist_add_item',
+            userId,
+            elementInstanceId: instanceId,
+            action: 'add_item',
+            data: { itemId, title },
+          },
+        ],
+      },
+    };
+  },
+
+  async remove_item(context: ActionContext): Promise<ActionResult> {
+    const { elementId, data, userId, sharedState } = context;
+    const instanceId = elementId || 'checklist';
+    const itemId = data.itemId as string;
+
+    if (!itemId) {
+      return { success: false, error: 'Missing itemId' };
+    }
+
+    const addedItemsKey = `${instanceId}:added_items`;
+    const completionsKey = `${instanceId}:completions`;
+
+    // Remove the item from added_items
+    const deleteOps: Record<string, string[]> = {
+      [addedItemsKey]: [itemId],
+    };
+
+    // Also remove any completion entries for this item
+    const existingCompletions = sharedState.collections[completionsKey] || {};
+    const completionToRemove = Object.entries(existingCompletions).find(
+      ([, entry]) => {
+        const d = entry.data as Record<string, unknown>;
+        return d.itemId === itemId;
+      }
+    );
+    if (completionToRemove) {
+      deleteOps[completionsKey] = [completionToRemove[0]];
+    }
+
+    return {
+      success: true,
+      data: { action: 'remove_item', itemId },
+      sharedStateUpdate: {
+        collectionDeletes: deleteOps,
+        timelineAppend: [
+          {
+            type: 'checklist_remove_item',
+            userId,
+            elementInstanceId: instanceId,
+            action: 'remove_item',
+            data: { itemId },
+          },
+        ],
       },
     };
   },
@@ -1496,6 +1788,14 @@ export const POST = withAuthValidationAndErrors(
       lastUsedAt: nowIso
     });
 
+    // Award builder XP to tool owner for usage (fire-and-forget, daily capped)
+    const toolOwnerId = (tool as Record<string, unknown>).ownerId as string | undefined;
+    if (toolOwnerId && toolOwnerId !== userId) {
+      import('@/lib/builder-xp').then(({ awardXP }) => {
+        awardXP(toolOwnerId, 2, 'tool_used_by_unique_user', { checkDailyCap: true }).catch(() => {});
+      });
+    }
+
     // Log activity event (exclude undefined values for Firestore compatibility)
     const activityEvent: Record<string, unknown> = {
       userId,
@@ -1579,6 +1879,51 @@ export const POST = withAuthValidationAndErrors(
       dbAdmin.collection('analytics_events').add(analyticsEvent).catch(err => {
         logger.error('Failed to record analytics event', { error: err instanceof Error ? err.message : String(err) });
       });
+    }
+
+    // ===========================================================================
+    // Usage Milestone Notifications (fire-and-forget)
+    // ===========================================================================
+    const USAGE_MILESTONES = [10, 50, 100, 500, 1000];
+    const toolRecord = tool as Record<string, unknown>;
+    const currentUseCount = (tool.useCount || 0) + 1; // +1 because we just incremented
+    const creatorId = toolRecord.creatorId as string | undefined;
+    const toolName = (toolRecord.name as string) || 'Untitled Tool';
+    const toolId = deployment.toolId;
+
+    if (creatorId && toolId) {
+      const milestonesReached = (toolRecord.milestonesReached as number[]) || [];
+      const crossedMilestone = USAGE_MILESTONES.find(
+        m => currentUseCount >= m && !milestonesReached.includes(m)
+      );
+
+      if (crossedMilestone) {
+        // Fire and forget — don't block the response
+        (async () => {
+          try {
+            await dbAdmin.collection('tools').doc(toolId).update({
+              milestonesReached: admin.firestore.FieldValue.arrayUnion(crossedMilestone),
+            });
+            await notifyToolMilestone({
+              creatorId,
+              toolId,
+              toolName,
+              milestone: crossedMilestone,
+            });
+            logger.info('Tool milestone notification sent', {
+              toolId,
+              milestone: crossedMilestone,
+              creatorId,
+            });
+          } catch (err) {
+            logger.warn('Failed to process tool milestone', {
+              toolId,
+              milestone: crossedMilestone,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        })();
+      }
     }
 
     // ===========================================================================

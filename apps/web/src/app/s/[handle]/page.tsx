@@ -727,8 +727,11 @@ export default function SpacePageUnified() {
                 onSettingsClick={() => setShowSettingsModal(true)}
                 onSpaceInfoClick={() => setShowInfoDrawer(true)}
                 onBuildToolClick={() => {
-                  const params = new URLSearchParams({ spaceId: space.id });
-                  router.push(`/lab?${params.toString()}`);
+                  const params = new URLSearchParams({
+                    spaceId: space.id,
+                    spaceName: space.name,
+                  });
+                  router.push(`/lab/new?${params.toString()}`);
                 }}
                 onCreateEventClick={() => setShowEventModal(true)}
                 onModerationClick={() => setShowModerationPanel(true)}
@@ -766,8 +769,12 @@ export default function SpacePageUnified() {
                   router.push(`/lab/${tool.toolId}`);
                 },
                 onAddTool: () => {
-                  const params = new URLSearchParams({ spaceId: space.id, deploy: 'sidebar' });
-                  router.push(`/lab?${params.toString()}`);
+                  const params = new URLSearchParams({
+                    spaceId: space.id,
+                    spaceName: space.name,
+                  });
+                  if (space.orgTypeName) params.set('spaceType', space.orgTypeName);
+                  router.push(`/lab/new?${params.toString()}`);
                 },
               }}
               members={{

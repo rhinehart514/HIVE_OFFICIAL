@@ -26,3 +26,7 @@ export { UserSelectorElement } from './user-selector-element';
 
 // Spatial
 export { MapViewElement } from './map-view-element';
+
+// Directory & QR (also available via direct import for circular-dep avoidance)
+export { DirectoryListElement } from './directory-list-element';
+export { QRCodeGeneratorElement } from './qr-code-generator-element';

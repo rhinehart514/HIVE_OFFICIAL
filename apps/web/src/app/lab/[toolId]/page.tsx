@@ -11,6 +11,7 @@ import {
   Skeleton,
   ToolDeployModal,
   ToolCanvas,
+  BuilderOnboarding,
   type HiveLabComposition,
   type IDECanvasElement,
   type IDEConnection,
@@ -79,12 +80,19 @@ interface ToolApiResponse {
     }>;
     createdAt: string;
     updatedAt: string;
+    remixedFrom?: {
+      toolId: string;
+      toolName: string;
+      creatorId: string;
+      creatorName: string;
+    } | null;
   };
 }
 
 interface Space {
   id: string;
   name: string;
+  handle?: string;
   memberCount?: number;
   description?: string;
 }
@@ -169,8 +177,12 @@ async function deployToolToTarget(
     }),
   });
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to deploy tool');
+    const errorData = await response.json().catch(() => ({}));
+    const err = new Error(errorData.error || errorData.message || 'Failed to deploy tool');
+    if (errorData.validationErrors) {
+      (err as any).validationErrors = errorData.validationErrors;
+    }
+    throw err;
   }
 }
 
@@ -420,7 +432,7 @@ export default function ToolStudioPage({ params }: Props) {
           description: composition.description,
           elements: composition.elements,
           connections: composition.connections,
-          layout: 'grid',
+          layout: 'flow',
         });
       }
 
@@ -436,17 +448,26 @@ export default function ToolStudioPage({ params }: Props) {
 
       toast.success(`${toolName} is live!`, {
         description: `Deployed to ${targetName}. ${config.targetType === 'space' ? 'Space members can now use it.' : 'Visible on your profile.'}`,
+        action: config.targetType === 'space' ? {
+          label: 'View',
+          onClick: () => {
+            const handle = targetSpace?.handle || config.targetId;
+            router.push(`/s/${handle}/tools/${toolId}`);
+          },
+        } : undefined,
       });
     },
-    [toolId, hasUnsavedChanges, composition, userSpaces]
+    [toolId, hasUnsavedChanges, composition, userSpaces, router]
   );
 
   // Handle view in space after deployment
   const handleViewInSpace = useCallback(
     (spaceId: string) => {
-      router.push(`/spaces/${spaceId}`);
+      const space = userSpaces.find((s) => s.id === spaceId);
+      const handle = space?.handle || spaceId;
+      router.push(`/s/${handle}/tools/${toolId}`);
     },
-    [router]
+    [router, userSpaces, toolId]
   );
 
   // Loading state
@@ -553,7 +574,7 @@ export default function ToolStudioPage({ params }: Props) {
             description: composition.description,
             elements: composition.elements,
             connections: composition.connections,
-            layout: 'grid',
+            layout: 'flow',
           })
         }
         onSave={() =>
@@ -563,7 +584,7 @@ export default function ToolStudioPage({ params }: Props) {
             description: composition.description,
             elements: composition.elements,
             connections: composition.connections,
-            layout: 'grid',
+            layout: 'flow',
           })
         }
         saving={saving}
@@ -577,6 +598,25 @@ export default function ToolStudioPage({ params }: Props) {
         onModeChange={handleModeChange}
         canEdit={true}
       />
+
+      {/* Remix attribution banner - persistent, cannot be dismissed */}
+      {tool?.remixedFrom && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-[var(--hivelab-panel)] border-b border-[var(--hivelab-border)] text-xs text-[var(--hivelab-text-secondary)]">
+          <svg className="w-3.5 h-3.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><circle cx="18" cy="6" r="3" /><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9" /><path d="M12 12v3" />
+          </svg>
+          <span>
+            Based on{' '}
+            <a
+              href={`/lab/${tool.remixedFrom.toolId}?mode=use`}
+              className="text-[var(--life-gold)] hover:underline"
+            >
+              {tool.remixedFrom.toolName}
+            </a>
+            {' '}by {tool.remixedFrom.creatorName}
+          </span>
+        </div>
+      )}
 
       {/* Main content area - IDE or Runtime based on mode */}
       <div className="flex-1 overflow-hidden">
@@ -704,6 +744,12 @@ export default function ToolStudioPage({ params }: Props) {
           onClose={() => setAutomationsOpen(false)}
         />
       )}
+
+      {/* Builder Onboarding — 3-step tour for first-time builders */}
+      <BuilderOnboarding
+        show={showOnboarding}
+        onDismiss={() => setShowOnboarding(false)}
+      />
     </div>
   );
 }

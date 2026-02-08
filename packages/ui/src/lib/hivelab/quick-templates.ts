@@ -43,6 +43,9 @@ export type TemplateCategory =
 /** Template readiness status */
 export type TemplateStatus = 'ready' | 'coming-soon' | 'hidden';
 
+/** Space types for template curation */
+export type SpaceType = 'student_org' | 'uni_org' | 'residential' | 'greek';
+
 export interface QuickTemplate {
   /** Unique template ID */
   id: string;
@@ -69,6 +72,12 @@ export interface QuickTemplate {
   status?: TemplateStatus;
   /** List of element IDs that are incomplete/stub - shown as warning to user */
   incompleteElements?: string[];
+  /** Quick deploy: skip the builder, deploy via lightweight modal with setupFields */
+  quickDeploy?: boolean;
+  /** Quick deploy config fields (overrides setupFields for the quick deploy modal) */
+  quickDeployFields?: TemplateConfigField[];
+  /** Space types this template is relevant for — used for curation */
+  spaceTypes?: SpaceType[];
 }
 
 // Generate unique IDs for elements
@@ -85,12 +94,17 @@ export const QUICK_POLL_TEMPLATE: QuickTemplate = {
   icon: 'bar-chart-2',
   category: 'engagement',
   complexity: 'simple',
+  quickDeploy: true,
+  spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
   },
-  // P0: Setup fields for customization
   setupFields: [
+    { key: 'question', label: 'Poll Question', type: 'text', required: true, placeholder: 'What do you think about...?' },
+    { key: 'options', label: 'Options (comma-separated)', type: 'text', required: true, placeholder: 'Option A, Option B, Option C', defaultValue: 'Yes, No, Maybe' },
+  ],
+  quickDeployFields: [
     { key: 'question', label: 'Poll Question', type: 'text', required: true, placeholder: 'What do you think about...?' },
     { key: 'options', label: 'Options (comma-separated)', type: 'text', required: true, placeholder: 'Option A, Option B, Option C', defaultValue: 'Yes, No, Maybe' },
   ],
@@ -129,12 +143,17 @@ export const EVENT_COUNTDOWN_TEMPLATE: QuickTemplate = {
   icon: 'timer',
   category: 'events',
   complexity: 'simple',
+  quickDeploy: true,
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
   },
-  // P0: Setup fields for customization
   setupFields: [
+    { key: 'title', label: 'Event Name', type: 'text', required: true, placeholder: 'Spring Social' },
+    { key: 'targetDate', label: 'Event Date', type: 'date', required: true },
+  ],
+  quickDeployFields: [
     { key: 'title', label: 'Event Name', type: 'text', required: true, placeholder: 'Spring Social' },
     { key: 'targetDate', label: 'Event Date', type: 'date', required: true },
   ],
@@ -175,6 +194,7 @@ export const QUICK_LINKS_TEMPLATE: QuickTemplate = {
   icon: 'link-2',
   category: 'resources',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -217,6 +237,7 @@ export const STUDY_GROUP_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'teams',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -258,6 +279,12 @@ export const ANNOUNCEMENTS_TEMPLATE: QuickTemplate = {
   icon: 'message-square',
   category: 'teams',
   complexity: 'simple',
+  quickDeploy: true,
+  spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
+  quickDeployFields: [
+    { key: 'title', label: 'Announcement Title', type: 'text', required: true, placeholder: 'Important Update' },
+    { key: 'content', label: 'Message', type: 'textarea', required: true, placeholder: 'Write your announcement...' },
+  ],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -303,6 +330,7 @@ export const MEETING_NOTES_TEMPLATE: QuickTemplate = {
   icon: 'file-text',
   category: 'teams',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: true,
@@ -340,6 +368,7 @@ export const OFFICE_HOURS_TEMPLATE: QuickTemplate = {
   icon: 'calendar',
   category: 'resources',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -388,6 +417,7 @@ export const LEADERBOARD_TEMPLATE: QuickTemplate = {
   icon: 'sparkles',
   category: 'engagement',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -428,6 +458,13 @@ export const EVENT_RSVP_TEMPLATE: QuickTemplate = {
   icon: 'calendar',
   category: 'events',
   complexity: 'simple',
+  quickDeploy: true,
+  spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
+  quickDeployFields: [
+    { key: 'eventTitle', label: 'Event Name', type: 'text', required: true, placeholder: 'Weekly Meeting' },
+    { key: 'eventDate', label: 'When', type: 'date', required: true },
+    { key: 'eventLocation', label: 'Location', type: 'text', required: false, placeholder: 'Student Union Room 201' },
+  ],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -468,6 +505,7 @@ export const MEMBER_SPOTLIGHT_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'engagement',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'greek', 'residential'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -508,6 +546,7 @@ export const ANONYMOUS_QA_TEMPLATE: QuickTemplate = {
   icon: 'message-square',
   category: 'feedback',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -548,6 +587,7 @@ export const EVENT_CHECKIN_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'events',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -589,6 +629,7 @@ export const SPACE_STATS_TEMPLATE: QuickTemplate = {
   icon: 'bar-chart-2',
   category: 'engagement',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -628,6 +669,7 @@ export const UPCOMING_EVENTS_TEMPLATE: QuickTemplate = {
   icon: 'calendar',
   category: 'events',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -666,6 +708,7 @@ export const FEEDBACK_FORM_TEMPLATE: QuickTemplate = {
   icon: 'clipboard-list',
   category: 'feedback',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -708,12 +751,16 @@ export const DECISION_MAKER_TEMPLATE: QuickTemplate = {
   icon: 'target',
   category: 'engagement',
   complexity: 'simple',
+  quickDeploy: true,
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
   },
-  // P0: Setup fields for customization
   setupFields: [
+    { key: 'question', label: 'Decision Question', type: 'text', required: true, placeholder: 'Should we host a social event next week?' },
+  ],
+  quickDeployFields: [
     { key: 'question', label: 'Decision Question', type: 'text', required: true, placeholder: 'Should we host a social event next week?' },
   ],
   composition: {
@@ -752,6 +799,7 @@ export const PROGRESS_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'trending-up',
   category: 'teams',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -797,6 +845,11 @@ export const MEETING_AGENDA_TEMPLATE: QuickTemplate = {
   icon: 'clipboard-list',
   category: 'teams',
   complexity: 'simple',
+  quickDeploy: true,
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
+  quickDeployFields: [
+    { key: 'title', label: 'Meeting Name', type: 'text', required: true, placeholder: 'Weekly Board Meeting' },
+  ],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -834,6 +887,7 @@ export const BUDGET_OVERVIEW_TEMPLATE: QuickTemplate = {
   icon: 'wallet',
   category: 'resources',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -879,6 +933,7 @@ export const WEEKLY_UPDATE_TEMPLATE: QuickTemplate = {
   icon: 'file-text',
   category: 'teams',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -917,6 +972,7 @@ export const WHAT_SHOULD_I_EAT_TEMPLATE: QuickTemplate = {
   category: 'resources',
   complexity: 'simple',
   status: 'hidden',
+  spaceTypes: ['residential'],
   incompleteElements: ['dining-picker'],
   defaultConfig: {
     placement: 'sidebar',
@@ -967,6 +1023,7 @@ export const TONIGHTS_EVENTS_TEMPLATE: QuickTemplate = {
   icon: 'sparkles',
   category: 'events',
   complexity: 'simple',
+  spaceTypes: ['student_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -1040,6 +1097,7 @@ export const STUDY_SPOT_FINDER_TEMPLATE: QuickTemplate = {
   category: 'resources',
   complexity: 'simple',
   status: 'hidden',
+  spaceTypes: ['student_org', 'residential'],
   incompleteElements: ['study-spot-finder'],
   defaultConfig: {
     placement: 'sidebar',
@@ -1103,6 +1161,7 @@ export const PHOTO_CHALLENGE_TEMPLATE: QuickTemplate = {
   icon: 'camera',
   category: 'apps',
   complexity: 'app',
+  spaceTypes: ['student_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -1180,6 +1239,7 @@ export const ATTENDANCE_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'apps',
   complexity: 'app',
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -1259,6 +1319,7 @@ export const RESOURCE_SIGNUP_TEMPLATE: QuickTemplate = {
   icon: 'clipboard-list',
   category: 'apps',
   complexity: 'app',
+  spaceTypes: ['student_org', 'uni_org', 'residential'],
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -1348,6 +1409,7 @@ export const MULTI_POLL_DASHBOARD_TEMPLATE: QuickTemplate = {
   icon: 'grid',
   category: 'apps',
   complexity: 'app',
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -1441,6 +1503,7 @@ export const EVENT_SERIES_HUB_TEMPLATE: QuickTemplate = {
   icon: 'calendar',
   category: 'apps',
   complexity: 'app',
+  spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -1518,6 +1581,7 @@ export const SUGGESTION_BOX_TEMPLATE: QuickTemplate = {
   icon: 'inbox',
   category: 'apps',
   complexity: 'app',
+  spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -1606,6 +1670,7 @@ export const STUDY_GROUP_MATCHER_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'apps',
   complexity: 'app',
+  spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -1690,6 +1755,7 @@ export const COMPETITION_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'trophy',
   category: 'apps',
   complexity: 'app',
+  spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -1873,14 +1939,77 @@ export function getCategoriesWithCounts(): { category: TemplateCategory; count: 
  * Create a deployable tool from a template
  * Generates fresh IDs to avoid conflicts
  */
-export function createToolFromTemplate(template: QuickTemplate): ToolComposition {
+export function createToolFromTemplate(
+  template: QuickTemplate,
+  configOverrides?: Record<string, string>
+): ToolComposition {
   const toolId = generateId();
   return {
     ...template.composition,
     id: toolId,
-    elements: template.composition.elements.map(el => ({
-      ...el,
-      instanceId: generateId(),
-    })),
+    elements: template.composition.elements.map((el, index) => {
+      const newEl = { ...el, instanceId: generateId() };
+      // Apply config overrides to the first element (simple templates have 1 primary element)
+      if (index === 0 && configOverrides && Object.keys(configOverrides).length > 0) {
+        const mergedConfig = { ...el.config };
+        for (const [key, value] of Object.entries(configOverrides)) {
+          if (value === undefined || value === '') continue;
+          // If existing config value is an array, split comma-separated input
+          if (Array.isArray(el.config[key])) {
+            mergedConfig[key] = value.split(',').map(v => v.trim()).filter(Boolean);
+          } else {
+            mergedConfig[key] = value;
+          }
+        }
+        newEl.config = mergedConfig;
+      }
+      return newEl;
+    }),
   };
 }
+
+/**
+ * Get quick-deployable templates (skip the builder)
+ */
+export function getQuickDeployTemplates(): QuickTemplate[] {
+  return QUICK_TEMPLATES.filter(t => t.quickDeploy && t.status !== 'hidden');
+}
+
+/**
+ * Get templates recommended for a specific space type
+ */
+export function getTemplatesForSpaceType(spaceType: SpaceType): QuickTemplate[] {
+  return QUICK_TEMPLATES.filter(
+    t => t.status !== 'hidden' && t.spaceTypes?.includes(spaceType)
+  );
+}
+
+/**
+ * Get templates sorted with recommended-for-space-type first
+ */
+export function getTemplatesSortedByRelevance(
+  spaceType?: SpaceType
+): { recommended: QuickTemplate[]; others: QuickTemplate[] } {
+  const available = getAvailableTemplates();
+  if (!spaceType) {
+    return { recommended: [], others: available };
+  }
+  const recommended: QuickTemplate[] = [];
+  const others: QuickTemplate[] = [];
+  for (const template of available) {
+    if (template.spaceTypes?.includes(spaceType)) {
+      recommended.push(template);
+    } else {
+      others.push(template);
+    }
+  }
+  return { recommended, others };
+}
+
+/** Space type display names */
+export const SPACE_TYPE_LABELS: Record<SpaceType, string> = {
+  student_org: 'Student Org',
+  uni_org: 'University Org',
+  residential: 'Residential',
+  greek: 'Greek Life',
+};

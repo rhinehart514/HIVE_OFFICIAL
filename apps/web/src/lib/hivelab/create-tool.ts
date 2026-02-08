@@ -44,19 +44,25 @@ export async function createBlankTool(
  * Create a tool from a template via API
  *
  * This creates the tool with pre-composed elements from the template.
+ * Accepts optional configOverrides to merge user input into element configs.
  * Returns the tool ID for immediate redirect to the IDE.
  */
 export async function createToolFromTemplateApi(
-  template: QuickTemplate
+  template: QuickTemplate,
+  configOverrides?: Record<string, string>
 ): Promise<string> {
-  const composition = createToolFromTemplate(template);
+  const composition = createToolFromTemplate(template, configOverrides);
+
+  // Use a meaningful name from config if available (e.g., poll question, event name)
+  const nameFromConfig = configOverrides?.title || configOverrides?.eventTitle || configOverrides?.question;
+  const toolName = nameFromConfig ? nameFromConfig.slice(0, 80) : template.name;
 
   const response = await fetch('/api/tools', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify({
-      name: template.name,
+      name: toolName,
       description: template.description,
       status: 'draft',
       type: 'visual',

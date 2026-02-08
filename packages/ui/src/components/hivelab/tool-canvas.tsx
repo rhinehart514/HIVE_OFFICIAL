@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowPathIcon, ExclamationTriangleIcon, ViewfinderCircleIcon } from '@heroicons/react/24/outline';
 
@@ -225,7 +226,7 @@ function FlowLayout({ elements, state, onElementChange, onElementAction, context
         <motion.div
           key={el.instanceId}
           variants={prefersReducedMotion ? fadeIn : elementVariants}
-          className="flex-1 min-w-[280px] max-w-full"
+          className="flex-1 min-w-0 sm:min-w-[280px] max-w-full basis-full sm:basis-auto"
         >
           <ElementWrapper
             element={el}
@@ -372,12 +373,62 @@ function ElementWrapper({
 // ============================================================================
 
 function CanvasSkeleton() {
-  const prefersReducedMotion = useReducedMotion();
-
   const shimmerVariant = {
     hidden: { opacity: 0.3 },
     visible: { opacity: 0.6 },
   };
+
+  // Element-shaped skeleton placeholders
+  const skeletonElements = [
+    // Poll-like element
+    { height: 'h-auto', content: (
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-5 h-5 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-4 w-36 bg-white/[0.06] rounded animate-pulse" />
+        </div>
+        <div className="space-y-3">
+          <div className="h-11 bg-white/[0.04] rounded-lg animate-pulse" />
+          <div className="h-11 bg-white/[0.04] rounded-lg animate-pulse" />
+          <div className="h-11 bg-white/[0.04] rounded-lg animate-pulse" />
+        </div>
+        <div className="mt-3 flex justify-between">
+          <div className="h-3 w-16 bg-white/[0.04] rounded animate-pulse" />
+          <div className="h-3 w-12 bg-white/[0.04] rounded animate-pulse" />
+        </div>
+      </div>
+    )},
+    // Counter-like element
+    { height: 'h-auto', content: (
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+        <div className="text-center">
+          <div className="h-3 w-20 bg-white/[0.06] rounded animate-pulse mx-auto mb-4" />
+          <div className="flex items-center justify-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-white/[0.04] animate-pulse" />
+            <div className="h-12 w-24 bg-white/[0.06] rounded-lg animate-pulse" />
+            <div className="h-12 w-12 rounded-full bg-white/[0.04] animate-pulse" />
+          </div>
+        </div>
+      </div>
+    )},
+    // RSVP/button-like element
+    { height: 'h-auto', content: (
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="space-y-2">
+            <div className="h-4 w-28 bg-white/[0.06] rounded animate-pulse" />
+            <div className="h-3 w-20 bg-white/[0.04] rounded animate-pulse" />
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="h-4 w-4 bg-white/[0.04] rounded animate-pulse" />
+            <div className="h-3 w-12 bg-white/[0.04] rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="h-2 bg-white/[0.04] rounded-full mb-4 animate-pulse" />
+        <div className="h-10 bg-white/[0.06] rounded-lg animate-pulse" />
+      </div>
+    )},
+  ];
 
   return (
     <motion.div
@@ -386,36 +437,17 @@ function CanvasSkeleton() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
     >
-      <motion.div
-        className="h-11 bg-white/[0.04] rounded-lg w-full"
-        variants={shimmerVariant}
-        initial="hidden"
-        animate="visible"
-        transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse' }}
-      />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {skeletonElements.map((skeleton, index) => (
         <motion.div
-          className="h-32 bg-white/[0.04] rounded-xl"
+          key={index}
           variants={shimmerVariant}
           initial="hidden"
           animate="visible"
-          transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse', delay: 0.1 }}
-        />
-        <motion.div
-          className="h-32 bg-white/[0.04] rounded-xl"
-          variants={shimmerVariant}
-          initial="hidden"
-          animate="visible"
-          transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse', delay: 0.2 }}
-        />
-      </div>
-      <motion.div
-        className="h-48 bg-white/[0.04] rounded-xl"
-        variants={shimmerVariant}
-        initial="hidden"
-        animate="visible"
-        transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse', delay: 0.3 }}
-      />
+          transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse', delay: index * 0.1 }}
+        >
+          {skeleton.content}
+        </motion.div>
+      ))}
     </motion.div>
   );
 }
@@ -585,6 +617,101 @@ export function ToolCanvas({
       {layout === 'flow' && <FlowLayout {...layoutProps} />}
       {layout === 'stack' && <StackLayout {...layoutProps} />}
     </div>
+  );
+}
+
+// ============================================================================
+// TOOL ERROR BOUNDARY
+// ============================================================================
+
+interface ToolErrorBoundaryProps {
+  children: ReactNode;
+  onRetry?: () => void;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}
+
+interface ToolErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+/**
+ * Tool-level error boundary.
+ * Wraps the entire ToolCanvas to catch any unhandled errors.
+ * Shows a friendly error state with retry button.
+ */
+export class ToolErrorBoundary extends Component<ToolErrorBoundaryProps, ToolErrorBoundaryState> {
+  constructor(props: ToolErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ToolErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[HiveLab] Tool crashed:', error, errorInfo);
+    }
+    this.props.onError?.(error, errorInfo);
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <ToolErrorFallback
+          error={this.state.error}
+          onRetry={() => {
+            this.setState({ hasError: false, error: null });
+            this.props.onRetry?.();
+          }}
+        />
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+function ToolErrorFallback({
+  error,
+  onRetry,
+}: {
+  error: Error | null;
+  onRetry: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+      className="rounded-xl p-8 text-center bg-red-500/5 border border-red-500/20"
+      role="alert"
+      aria-live="polite"
+    >
+      <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+        <ExclamationTriangleIcon className="h-7 w-7 text-red-400" />
+      </div>
+      <p className="text-red-400 font-medium mb-1">Something went wrong</p>
+      <p className="text-sm text-red-400/60 mb-4">
+        This tool encountered an error while rendering.
+      </p>
+      {process.env.NODE_ENV === 'development' && error && (
+        <pre className="text-xs text-red-400/50 bg-red-500/5 p-3 rounded-lg mb-4 overflow-x-auto text-left max-w-md mx-auto">
+          {error.message}
+        </pre>
+      )}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onRetry}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-sm font-medium min-h-[44px]"
+      >
+        <ArrowPathIcon className="w-4 h-4" />
+        Try again
+      </motion.button>
+    </motion.div>
   );
 }
 

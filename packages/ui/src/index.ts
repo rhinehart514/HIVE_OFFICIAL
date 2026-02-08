@@ -398,12 +398,20 @@ export {
   getAvailableTemplates,
   getCategoriesWithCounts,
   createToolFromTemplate,
+  getQuickDeployTemplates,
+  getTemplatesForSpaceType,
+  getTemplatesSortedByRelevance,
+  SPACE_TYPE_LABELS,
 } from "./lib/hivelab/quick-templates";
-export type { QuickTemplate, TemplateCategory, TemplateComplexity, TemplateStatus } from "./lib/hivelab/quick-templates";
+export type { QuickTemplate, TemplateCategory, TemplateComplexity, TemplateStatus, SpaceType } from "./lib/hivelab/quick-templates";
 
 // HiveLab UI Components
 export { QuickCreateWizard, QUICK_CREATE_INTENTS } from "./design-system/components/hivelab";
 export type { QuickCreateIntent, QuickCreateField, QuickCreateResult, QuickCreateWizardProps } from "./design-system/components/hivelab";
+export { BuilderOnboarding, useBuilderOnboarding } from "./design-system/components/hivelab";
+export type { BuilderOnboardingProps } from "./design-system/components/hivelab";
+export { QuickDeployModal } from "./design-system/components/hivelab";
+export type { QuickDeployModalProps, QuickDeployResult } from "./design-system/components/hivelab";
 
 export {
   VisuallyHidden,
@@ -1189,7 +1197,7 @@ export { VisualToolComposer } from "./components/hivelab/visual-tool-composer";
 export type { VisualToolComposerProps } from "./components/hivelab/visual-tool-composer";
 
 // HiveLab: Tool Canvas (runtime rendering)
-export { ToolCanvas } from "./components/hivelab/tool-canvas";
+export { ToolCanvas, ToolErrorBoundary } from "./components/hivelab/tool-canvas";
 export type { ToolCanvasProps, ToolElement, ToolCanvasContext } from "./components/hivelab/tool-canvas";
 
 // HiveLab: Tool Runtime Provider (context injection for space-deployed tools)

@@ -546,6 +546,8 @@ export {
   ToolConfigSchema,
   ToolMetadataSchema,
   ToolVersionSchema,
+  RemixedFromSchema,
+  type RemixedFrom,
   createToolDefaults,
   generateShareToken,
   canUserEditTool,

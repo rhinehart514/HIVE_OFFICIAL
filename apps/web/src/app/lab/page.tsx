@@ -3,30 +3,26 @@
 export const dynamic = 'force-dynamic';
 
 /**
- * Builder Dashboard — Your Lab
+ * Creator Dashboard — Your Lab
  *
  * State-based layout:
- * - New User (0 tools): Welcome + Quick Start templates + AI prompt
- * - Active Builder (1+ tools): Your Tools grid + Quick Start chips (compact)
+ * - New User (0 tools): Inspiring hero + templates + AI prompt
+ * - Active Builder (1+ tools): Stats bar + tool grid + quick actions
  *
- * Key improvements over templates-first:
- * - Returning users see their work first
- * - Templates demoted to quick-start for active builders
- * - No more query param flow - direct creation from templates
+ * Uses /api/tools/my-tools for aggregated stats per tool.
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAuth } from '@hive/auth-logic';
-import { apiClient } from '@/lib/api-client';
 import {
   Sparkles,
   ArrowRight,
   Plus,
   Zap,
+  LayoutGrid,
 } from 'lucide-react';
 import { MOTION, staggerPresets, durationSeconds } from '@hive/tokens';
 import { staggerContainerVariants, staggerItemVariants, fadeInUpVariants } from '@hive/ui/lib/motion-variants';
@@ -37,12 +33,13 @@ import {
   type QuickTemplate,
 } from '@hive/ui';
 
-import { ToolCard, NewToolCard, type ToolData } from '@/components/hivelab/dashboard/ToolCard';
+import { ToolCard, NewToolCard } from '@/components/hivelab/dashboard/ToolCard';
+import { StatsBar } from '@/components/hivelab/dashboard/StatsBar';
+import { BuilderLevel } from '@/components/hivelab/dashboard/BuilderLevel';
 import { QuickStartChips } from '@/components/hivelab/dashboard/QuickStartChips';
+import { useMyTools } from '@/hooks/use-my-tools';
 import {
-  createBlankTool,
   createToolFromTemplateApi,
-  generateToolName,
 } from '@/lib/hivelab/create-tool';
 
 // Premium easing
@@ -67,19 +64,11 @@ const FEATURED_TEMPLATE_IDS = [
   'study-group-signup',
 ];
 
-// Fetch user's tools
-async function fetchUserTools(): Promise<ToolData[]> {
-  const response = await apiClient.get('/api/tools');
-  if (!response.ok) throw new Error('Failed to fetch tools');
-  const data = await response.json();
-  return (data.tools || []) as ToolData[];
-}
-
-// Submit loading state (simplified - no ceremony)
+// Submit loading state
 type CeremonyPhase = 'idle' | 'creating';
 
 /**
- * WordReveal — Word-by-word text animation
+ * WordReveal -- Word-by-word text animation
  */
 function WordReveal({
   text,
@@ -131,7 +120,7 @@ function WordReveal({
 }
 
 /**
- * GoldBorderInput — Input with animated gold border on focus
+ * GoldBorderInput -- Input with animated gold border on focus
  */
 function GoldBorderInput({
   value,
@@ -262,7 +251,6 @@ export default function BuilderDashboard() {
 
   // Preserve space context when arriving from a space's "Build Tool" button
   const originSpaceId = searchParams.get('spaceId');
-  const deploySurface = searchParams.get('deploy'); // 'sidebar' when from space
 
   // Get featured templates
   const featuredTemplates = FEATURED_TEMPLATE_IDS
@@ -272,13 +260,10 @@ export default function BuilderDashboard() {
   // Get all available templates for quick-start chips
   const allTemplates = React.useMemo(() => getAvailableTemplates().slice(0, 8), []);
 
-  // Fetch user's tools
-  const { data: userTools = [], isLoading: toolsLoading } = useQuery({
-    queryKey: ['personal-tools', user?.uid],
-    queryFn: fetchUserTools,
-    enabled: !!user,
-    staleTime: 60000,
-  });
+  // Fetch user's tools with aggregated stats
+  const { data, isLoading: toolsLoading } = useMyTools();
+  const userTools = data?.tools ?? [];
+  const stats = data?.stats ?? { totalTools: 0, totalUsers: 0, weeklyInteractions: 0 };
 
   const hasTools = userTools.length > 0;
   const isNewUser = !toolsLoading && !hasTools;
@@ -293,28 +278,16 @@ export default function BuilderDashboard() {
     }
   }, [authLoading, user, titleRevealed, isNewUser]);
 
-  // Handle submit - instant feedback, no ceremony
-  const handleSubmit = useCallback(async () => {
+  // Handle submit — route to conversational creation page
+  const handleSubmit = useCallback(() => {
     if (!prompt.trim() || ceremonyPhase !== 'idle') return;
 
-    const toolName = generateToolName(prompt);
-    setCeremonyPhase('creating');
-    setStatusText(`Creating ${toolName}...`);
-
-    try {
-      const toolId = await createBlankTool(toolName, prompt);
-      const encodedPrompt = encodeURIComponent(prompt.trim());
-      // Preserve space context for deploy pre-selection
-      const spaceParam = originSpaceId ? `&spaceId=${originSpaceId}` : '';
-      router.push(`/lab/${toolId}?new=true&prompt=${encodedPrompt}${spaceParam}`);
-    } catch (error) {
-      toast.error('Failed to create tool');
-      setCeremonyPhase('idle');
-      setStatusText('');
-    }
+    const encodedPrompt = encodeURIComponent(prompt.trim());
+    const spaceParam = originSpaceId ? `&spaceId=${originSpaceId}` : '';
+    router.push(`/lab/new?prompt=${encodedPrompt}${spaceParam}`);
   }, [prompt, ceremonyPhase, router, originSpaceId]);
 
-  // Handle template click - create tool and redirect to IDE
+  // Handle template click
   const handleTemplateClick = useCallback(async (template: QuickTemplate) => {
     if (ceremonyPhase !== 'idle' || creatingFromTemplate) return;
 
@@ -324,10 +297,9 @@ export default function BuilderDashboard() {
 
     try {
       const toolId = await createToolFromTemplateApi(template);
-      // Preserve space context for deploy pre-selection
       const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
       router.push(`/lab/${toolId}${spaceParam}`);
-    } catch (error) {
+    } catch {
       toast.error('Failed to create tool from template');
       setCeremonyPhase('idle');
       setCreatingFromTemplate(false);
@@ -348,13 +320,11 @@ export default function BuilderDashboard() {
     router.push(`/lab/${toolId}`);
   }, [router]);
 
-  // Handle new tool button
+  // Handle new tool button — go to conversational creation
   const handleNewTool = useCallback(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
+    const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
+    router.push(`/lab/new${spaceParam}`);
+  }, [router, originSpaceId]);
 
   // Guest state
   if (!authLoading && !user) {
@@ -404,12 +374,13 @@ export default function BuilderDashboard() {
 
   const isSubmitting = ceremonyPhase !== 'idle';
   const showStatus = ceremonyPhase === 'creating';
+  const displayTools = showAllTools ? userTools : userTools.slice(0, 8);
 
   return (
     <div className="min-h-screen bg-[var(--bg-ground,#0A0A09)]">
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-6 py-8">
         {/* ============================================================ */}
-        {/* ACTIVE BUILDER STATE (1+ tools) */}
+        {/* ACTIVE BUILDER STATE (1+ tools)                              */}
         {/* ============================================================ */}
         {hasTools && (
           <>
@@ -420,19 +391,48 @@ export default function BuilderDashboard() {
               animate="animate"
               className="flex items-center justify-between mb-6"
             >
-              <h1 className="text-xl font-medium text-white">Your Lab</h1>
-              <button
-                onClick={handleNewTool}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                  text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08]
-                  transition-colors text-sm font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                New
-              </button>
+              <div className="flex items-center gap-3">
+                <LayoutGrid className="w-5 h-5 text-white/40" />
+                <h1 className="text-xl font-medium text-white">Your Lab</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push('/lab/templates')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                    text-white/50 hover:text-white/70 bg-white/[0.03] hover:bg-white/[0.06]
+                    transition-colors text-sm"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Templates
+                </button>
+                <button
+                  onClick={handleNewTool}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                    text-white/80 hover:text-white bg-white/[0.06] hover:bg-white/[0.10]
+                    transition-colors text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  New Tool
+                </button>
+              </div>
             </motion.div>
 
-            {/* Your Tools Section */}
+            {/* Stats Bar + Builder Level */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: EASE }}
+              className="mb-6 space-y-3"
+            >
+              <StatsBar
+                totalTools={stats.totalTools}
+                totalUsers={stats.totalUsers}
+                weeklyInteractions={stats.weeklyInteractions}
+              />
+              <BuilderLevel />
+            </motion.div>
+
+            {/* Your Tools Grid */}
             <motion.div
               variants={fadeInUpVariants}
               initial="initial"
@@ -443,27 +443,27 @@ export default function BuilderDashboard() {
                 Your Tools
               </div>
               <motion.div
-                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                 variants={staggerContainerVariants}
                 initial="hidden"
                 animate="visible"
               >
-                {(showAllTools ? userTools : userTools.slice(0, 7)).map((tool, index) => (
+                {displayTools.map((tool) => (
                   <motion.div key={tool.id} variants={staggerItemVariants}>
                     <ToolCard
                       tool={tool}
                       onClick={handleToolClick}
-                      index={index}
+                      variant="full"
                     />
                   </motion.div>
                 ))}
                 <motion.div variants={staggerItemVariants}>
-                  <NewToolCard onClick={handleNewTool} index={showAllTools ? userTools.length : Math.min(userTools.length, 7)} />
+                  <NewToolCard onClick={handleNewTool} />
                 </motion.div>
               </motion.div>
 
-              {/* View all / collapse link if more than 7 tools */}
-              {userTools.length > 7 && (
+              {/* View all / collapse */}
+              {userTools.length > 8 && (
                 <motion.button
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -471,7 +471,7 @@ export default function BuilderDashboard() {
                   onClick={() => setShowAllTools(!showAllTools)}
                   className="mt-3 text-white/40 hover:text-white/60 text-xs transition-colors"
                 >
-                  {showAllTools ? 'Show less' : `View all ${userTools.length} tools →`}
+                  {showAllTools ? 'Show less' : `View all ${userTools.length} tools`}
                 </motion.button>
               )}
             </motion.div>
@@ -479,7 +479,7 @@ export default function BuilderDashboard() {
             {/* Divider */}
             <div className="h-px bg-white/[0.06] mb-6" />
 
-            {/* Quick Start Chips (compact for active builders) */}
+            {/* Quick Start Chips */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -495,7 +495,7 @@ export default function BuilderDashboard() {
               />
             </motion.div>
 
-            {/* AI Prompt (collapsed for active builders) */}
+            {/* AI Prompt */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -565,7 +565,7 @@ export default function BuilderDashboard() {
                 />
               </div>
 
-              {/* Status text during ceremony */}
+              {/* Status text */}
               <AnimatePresence>
                 {showStatus && (
                   <motion.div
@@ -586,7 +586,7 @@ export default function BuilderDashboard() {
         )}
 
         {/* ============================================================ */}
-        {/* NEW USER STATE (0 tools) */}
+        {/* NEW USER STATE (0 tools)                                     */}
         {/* ============================================================ */}
         {isNewUser && (
           <>
@@ -599,10 +599,10 @@ export default function BuilderDashboard() {
             >
               <h1 className="text-2xl sm:text-3xl font-medium text-white mb-2">
                 {shouldReduceMotion ? (
-                  'Welcome to your Lab'
+                  'Build something your campus will use'
                 ) : (
                   <WordReveal
-                    text="Welcome to your Lab"
+                    text="Build something your campus will use"
                     stagger={0.06}
                     onComplete={() => setTitleRevealed(true)}
                   />
@@ -614,11 +614,11 @@ export default function BuilderDashboard() {
                 transition={{ duration: 0.3, delay: 0.1 }}
                 className="text-white/50 text-sm"
               >
-                Build tools your space will actually use
+                Polls, sign-ups, countdowns, leaderboards -- no coding required
               </motion.p>
             </motion.div>
 
-            {/* Why Build a Tool — Value prop for first-time visitors */}
+            {/* Value prop */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -636,7 +636,7 @@ export default function BuilderDashboard() {
                   className="text-sm font-medium mb-4"
                   style={{ color: 'var(--text-secondary, rgba(255,255,255,0.7))' }}
                 >
-                  Build interactive tools for your spaces — polls, sign-ups, generators, and more.
+                  Build interactive tools for your spaces -- polls, sign-ups, generators, and more.
                   No coding required.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -668,7 +668,7 @@ export default function BuilderDashboard() {
               </div>
             </motion.div>
 
-            {/* Quick Start Templates Grid (primary for new users) */}
+            {/* Quick Start Templates Grid */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -698,7 +698,7 @@ export default function BuilderDashboard() {
               <div className="flex-1 h-px bg-white/[0.06]" />
             </motion.div>
 
-            {/* AI Prompt Section (secondary for new users) */}
+            {/* AI Prompt Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -757,7 +757,7 @@ export default function BuilderDashboard() {
                   </AnimatePresence>
                 </motion.button>
 
-                {/* Dimming overlay during ceremony */}
+                {/* Dimming overlay */}
                 <motion.div
                   className="absolute inset-0 rounded-2xl pointer-events-none bg-[var(--bg-ground,#0A0A09)]"
                   initial={{ opacity: 0 }}
@@ -768,7 +768,7 @@ export default function BuilderDashboard() {
                 />
               </div>
 
-              {/* Status text during ceremony */}
+              {/* Status text */}
               <AnimatePresence>
                 {showStatus && (
                   <motion.div
@@ -815,14 +815,24 @@ export default function BuilderDashboard() {
               <div className="h-6 w-24 rounded-lg bg-white/[0.06] animate-pulse" />
               <div className="h-8 w-16 rounded-lg bg-white/[0.04] animate-pulse" />
             </div>
+            {/* Stats skeleton */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-16 rounded-xl bg-white/[0.03] animate-pulse"
+                  style={{ animationDelay: `${i * 80}ms` }}
+                />
+              ))}
+            </div>
             <div className="text-xs font-medium text-white/40 tracking-wide mb-3">
               Your Tools
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-24 rounded-xl bg-white/[0.03] animate-pulse"
+                  className="h-[140px] rounded-xl bg-white/[0.03] animate-pulse"
                   style={{ animationDelay: `${i * 100}ms` }}
                 />
               ))}

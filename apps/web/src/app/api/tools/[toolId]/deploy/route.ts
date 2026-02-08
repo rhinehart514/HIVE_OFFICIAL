@@ -6,6 +6,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthValidationAndErrors, withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
+import { validateToolForPublish } from "@/lib/tool-validation";
 
 // Schema for tool deployment requests
 // Accepts either spaceId (legacy) or targetId/targetType (new modal format)
@@ -172,6 +173,15 @@ export const POST = withAuthValidationAndErrors(
     const toolData = toolDoc.data();
     if (toolData?.campusId !== campusId) {
       return NextResponse.json(ApiResponseHelper.error("Access denied for this campus", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
+    }
+
+    // Quality gate: validate tool composition before deployment
+    const validation = validateToolForPublish(toolData as Record<string, unknown>);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { success: false, error: 'Tool failed validation', validationErrors: validation.errors },
+        { status: 400 }
+      );
     }
 
     // Auto-publish draft tools when deploying (deployment implies intent to publish)

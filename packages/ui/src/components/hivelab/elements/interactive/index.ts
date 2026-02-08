@@ -17,6 +17,8 @@ export { RsvpButtonElement } from './rsvp-button-element';
 export { LeaderboardElement } from './leaderboard-element';
 export { CountdownTimerElement } from './countdown-timer-element';
 export { TimerElement } from './timer-element';
+export { SignupSheetElement } from './signup-sheet-element';
+export { ChecklistTrackerElement } from './checklist-tracker-element';
 
 // Re-export core types for element authors
 export type { ElementMode } from '../core';

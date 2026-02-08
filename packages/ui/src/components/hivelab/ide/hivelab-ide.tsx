@@ -262,49 +262,50 @@ export function HiveLabIDE({
     type: string;
   } | undefined>();
 
-  // Fetch automations from API when deploymentId is available
-  useEffect(() => {
+  // Fetch automations from API
+  const fetchAutomations = useCallback(async () => {
     if (!deploymentId) {
       setAutomations([]);
       return;
     }
 
-    const fetchAutomations = async () => {
-      setAutomationsLoading(true);
-      try {
-        const response = await fetch(`/api/tools/${deploymentId}/automations`);
-        if (response.ok) {
-          const data = await response.json();
-          // Convert ToolAutomation to AutomationSummary
-          const summaries: AutomationSummary[] = data.automations.map((auto: {
-            id: string;
-            name: string;
-            enabled: boolean;
-            trigger: { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number };
-            runCount: number;
-            errorCount: number;
-            lastRun?: string;
-          }) => ({
-            id: auto.id,
-            name: auto.name,
-            enabled: auto.enabled,
-            triggerType: auto.trigger.type as 'event' | 'schedule' | 'threshold',
-            triggerSummary: getTriggerSummaryFromTrigger(auto.trigger),
-            runCount: auto.runCount,
-            errorCount: auto.errorCount,
-            lastRun: auto.lastRun,
-          }));
-          setAutomations(summaries);
-        }
-      } catch (error) {
-        console.error('Failed to fetch automations:', error);
-      } finally {
-        setAutomationsLoading(false);
+    setAutomationsLoading(true);
+    try {
+      const response = await fetch(`/api/tools/${deploymentId}/automations`);
+      if (response.ok) {
+        const data = await response.json();
+        // Convert ToolAutomation to AutomationSummary
+        const summaries: AutomationSummary[] = data.automations.map((auto: {
+          id: string;
+          name: string;
+          enabled: boolean;
+          trigger: { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number };
+          runCount: number;
+          errorCount: number;
+          lastRun?: string;
+        }) => ({
+          id: auto.id,
+          name: auto.name,
+          enabled: auto.enabled,
+          triggerType: auto.trigger.type as 'event' | 'schedule' | 'threshold',
+          triggerSummary: getTriggerSummaryFromTrigger(auto.trigger),
+          runCount: auto.runCount,
+          errorCount: auto.errorCount,
+          lastRun: auto.lastRun,
+        }));
+        setAutomations(summaries);
       }
-    };
-
-    fetchAutomations();
+    } catch (error) {
+      console.error('Failed to fetch automations:', error);
+    } finally {
+      setAutomationsLoading(false);
+    }
   }, [deploymentId]);
+
+  // Load automations when deploymentId is available
+  useEffect(() => {
+    fetchAutomations();
+  }, [fetchAutomations]);
 
   // Fetch other tools in the same space for cross-tool connections
   useEffect(() => {
@@ -472,7 +473,7 @@ export function HiveLabIDE({
           description: toolDescription,
           elements,
           connections,
-          layout: 'grid',
+          layout: 'flow',
         };
         await onSave(composition);
         setHasUnsavedChanges(false);
@@ -929,7 +930,7 @@ export function HiveLabIDE({
         description: toolDescription,
         elements,
         connections,
-        layout: 'grid',
+        layout: 'flow',
       };
       await onSave(composition);
       setHasUnsavedChanges(false);
@@ -956,7 +957,7 @@ export function HiveLabIDE({
         description: toolDescription,
         elements,
         connections,
-        layout: 'grid',
+        layout: 'flow',
       };
       await onSave(composition);
       await onDeploy(composition);
@@ -981,7 +982,7 @@ export function HiveLabIDE({
       description: toolDescription,
       elements,
       connections,
-      layout: 'grid',
+      layout: 'flow',
     };
     onPreview(composition);
   }, [toolId, toolName, toolDescription, elements, connections, onPreview]);
@@ -1305,13 +1306,15 @@ export function HiveLabIDE({
 
       if (response.ok && result.success) {
         toast.success('Automation triggered successfully');
+        // Refresh automations list to update runCount/lastRun
+        fetchAutomations();
       } else {
         toast.error(result.error || 'Failed to trigger automation');
       }
     } catch (error) {
       toast.error('Failed to trigger automation');
     }
-  }, [deploymentId]);
+  }, [deploymentId, fetchAutomations]);
 
   // Save automation from builder (create or update)
   const handleSaveAutomation = useCallback(async (data: AutomationData) => {
@@ -1699,8 +1702,9 @@ export function HiveLabIDE({
         runs={automationRuns}
         loading={automationRunsLoading}
         onRefresh={() => {
-          setAutomationRunsLoading(true);
-          setTimeout(() => setAutomationRunsLoading(false), 500);
+          if (viewingAutomationId) {
+            handleViewAutomationLogs(viewingAutomationId);
+          }
         }}
         onLoadMore={() => {}}
         hasMore={false}

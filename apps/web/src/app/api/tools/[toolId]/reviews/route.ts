@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import {
+  withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
   getCampusId,
@@ -162,5 +163,74 @@ export const POST = withAuthValidationAndErrors(
       { reviewId: reviewRef.id },
       { message: "Review created successfully" },
     );
+  },
+);
+
+export const GET = withAuthAndErrors(
+  async (
+    request,
+    { params }: { params: Promise<{ toolId: string }> },
+    respond,
+  ) => {
+    const req = request as AuthenticatedRequest;
+    const campusId = getCampusId(req);
+    const { toolId } = await params;
+
+    const toolDoc = await adminDb.collection("tools").doc(toolId).get();
+    if (!toolDoc.exists) {
+      return respond.error("Tool not found", "RESOURCE_NOT_FOUND", {
+        status: 404,
+      });
+    }
+
+    const toolData = toolDoc.data();
+    if (toolData?.campusId !== campusId) {
+      return respond.error("Access denied for this campus", "FORBIDDEN", {
+        status: 403,
+      });
+    }
+
+    const reviewsSnapshot = await adminDb
+      .collection("toolReviews")
+      .where("toolId", "==", toolId)
+      .where("campusId", "==", campusId)
+      .where("status", "==", "published")
+      .orderBy("createdAt", "desc")
+      .limit(100)
+      .get();
+
+    const reviews = await Promise.all(
+      reviewsSnapshot.docs.map(async (doc) => {
+        const data = doc.data();
+
+        let authorName = "Anonymous";
+        try {
+          const userDoc = await adminDb
+            .collection("users")
+            .doc(data.userId)
+            .get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            authorName = userData?.displayName || userData?.name || "Anonymous";
+          }
+        } catch {
+          // Keep default
+        }
+
+        return {
+          id: doc.id,
+          rating: data.rating,
+          title: data.title,
+          content: data.content,
+          author: authorName,
+          userId: data.userId,
+          verified: data.verified ?? false,
+          helpful: data.helpful ?? 0,
+          createdAt: data.createdAt,
+        };
+      }),
+    );
+
+    return respond.success({ reviews });
   },
 );

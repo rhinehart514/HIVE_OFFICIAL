@@ -27,6 +27,7 @@ export type NotificationType =
   | 'event_rsvp'        // Someone RSVPd to your event
   | 'connection_new'    // New connection
   | 'tool_deployed'     // Tool was deployed to your space
+  | 'tool_milestone'    // Your tool hit a usage milestone
   | 'ritual_joined'     // You joined a ritual
   | 'ritual_active'     // A ritual you joined is now active
   | 'ritual_checkin'    // Daily reminder to check in to ritual
@@ -696,6 +697,30 @@ export async function notifyToolDeployment(params: {
   // Don't notify the deployer
   const recipientIds = params.memberIds.filter(id => id !== params.deployerId);
   return createBulkNotifications(recipientIds, notificationParams);
+}
+
+/**
+ * Notify tool creator when their tool hits a usage milestone
+ */
+export async function notifyToolMilestone(params: {
+  creatorId: string;
+  toolId: string;
+  toolName: string;
+  milestone: number;
+}): Promise<string | null> {
+  return createNotification({
+    userId: params.creatorId,
+    type: 'tool_milestone',
+    category: 'tools',
+    title: `Your tool "${params.toolName}" just hit ${params.milestone} users!`,
+    body: `${params.milestone} people have used your tool. Keep building!`,
+    actionUrl: `/tools/${params.toolId}/analytics`,
+    metadata: {
+      toolId: params.toolId,
+      toolName: params.toolName,
+      milestone: params.milestone,
+    },
+  });
 }
 
 /**

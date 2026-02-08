@@ -38,15 +38,19 @@ import {
   Inbox,
   Grid,
 } from 'lucide-react';
-import { BrandSpinner } from '@hive/ui';
+import { BrandSpinner, QuickDeployModal } from '@hive/ui';
 import {
   getAvailableTemplates,
   getCategoriesWithCounts,
+  getTemplatesSortedByRelevance,
+  SPACE_TYPE_LABELS,
   type QuickTemplate,
   type TemplateCategory,
+  type SpaceType,
 } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 import { createToolFromTemplateApi } from '@/lib/hivelab/create-tool';
+import { Zap } from 'lucide-react';
 
 // Premium easing
 const EASE = MOTION.ease.premium;
@@ -193,6 +197,7 @@ function GoldBorderInput({
           />
         </div>
       </div>
+
     </div>
   );
 }
@@ -268,7 +273,19 @@ function TemplateCard({
           >
             {template.name}
           </div>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {template.quickDeploy && (
+              <span
+                className="text-label-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1"
+                style={{
+                  backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                  color: 'rgb(74, 222, 128)',
+                }}
+              >
+                <Zap className="w-2.5 h-2.5" />
+                Instant
+              </span>
+            )}
             {isApp && (
               <span
                 className="text-label-xs px-2 py-0.5 rounded-full font-medium"
@@ -304,14 +321,24 @@ function TemplateCard({
 export default function ToolTemplatesPage() {
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const spaceType = searchParams.get('spaceType') as SpaceType | null;
+
   const [search, setSearch] = React.useState('');
   const [category, setCategory] = React.useState<TemplateCategory | 'all'>('all');
   const [selectedTemplate, setSelectedTemplate] = React.useState<QuickTemplate | null>(null);
   const [isNavigating, setIsNavigating] = React.useState(false);
   const [titleRevealed, setTitleRevealed] = React.useState(false);
+  const [quickDeployTemplate, setQuickDeployTemplate] = React.useState<QuickTemplate | null>(null);
 
   // Get available templates (excludes hidden ones)
   const availableTemplates = React.useMemo(() => getAvailableTemplates(), []);
+
+  // Space-type sorted templates
+  const { recommended: recommendedTemplates, others: otherTemplates } = React.useMemo(
+    () => getTemplatesSortedByRelevance(spaceType || undefined),
+    [spaceType]
+  );
 
   // Get categories with counts for filter chips
   const categoriesWithCounts = React.useMemo(() => {
@@ -336,21 +363,23 @@ export default function ToolTemplatesPage() {
   const appTemplates = filteredTemplates.filter(t => t.complexity === 'app');
   const simpleTemplates = filteredTemplates.filter(t => t.complexity === 'simple');
 
-  // Handle template selection: create tool directly, redirect to IDE
+  // Handle template selection: quick deploy or full builder
   const handleSelectTemplate = React.useCallback(async (template: QuickTemplate) => {
     if (isNavigating) return;
 
+    // Quick deploy path: open lightweight modal
+    if (template.quickDeploy) {
+      setQuickDeployTemplate(template);
+      return;
+    }
+
+    // Full builder path: create tool, redirect to IDE
     setSelectedTemplate(template);
     setIsNavigating(true);
 
     try {
-      // Create tool from template via API
       const toolId = await createToolFromTemplateApi(template);
-
-      // Brief pause for visual feedback
       await new Promise((resolve) => setTimeout(resolve, shouldReduceMotion ? 100 : 200));
-
-      // Navigate directly to IDE with the new tool
       router.push(`/lab/${toolId}`);
     } catch (error) {
       logger.error('Failed to create tool from template', { component: 'ToolTemplatesPage' }, error instanceof Error ? error : undefined);
@@ -359,6 +388,16 @@ export default function ToolTemplatesPage() {
       setSelectedTemplate(null);
     }
   }, [isNavigating, router, shouldReduceMotion]);
+
+  // Handle quick deploy: create tool with user config, open deploy modal
+  const handleQuickDeploy = React.useCallback(async (result: { templateId: string; templateName: string; config: Record<string, string> }) => {
+    const template = availableTemplates.find(t => t.id === result.templateId);
+    if (!template) throw new Error('Template not found');
+
+    const toolId = await createToolFromTemplateApi(template, result.config);
+    // Redirect to IDE with deploy modal auto-open
+    router.push(`/lab/${toolId}?deploy=true`);
+  }, [availableTemplates, router]);
 
   // Popular templates to suggest when search is empty
   const popularTemplates = availableTemplates.slice(0, 6);
@@ -531,6 +570,45 @@ export default function ToolTemplatesPage() {
           </motion.div>
         )}
 
+        {/* Recommended for space type (when browsing from a space context) */}
+        {spaceType && recommendedTemplates.length > 0 && !search && category === 'all' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="mb-8"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <h2
+                className="text-sm font-medium"
+                style={{ color: COLORS.textSecondary }}
+              >
+                Recommended for {SPACE_TYPE_LABELS[spaceType]}
+              </h2>
+              <span
+                className="text-label-xs px-2 py-0.5 rounded-full font-medium"
+                style={{
+                  backgroundColor: `${COLORS.gold}15`,
+                  color: COLORS.gold,
+                }}
+              >
+                {recommendedTemplates.length} templates
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recommendedTemplates.slice(0, 6).map((template, index) => (
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  index={index}
+                  onSelect={handleSelectTemplate}
+                  isSelected={selectedTemplate?.id === template.id}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Templates Grid */}
         {filteredTemplates.length > 0 && (
           <AnimatePresence mode="wait">
@@ -643,6 +721,16 @@ export default function ToolTemplatesPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Quick Deploy Modal for instant templates */}
+      <QuickDeployModal
+        open={!!quickDeployTemplate}
+        onOpenChange={(open) => {
+          if (!open) setQuickDeployTemplate(null);
+        }}
+        template={quickDeployTemplate}
+        onDeploy={handleQuickDeploy}
+      />
     </div>
   );
 }

@@ -1,328 +1,207 @@
 # HIVE TODO
 
-**Updated:** 2026-02-05
-**Build:** `pnpm --filter=@hive/web build` (full monorepo may timeout)
-**Stack:** Next.js 15 · React 19 · Firebase · TypeScript · Vercel
+**Updated:** 2026-02-07
+**Focus:** Ship HiveLab to production. A student should be able to create a tool from a template, deploy it to their space, and have members actually use it — without hitting a single broken screen.
 
 ---
 
 ## Decision Log
 
-Architectural choices made. Not up for debate unless context changes.
-
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-02-04 | Real-time uses Firebase listeners + SSE, not WebSocket | Simpler architecture, Firebase already deployed, SSE good enough for notifications. |
-| 2026-02-04 | HiveLab automations stored but not executed | Data layer ready, execution engine deferred to post-launch. |
-| 2026-02-04 | Entry flow is multi-phase state machine | Gate → Naming → Field → Crossing. Single URL `/enter`, client-side state, no navigation jumps. |
-| 2026-02-05 | Canonical profile URL: `/u/[handle]` | Kill `/user/[handle]` and `/profile/[id]`. Single source of truth for routing. |
-| 2026-02-05 | Single Profile type source: `packages/core` | Domain type is canonical. App types extend it. No parallel definitions. |
-| 2026-02-05 | Handle validation: 20 char max, alphanumeric + underscore | No periods, no special chars. Most restrictive regime wins. |
-| 2026-02-05 | Avatar field: `avatarUrl` canonical | Kill `photoURL` and `profileImageUrl`. Single field name across codebase. |
-| 2026-02-05 | Three shells exist, only AppShell is active | UniversalShell (built, unused) and CampusShell (incomplete) need cleanup. Consolidate to one. |
+| 2026-02-04 | Real-time uses Firebase listeners + SSE, not WebSocket | Simpler architecture, Firebase already deployed. |
+| 2026-02-04 | HiveLab automations stored but not executed | Execution engine deferred to post-HiveLab-polish. |
+| 2026-02-04 | Entry flow is multi-phase state machine | Gate > Naming > Field > Crossing. Single URL `/enter`. |
+| 2026-02-07 | HiveLab is the priority. Everything else is frozen. | Builder experience IS adoption. Vercel's lesson: DX is growth. |
+| 2026-02-07 | Tools use predefined action handlers, not custom code | No `new Function()`, no `eval()`. Safe by design. Flexibility via new handlers. |
+| 2026-02-07 | Tools exist on 3 surfaces: Spaces, Profiles, Feed | Spaces first. Profiles and Feed come after HiveLab is excellent standalone. |
+| 2026-02-07 | 4 creation levels: Instant / Template / AI-Assisted / Full Builder | 60% instant, 25% template, 12% AI, 3% full builder. Target distribution. |
+| 2026-02-07 | No app store. Social discovery only. | Tools live in profiles and feeds, not a catalog. |
+| 2026-02-07 | Remix is the primary creation pattern | Fork any tool, customize, deploy. More powerful than templates alone. |
+| 2026-02-07 | Grid/stack layout deferred. Ship with flow only. | Grid is broken, stack is untested. Flow works. Ship what works. |
 
 ---
 
-## Feature Flags
+## What Exists (Working)
 
-Runtime toggles for incomplete features. Check `use-feature-flags.ts` before using.
+Don't rebuild these — extend them.
 
-| Flag | Status | Notes |
-|------|--------|-------|
-| `dmsEnabled` | OFF | DM infrastructure complete, UI not ready |
-| `notificationsEnabled` | OFF | SSE + data layer ready, push delivery not implemented |
-| `alumniEnabled` | OFF | Alumni waitlist functional, campus verification incomplete |
-| `ghost_mode` | OFF | Privacy enforcement incomplete, defer to post-launch |
-| `handle_change` | OFF | Backend ready, no UI for handle editing |
-
----
-
-## P0 — Pre-Launch Blockers
-
-### Security
-
-- [ ] **Fix cron endpoint auth bypass** — `if (CRON_SECRET && authHeader !== ...)` allows anyone when env var unset. Change to `if (!CRON_SECRET || authHeader !== ...)`. One-line fix in 3 files: `api/cron/automations/route.ts:32`, `cron/setup-orchestration/route.ts:31`, `cron/tool-automations/route.ts:30`
-- [ ] **Fix cross-campus permission gap** — `checkSpacePermission()` in `lib/space-permission-middleware.ts:95-295` does not validate campusId. Add `userCampusId` param and compare against `space.campusId`.
-- [ ] **Remove admin JWT dev fallback secret** — `lib/middleware/auth.ts:15-17` falls back to `'dev-only-secret-do-not-use-in-production'` when `ADMIN_JWT_SECRET` unset.
-- [ ] **Fix `new Function()` sandbox escape** — `lib/tool-execution-runtime.ts:223` uses `new Function()` for tool code execution. CVSS 9.0. Replace with `vm2` or WebAssembly sandbox.
-- [ ] **Reset rate limit constant** — `MAX_CODES_PER_EMAIL_PER_HOUR = 10` has comment "Temporarily increased for testing". Reset to 3-5.
-- [ ] **Remove hardcoded admin password** — `scripts/add-admin.ts` contains plaintext credentials (`Flynn123`). Delete or rotate.
-- [ ] **Add rate limiting to refresh token endpoint** — `api/auth/refresh/route.ts` has no rate limiting.
-- [ ] **Fix refresh token rotation** — `api/auth/refresh/route.ts` creates new token pair but never revokes old refresh token.
-- [ ] **Fix session ownership verification** — `api/auth/sessions/[sessionId]/route.ts` DELETE handler doesn't verify session belongs to requesting user.
-- [ ] **Remove deprecated session endpoint** — `api/auth/session/route.ts` is deprecated but still live with zero validation. Delete file.
-- [ ] **Fix ghost mode presence leak** — `hooks/use-presence.ts` exposes online status regardless of ghost mode settings.
-- [ ] **Enforce DM preferences** — `allowDirectMessages` preference exists but not enforced on DM creation routes.
-
-### Data Integrity
-
-- [ ] **Fix hardcoded schoolId in entry** — `components/entry/hooks/useEntry.ts:139` hardcodes `schoolId: 'ub-buffalo'`.
-- [ ] **Fix wrong schoolId in code verification** — `components/entry/hooks/useEntry.ts:504` sends incorrect schoolId to `verifyCode()`.
-- [ ] **Fix all profile URLs to `/u/[handle]`** — 3 conflicting patterns coexist. Fix in: explore/page.tsx (`/profile/${id}`), search/route.ts (`/user/${handle}`), notification-service.ts (11 dead `/spaces/` paths + `/user/` paths). Delete legacy `/profile/[id]/` route tree.
-- [ ] **Fix account deletion** — `api/profile/delete/route.ts:165` queries `spaceMemberships` but actual collection is `spaceMembers`. Also missing cascade deletions: `users` doc, `handles`, `notifications`, `connections`, `spaceJoinRequests`, `chatMessages`, `calendarTokens`, `verification_codes`, `activityEvents`, `tools`.
-
-### Mobile
-
-- [ ] **Add viewport-fit for iOS notch** — `app/layout.tsx` missing `viewport-fit: 'cover'`.
-- [ ] **Fix OTP input overflow on small screens** — `packages/ui/.../OTPInput.tsx` requires 314px but only 312px available on 360px screens.
-- [ ] **Define pb-safe utility** — `pb-safe` class used throughout but not defined in Tailwind config.
-
-### Compliance
-
-- [ ] **Add terms/privacy acceptance to entry flow** — No consent proof stored. Add checkbox + timestamps.
-- [ ] **Remove automatic Gravatar fetch** — `api/auth/complete-entry/route.ts` sends email MD5 hash without user consent.
-
-### Integration
-
-- [ ] **Verify `DEV_AUTH_BYPASS` is disabled in production** — no dev credentials in prod.
+| Component | Status | Location |
+|-----------|--------|----------|
+| 27 elements | Registry complete | `packages/core/src/domain/hivelab/element-registry.ts` |
+| 23 templates | All `ready` | `packages/ui/src/lib/hivelab/quick-templates.ts` |
+| Builder canvas | Working (flow layout) | `packages/ui/src/components/hivelab/StreamingCanvasView.tsx` |
+| Element renderers | Working (some stubs) | `packages/ui/src/components/hivelab/element-renderers.tsx` |
+| Tool state (shared + user) | Working | `apps/web/src/hooks/use-tool-runtime.ts` |
+| Real-time RTDB sync | Working | Firebase RTDB broadcast on action execution |
+| Action execution API | Working | `apps/web/src/app/api/tools/execute/route.ts` |
+| Publishing flow | Working | `apps/web/src/app/api/tools/publish/route.ts` |
+| Deploy to space flow | Working | `apps/web/src/app/lab/[toolId]/deploy/page.tsx` |
+| PlacedTool data model | Working | `packages/core/src/domain/spaces/entities/placed-tool.ts` |
+| Space tools API | Working | `apps/web/src/app/api/spaces/[spaceId]/tools/route.ts` |
+| Capability governance | Working | `packages/core/src/domain/hivelab/capabilities.ts` |
+| AI generation (Gemini) | Working | `apps/web/src/lib/firebase-ai-generator.ts` |
+| Sidebar tool cards | Working | `apps/web/src/components/spaces/sidebar-tool-section.tsx` |
+| Creator dashboard | Working | `apps/web/src/app/lab/page.tsx` |
+| Deploy modal | Working | `packages/ui/src/components/hivelab/ToolDeployModal.tsx` |
+| IDE editor | Working | `apps/web/src/app/lab/[toolId]/page.tsx` |
+| Template gallery | Working | `apps/web/src/app/lab/templates/page.tsx` |
 
 ---
 
-## P1 — Ship With Confidence
+## PRODUCTION GATE: Must Ship
 
-### Security
-
-- [ ] **Require auth for search API** — `api/search/route.ts` falls back to `getDefaultCampusId()` for unauthenticated users.
-- [ ] **Add campusId filter to collectionGroup queries** — `api/spaces/activity/recent/route.ts:171` and `api/tools/[toolId]/route.ts:268` can return cross-campus data.
-- [ ] **Fix access whitelist fail-open** — `api/auth/send-code/route.ts:169` returns `true` on error.
-- [ ] **Fix join request race condition** — `join-request/route.ts:111-141` check-then-create without transaction.
-- [ ] **Add chat message idempotency keys** — `.add()` creates duplicates on double-click. Use client-generated `messageId` with `.set()`.
-- [ ] **Add timeouts to all Firestore operations** — zero timeout protection. Add 8s default with AbortController.
-- [ ] Migrate `join-request` GET/DELETE and `join-requests` GET to `withAuthAndErrors`
-- [ ] Add Zod to 4 POST routes — `feedback`, `waitlist/join`, `waitlist/launch`, `friends`
-- [ ] Fix session revocation gap — `MAX_REVOCATION_AGE` (8 days) < session max (30 days)
-- [ ] **Upgrade `next` from 15.5.9 to >=15.5.10** — 2 CVEs
-- [ ] **Add `pnpm.overrides`** for patched transitives: `node-forge>=1.3.2`, `jws@4>=4.0.1`, `lodash>=4.17.23`
-- [ ] Implement CSRF for form-encoded POST — `extractToken()` has comment-only, no implementation
-- [ ] **Guard console.log in session.ts:57** — logs session secret info in production
-- [ ] Add campusId filter to dashboard space query — `api/profile/dashboard/route.ts:182-187`
-
-### Entry
-
-- [ ] **Update graduation years** — `FieldScreen.tsx` includes 2025 (in the past). Update to 2026-2029.
-- [ ] **Fix POPULAR_MAJORS mismatch** — "Engineering" in POPULAR_MAJORS but not in ALL_MAJORS.
-- [ ] **Differentiate phase transitions** — identical transition config for all 4 entry phases.
-- [ ] **Wire confetti on completion** — `ConfettiBurst` exists but never fires.
-- [ ] **Delete dead entry files** — ~15 orphaned files in `components/entry/`
-
-### Profile
-
-- [ ] **Wire badges** — `ProfilePageContent.tsx` never passes `badges` prop to ProfileIdentityHero.
-- [ ] **Fix Edit Profile link** — navigates to legacy route. Should go to `/me/settings`.
-- [ ] **Consolidate profile API calls** — 8 parallel requests on load. Merge into 1-2 endpoints.
-- [ ] **Display pronouns** — data exists, never rendered in UI.
-
-### Settings
-
-- [ ] **Fix account settings persistence** — account section changes NEVER SAVED. No PUT/PATCH wired.
-- [ ] **Add bio character counter** — backend limits to 500, UI gives no feedback.
-- [ ] **Add dirty-state warning** — navigation away with unsaved changes = silent data loss.
-- [ ] **Unify persistence patterns** — 3 different save patterns across 4 sections.
-
-### Handle
-
-- [ ] **Fix handle length divergence** — client validates max 20 chars, server allows 30.
-- [ ] **Fix handle period validation** — periods allowed server-side, blocked client-side.
-- [ ] **Expand reserved handle list** — missing platform routes: explore, home, lab, me, settings, api.
-- [ ] **Fix handle check endpoint** — `useDramaticHandleCheck` points to wrong API endpoint.
-- [ ] **Add handle change UI** — backend support exists, no frontend.
-
-### Integration
-
-- [ ] **Fix chat avatars** — `chat-messages.tsx:207-209` only renders AvatarFallback, never AvatarImage.
-- [ ] **Add tool creator attribution** — `ToolCard.tsx` shows zero creator info.
-- [ ] **Fix notification badge color** — TopBar badge uses RED (#EF4444), should be GOLD (#FFD700).
-- [ ] **Uncomment notification trigger** — `api/tools/updates/route.ts:898` has commented-out `createNotification()`.
-- [ ] **Add missing Firestore composite indexes** — need indexes for: posts (spaceId+createdAt), events (campusId+startTime), spaceMembers (spaceId+joinedAt), tools (campusId+status).
-- [ ] **Fix user search N+1** — `api/users/search` calculates mutual spaces per-user.
-- [ ] **Fix ghost space claim notification** — waitlist join works but no notification fires.
-
-### Reliability
-
-- [ ] Add retry logic to `deliverNotification()` — 3-attempt exponential backoff.
-- [ ] Wire unread count real-time sync — `useTotalUnreadCount()` hardcoded to 0.
-- [ ] Add Content Security Policy headers — only configured for `/admin/`.
-- [ ] **Add cookie consent banner** — required for GDPR.
-- [ ] **Remove or implement auto-delete activity toggle** — settings UI toggle is theater with no backend.
-- [ ] **Add idempotency keys to posts + comments** — `.add()` = double-click duplicates.
-- [ ] **Complete data export** — misses chat messages, authored posts, notifications, tools. GDPR Article 20.
-- [ ] Add verification_codes TTL/cleanup — docs never deleted, collection grows unbounded.
+Everything below this line blocks launch. No exceptions.
 
 ---
 
-## P2 — Core Experience
+### 1. Fix Element Renderers (The Big One)
 
-- [ ] Settings missing fields — pronouns, social links, cover photo, device management
-- [ ] Mobile triple breakpoint mismatch — tokens vs Tailwind vs hooks
-- [ ] Mobile touch target violations — 12+ items under 44px
-- [ ] Mobile profile page bottom padding — BottomNav overlap
-- [ ] Build thread panel UI for Spaces
-- [ ] Non-member space preview + social proof — blurred content, join CTA
-- [ ] Offline message queue + retry — failed sends disappear silently
-- [ ] Consolidate Home API calls — 3 fetches into 1 endpoint
-- [ ] Shared feed card library — extract SpaceCard, EventCard, ActivityCard into `packages/ui`
-- [ ] Add search history
-- [ ] Add faceted search filters
-- [ ] Time-grouped activity on home
-- [ ] "All quiet" empty state for home
-- [ ] Add notification badge to BottomNav home icon
-- [ ] Notification bell wiggle animation
-- [ ] Keyboard navigation in notification popover
-- [ ] Add "did you mean" suggestions to search
-- [ ] Unify space type shapes — SpaceCardData vs SpaceData vs SpaceWithMetadata
-- [ ] Consolidate AppShell + UniversalShell + CampusShell into one
-- [ ] Wire cross-tab unread sync via BroadcastChannel
-- [ ] Cache unread counts — event-driven invalidation, not recompute on fetch
+Element registry says 27 elements. Runtime renderers for several are stubs returning mock data or empty containers. A user deploys a "Leaderboard" template and gets hardcoded fake data — that's a broken product.
+
+**Audit and fix the top-used elements:**
+
+- [ ] **Poll element** — Verify: vote submission, results display, percentage bars, multi-option. Must work end-to-end with execute API.
+- [ ] **Counter element** — Verify: increment/decrement, display, shared state sync across users.
+- [ ] **RSVP element** — Verify: RSVP action, attendee count, user's own RSVP status, capacity limits.
+- [ ] **Countdown element** — Verify: target date config, live countdown, expired state.
+- [ ] **Leaderboard element** — Replace hardcoded mock data with real shared state. Render sorted entries from tool state.
+- [ ] **Chart display element** — Wire up Recharts. Render data from shared state (bar, line, pie based on config). Currently empty container.
+- [ ] **Form builder element** — Dynamic field rendering from config. Currently no fields render. Minimum: text input, select, checkbox.
+- [ ] **Result list element** — Render collection from shared state. Filter, sort, pagination.
+- [ ] **Progress indicator element** — Render percentage from shared state. Visual bar + label.
+- [ ] **Tag cloud element** — Render tags from shared state with frequency-based sizing.
+
+**Acceptance:** Deploy each of the 23 templates. Every element in every template must render real data and respond to user interaction. No mock data, no empty containers.
 
 ---
 
-## P3 — Growth & Retention
+### 2. Consumer Tool View
 
-- [ ] Profile completion rate tracking — target 80%+ within 7 days
-- [ ] Identity verification badges — campus email auto, org leader manual, early adopter auto
-- [ ] Profile belonging graph — shared spaces between users
-- [ ] Entry flow analytics — phase-by-phase timing, drop-off, handle collisions
-- [ ] Progressive profiling — bio prompt at +3 days, connection suggestions after first interaction
-- [ ] Conversion funnel analytics
-- [ ] Real trending calculation — activity velocity instead of member count
-- [ ] Full-text search — upgrade from `.includes()` to Algolia or Firestore text search
-- [ ] Recommendation caching — store per user, stop recomputing
-- [ ] Real-time unread badge on Home — wire SSE
-- [ ] Email digest service — batch per user, respect quiet hours
-- [ ] Complete ghost mode — real-time privacy violation detection
-- [ ] Connection feed/discovery
-- [ ] Space analytics dashboard — API exists, add chart rendering
+The page at `/s/[handle]/tools/[toolId]` is where real users interact with tools. It's functional but raw. This is the most-visited page in HiveLab's lifecycle — every tool user hits it.
+
+- [ ] **Tool header** — Tool name, creator name with link, usage count, back to space nav. Currently minimal.
+- [ ] **Share button** — Copy link to clipboard. That's it for v1. No QR, no social.
+- [ ] **Loading state** — Element-shaped skeleton placeholders instead of generic shimmer grid. Match the tool's actual layout.
+- [ ] **Empty states** — Every element type needs a guided empty state. Poll with no votes: "Be the first to vote." RSVP with no attendees: "No one has RSVPed yet." Never "No data."
+- [ ] **Error recovery** — When an action fails, show what happened and a retry button with context. Not just "Error."
+- [ ] **Mobile layout** — Test all elements at 375px. Fix overflow, touch targets (min 44px), text truncation. Flow layout should stack to single column on mobile.
+- [ ] **Interaction feedback** — Micro-animation on every user action. Vote submitted: bar grows. RSVP: checkmark appears. Counter: number ticks. Use motion tokens, <200ms.
+
+**Acceptance:** Hand phone to a friend. They open a tool link, understand what it does, interact with it, and see their action reflected. No confusion, no broken screens.
 
 ---
 
-## P4 — HiveLab Completion
+### 3. Template Quick-Deploy (Happy Path)
 
-- [ ] Wire automation execution engine — triggers never fire, need scheduler
-- [ ] Execute connection cascades on element state change
-- [ ] Build AI element generation — Claude API, name in → full element out
-- [ ] Wire `notifyAffectedUsers()` — space members don't get notified on tool updates
-- [ ] Implement template versioning — lock deployed templates at creation version
-- [ ] Build community trust workflow — verification form, reviewer dashboard
-- [ ] Build community reviews UI — API routes exist, no frontend
+60% of tools should come from templates. The current flow works but has friction. The happy path should be: browse templates → pick one → fill 2-3 fields → deploy to space → done.
 
----
+- [ ] **One-tap deploy for simple templates** — For 1-2 element templates (Quick Poll, Countdown, Announcements), skip the builder. Tap → configure fields in modal → deploy. QuickDeployModal exists but verify it works end-to-end.
+- [ ] **Template preview** — Show a visual preview of what the tool looks like before committing. Static render of the composition, not interactive.
+- [ ] **Deploy success → tool link** — After deploy, show the tool URL and a "View in space" button. Currently success animation plays but no clear next action.
+- [ ] **Template categories in gallery** — Group templates by function (events, engagement, feedback, teams). Currently flat list.
 
-## P5 — Performance & Infrastructure
-
-### High Impact / Low Effort
-
-- [ ] Profile type unification — 6 competing definitions → 1 canonical source
-- [ ] Avatar field consolidation — 3 names → 1 canonical `avatarUrl`
-- [ ] Denormalize RSVP counts onto event docs — N individual reads per dashboard load
-- [ ] Parallelize space page API calls — `use-space-residence-state.ts` makes 5 serial calls. Use `Promise.all`.
-- [ ] Eliminate duplicate presence heartbeat — global + per-space both send 60s heartbeats. Saves ~$500/mo at 10K DAU.
-- [ ] Add Cache-Control headers to dashboard and activity feed routes
-- [ ] Batch space doc reads in activity feed — N individual reads → `where('__name__', 'in', spaceIds)`
-
-### Medium Effort
-
-- [ ] Space page code split — `/s/[handle]` at 1.04 MB. Use `next/dynamic` for modals. Zero `dynamic()` usage anywhere.
-- [ ] Replace tool update polling with Firestore `onSnapshot` — 2s polling = 30 req/min per user
-- [ ] Convert 13 raw `<img>` tags to `next/image`
-- [ ] Eliminate duplicate user doc reads in `join-v2/route.ts:421,456`
-
-### High Effort
-
-- [ ] Presence cost reduction — 60s heartbeat × 10K DAU = 14.4M writes/day (~$1,036/mo). Increase to 120s.
-- [ ] Restructure activity feed — per-space queries to flat `activityFeed` collection
-- [ ] React Query cache tuning — HomePage uses raw `fetch()` bypassing all caching
-- [ ] Firestore indexes audit — 11 ghost collections with indexes but no code references. Add TTL policies.
-- [ ] Performance monitoring — Web Vitals component exists but never mounted
-- [ ] Typing cleanup background job — remove docs older than 3s
+**Acceptance:** New user goes from `/lab` to a working deployed tool in under 2 minutes using a template. Time it.
 
 ---
 
-## Debt
+### 4. Kill Broken Features
 
-### Architecture
+Shipping broken features is worse than shipping no features. Remove or gate anything that doesn't work.
 
-- [ ] Collapse dual JWT signing systems — two parallel implementations
-- [ ] Consolidate three session creation patterns
-- [ ] Collapse 3 space state machines (`SpaceState`, `ResidenceState`, `SpaceStatus`) into single enum
-- [ ] Remove redundant permission flags — derive from `role` only
-- [ ] Consolidate duplicate `SpaceCardData` type and `SpaceData` (3 locations)
-- [ ] Delete dead `packages/validation` — 14 schemas, zero imports
-- [ ] Split `space-settings.tsx` (1,946 lines) into section components
-- [ ] Standardize API response shapes — 4 patterns coexist
-- [ ] Merge dual `getCurrentUser` modules — `@/lib/auth-server` and `@/lib/server-auth`
-- [ ] Migrate 61 files from `useEffect` + `fetch` to React Query
-- [ ] Fix `window.location.href` in `tool-navigation.ts` — 6 occurrences bypass Next.js routing
-- [ ] Standardize tsconfig across packages
+- [ ] **Remove grid/stack layout options from UI** — Only flow layout works. Remove the layout selector from the builder until grid/stack are real. Don't let users pick a broken option.
+- [ ] **Gate element connections UI** — Connections aren't functional at runtime. If connection UI exists in the IDE, hide it. Show it when connections actually work.
+- [ ] **Hide incomplete elements from palette** — If an element renderer is a stub (returns mock data), don't show it in the element palette. Users shouldn't be able to add broken elements.
+- [ ] **Audit new elements** — Checklist, Signup Sheet, Directory, QR Code have stub implementations. Either finish them or remove from registry until they work.
+- [ ] **Remove unused builder-level/XP UI** — If builder levels aren't calculated, don't show the level display. Empty progress bars are worse than no progress bars.
 
-### Design Token Violations
+**Acceptance:** Every button does something real. Every element renders real data. Every option in the UI leads to a working feature.
 
-- [ ] Replace 183 hardcoded values in profile components with design tokens
-- [ ] Replace 26 `scale` transforms on hover/tap with opacity/brightness changes
-- [ ] Replace inline motion values with `@hive/tokens/motion` imports — 20+ components
-- [ ] Fix CSS animation hardcoded timing — pulseGold(2s), shineRotate(14s), borderBeam(12s), float(3s)
-- [ ] Fix entry flow motion constraint violations — uses 600-1500ms durations (constraint is <300ms)
-- [ ] Migrate 13 raw `<img>` tags to `next/image`
+---
 
-### Dead Code
+### 5. Deploy + Publish Flow
 
-- [ ] Delete `api-client-resilient.ts` + `error-resilience-system.ts` — zero consumers
-- [ ] Remove 8 unused deps from `apps/web`: `@sendgrid/mail`, `@upstash/redis`, `@hookform/resolvers`, `react-hook-form`, `react-intersection-observer`, `@radix-ui/react-icons`, `@dnd-kit/*`
-- [ ] Remove `motion` v12 from `packages/ui` — zero imports
-- [ ] Remove `input-otp` from `packages/ui` — zero imports
-- [ ] Consolidate 3 icon libraries → 1 (lucide-react)
-- [ ] Remove 8-12 unused design system exports
-- [ ] Consolidate duplicate EmptyState — local vs `packages/ui` version
-- [ ] Remove ~40KB dead DDD code in spaces services
-- [ ] Remove orphaned nav routes — /calendar, /rituals, /resources, /leaders
-- [ ] Deduplicate nav configs — NAV_ITEMS vs MobileNav vs SpaceMobileNav
-- [ ] Delete CampusShell — `app/campus-provider.tsx`
+The path from "I built a tool" to "people are using it" must be bulletproof.
 
-### Tooling & CI
+- [ ] **Deploy to space — end-to-end test** — Create tool → deploy to space → verify tool appears in space sidebar → verify tool opens and works → verify interactions are recorded. Manual test, document any failures.
+- [ ] **Deploy validation** — Before deploy, validate the tool composition. No broken elements, no empty required fields. Show specific errors ("Your poll needs at least 2 options") not generic "Invalid tool."
+- [ ] **Permissions on deployed tools** — Verify canView/canInteract/canEdit permissions work. A space member who can view but not interact should see the tool but buttons should be disabled.
+- [ ] **Deploy to profile** — Verify the profile deployment path works (separate from space deploy). Tool should appear on creator's profile.
+- [ ] **Undeploy/remove** — Space leaders need to remove a deployed tool. Verify the remove flow works.
 
-- [ ] Install Prettier — config exists but binary not in any `package.json`
-- [ ] Add pre-commit hooks (husky + lint-staged)
-- [ ] Add lint scripts to 7 packages
-- [ ] Fix CI test gating — tests can fail without stopping deploy
-- [ ] Remove `eslint: { ignoreDuringBuilds: true }` from `next.config.mjs`
-- [ ] Add env validation (Zod or t3-env)
-- [ ] Set up Dependabot or Renovate
-- [ ] Remove `tooling/*` from `pnpm-workspace.yaml` — matches nothing
-- [ ] Create `.env.local.example`
-- [ ] Fix Node.js engine mismatch — root `node 20.x` vs functions `node 18`
+**Acceptance:** Deploy a tool to a space. 3 different test accounts interact with it. All interactions visible. Remove the tool. It's gone.
 
-### Data Integrity
+---
 
-- [ ] Make join/leave member count atomic
-- [ ] Add negative-count protection to sharded counters
-- [ ] Fix counter drift — `memberCount` without transactions
-- [ ] Add denormalization fan-out — embedded names never propagate on change
-- [ ] Add schema versioning/migration framework
-- [ ] Standardize collection naming — `spaceMemberships` vs `spaceMembers`, `eventRSVPs` vs `rsvps`
-- [ ] Clean up 11 ghost indexes
-- [ ] Migrate client-side Firestore writes to API routes — 5 files bypass server
-- [ ] Fix Firebase admin mock fallback — init failure silently falls back to mock
+### 6. Creator Dashboard (Minimum Viable)
 
-### Reliability
+The `/lab` page is the builder's home. It works but some displayed data is incomplete.
 
-- [ ] Add circuit breaker for external services (SendGrid, FCM, Resend)
-- [ ] Add OTP email send retry
-- [ ] Fix multi-tab presence oscillation
-- [ ] Add client-side 401 auto-refresh interceptor
+- [ ] **My tools list** — Verify `/api/tools/my-tools` returns real data. Each card should show: name, status (draft/deployed/published), deployment count, last edited.
+- [ ] **Stats accuracy** — Stats bar shows total tools, total users, weekly interactions. Verify these numbers are real, not 0 or stale.
+- [ ] **Create new tool flow** — "Name a new tool..." input → routes to builder. Verify the routing works and the tool is created in Firestore.
+- [ ] **Delete/archive tool** — Creator should be able to remove a tool they built. Verify this works and removes from all deployed locations.
 
-### Compliance
+**Acceptance:** Builder logs in, sees their tools with accurate stats, creates a new one, deletes an old one. All real data.
 
-- [ ] Add login attempt logging — in-memory only, lost on redeploy
-- [ ] FERPA: Audit academic info visibility defaults
-- [ ] FERPA: Add consent notice for academic data
-- [ ] CCPA/CPRA: Add "Do Not Sell" notice
-- [ ] CAN-SPAM: Add physical address + unsubscribe to emails
+---
 
-### Observability
+### 7. AI Generation (Minimum Viable)
 
-- [ ] Fix email masking in logs
-- [ ] Add `/api/health` endpoint
-- [ ] Install `@sentry/nextjs`
-- [ ] Mount `WebVitals` component
-- [ ] Replace mock data in admin dashboards
-- [ ] Clean up 157 raw `console.log` calls
-- [ ] Add `/api/stats` auth or rate limiting
+AI generation works (Gemini integration is live). It needs to produce usable output.
+
+- [ ] **Generate → review → deploy** — User describes tool → AI generates composition → user sees it in builder → can deploy immediately. Verify this full flow.
+- [ ] **Generation quality** — AI output should only use elements whose renderers are functional. If chart/form renderers are stubs, exclude those elements from AI generation prompts.
+- [ ] **Template suggestion** — Before generating from scratch, check if user's description matches a template. "Sounds like Quick Poll — use it?" Saves generation time and produces better results.
+- [ ] **Error handling** — If generation fails (API error, timeout, bad output), show a clear message and offer to retry or start from template instead.
+
+**Acceptance:** Describe "a poll for picking our next event" → get a working poll tool → deploy it → it works.
+
+---
+
+## POST-LAUNCH: Next Up
+
+Ship the above first. Then these, roughly in order:
+
+### Remix System
+- Remix button on published tools
+- Copy composition + open in builder
+- Creator credit on remixed tools
+- Remix count metric
+
+### Element Connections
+- UI to connect element outputs → inputs in IDE
+- Runtime evaluation of connections
+- Data flow between elements
+
+### New Elements (finish stubs)
+- Signup Sheet (slot-based signups)
+- Checklist Tracker (shared progress)
+- Directory List (searchable member list)
+- QR Code Generator (physical distribution)
+- Schedule Picker (When2Meet alternative)
+- Voting Board (ranked choice)
+
+### Creator Analytics
+- Per-tool usage dashboard
+- Interaction trends over time
+- User feedback inbox
+- Usage milestone notifications
+
+### AI Refinement
+- Iterative editing ("add a counter to this")
+- Regenerate individual elements
+- Quality gate before publish
+
+### External Connections
+- Google Calendar sync
+- GroupMe bot notifications
+- Discord/Slack webhooks
+- iCal import/export
+
+---
+
+## Spec Reference
+
+Full spec: `docs/specs/HIVELAB_SPEC.md`
+Research: `docs/research/` (12 documents covering platforms, campus data, discovery, builder UX)

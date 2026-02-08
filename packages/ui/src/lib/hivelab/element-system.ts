@@ -570,6 +570,107 @@ const UNIVERSAL_ELEMENTS: ElementDefinition[] = [
     render: (props) => renderElement('availability-heatmap', props)
   },
 
+  // Signup Sheet - Slot-based signups
+  {
+    id: 'signup-sheet',
+    name: 'Signup Sheet',
+    description: 'Slot-based signups for office hours, volunteer shifts, study sessions',
+    category: 'action',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'ClipboardList',
+    configSchema: {
+      slots: { type: 'array', default: [] },
+      allowMultipleSignups: { type: 'boolean', default: false },
+      title: { type: 'string', default: 'Sign Up Sheet' }
+    },
+    defaultConfig: {
+      slots: [
+        { id: 'slot-1', name: 'Slot 1', time: '9:00 AM', capacity: 5 },
+        { id: 'slot-2', name: 'Slot 2', time: '10:00 AM', capacity: 5 },
+      ],
+      allowMultipleSignups: false,
+      title: 'Sign Up Sheet'
+    },
+    render: (props) => renderElement('signup-sheet', props)
+  },
+
+  // Checklist Tracker - Shared progress tracking
+  {
+    id: 'checklist-tracker',
+    name: 'Checklist Tracker',
+    description: 'Shared progress tracking with checkboxes, assignees, and completion tracking',
+    category: 'action',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'CheckSquare',
+    configSchema: {
+      items: { type: 'array', default: [] },
+      allowMemberAdd: { type: 'boolean', default: false },
+      title: { type: 'string', default: 'Checklist' }
+    },
+    defaultConfig: {
+      items: [],
+      allowMemberAdd: false,
+      title: 'Checklist'
+    },
+    render: (props) => renderElement('checklist-tracker', props)
+  },
+
+  // Directory List - Searchable contact directory
+  {
+    id: 'directory-list',
+    name: 'Directory List',
+    description: 'Searchable member or contact directory with configurable fields',
+    category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'ContactBook',
+    configSchema: {
+      fields: { type: 'array', default: [
+        { key: 'name', label: 'Name', type: 'text' },
+        { key: 'role', label: 'Role', type: 'role' },
+        { key: 'email', label: 'Email', type: 'email' },
+      ]},
+      entries: { type: 'array', default: [] },
+      useSpaceMembers: { type: 'boolean', default: false },
+      title: { type: 'string', default: 'Directory' }
+    },
+    defaultConfig: {
+      fields: [
+        { key: 'name', label: 'Name', type: 'text' },
+        { key: 'role', label: 'Role', type: 'role' },
+        { key: 'email', label: 'Email', type: 'email' },
+      ],
+      entries: [],
+      useSpaceMembers: false,
+      title: 'Directory'
+    },
+    render: (props) => renderElement('directory-list', props)
+  },
+
+  // QR Code Generator - Generate QR codes for URLs
+  {
+    id: 'qr-code-generator',
+    name: 'QR Code Generator',
+    description: 'Generate QR codes linking to the tool or custom URLs with download support',
+    category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'QrCode',
+    configSchema: {
+      url: { type: 'string', default: '' },
+      size: { type: 'string', default: 'md' },
+      label: { type: 'string', default: '' }
+    },
+    defaultConfig: {
+      url: '',
+      size: 'md',
+      label: ''
+    },
+    render: (props) => renderElement('qr-code-generator', props)
+  },
+
   // Photo Gallery - For Event Series and general photo sharing
   {
     id: 'photo-gallery',

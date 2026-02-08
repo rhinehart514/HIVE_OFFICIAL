@@ -52,6 +52,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
   const [step, setStep] = React.useState<'target' | 'config' | 'confirm' | 'success'>('target');
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = React.useState<Array<{ field: string; message: string; elementId?: string; severity: string }>>([]);
   const [animationComplete, setAnimationComplete] = React.useState(false);
 
   const [deploymentConfig, setDeploymentConfig] = React.useState<DeploymentConfig>(() => ({
@@ -68,6 +69,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
       setStep('target');
       setIsLoading(false);
       setError(null);
+      setValidationErrors([]);
       setAnimationComplete(false);
     }
   }, [open]);
@@ -92,11 +94,17 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
   const handleDeploy = async () => {
     setIsLoading(true);
     setError(null);
+    setValidationErrors([]);
     try {
       await onDeploy(deploymentConfig);
       setStep('success');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to deploy tool');
+      const errorMsg = e instanceof Error ? e.message : 'Failed to deploy tool';
+      setError(errorMsg);
+      // Try to parse validation errors from the error message
+      if (e instanceof Error && 'validationErrors' in (e as any)) {
+        setValidationErrors((e as any).validationErrors || []);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -346,14 +354,37 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
       <div className="space-y-4">
         {/* Error display - prominent at top */}
         {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-            <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-red-400 text-xs font-bold">!</span>
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-red-400 text-xs font-bold">!</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-red-400 text-sm font-medium">
+                  {validationErrors.length > 0 ? 'Tool needs fixes before deploying' : 'Deployment failed'}
+                </p>
+                {validationErrors.length === 0 && (
+                  <p className="text-red-400/80 text-sm mt-1">{error}</p>
+                )}
+              </div>
             </div>
-            <div>
-              <p className="text-red-400 text-sm font-medium">Deployment failed</p>
-              <p className="text-red-400/80 text-sm mt-1">{error}</p>
-            </div>
+            {validationErrors.length > 0 && (
+              <ul className="mt-3 space-y-1.5 ml-8">
+                {validationErrors.map((err, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <span className={err.severity === 'error' ? 'text-red-400' : 'text-yellow-400'}>
+                      {err.severity === 'error' ? '\u2715' : '\u26A0'}
+                    </span>
+                    <span className="text-[var(--hivelab-text-secondary)]">
+                      {err.message}
+                      {err.elementId && (
+                        <span className="text-[var(--hivelab-text-tertiary)]"> ({err.elementId})</span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 
