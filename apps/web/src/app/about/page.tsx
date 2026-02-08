@@ -6,7 +6,6 @@ import {
   Logo,
   motion,
   NoiseOverlay,
-  Button,
   useScroll,
   useTransform,
   useInView,

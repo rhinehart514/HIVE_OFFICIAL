@@ -9,7 +9,6 @@ import {
   WrenchIcon,
   ChatBubbleLeftIcon,
   ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   ClockIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
@@ -24,7 +23,6 @@ const Hash = HashtagIcon;
 const Wrench = WrenchIcon;
 const MessageSquare = ChatBubbleLeftIcon;
 const TrendingUp = ArrowTrendingUpIcon;
-const TrendingDown = ArrowTrendingDownIcon;
 const Clock = ClockIcon;
 const AlertTriangle = ExclamationTriangleIcon;
 const CheckCircle2 = CheckCircleIcon;

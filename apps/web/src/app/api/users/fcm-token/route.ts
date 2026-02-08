@@ -10,7 +10,6 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { dbAdmin } from '@/lib/firebase-admin';
 import {
   withAuthValidationAndErrors,
-  withAuthAndErrors,
   getUserId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';

@@ -7,8 +7,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
   Skeleton,
   MOTION,
 } from '@hive/ui';

@@ -669,7 +669,7 @@ export async function* firebaseGenerateToolStreaming(
  */
 function transformToComposition(
   tool: Record<string, unknown>,
-  request: GenerateToolRequest
+  _request: GenerateToolRequest
 ): import('@hive/core').ToolComposition {
   const elements = ((tool.elements as Array<Record<string, unknown>>) || []).map((el, index) => ({
     elementId: (el.type as string) || 'unknown',
@@ -679,7 +679,7 @@ function transformToComposition(
     config: (el.config as Record<string, unknown>) || {},
   }));
 
-  const connections = ((tool.connections as Array<Record<string, unknown>>) || []).map((conn, index) => ({
+  const connections = ((tool.connections as Array<Record<string, unknown>>) || []).map((conn, _index) => ({
     from: {
       instanceId: (conn.from as string) || '',
       output: 'default',

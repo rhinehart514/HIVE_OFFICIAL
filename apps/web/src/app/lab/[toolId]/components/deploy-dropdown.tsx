@@ -29,8 +29,8 @@ interface DeployDropdownProps {
 }
 
 export function DeployDropdown({
-  toolId,
-  toolName,
+  toolId: _toolId,
+  toolName: _toolName,
   onDeploy,
   onShareLink,
   onAdvancedSettings,

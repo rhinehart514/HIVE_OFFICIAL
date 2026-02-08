@@ -14,7 +14,7 @@
  * - Impact/success metrics
  */
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCommandStore, selectActiveView, selectIsConnected } from "@/lib/stores";
 import { PulseView } from "./PulseView";

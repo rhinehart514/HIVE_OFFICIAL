@@ -11,16 +11,6 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { getServerProfileRepository, PrivacyLevel, ProfilePrivacy } from '@hive/core/server';
-import { NextResponse } from 'next/server';
-
-// Add deprecation headers to all responses
-function addDeprecationHeaders(response: NextResponse): NextResponse {
-  response.headers.set('Deprecation', 'true');
-  response.headers.set('Sunset', 'Sat, 01 Mar 2026 00:00:00 GMT');
-  response.headers.set('Link', '</api/profile?include=grid,viewer>; rel="successor-version"');
-  response.headers.set('X-Deprecation-Notice', 'Use /api/profile?include=grid,viewer instead');
-  return response;
-}
 
 type ViewerRelationship = 'self' | 'friend' | 'connection' | 'campus';
 

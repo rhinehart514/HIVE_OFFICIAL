@@ -15,9 +15,7 @@ import {
   BarChart3,
   ChevronRight,
   Pencil,
-  Eye,
   Rocket,
-  MoreHorizontal,
   Users,
   TrendingUp,
   MessageSquare,
@@ -75,10 +73,9 @@ const STATUS_CONFIG = {
   },
 };
 
-export function ToolCard({ tool, onClick, onDelete, index = 0, variant = 'full' }: ToolCardProps) {
+export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant = 'full' }: ToolCardProps) {
   const router = useRouter();
   const status = STATUS_CONFIG[tool.status] || STATUS_CONFIG.draft;
-  const [showActions, setShowActions] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleEdit = useCallback((e: React.MouseEvent) => {
@@ -100,11 +97,6 @@ export function ToolCard({ tool, onClick, onDelete, index = 0, variant = 'full' 
     e.stopPropagation();
     router.push(`/lab/${tool.id}/deploy`);
   }, [router, tool.id]);
-
-  const handleMoreToggle = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowActions((prev) => !prev);
-  }, []);
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -273,7 +265,7 @@ interface NewToolCardProps {
   index?: number;
 }
 
-export function NewToolCard({ onClick, index = 0 }: NewToolCardProps) {
+export function NewToolCard({ onClick, index: _index = 0 }: NewToolCardProps) {
   return (
     <motion.button
       whileHover={cardHoverVariants.hover}

@@ -20,16 +20,11 @@ import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { usePermissions } from '@/hooks/use-permissions';
 import {
-  Text,
   Button,
   MOTION,
-  EmptyCanvas,
-  ArrivalTransition,
-  ArrivalZone,
 } from '@hive/ui/design-system/primitives';
 import { toast, type ReportContentInput } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
@@ -45,15 +40,12 @@ import {
   MainContent,
   MessageFeed,
   TypingIndicator,
-  type Member,
   type Board,
   type OnlineMember,
 } from './components';
 import { useTypingIndicator } from '@/hooks/use-presence';
 import { GatheringThreshold } from './components/threshold';
 import {
-  BoardsSidebar,
-  UnifiedActivityFeed,
   type FeedItem,
 } from '@/components/spaces';
 import type { CreateEventData } from '@/components/events/create-event-modal';
@@ -112,13 +104,13 @@ export default function SpacePageUnified() {
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
   const [showInfoDrawer, setShowInfoDrawer] = React.useState(false);
   const [showEventModal, setShowEventModal] = React.useState(false);
-  const [isFirstEntry, setIsFirstEntry] = React.useState(true);
+  const [, setIsFirstEntry] = React.useState(true);
   const [showDeleteSpaceConfirm, setShowDeleteSpaceConfirm] = React.useState(false);
   const [showDeleteBoardConfirm, setShowDeleteBoardConfirm] = React.useState<string | null>(null);
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
-  const [isCreatingBoard, setIsCreatingBoard] = React.useState(false);
+  const [, setIsCreatingBoard] = React.useState(false);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
   const [isDeletingBoard, setIsDeletingBoard] = React.useState(false);
   const [reportModal, setReportModal] = React.useState<{
@@ -144,7 +136,7 @@ export default function SpacePageUnified() {
     boards,
     activeBoard,
     setActiveBoard,
-    canAddBoard,
+    canAddBoard: _canAddBoard,
     messages,
     isLoadingMessages,
     isLoadingMoreMessages,
@@ -153,11 +145,11 @@ export default function SpacePageUnified() {
     sendMessage,
     joinSpace,
     leaveSpace,
-    rsvpToEvent,
+    rsvpToEvent: _rsvpToEvent,
     onlineMembers,
     upcomingEvents,
     navigateBack,
-    navigateToSettings,
+    navigateToSettings: _navigateToSettings,
     allMembers,
     isLoadingMembers,
     // Tools (HiveLab Sprint 1)
@@ -319,7 +311,7 @@ export default function SpacePageUnified() {
   }, [onlineMembers]);
 
   // Keyboard navigation (called unconditionally)
-  const { highlightedBoard } = useKeyboardNav({
+  const { highlightedBoard: _highlightedBoard } = useKeyboardNav({
     boardIds: (boards || []).map((b) => b.id),
     activeBoard: activeBoard || boards?.[0]?.id || 'general',
     onBoardChange: setActiveBoard,
@@ -349,7 +341,7 @@ export default function SpacePageUnified() {
   }, [messages]);
 
   // Transform messages to unified feed items (for legacy compatibility)
-  const feedItems: FeedItem[] = React.useMemo(() => {
+  const _feedItems: FeedItem[] = React.useMemo(() => {
     // Combine messages, events, and tools into unified feed
     const items: FeedItem[] = [];
 
@@ -507,7 +499,7 @@ export default function SpacePageUnified() {
         throw new Error(errorData.error || 'Failed to create event');
       }
 
-      const result = await response.json();
+      await response.json();
       setShowEventModal(false);
       toast.success('Event created successfully');
 

@@ -44,7 +44,7 @@ interface StreamingPreviewProps {
 
 export function StreamingPreview({
   prompt,
-  toolId,
+  toolId: _toolId,
   spaceContext,
   existingComposition,
   isIteration,

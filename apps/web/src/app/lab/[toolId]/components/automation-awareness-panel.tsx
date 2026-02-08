@@ -228,7 +228,7 @@ function DeploymentSection({ deployment }: { deployment: ToolDeployment }) {
   );
 }
 
-export function AutomationAwarenessPanel({ toolId, toolName, elementIds, onClose }: Props) {
+export function AutomationAwarenessPanel({ toolId, toolName, elementIds: _elementIds, onClose }: Props) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['tool-automations', toolId],
     queryFn: () => fetchToolAutomations(toolId),

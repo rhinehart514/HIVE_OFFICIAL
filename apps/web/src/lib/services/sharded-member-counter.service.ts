@@ -238,7 +238,7 @@ export function isShardedMemberCountEnabled(): boolean {
   return process.env.USE_SHARDED_MEMBER_COUNT === 'true';
 }
 
-export default {
+const shardedMemberCounterService = {
   incrementMemberCount,
   decrementMemberCount,
   getMemberCount,
@@ -248,3 +248,5 @@ export default {
   isSpaceMigrated,
   isShardedMemberCountEnabled,
 };
+
+export default shardedMemberCounterService;

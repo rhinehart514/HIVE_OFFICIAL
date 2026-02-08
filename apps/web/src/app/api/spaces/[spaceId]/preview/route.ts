@@ -119,7 +119,7 @@ export const GET = withAuthAndErrors(async (
       const presenceData = presenceSnap.data();
       onlineCount = presenceData?.onlineCount || Object.keys(presenceData?.members || {}).length || 0;
     }
-  } catch (err) {
+  } catch {
     // Presence is optional, fail silently
   }
 
@@ -131,7 +131,7 @@ export const GET = withAuthAndErrors(async (
       const data = spaceDoc.data();
       avatar = data?.avatarUrl || data?.avatar;
     }
-  } catch (err) {
+  } catch {
     // Avatar is optional
   }
 

@@ -9,7 +9,6 @@
  * Only config, visibility, and permissions can be modified.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';

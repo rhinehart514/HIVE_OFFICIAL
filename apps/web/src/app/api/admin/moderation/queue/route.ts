@@ -21,27 +21,6 @@ const QueueQuerySchema = z.object({
   offset: z.string().optional().transform(v => v ? parseInt(v, 10) : 0),
 });
 
-interface ReportDocument {
-  id: string;
-  contentType: 'message' | 'space' | 'tool' | 'profile' | 'post';
-  contentId: string;
-  contentPreview?: string;
-  reportType: 'spam' | 'harassment' | 'inappropriate' | 'other';
-  reportedBy: string;
-  reportedByName?: string;
-  targetUserId?: string;
-  targetUserName?: string;
-  spaceId?: string;
-  spaceName?: string;
-  reason: string;
-  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
-  priority: 'high' | 'medium' | 'low';
-  aiScore?: number;
-  aiFlags?: string[];
-  createdAt: Date;
-  updatedAt?: Date;
-}
-
 /**
  * GET /api/admin/moderation/queue
  * Fetch pending reports requiring review
@@ -62,7 +41,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
 
   try {
     // Build Firestore query for pending reports
-    let reportsQuery = dbAdmin
+    const reportsQuery = dbAdmin
       .collection('contentReports')
       .where('campusId', '==', campusId)
       .where('status', '==', 'pending')

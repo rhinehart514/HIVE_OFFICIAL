@@ -310,7 +310,7 @@ export function InviteLinkModal({
 
       setInvites((prev) => prev.filter((inv) => inv.id !== inviteId));
       toast.success('Revoked', 'Invite link has been disabled');
-    } catch (error) {
+    } catch {
       toast.error('Error', 'Failed to revoke invite');
     } finally {
       setRevokingId(null);

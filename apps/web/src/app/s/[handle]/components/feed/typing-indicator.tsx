@@ -20,9 +20,7 @@ interface TypingIndicatorProps {
 }
 
 export function TypingIndicator({ typingUsers, className }: TypingIndicatorProps) {
-  if (typingUsers.length === 0) return null;
-
-  // Format the typing message
+  // Format the typing message (must be above early return - rules of hooks)
   const typingMessage = React.useMemo(() => {
     if (typingUsers.length === 1) {
       return `${typingUsers[0]} is typing`;
@@ -34,6 +32,8 @@ export function TypingIndicator({ typingUsers, className }: TypingIndicatorProps
       return `${typingUsers[0]}, ${typingUsers[1]}, and ${typingUsers.length - 2} others are typing`;
     }
   }, [typingUsers]);
+
+  if (typingUsers.length === 0) return null;
 
   return (
     <AnimatePresence>

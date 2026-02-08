@@ -17,7 +17,7 @@ import { SecurityScanner } from "@/lib/secure-input-validation";
 import { GhostModeService, type GhostModeUser } from '@hive/core/domain/profile/services/ghost-mode.service';
 import { ViewerContext } from '@hive/core/domain/shared/value-objects/viewer-context.value';
 // Event-board auto-linking
-import { autoLinkEventToBoard, findEventBoard } from "@/lib/event-board-auto-link";
+import { autoLinkEventToBoard } from "@/lib/event-board-auto-link";
 import { isContentHidden } from "@/lib/content-moderation";
 import { notifySpaceEventCreated } from "@/lib/notification-service";
 

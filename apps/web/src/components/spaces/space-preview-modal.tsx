@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   XMarkIcon,
   UserGroupIcon,
@@ -35,7 +35,6 @@ import {
 } from '@hive/ui';
 import { Text, ModalOverlay } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
-import { secureApiFetch } from '@/lib/secure-auth-utils';
 
 // ============================================================
 // Types

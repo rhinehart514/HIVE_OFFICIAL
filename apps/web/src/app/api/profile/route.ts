@@ -364,10 +364,10 @@ export const GET = withAuthAndErrors(
 /**
  * Legacy response builder for backward compatibility
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function buildLegacyResponse(
   userId: string,
-  userData: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  userData: Record<string, any>,
   campusId: string,
   isOwnProfile: boolean = true,
   includes: string[] = []

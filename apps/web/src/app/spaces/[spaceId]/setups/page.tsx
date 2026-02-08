@@ -18,7 +18,6 @@ import {
   Zap,
   Play,
   Pause,
-  Calendar,
   GitBranch,
   ChevronRight,
   Clock,
@@ -27,10 +26,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { BrandSpinner, Button } from '@hive/ui';
-import { MOTION } from '@hive/tokens';
-
-const EASE = MOTION.ease.premium;
-
 const COLORS = {
   gold: 'var(--life-gold, #D4AF37)',
   bg: 'var(--bg-ground, #0A0A09)',
@@ -165,7 +160,7 @@ export default function SpaceSetupsPage() {
   const params = useParams();
   const spaceId = params.spaceId as string;
 
-  const { data: deployments = [], isLoading, error } = useQuery({
+  const { data: deployments = [], isLoading } = useQuery({
     queryKey: ['setup-deployments', spaceId],
     queryFn: () => fetchSetupDeployments(spaceId),
     enabled: !!spaceId,

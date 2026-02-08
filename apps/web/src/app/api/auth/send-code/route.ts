@@ -11,7 +11,6 @@ import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
-import { SESSION_CONFIG } from "@/lib/session";
 import { validateOrigin } from "@/lib/security-middleware";
 import { Resend } from 'resend';
 import { isDevAuthBypassAllowed, logDevCode } from "@/lib/dev-auth-bypass";
@@ -633,10 +632,10 @@ export const POST = withValidation(
 
       // Log code in development for testing
       if (currentEnvironment === 'development') {
-        console.log('\n========================================');
-        console.log(`🔑 DEV OTP CODE: ${code}`);
-        console.log(`📧 Email: ${normalizedEmail}`);
-        console.log('========================================\n');
+        console.warn('\n========================================');
+        console.warn(`DEV OTP CODE: ${code}`);
+        console.warn(`Email: ${normalizedEmail}`);
+        console.warn('========================================\n');
       }
 
       // Store in Firestore (skip in development to avoid quota issues)

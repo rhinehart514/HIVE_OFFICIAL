@@ -15,13 +15,12 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Facebook, Linkedin, Youtube, ExternalLink, Calendar, Shield, BellOff, Bell, Clock } from 'lucide-react';
+import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Calendar, Shield, BellOff, Bell, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials, SpaceHealthBadge, getSpaceHealthLevel, type SpaceHealthLevel } from '@hive/ui';
+import { Button, Avatar, AvatarImage, AvatarFallback, getInitials, SpaceHealthBadge, getSpaceHealthLevel } from '@hive/ui';
 import { MOTION, durationSeconds } from '@hive/tokens';
-import { useAuth } from '@hive/auth-logic';
 
-type EnergyLevel = 'busy' | 'active' | 'quiet' | 'none';
+
 
 interface SpaceHeaderProps {
   space: {
@@ -65,40 +64,6 @@ interface SpaceHeaderProps {
   className?: string;
 }
 
-/**
- * Calculate energy level from recent message count (last 24 hours)
- * - busy: 20+ messages
- * - active: 5-19 messages
- * - quiet: 1-4 messages
- * - none: 0 messages
- */
-function getEnergyLevel(messageCount: number = 0): EnergyLevel {
-  if (messageCount >= 20) return 'busy';
-  if (messageCount >= 5) return 'active';
-  if (messageCount >= 1) return 'quiet';
-  return 'none';
-}
-
-/**
- * Energy dots component
- */
-function EnergyDots({ level }: { level: EnergyLevel }) {
-  if (level === 'none') return null;
-
-  const dotCount = level === 'busy' ? 3 : level === 'active' ? 2 : 1;
-
-  return (
-    <div className="flex items-center gap-0.5 mr-1.5">
-      {[...Array(dotCount)].map((_, i) => (
-        <span
-          key={i}
-          className="w-1 h-1 rounded-full bg-[var(--color-gold)]"
-        />
-      ))}
-    </div>
-  );
-}
-
 const MUTE_OPTIONS = [
   { label: '1 hour', hours: 1 },
   { label: '8 hours', hours: 8 },
@@ -109,7 +74,7 @@ const MUTE_OPTIONS = [
 function MuteDropdown({
   isMuted,
   onMuteChange,
-  spaceId,
+  spaceId: _spaceId,
 }: {
   isMuted: boolean;
   onMuteChange: (muteUntil: string | null) => void;
@@ -244,8 +209,6 @@ export function SpaceHeader({
   onMuteChange,
   className,
 }: SpaceHeaderProps) {
-  const energyLevel = getEnergyLevel(space.recentMessageCount);
-
   // Calculate health level for health indicator
   const healthLevel = getSpaceHealthLevel({
     lastActivityAt: space.lastActivityAt,

@@ -415,7 +415,6 @@ export async function clearAllOfflineData(): Promise<void> {
  * Clear expired cache entries
  */
 export async function clearExpiredCache(): Promise<void> {
-  const database = await getDB();
   const now = Date.now();
 
   // Get all cache meta entries

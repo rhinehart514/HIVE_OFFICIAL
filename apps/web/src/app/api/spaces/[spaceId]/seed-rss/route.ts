@@ -134,7 +134,7 @@ export const POST = withAuthAndErrors(async (
             campusId: campusId,
           };
 
-          const postRef = await dbAdmin
+          await dbAdmin
             .collection('spaces')
             .doc(spaceId)
             .collection('posts')

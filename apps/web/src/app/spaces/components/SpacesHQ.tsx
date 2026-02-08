@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, MOTION, Button } from '@hive/ui/design-system/primitives';
-import { fadeInUpVariants, staggerContainerVariants, staggerItemVariants } from '@hive/ui/lib/motion-variants';
+import { fadeInUpVariants, staggerContainerVariants } from '@hive/ui/lib/motion-variants';
 import { useSpacesHQ } from '../hooks/useSpacesHQ';
 import { IdentityRow } from './IdentityRow';
 import { OrganizationsPanel } from './OrganizationsPanel';

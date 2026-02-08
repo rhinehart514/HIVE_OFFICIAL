@@ -16,7 +16,6 @@
 
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
-import { FieldValue } from 'firebase-admin/firestore';
 
 const MAJOR_UNLOCK_THRESHOLD = 10;
 

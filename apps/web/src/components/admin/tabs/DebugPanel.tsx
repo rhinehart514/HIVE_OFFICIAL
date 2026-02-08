@@ -25,7 +25,7 @@ export function DebugPanel() {
   try {
     const raw = sessionStorage.getItem('hive_admin_flag_overrides');
     if (raw) overrides = JSON.parse(raw);
-  } catch {}
+  } catch { /* intentionally empty */ }
 
   const debugData = {
     session: {

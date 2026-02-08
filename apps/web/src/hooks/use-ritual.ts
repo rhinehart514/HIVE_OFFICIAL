@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { RitualUnion, RitualPhase } from "@hive/core";
+import { RitualUnion } from "@hive/core";
 import { logger } from "@/lib/logger";
 
 export interface UseRitualOptions {

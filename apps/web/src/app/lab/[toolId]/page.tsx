@@ -180,7 +180,7 @@ async function deployToolToTarget(
     const errorData = await response.json().catch(() => ({}));
     const err = new Error(errorData.error || errorData.message || 'Failed to deploy tool');
     if (errorData.validationErrors) {
-      (err as any).validationErrors = errorData.validationErrors;
+      (err as unknown as Record<string, unknown>).validationErrors = errorData.validationErrors;
     }
     throw err;
   }

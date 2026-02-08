@@ -251,7 +251,7 @@ async function getSharedInterestsCount(userId1: string, userId2: string): Promis
 async function getMessageCount(userId1: string, userId2: string): Promise<number> {
   try {
     // Check DM conversations
-    const [chatId1, chatId2] = [`dm_${userId1}_${userId2}`, `dm_${userId2}_${userId1}`].sort();
+    const [chatId1] = [`dm_${userId1}_${userId2}`, `dm_${userId2}_${userId1}`].sort();
     const chatDoc = await db.collection('chats').doc(chatId1).get();
 
     if (chatDoc.exists) {

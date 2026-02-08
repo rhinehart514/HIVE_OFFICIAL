@@ -18,7 +18,6 @@ import { Hash, MoreVertical, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   SPACE_COMPONENTS,
-  SPACE_COLORS,
   spaceTypographyClasses,
 } from '@hive/tokens';
 

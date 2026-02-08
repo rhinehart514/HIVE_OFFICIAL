@@ -16,8 +16,8 @@ import { motion } from 'framer-motion';
 import { Calendar, MapPin, Video, Users, Check, Clock, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@hive/ui';
-import { SPACE_COMPONENTS, SPACE_COLORS } from '@hive/tokens';
-import { MOTION, durationSeconds } from '@hive/tokens';
+import { SPACE_COMPONENTS } from '@hive/tokens';
+import { MOTION } from '@hive/tokens';
 
 export interface EventCardEvent {
   id: string;

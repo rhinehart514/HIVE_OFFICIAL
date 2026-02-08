@@ -114,7 +114,7 @@ export function useFeatureFlags(flagIds?: string[]): UseFeatureFlagsReturn {
           const parsed = JSON.parse(overrides);
           if (flagId in parsed) return parsed[flagId];
         }
-      } catch {}
+      } catch { /* intentionally empty */ }
       return state.flags[flagId] === true;
     },
     [state.flags]

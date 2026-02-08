@@ -19,7 +19,6 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   ArrowLeft,
   Play,
-  Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
@@ -29,7 +28,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
-import { BrandSpinner } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 import { toast } from 'sonner';
 
@@ -241,15 +239,13 @@ function RunDetailDrawer({
   run,
   onClose,
   onRerun,
-  toolName,
+  toolName: _toolName,
 }: {
   run: ToolRun | null;
   onClose: () => void;
   onRerun: (run: ToolRun) => void;
   toolName: string;
 }) {
-  const shouldReduceMotion = useReducedMotion();
-
   const copyToClipboard = React.useCallback((text: string, type: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${type} copied to clipboard`);
@@ -496,7 +492,6 @@ export default function ToolRunsPage({ params }: Props) {
   const { toolId } = use(params);
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const shouldReduceMotion = useReducedMotion();
 
   const [runs, setRuns] = React.useState<ToolRun[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 
 // Lazy load page components for better performance
 // const LazyProfilePage = lazy(() => import('../app/(dashboard)/profile/page')); // Deleted in refactor

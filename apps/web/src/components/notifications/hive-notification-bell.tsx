@@ -11,9 +11,9 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, ChevronDown, ChevronRight, CheckCheck } from 'lucide-react';
+import { Bell, ChevronDown, CheckCheck } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent, Button } from '@hive/ui';
-import { MOTION, durationSeconds, staggerPresets } from '@hive/tokens';
+import { MOTION, durationSeconds } from '@hive/tokens';
 import { useRealtimeNotifications } from '@/hooks/use-realtime-notifications';
 import type { Notification } from '@/hooks/use-realtime-notifications';
 import { cn } from '@/lib/utils';

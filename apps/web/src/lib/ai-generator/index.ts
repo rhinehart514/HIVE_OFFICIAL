@@ -19,9 +19,9 @@ export * from './element-composition';
 export * from './tool-naming';
 
 // Import for internal use
-import { detectIntent, type Intent, type DetectedIntent } from './intent-detection';
+import { detectIntent } from './intent-detection';
 import { isIterationRequest, detectRefinement } from './refinement';
-import { composeElements, type ElementSpec, type Connection } from './element-composition';
+import { composeElements, type ElementSpec } from './element-composition';
 import { generateToolName } from './tool-naming';
 
 export interface StreamingChunk {

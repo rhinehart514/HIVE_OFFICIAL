@@ -12,7 +12,7 @@
  */
 
 import * as React from 'react';
-import { Search, MoreHorizontal, Pin, Bell, BellOff } from 'lucide-react';
+import { Search, MoreHorizontal, Pin, BellOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@hive/ui';
 import { SPACE_COLORS } from '@hive/tokens';
@@ -33,8 +33,8 @@ export function BoardHeader({
   isPinned = false,
   isMuted = false,
   onSearch,
-  onTogglePin,
-  onToggleMute,
+  onTogglePin: _onTogglePin,
+  onToggleMute: _onToggleMute,
   onOptions,
   className,
 }: BoardHeaderProps) {

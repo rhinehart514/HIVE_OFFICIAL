@@ -10,7 +10,7 @@
  */
 
 import * as React from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -21,21 +21,13 @@ import {
   Trash2,
   Settings,
   Zap,
-  Play,
   Eye,
   EyeOff,
   GripVertical,
-  ChevronDown,
-  ChevronRight,
   AlertCircle,
-  Check,
   Layers,
 } from 'lucide-react';
-import { BrandSpinner, Button } from '@hive/ui';
-import { MOTION } from '@hive/tokens';
-
-const EASE = MOTION.ease.premium;
-
+import { BrandSpinner } from '@hive/ui';
 const COLORS = {
   gold: 'var(--life-gold, #D4AF37)',
   bg: 'var(--bg-ground, #0A0A09)',
@@ -111,7 +103,6 @@ async function updateSetupTemplate(id: string, updates: Partial<SetupTemplate>):
 }
 
 export default function SetupBuilderPage() {
-  const router = useRouter();
   const params = useParams();
   const queryClient = useQueryClient();
   const setupId = params.setupId as string;
@@ -369,7 +360,7 @@ export default function SetupBuilderPage() {
 
                 {/* Tool Slots List */}
                 <div className="space-y-2">
-                  {localTools.map((slot, index) => (
+                  {localTools.map((slot, _index) => (
                     <motion.button
                       key={slot.slotId}
                       layout

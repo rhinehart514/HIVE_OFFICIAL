@@ -171,7 +171,7 @@ function HoverActions({
 export function SidebarToolCard({
   tool,
   isActive = false,
-  isDraggable = false,
+  isDraggable: _isDraggable = false,
   onClick,
   onRun,
   onViewFull,

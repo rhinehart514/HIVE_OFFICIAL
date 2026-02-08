@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getCatalog } from '@/server/onboarding-catalog-store';
-import { getCampusId as getCampusIdFromRequest, getDefaultCampusId, getCampusFromEmail } from '@/lib/campus-context';
+import { getCampusId as getCampusIdFromRequest, getCampusFromEmail } from '@/lib/campus-context';
 import { getCurrentUser } from '@/lib/server-auth';
 
 /**

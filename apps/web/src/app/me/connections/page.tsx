@@ -260,17 +260,6 @@ export default function ConnectionsPage() {
     }
   };
 
-  if (!user) {
-    router.push('/enter');
-    return null;
-  }
-
-  // Feature flag gate - redirect if connections feature is not enabled
-  if (!flagsLoading && !connectionsEnabled) {
-    router.push('/me');
-    return null;
-  }
-
   const filteredData = useMemo(() => {
     interface FilteredItem {
       id: string;
@@ -370,6 +359,17 @@ export default function ConnectionsPage() {
 
     return items;
   }, [activeTab, connections, friends, receivedRequests, searchQuery]);
+
+  if (!user) {
+    router.push('/enter');
+    return null;
+  }
+
+  // Feature flag gate - redirect if connections feature is not enabled
+  if (!flagsLoading && !connectionsEnabled) {
+    router.push('/me');
+    return null;
+  }
 
   if (isLoading) {
     return (

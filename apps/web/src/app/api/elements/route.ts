@@ -82,26 +82,6 @@ function toElementListDTO(element: ElementSpec): ElementListDTO {
 // Element Tier Classification
 // ============================================================================
 
-const UNIVERSAL_ELEMENT_IDS = new Set([
-  'search-input',
-  'date-picker',
-  'user-selector',
-  'form-builder',
-  'filter-selector',
-  'result-list',
-  'chart-display',
-  'poll-element',
-  'rsvp-button',
-  'countdown-timer',
-  'leaderboard',
-  'counter',
-  'timer',
-  'role-gate',
-  'tag-cloud',
-  'map-view',
-  'notification-center',
-]);
-
 const CONNECTED_ELEMENT_IDS = new Set([
   'event-picker',
   'space-picker',

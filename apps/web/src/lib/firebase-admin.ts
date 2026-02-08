@@ -134,7 +134,7 @@ try {
 
   // Create mock instances for development - throws on use to surface missing config
   dbAdmin = {
-    collection: (path: string) => ({
+    collection: (_path: string) => ({
       get: async () => {
         throw new Error(
           `Firebase Admin not configured for ${currentEnvironment}. Add credentials to environment variables.`
@@ -145,7 +145,7 @@ try {
           `Firebase Admin not configured for ${currentEnvironment}.`
         );
       },
-      doc: (id: string) => ({
+      doc: (_id: string) => ({
         get: async () => {
           throw new Error(
             `Firebase Admin not configured for ${currentEnvironment}.`

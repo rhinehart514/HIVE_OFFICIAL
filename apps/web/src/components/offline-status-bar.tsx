@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiIcon, CloudIcon, CheckIcon, ExclamationCircleIcon, ArrowPathIcon, NoSymbolIcon } from '@heroicons/react/24/outline';
+import { WifiIcon, CloudIcon, CheckIcon, ArrowPathIcon, NoSymbolIcon } from '@heroicons/react/24/outline';
 
 // Aliases for lucide compatibility
 const CloudOff = NoSymbolIcon;
@@ -28,7 +28,7 @@ interface OfflineStatusBarProps {
 export function OfflineStatusBar({
   className,
   position = 'top',
-  showPendingCount = true,
+  showPendingCount: _showPendingCount = true,
 }: OfflineStatusBarProps) {
   const {
     isOnline,

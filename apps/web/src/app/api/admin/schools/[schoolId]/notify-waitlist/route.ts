@@ -8,7 +8,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { logger } from '@/lib/logger';

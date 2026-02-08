@@ -260,8 +260,8 @@ async function triggerReactionThresholdAutomations(
         }
 
         if (userIds.length > 0) {
-          let title = action.config?.title || 'Popular Message';
-          let body = action.config?.body || `A message reached ${threshold} ${targetEmoji} reactions`;
+          const title = action.config?.title || 'Popular Message';
+          const body = action.config?.body || `A message reached ${threshold} ${targetEmoji} reactions`;
 
           await createBulkNotifications(userIds, {
             type: 'system',
@@ -280,7 +280,7 @@ async function triggerReactionThresholdAutomations(
         }
       } else if (action.type === 'send_message') {
         const config = action.config || {};
-        let content = config.content || `🎉 This message is popular! ${threshold}+ ${targetEmoji} reactions`;
+        const content = config.content || `This message is popular! ${threshold}+ ${targetEmoji} reactions`;
 
         await dbAdmin
           .collection('spaces')

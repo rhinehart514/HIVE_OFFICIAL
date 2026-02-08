@@ -138,7 +138,7 @@ export function Entry() {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [entry.phase, entry.gateStep, entry.goBack, router]);
+  }, [entry, router]);
 
   return (
     <EntryShell

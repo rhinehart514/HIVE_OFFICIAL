@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LandingNav, Logo, NoiseOverlay, Button } from '@hive/ui/design-system/primitives';
+import { Logo, NoiseOverlay, Button } from '@hive/ui/design-system/primitives';
 import { ArrowRight } from 'lucide-react';
 
 export function LandingHeader() {

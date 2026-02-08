@@ -1,11 +1,10 @@
 "use server";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { z } from "zod";
-import { logger } from "@/lib/logger";
 
 // ============================================================================
 // Constants

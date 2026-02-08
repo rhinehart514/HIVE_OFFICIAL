@@ -60,7 +60,7 @@ export function usePlatformStats(): UsePlatformStatsReturn {
           setStats(data.data);
           setError(false);
         }
-      } catch (err) {
+      } catch {
         if (mounted) {
           setError(true);
           // Keep fallback stats on error

@@ -1,8 +1,6 @@
 import { dbAdmin } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
-import { currentEnvironment } from "@/lib/env";
 import { logger } from "@/lib/structured-logger";
-import { ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 
 // Local response type aligned with our Firestore shape
 type SchoolSummary = {

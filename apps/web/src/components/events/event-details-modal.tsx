@@ -21,7 +21,6 @@ import {
   CalendarIcon,
   MapPinIcon,
   UserGroupIcon,
-  ClockIcon,
   BookmarkIcon,
   ShareIcon,
   CheckCircleIcon,
@@ -34,7 +33,7 @@ import {
   CheckCircleIcon as CheckCircleSolidIcon,
 } from "@heroicons/react/24/solid";
 import type { EventData } from "@/hooks/use-events";
-import { formatEventTime, getEventTypeColor, getEventTypeIcon } from "@/hooks/use-events";
+import { getEventTypeColor, getEventTypeIcon } from "@/hooks/use-events";
 
 export interface EventDetailsModalProps {
   isOpen: boolean;

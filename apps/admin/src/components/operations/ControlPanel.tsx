@@ -25,7 +25,6 @@ import {
   Cog6ToothIcon,
   MagnifyingGlassIcon,
   ArrowPathIcon,
-  CheckCircleIcon,
   ExclamationTriangleIcon,
   BoltIcon,
   BeakerIcon,

@@ -162,7 +162,7 @@ export function useToolStateRealtime(
         // Update timeline
         if (!subscriptions || subscriptions.includes('timeline')) {
           const newTimeline = data.timeline || [];
-          setTimeline((prev) => {
+          setTimeline((_prev) => {
             // Check for new events
             if (newTimeline.length > previousTimelineLength.current) {
               const newEvents = newTimeline.slice(previousTimelineLength.current);

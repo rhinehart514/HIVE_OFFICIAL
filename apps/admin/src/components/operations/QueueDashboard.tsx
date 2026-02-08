@@ -10,7 +10,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useOperationsStore, selectQueueCounts } from "@/lib/stores";
-import { HiveCard, CardContent, CardHeader, CardTitle, Badge, Button, Progress } from "@hive/ui";
+import { HiveCard, CardContent, CardHeader, CardTitle, Badge, Button } from "@hive/ui";
 import {
   FlagIcon,
   TrophyIcon,
@@ -77,7 +77,7 @@ const queueConfigs: QueueConfig[] = [
   },
 ];
 
-function QueueCard({ config, count, loading }: { config: QueueConfig; count: number; loading: boolean }) {
+function QueueCard({ config, count, loading: _loading }: { config: QueueConfig; count: number; loading: boolean }) {
   const Icon = config.icon;
   const hasItems = count > 0;
 

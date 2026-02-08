@@ -828,7 +828,6 @@ function HomeSkeleton() {
 
 export default function HomePage() {
   const { user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   // Fetch spaces via React Query
@@ -897,7 +896,7 @@ export default function HomePage() {
 
   // Derive data from query results
   const spaces = spacesData ?? [];
-  const allEvents = dashboardData?.events ?? [];
+  const _allEvents = dashboardData?.events ?? [];
   const recommendations = dashboardData?.recommendations ?? [];
   const activityItems = activityData ?? [];
 
@@ -990,26 +989,29 @@ export default function HomePage() {
   );
 
   const isNewUser = useMemo(
-    () => !loadingStates.spaces && spaces.length === 0,
-    [loadingStates.spaces, spaces.length]
+    () => !loadingSpaces && (spacesData ?? []).length === 0,
+    [loadingSpaces, spacesData]
   );
 
   const nextEvent = useMemo(() => {
-    const upcoming = allEvents
+    const events = dashboardData?.events ?? [];
+    const upcoming = events
       .filter((e) => isWithin24Hours(e.startDate) || e.isLive)
       .sort(
         (a, b) =>
           new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
       );
     return upcoming[0] || null;
-  }, [allEvents]);
+  }, [dashboardData?.events]);
 
   // Pick one recommendation to show (first one that user hasn't joined)
   const suggestedSpace = useMemo(() => {
-    if (isNewUser || recommendations.length === 0) return null;
-    const spaceIds = new Set(spaces.map((s) => s.id));
-    return recommendations.find((r) => !spaceIds.has(r.id)) || null;
-  }, [recommendations, spaces, isNewUser]);
+    const recs = dashboardData?.recommendations ?? [];
+    const spcs = spacesData ?? [];
+    if (isNewUser || recs.length === 0) return null;
+    const spaceIds = new Set(spcs.map((s) => s.id));
+    return recs.find((r) => !spaceIds.has(r.id)) || null;
+  }, [dashboardData?.recommendations, spacesData, isNewUser]);
 
   // Loading state
   if (authLoading) {

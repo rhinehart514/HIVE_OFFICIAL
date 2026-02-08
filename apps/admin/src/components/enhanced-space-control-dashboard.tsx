@@ -9,7 +9,7 @@ import {
   Cog6ToothIcon, EyeIcon, ChartBarIcon, ArrowPathIcon,
   PlayIcon, PauseIcon, ArchiveBoxIcon, ArrowPathIcon as ArrowPathIcon2, PencilIcon,
   CheckCircleIcon, XCircleIcon, ClockIcon, BoltIcon, CursorArrowRaysIcon, GlobeAltIcon,
-  ChatBubbleLeftIcon, CalendarIcon, WrenchIcon, ShieldCheckIcon
+  ChatBubbleLeftIcon, CalendarIcon, WrenchIcon
 } from "@heroicons/react/24/outline";
 
 // Aliases for lucide compatibility
@@ -35,7 +35,6 @@ const Globe = GlobeAltIcon;
 const MessageSquare = ChatBubbleLeftIcon;
 const Calendar = CalendarIcon;
 const Wrench = WrenchIcon;
-const Shield = ShieldCheckIcon;
 
 interface EnhancedSpace {
   id: string;

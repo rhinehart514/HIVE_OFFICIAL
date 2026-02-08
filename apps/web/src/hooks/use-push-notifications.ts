@@ -183,25 +183,21 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   }, [state.isSupported]);
 
   const registerToken = useCallback(async (token: string): Promise<void> => {
-    try {
-      const response = await fetch("/api/profile/fcm-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ token }),
-      });
+    const response = await fetch("/api/profile/fcm-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ token }),
+    });
 
-      if (!response.ok) {
-        throw new Error("Failed to register FCM token");
-      }
-
-      setState((prev) => ({
-        ...prev,
-        fcmToken: token,
-      }));
-    } catch (error) {
-      throw error;
+    if (!response.ok) {
+      throw new Error("Failed to register FCM token");
     }
+
+    setState((prev) => ({
+      ...prev,
+      fcmToken: token,
+    }));
   }, []);
 
   return {

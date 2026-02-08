@@ -86,7 +86,7 @@ export const GET = withAdminAuthAndErrors(async (request, context: RouteContext,
     }
 
     // Fetch members
-    let membersQuery = dbAdmin
+    const membersQuery = dbAdmin
       .collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('campusId', '==', campusId)
@@ -235,7 +235,7 @@ export const PATCH = withAuthValidationAndErrors(
       }
 
       const now = new Date();
-      let updateData: Record<string, unknown> = {
+      const updateData: Record<string, unknown> = {
         updatedAt: now,
         updatedBy: adminId,
       };

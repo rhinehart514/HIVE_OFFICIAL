@@ -35,8 +35,6 @@ import {
   ArrowPathIcon,
   MagnifyingGlassIcon,
   ChevronRightIcon,
-  StarIcon,
-  ChatBubbleLeftIcon,
   Square2StackIcon,
   SparklesIcon,
   HandThumbUpIcon,
@@ -56,14 +54,12 @@ const ExternalLink = ArrowTopRightOnSquareIcon;
 const RefreshCw = ArrowPathIcon;
 const Search = MagnifyingGlassIcon;
 const ChevronRight = ChevronRightIcon;
-const Star = StarIcon;
-const MessageSquare = ChatBubbleLeftIcon;
 const Layers = Square2StackIcon;
 const Sparkles = SparklesIcon;
 const ThumbsUp = HandThumbUpIcon;
 const ThumbsDown = HandThumbDownIcon;
 const Edit3 = PencilIcon;
-import { PieChart, BarChart } from "./charts";
+import { PieChart } from "./charts";
 
 interface PendingTool {
   id: string;
@@ -156,7 +152,7 @@ export function ToolReviewDashboard() {
           metrics: statsData.data.metrics,
         });
       }
-    } catch (err) {
+    } catch {
       setError("Network error");
     } finally {
       setLoading(false);
@@ -194,7 +190,7 @@ export function ToolReviewDashboard() {
       } else {
         setError(data.error?.message || "Failed to approve tool");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to approve tool");
     } finally {
       setActionLoading(false);
@@ -227,7 +223,7 @@ export function ToolReviewDashboard() {
       } else {
         setError(data.error?.message || "Failed to reject tool");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to reject tool");
     } finally {
       setActionLoading(false);

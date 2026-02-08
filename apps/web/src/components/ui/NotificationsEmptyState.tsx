@@ -13,7 +13,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Bell, CheckCircle, Inbox, Sparkles } from 'lucide-react';
-import { Button, Text } from '@hive/ui/design-system/primitives';
+import { Button } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 
 export type NotificationsEmptyVariant = 'new_user' | 'filtered' | 'caught_up';

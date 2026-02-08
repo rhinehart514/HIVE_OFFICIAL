@@ -335,7 +335,7 @@ export default function ToolTemplatesPage() {
   const availableTemplates = React.useMemo(() => getAvailableTemplates(), []);
 
   // Space-type sorted templates
-  const { recommended: recommendedTemplates, others: otherTemplates } = React.useMemo(
+  const { recommended: recommendedTemplates } = React.useMemo(
     () => getTemplatesSortedByRelevance(spaceType || undefined),
     [spaceType]
   );

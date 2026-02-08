@@ -35,7 +35,6 @@ export async function sendFirebaseMagicLinkEmail(
 
   try {
     // TODO: Implement actual Firebase email sending
-    // eslint-disable-next-line no-console
     logger.debug('Would send magic link', { component: 'firebase-auth-email', email: options.email });
     return { success: true };
   } catch (error) {

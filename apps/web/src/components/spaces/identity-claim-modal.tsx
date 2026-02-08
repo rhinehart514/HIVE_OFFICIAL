@@ -24,7 +24,6 @@ import {
   Text,
   SimpleAvatar,
   Button,
-  Input,
   Skeleton,
 } from '@hive/ui/design-system/primitives';
 import { toast } from '@hive/ui';
@@ -92,7 +91,7 @@ const MODAL_CONFIG: Record<
 // Hardcoded Options (for residential and major)
 // ============================================================
 
-const RESIDENTIAL_OPTIONS = [
+const _RESIDENTIAL_OPTIONS = [
   'Ellicott Complex',
   'Governors Complex',
   'Greiner Hall',
@@ -106,7 +105,7 @@ const RESIDENTIAL_OPTIONS = [
   'Spaulding Quadrangle',
 ];
 
-const MAJOR_OPTIONS = [
+const _MAJOR_OPTIONS = [
   'Computer Science',
   'Mechanical Engineering',
   'Electrical Engineering',

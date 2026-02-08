@@ -121,7 +121,6 @@ const TrackRequestSchema = z.object({
 });
 
 type TrackRequest = z.infer<typeof TrackRequestSchema>;
-type AnalyticsEvent = z.infer<typeof AnalyticsEventSchema>;
 
 /**
  * POST /api/analytics/track

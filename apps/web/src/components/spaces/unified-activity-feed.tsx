@@ -22,7 +22,6 @@ import {
   CalendarIcon,
   WrenchScrewdriverIcon,
   MegaphoneIcon,
-  UserGroupIcon,
   CheckIcon,
   XMarkIcon,
   EllipsisHorizontalIcon,
@@ -574,7 +573,7 @@ export function UnifiedActivityFeed({
   loading = false,
   onLoadMore,
   hasMore = false,
-  currentUserId,
+  currentUserId: _currentUserId,
   onEventRsvp,
   onRunTool,
   onReact,
@@ -629,15 +628,8 @@ export function UnifiedActivityFeed({
     };
   }, [hasMore, onLoadMore, loading]);
 
-  if (loading && filteredItems.length === 0) {
-    return <FeedSkeleton />;
-  }
-
-  if (filteredItems.length === 0) {
-    return <EmptyState />;
-  }
-
   // Find the index where unread messages begin
+  // MUST be above early returns to satisfy rules-of-hooks
   const firstUnreadIndex = React.useMemo(() => {
     if (!lastReadAt || unreadCount === 0) return -1;
 
@@ -652,6 +644,14 @@ export function UnifiedActivityFeed({
     }
     return -1;
   }, [filteredItems, lastReadAt, unreadCount]);
+
+  if (loading && filteredItems.length === 0) {
+    return <FeedSkeleton />;
+  }
+
+  if (filteredItems.length === 0) {
+    return <EmptyState />;
+  }
 
   return (
     <div className="flex flex-col">

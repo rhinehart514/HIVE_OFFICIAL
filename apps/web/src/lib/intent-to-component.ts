@@ -20,7 +20,6 @@ import type {
   PollCommand,
   RsvpCommand,
   CountdownCommand,
-  AnnounceCommand,
 } from './slash-command-parser';
 import { logger } from './logger';
 
@@ -466,7 +465,7 @@ export async function processMessageForComponent(
  */
 export function describeCreation(
   intent: ParsedIntent | ParsedSlashCommand,
-  source: CreationSource
+  _source: CreationSource
 ): string {
   if ('type' in intent) {
     // ParsedIntent

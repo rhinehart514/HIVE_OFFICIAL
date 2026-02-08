@@ -14,7 +14,6 @@
  */
 
 import React from 'react';
-import { usePathname } from 'next/navigation';
 import { useAuth } from '@hive/auth-logic';
 import { useRealtimeNotifications } from '../use-realtime-notifications';
 import { apiClient } from '@/lib/api-client';
@@ -284,7 +283,6 @@ function formatMeta(space: Record<string, unknown>): string {
  */
 export function useShellData(options: { skipFetch?: boolean } = {}): ShellDataResult {
   const { skipFetch = false } = options;
-  const pathname = usePathname();
   const auth = useAuth();
 
   // Notifications

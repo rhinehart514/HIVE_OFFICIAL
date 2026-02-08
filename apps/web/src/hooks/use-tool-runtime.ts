@@ -540,7 +540,7 @@ export function useToolRuntime(
             );
             if (updates.length === 0) return el;
 
-            let config = { ...el.config };
+            const config = { ...el.config };
             for (const update of updates) {
               // Set value at the input path in config
               const parts = update.inputPath.split('.');

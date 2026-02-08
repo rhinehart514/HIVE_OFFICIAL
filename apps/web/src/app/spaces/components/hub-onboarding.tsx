@@ -22,7 +22,7 @@ import {
   MOTION,
   Button,
 } from '@hive/ui/design-system/primitives';
-import { SPACES_MOTION, SPACES_GOLD } from '@hive/ui/tokens';
+import { SPACES_GOLD } from '@hive/ui/tokens';
 import { IdentityConstellation } from './identity-constellation';
 import { OrganizationsGrid } from './space-orbit';
 import type { IdentityClaim, Space } from '../hooks/useSpacesHQ';

@@ -214,7 +214,7 @@ function computeActiveDaysThisMonth(
 function formatActiveDays(days: number): string {
   if (days === 0) return 'No activity this month';
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const _todayStr = today.toISOString().split('T')[0];
   // We can't easily check "active today" without knowing if today's date is in contributions,
   // but the count is sufficient for display
   if (days === 1) return 'Active 1 day this month';
@@ -249,9 +249,9 @@ export default function ProfilePageContent() {
     heroPresence,
     profileSpaces,
     profileTools,
-    profileConnections,
-    totalConnections,
-    spacesLed,
+    profileConnections: _profileConnections,
+    totalConnections: _totalConnections,
+    spacesLed: _spacesLed,
     selectedTool,
     organizingEvents,
     sharedSpacesCount,

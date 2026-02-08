@@ -232,7 +232,7 @@ function shouldCronRun(cron: string, now: Date): boolean {
 /**
  * Calculate next run time from cron expression
  */
-function calculateNextRun(cron: string): Date {
+function calculateNextRun(_cron: string): Date {
   // Simplified: add 1 hour
   // Real implementation would use cron-parser library
   const next = new Date();
@@ -265,7 +265,7 @@ async function executeAutomationAction(
   action: { type: string; [key: string]: unknown },
   deploymentId: string,
   spaceId: string,
-  state: Record<string, unknown>
+  _state: Record<string, unknown>
 ): Promise<void> {
   if (action.type === 'notify') {
     // Get recipients

@@ -17,7 +17,6 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Calendar, MessageSquare, ArrowRight, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { AnimatedLine, WordReveal, GoldBorderContainer } from '@hive/ui/motion';
 import { MOTION, durationSeconds } from '@hive/tokens';

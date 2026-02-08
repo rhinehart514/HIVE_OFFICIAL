@@ -18,7 +18,7 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { z } from 'zod';
-import type { ToolConnection, DataTransform } from '@hive/core';
+import type { ToolConnection } from '@hive/core';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -59,7 +59,7 @@ async function verifyToolAccess(
 
   // Check space membership using composite key pattern
   const compositeId = `${spaceId}_${userId}`;
-  let memberDoc = await dbAdmin.collection('spaceMembers').doc(compositeId).get();
+  const memberDoc = await dbAdmin.collection('spaceMembers').doc(compositeId).get();
   let memberData = memberDoc.exists ? memberDoc.data() : null;
 
   if (!memberDoc.exists && toolOwnerId !== userId) {

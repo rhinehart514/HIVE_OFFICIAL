@@ -16,34 +16,26 @@ import {
 } from "@hive/ui";
 import { motion } from "framer-motion";
 import {
-  UsersIcon,
   UserPlusIcon,
   CheckCircleIcon,
   XCircleIcon,
   ArrowDownIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   ClockIcon,
   CursorArrowRaysIcon,
   ArrowPathIcon,
   ChevronDownIcon,
-  SparklesIcon,
   HeartIcon,
 } from "@heroicons/react/24/outline";
 
 // Aliases for lucide compatibility
-const Users = UsersIcon;
 const UserPlus = UserPlusIcon;
 const CheckCircle = CheckCircleIcon;
 const XCircle = XCircleIcon;
 const ArrowDown = ArrowDownIcon;
-const TrendingUp = ArrowTrendingUpIcon;
-const TrendingDown = ArrowTrendingDownIcon;
 const Clock = ClockIcon;
 const Target = CursorArrowRaysIcon;
 const RefreshCw = ArrowPathIcon;
 const ChevronDown = ChevronDownIcon;
-const Sparkles = SparklesIcon;
 const Heart = HeartIcon;
 import { AreaChart, BarChart, PieChart } from "./charts";
 
@@ -105,7 +97,7 @@ export function OnboardingFunnelDashboard() {
       } else {
         setError(data.error?.message || "Failed to fetch funnel data");
       }
-    } catch (err) {
+    } catch {
       setError("Network error");
     } finally {
       setLoading(false);

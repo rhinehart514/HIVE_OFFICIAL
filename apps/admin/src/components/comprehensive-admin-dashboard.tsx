@@ -24,7 +24,6 @@ import { ActivityLogViewer } from "./activity-log-viewer";
 import { ClaimsQueue } from "./claims-queue";
 import { LeaderHealthDashboard } from "./leader-health-dashboard";
 import { CommandCenterDashboard } from "./command";
-import { OperationsCenterDashboard } from "./operations";
 import { ModeSwitcher } from "./ModeSwitcher";
 import { NotificationPanel } from "./notifications/NotificationPanel";
 import {
@@ -46,7 +45,7 @@ interface AdminDashboardProps {
 
 export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDashboardProps) {
   const { admin } = useAdminAuth();
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, _setActiveTab] = useState(initialTab);
   const [adminMode, setAdminMode] = useState<AdminMode>("operations");
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationBellRef = useRef<HTMLButtonElement>(null);

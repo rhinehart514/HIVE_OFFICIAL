@@ -243,7 +243,7 @@ export class ToolStateBroadcasterService {
     const timelineEventsRef = this.rtdb.ref(timelineEventsPath);
 
     // Atomic push - concurrent-safe, no read required
-    const eventRef = await timelineEventsRef.push({
+    await timelineEventsRef.push({
       ...event,
       _serverTime: admin.database.ServerValue.TIMESTAMP,
     });

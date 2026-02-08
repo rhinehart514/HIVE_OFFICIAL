@@ -334,7 +334,7 @@ export default function SetupDetailPage() {
         const err = await response.json();
         throw new Error(err.error || 'Deploy failed');
       }
-      const data = await response.json();
+      await response.json();
       setShowDeployModal(false);
       // Navigate to the space
       const space = userSpaces.find(s => s.id === selectedSpaceId);

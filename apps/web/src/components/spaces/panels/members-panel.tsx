@@ -165,7 +165,7 @@ function EmptyState({ isLeader, onInvite }: { isLeader?: boolean; onInvite?: () 
 // ============================================================
 
 export function MembersPanel({
-  spaceId,
+  spaceId: _spaceId,
   members,
   totalCount,
   onlineCount = 0,

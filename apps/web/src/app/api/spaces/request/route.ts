@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import {

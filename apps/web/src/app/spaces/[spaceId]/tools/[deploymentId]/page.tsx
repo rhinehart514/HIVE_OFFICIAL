@@ -8,30 +8,21 @@
  */
 
 import * as React from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
   Save,
   Shield,
-  Zap,
-  Eye,
-  EyeOff,
   Users,
-  Settings,
   ExternalLink,
   Clock,
   User,
-  Layers,
 } from 'lucide-react';
 import { BrandSpinner, Button } from '@hive/ui';
-import { MOTION } from '@hive/tokens';
-
-const EASE = MOTION.ease.premium;
-
 const COLORS = {
   gold: 'var(--life-gold, #D4AF37)',
   bg: 'var(--bg-ground, #0A0A09)',
@@ -132,10 +123,8 @@ async function updatePlacement(
 }
 
 export default function PlacementDetailPage() {
-  const router = useRouter();
   const params = useParams();
   const queryClient = useQueryClient();
-  const shouldReduceMotion = useReducedMotion();
   const spaceId = params.spaceId as string;
   const deploymentId = params.deploymentId as string;
 

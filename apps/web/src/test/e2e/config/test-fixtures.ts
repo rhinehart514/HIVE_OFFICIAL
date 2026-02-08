@@ -69,6 +69,7 @@ export const test = base.extend<TestFixtures>({
 
     await loginWithDevMagicLink(page, TEST_USERS.admin.email);
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page);
     await context.close();
   },
@@ -82,6 +83,7 @@ export const test = base.extend<TestFixtures>({
 
     await loginWithDevMagicLink(page, TEST_USERS.admin.email);
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page);
     await context.close();
   },
@@ -95,6 +97,7 @@ export const test = base.extend<TestFixtures>({
 
     await loginWithDevMagicLink(page, TEST_USERS.student.email);
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page);
     await context.close();
   },
@@ -105,6 +108,7 @@ export const test = base.extend<TestFixtures>({
   testContext: async ({ authenticatedPage }, use) => {
     const csrfToken = await getCsrfToken(authenticatedPage);
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use({
       user: TEST_USERS.admin,
       csrfToken,

@@ -19,7 +19,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getAdminRecord, hasAdminRole } from '@/lib/admin-auth';
-import { FieldValue } from 'firebase-admin/firestore';
+
 
 const InviteSchema = z.object({
   email: z.string().email(),

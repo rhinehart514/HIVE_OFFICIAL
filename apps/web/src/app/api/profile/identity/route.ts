@@ -225,7 +225,7 @@ export const POST = withAuthValidationAndErrors(
         updateData.majorSpaceId = spaceId;
         updateData.major = spaceData.majorName || spaceData.name;
         break;
-      case 'greek':
+      case 'greek': {
         // Add to community identities
         const userDoc = await userRef.get();
         const existingIdentities = userDoc.data()?.communityIdentities || {};
@@ -239,6 +239,7 @@ export const POST = withAuthValidationAndErrors(
           updateData.communitySpaceIds = [...existingCommunitySpaces, spaceId];
         }
         break;
+      }
     }
 
     await userRef.update(updateData);

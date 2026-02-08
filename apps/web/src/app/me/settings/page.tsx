@@ -52,7 +52,6 @@ function SettingsContent() {
     notificationSettings,
     setNotificationSettings,
     privacySettings,
-    setPrivacySettings,
     accountSettings,
     calendarStatus,
     isCalendarLoading,

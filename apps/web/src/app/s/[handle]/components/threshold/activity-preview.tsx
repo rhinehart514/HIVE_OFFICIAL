@@ -19,7 +19,8 @@ import {
   useInView,
   MOTION,
 } from '@hive/ui/design-system/primitives';
-import { SPACES_GOLD } from '@hive/ui/tokens';
+
+
 
 // ============================================================
 // Types

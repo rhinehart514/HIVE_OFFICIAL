@@ -31,7 +31,6 @@ import { getCampusId as getCampusIdFromRequest, getDefaultCampusId, getCampusFro
 import { getCurrentUser } from '@/lib/server-auth';
 import {
   type DiningLocation,
-  type DiningLocationStatus,
   type DiningRecommendationDTO,
   isDiningLocationOpen,
   getMinutesUntilClose,

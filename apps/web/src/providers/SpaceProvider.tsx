@@ -138,7 +138,7 @@ export function SpaceProvider({ spaceId, initialBoardId, children }: SpaceProvid
   } = useSpaceMembers(spaceId, { limit: 100 });
 
   // Extract data
-  const boards = boardsData?.boards ?? [];
+  const boards = React.useMemo(() => boardsData?.boards ?? [], [boardsData?.boards]);
   const members = membersData?.members ?? [];
 
   // Find current user's membership

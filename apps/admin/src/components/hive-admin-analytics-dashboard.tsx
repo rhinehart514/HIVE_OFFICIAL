@@ -193,7 +193,6 @@ const SpaceCategoryCard: React.FC<{
   category: SpaceCategoryAnalytics;
   onViewDetails: () => void;
 }> = ({ category, onViewDetails }) => {
-  const { toast } = useToast();
   const getCategoryIcon = (cat: ValidSpaceCategory) => {
     switch (cat) {
       case 'student_organizations': return <HeartIcon className="w-5 h-5" />;
@@ -279,7 +278,6 @@ const ViolationAlert: React.FC<{
   violations: ViolationAnalytics;
   onViewDetails: () => void;
 }> = ({ violations, onViewDetails }) => {
-  const { toast } = useToast();
   if (violations.pendingViolations === 0) {
     return (
       <Card className="border-green-500/30 bg-green-500/5">

@@ -7,7 +7,7 @@
  * while /api/auth/me uses the httpOnly session cookie (preferred pattern).
  */
 
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';

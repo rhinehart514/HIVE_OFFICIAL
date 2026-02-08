@@ -21,7 +21,6 @@ const MAX_LOCKOUT_DURATION_MS = 24 * 60 * 60 * 1000; // Max 24 hours
 
 // In-memory cache for lockouts (reduces Firestore reads)
 const lockoutCache = new Map<string, { lockedUntil: number; violations: number }>();
-const CACHE_TTL_MS = 60 * 1000; // 1 minute cache
 
 /**
  * Hash an access code using SHA256

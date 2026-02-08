@@ -186,7 +186,7 @@ export function UserManagementDashboard({
   // Initial load and filter changes
   useEffect(() => {
     fetchUsers(true);
-  }, [roleFilter, statusFilter, sortBy, sortOrder]);
+  }, [roleFilter, statusFilter, sortBy, sortOrder, fetchUsers]);
 
   // Debounced search
   useEffect(() => {
@@ -196,7 +196,7 @@ export function UserManagementDashboard({
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, fetchUsers]);
 
   // Fetch user details
   const fetchUserDetails = async (userId: string) => {

@@ -96,8 +96,8 @@ export function logDevCode(email: string, code: string): void {
   logger.info('===========================================');
 
   // Also log to console for visibility
-  console.log('\n========================================');
-  console.log(`🔑 DEV OTP CODE: ${code}`);
-  console.log(`📧 Email: ${email}`);
-  console.log('========================================\n');
+  console.warn('\n========================================');
+  console.warn(`DEV OTP CODE: ${code}`);
+  console.warn(`Email: ${email}`);
+  console.warn('========================================\n');
 }

@@ -109,7 +109,7 @@ function IdentityCard({
   type,
   claim,
   onClaimClick,
-  onViewSpace,
+  onViewSpace: _onViewSpace,
   asChip = false,
 }: IdentityCardProps) {
   const config = IDENTITY_CONFIG[type];

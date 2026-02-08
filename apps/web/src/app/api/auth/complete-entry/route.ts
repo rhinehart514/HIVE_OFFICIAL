@@ -5,13 +5,13 @@ import { createHash } from 'crypto';
 import { FieldValue } from 'firebase-admin/firestore';
 import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
-import { createTokenPair, setTokenPairCookies, getSession, SESSION_CONFIG } from '@/lib/session';
+import { createTokenPair, setTokenPairCookies, getSession } from '@/lib/session';
 import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction, validateHandleFormat } from '@/lib/handle-service';
 import { logger } from '@/lib/logger';
 import { SecureSchemas } from '@/lib/secure-input-validation';
 import { isDevAuthBypassAllowed } from '@/lib/dev-auth-bypass';
 import { enforceRateLimit } from '@/lib/secure-rate-limiter';
-import { COMPLETION_REQUIREMENTS } from '@hive/core';
+
 
 /**
  * Generate Gravatar URL from email hash.

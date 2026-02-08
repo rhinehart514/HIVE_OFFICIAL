@@ -17,7 +17,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessageItem, type Message } from './message-item';
-import { MOTION } from '@hive/tokens';
+
+
 
 interface ThreadReply extends Message {
   parentId: string;
@@ -62,6 +63,7 @@ export function ThreadPanel({
       setReplies([]);
       setError(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, parentMessage?.id]);
 
   // Focus input when panel opens

@@ -35,7 +35,7 @@ export interface GhostSpaceCardProps {
   index?: number;
 }
 
-export function GhostSpaceCard({ space, index = 0 }: GhostSpaceCardProps) {
+export function GhostSpaceCard({ space, index: _index = 0 }: GhostSpaceCardProps) {
   const [isOnWaitlist, setIsOnWaitlist] = React.useState(false);
   const [isJoining, setIsJoining] = React.useState(false);
 

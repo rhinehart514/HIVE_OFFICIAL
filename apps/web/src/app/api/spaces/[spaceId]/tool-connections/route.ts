@@ -3,7 +3,6 @@ import {
   withAuthValidationAndErrors,
   withAuthAndErrors,
   getUserId,
-  getCampusId,
   type AuthenticatedRequest
 } from "@/lib/middleware";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
@@ -122,7 +121,6 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     const { spaceId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
 
     if (!spaceId) {
       return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });

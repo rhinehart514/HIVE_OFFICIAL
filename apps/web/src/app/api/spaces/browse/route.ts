@@ -18,7 +18,6 @@ import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import {
   getServerSpaceRepository,
-  getServerProfileRepository,
   toSpaceBrowseDTOList,
   type SpaceBrowseEnrichment,
 } from '@hive/core/server';
@@ -81,6 +80,7 @@ async function getUserMajorSpace(
   userId: string,
   campusId: string,
   spaceRepo: ReturnType<typeof getServerSpaceRepository>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ space: any; major: string; school: AcademicSchool } | null> {
   try {
     // Get user's profile
@@ -119,9 +119,12 @@ async function getUserMajorSpace(
  * Group spaces by academic school for major browse
  */
 function groupSpacesBySchool(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   spaces: any[],
   excludeSpaceId?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Record<string, any[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const groups: Record<string, any[]> = {};
 
   // Initialize all schools
@@ -252,6 +255,7 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
     spaces = spaces.filter((s) => s.isLive);
 
     // Get user's major if authenticated
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let userMajorData: { space: any; major: string; school: AcademicSchool } | null = null;
     if (userId) {
       userMajorData = await getUserMajorSpace(userId, campusId, spaceRepo);
@@ -337,6 +341,7 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
   // Handle Other Categories (interests, home, greek)
   // ============================================================
   const spaceTypes = CATEGORY_TO_SPACE_TYPES[category];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allSpaces: any[] = [];
 
   // Fetch spaces for each mapped type

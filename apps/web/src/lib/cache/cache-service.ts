@@ -4,7 +4,7 @@
 
 import { redisCache } from './redis-client';
 import { logger } from '@/lib/logger';
-import type { User, Space, Post, Tool, Ritual } from '@hive/core';
+import type { User, Space, Post, Ritual } from '@hive/core';
 
 interface CacheNamespaces {
   USERS: 'users';

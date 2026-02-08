@@ -9,7 +9,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { isRitualsEnabled, isRitualsLeadersOnly, isFoundingClassEnabled } from "@/lib/feature-flags";
+import { isRitualsEnabled, isRitualsLeadersOnly } from "@/lib/feature-flags";
 import { isAdmin as checkIsAdmin } from "@/lib/admin-auth";
 import { dbAdmin } from "@/lib/firebase-admin";
 

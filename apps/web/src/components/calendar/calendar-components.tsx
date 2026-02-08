@@ -17,7 +17,6 @@ import {
   CheckIcon,
   XMarkIcon,
   ChevronDownIcon,
-  ChevronUpIcon,
 } from "@heroicons/react/24/outline";
 import type { CalendarEvent } from "@/hooks/use-calendar";
 import { getTypeColor, getTypeIcon, formatTime, formatDate } from "@/hooks/use-calendar";
@@ -666,7 +665,7 @@ export function ConflictResolutionPanel({
       {/* Conflict groups */}
       <div className="space-y-4">
         <AnimatePresence mode="popLayout">
-          {conflictGroups.map((group, index) => (
+          {conflictGroups.map((group, _index) => (
             <ConflictGroup
               key={group.map(e => e.id).join('-')}
               events={group}

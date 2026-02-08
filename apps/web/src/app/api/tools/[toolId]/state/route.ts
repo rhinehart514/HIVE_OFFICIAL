@@ -431,7 +431,7 @@ async function executeAutomationAction(
   deploymentId: string,
   spaceId: string,
   userId: string,
-  state: Record<string, unknown>
+  _state: Record<string, unknown>
 ): Promise<void> {
   if (action.type === 'notify') {
     const { createBulkNotifications } = await import('@/lib/notification-service');

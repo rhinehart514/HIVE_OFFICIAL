@@ -54,8 +54,8 @@ export interface EntryShellProps {
 export function EntryShell({
   children,
   emotionalState = 'neutral',
-  currentStep = 'school',
-  showProgress = false,
+  currentStep: _currentStep = 'school',
+  showProgress: _showProgress = false,
   className,
   contentMaxWidth,
   footer,

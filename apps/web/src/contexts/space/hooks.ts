@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import {
   useSpaceMetadata,
   useOptionalSpaceMetadata,
-  type SpaceMetadataContextValue,
   type SpaceDetailDTO,
   type SpaceMembership,
   type MemberRole,
@@ -12,13 +11,11 @@ import {
 import {
   useSpaceEvents,
   useOptionalSpaceEvents,
-  type SpaceEventsContextValue,
   type SpaceEvent,
 } from "./SpaceEventsContext";
 import {
   useSpaceStructureContext,
   useOptionalSpaceStructure,
-  type SpaceStructureContextValue,
   type SpaceTab,
   type SpaceWidget,
   type SpacePermissions,
@@ -26,12 +23,10 @@ import {
 import {
   useSpaceTabUI,
   useOptionalSpaceTabUI,
-  type SpaceTabUIContextValue,
 } from "./SpaceTabUIContext";
 import {
   useSpaceLeader,
   useOptionalSpaceLeader,
-  type SpaceLeaderContextValue,
   type LeaderActions,
 } from "./SpaceLeaderContext";
 

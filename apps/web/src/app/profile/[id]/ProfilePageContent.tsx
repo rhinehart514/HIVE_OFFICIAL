@@ -50,9 +50,7 @@ const MAX_LEADERSHIP_VISIBLE = 3;
 const MAX_EVENTS_VISIBLE = 2;
 const MAX_SPACES_VISIBLE = 6;
 
-// Inline expansion thresholds
-const TOOLS_EXPANSION_THRESHOLD = MAX_TOOLS_VISIBLE;
-const SPACES_EXPANSION_THRESHOLD = MAX_SPACES_VISIBLE;
+// Inline expansion thresholds (used by expansion logic below)
 
 const EASE_PREMIUM: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -110,7 +108,6 @@ export default function ProfilePageContent() {
     profileSpaces,
     profileTools,
     profileConnections,
-    totalConnections,
     spacesLed,
     selectedTool,
     organizingEvents,
@@ -159,15 +156,7 @@ export default function ProfilePageContent() {
   };
 
   // ============================================================================
-  // Loading/Error States
-  // ============================================================================
-
-  if (isLoading) return <ProfileLoadingState />;
-  if (error) return <ProfileErrorState error={error} onNavigate={() => router.push('/spaces')} />;
-  if (!profileData || !heroUser) return <ProfileNotFoundState onNavigate={() => router.push('/feed')} />;
-
-  // ============================================================================
-  // Data Transformations
+  // Data Transformations (must be above early returns - rules of hooks)
   // ============================================================================
 
   // Transform tools for ProfileActivityCard
@@ -219,6 +208,14 @@ export default function ProfilePageContent() {
       spaceName: event.spaceName || undefined,
     }));
   }, [organizingEvents]);
+
+  // ============================================================================
+  // Loading/Error States
+  // ============================================================================
+
+  if (isLoading) return <ProfileLoadingState />;
+  if (error) return <ProfileErrorState error={error} onNavigate={() => router.push('/spaces')} />;
+  if (!profileData || !heroUser) return <ProfileNotFoundState onNavigate={() => router.push('/feed')} />;
 
   // Shared spaces count from hook (computed via API)
 

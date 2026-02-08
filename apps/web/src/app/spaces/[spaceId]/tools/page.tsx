@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -21,19 +21,11 @@ import {
   Pause,
   Trash2,
   Settings,
-  Eye,
-  EyeOff,
-  Shield,
-  Zap,
   ChevronRight,
   ExternalLink,
   Layers,
 } from 'lucide-react';
 import { BrandSpinner, Button } from '@hive/ui';
-import { MOTION } from '@hive/tokens';
-
-const EASE = MOTION.ease.premium;
-
 const COLORS = {
   gold: 'var(--life-gold, #D4AF37)',
   bg: 'var(--bg-ground, #0A0A09)',

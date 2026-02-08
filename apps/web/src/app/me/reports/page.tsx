@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Shell, Card, Badge, EmptyState, toast } from '@hive/ui';
+import { Card, EmptyState } from '@hive/ui';
 import { Text, Button } from '@hive/ui/design-system/primitives';
 import { Flag, Clock, CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { logger } from '@/lib/logger';

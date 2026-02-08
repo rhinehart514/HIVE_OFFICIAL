@@ -10,7 +10,6 @@
 import * as React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { OTPInput, CountdownTimer } from '@hive/ui/design-system/primitives';
-import { cn } from '@/lib/utils';
 import {
   stateVariants,
   childVariants,

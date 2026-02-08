@@ -233,8 +233,6 @@ export class ContentModerationService {
    */
   private async performAIAnalysis(report: ContentReport): Promise<AIAnalysisResult | null> {
     try {
-      const startTime = Date.now();
-
       // Get content text from snapshot
       const contentText = this.extractContentText(report.metadata.contentSnapshot);
       if (!contentText) {

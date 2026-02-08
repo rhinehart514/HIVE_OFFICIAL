@@ -6,7 +6,7 @@ import { MOTION } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 
 export default function ProfileError({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };

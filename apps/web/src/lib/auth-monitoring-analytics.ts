@@ -555,7 +555,7 @@ export class AuthMonitoringAnalytics {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ events: eventsToFlush })
       });
-    } catch (_error) {
+    } catch {
       // Re-queue events on failure - analytics flush is non-critical
       this.eventQueue.unshift(...eventsToFlush);
     }

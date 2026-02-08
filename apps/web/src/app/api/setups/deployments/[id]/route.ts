@@ -103,7 +103,7 @@ export async function PATCH(
       return errorResponse(parseResult.error.errors[0].message, 400);
     }
 
-    const { status, config, sharedData } = parseResult.data;
+    const { status, sharedData } = parseResult.data;
 
     // Get repository
     const repo = getServerSetupDeploymentRepository();
@@ -114,8 +114,6 @@ export async function PATCH(
     if (result.isFailure) {
       return errorResponse('Deployment not found', 404);
     }
-
-    const deployment = result.getValue();
 
     // Update status if provided
     if (status) {

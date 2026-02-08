@@ -2,15 +2,13 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowTopRightOnSquareIcon,
-  DocumentTextIcon,
   CodeBracketIcon,
   UsersIcon,
   StarIcon,
-  ArrowDownTrayIcon,
   BookOpenIcon,
   WrenchScrewdriverIcon,
   SparklesIcon,

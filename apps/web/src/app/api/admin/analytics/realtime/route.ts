@@ -86,13 +86,10 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Count unique sessions in recent activity
     const recentUserIds = new Set<string>();
     let recentPostCount = 0;
-    let recentToolInteractions = 0;
-
     recentActivitySnapshot.docs.forEach(doc => {
       const data = doc.data();
       if (data.userId) recentUserIds.add(data.userId);
       if (data.type === 'post_created' || data.type === 'message') recentPostCount++;
-      if (data.type === 'tool_interaction') recentToolInteractions++;
     });
 
     // Live events (started but not ended)

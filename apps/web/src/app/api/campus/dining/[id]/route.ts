@@ -14,9 +14,6 @@ import { getCampusId as getCampusIdFromRequest, getDefaultCampusId, getCampusFro
 import { getCurrentUser } from '@/lib/server-auth';
 import {
   type DiningLocation,
-  isDiningLocationOpen,
-  getMinutesUntilClose,
-  getCurrentMealPeriod,
   getDiningLocationStatus,
 } from '@hive/core';
 

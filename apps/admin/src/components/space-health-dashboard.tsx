@@ -20,10 +20,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
 } from "@hive/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -36,8 +32,6 @@ import {
   TrophyIcon,
   StarIcon,
   StarIcon as StarOffIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   ChartBarIcon,
   EyeIcon,
   ArrowTopRightOnSquareIcon,
@@ -59,8 +53,6 @@ const Wrench = WrenchIcon;
 const Crown = TrophyIcon;
 const Star = StarIcon;
 const StarOff = StarOffIcon;
-const TrendingUp = ArrowTrendingUpIcon;
-const TrendingDown = ArrowTrendingDownIcon;
 const Activity = ChartBarIcon;
 const Eye = EyeIcon;
 const ExternalLink = ArrowTopRightOnSquareIcon;
@@ -136,7 +128,7 @@ export function SpaceHealthDashboard() {
   const [hasLeaderFilter, setHasLeaderFilter] = useState<"all" | "true" | "false">("all");
 
   const [selectedSpace, setSelectedSpace] = useState<SpaceHealth | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [_detailLoading, _setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchSpaces = useCallback(async () => {
@@ -173,7 +165,7 @@ export function SpaceHealthDashboard() {
       } else {
         setError(data.error?.message || "Failed to fetch space health");
       }
-    } catch (err) {
+    } catch {
       setError("Network error");
     } finally {
       setLoading(false);
@@ -200,7 +192,7 @@ export function SpaceHealthDashboard() {
           setSelectedSpace({ ...selectedSpace, isFeatured: featured });
         }
       }
-    } catch (err) {
+    } catch {
       console.error("Failed to update feature status");
     } finally {
       setActionLoading(false);

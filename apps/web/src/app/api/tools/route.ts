@@ -3,7 +3,6 @@ import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import {
-  ToolSchema,
   createToolDefaults as coreCreateToolDefaults,
   type PlacementTargetType,
   validateToolComposition,
@@ -13,7 +12,6 @@ import {
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 import { rateLimit } from "@/lib/rate-limit";
 import { validateToolContext } from "@hive/core/infrastructure/api/validate-tool-context";
-import * as admin from "firebase-admin";
 import { getQuickTemplate } from "@hive/ui";
 
 // Define tool schemas locally (not in core package)
@@ -79,7 +77,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     const toolIds = snapshot.docs.map((doc) => doc.id);
 
     // Batch fetch deployments for these tools to get space context
-    let deploymentsMap = new Map<string, Array<{ spaceId: string; spaceName: string }>>();
+    const deploymentsMap = new Map<string, Array<{ spaceId: string; spaceName: string }>>();
     if (toolIds.length > 0) {
       // Firestore 'in' queries support up to 30 values
       const chunks: string[][] = [];
@@ -629,7 +627,7 @@ export const PUT = withAuthValidationAndErrors(
 
     // Context Gatekeeping: Preserve originalContext (cannot be changed after creation)
     // Remove context fields from updateData to prevent modification
-    const { contextType, contextId, contextName, ...safeUpdateData } = updateData;
+    const { contextType: _contextType, contextId: _contextId, contextName: _contextName, ...safeUpdateData } = updateData;
 
     const updatedTool = {
       ...existingTool,

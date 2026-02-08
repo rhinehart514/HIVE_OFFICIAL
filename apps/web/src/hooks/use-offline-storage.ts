@@ -286,7 +286,7 @@ export function useOfflineSync(options: SyncOptions = {}): SyncState & { sync: (
 
   const sync = useCallback(async () => {
     if (!isOnline) {
-      if (isDev) console.log('[OfflineSync] Skipping sync - offline');
+      if (isDev) console.warn('[OfflineSync] Skipping sync - offline');
       return;
     }
 
@@ -304,7 +304,7 @@ export function useOfflineSync(options: SyncOptions = {}): SyncState & { sync: (
         return;
       }
 
-      if (isDev) console.log(`[OfflineSync] Syncing ${mutations.length} pending mutations...`);
+      if (isDev) console.warn(`[OfflineSync] Syncing ${mutations.length} pending mutations...`);
 
       let success = 0;
       let failed = 0;
@@ -333,7 +333,7 @@ export function useOfflineSync(options: SyncOptions = {}): SyncState & { sync: (
       }));
 
       onSyncComplete?.({ success, failed });
-      if (isDev) console.log(`[OfflineSync] Sync complete: ${success} succeeded, ${failed} failed`);
+      if (isDev) console.warn(`[OfflineSync] Sync complete: ${success} succeeded, ${failed} failed`);
     } catch (error) {
       if (isDev) console.error('[OfflineSync] Sync error:', error);
       setState((prev) => ({
@@ -392,7 +392,7 @@ export function useOfflineData<T>(options: UseOfflineDataOptions<T>): UseOffline
   const fetchData = useCallback(async () => {
     if (!isOnline) {
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[useOfflineData:${cacheKey}] Offline - using cache only`);
+        console.warn(`[useOfflineData:${cacheKey}] Offline - using cache only`);
       }
       return;
     }
@@ -434,7 +434,6 @@ export function useOfflineData<T>(options: UseOfflineDataOptions<T>): UseOffline
         setIsLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Refetch when coming back online if data is stale

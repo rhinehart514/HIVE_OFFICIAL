@@ -30,7 +30,7 @@ export function PrivacySection({
   ghostModeEnabled,
   showGhostModeModal,
   setShowGhostModeModal,
-  onToggleGhostMode,
+  onToggleGhostMode: _onToggleGhostMode,
 }: PrivacySectionProps) {
   const ghostMode = useGhostMode();
 

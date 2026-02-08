@@ -16,7 +16,6 @@ import {
 } from "@/lib/tool-placement";
 import { notifyToolDeployment } from "@/lib/notification-service";
 import {
-  CAPABILITY_PRESETS,
   getDefaultBudgets,
   getCapabilityLane,
   validateCapabilityRequest,
@@ -318,49 +317,6 @@ function resolveBudgets(
     automationsPerDay: budgets?.automationsPerDay ?? defaults.automationsPerDay,
     executionsPerUserPerHour: budgets?.executionsPerUserPerHour ?? defaults.executionsPerUserPerHour,
   };
-}
-
-// Space-tier element IDs that require isSpaceLeader
-const SPACE_TIER_ELEMENTS = [
-  'member-list',
-  'member-selector',
-  'space-events',
-  'space-feed',
-  'space-stats',
-  'announcement',
-  'role-gate',
-];
-
-// Elements that are hidden (missing backend APIs) - cannot be deployed
-const BLOCKED_ELEMENTS = [
-  'study-spot-finder', // Calls /api/campus/buildings/study-spots - API doesn't exist
-  'dining-picker',     // Calls /api/campus/dining - API doesn't exist
-];
-
-/**
- * Check if tool composition contains space-tier elements
- */
-function compositionHasSpaceElements(toolData: FirebaseFirestore.DocumentData): boolean {
-  const elements = toolData.composition?.elements || toolData.elements || [];
-  return elements.some((el: { elementId?: string }) =>
-    SPACE_TIER_ELEMENTS.includes(el.elementId || '')
-  );
-}
-
-/**
- * Check if tool composition contains blocked elements (missing backend APIs)
- * Returns the list of blocked element IDs found, or empty array if none
- */
-function getBlockedElements(toolData: FirebaseFirestore.DocumentData): string[] {
-  const elements = toolData.composition?.elements || toolData.elements || [];
-  const blockedFound: string[] = [];
-  for (const el of elements) {
-    const elementId = el.elementId || '';
-    if (BLOCKED_ELEMENTS.includes(elementId)) {
-      blockedFound.push(elementId);
-    }
-  }
-  return blockedFound;
 }
 
 async function ensureToolIsDeployable(toolId: string, userId: string, campusId: string) {

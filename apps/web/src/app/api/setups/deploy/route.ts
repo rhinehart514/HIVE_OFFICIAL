@@ -89,8 +89,6 @@ export async function POST(request: NextRequest) {
       return errorResponse('Space not found', 404);
     }
 
-    const spaceData = spaceDoc.data();
-
     // Check if user is a leader (owner/admin/mod)
     const memberDoc = await dbAdmin
       .collection('spaces')

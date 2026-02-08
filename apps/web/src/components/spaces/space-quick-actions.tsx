@@ -23,7 +23,6 @@ import {
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
-import { Text } from '@hive/ui/design-system/primitives';
 import { MOTION } from '@hive/tokens';
 
 // ============================================================

@@ -31,7 +31,7 @@ import {
 // Animated counter component
 function AnimatedNumber({
   value,
-  duration = 1000,
+  duration: _duration = 1000,
 }: {
   value: number;
   duration?: number;

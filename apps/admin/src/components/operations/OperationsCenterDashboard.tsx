@@ -19,7 +19,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiveCard, CardContent, Badge } from "@hive/ui";
+import { Badge } from "@hive/ui";
 import { QueueDashboard } from "./QueueDashboard";
 import { ControlPanel } from "./ControlPanel";
 import { CommsPanel } from "./CommsPanel";

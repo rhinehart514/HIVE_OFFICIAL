@@ -29,13 +29,11 @@ import {
   ExclamationTriangleIcon,
   ExclamationCircleIcon,
   CheckCircleIcon,
-  XCircleIcon,
   PlusIcon,
   TrashIcon,
   PencilIcon,
   ArrowPathIcon,
   ClockIcon,
-  ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   UsersIcon,
   ChatBubbleLeftIcon,
@@ -48,13 +46,11 @@ const BellOff = BellSlashIcon;
 const AlertTriangle = ExclamationTriangleIcon;
 const AlertCircle = ExclamationCircleIcon;
 const CheckCircle = CheckCircleIcon;
-const XCircle = XCircleIcon;
 const Plus = PlusIcon;
 const Trash2 = TrashIcon;
 const Edit2 = PencilIcon;
 const RefreshCw = ArrowPathIcon;
 const Clock = ClockIcon;
-const TrendingUp = ArrowTrendingUpIcon;
 const TrendingDown = ArrowTrendingDownIcon;
 const Users = UsersIcon;
 const MessageSquare = ChatBubbleLeftIcon;

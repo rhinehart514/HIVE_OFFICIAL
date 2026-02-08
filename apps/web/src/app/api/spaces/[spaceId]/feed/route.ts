@@ -1,5 +1,4 @@
 import { dbAdmin } from "@/lib/firebase-admin";
-import { logger } from "@/lib/structured-logger";
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { z } from 'zod';
 import { HttpStatus } from "@/lib/api-response-types";

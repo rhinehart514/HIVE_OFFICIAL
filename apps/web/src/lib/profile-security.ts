@@ -7,7 +7,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from './firebase-admin';
 import { logger } from './structured-logger';
-import { getUserId, type AuthenticatedRequest } from './middleware';
+import { type AuthenticatedRequest } from './middleware';
 import * as admin from 'firebase-admin';
 
 // Connection visibility levels from PRD

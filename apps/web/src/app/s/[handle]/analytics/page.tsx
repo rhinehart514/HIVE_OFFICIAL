@@ -14,7 +14,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
-import { Button, Text, Card, MOTION } from '@hive/ui/design-system/primitives';
+import { Button, Text, Card } from '@hive/ui/design-system/primitives';
 import { StatCard, StatCardGroup, StatCardSkeleton } from '@hive/ui';
 import {
   ArrowLeftIcon,
@@ -22,7 +22,6 @@ import {
   ChatBubbleLeftIcon,
   CalendarDaysIcon,
   HeartIcon,
-  ArrowDownTrayIcon,
   ChartBarIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
@@ -32,18 +31,6 @@ import { useAuth } from '@hive/auth-logic';
 interface MemberGrowthData {
   date: string;
   value: number;
-}
-
-interface EngagementData {
-  posts: number;
-  reactions: number;
-  comments: number;
-  events: number;
-}
-
-interface HealthScore {
-  score: number;
-  insights: string[];
 }
 
 interface SpaceAnalytics {
@@ -403,7 +390,7 @@ export default function SpaceAnalyticsPage() {
   const params = useParams();
   const router = useRouter();
   const handle = params.handle as string;
-  const { user } = useAuth();
+  useAuth();
 
   const [spaceId, setSpaceId] = React.useState<string | null>(null);
   const [analytics, setAnalytics] = React.useState<SpaceAnalytics | null>(null);

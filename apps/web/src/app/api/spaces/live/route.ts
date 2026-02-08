@@ -156,8 +156,6 @@ export async function GET(request: NextRequest) {
 
     // Check for active events in these spaces
     const now = new Date();
-    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-
     const activeEventsSnapshot = await dbAdmin
       .collection('events')
       .where('spaceId', 'in', spaceIds.slice(0, 10))

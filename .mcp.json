@@ -4,7 +4,7 @@
       "type": "stdio",
       "command": "node",
       "args": [
-        "/Users/laneyfraass/.nvm/versions/node/v20.19.5/lib/node_modules/@playwright/mcp/cli.js"
+        "/Users/laneyfraass/.nvm/versions/node/v20.20.0/lib/node_modules/@playwright/mcp/cli.js"
       ],
       "env": {}
     },

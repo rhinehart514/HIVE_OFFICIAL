@@ -54,7 +54,7 @@ const SESSION_SECRET = rawSecret || generateDevSecret();
 
 // Log session secret source on startup (only in development)
 if (isDevelopment) {
-  console.log(`🔐 Session secret: ${rawSecret ? 'using .env.local (persistent)' : 'generated random (sessions will NOT persist)'}`);
+  console.warn(`Session secret: ${rawSecret ? 'using .env.local (persistent)' : 'generated random (sessions will NOT persist)'}`);
 }
 
 // Cookie names

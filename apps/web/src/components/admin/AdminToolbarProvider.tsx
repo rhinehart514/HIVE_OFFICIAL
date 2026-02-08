@@ -61,7 +61,7 @@ function loadOverrides(): Record<string, boolean> {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
+  } catch { /* intentionally empty */ }
   return {};
 }
 
@@ -72,7 +72,7 @@ function saveOverrides(overrides: Record<string, boolean>) {
     } else {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
     }
-  } catch {}
+  } catch { /* intentionally empty */ }
 }
 
 export function AdminToolbarProvider({ children }: { children: ReactNode }) {

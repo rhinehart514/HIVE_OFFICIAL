@@ -12,7 +12,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { Search, Clock, TrendingUp, AlertCircle, ArrowRight } from 'lucide-react';
-import { Button, Text } from '@hive/ui/design-system/primitives';
+import { Button } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 
 export type SearchEmptyVariant = 'no_results' | 'initial' | 'error';

@@ -433,7 +433,7 @@ export const useCommandStore = create<CommandState>()(
             setConnected(false, 'Max reconnection attempts reached');
           }
         };
-      } catch (error) {
+      } catch {
         setConnected(false, 'Failed to establish connection');
       }
     },

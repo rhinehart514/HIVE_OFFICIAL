@@ -13,7 +13,6 @@ import {
   useCommandStore,
   selectTerritoryNodes,
   type TerritoryNode,
-  type CategoryCluster,
 } from "@/lib/stores";
 import { HiveCard, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import {
@@ -77,28 +76,6 @@ function SpaceBubble({ node, onClick }: BubbleProps) {
         </div>
       )}
     </motion.div>
-  );
-}
-
-function CategoryPanel({ cluster }: { cluster: CategoryCluster }) {
-  return (
-    <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/5">
-      <div className="flex items-center gap-2">
-        <div
-          className="w-3 h-3 rounded-full"
-          style={{ backgroundColor: cluster.color }}
-        />
-        <span className="text-sm text-white/70">{cluster.label}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="text-xs">
-          {cluster.spaceCount} spaces
-        </Badge>
-        <span className="text-xs text-white/40">
-          {cluster.totalMembers.toLocaleString()} members
-        </span>
-      </div>
-    </div>
   );
 }
 

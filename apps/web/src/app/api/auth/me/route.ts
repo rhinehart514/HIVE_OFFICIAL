@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifySession, type SessionData, SESSION_CONFIG, getEncodedSessionSecret } from "@/lib/session";
+import { verifySession, type SessionData } from "@/lib/session";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";

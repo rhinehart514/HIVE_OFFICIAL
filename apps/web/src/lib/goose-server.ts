@@ -88,60 +88,6 @@ async function callOllama(
   return data.response;
 }
 
-async function* streamOllama(
-  config: GooseConfig,
-  prompt: string,
-  systemPrompt: string
-): AsyncGenerator<string> {
-  const response = await fetch(`${config.ollamaHost}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: config.ollamaModel,
-      prompt: prompt,
-      system: systemPrompt,
-      stream: true,
-      options: {
-        temperature: 0.3,
-        top_p: 0.9,
-        num_ctx: 2048,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Ollama error: ${response.status}`);
-  }
-
-  const reader = response.body?.getReader();
-  if (!reader) throw new Error('No response body');
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-
-    for (const line of lines) {
-      if (line.trim()) {
-        try {
-          const data = JSON.parse(line);
-          if (data.response) {
-            yield data.response;
-          }
-        } catch {
-          // Skip invalid JSON
-        }
-      }
-    }
-  }
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // GROQ BACKEND (Cloud Fallback)
 // ═══════════════════════════════════════════════════════════════════
@@ -368,7 +314,7 @@ export async function generateTool(
           composition = parseModelOutput(rawOutput);
           break;
 
-        case 'groq':
+        case 'groq': {
           // Use full system prompt for 70b model, compact for 8b
           const is70b = config.groqModel.includes('70b');
           const groqSystemPrompt = is70b
@@ -377,6 +323,7 @@ export async function generateTool(
           rawOutput = await callGroq(config, request.prompt, groqSystemPrompt);
           composition = parseModelOutput(rawOutput);
           break;
+        }
 
         case 'rules':
           composition = generateWithRules(request.prompt);
@@ -406,8 +353,6 @@ export async function generateTool(
 export async function* generateToolStream(
   request: GenerateRequest
 ): AsyncGenerator<StreamMessage> {
-  const config = getGooseConfig();
-
   // Yield thinking message
   yield { type: 'thinking', data: { message: 'Analyzing your request...' } };
 

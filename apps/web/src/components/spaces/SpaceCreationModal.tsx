@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Users, Lock, Globe, BookOpen, Compass, Briefcase, GraduationCap } from 'lucide-react';
+import { X, Check, Users, Lock, Globe, Compass, Briefcase, GraduationCap } from 'lucide-react';
 import {
   Button,
   Input,

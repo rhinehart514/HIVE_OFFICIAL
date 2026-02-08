@@ -72,12 +72,11 @@ export {
 // Admin middleware removed for HiveLab-only launch
 
 // Combined middleware wrappers
-import { withAuth, withAdminAuth, getUser, attachUser, deriveCampusFromEmail, type AuthenticatedHandler, type AuthenticatedRequest, type UserContext } from './auth';
+import { withAuth, withAdminAuth, getUser, attachUser, deriveCampusFromEmail, type AuthenticatedRequest, type UserContext } from './auth';
 import { withErrorHandling, type ApiHandler } from './error-handler';
 import { withResponse, type ResponseFormatter } from './response';
 import { type z } from 'zod';
-import { apiRateLimit, strictRateLimit, authRateLimit } from '../rate-limit-simple';
-import { CSRFProtection } from '../csrf-protection';
+import { apiRateLimit } from '../rate-limit-simple';
 import { isDevelopment } from '../env';
 
 // Define RouteParams type for dynamic route parameters
@@ -205,7 +204,7 @@ function getClientId(request: Request): string {
  */
 function withRateLimit(
   handler: ApiHandler,
-  config: RateLimitConfig = DEFAULT_LIMITS.authenticated
+  _config: RateLimitConfig = DEFAULT_LIMITS.authenticated
 ): ApiHandler {
   return async (request: Request, context: unknown) => {
     const clientId = getClientId(request);

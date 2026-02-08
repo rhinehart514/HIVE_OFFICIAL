@@ -7,7 +7,6 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   collection,
   query,
-  where,
   orderBy,
   limit,
   onSnapshot,
@@ -16,7 +15,6 @@ import {
   writeBatch,
   serverTimestamp,
   addDoc,
-  Timestamp
 } from 'firebase/firestore';
 import { db } from '@hive/firebase';
 import { useAuth } from '@hive/auth-logic';

@@ -24,7 +24,7 @@ import {
   Sparkles,
   AlertCircle,
 } from 'lucide-react';
-import { Button, BrandSpinner } from '@hive/ui';
+import { BrandSpinner } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 
 const EASE = MOTION.ease.premium;

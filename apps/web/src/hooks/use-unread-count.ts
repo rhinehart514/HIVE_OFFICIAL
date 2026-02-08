@@ -232,7 +232,6 @@ export function useSpaceUnreadCounts(spaceId: string, boardIds: string[]) {
     if (!user?.uid) return;
 
     try {
-      const now = new Date();
       const batch = boardIds.slice(0, 10).map(async (boardId) => {
         const readRef = doc(db, 'userBoardReads', `${user.uid}_${boardId}`);
         return setDoc(readRef, {

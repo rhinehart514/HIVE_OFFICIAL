@@ -15,7 +15,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SPACE_COMPONENTS, SPACE_COLORS } from '@hive/tokens';
+import { SPACE_COMPONENTS } from '@hive/tokens';
 
 interface UnreadDividerProps {
   /** Number of unread messages */

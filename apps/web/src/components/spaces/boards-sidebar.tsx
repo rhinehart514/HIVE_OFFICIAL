@@ -242,7 +242,7 @@ export function BoardsSidebar({
   // Events props (Phase 3 redesign)
   upcomingEvents = [],
   onEventClick,
-  onEventRsvp,
+  onEventRsvp: _onEventRsvp,
   // Tool props (HiveLab Sprint 1)
   sidebarTools = [],
   isLoadingTools = false,

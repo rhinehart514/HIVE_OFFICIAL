@@ -10,7 +10,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Button, Badge, HiveCard as Card, CardContent, CardHeader, CardTitle } from "@hive/ui";
+import { Button, Badge, HiveCard as Card, CardContent } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import {
   TrophyIcon,

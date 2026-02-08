@@ -11,7 +11,6 @@ import {
   Parallax,
   Magnetic,
   Button,
-  MOTION,
 } from '@hive/ui/design-system/primitives';
 import { ArrowRight } from 'lucide-react';
 import { WaitlistModal } from './WaitlistModal';

@@ -1,4 +1,3 @@
-import { NextResponse, type NextRequest } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 

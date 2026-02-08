@@ -1,5 +1,5 @@
 import { dbAdmin as db } from '@/lib/firebase-admin';
-import { withAuthAndErrors, getUserId, respond } from '@/lib/middleware';
+import { withAuthAndErrors, getUserId } from '@/lib/middleware';
 
 interface ConnectionData {
   connectionId: string;

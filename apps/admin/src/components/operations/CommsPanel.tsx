@@ -131,7 +131,7 @@ export function CommsPanel() {
         throw new Error(data.error?.message || "Failed to send announcement");
       }
 
-      const result = await response.json();
+      await response.json();
       setSuccess(scheduleEnabled ? "Announcement scheduled!" : "Announcement sent!");
 
       // Clear form

@@ -21,7 +21,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button, Text } from '@hive/ui';
+import { Button } from '@hive/ui';
 import { MOTION, durationSeconds } from '@hive/tokens';
 
 export type BoardType = 'general' | 'announcements' | 'events' | 'resources' | 'default';

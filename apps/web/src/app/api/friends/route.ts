@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
 
     // Combine friends
     const friendIds = new Set<string>();
-    const friendConnections: any[] = [];
+    const friendConnections: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+Record<string, any>[] = [];
 
     [...asId1Snapshot.docs, ...asId2Snapshot.docs].forEach(doc => {
       const data = doc.data();
@@ -46,7 +47,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch friend profiles
-    const friendProfiles: any[] = [];
+    const friendProfiles: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+Record<string, any>[] = [];
     const friendIdsArray = Array.from(friendIds);
 
     for (let i = 0; i < friendIdsArray.length; i += 10) {
@@ -74,7 +76,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const response: any = {
+    const response: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+Record<string, any> = {
       success: true,
       friends: friendProfiles,
       count: friendProfiles.length,
@@ -104,8 +107,10 @@ export async function GET(request: NextRequest) {
         .where('isActive', '==', true)
         .get();
 
-      const receivedRequests: any[] = [];
-      const sentRequests: any[] = [];
+      const receivedRequests: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+Record<string, any>[] = [];
+      const sentRequests: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+Record<string, any>[] = [];
 
       // Process received requests
       const receivedIds = new Set<string>();

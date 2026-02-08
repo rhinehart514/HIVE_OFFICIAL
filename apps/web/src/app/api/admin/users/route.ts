@@ -27,21 +27,6 @@ const ListQuerySchema = z.object({
   offset: z.string().optional().transform(v => v ? parseInt(v, 10) : 0),
 });
 
-interface UserProfile {
-  id: string;
-  email: string;
-  displayName: string;
-  handle: string;
-  avatarUrl: string | null;
-  role: string;
-  status: string;
-  campusId: string;
-  createdAt: FirebaseFirestore.Timestamp;
-  lastActive: FirebaseFirestore.Timestamp | null;
-  onboardingCompleted: boolean;
-  spaceMemberships: string[];
-}
-
 /**
  * GET /api/admin/users
  * List all users with admin-level filters

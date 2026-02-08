@@ -31,7 +31,6 @@ export const GET = withSecureAuth(
   async (request: Request, token: { uid: string }, context: RouteContext) => {
     try {
       const { spaceId, resourceId } = await context.params;
-      const userId = token.uid;
       const campusId = getDefaultCampusId();
 
       // Get resource

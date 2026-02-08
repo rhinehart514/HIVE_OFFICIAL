@@ -120,7 +120,7 @@ interface FeedWrapperProps {
   isFirstVisit?: boolean;
 }
 
-export function FeedWrapper({ children, isFirstVisit = false }: FeedWrapperProps) {
+export function FeedWrapper({ children, isFirstVisit: _isFirstVisit = false }: FeedWrapperProps) {
   return (
     <ArrivalZone zone="content" className="flex-1 flex flex-col min-w-0">
       {children}
@@ -137,7 +137,7 @@ interface SidebarWrapperProps {
   isFirstVisit?: boolean;
 }
 
-export function SidebarWrapper({ children, isFirstVisit = false }: SidebarWrapperProps) {
+export function SidebarWrapper({ children, isFirstVisit: _isFirstVisit = false }: SidebarWrapperProps) {
   return (
     <ArrivalZone zone="sidebar" className="w-[280px] shrink-0">
       {children}

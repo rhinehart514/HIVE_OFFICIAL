@@ -169,8 +169,10 @@ export function withAppCheck<T extends (...args: unknown[]) => Promise<Response>
   }) as T;
 }
 
-export default {
+const appCheckServer = {
   verifyAppCheckToken,
   verifyRequestAppCheck,
   withAppCheck,
 };
+
+export default appCheckServer;

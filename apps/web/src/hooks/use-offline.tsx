@@ -57,7 +57,7 @@ function loadPendingActions(): PendingAction[] {
       const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
       return actions.filter(a => a.createdAt > oneDayAgo);
     }
-  } catch (error) {
+  } catch {
     logger.warn('Failed to load pending actions', { component: 'useOffline' });
   }
 
@@ -71,7 +71,7 @@ function savePendingActions(actions: PendingAction[]): void {
     // Keep only the most recent actions
     const trimmed = actions.slice(-MAX_PENDING_ACTIONS);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
-  } catch (error) {
+  } catch {
     logger.warn('Failed to save pending actions', { component: 'useOffline' });
   }
 }
@@ -203,7 +203,7 @@ export function useOffline() {
       }
 
       return false;
-    } catch (error) {
+    } catch {
       logger.warn('Failed to execute pending action', {
         component: 'useOffline',
         actionId: action.id,
@@ -345,7 +345,7 @@ export function useOffline() {
 export function useOfflineChat(spaceId: string, boardId: string) {
   const offline = useOffline();
 
-  const queueMessage = useCallback((content: string, userId: string) => {
+  const queueMessage = useCallback((content: string, _userId: string) => {
     return offline.queueAction(
       {
         type: 'message',

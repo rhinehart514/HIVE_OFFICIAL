@@ -17,7 +17,6 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import {
   SPACE_LAYOUT,
-  SPACE_TYPOGRAPHY,
   spaceTypographyClasses,
 } from '@hive/tokens';
 import { BoardsList, type BoardsListProps } from './sidebar/boards-list';

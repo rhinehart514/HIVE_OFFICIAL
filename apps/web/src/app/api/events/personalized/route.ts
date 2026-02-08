@@ -176,7 +176,7 @@ async function handler(
     const userSpaceIds = new Set(membershipsSnapshot.docs.map(doc => doc.data().spaceId));
 
     // Step 2: Fetch events in time range
-    let eventsQuery = dbAdmin.collection('events')
+    const eventsQuery = dbAdmin.collection('events')
       .where('campusId', '==', campusId)
       .where('state', '==', 'published')
       .where('startDate', '>=', start.toISOString())

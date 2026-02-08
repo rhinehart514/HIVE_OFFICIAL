@@ -15,8 +15,6 @@ const SearchFeedSchema = z.object({
   includeUserContent: z.coerce.boolean().default(true)
 });
 
-type SearchFeedParams = z.infer<typeof SearchFeedSchema>;
-
 const db = dbAdmin;
 
 export const POST = withAuthValidationAndErrors(

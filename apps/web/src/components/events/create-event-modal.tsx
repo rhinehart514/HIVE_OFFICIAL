@@ -22,9 +22,7 @@ import {
 import {
   CalendarIcon,
   MapPinIcon,
-  ClockIcon,
   DocumentTextIcon,
-  TagIcon,
   GlobeAltIcon,
   VideoCameraIcon,
   BuildingOfficeIcon,
@@ -73,7 +71,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   isOpen,
   onClose,
   onCreateEvent,
-  spaceId,
+  spaceId: _spaceId,
   spaceName,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -202,7 +200,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       });
 
       onClose();
-    } catch (error) {
+    } catch {
       toast.error("Failed to create event", "Please try again.");
     } finally {
       setIsSubmitting(false);

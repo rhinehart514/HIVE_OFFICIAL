@@ -133,11 +133,10 @@ export const POST = withSecureAuth(
 
 // GET - List posts (simple endpoint, main feed at /api/feed)
 export const GET = withSecureAuth(
-  async (request: Request, token: { uid: string }) => {
+  async (request: Request, _token: { uid: string }) => {
     try {
       const { searchParams } = new URL(request.url);
       const campusId = getDefaultCampusId();
-      const userId = token.uid;
       const spaceId = searchParams.get('spaceId');
       const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
 

@@ -215,7 +215,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
   // Initialize with empty arrays - real data comes from API
   const [onlineMembers, setOnlineMembers] = React.useState<OnlineMember[]>([]);
   const [upcomingEvents, setUpcomingEvents] = React.useState<UpcomingEvent[]>([]);
-  const [pinnedItems, setPinnedItems] = React.useState<PinnedItem[]>([]);
+  const [pinnedItems] = React.useState<PinnedItem[]>([]);
   const [allMembers, setAllMembers] = React.useState<SpaceMember[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = React.useState(false);
 

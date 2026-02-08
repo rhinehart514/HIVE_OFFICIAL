@@ -52,7 +52,6 @@ export const GET = withAuthAndErrors(async (
     }
 
     // Calculate date range
-    const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     const startDateStr = startDate.toISOString().slice(0, 10);

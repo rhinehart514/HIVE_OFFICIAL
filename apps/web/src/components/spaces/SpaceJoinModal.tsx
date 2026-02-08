@@ -12,7 +12,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Check, AlertCircle } from 'lucide-react';
 import {
   Button,
   Text,

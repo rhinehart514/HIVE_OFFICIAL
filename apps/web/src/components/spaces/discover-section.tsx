@@ -18,7 +18,6 @@ import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import {
   Text,
-  Skeleton,
   CategoryScroller,
   type CategoryItem,
 } from '@hive/ui/design-system/primitives';
@@ -117,7 +116,7 @@ const TABS: { value: DiscoverTab; label: string; apiCategory: string }[] = [
 
 function computeSpaceScore(
   space: DiscoverSpace,
-  joinedSpaceIds: Set<string>
+  _joinedSpaceIds: Set<string>
 ): number {
   let score = 0;
 
@@ -292,7 +291,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 // ============================================================
 
 export function DiscoverSection({
-  onNavigateToSpace,
+  onNavigateToSpace: _onNavigateToSpace,
   onJoinSpace,
   joinedSpaceIds = new Set(),
 }: DiscoverSectionProps) {
@@ -301,7 +300,6 @@ export function DiscoverSection({
   const [spaces, setSpaces] = React.useState<DiscoverSpace[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
-  const [joiningId, setJoiningId] = React.useState<string | null>(null);
   const [hasMore, setHasMore] = React.useState(true);
   const [cursor, setCursor] = React.useState<string | undefined>(undefined);
   const [previewSpace, setPreviewSpace] = React.useState<SpacePreviewData | null>(null);
@@ -440,7 +438,6 @@ export function DiscoverSection({
 
   // Handle join
   const handleJoin = async (spaceId: string) => {
-    setJoiningId(spaceId);
     try {
       await onJoinSpace(spaceId);
       // Update local state to reflect joined status
@@ -454,7 +451,7 @@ export function DiscoverSection({
     } catch {
       // Join failed - joiningId will reset in finally
     } finally {
-      setJoiningId(null);
+      // join complete
     }
   };
 

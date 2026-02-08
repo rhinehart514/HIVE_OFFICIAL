@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card, toast } from '@hive/ui';
-import { ArrowTopRightOnSquareIcon, ArrowPathIcon, CameraIcon, UserIcon } from '@heroicons/react/24/outline';
+import { ArrowTopRightOnSquareIcon, ArrowPathIcon, CameraIcon } from '@heroicons/react/24/outline';
 import { ImageCropper } from '@/components/ui/image-cropper';
 import { logger } from '@/lib/structured-logger';
 

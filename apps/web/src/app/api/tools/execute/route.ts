@@ -38,14 +38,12 @@ import type {
 } from '@hive/core';
 import {
   hasCapability,
-  validateActionCapabilities,
   checkBudget,
   checkBudgetFromDb,
   recordBudgetUsage,
   CAPABILITY_PRESETS,
   DEFAULT_BUDGETS,
   createConnectionResolver,
-  getActionRequiredCapabilities,
   deploymentHasActionCapabilities,
 } from '@hive/core';
 
@@ -315,7 +313,7 @@ const actionHandlers: Record<string, ActionHandler> = {
   },
 
   async set_progress(context: ActionContext): Promise<ActionResult> {
-    const { elementId, data, userId, sharedState } = context;
+    const { elementId, data, sharedState } = context;
     const instanceId = elementId || 'progress';
     const newValue = (data.value as number) ?? 0;
     const currentValue = sharedState.counters[`${instanceId}:value`] || 0;

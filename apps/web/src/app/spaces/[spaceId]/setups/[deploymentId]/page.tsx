@@ -10,33 +10,25 @@
 import * as React from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
   Play,
   Pause,
-  Settings,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
   Zap,
-  Calendar,
-  GitBranch,
   ChevronRight,
   RefreshCw,
   Layers,
   Activity,
   Timer,
-  MoreHorizontal,
 } from 'lucide-react';
 import { BrandSpinner, Button } from '@hive/ui';
-import { MOTION } from '@hive/tokens';
-
-const EASE = MOTION.ease.premium;
-
 const COLORS = {
   gold: 'var(--life-gold, #D4AF37)',
   bg: 'var(--bg-ground, #0A0A09)',
@@ -548,7 +540,7 @@ export default function SetupDeploymentDetailPage() {
                 className="rounded-lg border p-4"
                 style={{ backgroundColor: COLORS.surface, borderColor: COLORS.border }}
               >
-                {deployment.executionLog?.map((log, index) => (
+                {deployment.executionLog?.map((log) => (
                   <ExecutionLogItem key={log.id} log={log} />
                 ))}
               </div>

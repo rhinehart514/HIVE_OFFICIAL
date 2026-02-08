@@ -28,7 +28,7 @@ import {
  * even with expired/invalid tokens - fail-safe logout
  */
 export const POST = withErrors(
-  async (request: Request, _context: unknown, respond: typeof ResponseFormatter) => {
+  async (request: Request, _context: unknown, _respond: typeof ResponseFormatter) => {
     const nextRequest = request as NextRequest;
     const globalLogout = nextRequest.nextUrl.searchParams.get('global') === 'true';
     let userId: string | null = null;

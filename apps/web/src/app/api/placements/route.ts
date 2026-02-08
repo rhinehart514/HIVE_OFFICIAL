@@ -7,7 +7,7 @@
  * Supports filtering by spaceId, profileId, toolId, and status.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import {
@@ -20,10 +20,6 @@ import {
 // ============================================================================
 // Response Helpers
 // ============================================================================
-
-function jsonResponse(data: unknown, status = 200) {
-  return NextResponse.json(data, { status });
-}
 
 // ============================================================================
 // Query Parameters

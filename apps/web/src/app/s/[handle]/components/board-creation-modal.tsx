@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import { HashtagIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { Button, Text } from '@hive/ui';
-import { MOTION, durationSeconds } from '@hive/tokens';
+import { MOTION } from '@hive/tokens';
 
 interface BoardCreationModalProps {
   isOpen: boolean;

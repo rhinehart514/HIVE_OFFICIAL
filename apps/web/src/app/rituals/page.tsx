@@ -105,7 +105,7 @@ function transformRitual(
 export default function RitualsPage() {
   const router = useRouter();
   const [rituals, setRituals] = useState<RitualData[]>([]);
-  const [participatingIds, setParticipatingIds] = useState<Set<string>>(new Set());
+  const [, setParticipatingIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -140,7 +140,7 @@ export default function RitualsPage() {
 
         // Fetch user's participation status with full data
         let participating = new Set<string>();
-        let participationMap = new Map<string, ParticipationData>();
+        const participationMap = new Map<string, ParticipationData>();
         try {
           const participationsRes = await fetch("/api/rituals/my-participations");
           if (participationsRes.ok) {

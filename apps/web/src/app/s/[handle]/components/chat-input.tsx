@@ -9,7 +9,7 @@
  */
 
 import * as React from 'react';
-import { Send, Plus, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Send, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@hive/ui/design-system/primitives';
 

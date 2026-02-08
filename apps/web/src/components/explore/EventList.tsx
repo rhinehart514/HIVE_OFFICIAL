@@ -347,7 +347,7 @@ function formatDateKey(date: Date): string {
 
 function formatEventTime(
   start: Date,
-  end?: Date
+  _end?: Date
 ): { time: string; date: string } {
   const timeStr = start.toLocaleTimeString('en-US', {
     hour: 'numeric',

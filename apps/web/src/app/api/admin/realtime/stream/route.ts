@@ -26,7 +26,7 @@ interface AdminEvent {
  * GET /api/admin/realtime/stream
  * SSE endpoint for real-time admin updates
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+export const GET = withAdminAuthAndErrors(async (request, _context, _respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 

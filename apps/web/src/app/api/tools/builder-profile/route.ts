@@ -8,7 +8,6 @@ import {
   computeLevel,
   getNextLevelThreshold,
   getLevelThreshold,
-  LEVEL_THRESHOLDS,
   type BuilderLevel,
 } from '@/lib/builder-xp';
 

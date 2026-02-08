@@ -497,10 +497,6 @@ async function triggerKeywordAutomations(
           .replace(/\{author\}/g, `<@${authorId}>`)
           .replace(/\{message\}/g, content.slice(0, 100));
 
-        // Get user profile for bot message
-        const userDoc = await dbAdmin.collection('profiles').doc(authorId).get();
-        const userName = userDoc.exists ? (userDoc.data()?.displayName || 'Member') : 'Member';
-
         // Create system message in response
         await dbAdmin
           .collection('spaces')

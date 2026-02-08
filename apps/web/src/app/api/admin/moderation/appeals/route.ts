@@ -32,22 +32,6 @@ const AppealDecisionSchema = z.object({
   liftSuspension: z.boolean().optional().default(false),
 });
 
-interface Appeal {
-  id: string;
-  userId: string;
-  userName?: string;
-  userHandle?: string;
-  type: 'suspension' | 'ban' | 'content_removal';
-  violationId: string;
-  originalReason: string;
-  appealReason: string;
-  status: 'pending' | 'approved' | 'denied';
-  reviewedBy?: string;
-  reviewedAt?: string;
-  reviewNote?: string;
-  createdAt: string;
-}
-
 /**
  * GET /api/admin/moderation/appeals
  * Fetch user appeals

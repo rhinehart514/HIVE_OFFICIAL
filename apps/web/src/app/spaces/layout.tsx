@@ -1,6 +1,5 @@
 'use client';
 
-import { type Metadata } from 'next';
 import { LayoutProvider } from '@hive/ui';
 
 // Note: metadata can't be exported from client components

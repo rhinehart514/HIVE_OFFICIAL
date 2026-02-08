@@ -208,7 +208,6 @@ const NotificationCard: React.FC<{
   onResend: () => void;
 }> = ({ notification, onViewDetails, onEdit, onCancel, onResend }) => {
   const [showMetrics, setShowMetrics] = useState(false);
-  const { toast } = useToast();
 
   const getTypeIcon = (type: NotificationType) => {
     switch (type) {

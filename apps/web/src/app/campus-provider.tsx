@@ -70,7 +70,6 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
     dockTools,
     notifications,
     notificationCount,
-    isLoading,
     spaceOrder,
     setSpaceOrder,
   } = useCampusData({ skipFetch: isNoNavRoute });
@@ -118,8 +117,8 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
   }, [pathname]);
 
   // Preview state
-  const [previewData, setPreviewData] = React.useState<SpacePreviewData | null>(null);
-  const [previewLoading, setPreviewLoading] = React.useState(false);
+  const [previewData] = React.useState<SpacePreviewData | null>(null);
+  const [previewLoading] = React.useState(false);
 
   // Command palette state
   const [isCommandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
@@ -242,15 +241,6 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
         ]}
       />
     </CampusProvider>
-  );
-}
-
-// Loading component while campus loads
-function CampusLoader() {
-  return (
-    <div className="min-h-screen bg-[var(--bg-ground)] flex items-center justify-center">
-      <div className="w-5 h-5 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-    </div>
   );
 }
 

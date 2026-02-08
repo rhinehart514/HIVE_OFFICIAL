@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { GlassSurface, MOTION } from '@hive/ui/design-system/primitives';
+import { GlassSurface } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import { Globe, Hand, Lock, type LucideIcon } from 'lucide-react';
 

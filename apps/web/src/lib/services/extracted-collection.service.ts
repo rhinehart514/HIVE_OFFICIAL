@@ -33,12 +33,6 @@ import type { ToolSharedEntity } from '@hive/core';
  */
 const DEFAULT_BATCH_LIMIT = 500;
 
-/**
- * Maximum age of timeline events in days.
- * Events older than this may be pruned.
- */
-const TIMELINE_RETENTION_DAYS = 30;
-
 // ============================================================================
 // TYPES
 // ============================================================================

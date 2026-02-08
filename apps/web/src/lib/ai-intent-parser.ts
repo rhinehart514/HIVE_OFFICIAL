@@ -247,8 +247,6 @@ function detectQuickPatterns(message: string): ParsedIntent | null {
  * or: Poll: Question? - Option1, Option2, Option3
  */
 function parseQuickPoll(message: string): ParsedIntent {
-  const lower = message.toLowerCase().trim();
-
   // Try /poll "Question?" options format
   const slashMatch = message.match(/^\/poll\s+"([^"]+)"\s+(.+)$/i);
   if (slashMatch) {

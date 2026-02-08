@@ -76,7 +76,6 @@ async function getSentryClient(): Promise<SentryLike | null> {
         // Use eval to completely hide the import from webpack static analysis
         // This prevents build errors when @sentry/nextjs is not installed
         const moduleName = '@sentry/nextjs';
-        // eslint-disable-next-line no-eval
         const dynamicImport = new Function('moduleName', 'return import(moduleName)');
         const Sentry = await dynamicImport(moduleName);
         sentryClient = Sentry as unknown as SentryLike;
@@ -105,10 +104,10 @@ function consoleCapture(
 
   switch (level) {
     case LogLevel.DEBUG:
-      console.debug(`[${timestamp}] [DEBUG]`, error.message, contextStr);
+      console.warn(`[${timestamp}] [DEBUG]`, error.message, contextStr);
       break;
     case LogLevel.INFO:
-      console.info(`[${timestamp}] [INFO]`, error.message, contextStr);
+      console.warn(`[${timestamp}] [INFO]`, error.message, contextStr);
       break;
     case LogLevel.WARN:
       console.warn(`[${timestamp}] [WARN]`, error.message, contextStr);
@@ -131,14 +130,14 @@ function consoleCapture(
 export async function initErrorMonitoring(): Promise<void> {
   if (!SENTRY_ENABLED) {
     if (IS_DEVELOPMENT) {
-      console.log('[Error Monitoring] Development mode - using console fallback');
+      console.warn('[Error Monitoring] Development mode - using console fallback');
     }
     return;
   }
 
   const sentry = await getSentryClient();
   if (sentry) {
-    console.log(`[Error Monitoring] Sentry initialized for ${currentEnvironment}`);
+    console.warn(`[Error Monitoring] Sentry initialized for ${currentEnvironment}`);
   }
 }
 
@@ -192,9 +191,9 @@ export async function captureError(
 export async function trackApiCall(metrics: ApiCallMetrics): Promise<void> {
   // Development logging
   if (IS_DEVELOPMENT) {
-    const emoji = metrics.success ? '✅' : '❌';
-    console.log(
-      `${emoji} [API] ${metrics.method} ${metrics.endpoint} - ${metrics.statusCode} (${metrics.duration}ms)`
+    const status = metrics.success ? 'OK' : 'FAIL';
+    console.warn(
+      `${status} [API] ${metrics.method} ${metrics.endpoint} - ${metrics.statusCode} (${metrics.duration}ms)`
     );
   }
 
@@ -233,7 +232,7 @@ export function trackError(error: Error, context?: Record<string, unknown>): voi
  */
 export async function setUserContext(userId: string, email?: string): Promise<void> {
   if (IS_DEVELOPMENT) {
-    console.log('[Error Monitoring] User context set:', { userId, email: email || 'N/A' });
+    console.warn('[Error Monitoring] User context set:', { userId, email: email || 'N/A' });
   }
 
   if (SENTRY_ENABLED) {
@@ -252,7 +251,7 @@ export async function setUserContext(userId: string, email?: string): Promise<vo
  */
 export async function clearUserContext(): Promise<void> {
   if (IS_DEVELOPMENT) {
-    console.log('[Error Monitoring] User context cleared');
+    console.warn('[Error Monitoring] User context cleared');
   }
 
   if (SENTRY_ENABLED) {
@@ -273,7 +272,7 @@ export async function addBreadcrumb(
   data?: Record<string, unknown>
 ): Promise<void> {
   if (IS_DEVELOPMENT) {
-    console.log(`[Breadcrumb] [${category}] ${message}`, data || '');
+    console.warn(`[Breadcrumb] [${category}] ${message}`, data || '');
   }
 
   if (SENTRY_ENABLED) {

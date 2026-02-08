@@ -117,8 +117,6 @@ export function usePinnedMessages(
 
         // Refresh pinned messages list
         await fetchPinnedMessages();
-      } catch (err) {
-        throw err;
       } finally {
         pinningRef.current.delete(messageId);
       }

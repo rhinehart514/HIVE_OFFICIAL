@@ -20,7 +20,6 @@ import type {
   AuditEntry,
   AuditLogQuery,
   AuditLogResponse,
-  AuditSummary,
   AuditEventType,
 } from '@hive/core';
 import {

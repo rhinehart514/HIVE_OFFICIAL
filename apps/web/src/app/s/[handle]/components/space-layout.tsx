@@ -43,7 +43,7 @@ export function SpaceLayout({
   children,
   input,
   sidebarCollapsed = false,
-  onToggleSidebar,
+  onToggleSidebar: _onToggleSidebar,
   mobileSidebarOpen = false,
   onToggleMobileSidebar,
   className,

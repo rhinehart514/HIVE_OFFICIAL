@@ -159,8 +159,6 @@ export async function POST(request: NextRequest) {
 
     // Create streaming response
     const encoder = new TextEncoder();
-    let generationSuccessful = false;
-
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -174,6 +172,7 @@ export async function POST(request: NextRequest) {
             // Use Goose (Ollama or Groq)
             generator = generateToolStream({
               prompt: validated.prompt,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               existingComposition: validated.existingComposition as any,
               isIteration: validated.isIteration,
             }) as AsyncGenerator<StreamingChunk>;
@@ -210,8 +209,6 @@ export async function POST(request: NextRequest) {
 
             // If generation is complete, record usage and close stream
             if (chunk.type === 'complete') {
-              generationSuccessful = true;
-
               // Record usage for authenticated users
               if (userId) {
                 try {

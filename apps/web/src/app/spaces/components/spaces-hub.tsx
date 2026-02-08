@@ -158,7 +158,7 @@ interface SpacesHubProps {
   isOnboarding?: boolean;
 }
 
-export function SpacesHub({ isOnboarding = false }: SpacesHubProps) {
+export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showCreateModal, setShowCreateModal] = React.useState(false);

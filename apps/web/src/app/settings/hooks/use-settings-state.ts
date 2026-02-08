@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDebouncedCallback } from '@hive/hooks';
 import { logger } from '@/lib/structured-logger';
 import { toast } from '@hive/ui';
-import type { NotificationSettings, PrivacySettings, AccountSettings, UserSpace, CalendarStatus, ExportProgress } from '../types';
+import type { NotificationSettings, PrivacySettings, AccountSettings, CalendarStatus, ExportProgress } from '../types';
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   email: {
@@ -70,10 +70,7 @@ export function useSettingsState(profile: unknown) {
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
   const [isCalendarLoading, setIsCalendarLoading] = useState(true);
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
-  const [notificationsLoaded, setNotificationsLoaded] = useState(false);
-
-  const pendingNotificationRef = useRef<Partial<NotificationSettings>>({});
-  const pendingPrivacyRef = useRef<Partial<PrivacySettings>>({});
+  const [, setNotificationsLoaded] = useState(false);
 
   // Load notification settings from server on mount
   useEffect(() => {

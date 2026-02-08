@@ -222,7 +222,6 @@ const SpaceCard: React.FC<{
   onAudit: () => void;
 }> = ({ space, onViewDetails, onEdit, onAudit }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const { toast } = useToast();
   const categoryRule = SPACE_CATEGORY_RULES[space.category];
   const subtypeRule = categoryRule.allowedSubtypes.find(s => s.value === space.subtype);
   

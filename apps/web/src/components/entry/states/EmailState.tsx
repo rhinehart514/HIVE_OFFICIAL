@@ -11,7 +11,6 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { EmailInput, Button, Input } from '@hive/ui/design-system/primitives';
-import { cn } from '@/lib/utils';
 import {
   stateVariants,
   childVariants,
@@ -44,7 +43,7 @@ export function EmailState({
   error,
   isLoading,
   domain,
-  isReturning = false,
+  isReturning: _isReturning = false,
 }: EmailStateProps) {
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {

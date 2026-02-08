@@ -64,22 +64,6 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
   const [isRefining, setIsRefining] = useState(false);
   const hasCreatedInitial = useRef(false);
 
-  // Handle prompt submission from hero
-  const handlePromptSubmit = useCallback(async (userPrompt: string) => {
-    setPrompt(userPrompt);
-
-    // Check for template match first
-    const match = matchTemplate(userPrompt);
-    if (match) {
-      setMatchedTemplate(match.template);
-      setPhase('template-check');
-      return;
-    }
-
-    // No template match - proceed to create tool + generate
-    await startGeneration(userPrompt);
-  }, []);
-
   // Create a tool document and start AI generation
   const startGeneration = useCallback(async (userPrompt: string) => {
     setPhase('creating-tool');
@@ -95,6 +79,22 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
       setPhase('prompt');
     }
   }, []);
+
+  // Handle prompt submission from hero
+  const handlePromptSubmit = useCallback(async (userPrompt: string) => {
+    setPrompt(userPrompt);
+
+    // Check for template match first
+    const match = matchTemplate(userPrompt);
+    if (match) {
+      setMatchedTemplate(match.template);
+      setPhase('template-check');
+      return;
+    }
+
+    // No template match - proceed to create tool + generate
+    await startGeneration(userPrompt);
+  }, [startGeneration]);
 
   // Handle template usage
   const handleUseTemplate = useCallback(async (template: QuickTemplate) => {

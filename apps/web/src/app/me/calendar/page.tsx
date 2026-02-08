@@ -298,7 +298,7 @@ export default function CalendarPage() {
                 if (remainingConflicts.length === 0 && status === 'not_going') {
                   toast.success('All conflicts resolved', 'Your schedule is now clear.');
                 }
-              } catch (error) {
+              } catch {
                 toast.error('Failed to update RSVP', 'Please try again.');
               } finally {
                 setIsResolvingConflict(false);

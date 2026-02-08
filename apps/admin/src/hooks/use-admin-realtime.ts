@@ -139,7 +139,7 @@ export function useAdminRealtime(options: UseAdminRealtimeOptions = {}): UseAdmi
           setError('Connection lost. Click to reconnect.');
         }
       };
-    } catch (err) {
+    } catch {
       setError('Failed to establish connection');
       setIsConnected(false);
     }

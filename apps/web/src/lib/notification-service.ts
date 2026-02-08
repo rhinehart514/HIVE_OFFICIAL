@@ -5,7 +5,6 @@
  * Events: comments, likes, mentions, space membership, etc.
  */
 
-import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';

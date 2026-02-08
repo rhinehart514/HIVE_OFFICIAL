@@ -13,7 +13,7 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { logger } from '@/lib/logger';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 // ═══════════════════════════════════════════════════════════════════════
 // Type Definitions

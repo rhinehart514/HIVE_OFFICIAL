@@ -83,13 +83,6 @@ const ROLE_LABELS: Record<MemberRole, string> = {
   member: 'Member',
 };
 
-const ROLE_COLORS: Record<MemberRole, string> = {
-  owner: 'text-[var(--color-gold)]',
-  admin: 'text-[var(--color-gold)]',
-  moderator: 'text-blue-400',
-  member: 'text-white/50',
-};
-
 const PAGE_SIZE = 20;
 
 // ============================================================

@@ -8,7 +8,6 @@
 import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthAndErrors, withOptionalAuth, getUserId, getCampusId, getUser } from '@/lib/middleware';
-import { NextResponse } from 'next/server';
 
 const FieldValue = admin.firestore.FieldValue;
 

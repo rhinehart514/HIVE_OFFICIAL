@@ -15,7 +15,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save,
   AlertTriangle,
-  Image as ImageIcon,
   Globe,
   Lock,
   Users,
@@ -43,7 +42,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Text, Button, toast, ConfirmDialog, AutomationsPanel, AutomationBuilderModal, Avatar, AvatarImage, AvatarFallback, getInitials, AddWidgetModal, type AutomationItem, type AutomationData, type AddWidgetInputUI, type QuickTemplateUI, type ExistingTool } from '@hive/ui';
+import { Text, Button, toast, ConfirmDialog, AutomationsPanel, AutomationBuilderModal, Avatar, AvatarImage, AvatarFallback, getInitials, AddWidgetModal, type AutomationItem, type AutomationData, type QuickTemplateUI, type ExistingTool } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 import { InviteLinkModal } from '@/components/spaces/invite-link-modal';
 import { MemberManagement } from './member-management';
