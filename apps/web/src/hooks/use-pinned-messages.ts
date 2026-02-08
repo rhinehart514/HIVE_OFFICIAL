@@ -8,7 +8,23 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { ChatMessageData } from "./use-chat-messages";
+
+interface ChatMessageData {
+  id: string;
+  boardId: string;
+  type: string;
+  authorId: string;
+  authorName: string;
+  authorAvatarUrl?: string;
+  authorRole?: string;
+  content: string;
+  timestamp: number;
+  reactions?: Array<{ emoji: string; userIds: string[] }>;
+  isPinned?: boolean;
+  threadId?: string;
+  editedAt?: number;
+  [key: string]: unknown;
+}
 
 interface UsePinnedMessagesOptions {
   spaceId: string;

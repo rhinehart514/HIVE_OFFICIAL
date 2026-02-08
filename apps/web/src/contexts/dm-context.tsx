@@ -13,6 +13,7 @@
 
 import * as React from 'react';
 import { useAuth } from '@hive/auth-logic';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // Types
@@ -141,7 +142,7 @@ export function DMProvider({ children }: DMProviderProps) {
         setConversations(data.conversations || []);
       }
     } catch (error) {
-      console.error('Failed to fetch conversations:', error);
+      logger.error('Failed to fetch conversations', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setIsLoadingConversations(false);
     }
@@ -168,7 +169,7 @@ export function DMProvider({ children }: DMProviderProps) {
         setMessages(formattedMessages);
       }
     } catch (error) {
-      console.error('Failed to fetch messages:', error);
+      logger.error('Failed to fetch messages', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setIsLoadingMessages(false);
     }
@@ -263,7 +264,7 @@ export function DMProvider({ children }: DMProviderProps) {
         // Connect to stream
         connectToStream(conversation.id);
       } catch (error) {
-        console.error('Failed to open conversation:', error);
+        logger.error('Failed to open conversation', error instanceof Error ? error : new Error(String(error)));
         setIsPanelOpen(false);
       } finally {
         setIsLoadingMessages(false);
@@ -292,7 +293,7 @@ export function DMProvider({ children }: DMProviderProps) {
             setActiveConversation(data.conversation);
           }
         } catch (error) {
-          console.error('Failed to fetch conversation:', error);
+          logger.error('Failed to fetch conversation', error instanceof Error ? error : new Error(String(error)));
         }
       }
 
@@ -380,7 +381,7 @@ export function DMProvider({ children }: DMProviderProps) {
           )
         );
       } catch (error) {
-        console.error('Failed to send message:', error);
+        logger.error('Failed to send message', error instanceof Error ? error : new Error(String(error)));
         throw error;
       } finally {
         setIsSending(false);

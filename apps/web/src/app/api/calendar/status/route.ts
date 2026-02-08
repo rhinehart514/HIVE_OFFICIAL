@@ -14,10 +14,19 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getSession } from '@/lib/session';
 import { isCalendarOAuthConfigured } from '@/lib/calendar/google-oauth';
 import { logger } from '@/lib/structured-logger';
+
+// Zod schema for calendar sharing update
+const CalendarSharingSchema = z.object({
+  sharing: z.object({
+    enabled: z.boolean(),
+    spaceIds: z.array(z.string()).optional().default([]),
+  }),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -111,15 +120,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { sharing } = body;
-
-    if (!sharing || typeof sharing.enabled !== 'boolean') {
-      return NextResponse.json(
-        { error: 'Invalid sharing settings' },
-        { status: 400 }
-      );
-    }
+    const { sharing } = CalendarSharingSchema.parse(await request.json());
 
     // Update sharing preferences
     await dbAdmin
@@ -128,7 +129,7 @@ export async function PATCH(request: NextRequest) {
       .update({
         sharing: {
           enabled: sharing.enabled,
-          spaceIds: Array.isArray(sharing.spaceIds) ? sharing.spaceIds : [],
+          spaceIds: sharing.spaceIds,
         },
       });
 
@@ -140,6 +141,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors[0]?.message || 'Invalid sharing settings' }, { status: 400 });
+    }
     logger.error('Calendar sharing update error', { component: 'calendar-status' }, error instanceof Error ? error : undefined);
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -24,9 +24,9 @@ const verifyCodeSchema = z.object({
     .max(6, "Code must be 6 digits")
     .regex(/^\d+$/, "Code must be numeric"),
   schoolId: z.string()
-    .min(1, "School ID is required")
     .max(50, "School ID too long")
     .regex(/^[a-zA-Z0-9_-]+$/, "Invalid school ID format")
+    .optional() // schoolId is now optional
 });
 
 /**
@@ -132,8 +132,8 @@ export const POST = withValidation(
       // This avoids Firebase quota issues during testing
       if (isDevAuthBypassAllowed('verify_code', { email: normalizedEmail, endpoint: '/api/auth/verify-code' })) {
         if (normalizedCode.length === 6 && /^\d+$/.test(normalizedCode)) {
-          // Create session in dev mode
-          return await createSessionResponse(normalizedEmail, schoolId, true, respond);
+          // Create session in dev mode - schoolId is optional
+          return await createSessionResponse(normalizedEmail, schoolId || null, true, respond);
         }
         return respond.error("Invalid code format", "INVALID_CODE", { status: 400 });
       }
@@ -245,8 +245,8 @@ export const POST = withValidation(
         verifiedAt: new Date()
       });
 
-      // Create session
-      const response = await createSessionResponse(normalizedEmail, codeData.campusId || schoolId, false, respond);
+      // Create session - use campusId from code data or fall back to schoolId (both may be null)
+      const response = await createSessionResponse(normalizedEmail, codeData.campusId || schoolId || null, false, respond);
 
       await auditAuthEvent('success', request as unknown as NextRequest, {
         operation: 'verify_code'
@@ -275,7 +275,7 @@ export const POST = withValidation(
  */
 async function createSessionResponse(
   email: string,
-  campusId: string,
+  campusId: string | null,
   isDevMode: boolean,
   _respond: typeof ResponseFormatter
 ): Promise<NextResponse> {
@@ -303,17 +303,23 @@ async function createSessionResponse(
       userId = userRef.id;
 
       const isAdminEmail = ADMIN_EMAILS.has(email);
-      await userRef.set({
+      const userData: Record<string, unknown> = {
         id: userId,
         email,
-        campusId,
-        schoolId: campusId,
         emailVerified: true,
         ...(isAdminEmail && { isAdmin: true }),
         verifiedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      });
+      };
+
+      // Optional campus association
+      if (campusId) {
+        userData.campusId = campusId;
+        userData.schoolId = campusId;
+      }
+
+      await userRef.set(userData);
 
       needsOnboarding = true;
       isAdmin = isAdminEmail;
@@ -343,11 +349,11 @@ async function createSessionResponse(
     userId = `dev-${email.replace(/[^a-zA-Z0-9]/g, '-')}`;
   }
 
-  // Create token pair (access + refresh tokens)
+  // Create token pair (access + refresh tokens) - campusId is optional
   const tokens = await createTokenPair({
     userId,
     email,
-    campusId,
+    campusId: campusId || undefined,
     isAdmin,
     onboardingCompleted: !needsOnboarding,
   });
@@ -359,7 +365,7 @@ async function createSessionResponse(
     user: {
       id: userId,
       email,
-      campusId,
+      campusId: campusId || undefined,
       onboardingCompleted: !needsOnboarding,
     },
     // Include expiration for client-side refresh scheduling

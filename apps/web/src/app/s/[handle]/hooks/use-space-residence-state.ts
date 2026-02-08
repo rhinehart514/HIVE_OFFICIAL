@@ -17,6 +17,7 @@ import { usePresence, useOnlineUsers } from '@/hooks/use-presence';
 import { useAuth } from '@hive/auth-logic';
 import type { Board, SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@hive/ui';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
+import { logger } from '@/lib/logger';
 
 // Re-export types locally for convenience
 type OnlineMember = SpacePanelOnlineMember;
@@ -471,7 +472,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         setHasMoreMessages(data.hasMore || false);
       }
     } catch (error) {
-      console.error('Failed to load more messages:', error);
+      logger.error('Failed to load more messages', error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to load older messages", "Please try again");
     } finally {
       setIsLoadingMoreMessages(false);
@@ -586,7 +587,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     } catch (error) {
       // Revert optimistic update
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message', error instanceof Error ? error : new Error(String(error)));
       toast.error("Message failed to send", "Please try again");
       throw error;
     }
@@ -629,7 +630,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     } catch (error) {
       // Revert optimistic update
       setSpace((prev) => (prev ? { ...prev, isMember: false, memberCount: prev.memberCount - 1 } : null));
-      console.error('Failed to join space:', error);
+      logger.error('Failed to join space', error instanceof Error ? error : new Error(String(error)));
       // Re-throw with the mapped error message (don't override with generic)
       throw error;
     }
@@ -659,7 +660,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     } catch (error) {
       // Revert optimistic update
       setSpace((prev) => (prev ? { ...prev, isMember: true, memberCount: prev.memberCount + 1 } : null));
-      console.error('Failed to leave space:', error);
+      logger.error('Failed to leave space', error instanceof Error ? error : new Error(String(error)));
       toast.error("Couldn't leave space", "Please try again");
       throw error;
     }
@@ -696,7 +697,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     } catch (error) {
       // Revert optimistic update
       setUpcomingEvents(previousEvents);
-      console.error('Failed to RSVP:', error);
+      logger.error('Failed to RSVP', error instanceof Error ? error : new Error(String(error)));
       toast.error("RSVP failed", "Please try again");
       throw error;
     }
@@ -723,7 +724,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         setSidebarTools(data.tools || []);
       }
     } catch (error) {
-      console.error('Failed to refresh tools:', error);
+      logger.error('Failed to refresh tools', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setIsLoadingTools(false);
     }
@@ -768,7 +769,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         }
       }
     } catch (error) {
-      console.error('Failed to refresh space:', error);
+      logger.error('Failed to refresh space', error instanceof Error ? error : new Error(String(error)));
     }
   }, [space?.id]);
 

@@ -7,3 +7,4 @@
 export * from './QuickCreateWizard';
 export * from './BuilderOnboarding';
 export * from './QuickDeployModal';
+export * from './CustomBlockRenderer';

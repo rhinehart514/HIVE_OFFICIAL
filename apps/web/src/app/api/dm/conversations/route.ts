@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
+import { z } from 'zod';
 import { getSession } from '@/lib/session';
 import { dbAdmin as db } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { isDMsEnabled } from '@/lib/feature-flags';
+
+// Zod schema for conversation creation
+const CreateConversationSchema = z.object({
+  recipientId: z.string().min(1, 'recipientId is required'),
+});
 
 /**
  * DM Conversations API
@@ -158,15 +164,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Feature not available' }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { recipientId } = body;
-
-    if (!recipientId) {
-      return NextResponse.json(
-        { error: 'recipientId is required' },
-        { status: 400 }
-      );
-    }
+    const { recipientId } = CreateConversationSchema.parse(await request.json());
 
     const currentUserId = session.userId;
 
@@ -262,6 +260,9 @@ export async function POST(request: NextRequest) {
       isNew: true,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors[0]?.message || 'Invalid input' }, { status: 400 });
+    }
     logger.error('Failed to create DM conversation', {
       action: 'dm_conversation_create',
       endpoint: '/api/dm/conversations',

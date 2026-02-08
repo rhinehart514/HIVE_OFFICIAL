@@ -26,8 +26,13 @@ import {
   type GhostSpaceData,
   type PersonData,
   type EventData,
-  type ToolData,
+  type ToolData as ExploreToolData,
 } from '@/components/explore';
+
+// Extend ToolData with campus info
+type ToolData = ExploreToolData & {
+  campusName?: string;
+};
 import {
   GlassSurface,
   SimpleAvatar,
@@ -52,6 +57,7 @@ import { cn } from '@/lib/utils';
 interface UserProfile {
   interests: string[];
   major: string | null;
+  campusId?: string | null;
 }
 
 // ============================================
@@ -75,13 +81,14 @@ function useDebounce<T>(value: T, delay: number): T {
 
 async function fetchUserProfile(): Promise<UserProfile> {
   const response = await fetch('/api/profile', { credentials: 'include' });
-  if (!response.ok) return { interests: [], major: null };
+  if (!response.ok) return { interests: [], major: null, campusId: null };
 
   const data = await response.json();
   const profile = data.data || data;
   return {
     interests: profile.interests || [],
     major: profile.major || null,
+    campusId: profile.campusId || null,
   };
 }
 
@@ -255,11 +262,13 @@ async function fetchEvents(options: {
 async function fetchTools(options: {
   search?: string;
   limit?: number;
+  campusId?: string;
 } = {}): Promise<ToolData[]> {
   const params = new URLSearchParams({
     limit: String(options.limit || 12),
   });
   if (options.search) params.set('search', options.search);
+  if (options.campusId) params.set('campusId', options.campusId);
 
   const response = await fetch(`/api/tools/browse?${params.toString()}`);
   if (!response.ok) return [];
@@ -278,6 +287,7 @@ async function fetchTools(options: {
     deployedSpaces?: Array<{ id: string; name: string; handle: string }>;
     createdByName?: string;
     ownerName?: string;
+    campusName?: string;
   }) => ({
     id: t.id,
     name: t.name,
@@ -288,6 +298,7 @@ async function fetchTools(options: {
     isOfficial: t.isOfficial,
     deployedSpaces: t.deployedSpaces,
     createdByName: t.createdByName || t.ownerName,
+    campusName: t.campusName,
   }));
 }
 
@@ -569,9 +580,15 @@ function UpcomingEventsSection({
 function CampusToolsSection({
   tools,
   loading,
+  campusFilter,
+  userCampusId,
+  onCampusFilterChange,
 }: {
   tools: ToolData[];
   loading: boolean;
+  campusFilter: 'all' | 'campus';
+  userCampusId: string | null;
+  onCampusFilterChange: (filter: 'all' | 'campus') => void;
 }) {
   if (loading) {
     return (
@@ -588,6 +605,34 @@ function CampusToolsSection({
       title="Campus Tools"
       icon={<Wrench className="w-4 h-4" />}
       subtitle="Built by students, for students"
+      action={
+        userCampusId ? (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onCampusFilterChange('all')}
+              className={cn(
+                'px-3 py-1.5 text-label font-medium rounded-lg transition-colors',
+                campusFilter === 'all'
+                  ? 'bg-white/[0.08] text-white'
+                  : 'text-white/40 hover:text-white/60'
+              )}
+            >
+              All Campuses
+            </button>
+            <button
+              onClick={() => onCampusFilterChange('campus')}
+              className={cn(
+                'px-3 py-1.5 text-label font-medium rounded-lg transition-colors',
+                campusFilter === 'campus'
+                  ? 'bg-white/[0.08] text-white'
+                  : 'text-white/40 hover:text-white/60'
+              )}
+            >
+              My Campus
+            </button>
+          </div>
+        ) : null
+      }
     >
       <ToolGallery tools={tools.slice(0, 6)} />
     </FeedSection>
@@ -1029,6 +1074,7 @@ function ExploreContent() {
 
   const [feedLoading, setFeedLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [campusFilter, setCampusFilter] = useState<'all' | 'campus'>('all');
 
   // Update URL when query changes
   useEffect(() => {
@@ -1039,19 +1085,22 @@ function ExploreContent() {
     router.replace(newUrl, { scroll: false });
   }, [debouncedQuery, router]);
 
-  // Fetch feed data on mount
+  // Fetch feed data on mount and when campus filter changes
   useEffect(() => {
     const loadFeed = async () => {
       setFeedLoading(true);
       try {
-        const [profile, spacesData, eventsData, toolsData] = await Promise.all([
-          fetchUserProfile().catch(() => ({ interests: [], major: null })),
+        const profile = await fetchUserProfile().catch(() => ({ interests: [], major: null, campusId: null }));
+        setUserProfile(profile);
+
+        const effectiveCampusId = campusFilter === 'campus' ? (profile.campusId || undefined) : undefined;
+
+        const [spacesData, eventsData, toolsData] = await Promise.all([
           fetchSpaces({ sort: 'trending', limit: 30 }),
           fetchEvents({ limit: 10 }),
-          fetchTools({ limit: 12 }).catch(() => []),
+          fetchTools({ limit: 12, campusId: effectiveCampusId }).catch(() => []),
         ]);
 
-        setUserProfile(profile);
         setSpaces(spacesData.spaces);
         setGhostSpaces(spacesData.ghostSpaces);
         setEvents(eventsData);
@@ -1070,7 +1119,7 @@ function ExploreContent() {
     };
 
     loadFeed();
-  }, []);
+  }, [campusFilter]);
 
   // Fetch search results when query changes
   useEffect(() => {
@@ -1186,6 +1235,9 @@ function ExploreContent() {
               <CampusToolsSection
                 tools={tools}
                 loading={feedLoading}
+                campusFilter={campusFilter}
+                userCampusId={userProfile?.campusId || null}
+                onCampusFilterChange={setCampusFilter}
               />
             </motion.div>
           )}

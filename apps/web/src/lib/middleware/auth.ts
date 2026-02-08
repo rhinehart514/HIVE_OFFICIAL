@@ -59,7 +59,7 @@ const USER_SYMBOL = Symbol.for('hive.authenticated.user');
 export interface UserContext {
   uid: string;
   email: string;
-  campusId: string; // Required - enforced at auth boundary
+  campusId?: string; // Optional - users can sign up without campus affiliation
   decodedToken: DecodedIdToken;
 }
 
@@ -81,13 +81,13 @@ export function getUser(request: NextRequest): UserContext | undefined {
 /**
  * Authenticated Request Handler Type
  * Handlers receive verified user info instead of raw request
- * Note: campusId is now REQUIRED - enforced by middleware in production
+ * Note: campusId is now optional - users can sign up without campus
  */
 export interface AuthenticatedRequest extends NextRequest {
   user: {
     uid: string;
     email: string;
-    campusId: string; // Required - no longer optional
+    campusId?: string; // Optional - users can sign up without campus affiliation
     decodedToken: DecodedIdToken;
   };
 }
@@ -180,15 +180,14 @@ function sessionToDecodedToken(session: SessionData): DecodedIdToken {
 }
 
 /**
- * Resolve campus ID with enforcement
- * In production: rejects if no campus can be determined
- * In development: warns and falls back to 'ub-buffalo'
+ * Resolve campus ID - now optional, users can sign up without campus
+ * Tries to associate a campus if possible, but doesn't require it
  */
 function resolveCampusId(
   sessionCampusId: string | undefined,
   email: string,
   userId: string
-): { campusId: string | null; error?: Response } {
+): { campusId: string | undefined; error?: Response } {
   // 1. Use session campusId if available
   if (sessionCampusId) {
     return { campusId: sessionCampusId };
@@ -200,33 +199,13 @@ function resolveCampusId(
     return { campusId: derivedCampus };
   }
 
-  // 3. No campus could be determined
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  if (isProduction) {
-    logger.error('SECURITY: No campus context for authenticated user', {
-      userId,
-      email,
-      reason: 'email_domain_not_recognized'
-    });
-    return {
-      campusId: null,
-      error: NextResponse.json(
-        ApiResponseHelper.error(
-          "Campus identification required. Your email domain is not associated with a registered campus.",
-          "CAMPUS_REQUIRED"
-        ),
-        { status: HttpStatus.FORBIDDEN }
-      )
-    };
-  }
-
-  // Development fallback with warning
-  logger.warn('DEV: Using fallback campus for user without recognized domain', {
+  // 3. No campus could be determined - that's OK now
+  logger.info('User authenticated without campus affiliation', {
     userId,
-    email,
+    email: email.replace(/(.{3}).*@/, '$1***@'),
   });
-  return { campusId: 'ub-buffalo' };
+
+  return { campusId: undefined };
 }
 
 /**
@@ -255,22 +234,18 @@ export function withAuth<T extends RouteParams>(
         const session = await verifySession(sessionCookie.value);
 
         if (session && session.userId && session.email) {
-          // Resolve campus with enforcement
-          const { campusId, error } = resolveCampusId(
+          // Resolve campus - optional now
+          const { campusId } = resolveCampusId(
             session.campusId,
             session.email,
             session.userId
           );
 
-          if (error) {
-            return error;
-          }
-
           // Create user context
           const userContext: UserContext = {
             uid: session.userId,
             email: session.email,
-            campusId: campusId!, // Safe - checked above
+            campusId,
             decodedToken: sessionToDecodedToken(session)
           };
 
@@ -299,21 +274,17 @@ export function withAuth<T extends RouteParams>(
 
         if (adminSession && adminSession.userId && adminSession.email) {
           // Resolve campus - admin users may have explicit campusId or derive from email
-          const { campusId, error } = resolveCampusId(
+          const { campusId } = resolveCampusId(
             adminSession.campusId,
             adminSession.email,
             adminSession.userId
           );
 
-          if (error) {
-            return error;
-          }
-
           // Create user context from admin session
           const userContext: UserContext = {
             uid: adminSession.userId,
             email: adminSession.email,
-            campusId: campusId!,
+            campusId,
             decodedToken: {
               uid: adminSession.userId,
               email: adminSession.email,
@@ -578,7 +549,11 @@ export function getUserEmail(request: AuthenticatedRequest): string {
  * Utility function to get campus ID from authenticated request
  * Campus ID is now GUARANTEED by the auth middleware - no fallback needed
  */
-export function getCampusId(request: AuthenticatedRequest): string {
+/**
+ * Get campus ID from authenticated request
+ * Returns undefined if user has no campus affiliation
+ */
+export function getCampusId(request: AuthenticatedRequest): string | undefined {
   return request.user.campusId;
 }
 

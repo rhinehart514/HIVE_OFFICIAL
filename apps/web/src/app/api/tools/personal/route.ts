@@ -22,17 +22,21 @@ interface PersonalTool {
 }
 
 // Fetch user's actual personal tools from database
-async function fetchPersonalTools(userId: string, campusId: string): Promise<PersonalTool[]> {
+async function fetchPersonalTools(userId: string, campusId: string | null): Promise<PersonalTool[]> {
   try {
     const { dbAdmin } = await import('@/lib/firebase-admin');
 
-    // Get user's installed tools
-    const userToolsSnapshot = await dbAdmin
+    // Get user's installed tools - filter by campus if present
+    let userToolsQuery = dbAdmin
       .collection('user_tools')
       .where('userId', '==', userId)
-      .where('campusId', '==', campusId)
-      .where('isInstalled', '==', true)
-      .get();
+      .where('isInstalled', '==', true);
+
+    if (campusId) {
+      userToolsQuery = userToolsQuery.where('campusId', '==', campusId);
+    }
+
+    const userToolsSnapshot = await userToolsQuery.get();
 
     const tools: PersonalTool[] = userToolsSnapshot.docs.map(doc => {
       const data = doc.data();
@@ -64,8 +68,9 @@ export const GET = withAuthAndErrors(async (
   context,
   respond
 ) => {
-  const userId = getUserId(request as AuthenticatedRequest);
-  const campusId = getCampusId(request as AuthenticatedRequest);
+  const req = request as AuthenticatedRequest;
+  const userId = getUserId(req);
+  const campusId = req.user.campusId || null;
   const tools = await fetchPersonalTools(userId, campusId);
 
   return respond.success({

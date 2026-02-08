@@ -372,6 +372,23 @@ export const ELEMENT_CATALOG = {
     },
     outputs: ['hasAccess'],
     useCases: ['admin controls', 'leader features', 'member-only content', 'permissions']
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // CUSTOM ELEMENTS - AI-generated HTML/CSS/JS for unique needs
+  // ═══════════════════════════════════════════════════════════════
+
+  'custom-block': {
+    category: 'action',
+    tier: 'universal',
+    description: 'AI-generated custom HTML/CSS/JS component for unique UI needs not covered by native elements. Use ONLY when native elements cannot achieve the desired functionality. Examples: custom visualizations (bingo cards, flip countdown, hand-drawn charts), specialized interactions (drag-and-drop games, custom animations), branded components with specific styling.',
+    config: {
+      metadata: 'object with { name, description, createdBy, createdAt, updatedAt }',
+      code: 'object with { html, css, js, hash }',
+      manifest: 'object with { actions, inputs, outputs, stateSchema }'
+    },
+    outputs: ['Defined in manifest'],
+    useCases: ['bingo card game', 'flip-style countdown', 'custom data viz', 'unique animations', 'branded UI components', 'specialized interactions not available in native elements']
   }
 } as const;
 
@@ -686,6 +703,72 @@ Message 4 (final):
 6. **Default configs**: Use sensible defaults, don't over-configure
 7. **Campus context**: Remember these are for student orgs, not enterprises
 
+# Hybrid Compositions: Native vs Custom Elements
+
+**PREFER NATIVE ELEMENTS FIRST**. Custom blocks add complexity and should only be used when native elements cannot achieve the desired result.
+
+**Use Native Elements When:**
+- Standard campus tool patterns (polls, RSVPs, forms, directories)
+- Data display (lists, charts, leaderboards)
+- Common interactions (voting, countdown, counters)
+- User selection, filtering, search
+- 95% of campus tool requests
+
+**Use Custom Blocks When:**
+- Unique visual patterns not available natively (bingo cards, flip animations, custom grids)
+- Specialized interactions (drag-and-drop games, drawing tools, gesture-based UI)
+- Custom data visualizations (hand-drawn charts, unique graph styles)
+- Branded components with very specific styling requirements
+- Complex animations or transitions not supported by native elements
+
+**Custom Block Code Generation:**
+When generating custom block code, ALWAYS use HIVE design tokens:
+
+```css
+/* Available CSS Variables */
+--hive-color-gold, --hive-color-black, --hive-color-white
+--hive-gray-{50,100,200,300,400,500,600,700,800,900,950}
+--hive-bg-{ground,surface,surface-hover,surface-active}
+--hive-text-{primary,secondary,tertiary,disabled}
+--hive-border-{default,subtle,hover,focus}
+--hive-spacing-{1,2,3,4,5,6,8,10,12,16,20,24}
+--hive-radius-{sm,md,lg,xl,2xl,full}
+--hive-font-size-{xs,sm,base,lg,xl,2xl,3xl,4xl}
+--hive-shadow-{sm,md,lg,gold-glow}
+--hive-duration-{fast,base,slow}
+--hive-ease-{in-out,out,in}
+```
+
+**Utility Classes Available:**
+- `.hive-btn`, `.hive-btn-primary`, `.hive-btn-secondary`
+- `.hive-card`
+- `.hive-input`
+- `.hive-text-{primary,secondary,tertiary}`
+
+**Example Custom Block CSS:**
+```css
+.my-element {
+  background: var(--hive-bg-surface);
+  border: 1px solid var(--hive-border-default);
+  border-radius: var(--hive-radius-lg);
+  padding: var(--hive-spacing-4);
+  color: var(--hive-text-primary);
+  transition: all var(--hive-duration-base) var(--hive-ease-in-out);
+}
+
+.my-element:hover {
+  border-color: var(--hive-border-hover);
+  background: var(--hive-bg-surface-hover);
+}
+
+button {
+  background: var(--hive-color-gold);
+  color: var(--hive-color-black);
+  padding: var(--hive-spacing-2) var(--hive-spacing-4);
+  border-radius: var(--hive-radius-lg);
+}
+```
+
 # CRITICAL: Element ID Format
 
 **NEVER add numeric suffixes to elementId values!**
@@ -701,6 +784,7 @@ Use \`instanceId\` (like "elem_001", "elem_002") to distinguish multiple instanc
 - Universal: search-input, filter-selector, result-list, date-picker, tag-cloud, map-view, chart-display, form-builder, countdown-timer, timer, counter, poll-element, leaderboard, notification-center
 - Connected: event-picker, space-picker, user-selector, rsvp-button, connection-list
 - Space: member-list, member-selector, space-events, space-feed, space-stats, announcement, role-gate
+- Custom: custom-block (AI-generated HTML/CSS/JS, use sparingly when native elements insufficient)
 
 Now convert the user's prompt into a ToolComposition!`;
 

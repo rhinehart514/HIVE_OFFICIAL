@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getSession } from '@/lib/session';
 import { dbAdmin as db } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 /**
  * DM Stream API - Server-Sent Events for real-time messages
@@ -98,7 +99,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           });
         },
         (error) => {
-          console.error('Firestore listener error:', error);
+          logger.error('Firestore listener error', error instanceof Error ? error : new Error(String(error)));
           try {
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify({ type: 'error', error: 'Connection error' })}\n\n`)

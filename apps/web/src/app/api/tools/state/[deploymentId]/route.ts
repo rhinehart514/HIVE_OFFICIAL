@@ -53,6 +53,23 @@ interface ToolStateDocument {
 }
 
 async function loadDeployment(deploymentId: string, campusId: string) {
+  // Handle standalone deployments (standalone:{toolId})
+  if (deploymentId.startsWith('standalone:')) {
+    const toolId = deploymentId.replace('standalone:', '');
+    return {
+      ok: true as const,
+      doc: null,
+      data: {
+        deploymentId,
+        toolId,
+        deployedTo: 'standalone',
+        targetId: null,
+        campusId: null, // Standalone tools are not campus-isolated
+      },
+    };
+  }
+
+  // Handle space deployments (space:{spaceId}_{placementId})
   const doc = await dbAdmin.collection("deployedTools").doc(deploymentId).get();
   if (!doc.exists) {
     return {
@@ -87,6 +104,11 @@ async function canUserAccessDeploymentState(
   deployment: FirebaseFirestore.DocumentData,
   campusId: string,
 ) {
+  // Standalone tools are accessible to all authenticated users
+  if (deployment.deployedTo === "standalone") {
+    return true;
+  }
+
   if (deployment.deployedTo === "profile") {
     return deployment.targetId === userId;
   }
@@ -108,10 +130,10 @@ async function canUserAccessDeploymentState(
 
 async function ensureStateAccess(
   userId: string,
-  deploymentDoc: DeploymentDoc,
+  deploymentDoc: DeploymentDoc | null,
+  deploymentData: FirebaseFirestore.DocumentData,
   campusId: string,
 ) {
-  const deploymentData = deploymentDoc.data();
   if (!deploymentData) {
     return {
       ok: false as const,
@@ -120,12 +142,15 @@ async function ensureStateAccess(
     };
   }
 
-  if (deploymentData.campusId && deploymentData.campusId !== campusId) {
-    return {
-      ok: false as const,
-      status: 403,
-      message: "Access denied for this campus",
-    };
+  // Standalone deployments skip campus isolation
+  if (deploymentData.deployedTo !== 'standalone') {
+    if (deploymentData.campusId && deploymentData.campusId !== campusId) {
+      return {
+        ok: false as const,
+        status: 403,
+        message: "Access denied for this campus",
+      };
+    }
   }
 
   const hasAccess = await canUserAccessDeploymentState(userId, deploymentData, campusId);
@@ -141,17 +166,19 @@ async function ensureStateAccess(
 }
 
 async function fetchStateDocuments(
-  deploymentDoc: DeploymentDoc,
+  deploymentDoc: DeploymentDoc | null,
+  deploymentId: string,
   userId: string,
 ) {
-  const placementContext = await getPlacementFromDeploymentDoc(deploymentDoc);
+  // Standalone deployments don't have placement context
+  const placementContext = deploymentDoc ? await getPlacementFromDeploymentDoc(deploymentDoc) : null;
   const placementStateDoc = placementContext
     ? await placementContext.ref.collection("state").doc(userId).get()
     : null;
 
   const globalStateDoc = await dbAdmin
     .collection("toolStates")
-    .doc(`${deploymentDoc.id}_${userId}`)
+    .doc(`${deploymentId}_${userId}`)
     .get();
 
   return { placementContext, placementStateDoc, globalStateDoc };
@@ -291,7 +318,12 @@ export const GET = withAuthAndErrors(async (
     });
   }
 
-  const accessResult = await ensureStateAccess(userId, deploymentResult.doc, campusId);
+  const accessResult = await ensureStateAccess(
+    userId,
+    deploymentResult.doc,
+    deploymentResult.data,
+    campusId
+  );
   if (!accessResult.ok) {
     return respond.error(accessResult.message, "FORBIDDEN", {
       status: accessResult.status,
@@ -299,7 +331,7 @@ export const GET = withAuthAndErrors(async (
   }
 
   const { placementContext: _placementContext, placementStateDoc, globalStateDoc } =
-    await fetchStateDocuments(deploymentResult.doc, userId);
+    await fetchStateDocuments(deploymentResult.doc, deploymentId, userId);
 
   const stateDoc =
     (placementStateDoc && placementStateDoc.exists
@@ -352,7 +384,12 @@ export const PUT = withAuthValidationAndErrors(
 
     const { data: deploymentData } = deploymentResult;
 
-    const accessResult = await ensureStateAccess(userId, deploymentResult.doc, campusId);
+    const accessResult = await ensureStateAccess(
+      userId,
+      deploymentResult.doc,
+      deploymentData,
+      campusId
+    );
     if (!accessResult.ok) {
       return respond.error(accessResult.message, "FORBIDDEN", {
         status: accessResult.status,
@@ -360,7 +397,7 @@ export const PUT = withAuthValidationAndErrors(
     }
 
     const { placementContext, placementStateDoc, globalStateDoc } =
-      await fetchStateDocuments(deploymentResult.doc, userId);
+      await fetchStateDocuments(deploymentResult.doc, deploymentId, userId);
 
     const existingState =
       placementStateDoc?.data()?.state ??
@@ -433,7 +470,12 @@ export const PATCH = withAuthValidationAndErrors(
       });
     }
 
-    const accessResult = await ensureStateAccess(userId, deploymentResult.doc, campusId);
+    const accessResult = await ensureStateAccess(
+      userId,
+      deploymentResult.doc,
+      deploymentResult.data,
+      campusId
+    );
     if (!accessResult.ok) {
       return respond.error(accessResult.message, "FORBIDDEN", {
         status: accessResult.status,
@@ -441,7 +483,7 @@ export const PATCH = withAuthValidationAndErrors(
     }
 
     const { placementContext, placementStateDoc, globalStateDoc } =
-      await fetchStateDocuments(deploymentResult.doc, userId);
+      await fetchStateDocuments(deploymentResult.doc, deploymentId, userId);
 
     const sourceDoc =
       placementStateDoc && placementStateDoc.exists
@@ -524,7 +566,12 @@ export const DELETE = withAuthAndErrors(async (
     });
   }
 
-  const accessResult = await ensureStateAccess(userId, deploymentResult.doc, campusId);
+  const accessResult = await ensureStateAccess(
+    userId,
+    deploymentResult.doc,
+    deploymentResult.data,
+    campusId
+  );
   if (!accessResult.ok) {
     return respond.error(accessResult.message, "FORBIDDEN", {
       status: accessResult.status,
@@ -533,6 +580,7 @@ export const DELETE = withAuthAndErrors(async (
 
   const { placementContext } = await fetchStateDocuments(
     deploymentResult.doc,
+    deploymentId,
     userId,
   );
 

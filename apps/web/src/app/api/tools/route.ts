@@ -1,3 +1,4 @@
+import type * as admin from "firebase-admin";
 import { z } from "zod";
 import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
@@ -39,10 +40,12 @@ const createToolLimiter = rateLimit({
 // GET /api/tools - List user's tools
 export const GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
-  const campusId = getCampusId(request as AuthenticatedRequest);
+  const req = request as AuthenticatedRequest;
+  const campusId: string | undefined = req.user.campusId || undefined;
 
   logger.info('[tools] GET request received', {
     userId,
+    campusId,
     endpoint: '/api/tools'
   });
 
@@ -53,12 +56,16 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
   const offset = parseInt(searchParams.get("offset") || "0");
 
   try {
-    // Build query
-    let query = adminDb
-      .collection("tools")
-      .where("campusId", "==", campusId)  // campusId first to match index
-      .where("ownerId", "==", userId)
-      .orderBy("updatedAt", "desc");
+    // Build query - filter by campus if present
+    let query: admin.firestore.Query<admin.firestore.DocumentData> = adminDb.collection("tools");
+
+    if (campusId) {
+      query = query.where("campusId", "==", campusId).where("ownerId", "==", userId);
+    } else {
+      query = query.where("ownerId", "==", userId);
+    }
+
+    query = query.orderBy("updatedAt", "desc");
 
     // Filter by space if provided
     if (spaceId) {
@@ -151,9 +158,12 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     });
 
     // Get total count for pagination
-    const countQuery = adminDb.collection("tools")
-      .where("campusId", "==", campusId)
-      .where("ownerId", "==", userId);
+    let countQuery: admin.firestore.Query<admin.firestore.DocumentData> = adminDb.collection("tools");
+    if (campusId) {
+      countQuery = countQuery.where("campusId", "==", campusId).where("ownerId", "==", userId);
+    } else {
+      countQuery = countQuery.where("ownerId", "==", userId);
+    }
     const countSnapshot = await countQuery.count().get();
     const total = countSnapshot.data().count;
 
@@ -219,7 +229,8 @@ export const POST = withAuthValidationAndErrors(
   EnhancedCreateToolSchema,
   async (request, context, validatedData: Record<string, unknown>, respond) => {
     const userId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
+    const req = request as AuthenticatedRequest;
+    const campusId: string | undefined = req.user.campusId || undefined;
 
     // Rate limiting
     try {
@@ -474,7 +485,7 @@ export const POST = withAuthValidationAndErrors(
           toolId: toolRef.id,
           deploymentId: `tool_${Date.now()}`,
           placedBy: userId,
-          campusId,
+          campusId: campusId || '',
           placement: 'sidebar',
           visibility: 'all',
           configOverrides: placementRecord.config,

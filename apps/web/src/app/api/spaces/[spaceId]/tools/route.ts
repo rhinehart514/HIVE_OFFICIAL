@@ -3,13 +3,14 @@
 /**
  * Space Tools API Route
  *
- * Handles tool deployment and management for spaces using DDD services.
+ * Handles tool posting and management for spaces using DDD services.
+ * Tools are "posted" to spaces (not "deployed") - lightweight, shareable across contexts.
  *
- * GET /api/spaces/[spaceId]/tools - List deployed tools
- * POST /api/spaces/[spaceId]/tools - Deploy a new tool
+ * GET /api/spaces/[spaceId]/tools - List posted tools
+ * POST /api/spaces/[spaceId]/tools - Post a tool to the space
  *
  * @author HIVE Backend Team
- * @version 2.0.0 - DDD Refactor
+ * @version 2.1.0 - Posting Model Refactor
  */
 
 import { z } from "zod";
@@ -58,13 +59,15 @@ const PlaceToolSchema = z.object({
   configOverrides: z.record(z.any()).optional(),
   visibility: z.enum(["all", "members", "leaders"]).default("all"),
   titleOverride: z.string().max(100).optional(),
+  // State isolation mode: 'shared' (default) enables cross-space engagement
+  stateMode: z.enum(["shared", "isolated"]).default("shared"),
 });
 
 // ============================================================================
 // Callbacks for SpaceDeploymentService
 // ============================================================================
 
-function createDeploymentCallbacks(spaceId: string, campusId: string): SpaceDeploymentCallbacks {
+function createDeploymentCallbacks(spaceId: string, campusId: string | undefined): SpaceDeploymentCallbacks {
   return {
     savePlacedTool: async (_spaceId: string, placedTool: PlacedToolData): Promise<Result<void>> => {
       try {
@@ -85,7 +88,10 @@ function createDeploymentCallbacks(spaceId: string, campusId: string): SpaceDepl
             visibility: placedTool.visibility,
             titleOverride: placedTool.titleOverride,
             isEditable: placedTool.isEditable,
-            state: placedTool.state,
+            // State management fields
+            stateMode: placedTool.stateMode,
+            deploymentId: placedTool.deploymentId,
+            state: placedTool.state, // Legacy field, prefer deploymentId-based state
             stateUpdatedAt: placedTool.stateUpdatedAt,
             campusId: campusId,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -139,6 +145,11 @@ function createDeploymentCallbacks(spaceId: string, campusId: string): SpaceDepl
 
         const tools: PlacedToolData[] = snapshot.docs.map((doc) => {
           const data = doc.data();
+          const stateMode = (data.stateMode || 'shared') as 'shared' | 'isolated';
+          // Generate deployment ID if not stored (backward compat)
+          const deploymentId = data.deploymentId ||
+            (stateMode === 'shared' ? `tool:${data.toolId}` : `space:${spaceId}_${data.toolId}`);
+
           return {
             id: doc.id,
             toolId: data.toolId,
@@ -153,6 +164,8 @@ function createDeploymentCallbacks(spaceId: string, campusId: string): SpaceDepl
             visibility: data.visibility || "all",
             titleOverride: data.titleOverride || null,
             isEditable: data.isEditable ?? true,
+            stateMode,
+            deploymentId,
             state: data.state || {},
             stateUpdatedAt: data.stateUpdatedAt?.toDate?.() || null,
           };
@@ -170,7 +183,7 @@ function createDeploymentCallbacks(spaceId: string, campusId: string): SpaceDepl
 // Helper Functions
 // ============================================================================
 
-async function validateSpaceAccess(spaceId: string, userId: string, campusId: string) {
+async function validateSpaceAccess(spaceId: string, userId: string, campusId: string | undefined) {
   const spaceRepo = getServerSpaceRepository();
   const spaceResult = await spaceRepo.findById(spaceId);
 
@@ -180,19 +193,23 @@ async function validateSpaceAccess(spaceId: string, userId: string, campusId: st
 
   const space = spaceResult.getValue();
 
-  if (space.campusId.id !== campusId) {
+  // Optional campus filtering: if both user and space have campus, they must match
+  if (campusId && space.campusId.id && space.campusId.id !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
   }
 
-  // Check membership
-  const membershipSnapshot = await dbAdmin
+  // Check membership - filter by campus if present
+  let membershipQuery = dbAdmin
     .collection("spaceMembers")
     .where("spaceId", "==", spaceId)
     .where("userId", "==", userId)
-    .where("isActive", "==", true)
-    .where("campusId", "==", campusId)
-    .limit(1)
-    .get();
+    .where("isActive", "==", true);
+
+  if (campusId) {
+    membershipQuery = membershipQuery.where("campusId", "==", campusId);
+  }
+
+  const membershipSnapshot = await membershipQuery.limit(1).get();
 
   const membership = membershipSnapshot.empty
     ? space.isPublic
@@ -470,11 +487,11 @@ export const POST = withAuthValidationAndErrors(
         return respond.error(validation.message, code, { status: validation.status });
       }
 
-      // Check permission (must be leader/admin to deploy tools)
+      // Check permission (must be leader/admin to post tools)
       const { membership } = validation;
-      const canDeploy = ["owner", "admin", "moderator"].includes(membership.role);
-      if (!canDeploy) {
-        return respond.error("Only space leaders can deploy tools", "FORBIDDEN", {
+      const canPost = ["owner", "admin", "moderator"].includes(membership.role);
+      if (!canPost) {
+        return respond.error("Only space leaders can post tools", "FORBIDDEN", {
           status: HttpStatus.FORBIDDEN,
         });
       }
@@ -488,7 +505,8 @@ export const POST = withAuthValidationAndErrors(
       }
 
       const toolData = toolDoc.data();
-      if (toolData?.campusId && toolData.campusId !== campusId) {
+      // Optional campus filtering: if both tool and user have campus, they must match
+      if (campusId && toolData?.campusId && toolData.campusId !== campusId) {
         return respond.error("Access denied for this campus", "FORBIDDEN", {
           status: HttpStatus.FORBIDDEN,
         });
@@ -537,16 +555,17 @@ export const POST = withAuthValidationAndErrors(
         configOverrides: body.configOverrides,
         visibility: body.visibility as PlacementVisibility,
         titleOverride: body.titleOverride,
+        stateMode: body.stateMode,
       });
 
       if (placeResult.isFailure) {
         // Check if duplicate
         if (placeResult.error?.includes("already placed")) {
-          return respond.error("Tool is already deployed in this space", "CONFLICT", {
+          return respond.error("Tool is already posted to this space", "CONFLICT", {
             status: HttpStatus.CONFLICT,
           });
         }
-        return respond.error(placeResult.error || "Failed to deploy tool", "INTERNAL_ERROR", {
+        return respond.error(placeResult.error || "Failed to post tool", "INTERNAL_ERROR", {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
         });
       }
@@ -573,15 +592,15 @@ export const POST = withAuthValidationAndErrors(
           isActive: true,
           source: "leader",
           visibility: body.visibility,
-          deployedAt: new Date().toISOString(),
-          deployedBy: userId,
+          postedAt: new Date().toISOString(),
+          postedBy: userId,
         },
       });
     } catch (error) {
-      logger.error("Error deploying tool to space", {
+      logger.error("Error posting tool to space", {
         error: error instanceof Error ? error.message : String(error),
       });
-      return respond.error("Failed to deploy tool", "INTERNAL_ERROR", {
+      return respond.error("Failed to post tool", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
       });
     }

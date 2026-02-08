@@ -15,6 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 import {
   getElementById,
   getRequiredFields,
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error validating element config:', error);
+    logger.error('Error validating element config', error instanceof Error ? error : new Error(String(error)));
     return errorResponse('Failed to validate element configuration', 500);
   }
 }

@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { BrandSpinner, Button } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
+import { logger } from '@/lib/logger';
 
 const EASE = MOTION.ease.premium;
 
@@ -344,7 +345,7 @@ export default function SetupDetailPage() {
         router.push('/spaces');
       }
     } catch (err) {
-      console.error('Deploy error:', err);
+      logger.error('Setup deploy failed', err instanceof Error ? err : new Error(String(err)));
       alert(err instanceof Error ? err.message : 'Failed to deploy setup');
     } finally {
       setDeploying(false);

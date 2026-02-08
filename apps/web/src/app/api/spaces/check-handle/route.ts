@@ -1,5 +1,6 @@
 import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +69,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
       suggestion,
     });
   } catch (error) {
-    console.error('Handle check error:', error);
+    logger.error('Handle check error', error instanceof Error ? error : new Error(String(error)));
     return respond.error('Check failed', 'INTERNAL_ERROR', { status: 500 });
   }
 });

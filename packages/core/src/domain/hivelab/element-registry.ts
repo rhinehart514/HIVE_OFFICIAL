@@ -869,6 +869,95 @@ const NEW_ELEMENTS: ElementSpec[] = [
 ];
 
 /**
+ * Custom Block Elements (Phase 5: iframe sandbox system)
+ */
+const CUSTOM_BLOCK_ELEMENTS: ElementSpec[] = [
+  {
+    id: 'custom-block',
+    name: 'Custom Block',
+    description: 'AI-generated HTML/CSS/JS component running in sandboxed iframe. Use for unique UI patterns not covered by native elements (custom visualizations, specialized interactions, branded components).',
+    category: 'action',
+    icon: '🎨',
+    configSchema: {
+      blockId: { type: 'string', required: true },
+      version: { type: 'number', required: true },
+      metadata: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', required: true },
+          description: { type: 'string', required: true },
+          createdBy: { type: 'string', enum: ['ai', 'user'], required: true },
+          createdAt: { type: 'string', required: true },
+          updatedAt: { type: 'string', required: true },
+        },
+      },
+      code: {
+        type: 'object',
+        properties: {
+          html: { type: 'string', required: true, maxLength: 50000 },
+          css: { type: 'string', maxLength: 25000 },
+          js: { type: 'string', maxLength: 50000 },
+          hash: { type: 'string', required: true },
+        },
+      },
+      manifest: {
+        type: 'object',
+        properties: {
+          actions: { type: 'array', items: { type: 'object' } },
+          inputs: { type: 'array', items: { type: 'object' } },
+          outputs: { type: 'array', items: { type: 'object' } },
+          stateSchema: { type: 'object' },
+          requiredTokens: { type: 'object' },
+        },
+      },
+      csp: {
+        type: 'object',
+        properties: {
+          imgSrc: { type: 'array', items: { type: 'string' } },
+          fontSrc: { type: 'array', items: { type: 'string' } },
+        },
+      },
+    },
+    defaultConfig: {
+      blockId: 'block_new',
+      version: 1,
+      metadata: {
+        name: 'Custom Block',
+        description: 'A custom component',
+        createdBy: 'ai',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      code: {
+        html: '<div class="custom-block">Custom content</div>',
+        css: '.custom-block { padding: var(--hive-spacing-md); }',
+        js: '// Custom block code',
+        hash: '',
+      },
+      manifest: {
+        actions: [],
+        inputs: [],
+        outputs: [],
+      },
+    },
+    actions: [], // Actions defined dynamically in manifest
+    outputs: [], // Outputs defined dynamically in manifest
+    inputs: [], // Inputs defined dynamically in manifest
+    useCases: [
+      'custom visualizations',
+      'unique UI patterns',
+      'branded components',
+      'specialized interactions',
+      'custom animations',
+      'data visualizations',
+    ],
+    defaultSize: { width: 400, height: 300 },
+    stateful: true,
+    realtime: true,
+  },
+];
+
+/**
  * Additional Universal Elements - Pure primitives
  */
 const ADDITIONAL_UNIVERSAL_ELEMENTS: ElementSpec[] = [
@@ -1063,6 +1152,7 @@ export function generateElementCatalog(): Record<string, object> {
   ...SPACE_ELEMENTS,
   ...ADDITIONAL_UNIVERSAL_ELEMENTS,
   ...NEW_ELEMENTS,
+  ...CUSTOM_BLOCK_ELEMENTS,
 ].forEach(registerElement);
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1079,6 +1169,7 @@ export {
   SPACE_ELEMENTS,
   ADDITIONAL_UNIVERSAL_ELEMENTS,
   NEW_ELEMENTS,
+  CUSTOM_BLOCK_ELEMENTS,
 };
 
 /** Total count of registered elements */
@@ -1102,4 +1193,5 @@ export const TIER_COUNTS = {
   connected: CONNECTED_ELEMENTS.length,
   space: SPACE_ELEMENTS.length,
   layout: LAYOUT_ELEMENTS.length,
+  custom: CUSTOM_BLOCK_ELEMENTS.length,
 };

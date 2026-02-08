@@ -3,10 +3,7 @@ import { z } from 'zod';
 const currentYear = new Date().getFullYear();
 
 export const userSchema = z.object({
-  email: z.string().email({ message: 'Must be a valid .edu email address' }).refine(
-    (email) => email.endsWith('.edu'),
-    { message: 'Must be a .edu email address' }
-  ),
+  email: z.string().email({ message: 'Must be a valid email address' }),
   fullName: z.string().min(1, 'Full name is required').max(40, 'Full name must be 40 characters or less'),
   preferredName: z.string().max(20, 'Preferred name must be 20 characters or less').optional(),
 

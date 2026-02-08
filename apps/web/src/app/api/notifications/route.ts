@@ -1,8 +1,29 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/auth-server';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+
+// Zod schemas for notification actions
+const NotificationActionSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('mark_read'),
+    notificationIds: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),
+  }),
+  z.object({
+    action: z.literal('mark_all_read'),
+  }),
+  z.object({
+    action: z.literal('delete'),
+    notificationIds: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),
+  }),
+]);
+
+const NotificationUpdateSchema = z.object({
+  notificationId: z.string().min(1, 'Notification ID is required'),
+  isRead: z.boolean(),
+});
 
 // Local type definition for notifications
 interface HiveNotification {
@@ -102,11 +123,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
-    const body = await request.json();
-    
+    const body = NotificationActionSchema.parse(await request.json());
+
     if (body.action === 'mark_read') {
-      const notificationIds = Array.isArray(body.notificationIds) 
-        ? body.notificationIds 
+      const notificationIds = Array.isArray(body.notificationIds)
+        ? body.notificationIds
         : [body.notificationIds];
 
       // Update notifications in Firebase
@@ -153,9 +174,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (body.action === 'delete') {
-      const notificationIds = Array.isArray(body.notificationIds) 
-        ? body.notificationIds 
+    if (body.action === 'delete' && 'notificationIds' in body) {
+      const notificationIds = Array.isArray(body.notificationIds)
+        ? body.notificationIds
         : [body.notificationIds];
 
       // Delete notifications from Firebase
@@ -177,6 +198,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(ApiResponseHelper.error("Invalid action", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
 
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(ApiResponseHelper.error(error.errors[0]?.message || "Invalid input", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
+    }
     logger.error(
       `Error handling notification action at /api/notifications`,
       { error: error instanceof Error ? error.message : String(error) }
@@ -192,12 +216,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
-    const body = await request.json();
-    const { notificationId, isRead } = body;
-
-    if (!notificationId) {
-      return NextResponse.json(ApiResponseHelper.error("Notification ID is required", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
+    const { notificationId, isRead } = NotificationUpdateSchema.parse(await request.json());
 
     // Verify notification belongs to user and update
     const notificationRef = dbAdmin.collection('notifications').doc(notificationId);
@@ -229,6 +248,9 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(ApiResponseHelper.error(error.errors[0]?.message || "Invalid input", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
+    }
     logger.error(
       `Error updating notification at /api/notifications`,
       { error: error instanceof Error ? error.message : String(error) }

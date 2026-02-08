@@ -88,7 +88,7 @@ export const CreateToolInputSchema = z.object({
   visibility: ToolVisibilitySchema.default('private'),
   iconEmoji: z.string().max(4).optional(),
   inputSchema: ToolInputSchemaSchema.optional(),
-  campusId: z.string().min(1),
+  campusId: z.string().min(1).optional(), // Optional to support global tools
 });
 export type CreateToolInput = z.infer<typeof CreateToolInputSchema>;
 
@@ -131,7 +131,7 @@ export const ToolSchema = z.object({
   inputSchema: ToolInputSchemaSchema.optional(),
   variants: z.array(ToolVariantSchema).optional(),
   ownerId: z.string(),
-  campusId: z.string(),
+  campusId: z.string().optional(), // Optional to support global tools
   usageCount: z.number().int().nonnegative().default(0),
   deploymentCount: z.number().int().nonnegative().default(0),
   createdAt: z.date(),

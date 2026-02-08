@@ -503,77 +503,43 @@ export const POST = withValidation(
         return respond.error("Request validation failed", "INVALID_INPUT", { status: 400 });
       }
 
-      // First: Validate school from email domain (authoritative source)
-      let schoolLookup: SchoolLookupResult;
+      // Optional: Try to lookup school from email domain (for campusId association)
+      let schoolLookup: SchoolLookupResult | null = null;
       try {
         schoolLookup = await getSchoolFromEmailAsync(email);
       } catch (err) {
-        const errorCode = (err as Error & { code?: string }).code;
+        // Email domain doesn't match a school - that's OK now
+        // Users can sign up without a campus affiliation
+        logger.info('Email domain not associated with a school', {
+          email: email.replace(/(.{3}).*@/, '$1***@')
+        });
+      }
 
-        if (errorCode === 'UNSUPPORTED_DOMAIN') {
-          await auditAuthEvent('forbidden', request as unknown as NextRequest, {
-            operation: 'send_code',
-            error: 'unsupported_domain'
-          });
-          return NextResponse.json(
-            ApiResponseHelper.error(
-              "This email domain is not supported. Use your school email.",
-              "UNSUPPORTED_DOMAIN"
-            ),
-            { status: HttpStatus.FORBIDDEN }
-          );
-        }
-
-        // Fallback: Try validating with provided schoolId if email lookup fails
-        if (schoolId) {
-          const schoolData = await validateSchool(schoolId);
-          if (schoolData) {
-            // Validate email domain matches school
-            if (!validateEmailDomain(email, [schoolData.domain])) {
-              await auditAuthEvent('failure', request as unknown as NextRequest, {
-                operation: 'send_code',
-                error: 'domain_mismatch'
-              });
-              return NextResponse.json(
-                { error: `Email must be from ${schoolData.domain} domain` },
-                { status: HttpStatus.BAD_REQUEST }
-              );
-            }
-            // Create a mock SchoolLookupResult from schoolData
-            schoolLookup = {
-              campusId: schoolData.id,
-              status: schoolData.active ? 'active' : 'waitlist',
-              schoolName: schoolData.name,
-              domain: schoolData.domain,
-            };
-          } else {
-            await auditAuthEvent('failure', request as unknown as NextRequest, {
-              operation: 'send_code',
-              error: 'invalid_school'
-            });
-            return NextResponse.json(
-              ApiResponseHelper.error("School not found or inactive", "RESOURCE_NOT_FOUND"),
-              { status: HttpStatus.NOT_FOUND }
-            );
-          }
+      // If schoolId was explicitly provided, validate it
+      if (schoolId) {
+        const schoolData = await validateSchool(schoolId);
+        if (schoolData) {
+          // Create SchoolLookupResult from explicit school
+          schoolLookup = {
+            campusId: schoolData.id,
+            status: schoolData.active ? 'active' : 'waitlist',
+            schoolName: schoolData.name,
+            domain: schoolData.domain,
+          };
         } else {
-          // No schoolId provided and email lookup failed
           await auditAuthEvent('failure', request as unknown as NextRequest, {
             operation: 'send_code',
-            error: 'unsupported_domain'
+            error: 'invalid_school'
           });
           return NextResponse.json(
-            ApiResponseHelper.error(
-              "This email domain is not supported. Use your school email.",
-              "UNSUPPORTED_DOMAIN"
-            ),
-            { status: HttpStatus.FORBIDDEN }
+            ApiResponseHelper.error("School not found or inactive", "RESOURCE_NOT_FOUND"),
+            { status: HttpStatus.NOT_FOUND }
           );
         }
       }
 
-      // Check if school is active
-      if (schoolLookup.status === 'waitlist') {
+      // Check if associated school is in waitlist mode (only if we found one)
+      if (schoolLookup && schoolLookup.status === 'waitlist') {
         await auditAuthEvent('forbidden', request as unknown as NextRequest, {
           operation: 'send_code',
           error: 'school_not_active',
@@ -646,8 +612,8 @@ export const POST = withValidation(
         await dbAdmin.collection('verification_codes').add({
           email: normalizedEmail,
           codeHash,
-          schoolId,
-          campusId: schoolLookup.campusId,
+          schoolId: schoolId || null,
+          campusId: schoolLookup?.campusId || null,
           status: 'pending',
           attempts: 0,
           createdAt: now,
@@ -656,7 +622,7 @@ export const POST = withValidation(
       }
 
       // Send email
-      const emailSent = await sendVerificationCodeEmail(normalizedEmail, code, schoolLookup.schoolName);
+      const emailSent = await sendVerificationCodeEmail(normalizedEmail, code, schoolLookup?.schoolName || 'HIVE');
 
       if (!emailSent && currentEnvironment === 'production') {
         await auditAuthEvent('failure', request as unknown as NextRequest, {
@@ -679,8 +645,8 @@ export const POST = withValidation(
 
       logger.info('Verification code sent', {
         email: maskedEmail,
-        campusId: schoolLookup.campusId,
-        schoolName: schoolLookup.schoolName
+        campusId: schoolLookup?.campusId || undefined,
+        schoolName: schoolLookup?.schoolName || 'HIVE'
       });
 
       // Calculate exact expiry time for countdown display

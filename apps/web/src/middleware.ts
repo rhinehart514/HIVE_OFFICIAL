@@ -63,6 +63,7 @@ const ADMIN_ROUTES = ['/admin'];
 // Auth/session redirects elsewhere use temporary (307) redirects
 export const ROUTE_REDIRECTS: Record<string, string> = {
   // Alias routes
+  '/home': '/lab',
   '/browse': '/spaces',
   '/build': '/lab/create',
   // Settings section shortcuts
@@ -159,7 +160,7 @@ function isAdminRoute(pathname: string): boolean {
 interface SessionPayload {
   userId: string;
   email: string;
-  campusId: string;
+  campusId?: string; // Optional - users can sign up without campus
   isAdmin?: boolean;
   onboardingCompleted?: boolean;
 }
@@ -181,13 +182,12 @@ async function verifySessionAtEdge(sessionCookie: string): Promise<SessionPayloa
 
     if (
       typeof payload.userId === 'string' &&
-      typeof payload.email === 'string' &&
-      typeof payload.campusId === 'string'
+      typeof payload.email === 'string'
     ) {
       return {
         userId: payload.userId,
         email: payload.email,
-        campusId: payload.campusId,
+        campusId: typeof payload.campusId === 'string' ? payload.campusId : undefined,
         isAdmin: payload.isAdmin === true,
         onboardingCompleted: payload.onboardingCompleted === true,
       };
@@ -287,9 +287,9 @@ export async function middleware(request: NextRequest) {
       if (sessionCookie) {
         const session = await verifySessionAtEdge(sessionCookie);
         if (session?.onboardingCompleted) {
-          // Completed user — send them to their intended destination or /spaces
+          // Completed user — send them to their intended destination or creator dashboard
           const redirectParam = request.nextUrl.searchParams.get('redirect');
-          const destination = redirectParam || '/spaces';
+          const destination = redirectParam || '/lab';
           return NextResponse.redirect(new URL(destination, request.url));
         }
       } else if (refreshCookie) {
@@ -298,7 +298,7 @@ export async function middleware(request: NextRequest) {
         const refreshSession = await verifySessionAtEdge(refreshCookie);
         if (refreshSession?.onboardingCompleted) {
           const redirectParam = request.nextUrl.searchParams.get('redirect');
-          const destination = redirectParam || '/spaces';
+          const destination = redirectParam || '/lab';
           return NextResponse.redirect(new URL(destination, request.url));
         }
       }
@@ -353,7 +353,7 @@ export async function middleware(request: NextRequest) {
     if (session.onboardingCompleted && pathname === '/enter') {
       const stateParam = request.nextUrl.searchParams.get('state');
       if (stateParam === 'identity') {
-        return NextResponse.redirect(new URL('/spaces', request.url));
+        return NextResponse.redirect(new URL('/lab', request.url));
       }
     }
     return NextResponse.next();
@@ -369,7 +369,7 @@ export async function middleware(request: NextRequest) {
 
   // Legacy /onboarding redirect - PERMANENT (301) canonical route change
   if (pathname === '/onboarding') {
-    return NextResponse.redirect(new URL('/spaces', request.url), 301);
+    return NextResponse.redirect(new URL('/lab', request.url), 301);
   }
 
   return NextResponse.next();

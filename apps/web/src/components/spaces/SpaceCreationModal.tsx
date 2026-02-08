@@ -21,6 +21,7 @@ import {
   useDramaticHandleCheck,
 } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface SpaceCreationModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
       const data = await response.json();
       setCreatedSpace({ handle: data.space.slug, slug: data.space.slug });
     } catch (error) {
-      console.error('Create error:', error);
+      logger.error('Space creation failed', error instanceof Error ? error : new Error(String(error)));
       setStep('identity');
       setIsCreating(false);
     }

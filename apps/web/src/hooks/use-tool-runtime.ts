@@ -20,6 +20,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { ToolSharedState, ToolConnection, DataTransform } from "@hive/core";
 import { applyTransform, getValueAtPath } from "@hive/core";
 import { useToolStateRealtime } from "./use-tool-state-realtime";
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // Types
@@ -48,6 +49,7 @@ export interface Tool {
   version?: number;
   currentVersion?: number;
   status?: string; // draft, preview, published
+  visibility?: 'private' | 'unlisted' | 'public';
   config?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   creatorId?: string;
@@ -153,6 +155,14 @@ function generateDeploymentId(spaceId: string, placementId: string): string {
 }
 
 /**
+ * Generate standalone deployment ID for tools without space context
+ * Format: "standalone:{toolId}"
+ */
+function generateStandaloneDeploymentId(toolId: string): string {
+  return `standalone:${toolId}`;
+}
+
+/**
  * Fetch with retry logic
  */
 async function fetchWithRetry(
@@ -203,9 +213,11 @@ export function useToolRuntime(
   } = options;
 
   // Calculate effective deployment ID
+  // Priority: providedDeploymentId > space context > standalone context
   const effectiveDeploymentId =
     providedDeploymentId ||
-    (spaceId && placementId ? generateDeploymentId(spaceId, placementId) : null);
+    (spaceId && placementId ? generateDeploymentId(spaceId, placementId) : null) ||
+    (toolId ? generateStandaloneDeploymentId(toolId) : null);
 
   // Real-time RTDB subscription for shared state updates
   const {
@@ -397,9 +409,7 @@ export function useToolRuntime(
         setSharedState(EMPTY_SHARED_STATE);
       }
     } catch (err) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error("Failed to load tool:", err);
-      }
+      logger.error("Failed to load tool", err instanceof Error ? err : new Error(String(err)));
       if (mountedRef.current) {
         setError(err instanceof Error ? err : new Error("Failed to load tool"));
       }
@@ -422,7 +432,8 @@ export function useToolRuntime(
   const connectionCacheRef = useRef<Map<string, CachedConnectionValue>>(new Map());
 
   useEffect(() => {
-    if (!tool || !effectiveDeploymentId || !spaceId || !enabled) return;
+    // Connections work in both space context and standalone context
+    if (!tool || !effectiveDeploymentId || !enabled) return;
 
     let cancelled = false;
 
@@ -567,9 +578,7 @@ export function useToolRuntime(
         });
       } catch {
         // Connection resolution is best-effort - don't fail the tool
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('[useToolRuntime] Connection resolution failed');
-        }
+        logger.warn('[useToolRuntime] Connection resolution failed');
       }
     }
 
@@ -578,7 +587,7 @@ export function useToolRuntime(
     return () => {
       cancelled = true;
     };
-  }, [tool?.id, effectiveDeploymentId, spaceId, enabled]);
+  }, [tool?.id, effectiveDeploymentId, enabled]);
 
   // ============================================================================
   // Save State
@@ -606,7 +615,7 @@ export function useToolRuntime(
           body: JSON.stringify({
             state: stateRef.current,
             toolId,
-            spaceId,
+            ...(spaceId && { spaceId }),
           }),
         }
       );
@@ -679,7 +688,7 @@ export function useToolRuntime(
             elementId,
             action: actionName,
             data: payload || {},
-            spaceId,
+            ...(spaceId && { spaceId }),
           }),
         });
 
@@ -927,7 +936,7 @@ export function useToolRuntime(
             body: JSON.stringify({
               state: stateRef.current,
               toolId,
-              spaceId,
+              ...(spaceId && { spaceId }),
             }),
             keepalive: true, // Keep request alive even after page unload
           }
@@ -964,7 +973,7 @@ export function useToolRuntime(
 }
 
 // ============================================================================
-// Convenience Hook: Tool in Space Context
+// Convenience Hooks
 // ============================================================================
 
 /**
@@ -981,6 +990,20 @@ export function useSpaceTool(
     toolId,
     spaceId,
     placementId,
+    ...options,
+  });
+}
+
+/**
+ * Convenience hook for standalone tools (not deployed in a space)
+ * Uses standalone:{toolId} deployment context for state isolation
+ */
+export function useStandaloneTool(
+  toolId: string,
+  options?: Partial<Omit<UseToolRuntimeOptions, "toolId" | "spaceId" | "placementId">>
+) {
+  return useToolRuntime({
+    toolId,
     ...options,
   });
 }

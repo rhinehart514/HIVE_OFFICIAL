@@ -82,7 +82,7 @@ export function getEncodedSessionSecret(): Uint8Array {
 export interface SessionData {
   userId: string;
   email: string;
-  campusId: string;
+  campusId?: string; // Optional - users can sign up without campus
   isAdmin?: boolean;
   verifiedAt: string;
   sessionId: string;
@@ -103,7 +103,7 @@ export interface RefreshTokenData {
 export interface CreateSessionInput {
   userId: string;
   email: string;
-  campusId: string;
+  campusId?: string; // Optional - users can sign up without campus
   isAdmin?: boolean;
   onboardingCompleted?: boolean; // Include in session for dev mode fallback
 }

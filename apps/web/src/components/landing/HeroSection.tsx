@@ -60,10 +60,10 @@ export function HeroSection() {
           <div className="relative">
             <h1 className={`${clashDisplay} text-[clamp(52px,13vw,150px)] font-semibold leading-[0.88] tracking-[-0.03em]`}>
               <span className="block">
-                <WordReveal text="finally," delay={0.3} stagger={0.08} className="text-white/30" />
+                <WordReveal text="build it." delay={0.3} stagger={0.08} className="text-white/30" />
               </span>
               <span className="text-white block">
-                <WordReveal text="HIVE" delay={0.5} stagger={0.08} />
+                <WordReveal text="share it." delay={0.5} stagger={0.08} />
               </span>
             </h1>
 
@@ -82,7 +82,7 @@ export function HeroSection() {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-12">
             <div className="md:max-w-md">
               <p className="text-base text-white/40 leading-relaxed mb-8">
-                One place to run your org. Chat, events, files, members&mdash;infrastructure that outlasts any president.
+                Create tools your campus actually uses. Polls, signups, countdowns, leaderboards&mdash;build in seconds, share anywhere.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Magnetic>
@@ -93,7 +93,7 @@ export function HeroSection() {
                     trailingIcon={<ArrowRight />}
                     onClick={handleEnter}
                   >
-                    Enter HIVE
+                    Start building
                   </Button>
                 </Magnetic>
                 <Button

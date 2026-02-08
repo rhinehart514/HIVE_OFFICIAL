@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminAuth } from "@/lib/auth";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { UserManagementDashboard } from "@/components/user-management-dashboard";
 
-export default function UsersPage() {
+function UsersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { admin, loading, isAuthenticated } = useAdminAuth();
@@ -29,7 +29,6 @@ export default function UsersPage() {
     return null;
   }
 
-  // Extract filters from URL params
   const filters = {
     search: searchParams.get("q") || "",
     role: (searchParams.get("role") || "all") as "all" | "user" | "builder" | "admin" | "super_admin",
@@ -65,5 +64,19 @@ export default function UsersPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function UsersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-[#FFD700]" />
+        </div>
+      }
+    >
+      <UsersPageContent />
+    </Suspense>
   );
 }

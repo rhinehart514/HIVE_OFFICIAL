@@ -2,13 +2,13 @@
  * Shared Navigation Config
  *
  * 4-Pillar IA (Feb 2026):
- * - Home: Dashboard + discovery (merged Feed + Explore)
- * - Spaces: Your communities + residences
- * - Lab: Build tools for your spaces
+ * - Create: Creator dashboard + builder (HIVE is a creation platform)
+ * - Spaces: Distribution surfaces where tools live
+ * - Explore: Discover tools, spaces, people
  * - You: Own profile + settings
  */
 
-import { HomeIcon, SpacesIcon, BeakerIcon, UserIcon } from '@hive/ui';
+import { BeakerIcon, SpacesIcon, CompassIcon, UserIcon } from '@hive/ui';
 
 export interface NavItem {
   id: string;
@@ -20,11 +20,11 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   {
-    id: 'home',
-    label: 'Home',
-    href: '/home',
-    icon: HomeIcon,
-    matchPattern: /^\/home(\/|$)|^\/feed(\/|$)|^\/explore(\/|$)/,
+    id: 'create',
+    label: 'Create',
+    href: '/lab',
+    icon: BeakerIcon,
+    matchPattern: /^\/lab(\/|$)/,
   },
   {
     id: 'spaces',
@@ -34,11 +34,11 @@ export const NAV_ITEMS: NavItem[] = [
     matchPattern: /^\/spaces(\/|$)|^\/s\//,
   },
   {
-    id: 'lab',
-    label: 'Lab',
-    href: '/lab',
-    icon: BeakerIcon,
-    matchPattern: /^\/lab(\/|$)/,
+    id: 'explore',
+    label: 'Explore',
+    href: '/explore',
+    icon: CompassIcon,
+    matchPattern: /^\/explore(\/|$)/,
   },
   {
     id: 'you',

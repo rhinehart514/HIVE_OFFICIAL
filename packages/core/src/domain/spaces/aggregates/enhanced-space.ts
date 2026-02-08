@@ -1806,7 +1806,7 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
   }
 
   /**
-   * Place a new tool in the space
+   * Place a new tool in the space (post a tool to the space)
    */
   public placeTool(props: {
     toolId: string;
@@ -1818,6 +1818,7 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     visibility?: PlacementVisibility;
     titleOverride?: string | null;
     isEditable?: boolean;
+    stateMode?: 'shared' | 'isolated';
   }): Result<PlacedTool> {
     // Check if tool is already placed (prevent duplicates)
     const existing = this.getPlacedToolByToolId(props.toolId);
@@ -1840,6 +1841,7 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       visibility: props.visibility ?? 'all',
       titleOverride: props.titleOverride ?? null,
       isEditable: props.isEditable ?? true,
+      stateMode: props.stateMode ?? 'shared',
     });
 
     if (toolResult.isFailure) {

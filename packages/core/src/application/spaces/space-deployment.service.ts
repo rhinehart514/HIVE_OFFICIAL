@@ -1,12 +1,14 @@
 /**
  * SpaceDeploymentService
  *
- * Application service for deploying HiveLab tools to spaces.
+ * Application service for posting HiveLab tools to spaces.
+ * "Posting" (not "deploying") - tools are lightweight, shareable across contexts.
+ *
  * Handles:
- * - Placing tools in space sidebar/inline/modal/tab
- * - Auto-deploying system tools based on space category
+ * - Posting tools to space sidebar/inline/modal/tab
+ * - Auto-posting system tools based on space category
  * - Managing tool placements (reorder, update, remove)
- * - Syncing tool state across spaces
+ * - State isolation modes: shared (cross-space) or isolated (per-space)
  */
 
 import { BaseApplicationService, ApplicationServiceContext, ServiceResult } from '../base.service';
@@ -44,6 +46,8 @@ export interface PlaceToolInput {
   configOverrides?: Record<string, unknown>;
   visibility?: PlacementVisibility;
   titleOverride?: string;
+  // State isolation mode: 'shared' (default) or 'isolated'
+  stateMode?: 'shared' | 'isolated';
 }
 
 /**
@@ -118,6 +122,11 @@ export interface SpaceDeploymentCallbacks {
 
 /**
  * Data transfer object for placed tool persistence
+ *
+ * Represents a tool "posted" to a space (not "deployed")
+ * - Posting is lightweight and shareable
+ * - State can be shared (cross-space) or isolated (per-space)
+ * - Presentation config (title, order) is always per-space
  */
 export interface PlacedToolData {
   id: string;
@@ -133,6 +142,11 @@ export interface PlacedToolData {
   visibility: PlacementVisibility;
   titleOverride: string | null;
   isEditable: boolean;
+  // State isolation mode: 'shared' (default) or 'isolated'
+  stateMode: 'shared' | 'isolated';
+  // Deployment ID for state access - generated based on stateMode
+  deploymentId: string;
+  // Legacy: per-space state (deprecated, use deploymentId-based state instead)
   state: Record<string, unknown>;
   stateUpdatedAt: Date | null;
 }
@@ -207,9 +221,10 @@ export class SpaceDeploymentService extends BaseApplicationService {
       const placedTool = placeResult.getValue();
 
       // Persist the placed tool
+      const stateMode = input.stateMode || 'shared';
       const saveResult = await this.callbacks.savePlacedTool(
         input.spaceId,
-        this.toPlacedToolData(placedTool)
+        this.toPlacedToolData(placedTool, stateMode)
       );
       if (saveResult.isFailure) {
         return Result.fail<ServiceResult<PlaceToolResult>>(saveResult.error!);
@@ -476,7 +491,12 @@ export class SpaceDeploymentService extends BaseApplicationService {
   // Private Helpers
   // ============================================================
 
-  private toPlacedToolData(placedTool: PlacedTool): PlacedToolData {
+  private toPlacedToolData(placedTool: PlacedTool, stateMode: 'shared' | 'isolated' = 'shared'): PlacedToolData {
+    // Generate deployment ID based on state isolation mode
+    const deploymentId = stateMode === 'shared'
+      ? `tool:${placedTool.toolId}`
+      : `space:${placedTool.spaceId}_${placedTool.toolId}`;
+
     return {
       id: placedTool.id,
       toolId: placedTool.toolId,
@@ -491,6 +511,8 @@ export class SpaceDeploymentService extends BaseApplicationService {
       visibility: placedTool.visibility,
       titleOverride: placedTool.titleOverride,
       isEditable: placedTool.isEditable,
+      stateMode,
+      deploymentId,
       state: placedTool.state,
       stateUpdatedAt: placedTool.stateUpdatedAt,
     };

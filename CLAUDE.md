@@ -1,6 +1,6 @@
 # HIVE
 
-Web-first platform for students who do things — build, join, organize, belong. Not a feed to scroll. A place to do.
+Creation platform for students. Build tools in seconds, share them anywhere. Polls, signups, countdowns, leaderboards — no code, just results.
 
 ---
 
@@ -8,7 +8,7 @@ Web-first platform for students who do things — build, join, organize, belong.
 
 Every decision runs through one question:
 
-**Does this help a student find their people, join something real, and come back tomorrow?**
+**Does this help a student build something useful and share it with their campus?**
 
 If no → kill it, ignore it, or defer it.
 
@@ -43,6 +43,9 @@ apps/web/src/app/api/[domain]/route.ts
 - For admin routes: use `withAdminAuthAndErrors`
 - For public routes: use `withErrors`
 - For routes with body validation: use `withAuthValidationAndErrors(schema, handler)`
+- **Approved alternatives** (do NOT migrate to standard):
+  - `withSecureAuth` (`@/lib/api-auth-secure`) — Redis rate limiting, cookie auth fallback, campus isolation. Used by feed/posts routes.
+  - `withValidation` (`@/lib/validation-middleware`) — Threat scanning (SQL injection, XSS detection). Used by pre-auth routes (send-code, verify-code).
 
 ```typescript
 // Example: most common pattern

@@ -1,10 +1,50 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 // Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { getCampusId } from '@/lib/campus-context';
+
+// Zod schema for privacy settings update
+const PrivacyUpdateSchema = z.object({
+  ghostMode: z.object({
+    enabled: z.boolean().optional(),
+    level: z.enum(['invisible', 'minimal', 'selective', 'normal']).optional(),
+    hideFromDirectory: z.boolean().optional(),
+    hideActivity: z.boolean().optional(),
+    hideSpaceMemberships: z.boolean().optional(),
+    hideLastSeen: z.boolean().optional(),
+    hideOnlineStatus: z.boolean().optional(),
+  }).optional(),
+  profileVisibility: z.object({
+    showToSpaceMembers: z.boolean().optional(),
+    showToFollowers: z.boolean().optional(),
+    showToPublic: z.boolean().optional(),
+    hideProfilePhoto: z.boolean().optional(),
+    hideHandle: z.boolean().optional(),
+    hideInterests: z.boolean().optional(),
+  }).optional(),
+  activitySharing: z.object({
+    shareActivityData: z.boolean().optional(),
+    shareSpaceActivity: z.boolean().optional(),
+    shareToolUsage: z.boolean().optional(),
+    shareContentCreation: z.boolean().optional(),
+    allowAnalytics: z.boolean().optional(),
+  }).optional(),
+  notifications: z.object({
+    enableActivityNotifications: z.boolean().optional(),
+    enableSpaceNotifications: z.boolean().optional(),
+    enableToolNotifications: z.boolean().optional(),
+    enableRitualNotifications: z.boolean().optional(),
+  }).optional(),
+  dataRetention: z.object({
+    retainActivityData: z.boolean().optional(),
+    retentionPeriod: z.number().int().min(1).max(3650).optional(),
+    autoDeleteInactiveData: z.boolean().optional(),
+  }).optional(),
+});
 
 // Privacy settings interface
 interface PrivacySettings {
@@ -131,13 +171,8 @@ export async function PUT(request: NextRequest) {
 
     const campusId = await getCampusId(request);
 
-    const body = await request.json();
+    const body = PrivacyUpdateSchema.parse(await request.json());
     const { ghostMode, profileVisibility, activitySharing, notifications, dataRetention } = body;
-
-    // Validate ghost mode level
-    if (ghostMode?.level && !['invisible', 'minimal', 'selective', 'normal'].includes(ghostMode.level)) {
-      return NextResponse.json(ApiResponseHelper.error("Invalid ghost mode level", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
 
     // Get existing settings
     const privacyDoc = await dbAdmin.collection('privacySettings').doc(user.uid).get();
@@ -169,6 +204,9 @@ export async function PUT(request: NextRequest) {
       message: 'Privacy settings updated successfully'
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(ApiResponseHelper.error(error.errors[0]?.message || "Invalid input", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
+    }
     logger.error(
       `Error updating privacy settings at /api/privacy`,
       { error: error instanceof Error ? error.message : String(error) }

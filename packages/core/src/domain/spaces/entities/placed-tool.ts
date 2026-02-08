@@ -1,8 +1,13 @@
 /**
  * PlacedTool Entity
  *
- * Represents a HiveLab tool that has been placed/deployed into a space.
+ * Represents a HiveLab tool that has been posted to a space.
  * This is the bridge between HiveLab (tool creation) and Spaces (tool usage).
+ *
+ * Key concepts:
+ * - "Posting" (not "deploying") - lightweight, shareable across contexts
+ * - Shared state by default - enables cross-space engagement
+ * - Per-space presentation config - title, order, visibility
  *
  * PlacedTools can appear in:
  * - Sidebar: Persistent tools visible in the space sidebar
@@ -66,7 +71,21 @@ interface PlacedToolProps {
   /** Whether leaders can remove/modify this placement */
   isEditable: boolean;
 
-  /** Runtime state for this placement (votes, submissions, etc.) */
+  /**
+   * State isolation mode for tool postings
+   * - shared: Tool state is shared across all spaces (default for viral tools)
+   * - isolated: Each space has its own state (for space-specific polls/data)
+   */
+  stateMode: 'shared' | 'isolated';
+
+  /**
+   * Deployment ID for state access - generated based on stateMode
+   * - shared mode: `tool:{toolId}` - state shared across all postings
+   * - isolated mode: `space:{spaceId}_{toolId}` - state isolated per space
+   */
+  deploymentId: string;
+
+  /** Legacy: per-space state (deprecated, use deploymentId-based state instead) */
   state: Record<string, unknown>;
 
   /** Last time the tool state was updated */
@@ -134,6 +153,14 @@ export class PlacedTool extends Entity<PlacedToolProps> {
     return this.props.isEditable;
   }
 
+  get stateMode(): 'shared' | 'isolated' {
+    return this.props.stateMode;
+  }
+
+  get deploymentId(): string {
+    return this.props.deploymentId;
+  }
+
   get state(): Record<string, unknown> {
     return this.props.state;
   }
@@ -199,6 +226,16 @@ export class PlacedTool extends Entity<PlacedToolProps> {
       return Result.fail<PlacedTool>(`Invalid placement: ${props.placement}. Must be one of: ${validPlacements.join(', ')}`);
     }
 
+    // Default to shared state mode
+    const stateMode = props.stateMode ?? 'shared';
+
+    // Generate deployment ID based on state isolation mode
+    const deploymentId = props.deploymentId ?? (
+      stateMode === 'shared'
+        ? `tool:${props.toolId}`
+        : `space:${props.spaceId}_${props.toolId}`
+    );
+
     const placedToolProps: PlacedToolProps = {
       toolId: props.toolId,
       spaceId: props.spaceId,
@@ -212,6 +249,8 @@ export class PlacedTool extends Entity<PlacedToolProps> {
       visibility: props.visibility ?? 'all',
       titleOverride: props.titleOverride ?? null,
       isEditable: props.isEditable ?? true,
+      stateMode,
+      deploymentId,
       state: props.state ?? {},
       stateUpdatedAt: props.stateUpdatedAt ?? null,
       toolVersion: props.toolVersion ?? null,

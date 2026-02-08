@@ -1,3 +1,4 @@
+import type * as admin from "firebase-admin";
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
 
@@ -5,15 +6,17 @@ import { dbAdmin } from '@/lib/firebase-admin';
 export const GET = withAuthAndErrors(async (request, context, respond) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
-  const campusId = getCampusId(req);
+  const campusId: string | undefined = req.user.campusId || undefined;
 
-  // Fetch user's tools
-  const toolsSnapshot = await dbAdmin
-    .collection('tools')
-    .where('campusId', '==', campusId)
-    .where('ownerId', '==', userId)
-    .orderBy('updatedAt', 'desc')
-    .get();
+  // Fetch user's tools - filter by campus if present
+  let toolsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('tools');
+  if (campusId) {
+    toolsQuery = toolsQuery.where('campusId', '==', campusId).where('ownerId', '==', userId);
+  } else {
+    toolsQuery = toolsQuery.where('ownerId', '==', userId);
+  }
+
+  const toolsSnapshot = await toolsQuery.orderBy('updatedAt', 'desc').get();
 
   if (toolsSnapshot.empty) {
     return respond.success({

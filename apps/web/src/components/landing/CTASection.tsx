@@ -39,12 +39,12 @@ export function CTASection() {
 
         <FadeUp>
           <h2 className={`${clashDisplay} text-[clamp(28px,4.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em] mb-4`}>
-            <span className="text-white">Ready to build</span>
+            <span className="text-white">What will you</span>
             <br />
-            <span className="text-white/20">something real?</span>
+            <span className="text-white/20">build first?</span>
           </h2>
           <p className="text-base text-white/30 mb-10">
-            Join 400+ organizations already on HIVE.
+            Pick a template. Make it yours. Share the link.
           </p>
         </FadeUp>
 
@@ -58,7 +58,7 @@ export function CTASection() {
                 trailingIcon={<ArrowRight />}
                 onClick={handleEnter}
               >
-                Enter HIVE
+                Start building
               </Button>
             </Magnetic>
             <Button

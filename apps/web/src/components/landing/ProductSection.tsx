@@ -3,20 +3,9 @@
 import {
   RevealSection,
   FadeUp,
-  LandingWindow,
-  type LandingWindowSpace,
 } from '@hive/ui/design-system/primitives';
-import { ProductMock } from './ProductMock';
 
 const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
-
-const discoverySpaces: LandingWindowSpace[] = [
-  { id: '1', name: 'Engineering Club', shortName: 'EC', memberCount: 234, isLive: true },
-  { id: '2', name: 'Debate Society', shortName: 'DS', memberCount: 89, isLive: false },
-  { id: '3', name: 'Art Collective', shortName: 'AC', memberCount: 156, isLive: true },
-  { id: '4', name: 'Finance Club', shortName: 'FC', memberCount: 312, isLive: false },
-  { id: '5', name: 'Robotics Lab', shortName: 'RL', memberCount: 67, isLive: true },
-];
 
 interface FeatureBlockProps {
   number: string;
@@ -45,33 +34,76 @@ function FeatureBlock({ number, title, description, visual, reverse }: FeatureBl
   );
 }
 
-function VerifiedProfileMock() {
+function BuildMock() {
+  const elements = ['Poll', 'Counter', 'RSVP', 'Countdown'];
   return (
     <div className="max-w-xs mx-auto">
       <div className="rounded-2xl border border-white/[0.06] bg-[var(--bg-ground)] p-6">
-        {/* Avatar */}
-        <div className="flex items-center gap-4 mb-5">
-          <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center">
-            <span className="text-sm font-bold text-white/50">JS</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white">Jordan Smith</span>
-              <span className="w-4 h-4 rounded-full bg-[#FFD700]/20 flex items-center justify-center">
-                <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-                  <path d="M10 3L4.5 8.5L2 6" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </span>
-            </div>
-            <span className="text-xs text-white/30">jordan.smith@buffalo.edu</span>
-          </div>
+        <div className="flex items-center gap-2 mb-5">
+          <span className="w-4 h-4 rounded bg-[#FFD700]/10 flex items-center justify-center">
+            <span className="text-[6px] text-[#FFD700] font-bold">H</span>
+          </span>
+          <span className="text-xs font-medium text-white/60">New Tool</span>
         </div>
-        {/* Spaces */}
+        <div className="space-y-2 mb-4">
+          {elements.map((el) => (
+            <div key={el} className="flex items-center gap-2 text-xs text-white/40 px-3 py-2 rounded-lg border border-white/[0.04] bg-white/[0.02]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/30" />
+              {el}
+            </div>
+          ))}
+        </div>
+        <div className="h-8 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
+          <span className="text-[10px] font-medium text-[#FFD700]/60">Deploy</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ShareMock() {
+  const channels = ['GroupMe', 'iMessage', 'Instagram', 'QR Code', 'Link'];
+  return (
+    <div className="max-w-xs mx-auto">
+      <div className="rounded-2xl border border-white/[0.06] bg-[var(--bg-ground)] p-6">
+        <div className="text-xs font-medium text-white/60 mb-4">Share anywhere</div>
         <div className="space-y-2">
-          {['Engineering Club', 'Robotics Lab', 'Debate Society'].map((space) => (
-            <div key={space} className="flex items-center gap-2 text-xs text-white/40">
+          {channels.map((ch) => (
+            <div key={ch} className="flex items-center gap-3 text-xs text-white/40 px-3 py-2 rounded-lg border border-white/[0.04] bg-white/[0.02]">
               <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
-              {space}
+              {ch}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResultsMock() {
+  const votes = [
+    { label: 'Friday', pct: 72 },
+    { label: 'Saturday', pct: 45 },
+    { label: 'Sunday', pct: 28 },
+  ];
+  return (
+    <div className="max-w-xs mx-auto">
+      <div className="rounded-2xl border border-white/[0.06] bg-[var(--bg-ground)] p-6">
+        <div className="text-xs font-medium text-white/60 mb-1">Event Poll</div>
+        <div className="text-[10px] text-white/30 mb-4">47 votes</div>
+        <div className="space-y-3">
+          {votes.map((v) => (
+            <div key={v.label}>
+              <div className="flex justify-between text-[10px] text-white/40 mb-1">
+                <span>{v.label}</span>
+                <span>{v.pct}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[#FFD700]/40"
+                  style={{ width: `${v.pct}%` }}
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -88,7 +120,7 @@ export function ProductSection() {
           <FadeUp>
             <div className="flex items-center gap-3 mb-8">
               <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
-              <p className="text-[11px] uppercase tracking-[0.3em] text-white/30">The Platform</p>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-white/30">How It Works</p>
             </div>
           </FadeUp>
         </div>
@@ -96,24 +128,24 @@ export function ProductSection() {
         <div className="space-y-32 md:space-y-40">
           <FeatureBlock
             number="01"
-            title="A permanent home for every org."
-            description="Posts, events, files, members&mdash;one place that outlasts any president."
-            visual={<ProductMock />}
+            title="Build in seconds."
+            description="Pick a template or describe what you need. Polls, signups, countdowns, leaderboards&mdash;27 elements, zero code."
+            visual={<BuildMock />}
           />
 
           <FeatureBlock
             number="02"
-            title="Find your people by what you care about."
-            description="Browse by major, interests, or what&rsquo;s trending. See who&rsquo;s active."
-            visual={<LandingWindow spaces={discoverySpaces} featuredIndex={0} />}
+            title="Share it anywhere."
+            description="Get a link. Drop it in GroupMe, text it, post it, print the QR code. Works on any device, no app to download."
+            visual={<ShareMock />}
             reverse
           />
 
           <FeatureBlock
             number="03"
-            title="Real names. Real trust."
-            description="Every profile verified through your campus email. You know who you&rsquo;re building with."
-            visual={<VerifiedProfileMock />}
+            title="See results live."
+            description="Votes come in. Signups fill up. Countdowns tick. Everything updates in real time for everyone."
+            visual={<ResultsMock />}
           />
         </div>
       </div>

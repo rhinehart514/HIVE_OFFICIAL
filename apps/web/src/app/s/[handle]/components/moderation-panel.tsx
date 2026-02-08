@@ -28,6 +28,7 @@ import {
   Square,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import {
   Text,
   Button,
@@ -164,7 +165,7 @@ export function ModerationPanel({
         return next;
       });
     } catch (err) {
-      console.error('Moderation action failed:', err);
+      logger.error('Moderation action failed', err instanceof Error ? err : new Error(String(err)));
     } finally {
       setActionInProgress(null);
     }
@@ -199,7 +200,7 @@ export function ModerationPanel({
       await fetchQueue();
       setSelectedIds(new Set());
     } catch (err) {
-      console.error('Bulk moderation action failed:', err);
+      logger.error('Bulk moderation action failed', err instanceof Error ? err : new Error(String(err)));
     } finally {
       setActionInProgress(null);
     }

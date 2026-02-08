@@ -6,8 +6,14 @@
  */
 
 import * as admin from 'firebase-admin';
+import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthAndErrors, withOptionalAuth, getUserId, getCampusId, getUser } from '@/lib/middleware';
+
+// Zod schema for comment creation
+const CommentSchema = z.object({
+  content: z.string().min(1, 'Comment content is required').max(2000, 'Comment too long (max 2000 characters)'),
+});
 
 const FieldValue = admin.firestore.FieldValue;
 
@@ -92,16 +98,7 @@ export const POST = withAuthAndErrors(async (request, context: { params: Promise
   const campusId = getCampusId(request);
   const userEmail = request.user.email;
 
-  const body = await request.json();
-  const { content } = body;
-
-  if (!content || typeof content !== 'string' || content.trim().length === 0) {
-    return respond.error('Comment content is required', 'VALIDATION_ERROR', { status: 400 });
-  }
-
-  if (content.length > 2000) {
-    return respond.error('Comment too long (max 2000 characters)', 'VALIDATION_ERROR', { status: 400 });
-  }
+  const { content } = CommentSchema.parse(await request.json());
 
   // Get user profile for author info
   const profileDoc = await dbAdmin.collection('profiles').doc(userId).get();

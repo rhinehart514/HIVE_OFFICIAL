@@ -10,16 +10,16 @@ import {
 
 const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
 
-const scatteredTools = [
-  { name: 'GroupMe', rotation: -3 },
-  { name: 'Slack', rotation: 2 },
-  { name: 'Notion', rotation: -1 },
-  { name: 'Google Docs', rotation: 4 },
-  { name: 'Drive', rotation: -2 },
-  { name: 'Email', rotation: 1 },
+const oldWay = [
+  { name: 'Google Forms', rotation: -3 },
+  { name: 'Spreadsheets', rotation: 2 },
+  { name: 'Group chat polls', rotation: -1 },
+  { name: 'Show of hands', rotation: 4 },
+  { name: 'Email threads', rotation: -2 },
+  { name: 'Pen & paper', rotation: 1 },
 ];
 
-const hiveTabs = ['Posts', 'Events', 'Files', 'Members'];
+const hiveTools = ['Poll', 'Signup', 'Countdown', 'Leaderboard'];
 
 export function ComparisonSection() {
   return (
@@ -30,7 +30,7 @@ export function ComparisonSection() {
           <FadeUp>
             <div className="relative rounded-2xl border border-white/[0.04] bg-white/[0.01] p-10 md:p-14 min-h-[300px] flex flex-col items-center justify-center">
               <Stagger staggerDelay={0.08} className="flex flex-wrap gap-4 justify-center mb-8">
-                {scatteredTools.map((tool) => (
+                {oldWay.map((tool) => (
                   <motion.span
                     key={tool.name}
                     className="text-white/20 text-sm md:text-base px-3 py-1.5 border border-white/[0.06] rounded-lg bg-white/[0.02]"
@@ -45,7 +45,7 @@ export function ComparisonSection() {
                 ))}
               </Stagger>
               <p className={`${clashDisplay} text-sm text-white/30 text-center`}>
-                Six tools. Nothing connects.
+                Hacky. Ugly. Nobody checks it.
               </p>
             </div>
           </FadeUp>
@@ -58,10 +58,10 @@ export function ComparisonSection() {
                   <span className="w-4 h-4 rounded bg-[#FFD700]/10 flex items-center justify-center">
                     <span className="text-[6px] text-[#FFD700] font-bold">H</span>
                   </span>
-                  <span className="text-xs font-medium text-white/60">Your Space</span>
+                  <span className="text-xs font-medium text-white/60">Your Tool</span>
                 </div>
                 <div className="flex gap-1">
-                  {hiveTabs.map((tab) => (
+                  {hiveTools.map((tab) => (
                     <span
                       key={tab}
                       className="text-[10px] px-2 py-1 rounded text-white/30 bg-white/[0.03] border border-white/[0.04]"
@@ -72,7 +72,7 @@ export function ComparisonSection() {
                 </div>
               </div>
               <p className={`${clashDisplay} text-sm text-white/30 text-center`}>
-                One Space. Everything persists.
+                Built in 30 seconds. Shared everywhere.
               </p>
             </AnimatedBorder>
           </FadeUp>

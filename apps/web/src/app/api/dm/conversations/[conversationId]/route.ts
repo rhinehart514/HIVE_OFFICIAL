@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { dbAdmin as db } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 /**
  * DM Conversation Detail API
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error('Failed to fetch conversation:', error);
+    logger.error('Failed to fetch conversation', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Failed to fetch conversation' },
       { status: 500 }

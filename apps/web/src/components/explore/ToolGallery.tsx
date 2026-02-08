@@ -31,6 +31,7 @@ export interface ToolData {
   isOfficial?: boolean;
   deployedSpaces?: DeployedSpace[];
   createdByName?: string;
+  campusName?: string;
 }
 
 export interface ToolGalleryProps {
@@ -244,7 +245,7 @@ function ToolCard({ tool }: ToolCardProps) {
 
               {/* Footer: Popularity + Actions */}
               <div className="flex items-center justify-between pt-1">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
                   {/* Deploy count as popularity signal */}
                   <span className={cn(
                     'flex items-center gap-1 text-label',
@@ -262,11 +263,18 @@ function ToolCard({ tool }: ToolCardProps) {
                       by {tool.createdByName}
                     </span>
                   )}
+
+                  {/* Campus attribution */}
+                  {tool.campusName && (
+                    <span className="text-label text-white/25">
+                      · {tool.campusName}
+                    </span>
+                  )}
                 </div>
 
                 {/* View in Lab */}
                 <Link
-                  href={`/lab/${tool.id}`}
+                  href={`/t/${tool.id}`}
                   onClick={(e) => e.stopPropagation()}
                   className={cn(
                     'flex items-center gap-1.5 px-2.5 py-1 rounded-md',
@@ -278,7 +286,7 @@ function ToolCard({ tool }: ToolCardProps) {
                   )}
                 >
                   <FlaskConical className="w-3 h-3" />
-                  View in Lab
+                  View
                 </Link>
               </div>
             </div>

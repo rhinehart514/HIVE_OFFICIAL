@@ -1,5 +1,6 @@
 "use server";
 
+import type * as admin from "firebase-admin";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import {
@@ -31,7 +32,7 @@ export const GET = withOptionalAuth(async (
     // Optional auth: get user if authenticated, null otherwise
     const user = getUser(request as import("next/server").NextRequest);
     const viewerId = user?.uid || null;
-    const campusId = user?.campusId || 'ub-buffalo'; // Default campus for public
+    const campusId = user?.campusId || null; // Optional campus filtering
     const searchParams = new URL(request.url).searchParams;
 
     const requestedUserId = searchParams.get("userId") ?? undefined;
@@ -45,10 +46,15 @@ export const GET = withOptionalAuth(async (
     );
     const offset = parseInteger(searchParams.get("offset"), 0);
     const search = searchParams.get("search") ?? undefined;
+    const campusFilter = searchParams.get("campusId") ?? undefined;
 
-    let query = dbAdmin
-      .collection("tools")
-      .where("campusId", "==", campusId);
+    let query: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection("tools");
+
+    // Optional campus filtering: use query param, then user's campus, or show all
+    const effectiveCampusId = campusFilter || campusId;
+    if (effectiveCampusId) {
+      query = query.where("campusId", "==", effectiveCampusId);
+    }
 
     if (requestedUserId) {
       if (requestedUserId === viewerId) {
@@ -144,14 +150,18 @@ export const GET = withOptionalAuth(async (
         let deployedSpaces: { id: string; name: string; handle: string }[] = [];
         let deploymentCount = toolData.deploymentCount || 0;
         try {
-          const deploymentsSnapshot = await dbAdmin
+          let deploymentsQuery = dbAdmin
             .collection("deployedTools")
             .where("toolId", "==", doc.id)
-            .where("campusId", "==", campusId)
             .where("status", "==", "active")
-            .where("deployedTo", "==", "space")
-            .limit(10)
-            .get();
+            .where("deployedTo", "==", "space");
+
+          // Optional campus filtering for deployments
+          if (effectiveCampusId) {
+            deploymentsQuery = deploymentsQuery.where("campusId", "==", effectiveCampusId);
+          }
+
+          const deploymentsSnapshot = await deploymentsQuery.limit(10).get();
 
           if (!deploymentsSnapshot.empty) {
             // Use the actual active deployment count if we have it
@@ -240,9 +250,12 @@ export const GET = withOptionalAuth(async (
     let total = filteredTools.length;
     if (offset === 0) {
       try {
-        let countQuery = dbAdmin
-          .collection("tools")
-          .where("campusId", "==", campusId);
+        let countQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection("tools");
+
+        // Apply same campus filter as main query
+        if (effectiveCampusId) {
+          countQuery = countQuery.where("campusId", "==", effectiveCampusId);
+        }
 
         if (requestedUserId) {
           if (requestedUserId === viewerId) {

@@ -278,6 +278,29 @@ export type {
   CounterMigrationStatus,
 } from "./domain/hivelab/tool-composition.types";
 
+// Custom Block Types (Phase 5: iframe sandbox system)
+export type {
+  CustomBlockConfig,
+  CustomBlockCode,
+  CustomBlockManifest,
+  CustomBlockMetadata,
+  CustomBlockPort,
+  CustomBlockAction,
+  CustomBlockCSP,
+  BlockState,
+  BlockContext,
+  ActionResult,
+  HIVESDK,
+  ParentMessage,
+  IframeMessage,
+  PostMessageEnvelope,
+  CodeValidationResult,
+  CodeValidationError,
+  CodeValidationWarning,
+  CustomBlockVersion,
+  CustomBlockWithVersions,
+} from "./domain/hivelab/custom-block.types";
+
 // Sprint 3: Tool-to-Tool Connection Types
 export type {
   DataTransform,

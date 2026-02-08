@@ -5,6 +5,7 @@ import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthValidationAndErrors, withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
+import { logger } from '@/lib/logger';
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 import { validateToolForPublish } from "@/lib/tool-validation";
 
@@ -108,7 +109,7 @@ export const POST = withAuthValidationAndErrors(
           deployment: { targetType: 'profile', toolId },
         });
       } catch (error) {
-        console.error('[Deploy Profile Error]', error);
+        logger.error('Deploy profile error', error instanceof Error ? error : new Error(String(error)));
         return respond.error(
           `Profile deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
           "UNKNOWN_ERROR",

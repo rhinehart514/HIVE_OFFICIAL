@@ -1,10 +1,17 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 // Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { getCampusId } from '@/lib/campus-context';
+
+// Zod schema for visibility check
+const VisibilityCheckSchema = z.object({
+  targetUserId: z.string().min(1, 'Target user ID is required'),
+  context: z.string().max(100).optional(),
+});
 
 // Visibility check interface
 interface VisibilityCheck {
@@ -28,12 +35,8 @@ export async function POST(request: NextRequest) {
 
     const campusId = await getCampusId(request);
 
-    const body = await request.json();
+    const body = VisibilityCheckSchema.parse(await request.json());
     const { targetUserId, context } = body;
-
-    if (!targetUserId) {
-      return NextResponse.json(ApiResponseHelper.error("Target user ID is required", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
 
     // Check if viewing own profile
     if (targetUserId === user.uid) {
@@ -69,7 +72,7 @@ export async function POST(request: NextRequest) {
       viewerPrivacy,
       relationship,
       sharedSpaces,
-      context
+      context || 'general'
     );
 
     return NextResponse.json({ 
@@ -80,6 +83,9 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(ApiResponseHelper.error(error.errors[0]?.message || "Invalid input", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
+    }
     logger.error(
       `Error checking visibility at /api/privacy/visibility`,
       { error: error instanceof Error ? error.message : String(error) }

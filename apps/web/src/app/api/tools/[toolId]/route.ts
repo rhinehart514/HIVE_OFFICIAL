@@ -15,8 +15,9 @@ export const GET = withAuthAndErrors(async (
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-  const userId = getUserId(request as AuthenticatedRequest);
-  const campusId = getCampusId(request as AuthenticatedRequest);
+  const req = request as AuthenticatedRequest;
+  const userId = getUserId(req);
+  const campusId = req.user.campusId || null;
   const { toolId } = await params;
   const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
 
@@ -34,7 +35,9 @@ export const GET = withAuthAndErrors(async (
     isPublic?: boolean;
     visibility?: string;
   };
-  if (toolData.campusId !== campusId) {
+
+  // Optional campus filtering: if user has campus and tool has campus, they must match
+  if (campusId && toolData.campusId && toolData.campusId !== campusId) {
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
@@ -83,8 +86,9 @@ export const PUT = withAuthAndErrors(async (
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-    const userId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
+    const req = request as AuthenticatedRequest;
+    const userId = getUserId(req);
+    const campusId = req.user.campusId || null;
     const { toolId } = await params;
     const body = await request.json();
     // Best-effort validation using core's lightweight schema helpers
@@ -114,7 +118,9 @@ export const PUT = withAuthAndErrors(async (
       elements?: Array<unknown>;
       spaceId?: string;
     };
-    if (currentTool.campusId !== campusId) {
+
+    // Optional campus filtering: if user has campus and tool has campus, they must match
+    if (campusId && currentTool.campusId && currentTool.campusId !== campusId) {
       return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
 
@@ -192,8 +198,9 @@ export const DELETE = withAuthAndErrors(async (
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-  const userId = getUserId(request as AuthenticatedRequest);
-  const campusId = getCampusId(request as AuthenticatedRequest);
+  const req = request as AuthenticatedRequest;
+  const userId = getUserId(req);
+  const campusId = req.user.campusId || null;
   const { toolId } = await params;
   const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
 
@@ -211,7 +218,9 @@ export const DELETE = withAuthAndErrors(async (
     elements?: Array<unknown>;
     useCount?: number;
   };
-  if (tool.campusId !== campusId) {
+
+  // Optional campus filtering: if user has campus and tool has campus, they must match
+  if (campusId && tool.campusId && tool.campusId !== campusId) {
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
@@ -222,16 +231,17 @@ export const DELETE = withAuthAndErrors(async (
   }
 
   // CASCADE DELETE: Find and delete all PlacedTools referencing this tool across all spaces
-  const placedToolsQuery = await dbAdmin.collectionGroup('placed_tools')
-    .where('toolId', '==', toolId)
-    .where('campusId', '==', campusId)
-    .get();
+  let placedToolsQuery = dbAdmin.collectionGroup('placed_tools').where('toolId', '==', toolId);
+  if (campusId) {
+    placedToolsQuery = placedToolsQuery.where('campusId', '==', campusId);
+  }
+  const placedToolsSnapshot = await placedToolsQuery.get();
 
   const cascadeBatch = dbAdmin.batch();
   const deletedPlacements: string[] = [];
   const deletedConnections: string[] = [];
 
-  for (const placementDoc of placedToolsQuery.docs) {
+  for (const placementDoc of placedToolsSnapshot.docs) {
     const placement = placementDoc.data();
     const spaceId = placement.spaceId || placementDoc.ref.parent.parent?.id;
 

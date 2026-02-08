@@ -18,6 +18,7 @@ import {
 } from '@hive/core/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { deriveCampusFromEmail } from '@/lib/middleware';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // Response Helpers
@@ -305,7 +306,7 @@ export async function POST(request: NextRequest) {
       201,
     );
   } catch (error) {
-    console.error('Error creating setup template:', error);
+    logger.error('Error creating setup template', error instanceof Error ? error : new Error(String(error)));
     return errorResponse('Failed to create setup template', 500);
   }
 }

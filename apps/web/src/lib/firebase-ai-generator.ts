@@ -73,9 +73,29 @@ const toolSchema = Schema.object({
           name: Schema.string(),
           config: Schema.object({
             properties: {
-              // Gemini requires at least one property for OBJECT type
-              // Using common config properties that most elements use
+              // Common properties for most elements
               label: Schema.string(),
+              // Custom block properties (when type is custom-block)
+              metadata: Schema.object({
+                properties: {
+                  name: Schema.string(),
+                  description: Schema.string(),
+                  version: Schema.string(),
+                },
+              }),
+              code: Schema.object({
+                properties: {
+                  html: Schema.string(),
+                  css: Schema.string(),
+                  js: Schema.string(),
+                },
+              }),
+              manifest: Schema.object({
+                properties: {
+                  capabilities: Schema.array({ items: Schema.string() }),
+                  requiresAuth: Schema.boolean(),
+                },
+              }),
             },
           }),
           position: Schema.object({
@@ -136,6 +156,9 @@ ACTION ELEMENTS:
 - signup-sheet: Slot-based signups for office hours, shifts, sessions. Config: { slots: [{ id: string, name: string, time: string, capacity: number }], allowMultipleSignups: boolean, title: string }
 - checklist-tracker: Shared checklist with progress tracking. Config: { items: [{ id: string, title: string, assignee?: string }], allowMemberAdd: boolean, title: string }
 
+CUSTOM ELEMENTS (use sparingly - prefer native elements):
+- custom-block: AI-generated HTML/CSS/JS for unique UI patterns not available natively. ONLY use when native elements cannot achieve the desired result. Examples: bingo cards, flip countdown timers, custom visualizations, specialized animations. Config requires: metadata (name, description), code (html, css, js), manifest (actions, inputs, outputs, stateSchema). When generating custom block code, ALWAYS use HIVE design tokens (--hive-color-*, --hive-spacing-*, --hive-radius-*, etc.) and utility classes (.hive-btn, .hive-card, .hive-input).
+
 ## Context: Tools Live in Spaces
 - Tools are created FOR a specific Space (club, org, dorm, etc.)
 - Space members interact with tools
@@ -158,6 +181,7 @@ Always use layout: "flow". This is the only supported layout mode.
 9. For signups/scheduling: combine signup-sheet + countdown-timer
 10. For task tracking: combine checklist-tracker + countdown-timer
 11. Prioritize the most impactful elements first — a poll before a chart, a signup before a leaderboard.
+12. HYBRID COMPOSITIONS: Prefer native elements (95% of cases). Only use custom-block when the request explicitly needs unique visuals or interactions not available natively (e.g., "bingo card", "flip countdown", "hand-drawn chart style"). You can mix native and custom elements in one tool.
 
 ## Naming & Description
 - Generate short, human-friendly names. Not "Study Group Finder Tool" but "Study Buddy" or "Find Study Partners".

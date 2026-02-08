@@ -12,6 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import {
   getAllElements,
   getElementsByCategory,
@@ -164,7 +165,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error listing elements:', error);
+    logger.error('Error listing elements', error instanceof Error ? error : new Error(String(error)));
     return errorResponse('Failed to list elements', 500);
   }
 }

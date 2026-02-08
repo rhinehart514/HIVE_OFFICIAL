@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // Response Helpers
@@ -171,7 +172,7 @@ export async function POST(
       newVersion,
     });
   } catch (error) {
-    console.error('Error restoring tool version:', error);
+    logger.error('Error restoring tool version', error instanceof Error ? error : new Error(String(error)));
     return errorResponse('Failed to restore tool version', 500);
   }
 }

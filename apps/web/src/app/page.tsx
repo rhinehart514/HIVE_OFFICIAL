@@ -11,17 +11,17 @@ import {
 } from '@/components/landing';
 
 export const metadata: Metadata = {
-  title: 'HIVE — finally.',
-  description: 'One place for student orgs. Spaces, events, members, chat. Live at UB.',
+  title: 'HIVE — build it. share it.',
+  description: 'Create tools your campus actually uses. Polls, signups, countdowns, leaderboards — build in seconds, share anywhere.',
   openGraph: {
-    title: 'HIVE — finally.',
-    description: 'One place for student orgs. Spaces, events, members, chat. Live at UB.',
+    title: 'HIVE — build it. share it.',
+    description: 'Create tools your campus actually uses. Polls, signups, countdowns, leaderboards — build in seconds, share anywhere.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HIVE — finally.',
-    description: 'One place for student orgs. Spaces, events, members, chat. Live at UB.',
+    title: 'HIVE — build it. share it.',
+    description: 'Create tools your campus actually uses. Polls, signups, countdowns, leaderboards — build in seconds, share anywhere.',
   },
 };
 

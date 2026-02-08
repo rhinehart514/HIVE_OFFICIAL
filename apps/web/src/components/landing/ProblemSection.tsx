@@ -11,9 +11,9 @@ import {
 const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
 
 const painPoints = [
-  { label: 'Knowledge dies', desc: 'Officers graduate, handoffs don\u2019t survive. Every semester starts from zero.' },
-  { label: 'Tools fragment', desc: '6+ apps, nothing connects. GroupMe, Slack, Drive, Notion\u2014scattered everywhere.' },
-  { label: 'Nothing persists', desc: 'You can\u2019t build on what doesn\u2019t exist. Institutional memory disappears.' },
+  { label: 'Ideas die in group chats', desc: 'Someone proposes a poll, a signup, a countdown. It gets lost in 200 messages.' },
+  { label: 'No tools fit', desc: 'Google Forms is ugly. Notion is overkill. Building an app takes months. Nothing exists in between.' },
+  { label: 'Sharing is broken', desc: 'You need something live — right now — for your club, your dorm floor, your study group. There\u2019s no fast way.' },
 ];
 
 export function ProblemSection() {
@@ -31,12 +31,12 @@ export function ProblemSection() {
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/30">The Problem</p>
               </div>
               <h2 className={`${clashDisplay} text-[clamp(32px,5.5vw,56px)] font-semibold leading-[1.05] tracking-[-0.02em]`}>
-                <span className="text-white">Every semester, student orgs</span>
+                <span className="text-white">Students have ideas.</span>
                 <br />
-                <span className="text-white/20">start from zero.</span>
+                <span className="text-white/20">No tools to ship them.</span>
               </h2>
               <p className="text-base text-white/30 mt-6 max-w-xl leading-relaxed">
-                Leadership turns over. GroupMe threads die. Google Drives get lost. The cycle repeats every year.
+                You want a quick poll for your club. A signup sheet for your event. A countdown for your fundraiser. Right now, there&rsquo;s nothing between &ldquo;text the group chat&rdquo; and &ldquo;learn to code.&rdquo;
               </p>
             </FadeUp>
           </div>

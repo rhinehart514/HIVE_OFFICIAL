@@ -25,6 +25,7 @@
  */
 
 import * as admin from 'firebase-admin';
+import { logger } from '../logger';
 
 // ============================================================================
 // CONFIGURATION
@@ -101,7 +102,7 @@ export class ToolStateBroadcasterService {
       this.rtdb = admin.database();
       this.enabled = true;
     } catch {
-      console.warn('RTDB not available - tool state broadcasting disabled');
+      logger.warn('RTDB not available - tool state broadcasting disabled');
       this.enabled = false;
       this.rtdb = null as unknown as admin.database.Database;
     }

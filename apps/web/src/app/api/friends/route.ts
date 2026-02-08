@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
+import { z } from 'zod';
 import { getSession } from '@/lib/session';
 import { dbAdmin as db } from '@/lib/firebase-admin';
+
+// Zod schemas for mutation endpoints
+const FriendRequestSchema = z.object({
+  toUserId: z.string().min(1, 'toUserId is required'),
+  message: z.string().max(500).optional(),
+});
+
+const FriendActionSchema = z.object({
+  requestId: z.string().min(1, 'requestId is required'),
+  action: z.enum(['accept', 'reject'], { message: 'Invalid action. Use "accept" or "reject"' }),
+});
 
 /**
  * GET /api/friends
@@ -164,15 +176,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = FriendRequestSchema.parse(await request.json());
     const { toUserId, message } = body;
-
-    if (!toUserId) {
-      return NextResponse.json(
-        { error: 'toUserId is required' },
-        { status: 400 }
-      );
-    }
 
     const currentUserId = session.userId;
 
@@ -286,7 +291,10 @@ export async function POST(request: NextRequest) {
       message: 'Friend request sent!',
       requestId: connectionId,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors[0]?.message || 'Invalid input' }, { status: 400 });
+    }
     return NextResponse.json(
       { error: 'Failed to send friend request' },
       { status: 500 }
@@ -305,22 +313,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = FriendActionSchema.parse(await request.json());
     const { requestId, action } = body;
-
-    if (!requestId || !action) {
-      return NextResponse.json(
-        { error: 'requestId and action are required' },
-        { status: 400 }
-      );
-    }
-
-    if (!['accept', 'reject'].includes(action)) {
-      return NextResponse.json(
-        { error: 'Invalid action. Use "accept" or "reject"' },
-        { status: 400 }
-      );
-    }
 
     const currentUserId = session.userId;
     const connectionDoc = await db.collection('connections').doc(requestId).get();
@@ -385,7 +379,10 @@ export async function PATCH(request: NextRequest) {
         message: 'Friend request declined',
       });
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors[0]?.message || 'Invalid input' }, { status: 400 });
+    }
     return NextResponse.json(
       { error: 'Failed to respond to friend request' },
       { status: 500 }

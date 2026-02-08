@@ -5,6 +5,9 @@ import { z } from 'zod';
 export const ToolStatus = z.enum(['draft', 'published', 'archived']);
 export type ToolStatus = z.infer<typeof ToolStatus>;
 
+export const ToolVisibility = z.enum(['private', 'unlisted', 'public']);
+export type ToolVisibility = z.infer<typeof ToolVisibility>;
+
 export const ToolVersionSchema = z.string().default('0.1.0');
 export const ToolConfigSchema = z.any();
 export const ToolMetadataSchema = z.record(z.any()).default({});
@@ -30,6 +33,8 @@ export const ToolSchema = z.object({
   name: z.string(),
   version: ToolVersionSchema.optional(),
   status: ToolStatus.default('draft'),
+  visibility: ToolVisibility.default('private').optional(),
+  campusId: z.string().optional(),
   config: ToolConfigSchema.optional(),
   metadata: ToolMetadataSchema.optional(),
   originalContext: ToolOriginalContextSchema,

@@ -68,6 +68,9 @@ export {
   CounterElement,
 } from './elements/interactive';
 
+// Custom elements (Phase 5)
+export { CustomBlockElement } from './elements/custom';
+
 // Re-export error boundary
 export { ElementErrorBoundary } from './elements/shared';
 

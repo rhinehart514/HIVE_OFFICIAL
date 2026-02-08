@@ -21,6 +21,7 @@
 
 import * as admin from 'firebase-admin';
 import { dbAdmin } from '../firebase-admin';
+import { logger } from '../logger';
 import type { ToolTimelineEvent } from '@hive/core';
 
 // ============================================================================
@@ -149,7 +150,7 @@ export class ExtractedTimelineService {
 
     // Update recent events in main document (fire and forget for performance)
     this.updateRecentEvents(deploymentId, fullEvent).catch((err) => {
-      console.error('Failed to update recent events:', err);
+      logger.error('Failed to update recent events', err instanceof Error ? err : new Error(String(err)));
     });
 
     return fullEvent;
@@ -196,7 +197,7 @@ export class ExtractedTimelineService {
     const recentToAdd = fullEvents.slice(-this.recentEventsInDocument);
     if (recentToAdd.length > 0) {
       this.updateRecentEvents(deploymentId, ...recentToAdd).catch((err) => {
-        console.error('Failed to update recent events:', err);
+        logger.error('Failed to update recent events', err instanceof Error ? err : new Error(String(err)));
       });
     }
 

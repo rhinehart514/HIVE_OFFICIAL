@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // Response Helpers
@@ -121,7 +122,7 @@ export async function GET(
 
     return jsonResponse({ version: dto });
   } catch (error) {
-    console.error('Error getting tool version:', error);
+    logger.error('Error getting tool version', error instanceof Error ? error : new Error(String(error)));
     return errorResponse('Failed to get tool version', 500);
   }
 }

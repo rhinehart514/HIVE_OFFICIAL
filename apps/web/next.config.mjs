@@ -87,10 +87,8 @@ const nextConfig = {
     return config;
   },
   serverExternalPackages: ['jose'],
-  // Skip ESLint during builds - pre-existing warnings in lib files
-  // TODO: Fix lint warnings incrementally and remove this
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   // Fix module resolution for workspace packages
   experimental: {

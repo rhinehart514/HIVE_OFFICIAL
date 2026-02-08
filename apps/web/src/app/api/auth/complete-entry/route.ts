@@ -359,33 +359,39 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       reserveHandleInTransaction(transaction, finalHandle, userId, email || '');
 
       // Update user document with identity data
-      transaction.set(userRef, {
+      // IMPORTANT: Firestore rejects `undefined` values — every field must be
+      // a concrete value (string, number, boolean, null, array, or object).
+      const now = new Date().toISOString();
+      const userData: Record<string, unknown> = {
         // Identity (from entry)
         fullName,
         firstName: body.firstName.trim(),
         lastName: body.lastName.trim(),
         handle: finalHandle,
         email: email || '',
-        // Decision-reducing identity fields (now optional)
-        ...(body.major && { major: body.major }),
-        graduationYear: body.graduationYear || null,
-        ...(body.residenceType && { residenceType: body.residenceType }),
-        residentialSpaceId: validatedResidentialSpaceId, // Only store if validated
-        interests: body.interests || [],
-        communityIdentities: body.communityIdentities || {},
+        // Decision-reducing identity fields (only include if provided)
+        graduationYear: body.graduationYear ?? null,
+        interests: body.interests ?? [],
+        communityIdentities: body.communityIdentities ?? {},
         // Campus isolation
         campusId,
         schoolId: campusId,
         // Entry completion - single source of truth
         // JWT still uses onboardingCompleted for backward compat (derived from entryCompletedAt)
-        entryCompletedAt: new Date().toISOString(),
+        entryCompletedAt: now,
         // Status
         isActive: true,
         userType: body.role || 'student',
         // Timestamps
-        updatedAt: new Date().toISOString(),
-        createdAt: existingUser.exists ? existingUser.data()?.createdAt : new Date().toISOString(),
-      }, { merge: true });
+        updatedAt: now,
+        createdAt: (existingUser.exists && existingUser.data()?.createdAt) || now,
+      };
+      // Only write optional fields if they have actual values (avoids undefined)
+      if (body.major) userData.major = body.major;
+      if (body.residenceType) userData.residenceType = body.residenceType;
+      if (validatedResidentialSpaceId) userData.residentialSpaceId = validatedResidentialSpaceId;
+
+      transaction.set(userRef, userData, { merge: true });
 
       // Auto-join: 1. Major space (if major provided and space exists)
       let majorSpaceId: string | null = null;

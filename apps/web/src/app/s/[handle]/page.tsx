@@ -43,6 +43,9 @@ import {
   type Board,
   type OnlineMember,
 } from './components';
+import { SpaceTabs, type SpaceTab } from './components/space-tabs';
+import { ToolsFeed } from './components/tools-feed';
+import { EventsTab } from './components/events-tab';
 import { useTypingIndicator } from '@/hooks/use-presence';
 import { GatheringThreshold } from './components/threshold';
 import {
@@ -121,6 +124,9 @@ export default function SpacePageUnified() {
 
   // Thread panel state - driven by URL param
   const [activeThreadId, setActiveThreadId] = React.useState<string | null>(null);
+
+  // Tab state - Tools is default
+  const [activeTab, setActiveTab] = React.useState<SpaceTab>('tools');
 
   // Detect first entry to this space for ArrivalTransition
   React.useEffect(() => {
@@ -700,19 +706,17 @@ export default function SpacePageUnified() {
         exit={{ opacity: 0 }}
         transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
       >
-        <SpaceLayout
-          mobileSidebarOpen={mobileSidebarOpen}
-          onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-          header={
-            <div className="px-4 h-full flex items-center">
-              <button
-                onClick={() => setMobileSidebarOpen(true)}
-                className="lg:hidden p-2 mr-2 text-white/60 hover:text-white transition-colors"
-                aria-label="Open sidebar"
-              >
-                <Menu size={20} />
-              </button>
-              <SpaceHeader
+        <div className="h-screen flex flex-col">
+          {/* Space Header */}
+          <div className="border-b border-white/[0.06] px-4 h-14 flex items-center flex-shrink-0">
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden p-2 mr-2 text-white/60 hover:text-white transition-colors"
+              aria-label="Open sidebar"
+            >
+              <Menu size={20} />
+            </button>
+            <SpaceHeader
                 space={{
                   id: space.id,
                   handle: space.handle,
@@ -743,110 +747,142 @@ export default function SpacePageUnified() {
                 onMuteChange={handleMuteChange}
                 className="w-full border-b-0"
               />
-            </div>
-          }
-          sidebar={
-            <SpaceSidebar
-              boards={{
-                boards: sidebarBoardsNew,
-                activeBoard: activeBoard || boards[0]?.id || 'general',
-                onBoardChange: setActiveBoard,
-                onCreateBoard: space.isLeader ? handleCreateBoard : undefined,
-                onReorderBoards: space.isLeader ? handleReorderBoards : undefined,
-              }}
-              tools={{
-                tools: sidebarTools || [],
-                isLoading: isLoadingTools,
-                isLeader: space.isLeader,
-                onToolClick: (tool) => {
-                  const params = new URLSearchParams();
-                  if (tool.placementId) params.set('placementId', tool.placementId);
-                  router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
-                },
-                onToolRun: (tool) => {
-                  const params = new URLSearchParams();
-                  if (tool.placementId) params.set('placementId', tool.placementId);
-                  router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
-                },
-                onViewFull: (tool) => {
-                  router.push(`/lab/${tool.toolId}`);
-                },
-                onAddTool: () => {
+          </div>
+
+          {/* Tab Navigation */}
+          <SpaceTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            toolsCount={sidebarTools?.length || 0}
+            unreadCount={unreadCount}
+            eventsCount={upcomingEvents?.length || 0}
+          />
+
+          {/* Tab Content */}
+          <div className="flex-1 overflow-hidden">
+            {activeTab === 'tools' && (
+              <ToolsFeed
+                tools={sidebarTools || []}
+                isLoading={isLoadingTools}
+                isLeader={space.isLeader}
+                spaceHandle={handle}
+                onAddTool={() => {
                   const params = new URLSearchParams({
                     spaceId: space.id,
                     spaceName: space.name,
                   });
                   if (space.orgTypeName) params.set('spaceType', space.orgTypeName);
                   router.push(`/lab/new?${params.toString()}`);
-                },
-              }}
-              members={{
-                onlineCount: space.onlineCount,
-                totalCount: space.memberCount,
-                onlineMembers: onlineMembersPreview,
-                onClick: () => setShowMembersPanel(true),
-              }}
-            />
-          }
-          input={
-            <div>
-              <TypingIndicator typingUsers={typingUsers} />
-              <ChatInput
-                spaceId={space.id}
-                onSend={sendMessage}
-                placeholder={`Message #${boards.find((b) => b.id === activeBoard)?.name || 'general'}`}
-                onTypingChange={setTyping}
-              />
-            </div>
-          }
-        >
-          {/* Main Content: Message Feed */}
-          <MainContent
-            boardName={boards.find((b) => b.id === activeBoard)?.name || 'general'}
-            contentKey={activeBoard || 'default'}
-            isLoading={isLoadingMessages}
-          >
-            {feedMessages.length === 0 && !isLoadingMessages ? (
-              <BoardEmptyState
-                boardType={getBoardType(boards.find((b) => b.id === activeBoard)?.name || 'general')}
-                boardName={boards.find((b) => b.id === activeBoard)?.name}
-                isLeader={space.isLeader}
-                onAction={() => {
-                  const input = document.querySelector('textarea[placeholder^="Message #"]') as HTMLTextAreaElement;
-                  input?.focus();
                 }}
-              />
-            ) : (
-              <MessageFeed
-                messages={feedMessages}
-                currentUserId={user?.id}
-                lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
-                unreadCount={unreadCount}
-                isLoading={isLoadingMessages}
-                isLoadingMore={isLoadingMoreMessages}
-                hasMore={hasMoreMessages}
-                onLoadMore={loadMoreMessages}
-                onReact={async (messageId, emoji) => {
-                  if (!space?.id) return;
-                  try {
-                    await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ emoji }),
-                    });
-                  } catch (error) {
-                    logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-                  }
-                }}
-                onReply={(messageId) => handleOpenThread(messageId)}
-                onDelete={handleDeleteMessage}
-                onEdit={handleEditMessage}
-                canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
-                onReport={handleReportMessage}
               />
             )}
-          </MainContent>
-        </SpaceLayout>
+
+            {activeTab === 'chat' && (
+              <SpaceLayout
+                mobileSidebarOpen={mobileSidebarOpen}
+                onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+                header={<div />}
+                sidebar={
+                  <SpaceSidebar
+                    boards={{
+                      boards: sidebarBoardsNew,
+                      activeBoard: activeBoard || boards[0]?.id || 'general',
+                      onBoardChange: setActiveBoard,
+                      onCreateBoard: space.isLeader ? handleCreateBoard : undefined,
+                      onReorderBoards: space.isLeader ? handleReorderBoards : undefined,
+                    }}
+                    tools={{
+                      tools: [],
+                      isLoading: false,
+                      isLeader: space.isLeader,
+                      onToolClick: () => {},
+                      onToolRun: () => {},
+                      onViewFull: () => {},
+                      onAddTool: () => {},
+                    }}
+                    members={{
+                      onlineCount: space.onlineCount,
+                      totalCount: space.memberCount,
+                      onlineMembers: onlineMembersPreview,
+                      onClick: () => setShowMembersPanel(true),
+                    }}
+                  />
+                }
+                input={
+                  <div>
+                    <TypingIndicator typingUsers={typingUsers} />
+                    <ChatInput
+                      spaceId={space.id}
+                      onSend={sendMessage}
+                      placeholder={`Message #${boards.find((b) => b.id === activeBoard)?.name || 'general'}`}
+                      onTypingChange={setTyping}
+                    />
+                  </div>
+                }
+              >
+                <MainContent
+                  boardName={boards.find((b) => b.id === activeBoard)?.name || 'general'}
+                  contentKey={activeBoard || 'default'}
+                  isLoading={isLoadingMessages}
+                >
+                  {feedMessages.length === 0 && !isLoadingMessages ? (
+                    <BoardEmptyState
+                      boardType={getBoardType(boards.find((b) => b.id === activeBoard)?.name || 'general')}
+                      boardName={boards.find((b) => b.id === activeBoard)?.name}
+                      isLeader={space.isLeader}
+                      onAction={() => {
+                        const input = document.querySelector('textarea[placeholder^="Message #"]') as HTMLTextAreaElement;
+                        input?.focus();
+                      }}
+                    />
+                  ) : (
+                    <MessageFeed
+                      messages={feedMessages}
+                      currentUserId={user?.id}
+                      lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
+                      unreadCount={unreadCount}
+                      isLoading={isLoadingMessages}
+                      isLoadingMore={isLoadingMoreMessages}
+                      hasMore={hasMoreMessages}
+                      onLoadMore={loadMoreMessages}
+                      onReact={async (messageId, emoji) => {
+                        if (!space?.id) return;
+                        try {
+                          await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ emoji }),
+                          });
+                        } catch (error) {
+                          logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+                        }
+                      }}
+                      onReply={(messageId) => handleOpenThread(messageId)}
+                      onDelete={handleDeleteMessage}
+                      onEdit={handleEditMessage}
+                      canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
+                      onReport={handleReportMessage}
+                    />
+                  )}
+                </MainContent>
+              </SpaceLayout>
+            )}
+
+            {activeTab === 'events' && (
+              <EventsTab
+                events={upcomingEvents.map(e => ({
+                  id: e.id,
+                  title: e.title,
+                  startTime: e.time || new Date().toISOString(),
+                  goingCount: e.goingCount,
+                }))}
+                isLoading={false}
+                isLeader={space.isLeader}
+                onCreateEvent={() => setShowEventModal(true)}
+              />
+            )}
+          </div>
+        </div>
 
         {/* Board Creation Modal */}
         <AnimatePresence>

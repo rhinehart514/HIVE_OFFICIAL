@@ -31,6 +31,7 @@ const SearchToolsSchema = z.object({
     .enum(["relevance", "deployments", "rating", "created"])
     .optional(),
   includePrivate: z.coerce.boolean().optional(),
+  campusId: z.string().optional(), // Optional campus filter
 });
 
 type SearchToolsInput = z.infer<typeof SearchToolsSchema>;
@@ -95,8 +96,9 @@ export const POST = withAuthValidationAndErrors(
     searchParams: SearchToolsInput,
     respond,
   ) => {
-    const userId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
+    const req = request as AuthenticatedRequest;
+    const userId = getUserId(req);
+    const userCampusId = req.user.campusId || null;
     const {
       query,
       limit = 20,
@@ -106,11 +108,18 @@ export const POST = withAuthValidationAndErrors(
       minDeployments,
       sortBy = 'relevance',
       includePrivate = false,
+      campusId: campusFilter,
     } = searchParams;
 
     try {
       let toolsQuery: admin.firestore.Query<admin.firestore.DocumentData> =
-        adminDb.collection("tools").where("campusId", "==", campusId);
+        adminDb.collection("tools");
+
+      // Optional campus filtering: use explicit filter, then user's campus, or show all
+      const effectiveCampusId = campusFilter || userCampusId;
+      if (effectiveCampusId) {
+        toolsQuery = toolsQuery.where("campusId", "==", effectiveCampusId);
+      }
 
       if (category) {
         toolsQuery = toolsQuery.where("category", "==", category);
@@ -232,14 +241,17 @@ export const POST = withAuthValidationAndErrors(
           deployedAt: string | undefined;
         } | null = null;
         try {
-          const deploymentSnapshot = await adminDb
+          let deploymentQuery = adminDb
             .collection("deployments")
             .where("toolId", "==", doc.id)
             .where("userId", "==", userId)
-            .where("campusId", "==", campusId)
-            .where("status", "==", "active")
-            .limit(1)
-            .get();
+            .where("status", "==", "active");
+
+          if (effectiveCampusId) {
+            deploymentQuery = deploymentQuery.where("campusId", "==", effectiveCampusId);
+          }
+
+          const deploymentSnapshot = await deploymentQuery.limit(1).get();
 
           if (!deploymentSnapshot.empty) {
             const deploymentData = deploymentSnapshot.docs[0].data();

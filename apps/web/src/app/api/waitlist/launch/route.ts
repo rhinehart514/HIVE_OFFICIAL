@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '@/lib/firebase-admin';
 import { HttpStatus } from '@/lib/api-response-types';
+import { logger } from '@/lib/logger';
 
 /**
  * POST /api/waitlist/launch
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
       message: "You're on the list!"
     });
   } catch (error) {
-    console.error('Launch waitlist error:', error);
+    logger.error('Launch waitlist error', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { success: false, error: 'Something went wrong' },
       { status: HttpStatus.INTERNAL_SERVER_ERROR }

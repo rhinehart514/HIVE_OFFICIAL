@@ -26,25 +26,25 @@ export function SocialProofSection() {
           <FadeUp>
             <div>
               <p className={`${clashDisplay} text-[clamp(48px,9vw,80px)] font-semibold text-white leading-none`}>
-                <AnimatedCounter value={400} suffix="+" />
+                <AnimatedCounter value={27} />
               </p>
-              <p className="text-sm text-white/30 mt-3">Organizations ready</p>
+              <p className="text-sm text-white/30 mt-3">Elements to build with</p>
             </div>
           </FadeUp>
           <FadeUp delay={0.1}>
             <div>
               <p className={`${clashDisplay} text-[clamp(48px,9vw,80px)] font-semibold text-white leading-none`}>
-                UB
+                30s
               </p>
-              <p className="text-sm text-white/30 mt-3">First campus</p>
+              <p className="text-sm text-white/30 mt-3">Template to live tool</p>
             </div>
           </FadeUp>
           <FadeUp delay={0.2}>
             <div>
               <p className={`${clashDisplay} text-[clamp(48px,9vw,80px)] font-semibold text-white leading-none`}>
-                &apos;<AnimatedCounter value={26} />
+                UB
               </p>
-              <p className="text-sm text-white/30 mt-3">Expanding</p>
+              <p className="text-sm text-white/30 mt-3">First campus</p>
             </div>
           </FadeUp>
         </div>
@@ -56,7 +56,7 @@ export function SocialProofSection() {
           <blockquote className="max-w-3xl">
             <p className={`${clashDisplay} text-xl md:text-2xl font-medium text-white/50 leading-relaxed`}>
               <NarrativeReveal stagger="words">
-                Every year, leadership resets. Knowledge disappears. Groups rebuild from scratch. We built HIVE to fix that.
+                Students have great ideas but no fast way to make them real. HIVE gives anyone the power to build a tool and share it with their campus in seconds.
               </NarrativeReveal>
             </p>
           </blockquote>

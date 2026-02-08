@@ -255,6 +255,119 @@ export const TimerConfigSchema = z.object({
 });
 
 // ═══════════════════════════════════════════════════════════════════
+// CUSTOM BLOCK SCHEMAS (Phase 5: iframe sandbox system)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Custom block port definition (input/output)
+ */
+export const CustomBlockPortSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1).max(100),
+  type: z.enum(['string', 'number', 'boolean', 'object', 'array']),
+  description: z.string().max(500).optional(),
+});
+
+/**
+ * Custom block action definition
+ */
+export const CustomBlockActionSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1).max(100),
+  category: z.enum(['aggregate', 'personal', 'hybrid']),
+  payloadSchema: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Custom block manifest
+ */
+export const CustomBlockManifestSchema = z.object({
+  actions: z.array(CustomBlockActionSchema).default([]),
+  inputs: z.array(CustomBlockPortSchema).default([]),
+  outputs: z.array(CustomBlockPortSchema).default([]),
+  stateSchema: z.object({
+    type: z.literal('object'),
+    properties: z.record(z.object({
+      type: z.enum(['string', 'number', 'boolean', 'object', 'array']),
+      description: z.string().optional(),
+      default: z.unknown().optional(),
+    })),
+  }).optional(),
+  requiredTokens: z.object({
+    colors: z.array(z.string()).optional(),
+    spacing: z.array(z.string()).optional(),
+    typography: z.array(z.string()).optional(),
+    radius: z.array(z.string()).optional(),
+  }).optional(),
+});
+
+/**
+ * Custom block code bundle
+ */
+export const CustomBlockCodeSchema = z.object({
+  html: z.string().min(1).max(50000), // 50KB max
+  css: z.string().max(25000), // 25KB max
+  js: z.string().max(50000), // 50KB max
+  hash: z.string().min(1),
+}).refine(
+  (data) => {
+    // Ensure total bundle size doesn't exceed 100KB
+    const totalSize = data.html.length + data.css.length + data.js.length;
+    return totalSize <= 100000;
+  },
+  {
+    message: 'Total code bundle size must not exceed 100KB',
+  }
+).refine(
+  (data) => {
+    // HTML must not contain <script> tags
+    return !/<script\b[^>]*>/i.test(data.html);
+  },
+  {
+    message: 'HTML must not contain <script> tags',
+  }
+).refine(
+  (data) => {
+    // HTML must not contain inline event handlers
+    return !/\son\w+\s*=/i.test(data.html);
+  },
+  {
+    message: 'HTML must not contain inline event handlers (onclick, onload, etc.)',
+  }
+);
+
+/**
+ * Custom block CSP overrides
+ */
+export const CustomBlockCSPSchema = z.object({
+  imgSrc: z.array(z.string().url()).max(10).optional(),
+  fontSrc: z.array(z.string().url()).max(5).optional(),
+});
+
+/**
+ * Custom block metadata
+ */
+export const CustomBlockMetadataSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().min(1).max(500),
+  createdBy: z.enum(['ai', 'user']),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+/**
+ * custom-block config schema (Phase 5)
+ */
+export const CustomBlockConfigSchema = z.object({
+  blockId: z.string().regex(/^block_[a-z0-9]+$/),
+  version: z.number().int().min(1),
+  metadata: CustomBlockMetadataSchema,
+  code: CustomBlockCodeSchema,
+  manifest: CustomBlockManifestSchema,
+  csp: CustomBlockCSPSchema.optional(),
+});
+
+// ═══════════════════════════════════════════════════════════════════
 // LAYOUT ELEMENT SCHEMAS (2 elements)
 // ═══════════════════════════════════════════════════════════════════
 
@@ -318,6 +431,9 @@ export const ELEMENT_CONFIG_SCHEMAS: Record<string, z.ZodType<unknown>> = {
   // Layout elements
   'tabs-container': TabsContainerConfigSchema,
   'card-container': CardContainerConfigSchema,
+
+  // Custom blocks (Phase 5)
+  'custom-block': CustomBlockConfigSchema,
 };
 
 /**

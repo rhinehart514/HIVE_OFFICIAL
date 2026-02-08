@@ -65,6 +65,9 @@ import {
   AvailabilityHeatmapElement,
 } from './space';
 
+// Custom elements - Phase 5 iframe sandboxing
+import { CustomBlockElement } from './custom';
+
 // ============================================================
 // Element Registry
 // ============================================================
@@ -140,6 +143,11 @@ export const ELEMENT_RENDERERS: Record<string, ElementRenderer> = {
   'announcement': AnnouncementElement,
   'role-gate': RoleGateElement,
   'availability-heatmap': AvailabilityHeatmapElement,
+
+  // ----------------------------------------
+  // Custom tier - Phase 5 iframe sandboxing
+  // ----------------------------------------
+  'custom-block': CustomBlockElement,
 };
 
 // ============================================================
