@@ -25,7 +25,7 @@ export function ImpersonationBanner() {
   };
 
   return (
-    <div className="sticky top-0 z-[9998] h-10 bg-red-500/90 backdrop-blur-sm flex items-center justify-center gap-3 px-4 text-white text-sm font-medium">
+    <div className="sticky top-0 z-40 h-10 bg-red-500/90 backdrop-blur-sm flex items-center justify-center gap-3 px-4 text-white text-sm font-medium">
       <Eye size={14} />
       <span>
         Viewing as {impersonation.profile.displayName || 'Unknown'}

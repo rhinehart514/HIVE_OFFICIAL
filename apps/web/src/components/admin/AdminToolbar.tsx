@@ -27,10 +27,10 @@ function AdminToolbarInner() {
 
   return (
     <>
-      {/* FAB */}
+      {/* FAB — left side to avoid HiveLab deploy button, above BottomNav on mobile */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-[9999] w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-lg flex items-center justify-center shadow-lg hover:bg-white/10 transition-colors"
+        className="fixed bottom-24 left-4 lg:bottom-6 lg:left-6 z-[9990] w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-lg flex items-center justify-center shadow-lg hover:bg-white/10 transition-colors"
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
         title="Admin Toolbar (⌘⇧D)"
@@ -53,7 +53,7 @@ function AdminToolbarInner() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed bottom-[72px] right-6 z-[9999] w-[400px] max-h-[70vh] bg-[#1A1A1A]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            className="fixed bottom-36 left-4 lg:bottom-[72px] lg:left-6 z-[9990] w-[min(400px,calc(100vw-2rem))] max-h-[70vh] bg-[#1A1A1A]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden flex flex-col"
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
