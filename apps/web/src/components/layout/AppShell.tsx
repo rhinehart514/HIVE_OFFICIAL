@@ -14,9 +14,10 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MessageSquare } from 'lucide-react';
+import { X, MessageSquare, Menu } from 'lucide-react';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import { BottomNav } from '@/components/nav/BottomNav';
 import { SettingsIcon, LogOutIcon, EASE_PREMIUM, SIDEBAR_WIDTH } from '@hive/ui';
@@ -25,7 +26,10 @@ import { cn } from '@/lib/utils';
 import { useDM } from '@/contexts/dm-context';
 import { useDMsEnabled } from '@/hooks/use-feature-flags';
 import { NAV_ITEMS, isNavItemActive, type NavItem } from '@/lib/navigation';
+import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 
+// Admin toolbar — dynamic import, SSR disabled. Non-admins never download this code.
+const AdminToolbar = dynamic(() => import('@/components/admin/AdminToolbar'), { ssr: false });
 
 // Premium easing from design system
 const EASE = EASE_PREMIUM;
@@ -163,14 +167,7 @@ function Sidebar({ onNavigate }: SidebarProps) {
               transition={{ duration: 0.2 }}
             />
 
-            <div className="relative z-10">
-              <MessageSquare className="w-5 h-5" />
-              {totalUnread > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center bg-[var(--color-gold)] text-black text-[10px] font-bold rounded-full">
-                  {totalUnread > 99 ? '99+' : totalUnread}
-                </span>
-              )}
-            </div>
+            <MessageSquare className="w-5 h-5 relative z-10" />
 
             <span className="relative z-10 tracking-[-0.01em]">
               Messages
@@ -341,14 +338,7 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                     }}
                     className="relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/[0.03] transition-colors"
                   >
-                    <div className="relative">
-                      <MessageSquare size={20} />
-                      {totalUnread > 0 && (
-                        <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 flex items-center justify-center bg-[var(--color-gold)] text-black text-[9px] font-bold rounded-full">
-                          {totalUnread > 99 ? '99+' : totalUnread}
-                        </span>
-                      )}
-                    </div>
+                    <MessageSquare size={20} />
                     <span className="text-body font-medium">Messages</span>
                     {totalUnread > 0 && (
                       <span className="ml-auto min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-[var(--color-gold)] text-black text-[11px] font-bold rounded-full">
@@ -422,7 +412,12 @@ export function AppShell({ children }: AppShellProps) {
     pathname.startsWith('/lab');
 
   if (isStandalonePage) {
-    return <>{children}</>;
+    return (
+      <>
+        {children}
+        <AdminToolbar />
+      </>
+    );
   }
 
   // ChatGPT aesthetic: Fixed 260px rail, generous content padding
@@ -440,9 +435,21 @@ export function AppShell({ children }: AppShellProps) {
       <main
         className="flex-1 overflow-y-auto lg:ml-[260px]"
       >
+        <ImpersonationBanner />
         {/* Mobile Header */}
-        <div className="lg:hidden sticky top-0 z-30 h-14 px-4 bg-[var(--bg-ground)]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-center">
-          <Logo variant="mark" size="sm" color="gold" />
+        <div className="lg:hidden sticky top-0 z-30 h-14 px-4 bg-[var(--bg-ground)]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center">
+          <button
+            onClick={() => setMobileNavOpen(true)}
+            className="lg:hidden p-2 text-white/60 hover:text-white transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="flex-1 flex justify-center">
+            <Logo variant="mark" size="sm" color="gold" />
+          </div>
+          {/* Spacer to balance the hamburger button */}
+          <div className="w-9" />
         </div>
 
         {/* Page Content */}
@@ -458,6 +465,9 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Mobile Bottom Nav */}
       <BottomNav />
+
+      {/* Admin Toolbar — only loaded for admins */}
+      <AdminToolbar />
     </div>
   );
 }

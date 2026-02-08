@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AtmosphereProvider, PageTransitionProvider, Toaster, useToast } from "@hive/ui";
 import { DMProvider } from "@/contexts/dm-context";
 import { DMPanel } from "@/components/dm";
+import { AdminToolbarProvider } from "@/components/admin/AdminToolbarProvider";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
 
 interface ProvidersProps {
@@ -95,7 +96,9 @@ export function Providers({ children }: ProvidersProps) {
         <AtmosphereProvider defaultAtmosphere="spaces">
           <PageTransitionProvider defaultMode="fade">
             <DMProvider>
-              {children}
+              <AdminToolbarProvider>
+                {children}
+              </AdminToolbarProvider>
               <DMPanel />
               <Toaster />
               <ToastBridge />

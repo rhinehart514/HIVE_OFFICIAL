@@ -107,6 +107,14 @@ export function useFeatureFlags(flagIds?: string[]): UseFeatureFlagsReturn {
 
   const isEnabled = useCallback(
     (flagId: string): boolean => {
+      // Check admin override first (sessionStorage, zero overhead for non-admins)
+      try {
+        const overrides = sessionStorage.getItem('hive_admin_flag_overrides');
+        if (overrides) {
+          const parsed = JSON.parse(overrides);
+          if (flagId in parsed) return parsed[flagId];
+        }
+      } catch {}
       return state.flags[flagId] === true;
     },
     [state.flags]
