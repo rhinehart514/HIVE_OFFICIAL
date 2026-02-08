@@ -76,11 +76,11 @@ const toolSchema = Schema.object({
               // Common properties for most elements
               label: Schema.string(),
               // Custom block properties (when type is custom-block)
+              // AI generates simplified structure, system enriches with blockId, hash, timestamps
               metadata: Schema.object({
                 properties: {
                   name: Schema.string(),
                   description: Schema.string(),
-                  version: Schema.string(),
                 },
               }),
               code: Schema.object({
@@ -92,8 +92,9 @@ const toolSchema = Schema.object({
               }),
               manifest: Schema.object({
                 properties: {
-                  capabilities: Schema.array({ items: Schema.string() }),
-                  requiresAuth: Schema.boolean(),
+                  actions: Schema.array({ items: Schema.object({ properties: {} }) }),
+                  inputs: Schema.array({ items: Schema.object({ properties: {} }) }),
+                  outputs: Schema.array({ items: Schema.object({ properties: {} }) }),
                 },
               }),
             },
@@ -157,7 +158,33 @@ ACTION ELEMENTS:
 - checklist-tracker: Shared checklist with progress tracking. Config: { items: [{ id: string, title: string, assignee?: string }], allowMemberAdd: boolean, title: string }
 
 CUSTOM ELEMENTS (use sparingly - prefer native elements):
-- custom-block: AI-generated HTML/CSS/JS for unique UI patterns not available natively. ONLY use when native elements cannot achieve the desired result. Examples: bingo cards, flip countdown timers, custom visualizations, specialized animations. Config requires: metadata (name, description), code (html, css, js), manifest (actions, inputs, outputs, stateSchema). When generating custom block code, ALWAYS use HIVE design tokens (--hive-color-*, --hive-spacing-*, --hive-radius-*, etc.) and utility classes (.hive-btn, .hive-card, .hive-input).
+- custom-block: AI-generated HTML/CSS/JS for unique UI patterns not available natively. ONLY use when native elements cannot achieve the desired result. Examples: bingo cards, flip countdown timers, custom visualizations, specialized animations.
+
+  Config structure for custom-block:
+  {
+    "metadata": {
+      "name": "Bingo Card",
+      "description": "Interactive 5x5 bingo grid with free space"
+    },
+    "code": {
+      "html": "<div class='bingo-grid'>...</div>",
+      "css": ".bingo-grid { display: grid; gap: var(--hive-spacing-sm); }",
+      "js": "// Optional JavaScript for interactivity"
+    },
+    "manifest": {
+      "actions": [{"id": "mark_cell", "label": "Mark Cell"}],
+      "inputs": [],
+      "outputs": [{"id": "completed", "type": "boolean"}]
+    }
+  }
+
+  IMPORTANT: When generating custom block code, ALWAYS use HIVE design tokens:
+  - Colors: var(--hive-color-surface), var(--hive-color-primary), var(--hive-color-text)
+  - Spacing: var(--hive-spacing-sm), var(--hive-spacing-md), var(--hive-spacing-lg)
+  - Radius: var(--hive-radius-sm), var(--hive-radius-md), var(--hive-radius-lg)
+  - Text: var(--hive-text-sm), var(--hive-text-base), var(--hive-text-lg)
+
+  System will automatically add: blockId, version, timestamps, code hash. Don't include these.
 
 ## Context: Tools Live in Spaces
 - Tools are created FOR a specific Space (club, org, dorm, etc.)
@@ -689,19 +716,77 @@ export async function* firebaseGenerateToolStreaming(
 }
 
 /**
+ * Generate content hash for custom block code
+ */
+function generateCodeHash(html: string, css: string, js: string): string {
+  const content = `${html}${css}${js}`;
+  // Simple hash function (djb2)
+  let hash = 5381;
+  for (let i = 0; i < content.length; i++) {
+    hash = ((hash << 5) + hash) + content.charCodeAt(i);
+  }
+  return `blk_${Math.abs(hash).toString(36)}`;
+}
+
+/**
+ * Enrich custom-block element config with required system fields
+ */
+function enrichCustomBlockConfig(config: Record<string, unknown>): Record<string, unknown> {
+  const code = config.code as { html: string; css?: string; js?: string } | undefined;
+  const metadata = config.metadata as { name: string; description: string } | undefined;
+
+  if (!code?.html || !metadata?.name) {
+    // Invalid custom block - return as-is and let validation catch it
+    return config;
+  }
+
+  const now = new Date().toISOString();
+  const hash = generateCodeHash(code.html, code.css || '', code.js || '');
+
+  return {
+    ...config,
+    blockId: `block_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    version: 1,
+    metadata: {
+      ...metadata,
+      createdBy: 'ai' as const,
+      createdAt: now,
+      updatedAt: now,
+    },
+    code: {
+      html: code.html,
+      css: code.css || '',
+      js: code.js || '',
+      hash,
+    },
+    manifest: config.manifest || { actions: [], inputs: [], outputs: [] },
+  };
+}
+
+/**
  * Transform raw Gemini output to ToolComposition format
  */
 function transformToComposition(
   tool: Record<string, unknown>,
   _request: GenerateToolRequest
 ): import('@hive/core').ToolComposition {
-  const elements = ((tool.elements as Array<Record<string, unknown>>) || []).map((el, index) => ({
-    elementId: (el.type as string) || 'unknown',
-    instanceId: (el.instanceId as string) || `el-${Date.now()}-${index}`,
-    position: (el.position as { x: number; y: number }) || { x: 100, y: 100 + index * 150 },
-    size: (el.size as { width: number; height: number }) || { width: 300, height: 200 },
-    config: (el.config as Record<string, unknown>) || {},
-  }));
+  const elements = ((tool.elements as Array<Record<string, unknown>>) || []).map((el, index) => {
+    let config = (el.config as Record<string, unknown>) || {};
+
+    // Enrich custom-block elements with required system fields
+    const elementId = (el.type as string) || 'unknown';
+    if (elementId === 'custom-block') {
+      config = enrichCustomBlockConfig(config);
+    }
+
+    return {
+      elementId,
+      instanceId: (el.instanceId as string) || `el-${Date.now()}-${index}`,
+      position: (el.position as { x: number; y: number }) || { x: 100, y: 100 + index * 150 },
+      size: (el.size as { width: number; height: number }) || { width: 300, height: 200 },
+      config,
+    };
+  });
 
   const connections = ((tool.connections as Array<Record<string, unknown>>) || []).map((conn, _index) => ({
     from: {

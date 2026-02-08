@@ -1,6 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, withErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { getSessionFromRequest } from "@/lib/session";
 import {
   UpdateToolSchema,
   getNextVersion,
@@ -9,15 +10,16 @@ import {
 
 const db = getFirestore();
 
-// GET /api/tools/[toolId] - Get tool details
-export const GET = withAuthAndErrors(async (
+// GET /api/tools/[toolId] - Get tool details (public access for published tools)
+export const GET = withErrors(async (
   request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-  const req = request as AuthenticatedRequest;
-  const userId = getUserId(req);
-  const campusId = req.user.campusId || null;
+  // Optional auth - allow anonymous access to public tools
+  const session = await getSessionFromRequest(request);
+  const userId = session?.userId || null;
+  const campusId = session?.campusId || null;
   const { toolId } = await params;
   const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
 
@@ -42,7 +44,7 @@ export const GET = withAuthAndErrors(async (
   }
 
   // Authorization check: Owner can see any tool, others can only see public/published tools
-  const isOwner = toolData.ownerId === userId || toolData.createdBy === userId;
+  const isOwner = userId && (toolData.ownerId === userId || toolData.createdBy === userId);
   const isPublicOrPublished = toolData.isPublic === true ||
                                toolData.status === 'published' ||
                                toolData.visibility === 'public';
@@ -52,8 +54,8 @@ export const GET = withAuthAndErrors(async (
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
-  // Increment view count if not the owner
-  if (toolData.ownerId !== userId) {
+  // Increment view count if not the owner (or anonymous)
+  if (!userId || toolData.ownerId !== userId) {
     await toolDoc.ref.update({
       viewCount: (toolData.viewCount || 0) + 1,
       lastUsedAt: new Date() });

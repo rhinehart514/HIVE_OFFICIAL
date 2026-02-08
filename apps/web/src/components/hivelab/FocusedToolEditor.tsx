@@ -110,7 +110,7 @@ export function FocusedToolEditor({ spaceId, onComplete, onCancel }: FocusedTool
         .map(([key, value]) => `${key}: ${value}`)
         .join(', ')}`;
 
-      const response = await fetch('/api/hivelab/generate', {
+      const response = await fetch('/api/tools/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

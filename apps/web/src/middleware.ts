@@ -47,6 +47,7 @@ const PUBLIC_ROUTES = [
   '/legal',         // Legal pages (/legal/privacy, /legal/terms, etc.)
   '/login',         // Login page
   '/schools',       // School selection page
+  '/t/',            // Standalone tool pages (shareable links for published tools)
 ];
 
 // Routes that require session but NOT completed onboarding
