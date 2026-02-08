@@ -260,7 +260,10 @@ export function useLoginMachine(options: UseLoginMachineOptions = {}): UseLoginM
         if (!response.ok) {
           // Reset code on error
           setData((prev) => ({ ...prev, code: ['', '', '', '', '', ''] }));
-          setError(result.error || 'Invalid code');
+          const msg = typeof result.error === 'string' ? result.error
+            : typeof result.message === 'string' ? result.message
+            : 'Invalid code';
+          setError(msg);
           setState('code');
           return;
         }

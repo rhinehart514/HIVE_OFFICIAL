@@ -219,10 +219,8 @@ export async function middleware(request: NextRequest) {
       return new NextResponse(
         JSON.stringify({
           success: false,
-          error: {
-            message: 'Too many requests. Please try again later.',
-            code: 'RATE_LIMIT_EXCEEDED',
-          },
+          error: 'Too many requests. Please try again later.',
+          code: 'RATE_LIMIT_EXCEEDED',
           meta: {
             retryAfter,
           },
@@ -279,15 +277,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/spaces?create=true', request.url), 301);
   }
 
-  // Public routes - no auth required (but redirect completed users away from landing/enter)
+  // Public routes - no auth required (but redirect completed users away from landing/enter/login)
   if (isPublicRoute(pathname)) {
-    // Check if authenticated user is on landing or enter pages
-    if (pathname === '/' || pathname === '/enter' || pathname.startsWith('/enter/')) {
+    // Check if authenticated user is on landing, enter, or login pages
+    if (pathname === '/' || pathname === '/enter' || pathname.startsWith('/enter/') || pathname === '/login') {
       const sessionCookie = request.cookies.get('hive_session')?.value;
+      const refreshCookie = request.cookies.get('hive_refresh')?.value;
+
       if (sessionCookie) {
         const session = await verifySessionAtEdge(sessionCookie);
         if (session?.onboardingCompleted) {
           // Completed user — send them to their intended destination or /spaces
+          const redirectParam = request.nextUrl.searchParams.get('redirect');
+          const destination = redirectParam || '/spaces';
+          return NextResponse.redirect(new URL(destination, request.url));
+        }
+      } else if (refreshCookie) {
+        // Access token expired but refresh token exists — user is still "signed in"
+        // Redirect to platform; client-side will auto-refresh the access token
+        const refreshSession = await verifySessionAtEdge(refreshCookie);
+        if (refreshSession?.onboardingCompleted) {
           const redirectParam = request.nextUrl.searchParams.get('redirect');
           const destination = redirectParam || '/spaces';
           return NextResponse.redirect(new URL(destination, request.url));
@@ -310,8 +319,19 @@ export async function middleware(request: NextRequest) {
   // === HAS SESSION: Verify and check permissions ===
   const session = await verifySessionAtEdge(sessionCookie);
 
-  // Invalid/expired session - redirect to landing
+  // Invalid/expired session — check for refresh token before redirecting
   if (!session) {
+    const refreshCookie = request.cookies.get('hive_refresh')?.value;
+    if (refreshCookie) {
+      // Refresh token exists — let the page load, client-side will auto-refresh
+      const refreshSession = await verifySessionAtEdge(refreshCookie);
+      if (refreshSession) {
+        // Valid refresh token — allow through, client handles the access token refresh
+        return NextResponse.next();
+      }
+    }
+
+    // No valid refresh token either — redirect to landing
     const landingUrl = new URL('/', request.url);
     landingUrl.searchParams.set('redirect', pathname);
     const response = NextResponse.redirect(landingUrl);

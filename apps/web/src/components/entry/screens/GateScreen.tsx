@@ -68,30 +68,14 @@ export function GateScreen({ entry }: GateScreenProps) {
 
   // Auto-verify when code is complete (with success flash)
   const verifyTimeout = React.useRef<NodeJS.Timeout | null>(null);
-  const previousPhase = React.useRef(entry.phase);
-
-  // Track phase changes to show success flash on verification
-  React.useEffect(() => {
-    // If we just moved from gate to naming, that means verification succeeded
-    if (previousPhase.current === 'gate' && entry.phase === 'naming') {
-      // Actually this transition happens in parent, so we need a different approach
-    }
-    previousPhase.current = entry.phase;
-  }, [entry.phase]);
+  const lastVerifiedCode = React.useRef<string>('');
 
   // Wrapper to verify and show success flash
   const verifyWithFlash = React.useCallback(async () => {
-    const prevError = entry.error;
     await entry.verifyCode();
-
-    // If no error after verification, show success flash
-    // The phase transition will happen in the hook, but we show flash here briefly
-    if (!entry.error && entry.phase === 'gate') {
-      setShowSuccessFlash(true);
-      // Flash will auto-hide and phase will transition
-    }
   }, [entry]);
 
+  // Auto-verify only when the code value itself changes to a complete 6-digit code
   React.useEffect(() => {
     const codeString = entry.data.code.join('');
 
@@ -100,11 +84,23 @@ export function GateScreen({ entry }: GateScreenProps) {
       verifyTimeout.current = null;
     }
 
-    if (codeString.length === 6 && !entry.isLoading && !showSuccessFlash) {
-      // Reduced delay from 300ms to 100ms for snappier feel
+    // Only auto-verify if code is 6 digits, not already verified for this code,
+    // not currently loading, and not showing success flash
+    if (
+      codeString.length === 6 &&
+      codeString !== lastVerifiedCode.current &&
+      !entry.isLoading &&
+      !showSuccessFlash
+    ) {
+      lastVerifiedCode.current = codeString;
       verifyTimeout.current = setTimeout(() => {
         verifyWithFlash();
       }, 100);
+    }
+
+    // Reset tracking when code is cleared/changed to incomplete
+    if (codeString.length < 6) {
+      lastVerifiedCode.current = '';
     }
 
     return () => {

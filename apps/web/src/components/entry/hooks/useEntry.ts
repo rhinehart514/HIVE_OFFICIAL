@@ -578,7 +578,10 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       const result = await res.json();
 
       if (!res.ok) {
-        throw new Error(result.error || result.message || 'Invalid code');
+        const msg = typeof result.error === 'string' ? result.error
+          : typeof result.message === 'string' ? result.message
+          : 'Invalid code';
+        throw new Error(msg);
       }
 
       // Move to naming phase (the wedge moment)
@@ -718,7 +721,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       }
 
       // Clear persisted entry state on success
-      try { sessionStorage.removeItem(ENTRY_STATE_KEY); } catch {}
+      try { sessionStorage.removeItem(ENTRY_STATE_KEY); } catch { /* intentionally empty */ }
 
       // Track completion
       analytics.trackStepCompleted('handle');
