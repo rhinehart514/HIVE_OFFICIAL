@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
 import {
   motion,
@@ -20,14 +20,19 @@ const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)
 
 export function HeroSection() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [requestSchool, setRequestSchool] = useState<{ id: string; name: string; domain: string; isActive?: boolean } | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
   const handleEnter = useCallback(() => {
-    router.push('/enter?schoolId=ub-buffalo&domain=buffalo.edu');
-  }, [router]);
+    const redirect = searchParams.get('redirect');
+    const enterUrl = redirect
+      ? `/enter?schoolId=ub-buffalo&domain=buffalo.edu&redirect=${encodeURIComponent(redirect)}`
+      : '/enter?schoolId=ub-buffalo&domain=buffalo.edu';
+    router.push(enterUrl);
+  }, [router, searchParams]);
 
   const handleWaitlist = useCallback(() => {
     setRequestSchool({ id: 'other', name: 'your school', domain: '', isActive: false });

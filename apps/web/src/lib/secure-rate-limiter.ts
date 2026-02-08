@@ -39,7 +39,7 @@ const RATE_LIMIT_CONFIGS = {
   search: { limit: 30, windowMs: 60000 },
   chat: { limit: 20, windowMs: 60000 },
   accessCode: { limit: 3, windowMs: 300000 },
-  signinCode: { limit: 5, windowMs: 300000 },
+  signinCode: { limit: 10, windowMs: 300000 },
   signinVerify: { limit: 5, windowMs: 300000 },
 } as const;
 

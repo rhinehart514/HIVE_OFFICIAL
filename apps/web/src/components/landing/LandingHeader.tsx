@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LandingNav, Logo, NoiseOverlay, Button } from '@hive/ui/design-system/primitives';
 import { ArrowRight } from 'lucide-react';
 
 export function LandingHeader() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -39,7 +40,13 @@ export function LandingHeader() {
               size="sm"
               className="rounded-full"
               trailingIcon={<ArrowRight />}
-              onClick={() => router.push('/enter?schoolId=ub-buffalo&domain=buffalo.edu')}
+              onClick={() => {
+                const redirect = searchParams.get('redirect');
+                const enterUrl = redirect
+                  ? `/enter?schoolId=ub-buffalo&domain=buffalo.edu&redirect=${encodeURIComponent(redirect)}`
+                  : '/enter?schoolId=ub-buffalo&domain=buffalo.edu';
+                router.push(enterUrl);
+              }}
             >
               Enter HIVE
             </Button>

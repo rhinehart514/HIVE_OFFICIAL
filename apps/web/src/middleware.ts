@@ -47,7 +47,6 @@ const PUBLIC_ROUTES = [
   '/legal',         // Legal pages (/legal/privacy, /legal/terms, etc.)
   '/login',         // Login page
   '/schools',       // School selection page
-  '/lab',           // DEV ONLY: Remove before deploy
 ];
 
 // Routes that require session but NOT completed onboarding
@@ -280,16 +279,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/spaces?create=true', request.url), 301);
   }
 
-  // Public routes - no auth required (but check if completed user visiting /enter)
+  // Public routes - no auth required (but redirect completed users away from landing/enter)
   if (isPublicRoute(pathname)) {
-    // Special case: /enter with completed session should redirect to /spaces
-    if (pathname === '/enter' || pathname.startsWith('/enter/')) {
+    // Check if authenticated user is on landing or enter pages
+    if (pathname === '/' || pathname === '/enter' || pathname.startsWith('/enter/')) {
       const sessionCookie = request.cookies.get('hive_session')?.value;
       if (sessionCookie) {
         const session = await verifySessionAtEdge(sessionCookie);
         if (session?.onboardingCompleted) {
-          // User already completed onboarding - redirect to spaces
-          return NextResponse.redirect(new URL('/spaces', request.url));
+          // Completed user — send them to their intended destination or /spaces
+          const redirectParam = request.nextUrl.searchParams.get('redirect');
+          const destination = redirectParam || '/spaces';
+          return NextResponse.redirect(new URL(destination, request.url));
         }
       }
     }

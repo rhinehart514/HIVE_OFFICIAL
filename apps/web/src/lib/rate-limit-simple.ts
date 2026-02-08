@@ -35,9 +35,11 @@ const RATE_LIMITS = {
     maxRequests: parseInt(process.env.RATE_LIMIT_ACCESS_CODE_REQUESTS || '3', 10),
     windowMs: parseInt(process.env.RATE_LIMIT_ACCESS_CODE_WINDOW_MS || '300000', 10), // 5 minutes
   },
-  // Sign-in code request - 5 requests per 5 minutes
+  // Sign-in code request - 10 requests per 5 minutes
+  // Generous because send-code only sends emails (no brute force risk)
+  // Email-level DB check (10/hour) is the real protection
   signinCode: {
-    maxRequests: parseInt(process.env.RATE_LIMIT_SIGNIN_CODE_REQUESTS || '5', 10),
+    maxRequests: parseInt(process.env.RATE_LIMIT_SIGNIN_CODE_REQUESTS || '10', 10),
     windowMs: parseInt(process.env.RATE_LIMIT_SIGNIN_CODE_WINDOW_MS || '300000', 10), // 5 minutes
   },
   // Sign-in code verify - 5 attempts per 5 minutes

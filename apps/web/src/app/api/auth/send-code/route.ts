@@ -481,7 +481,7 @@ export const POST = withValidation(
         return respond.error("Invalid request origin", "FORBIDDEN", { status: 403 });
       }
 
-      // Rate limiting - SECURITY: Use signinCode preset (5 requests per 5 min)
+      // Rate limiting - SECURITY: Use signinCode preset (10 requests per 5 min)
       const rateLimitResult = await enforceRateLimit('signinCode', request as NextRequest);
       if (!rateLimitResult.allowed) {
         return respond.error(rateLimitResult.error || "Rate limit exceeded", "RATE_LIMITED", {
