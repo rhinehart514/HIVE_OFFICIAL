@@ -1,6 +1,6 @@
 # HIVE TODO
 
-**Updated:** 2026-02-07
+**Updated:** 2026-02-08
 **Focus:** Ship HiveLab to production. A student should be able to create a tool from a template, deploy it to their space, and have members actually use it — without hitting a single broken screen.
 
 ---
@@ -19,6 +19,46 @@
 | 2026-02-07 | No app store. Social discovery only. | Tools live in profiles and feeds, not a catalog. |
 | 2026-02-07 | Remix is the primary creation pattern | Fork any tool, customize, deploy. More powerful than templates alone. |
 | 2026-02-07 | Grid/stack layout deferred. Ship with flow only. | Grid is broken, stack is untested. Flow works. Ship what works. |
+| 2026-02-08 | Killed "Commuter Home Base" framing. HIVE serves entire campus. | Product is Spaces (social) + HiveLab (creation) + Discovery (finding things). |
+
+---
+
+## Platform State (Feb 8, 2026)
+
+### Fully Working — Don't Touch
+| Area | Score | Details |
+|------|-------|---------|
+| Auth + Entry | 9/10 | 4-phase entry, JWT sessions, token refresh, state persistence, campus isolation |
+| Spaces + Chat | 9/10 | Split panel, real-time chat, typing indicators, reactions, moderation, mobile sidebar |
+| HiveLab IDE | 9/10 | 27 elements, canvas, inspector, deploy modal, AI generation, auto-save |
+| Explore/Discovery | 8/10 | Spaces, people, events, tools sections. ToolGallery integrated. |
+| Design System | 9/10 | 694 UI files, tokens-first, motion system, full primitives. Zero hardcoded colors. |
+| Middleware + Security | 9/10 | Edge auth, rate limiting, CSRF, campus isolation, content moderation |
+| Landing + About | 9/10 | Marketing site with hero, product, social proof, comparison |
+| Navigation | 9/10 | AppShell sidebar (desktop), bottom nav + hamburger (mobile), gold active indicators |
+| Profile | 8/10 | Server-rendered, gallery, activity, connections |
+
+### Recently Fixed (This Session)
+- [x] Removed `/lab` from PUBLIC_ROUTES (was unauthenticated)
+- [x] Fixed Spaces nav regex (didn't match `/s/handle` paths)
+- [x] Fixed hardcoded `campusId: 'ub-buffalo'` (uses session now)
+- [x] Added mobile hamburger to AppShell + Space layout
+- [x] Fixed DM badge duplication
+- [x] Consolidated deploy/preview pages to IDE params
+- [x] Fixed auto-save false positive on initial load
+- [x] Replaced all `window.confirm()` with inline confirmation UI
+- [x] Added search Enter-to-select
+- [x] Fixed optimistic message author info (was 'current-user'/'You')
+- [x] Fixed loading skeleton layout mismatch
+- [x] Added token refresh before entry completion
+- [x] Added entry state persistence (sessionStorage)
+- [x] Fixed dynamic Tailwind class in moderation panel
+- [x] Removed dead `/explore/people` link
+- [x] Fixed event card links to use space routes
+- [x] Added ToolGallery to explore page
+- [x] Standardized 34+ background tokens to CSS vars
+- [x] Standardized border tokens (removed zinc/hex outliers)
+- [x] Removed unused fonts (Space Grotesk, JetBrains Mono)
 
 ---
 
@@ -36,16 +76,18 @@ Don't rebuild these — extend them.
 | Real-time RTDB sync | Working | Firebase RTDB broadcast on action execution |
 | Action execution API | Working | `apps/web/src/app/api/tools/execute/route.ts` |
 | Publishing flow | Working | `apps/web/src/app/api/tools/publish/route.ts` |
-| Deploy to space flow | Working | `apps/web/src/app/lab/[toolId]/deploy/page.tsx` |
+| Deploy to space flow | Working | `packages/ui/src/components/hivelab/ToolDeployModal.tsx` |
 | PlacedTool data model | Working | `packages/core/src/domain/spaces/entities/placed-tool.ts` |
 | Space tools API | Working | `apps/web/src/app/api/spaces/[spaceId]/tools/route.ts` |
 | Capability governance | Working | `packages/core/src/domain/hivelab/capabilities.ts` |
 | AI generation (Gemini) | Working | `apps/web/src/lib/firebase-ai-generator.ts` |
 | Sidebar tool cards | Working | `apps/web/src/components/spaces/sidebar-tool-section.tsx` |
 | Creator dashboard | Working | `apps/web/src/app/lab/page.tsx` |
-| Deploy modal | Working | `packages/ui/src/components/hivelab/ToolDeployModal.tsx` |
 | IDE editor | Working | `apps/web/src/app/lab/[toolId]/page.tsx` |
 | Template gallery | Working | `apps/web/src/app/lab/templates/page.tsx` |
+| Conversational creator | Working | `apps/web/src/components/hivelab/conversational/` |
+| Builder level + stats | Working | `apps/web/src/components/hivelab/dashboard/` |
+| Feedback modal | Working | `apps/web/src/components/hivelab/FeedbackModal.tsx` |
 
 ---
 
@@ -159,9 +201,29 @@ AI generation works (Gemini integration is live). It needs to produce usable out
 
 ---
 
+## TECH DEBT: Fix Before Scale
+
+Not launch blockers, but fix before adding users.
+
+### Security (P1)
+- [ ] **57 API routes bypass standard middleware** — Admin schools, feature-flags, AI quality routes use raw `async function` instead of `withAdminAuthAndErrors`. Audit and wrap.
+- [ ] **Standardize admin auth** — Replace all `validateApiAuth` with `withAdminAuthAndErrors`. One pattern.
+- [ ] **Add Zod to remaining admin routes** — 37% of routes lack validation. Admin routes especially need it.
+
+### Code Cleanup (P2)
+- [ ] **Re-enable ESLint** — `ignoreDuringBuilds: true` in next.config.mjs. Fix warnings incrementally.
+- [ ] **Fix admin build** — `useSearchParams()` needs Suspense boundary on `/users` page.
+- [ ] **Delete duplicate hooks** — `use-chat-messages.ts` vs `chat/use-chat-messages.ts`, `use-unread-count.ts` vs `queries/use-unread-count.ts`.
+- [ ] **Delete unused Zustand store** — `useUnifiedStore` in unified-state-management.ts is dead code.
+- [ ] **Remove deprecated `use-session.ts`** — Migrate remaining consumers to `useAuth`.
+- [ ] **Install missing Radix deps** — ScrollArea, AspectRatio (@radix-ui packages).
+- [ ] **Consolidate real-time transport** — Chat (SSE) vs notifications (Firestore) vs space events (Firestore). Pick one.
+
+---
+
 ## POST-LAUNCH: Next Up
 
-Ship the above first. Then these, roughly in order:
+Ship the production gate first. Then these, roughly in order:
 
 ### Remix System
 - Remix button on published tools
@@ -201,7 +263,28 @@ Ship the above first. Then these, roughly in order:
 
 ---
 
+## Platform Numbers
+
+| Metric | Count |
+|--------|-------|
+| Pages | 66 |
+| API Routes | 333 |
+| Feature Components | 138 |
+| UI Package Files | 694 |
+| App Hooks | 77 |
+| Shared Hooks | 20 |
+| Design Token Files | 19 |
+| Cloud Functions | 47 |
+| Zod Schemas | 50+ |
+| Core Domain Files | 130 |
+| HiveLab Elements | 27 |
+| HiveLab Templates | 23 |
+
+---
+
 ## Spec Reference
 
 Full spec: `docs/specs/HIVELAB_SPEC.md`
-Research: `docs/research/` (12 documents covering platforms, campus data, discovery, builder UX)
+Research: `docs/research/` (12 documents)
+Strategy: `docs/strategy/` (12 documents)
+Design: `docs/DESIGN_DIRECTION.md`

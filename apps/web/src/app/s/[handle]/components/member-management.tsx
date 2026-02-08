@@ -302,7 +302,7 @@ function MemberRow({
           <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
         </Avatar>
         {member.isOnline && (
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0A0A09]" />
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[var(--bg-ground)]" />
         )}
       </div>
 
@@ -447,7 +447,7 @@ function MemberMenu({
       className={cn(
         'absolute right-0 top-full mt-1 z-50',
         'min-w-[160px] py-1',
-        'bg-[#1A1A18] border border-white/[0.08] rounded-xl shadow-xl'
+        'bg-[var(--bg-elevated)] border border-white/[0.08] rounded-xl shadow-xl'
       )}
     >
       <button

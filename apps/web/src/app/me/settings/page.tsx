@@ -37,7 +37,7 @@ type SettingsSection = 'profile' | 'notifications' | 'privacy' | 'account' | nul
 function SettingsContent() {
   const searchParams = useSearchParams();
   const [userSpaces, setUserSpaces] = useState<UserSpace[]>([]);
-  const { user, logout } = useAuth();
+  const { user, logout, logoutAll } = useAuth();
   const { hiveProfile: profile, updateProfile, toggleGhostMode, isLoading: profileLoading, isUpdating } = useProfileContext();
 
   const initialSection = searchParams.get('section') as SettingsSection;
@@ -319,6 +319,7 @@ function SettingsContent() {
                 exportProgress={exportProgress}
                 onDownloadData={handleDownloadData}
                 onLogout={logout}
+                onLogoutAll={logoutAll}
                 onDeleteAccount={() => setShowDeleteModal(true)}
               />
             )}

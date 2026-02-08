@@ -497,7 +497,12 @@ export default function ProfilePageContent() {
                         <ProfileEventCard
                           key={event.id}
                           event={event}
-                          onClick={() => router.push(`/events/${event.id}`)}
+                          onClick={() => {
+                            const orgEvent = organizingEvents.find(e => e.id === event.id);
+                            if (orgEvent?.spaceId) {
+                              router.push(`/s/${orgEvent.spaceId}`);
+                            }
+                          }}
                         />
                       ))}
                     </div>

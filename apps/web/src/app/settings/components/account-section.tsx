@@ -36,6 +36,7 @@ interface AccountSectionProps {
   exportProgress: ExportProgress | null;
   onDownloadData: () => void;
   onLogout: () => void;
+  onLogoutAll: () => void;
   onDeleteAccount: () => void;
 }
 
@@ -52,6 +53,7 @@ export function AccountSection({
   exportProgress,
   onDownloadData,
   onLogout,
+  onLogoutAll,
   onDeleteAccount,
 }: AccountSectionProps) {
   return (
@@ -243,11 +245,11 @@ export function AccountSection({
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/5 border-white/[0.08]">
+      <Card className="p-6 bg-white/5 border-white/[0.08] space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-white font-medium mb-1">Sign Out</h3>
-            <p className="text-white/50 text-sm">Sign out of your HIVE account on this device</p>
+            <p className="text-white/50 text-sm">Sign out on this device</p>
           </div>
           <Button
             variant="secondary"
@@ -257,6 +259,21 @@ export function AccountSection({
           >
             <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" aria-hidden="true" />
             Sign Out
+          </Button>
+        </div>
+        <div className="border-t border-white/[0.06] pt-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-white font-medium mb-1">Sign Out Everywhere</h3>
+            <p className="text-white/50 text-sm">Sign out on all devices and browsers</p>
+          </div>
+          <Button
+            variant="secondary"
+            className="border-white/20 text-white hover:bg-white/10"
+            onClick={onLogoutAll}
+            aria-label="Sign out of all sessions"
+          >
+            <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" aria-hidden="true" />
+            Sign Out All
           </Button>
         </div>
       </Card>

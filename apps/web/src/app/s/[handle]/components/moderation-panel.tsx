@@ -263,7 +263,7 @@ export function ModerationPanel({
           {/* Drawer Panel */}
           <motion.div
             className={cn(
-              'relative h-full w-full max-w-lg bg-[#0A0A09] border-l border-white/[0.06] shadow-2xl overflow-hidden flex flex-col',
+              'relative h-full w-full max-w-lg bg-[var(--bg-ground)] border-l border-white/[0.06] shadow-2xl overflow-hidden flex flex-col',
               className
             )}
             initial={{ x: '100%' }}
@@ -272,7 +272,7 @@ export function ModerationPanel({
             transition={{ duration: durationSeconds.smooth, ease: MOTION.ease.premium }}
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[#0A0A09]">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[var(--bg-ground)]">
               <div className="flex items-center gap-3">
                 <Shield className="h-5 w-5 text-white/60" />
                 <div>
@@ -487,6 +487,15 @@ export function ModerationPanel({
                                   const ActionIcon = config.icon;
                                   const isLoading = actionInProgress === `${item.id}-${action}`;
 
+                                  const hoverBgMap: Record<string, string> = {
+                                    green: 'hover:bg-green-400/10',
+                                    yellow: 'hover:bg-yellow-400/10',
+                                    blue: 'hover:bg-blue-400/10',
+                                    red: 'hover:bg-red-400/10',
+                                  };
+                                  const colorKey = config.color.split('-')[1] || '';
+                                  const hoverBg = hoverBgMap[colorKey] || 'hover:bg-white/[0.06]';
+
                                   return (
                                     <Button
                                       key={action}
@@ -494,7 +503,7 @@ export function ModerationPanel({
                                       size="sm"
                                       onClick={() => handleAction(item, action)}
                                       disabled={!!actionInProgress}
-                                      className={cn('h-7 px-2 text-xs', config.color, `hover:bg-${config.color.split('-')[1]}-400/10`)}
+                                      className={cn('h-7 px-2 text-xs', config.color, hoverBg)}
                                     >
                                       {isLoading ? (
                                         <Loader2 className="h-3 w-3 animate-spin mr-1" />

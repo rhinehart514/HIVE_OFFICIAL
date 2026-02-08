@@ -16,6 +16,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@hive/auth-logic';
 import {
   Sparkles,
@@ -41,6 +42,7 @@ import { useMyTools } from '@/hooks/use-my-tools';
 import {
   createToolFromTemplateApi,
 } from '@/lib/hivelab/create-tool';
+import { apiClient } from '@/lib/api-client';
 
 // Premium easing
 const EASE = MOTION.ease.premium;
@@ -238,6 +240,7 @@ function GoldBorderInput({
 export default function BuilderDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -325,6 +328,21 @@ export default function BuilderDashboard() {
     const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
     router.push(`/lab/new${spaceParam}`);
   }, [router, originSpaceId]);
+
+  // Handle delete tool
+  const handleDeleteTool = useCallback(async (toolId: string) => {
+    try {
+      const response = await apiClient.delete(`/api/tools/${toolId}`);
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to delete tool');
+      }
+      toast.success('Tool deleted');
+      queryClient.invalidateQueries({ queryKey: ['my-tools'] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete tool');
+    }
+  }, [queryClient]);
 
   // Guest state
   if (!authLoading && !user) {
@@ -453,6 +471,7 @@ export default function BuilderDashboard() {
                     <ToolCard
                       tool={tool}
                       onClick={handleToolClick}
+                      onDelete={handleDeleteTool}
                       variant="full"
                     />
                   </motion.div>

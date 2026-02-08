@@ -31,7 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Spaces',
     href: '/spaces',
     icon: SpacesIcon,
-    matchPattern: /^\/spaces(\/|$)|^\/s\/(\/|$)/,
+    matchPattern: /^\/spaces(\/|$)|^\/s\//,
   },
   {
     id: 'lab',

@@ -14,6 +14,7 @@ import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { usePresence, useOnlineUsers } from '@/hooks/use-presence';
+import { useAuth } from '@hive/auth-logic';
 import type { Board, SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@hive/ui';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 
@@ -184,6 +185,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { user: authUser } = useAuth();
 
   // Presence: heartbeat handled by usePresence(), online users by useOnlineUsers()
   usePresence();
@@ -546,9 +548,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     const optimisticMessage: ChatMessage = {
       id: tempId,
       boardId: activeBoard,
-      authorId: 'current-user',
-      authorName: 'You',
-      authorHandle: 'you',
+      authorId: authUser?.id || 'current-user',
+      authorName: authUser?.fullName || authUser?.displayName || 'You',
+      authorHandle: authUser?.handle || 'you',
+      authorAvatarUrl: authUser?.avatarUrl || undefined,
       content,
       timestamp: Date.now(),
       attachments,
@@ -587,7 +590,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       toast.error("Message failed to send", "Please try again");
       throw error;
     }
-  }, [activeBoard, space?.id, toast]);
+  }, [activeBoard, space?.id, toast, authUser]);
 
   const joinSpace = React.useCallback(async () => {
     if (!space?.id) return;

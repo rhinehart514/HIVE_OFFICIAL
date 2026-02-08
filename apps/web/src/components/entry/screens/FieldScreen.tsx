@@ -30,7 +30,8 @@ const ALL_MAJORS = [
 ];
 
 const POPULAR_MAJORS = ['Computer Science', 'Engineering', 'Business', 'Biology', 'Psychology'];
-const GRADUATION_YEARS = [2025, 2026, 2027, 2028, 2029];
+const currentYear = new Date().getFullYear();
+const GRADUATION_YEARS = Array.from({ length: 5 }, (_, i) => currentYear + i);
 
 interface FieldScreenProps {
   entry: UseEntryReturn;
@@ -299,7 +300,7 @@ export function FieldScreen({ entry }: FieldScreenProps) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-[#0A0A0A] border border-white/10 rounded-xl overflow-hidden shadow-2xl"
+                        className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-[var(--bg-ground)] border border-white/10 rounded-xl overflow-hidden shadow-2xl"
                       >
                         {filteredMajors.map((m, i) => (
                           <motion.button

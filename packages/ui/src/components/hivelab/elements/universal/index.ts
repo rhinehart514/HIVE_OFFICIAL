@@ -24,6 +24,9 @@ export { DatePickerElement } from './date-picker-element';
 export { FormBuilderElement } from './form-builder-element';
 export { UserSelectorElement } from './user-selector-element';
 
+// Progress
+export { ProgressIndicatorElement } from './progress-indicator-element';
+
 // Spatial
 export { MapViewElement } from './map-view-element';
 

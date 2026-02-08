@@ -159,13 +159,13 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
         animate={{ scale: 1 }}
         className={cn(
           'w-full max-w-4xl max-h-[90vh] overflow-y-auto',
-          'bg-[#0A0A09] border border-white/[0.08] rounded-xl',
+          'bg-[var(--bg-ground)] border border-white/[0.08] rounded-xl',
           'shadow-2xl'
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0A0A09]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[var(--bg-ground)]">
           <div>
             <h2 className="text-lg font-semibold text-white">Space Analytics</h2>
             <p className="text-sm text-white/50">

@@ -35,7 +35,7 @@ export function PushNotificationPrompt() {
 
   return (
     <div className="fixed bottom-20 left-4 right-4 z-40 flex justify-center sm:left-auto sm:right-4 sm:bottom-4">
-      <div className="w-full max-w-sm rounded-xl bg-zinc-900 p-4 shadow-lg border border-zinc-800">
+      <div className="w-full max-w-sm rounded-xl bg-[var(--bg-surface)] p-4 shadow-lg border border-white/[0.06]">
         {/* Icon */}
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 p-2 bg-yellow-500/10 rounded-lg">

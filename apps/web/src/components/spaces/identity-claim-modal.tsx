@@ -306,7 +306,7 @@ export function IdentityClaimModal({
               'fixed z-50',
               'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
               'w-full max-w-md',
-              'bg-[#141414] border border-white/[0.08]',
+              'bg-[var(--bg-surface)] border border-white/[0.08]',
               'rounded-2xl shadow-2xl',
               'overflow-hidden'
             )}

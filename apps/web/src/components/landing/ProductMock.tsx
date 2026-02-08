@@ -18,9 +18,9 @@ export function ProductMock() {
     <Tilt intensity={3} className="w-full max-w-lg mx-auto">
       <div className="relative group">
         <CursorGlow color="rgba(255,215,0,0.03)" size={400} opacity={1} />
-        <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] overflow-hidden shadow-2xl">
+        <div className="rounded-2xl border border-white/[0.06] bg-[var(--bg-ground)] overflow-hidden shadow-2xl">
           {/* Window chrome */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-[#0A0A0A]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-[var(--bg-ground)]">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-white/10" />
               <span className="w-2.5 h-2.5 rounded-full bg-white/10" />

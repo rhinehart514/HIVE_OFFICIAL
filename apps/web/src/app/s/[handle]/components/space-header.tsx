@@ -183,7 +183,7 @@ function MuteDropdown({
               'absolute right-0 top-full mt-1 z-50',
               'w-48 py-1',
               'rounded-xl',
-              'bg-[#1a1a1a] border border-white/[0.08]',
+              'bg-[var(--bg-surface-hover)] border border-white/[0.08]',
               'shadow-lg shadow-black/30'
             )}
           >

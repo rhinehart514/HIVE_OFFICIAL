@@ -144,6 +144,8 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
   const [showTransferConfirm, setShowTransferConfirm] = React.useState(false);
   const [isTransferring, setIsTransferring] = React.useState(false);
   const [showTransferDropdown, setShowTransferDropdown] = React.useState(false);
+  const [confirmLeave, setConfirmLeave] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
   const transferDropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Load eligible transfer candidates (admins and moderators first)
@@ -208,24 +210,17 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
 
   const handleLeave = async () => {
     if (!onLeave) return;
-    const confirmed = window.confirm(
-      'Are you sure you want to leave this space? You can rejoin at any time.'
-    );
-    if (!confirmed) return;
     setIsLeaving(true);
     try {
       await onLeave();
     } finally {
       setIsLeaving(false);
+      setConfirmLeave(false);
     }
   };
 
   const handleBoardDelete = async (boardId: string, boardName: string) => {
     if (!onBoardDelete) return;
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${boardName}"? This will archive all messages in this board.`
-    );
-    if (!confirmed) return;
     setDeletingBoardId(boardId);
     try {
       await onBoardDelete(boardId);
@@ -1488,7 +1483,6 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       }
                     }}
                     onDelete={async (id) => {
-                      if (!window.confirm('Delete this automation?')) return false;
                       try {
                         const response = await fetch(`/api/spaces/${space.id}/automations/${id}`, {
                           method: 'DELETE',
@@ -1543,13 +1537,32 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleLeave}
-                      disabled={isLeaving || isDeleting}
-                      loading={isLeaving}
+                      onClick={() => setConfirmLeave(true)}
+                      disabled={isLeaving || isDeleting || confirmLeave}
                       className="text-orange-400 hover:bg-orange-500/10"
                     >
-                      {isLeaving ? 'Leaving...' : 'Leave Space'}
+                      Leave Space
                     </Button>
+
+                    {confirmLeave && (
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 mt-3">
+                        <p className="text-sm text-white/70 flex-1">Are you sure you want to leave this space?</p>
+                        <button
+                          onClick={handleLeave}
+                          disabled={isLeaving}
+                          className="text-sm text-orange-400 font-medium hover:text-orange-300 disabled:opacity-50"
+                        >
+                          {isLeaving ? 'Leaving...' : 'Leave'}
+                        </button>
+                        <button
+                          onClick={() => setConfirmLeave(false)}
+                          disabled={isLeaving}
+                          className="text-sm text-white/40 hover:text-white/60"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1635,7 +1648,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                                 className={cn(
                                   'absolute left-0 right-0 top-full mt-1 z-50',
                                   'max-h-[240px] overflow-y-auto',
-                                  'rounded-xl border border-white/[0.08] bg-[#1A1A18] shadow-xl',
+                                  'rounded-xl border border-white/[0.08] bg-[var(--bg-elevated)] shadow-xl',
                                   'py-1'
                                 )}
                               >
@@ -1717,24 +1730,44 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={async () => {
-                        const confirmed = window.confirm(
-                          'Are you absolutely sure you want to delete this space? This action cannot be undone.'
-                        );
-                        if (!confirmed) return;
-                        setIsDeleting(true);
-                        try {
-                          await onDelete();
-                        } finally {
-                          setIsDeleting(false);
-                        }
-                      }}
-                      disabled={isDeleting || isLeaving}
-                      loading={isDeleting}
+                      onClick={() => setConfirmDelete(true)}
+                      disabled={isDeleting || isLeaving || confirmDelete}
                       className="text-red-400 hover:bg-red-500/10"
                     >
-                      {isDeleting ? 'Deleting...' : 'Delete Space'}
+                      Delete Space
                     </Button>
+
+                    {confirmDelete && (
+                      <div className="flex flex-col gap-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 mt-3">
+                        <p className="text-sm text-red-400/80">
+                          This will permanently delete <span className="font-medium text-red-400">{space.name}</span> and all its content. This cannot be undone.
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={async () => {
+                              setIsDeleting(true);
+                              try {
+                                await onDelete();
+                              } finally {
+                                setIsDeleting(false);
+                                setConfirmDelete(false);
+                              }
+                            }}
+                            disabled={isDeleting}
+                            className="text-sm text-red-400 font-medium hover:text-red-300 disabled:opacity-50"
+                          >
+                            {isDeleting ? 'Deleting...' : 'Yes, delete permanently'}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(false)}
+                            disabled={isDeleting}
+                            className="text-sm text-white/40 hover:text-white/60"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1826,9 +1859,9 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative z-10 bg-[#1A1A1A] rounded-2xl border border-white/[0.08] shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+            className="relative z-10 bg-[var(--bg-surface-hover)] rounded-2xl border border-white/[0.08] shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
           >
-            <div className="sticky top-0 bg-[#1A1A1A] border-b border-white/[0.06] p-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-[var(--bg-surface-hover)] border-b border-white/[0.06] p-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Automation Templates</h3>
               <button
                 onClick={() => setShowTemplates(false)}

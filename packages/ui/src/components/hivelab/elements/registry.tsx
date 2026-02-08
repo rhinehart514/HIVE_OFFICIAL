@@ -35,6 +35,7 @@ import {
 // New elements imported directly to avoid circular dependency through barrel exports
 import { DirectoryListElement } from './universal/directory-list-element';
 import { QRCodeGeneratorElement } from './universal/qr-code-generator-element';
+import { ProgressIndicatorElement } from './universal/progress-indicator-element';
 
 // Interactive elements - engagement components
 import {
@@ -98,6 +99,7 @@ export const ELEMENT_RENDERERS: Record<string, ElementRenderer> = {
   'notification-center': NotificationCenterElement,
   'notification-display': NotificationCenterElement, // Alias
   'photo-gallery': PhotoGalleryElement,
+  'progress-indicator': ProgressIndicatorElement,
 
   // ----------------------------------------
   // Action Elements - Interactive engagement
@@ -226,7 +228,7 @@ export function getElementsByCategory() {
   return {
     input: ['search-input', 'date-picker', 'user-selector', 'form-builder'],
     filter: ['filter-selector'],
-    display: ['result-list', 'chart-display', 'tag-cloud', 'map-view', 'notification-center', 'photo-gallery', 'directory-list', 'qr-code-generator'],
+    display: ['result-list', 'chart-display', 'tag-cloud', 'map-view', 'notification-center', 'photo-gallery', 'directory-list', 'qr-code-generator', 'progress-indicator'],
     action: ['poll-element', 'rsvp-button', 'countdown-timer', 'leaderboard', 'counter', 'timer', 'signup-sheet', 'checklist-tracker'],
     connected: ['event-picker', 'space-picker', 'connection-list', 'personalized-event-feed', 'dining-picker', 'study-spot-finder'],
     space: ['member-list', 'member-selector', 'space-events', 'space-feed', 'space-stats', 'announcement', 'role-gate', 'availability-heatmap'],

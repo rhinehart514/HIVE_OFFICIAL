@@ -21,6 +21,7 @@ import {
   Users,
   TrendingUp,
   MessageSquare,
+  Trash2,
 } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/hivelab/create-tool';
 import { cardHoverVariants } from '@hive/tokens';
@@ -42,6 +43,7 @@ export interface ToolData {
 interface ToolCardProps {
   tool: ToolData;
   onClick: (toolId: string) => void;
+  onDelete?: (toolId: string) => void;
   index?: number;
   variant?: 'compact' | 'full';
 }
@@ -73,10 +75,11 @@ const STATUS_CONFIG = {
   },
 };
 
-export function ToolCard({ tool, onClick, index = 0, variant = 'full' }: ToolCardProps) {
+export function ToolCard({ tool, onClick, onDelete, index = 0, variant = 'full' }: ToolCardProps) {
   const router = useRouter();
   const status = STATUS_CONFIG[tool.status] || STATUS_CONFIG.draft;
   const [showActions, setShowActions] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleEdit = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -102,6 +105,18 @@ export function ToolCard({ tool, onClick, index = 0, variant = 'full' }: ToolCar
     e.stopPropagation();
     setShowActions((prev) => !prev);
   }, []);
+
+  const handleDelete = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirmDelete) {
+      onDelete?.(tool.id);
+      setConfirmDelete(false);
+    } else {
+      setConfirmDelete(true);
+      // Reset after 3s if not confirmed
+      setTimeout(() => setConfirmDelete(false), 3000);
+    }
+  }, [confirmDelete, onDelete, tool.id]);
 
   if (variant === 'compact') {
     return (
@@ -231,6 +246,19 @@ export function ToolCard({ tool, onClick, index = 0, variant = 'full' }: ToolCar
               <Rocket className="w-3.5 h-3.5" />
             </button>
           ) : null}
+          {onDelete && (
+            <button
+              onClick={handleDelete}
+              className={`p-1.5 rounded-md transition-colors ${
+                confirmDelete
+                  ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                  : 'hover:bg-white/[0.08] text-white/40 hover:text-red-400'
+              }`}
+              title={confirmDelete ? 'Click again to confirm' : 'Delete'}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </motion.div>

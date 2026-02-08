@@ -267,7 +267,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
         </Avatar>
         {/* Online indicator - green for online, grey for offline */}
         {member.isOnline ? (
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0A0A09]" />
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[var(--bg-ground)]" />
         ) : (() => {
           // Show amber dot for recently active (< 1h), grey otherwise
           const lastSeenDate = member.lastSeen
@@ -277,7 +277,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
           return (
             <span
               className={cn(
-                'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#0A0A09]',
+                'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-ground)]',
                 recentlyActive ? 'bg-amber-400/60' : 'bg-white/10'
               )}
             />

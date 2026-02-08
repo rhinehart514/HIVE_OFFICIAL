@@ -12,7 +12,8 @@
  */
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { use } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
@@ -487,22 +488,32 @@ function groupRunsByDate(runs: ToolRun[]): Map<string, ToolRun[]> {
   return groups;
 }
 
-export default function ToolRunsPage() {
-  const params = useParams();
+interface Props {
+  params: Promise<{ toolId: string }>;
+}
+
+export default function ToolRunsPage({ params }: Props) {
+  const { toolId } = use(params);
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const shouldReduceMotion = useReducedMotion();
-  const toolId = params?.toolId as string;
 
   const [runs, setRuns] = React.useState<ToolRun[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [toolName, setToolName] = React.useState('');
   const [selectedRun, setSelectedRun] = React.useState<ToolRun | null>(null);
 
+  // Redirect if not authenticated
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      router.push(`/enter?redirect=/lab/${toolId}/runs`);
+    }
+  }, [isAuthenticated, router, toolId]);
+
   // Fetch tool info and runs
   React.useEffect(() => {
     async function fetchData() {
-      if (!toolId) return;
+      if (!toolId || !isAuthenticated) return;
 
       try {
         // Fetch tool info
@@ -528,13 +539,7 @@ export default function ToolRunsPage() {
     }
 
     fetchData();
-  }, [toolId]);
-
-  // Redirect if not authenticated
-  if (!isAuthenticated) {
-    router.push(`/enter?from=/lab/${toolId}/runs`);
-    return null;
-  }
+  }, [toolId, isAuthenticated]);
 
   // Stats
   const totalRuns = runs.length;

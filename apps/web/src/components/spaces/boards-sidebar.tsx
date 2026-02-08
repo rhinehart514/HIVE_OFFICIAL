@@ -271,7 +271,7 @@ export function BoardsSidebar({
   // Mobile: Bottom sheet
   if (isMobile) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0A0A09] border-t border-white/[0.06] p-4">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-ground)] border-t border-white/[0.06] p-4">
         {/* Toggle Button */}
         <button
           onClick={onToggleCollapse}

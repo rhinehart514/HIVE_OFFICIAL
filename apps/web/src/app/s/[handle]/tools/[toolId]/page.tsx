@@ -198,6 +198,94 @@ async function fetchSpaceByHandle(handle: string): Promise<SpaceBasicInfo | null
 }
 
 // ============================================================================
+// Skeleton Components
+// ============================================================================
+
+/** Element-shaped loading skeleton for context loading phase */
+function ContextLoadingSkeleton() {
+  return (
+    <motion.div
+      className="space-y-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      {/* Poll-shaped skeleton */}
+      <motion.div
+        initial={{ opacity: 0.3 }}
+        animate={{ opacity: 0.6 }}
+        transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse' }}
+      >
+        <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-5 h-5 rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-4 w-36 bg-white/[0.06] rounded animate-pulse" />
+          </div>
+          <div className="space-y-3">
+            <div className="h-11 bg-white/[0.04] rounded-lg animate-pulse" />
+            <div className="h-11 bg-white/[0.04] rounded-lg animate-pulse" />
+            <div className="h-11 bg-white/[0.04] rounded-lg animate-pulse" />
+          </div>
+        </div>
+      </motion.div>
+      {/* Counter-shaped skeleton */}
+      <motion.div
+        initial={{ opacity: 0.3 }}
+        animate={{ opacity: 0.6 }}
+        transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse', delay: 0.1 }}
+      >
+        <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+          <div className="text-center">
+            <div className="h-3 w-20 bg-white/[0.06] rounded animate-pulse mx-auto mb-4" />
+            <div className="flex items-center justify-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-white/[0.04] animate-pulse" />
+              <div className="h-12 w-24 bg-white/[0.06] rounded-lg animate-pulse" />
+              <div className="h-12 w-12 rounded-full bg-white/[0.04] animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/** Page-level loading skeleton with header and element shapes */
+function PageLoadingSkeleton() {
+  return (
+    <div className="min-h-screen bg-[var(--bg-ground)]">
+      {/* Header skeleton */}
+      <div className="sticky top-0 z-10 bg-[var(--bg-ground)]/95 backdrop-blur-xl border-b border-white/[0.06]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Skeleton className="h-10 w-10 rounded-lg shrink-0" />
+              <div className="space-y-2 min-w-0">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-3 w-32 hidden sm:block" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Skeleton className="h-9 w-9 rounded-lg" />
+              <Skeleton className="h-9 w-9 rounded-lg" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 mt-2 pl-12">
+            <Skeleton className="h-4 w-4 rounded-full" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+        </div>
+      </div>
+      {/* Content skeleton with element shapes */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="bg-[var(--bg-surface)] rounded-2xl border border-white/[0.06] p-4 sm:p-6">
+          <ContextLoadingSkeleton />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // Inner Component (has access to runtime context)
 // ============================================================================
 
@@ -295,10 +383,11 @@ function ToolContent({
   // Show loading while context is being assembled
   if (contextLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-2 border-[var(--life-gold)] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-white/50 text-sm">Loading context...</p>
+      <div className="min-h-screen bg-[var(--bg-ground)]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="bg-[var(--bg-surface)] rounded-2xl border border-white/[0.06] p-4 sm:p-6">
+            <ContextLoadingSkeleton />
+          </div>
         </div>
       </div>
     );
@@ -495,11 +584,25 @@ function ToolContent({
       {/* Tool Canvas */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {contextError && (
-          <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-            <p className="text-sm text-red-400">
-              Context error: {contextError}. Some features may be limited.
-            </p>
-          </div>
+          <motion.div
+            className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
+          >
+            <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-red-400">
+                Some features may be limited. {contextError}
+              </p>
+            </div>
+            <button
+              onClick={() => runtime.reload()}
+              className="text-xs text-red-400 hover:text-red-300 underline-offset-2 hover:underline shrink-0 transition-colors"
+            >
+              Retry
+            </button>
+          </motion.div>
         )}
 
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-white/[0.06] p-4 sm:p-6 overflow-x-hidden">
@@ -536,17 +639,25 @@ function ToolContent({
                 }}
               />
             ) : (
-              <div className="text-center py-16">
-                <p className="text-white/40">This tool has no elements configured.</p>
+              <motion.div
+                className="text-center py-16"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
+              >
+                <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="w-6 h-6 text-white/30" />
+                </div>
+                <p className="text-white/50 font-medium mb-1">Nothing here yet</p>
+                <p className="text-white/30 text-sm mb-6">This tool hasn't been set up with any elements.</p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={onBack}
-                  className="mt-4"
                 >
                   Back to space
                 </Button>
-              </div>
+              </motion.div>
             )}
           </ToolErrorBoundary>
         </div>
@@ -607,22 +718,7 @@ export default function SpaceToolPage() {
 
   // Loading state
   if (authLoading || spaceLoading || deploymentLoading) {
-    return (
-      <div className="min-h-screen bg-[var(--bg-ground)] p-6">
-        {/* Header skeleton */}
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-4 mb-8">
-            <Skeleton className="h-10 w-10 rounded-lg" />
-            <div className="space-y-2">
-              <Skeleton className="h-5 w-48" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-          {/* Content skeleton */}
-          <Skeleton className="h-96 w-full rounded-2xl" />
-        </div>
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   // Error: Space not found
@@ -633,11 +729,14 @@ export default function SpaceToolPage() {
           className="max-w-md text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+          transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
         >
-          <h2 className="text-xl font-semibold text-white mb-4">Space Not Found</h2>
+          <div className="w-14 h-14 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-5">
+            <AlertTriangle className="w-7 h-7 text-white/40" />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Space not found</h2>
           <p className="text-white/50 mb-6">
-            The space @{handle} could not be found or is no longer available.
+            The space @{handle} doesn't exist or is no longer available.
           </p>
           <Button variant="default" onClick={() => router.push('/spaces')}>
             Browse Spaces
@@ -655,14 +754,17 @@ export default function SpaceToolPage() {
           className="max-w-md text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+          transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
         >
-          <h2 className="text-xl font-semibold text-white mb-4">Tool Not Found</h2>
+          <div className="w-14 h-14 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-5">
+            <AlertTriangle className="w-7 h-7 text-white/40" />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Tool not found</h2>
           <p className="text-white/50 mb-6">
-            This tool is not deployed to {space.name} or is no longer available.
+            This tool isn't deployed here or is no longer available.
           </p>
           <Button variant="default" onClick={handleBack}>
-            Back to {space.name}
+            Back to space
           </Button>
         </motion.div>
       </div>

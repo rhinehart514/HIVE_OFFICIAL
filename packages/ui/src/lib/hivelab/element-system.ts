@@ -158,7 +158,7 @@ export interface ToolComposition {
     from: { instanceId: string; output: string };
     to: { instanceId: string; input: string };
   }[];
-  layout: 'grid' | 'flow' | 'tabs' | 'sidebar';
+  layout: 'flow'; // Only flow is implemented; grid/tabs/sidebar are future work
 }
 
 // Core Element Registry
@@ -1566,7 +1566,7 @@ export const TOOL_TEMPLATES: ToolComposition[] = [
         to: { instanceId: 'results-1', input: 'filters' }
       }
     ],
-    layout: 'grid'
+    layout: 'flow'
   },
 
   {
@@ -1616,7 +1616,7 @@ export const TOOL_TEMPLATES: ToolComposition[] = [
         to: { instanceId: 'event-form', input: 'invitees' }
       }
     ],
-    layout: 'grid'
+    layout: 'flow'
   },
 
   {
@@ -1656,7 +1656,7 @@ export const TOOL_TEMPLATES: ToolComposition[] = [
         to: { instanceId: 'chart-traffic', input: 'filter' }
       }
     ],
-    layout: 'grid'
+    layout: 'flow'
   }
 ];
 

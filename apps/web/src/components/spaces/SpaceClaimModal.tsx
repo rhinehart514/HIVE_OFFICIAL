@@ -226,7 +226,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
 
         {/* Modal */}
         <motion.div
-          className="relative w-full max-w-lg bg-[#0A0A09] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden"
+          className="relative w-full max-w-lg bg-[var(--bg-ground)] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}

@@ -70,6 +70,7 @@ export interface UseAuthReturn {
   refreshUser: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
   logout: () => Promise<void>;
+  logoutAll: () => Promise<void>;
   // Compatibility methods for legacy code
   getAuthToken?: () => Promise<string>;
   canAccessFeature: (feature: string) => boolean;
@@ -330,7 +331,33 @@ export function useAuth(): UseAuthReturn {
       // Broadcast logout to other tabs
       if (typeof window !== "undefined") {
         localStorage.setItem("hive_auth_event", `logout_${Date.now()}`);
-        window.location.href = "/auth/login";
+        window.location.href = "/login";
+      }
+    } catch (_err) {
+      // Still clear local state on logout failure
+      setUser(null);
+      sessionCache = null;
+    }
+  }, []);
+
+  /**
+   * Global logout - revokes all sessions across all devices
+   */
+  const logoutAll = useCallback(async (): Promise<void> => {
+    try {
+      await fetch("/api/auth/logout?global=true", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      // Clear local state and cache
+      setUser(null);
+      sessionCache = null;
+
+      // Broadcast logout to other tabs
+      if (typeof window !== "undefined") {
+        localStorage.setItem("hive_auth_event", `logout_${Date.now()}`);
+        window.location.href = "/login";
       }
     } catch (_err) {
       // Still clear local state on logout failure
@@ -475,6 +502,7 @@ export function useAuth(): UseAuthReturn {
     refreshUser,
     refreshToken,
     logout,
+    logoutAll,
     // Compatibility methods for legacy code
     getAuthToken: user?.getIdToken,
     canAccessFeature: (_feature: string) => !!user, // User must be authenticated

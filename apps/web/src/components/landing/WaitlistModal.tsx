@@ -55,7 +55,7 @@ export function WaitlistModal({ school, onClose }: { school: School | null; onCl
     >
       <motion.div className="absolute inset-0 bg-black/90" onClick={onClose} />
       <motion.div
-        className="relative w-full max-w-sm bg-[#0A0A0A] border border-white/10 rounded-2xl p-8"
+        className="relative w-full max-w-sm bg-[var(--bg-ground)] border border-white/10 rounded-2xl p-8"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}

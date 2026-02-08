@@ -21,10 +21,12 @@ import {
   ExploreSearch,
   SpaceCard,
   GhostSpaceCard,
+  ToolGallery,
   type SpaceCardData,
   type GhostSpaceData,
   type PersonData,
   type EventData,
+  type ToolData,
 } from '@/components/explore';
 import {
   GlassSurface,
@@ -38,7 +40,7 @@ import {
   revealVariants,
   cardHoverVariants,
 } from '@hive/tokens';
-import { Calendar, Users, ArrowRight, TrendingUp, Sparkles } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Sparkles, Wrench } from 'lucide-react';
 import { toast } from '@hive/ui';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -250,6 +252,45 @@ async function fetchEvents(options: {
   });
 }
 
+async function fetchTools(options: {
+  search?: string;
+  limit?: number;
+} = {}): Promise<ToolData[]> {
+  const params = new URLSearchParams({
+    limit: String(options.limit || 12),
+  });
+  if (options.search) params.set('search', options.search);
+
+  const response = await fetch(`/api/tools/browse?${params.toString()}`);
+  if (!response.ok) return [];
+
+  const data = await response.json();
+  const tools = data.data?.tools || data.tools || [];
+
+  return tools.map((t: {
+    id: string;
+    name: string;
+    description?: string;
+    icon?: string;
+    category?: string;
+    deployCount?: number;
+    isOfficial?: boolean;
+    deployedSpaces?: Array<{ id: string; name: string; handle: string }>;
+    createdByName?: string;
+    ownerName?: string;
+  }) => ({
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    icon: t.icon,
+    category: t.category,
+    deployCount: t.deployCount || 0,
+    isOfficial: t.isOfficial,
+    deployedSpaces: t.deployedSpaces,
+    createdByName: t.createdByName || t.ownerName,
+  }));
+}
+
 // ============================================
 // SECTION: FOR YOU
 // ============================================
@@ -436,14 +477,7 @@ function PeopleMajorSection({
     <FeedSection
       title={major ? `People in ${major}` : 'People on Campus'}
       icon={<Users className="w-4 h-4" />}
-      action={
-        <Link
-          href={major ? `/explore/people?major=${encodeURIComponent(major)}` : '/explore/people'}
-          className="text-label text-white/40 hover:text-white/60 transition-colors flex items-center gap-1"
-        >
-          View all <ArrowRight className="w-3 h-3" />
-        </Link>
-      }
+      action={undefined}
     >
       <motion.div
         className="grid grid-cols-2 md:grid-cols-3 gap-3"
@@ -524,6 +558,38 @@ function UpcomingEventsSection({
           <EventCompactCard key={event.id} event={event} onRSVP={handleRSVP} />
         ))}
       </motion.div>
+    </FeedSection>
+  );
+}
+
+// ============================================
+// SECTION: CAMPUS TOOLS
+// ============================================
+
+function CampusToolsSection({
+  tools,
+  loading,
+}: {
+  tools: ToolData[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <FeedSection title="Campus Tools" icon={<Wrench className="w-4 h-4" />}>
+        <ToolGallery tools={[]} loading />
+      </FeedSection>
+    );
+  }
+
+  if (tools.length === 0) return null;
+
+  return (
+    <FeedSection
+      title="Campus Tools"
+      icon={<Wrench className="w-4 h-4" />}
+      subtitle="Built by students, for students"
+    >
+      <ToolGallery tools={tools.slice(0, 6)} />
     </FeedSection>
   );
 }
@@ -954,6 +1020,7 @@ function ExploreContent() {
   const [ghostSpaces, setGhostSpaces] = useState<GhostSpaceData[]>([]);
   const [people, setPeople] = useState<PersonData[]>([]);
   const [events, setEvents] = useState<EventData[]>([]);
+  const [tools, setTools] = useState<ToolData[]>([]);
 
   const [searchSpaces, setSearchSpaces] = useState<SpaceCardData[]>([]);
   const [searchGhostSpaces, setSearchGhostSpaces] = useState<GhostSpaceData[]>([]);
@@ -977,16 +1044,18 @@ function ExploreContent() {
     const loadFeed = async () => {
       setFeedLoading(true);
       try {
-        const [profile, spacesData, eventsData] = await Promise.all([
+        const [profile, spacesData, eventsData, toolsData] = await Promise.all([
           fetchUserProfile().catch(() => ({ interests: [], major: null })),
           fetchSpaces({ sort: 'trending', limit: 30 }),
           fetchEvents({ limit: 10 }),
+          fetchTools({ limit: 12 }).catch(() => []),
         ]);
 
         setUserProfile(profile);
         setSpaces(spacesData.spaces);
         setGhostSpaces(spacesData.ghostSpaces);
         setEvents(eventsData);
+        setTools(toolsData);
 
         const peopleData = await fetchPeople({
           major: profile.major || undefined,
@@ -1111,6 +1180,11 @@ function ExploreContent() {
 
               <UpcomingEventsSection
                 events={events}
+                loading={feedLoading}
+              />
+
+              <CampusToolsSection
+                tools={tools}
                 loading={feedLoading}
               />
             </motion.div>

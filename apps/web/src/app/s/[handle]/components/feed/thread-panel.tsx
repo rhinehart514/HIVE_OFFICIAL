@@ -174,7 +174,7 @@ export function ThreadPanel({
             className={cn(
               'fixed right-0 top-0 bottom-0 z-50',
               'w-full max-w-md',
-              'bg-[#0A0A09] border-l border-white/[0.06]',
+              'bg-[var(--bg-ground)] border-l border-white/[0.06]',
               'flex flex-col'
             )}
           >

@@ -19,6 +19,7 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -116,6 +117,7 @@ export default function SpacePageUnified() {
   const [showDeleteBoardConfirm, setShowDeleteBoardConfirm] = React.useState<string | null>(null);
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const [isCreatingBoard, setIsCreatingBoard] = React.useState(false);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
   const [isDeletingBoard, setIsDeletingBoard] = React.useState(false);
@@ -707,8 +709,17 @@ export default function SpacePageUnified() {
         transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
       >
         <SpaceLayout
+          mobileSidebarOpen={mobileSidebarOpen}
+          onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           header={
             <div className="px-4 h-full flex items-center">
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="lg:hidden p-2 mr-2 text-white/60 hover:text-white transition-colors"
+                aria-label="Open sidebar"
+              >
+                <Menu size={20} />
+              </button>
               <SpaceHeader
                 space={{
                   id: space.id,
@@ -884,7 +895,7 @@ export default function SpacePageUnified() {
 
               {/* Panel */}
               <motion.div
-                className="relative h-full w-full max-w-md bg-[#0A0A09] border-l border-white/[0.06] shadow-2xl"
+                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] shadow-2xl"
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
@@ -961,7 +972,7 @@ export default function SpacePageUnified() {
 
               {/* Modal */}
               <motion.div
-                className="relative w-full max-w-4xl max-h-[90vh] bg-[#0A0A09] border border-white/[0.06] rounded-2xl shadow-2xl overflow-hidden"
+                className="relative w-full max-w-4xl max-h-[90vh] bg-[var(--bg-ground)] border border-white/[0.06] rounded-2xl shadow-2xl overflow-hidden"
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
@@ -1174,74 +1185,117 @@ export default function SpacePageUnified() {
   );
 }
 
-// Loading skeleton with premium animation (60/40 split, boards right)
+// Loading skeleton matching SpaceLayout: header top, sidebar LEFT (200px), content RIGHT (fluid)
 function SpacePageSkeleton() {
   return (
-    <div className="min-h-screen space-y-4 py-6 px-6">
+    <div className="h-screen flex flex-col">
+      {/* Header skeleton */}
       <motion.div
-        className="flex items-center gap-3"
+        className="h-14 border-b border-white/[0.06] px-4 flex items-center gap-3 flex-shrink-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
       >
         <motion.div
-          className="h-10 w-10 rounded-lg bg-white/[0.06]"
+          className="h-8 w-8 rounded-lg bg-white/[0.06]"
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.smooth }}
         />
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <motion.div
-            className="h-4 w-32 rounded bg-white/[0.06]"
+            className="h-4 w-28 rounded bg-white/[0.06]"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.smooth }}
           />
           <motion.div
-            className="h-3 w-24 rounded bg-white/[0.06]"
+            className="h-3 w-20 rounded bg-white/[0.04]"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
           />
         </div>
       </motion.div>
 
-      {/* Skeleton content - 60/40 split with boards on RIGHT */}
+      {/* Body: sidebar LEFT + content RIGHT */}
       <motion.div
-        className="flex gap-4 mt-8"
+        className="flex flex-1 min-h-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: MOTION.duration.base, delay: 0.1, ease: MOTION.ease.premium }}
       >
-        {/* Feed skeleton (left, 60%) */}
-        <div className="flex-1 space-y-4">
-          {[1, 2, 3, 4].map((i) => (
-            <motion.div
-              key={i}
-              className="h-20 rounded-xl bg-white/[0.04]"
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                delay: i * 0.1,
-                ease: MOTION.ease.smooth,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Sidebar skeleton (right, 40%) */}
-        <div className="w-56 space-y-2 border-l border-white/[0.06] pl-4">
+        {/* Sidebar skeleton (left, 200px) */}
+        <div className="w-[200px] border-r border-white/[0.06] p-3 space-y-2 flex-shrink-0">
+          <motion.div
+            className="h-3 w-16 rounded bg-white/[0.04] mb-3"
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
+          />
           {[1, 2, 3].map((i) => (
             <motion.div
-              key={i}
+              key={`board-${i}`}
               className="h-8 rounded-lg bg-white/[0.04]"
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{
                 duration: 1.5,
                 repeat: Infinity,
-                delay: 0.3 + i * 0.1,
+                delay: 0.2 + i * 0.1,
                 ease: MOTION.ease.smooth,
               }}
             />
           ))}
+          <div className="pt-4 mt-4 border-t border-white/[0.06] space-y-2">
+            <motion.div
+              className="h-3 w-20 rounded bg-white/[0.04]"
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.6, ease: MOTION.ease.smooth }}
+            />
+            <div className="flex gap-1.5">
+              {[1, 2, 3].map((i) => (
+                <motion.div
+                  key={`avatar-${i}`}
+                  className="h-6 w-6 rounded-full bg-white/[0.04]"
+                  animate={{ opacity: [0.3, 0.6, 0.3] }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: 0.7 + i * 0.05,
+                    ease: MOTION.ease.smooth,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Content skeleton (right, fluid) */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 p-4 space-y-4 overflow-hidden">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <motion.div
+                key={`msg-${i}`}
+                className="flex gap-3"
+                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  delay: i * 0.1,
+                  ease: MOTION.ease.smooth,
+                }}
+              >
+                <div className="h-8 w-8 rounded-full bg-white/[0.04] flex-shrink-0" />
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-3 w-24 rounded bg-white/[0.06]" />
+                  <div className="h-4 rounded bg-white/[0.04]" style={{ width: `${60 + (i * 7) % 30}%` }} />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <div className="p-3 border-t border-white/[0.06]">
+            <motion.div
+              className="h-10 rounded-xl bg-white/[0.04]"
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.5, ease: MOTION.ease.smooth }}
+            />
+          </div>
         </div>
       </motion.div>
     </div>

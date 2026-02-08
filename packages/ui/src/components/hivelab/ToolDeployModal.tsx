@@ -291,7 +291,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
       )}
 
       <Card className="p-4">
-        <h4 className="font-semibold text-[var(--hivelab-text-primary)] mb-2 flex items-center gap-2"><Cog6ToothIcon className="h-4 w-4" /> Deployment Cog6ToothIcon</h4>
+        <h4 className="font-semibold text-[var(--hivelab-text-primary)] mb-2 flex items-center gap-2"><Cog6ToothIcon className="h-4 w-4" /> Deployment Settings</h4>
         <div className="space-y-3">
           <label className="flex items-center gap-2">
             <input

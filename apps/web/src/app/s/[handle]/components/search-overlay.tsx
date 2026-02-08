@@ -6,6 +6,7 @@
  */
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MessageSquare, User, Calendar, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -34,11 +35,31 @@ const TYPE_ICONS = {
 };
 
 export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchOverlayProps) {
+  const router = useRouter();
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const navigateToResult = React.useCallback((result: SearchResult) => {
+    onClose();
+    switch (result.type) {
+      case 'member':
+        router.push(`/profile/${result.id}`);
+        break;
+      case 'event':
+        router.push(`/s/${spaceHandle}?event=${result.id}`);
+        break;
+      case 'tool':
+        router.push(`/s/${spaceHandle}/tools/${result.id}`);
+        break;
+      case 'message':
+      default:
+        router.push(`/s/${spaceHandle}?message=${result.id}`);
+        break;
+    }
+  }, [onClose, router, spaceHandle]);
 
   // Focus input on open
   React.useEffect(() => {
@@ -88,6 +109,11 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex(prev => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0 && results[selectedIndex]) {
+        navigateToResult(results[selectedIndex]);
+      }
     }
   };
 
@@ -116,7 +142,7 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
               ease: easingArrays.default,
             }}
           >
-            <div className="bg-[#141414] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="bg-[var(--bg-surface)] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden">
               {/* Search Input */}
               <div className="flex items-center gap-3 px-4 border-b border-white/[0.06]">
                 <Search className="w-4 h-4 text-white/30 flex-shrink-0" />
@@ -167,6 +193,7 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
                               : 'hover:bg-white/[0.03]'
                           )}
                           onMouseEnter={() => setSelectedIndex(index)}
+                          onClick={() => navigateToResult(result)}
                         >
                           <Icon className="w-4 h-4 text-white/30 flex-shrink-0" />
                           <div className="flex-1 min-w-0">

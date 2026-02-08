@@ -78,7 +78,7 @@ export function MembersPreview({
               </Avatar>
               {/* Online indicator dot */}
               <span
-                className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#0A0A09]"
+                className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[var(--bg-ground)]"
                 style={{ backgroundColor: SPACE_COLORS.onlineIndicator }}
               />
             </motion.div>

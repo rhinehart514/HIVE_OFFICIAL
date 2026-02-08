@@ -15,7 +15,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { logger } from '@/lib/logger';
 import { clearAllSessionCookies, getSession } from '@/lib/session';
 import { auditAuthEvent } from '@/lib/production-auth';
-import { revokeSession } from '@/lib/session-revocation';
+import { revokeSession, revokeAllUserSessionsAsync } from '@/lib/session-revocation';
 import {
   withErrors,
   RATE_LIMIT_PRESETS,
@@ -30,14 +30,22 @@ import {
 export const POST = withErrors(
   async (request: Request, _context: unknown, respond: typeof ResponseFormatter) => {
     const nextRequest = request as NextRequest;
+    const globalLogout = nextRequest.nextUrl.searchParams.get('global') === 'true';
     let userId: string | null = null;
 
     // Try to get session info for logging and revocation
     const session = await getSession(nextRequest);
     userId = session?.userId || null;
 
-    // Revoke the JWT session so it can't be reused even if cookie isn't cleared
-    if (session?.sessionId) {
+    if (globalLogout && userId) {
+      // Revoke ALL sessions for this user across all devices
+      await revokeAllUserSessionsAsync(userId);
+      logger.info('All user sessions revoked (global sign-out)', {
+        component: 'auth-logout',
+        userId,
+      });
+    } else if (session?.sessionId) {
+      // Revoke only the current session
       revokeSession(session.sessionId);
       logger.info('JWT session revoked', {
         component: 'auth-logout',
@@ -85,7 +93,7 @@ export const POST = withErrors(
 
     // Audit the logout event
     await auditAuthEvent('success', nextRequest, {
-      operation: 'logout',
+      operation: globalLogout ? 'logout_global' : 'logout',
       userId: userId || 'unknown',
     });
 

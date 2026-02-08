@@ -41,6 +41,10 @@ export interface EntryShellProps {
   showProgress?: boolean;
   /** Additional class names for content container */
   className?: string;
+  /** Override content max-width (default: max-w-[460px]) */
+  contentMaxWidth?: string;
+  /** Custom footer content (replaces default Terms/Privacy footer) */
+  footer?: React.ReactNode;
   /** Enable scroll for evolving entry */
   scrollable?: boolean;
   /** Show loading overlay during API calls */
@@ -53,6 +57,8 @@ export function EntryShell({
   currentStep = 'school',
   showProgress = false,
   className,
+  contentMaxWidth,
+  footer,
   scrollable = false,
   isLoading = false,
 }: EntryShellProps) {
@@ -173,7 +179,7 @@ export function EntryShell({
           }
           className={cn(
             'w-full mx-auto',
-            ENTRY_MAX_WIDTH,
+            contentMaxWidth || ENTRY_MAX_WIDTH,
             className
           )}
         >
@@ -188,13 +194,17 @@ export function EntryShell({
         animate={{ opacity: 1 }}
         transition={{ duration: DURATION.gentle, delay: 0.5, ease: EASE_PREMIUM }}
       >
-        <Link href="/legal/terms" className="hover:text-white/50 transition-colors">
-          Terms
-        </Link>
-        <span className="text-white/20">·</span>
-        <Link href="/legal/privacy" className="hover:text-white/50 transition-colors">
-          Privacy
-        </Link>
+        {footer || (
+          <>
+            <Link href="/legal/terms" className="hover:text-white/50 transition-colors">
+              Terms
+            </Link>
+            <span className="text-white/20">·</span>
+            <Link href="/legal/privacy" className="hover:text-white/50 transition-colors">
+              Privacy
+            </Link>
+          </>
+        )}
       </motion.footer>
     </div>
   );

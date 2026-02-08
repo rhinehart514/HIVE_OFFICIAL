@@ -28,9 +28,10 @@ import {
 
 import { Card, CardContent } from '../../../../design-system/primitives';
 import { Badge } from '../../../../design-system/primitives';
+import { BarChart3 } from 'lucide-react';
 
 import type { ElementProps } from '../../../../lib/hivelab/element-system';
-import type { ElementMode } from '../core';
+import { ElementEmpty, type ElementMode } from '../core';
 
 // ============================================================
 // Types
@@ -61,15 +62,6 @@ interface ChartDisplayElementProps extends ElementProps {
 // Constants
 // ============================================================
 
-/** Default sample data for charts */
-const DEFAULT_CHART_DATA: ChartDataPoint[] = [
-  { name: 'Week 1', value: 60, secondary: 45 },
-  { name: 'Week 2', value: 40, secondary: 55 },
-  { name: 'Week 3', value: 80, secondary: 70 },
-  { name: 'Week 4', value: 55, secondary: 50 },
-  { name: 'Week 5', value: 70, secondary: 65 },
-];
-
 /** HIVE color palette for charts - uses CSS custom properties */
 const CHART_COLORS = [
   'var(--life-gold)', // Gold - primary
@@ -92,13 +84,14 @@ export function ChartDisplayElement({
   const title = (config.title as string) || 'Analytics';
   const chartData = (data?.chartData as ChartDataPoint[]) ||
                     (config.data as ChartDataPoint[]) ||
-                    DEFAULT_CHART_DATA;
+                    null;
   const height = (config.height as number) || 280;
   const showLegend = config.showLegend !== false;
   const dataKey = (config.dataKey as string) || 'value';
   const secondaryKey = (config.secondaryKey as string) || undefined;
 
   const renderChart = () => {
+    if (!chartData) return null;
     switch (chartType) {
       case 'line':
         return (
@@ -240,14 +233,16 @@ export function ChartDisplayElement({
         </div>
 
         <div className="w-full">
-          {renderChart()}
+          {chartData ? (
+            renderChart()
+          ) : (
+            <ElementEmpty
+              icon={<BarChart3 className="h-8 w-8 text-muted-foreground" />}
+              message="No data available"
+              description="Connect a data source to see chart visualizations"
+            />
+          )}
         </div>
-
-        {!data?.chartData && !config.data && (
-          <div className="text-xs text-muted-foreground text-center">
-            Sample data shown. Connect analytics data to see real metrics.
-          </div>
-        )}
       </CardContent>
     </Card>
   );

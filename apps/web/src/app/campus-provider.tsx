@@ -145,7 +145,7 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
         onCreatePost={() => {
           // Post composer will be implemented post-launch
         }}
-        onCreateEvent={() => router.push('/events/create')}
+        onCreateEvent={() => router.push('/explore?tab=events')}
         onCreateTool={() => router.push('/lab/new')}
         onCreateSpace={() => router.push('/spaces/new')}
         isBuilder={user.isBuilder}

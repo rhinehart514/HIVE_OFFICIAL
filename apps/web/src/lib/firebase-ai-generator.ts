@@ -117,10 +117,11 @@ INPUT ELEMENTS:
 DISPLAY ELEMENTS:
 - result-list: Paginated list of items. Config: { itemsPerPage: number, showPagination: boolean, cardStyle: 'standard'|'compact' }
 - tag-cloud: Visual tag display with weighting. Config: { maxTags: number, sortBy: 'frequency'|'alpha', showCounts: boolean }
-- chart-display: Data visualization. Config: { chartType: 'bar'|'line'|'area', showLegend: boolean, animate: boolean }
+- chart-display: Data visualization. Config: { chartType: 'bar'|'line'|'pie', showLegend: boolean, animate: boolean }
 - notification-center: In-tool notifications. Config: { maxNotifications: number, groupByType: boolean, autoMarkRead: boolean }
-- countdown-timer: Live countdown for events/deadlines. Config: { seconds: number, label: string, showDays: boolean, targetDate: string }
-- leaderboard: Ranked standings with scores. Config: { maxEntries: number, showRank: boolean, showScore: boolean, scoreLabel: string, highlightTop: number }
+- progress-indicator: Progress bar or circular indicator. Config: { value: number, max: number, showLabel: boolean, variant: 'bar'|'circular', label: string }
+- directory-list: Searchable member/contact directory. Config: { fields: [{ key: string, label: string, type: 'text'|'email'|'phone'|'role' }], entries: array, title: string }
+- qr-code-generator: Generate QR codes for sharing. Config: { url: string, size: 'sm'|'md'|'lg', label: string }
 
 FILTER ELEMENTS:
 - filter-selector: Multi-select filters with categories. Config: { options: [{ value: string, label: string, count?: number }], allowMultiple: boolean, showCounts: boolean }
@@ -128,8 +129,12 @@ FILTER ELEMENTS:
 ACTION ELEMENTS:
 - poll-element: Voting/polls for space members. Config: { question: string, options: string[], allowMultipleVotes: boolean, showResults: boolean, anonymousVoting: boolean }
 - rsvp-button: Event signup with capacity. Config: { eventName: string, maxAttendees: number, showCount: boolean, requireConfirmation: boolean, allowWaitlist: boolean, eventDate: string }
-- counter: Track counts (attendance, inventory, etc). Config: { label: string, min: number, max: number, step: number }
-- timer: Stopwatch for sessions/activities. Config: { label: string, showControls: boolean, countUp: boolean, showLapTimes: boolean }
+- countdown-timer: Live countdown for events/deadlines. Config: { targetDate: string, title: string, showDays: boolean, showHours: boolean, showMinutes: boolean, showSeconds: boolean }
+- leaderboard: Ranked standings with scores. Config: { maxEntries: number, showRankChange: boolean, title: string, refreshInterval: number }
+- counter: Track counts (attendance, inventory, etc). Config: { label: string, initialValue: number, minValue: number, maxValue: number, step: number }
+- timer: Stopwatch for sessions/activities. Config: { autoStart: boolean, showMilliseconds: boolean, targetDuration: number }
+- signup-sheet: Slot-based signups for office hours, shifts, sessions. Config: { slots: [{ id: string, name: string, time: string, capacity: number }], allowMultipleSignups: boolean, title: string }
+- checklist-tracker: Shared checklist with progress tracking. Config: { items: [{ id: string, title: string, assignee?: string }], allowMemberAdd: boolean, title: string }
 
 ## Context: Tools Live in Spaces
 - Tools are created FOR a specific Space (club, org, dorm, etc.)
@@ -171,6 +176,10 @@ Always use layout: "flow". This is the only supported layout mode.
 - "competition tracker" → poll-element + leaderboard + counter + countdown-timer
 - "feedback collector" → form-builder + result-list + chart-display
 - "attendance tracker" → counter + leaderboard + chart-display
+- "office hours booking" → signup-sheet + countdown-timer
+- "event prep checklist" → checklist-tracker + countdown-timer + progress-indicator
+- "club directory" → directory-list + qr-code-generator
+- "fundraiser" → progress-indicator + counter + leaderboard
 
 ## Iteration Mode
 

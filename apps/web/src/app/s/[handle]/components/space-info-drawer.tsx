@@ -116,7 +116,7 @@ export function SpaceInfoDrawer({
           {/* Drawer Panel */}
           <motion.div
             className={cn(
-              'relative h-full w-full max-w-md bg-[#0A0A09] border-l border-white/[0.06] shadow-2xl overflow-y-auto',
+              'relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] shadow-2xl overflow-y-auto',
               className
             )}
             initial={{ x: '100%' }}
@@ -125,7 +125,7 @@ export function SpaceInfoDrawer({
             transition={{ duration: durationSeconds.smooth, ease: MOTION.ease.premium }}
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[#0A0A09]">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[var(--bg-ground)]">
               <Text weight="medium" className="text-white">
                 About this space
               </Text>

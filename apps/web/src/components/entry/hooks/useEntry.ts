@@ -135,13 +135,57 @@ const initialData: EntryData = {
   handleOverride: null,
 };
 
-export function useEntry(options: UseEntryOptions): UseEntryReturn {
-  const { onComplete, campusId = 'ub-buffalo', schoolId: initialSchoolId } = options;
+const ENTRY_STATE_KEY = 'hive_entry_state';
 
-  const [phase, setPhase] = React.useState<EntryPhase>('gate');
-  const [gateStep, setGateStep] = React.useState<GateStep>('email');
-  const [fieldStep, setFieldStep] = React.useState<FieldStep>('year');
-  const [data, setData] = React.useState<EntryData>(initialData);
+/** Fields safe to persist (excludes OTP code and verification status) */
+interface PersistedEntryState {
+  phase: EntryPhase;
+  gateStep: GateStep;
+  fieldStep: FieldStep;
+  email: string;
+  firstName: string;
+  lastName: string;
+  graduationYear: number | null;
+  major: string;
+  interests: string[];
+}
+
+function loadPersistedState(): PersistedEntryState | null {
+  try {
+    const saved = sessionStorage.getItem(ENTRY_STATE_KEY);
+    if (!saved) return null;
+    const state = JSON.parse(saved) as PersistedEntryState;
+    // Only restore if user got past the gate phase (has a session cookie)
+    if (state.phase === 'gate') return null;
+    return state;
+  } catch {
+    return null;
+  }
+}
+
+export function useEntry(options: UseEntryOptions): UseEntryReturn {
+  const { onComplete, schoolId: initialSchoolId } = options;
+  const campusId = initialSchoolId || options.campusId || 'ub-buffalo';
+
+  // Try to restore persisted state on initial render
+  const restoredState = React.useRef(loadPersistedState());
+
+  const [phase, setPhase] = React.useState<EntryPhase>(restoredState.current?.phase ?? 'gate');
+  const [gateStep, setGateStep] = React.useState<GateStep>(restoredState.current?.gateStep ?? 'email');
+  const [fieldStep, setFieldStep] = React.useState<FieldStep>(restoredState.current?.fieldStep ?? 'year');
+  const [data, setData] = React.useState<EntryData>(() => {
+    const r = restoredState.current;
+    if (!r) return initialData;
+    return {
+      ...initialData,
+      email: r.email || '',
+      firstName: r.firstName || '',
+      lastName: r.lastName || '',
+      graduationYear: r.graduationYear ?? null,
+      major: r.major || '',
+      interests: r.interests || [],
+    };
+  });
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -254,6 +298,31 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       }
     }
   }, [data.firstName, data.lastName, generateHandleFromName]);
+
+  // Persist entry state to sessionStorage after phase/step transitions
+  const persistState = React.useCallback(() => {
+    try {
+      const state: PersistedEntryState = {
+        phase, gateStep, fieldStep,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        graduationYear: data.graduationYear,
+        major: data.major,
+        interests: data.interests,
+      };
+      sessionStorage.setItem(ENTRY_STATE_KEY, JSON.stringify(state));
+    } catch {
+      // sessionStorage unavailable — ignore
+    }
+  }, [phase, gateStep, fieldStep, data]);
+
+  // Auto-persist whenever phase or step changes (skip the initial gate phase)
+  React.useEffect(() => {
+    if (phase !== 'gate') {
+      persistState();
+    }
+  }, [phase, gateStep, fieldStep, persistState]);
 
   // Analytics: Track phase transitions
   React.useEffect(() => {
@@ -612,6 +681,14 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     setSuggestedHandles([]);
 
     try {
+      // Refresh token before final submission to prevent expiry
+      // (user may have spent >15 min on naming/field/crossing phases)
+      try {
+        await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+      } catch {
+        // Refresh failed — continue anyway, the main call will handle auth errors
+      }
+
       const res = await fetch('/api/auth/complete-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -639,6 +716,9 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
         }
         throw new Error(result.error || 'Failed to complete entry');
       }
+
+      // Clear persisted entry state on success
+      try { sessionStorage.removeItem(ENTRY_STATE_KEY); } catch {}
 
       // Track completion
       analytics.trackStepCompleted('handle');

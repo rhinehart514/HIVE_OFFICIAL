@@ -314,6 +314,55 @@ const actionHandlers: Record<string, ActionHandler> = {
     };
   },
 
+  async set_progress(context: ActionContext): Promise<ActionResult> {
+    const { elementId, data, userId, sharedState } = context;
+    const instanceId = elementId || 'progress';
+    const newValue = (data.value as number) ?? 0;
+    const currentValue = sharedState.counters[`${instanceId}:value`] || 0;
+
+    return {
+      success: true,
+      data: { action: 'set_progress', elementId, value: newValue },
+      sharedStateUpdate: {
+        counterDeltas: {
+          [`${instanceId}:value`]: newValue - currentValue,
+        },
+      },
+    };
+  },
+
+  async increment_progress(context: ActionContext): Promise<ActionResult> {
+    const { elementId, data } = context;
+    const instanceId = elementId || 'progress';
+    const step = (data.step as number) ?? 1;
+
+    return {
+      success: true,
+      data: { action: 'increment_progress', elementId, step },
+      sharedStateUpdate: {
+        counterDeltas: {
+          [`${instanceId}:value`]: step,
+        },
+      },
+    };
+  },
+
+  async reset_progress(context: ActionContext): Promise<ActionResult> {
+    const { elementId, sharedState } = context;
+    const instanceId = elementId || 'progress';
+    const currentValue = sharedState.counters[`${instanceId}:value`] || 0;
+
+    return {
+      success: true,
+      data: { action: 'reset_progress', elementId, value: 0 },
+      sharedStateUpdate: {
+        counterDeltas: {
+          [`${instanceId}:value`]: -currentValue,
+        },
+      },
+    };
+  },
+
   async toggle(context: ActionContext): Promise<ActionResult> {
     const { state, elementId, data } = context;
     const key = (data.key as string) || elementId || 'toggle';

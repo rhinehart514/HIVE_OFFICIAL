@@ -305,7 +305,7 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete, on
                 />
                 <div className={cn(
                   'absolute right-0 top-full mt-1 z-20',
-                  'bg-[#1a1a1b] border border-white/[0.08] rounded-xl shadow-lg',
+                  'bg-[var(--bg-elevated)] border border-white/[0.08] rounded-xl shadow-lg',
                   'py-1 min-w-[120px]'
                 )}>
                   {/* Report action - available for all users */}

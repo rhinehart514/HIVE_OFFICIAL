@@ -20,7 +20,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-[#0A0A0A]">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-[var(--bg-ground)]">
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-[var(--status-warning-subtle)] p-4">

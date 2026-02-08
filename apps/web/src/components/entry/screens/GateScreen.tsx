@@ -265,7 +265,7 @@ export function GateScreen({ entry }: GateScreenProps) {
               {showSuccessFlash && (
                 <motion.div
                   key="success-flash"
-                  className="absolute inset-0 flex items-center justify-center z-20 bg-[var(--color-bg-void,#030303)]/90"
+                  className="absolute inset-0 flex items-center justify-center z-20 bg-[var(--color-bg-void)]/90"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}

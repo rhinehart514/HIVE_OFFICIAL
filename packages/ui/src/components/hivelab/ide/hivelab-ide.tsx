@@ -127,7 +127,7 @@ export interface HiveLabComposition {
   description: string;
   elements: CanvasElement[];
   connections: Connection[];
-  layout: 'grid' | 'flow' | 'tabs' | 'sidebar';
+  layout: 'flow'; // Only flow is implemented; grid/tabs/sidebar are future work
 }
 
 // Mobile gate component
@@ -430,8 +430,13 @@ export function HiveLabIDE({
   const selectedElements = elements.filter((el) => selectedIds.includes(el.id));
   const isCanvasEmpty = elements.length === 0;
 
-  // Track unsaved changes
+  // Track unsaved changes (skip initial load to avoid false positive)
+  const isInitialLoad = useRef(true);
   useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
     if (elements.length > 0 || connections.length > 0) {
       setHasUnsavedChanges(true);
     }

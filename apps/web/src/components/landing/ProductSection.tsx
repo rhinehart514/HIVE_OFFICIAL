@@ -48,7 +48,7 @@ function FeatureBlock({ number, title, description, visual, reverse }: FeatureBl
 function VerifiedProfileMock() {
   return (
     <div className="max-w-xs mx-auto">
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-6">
+      <div className="rounded-2xl border border-white/[0.06] bg-[var(--bg-ground)] p-6">
         {/* Avatar */}
         <div className="flex items-center gap-4 mb-5">
           <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center">

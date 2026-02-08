@@ -311,7 +311,7 @@ export default function ToolStudioPage({ params }: Props) {
   // User context for element permissions
   const userContext: UserContext = {
     userId: user?.uid || 'anonymous',
-    campusId: 'ub-buffalo',
+    campusId: user?.campusId || 'ub-buffalo',
     isSpaceLeader,
     leadingSpaceIds,
   };

@@ -33,6 +33,8 @@ export interface QuickDeployModalProps {
   onOpenChange: (open: boolean) => void;
   template: QuickTemplate | null;
   onDeploy: (result: QuickDeployResult) => Promise<void>;
+  /** URL or path to navigate to after successful deployment */
+  successUrl?: string;
   className?: string;
 }
 
@@ -43,6 +45,7 @@ export function QuickDeployModal({
   onOpenChange,
   template,
   onDeploy,
+  successUrl,
   className,
 }: QuickDeployModalProps) {
   const [state, setState] = React.useState<DeployState>('configure');
@@ -97,10 +100,6 @@ export function QuickDeployModal({
         config: formData,
       });
       setState('success');
-      // Auto-close after success
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to deploy');
       setState('configure');
@@ -274,7 +273,7 @@ export function QuickDeployModal({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              className="py-12 text-center"
+              className="py-8 text-center"
             >
               <motion.div
                 initial={{ scale: 0 }}
@@ -290,9 +289,35 @@ export function QuickDeployModal({
               <Text size="lg" weight="medium" className="mb-2">
                 {template.name} is live!
               </Text>
-              <Text size="sm" tone="muted">
-                Your tool has been deployed
+              <Text size="sm" tone="muted" className="mb-6">
+                Your tool has been created and is ready to customize
               </Text>
+              <div className="flex flex-col gap-2 px-4">
+                {successUrl ? (
+                  <Button
+                    variant="cta"
+                    onClick={() => {
+                      onOpenChange(false);
+                      window.location.href = successUrl;
+                    }}
+                  >
+                    Open in Builder
+                  </Button>
+                ) : (
+                  <Button
+                    variant="cta"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Continue
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Close
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

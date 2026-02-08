@@ -341,12 +341,17 @@ export const MEETING_NOTES_TEMPLATE: QuickTemplate = {
     description: 'Shared meeting notes',
     elements: [
       {
-        elementId: 'markdown-element',
+        elementId: 'checklist-tracker',
         instanceId: generateId(),
         config: {
           title: 'Meeting Notes',
-          content: '# Meeting Notes\n\n## Agenda\n- Item 1\n- Item 2\n\n## Action Items\n- [ ] Task 1\n- [ ] Task 2',
-          editable: true,
+          items: [
+            { id: 'agenda-1', title: 'Agenda Item 1' },
+            { id: 'agenda-2', title: 'Agenda Item 2' },
+            { id: 'action-1', title: 'Action: Follow up on decisions' },
+            { id: 'action-2', title: 'Action: Share notes with team' },
+          ],
+          allowMemberAdd: true,
         },
         position: { x: 0, y: 0 },
         size: { width: 300, height: 300 },
@@ -799,6 +804,7 @@ export const PROGRESS_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'trending-up',
   category: 'teams',
   complexity: 'simple',
+  status: 'hidden', // progress-indicator renderer not yet complete
   spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'sidebar',
@@ -860,12 +866,17 @@ export const MEETING_AGENDA_TEMPLATE: QuickTemplate = {
     description: 'Meeting agenda with time slots',
     elements: [
       {
-        elementId: 'markdown-element',
+        elementId: 'checklist-tracker',
         instanceId: generateId(),
         config: {
           title: 'Meeting Agenda',
-          content: '## Today\'s Agenda\n\n**5 min** - Welcome & Updates\n\n**15 min** - Main Topic Discussion\n\n**10 min** - Action Items Review\n\n**5 min** - Q&A & Wrap-up\n\n---\n\n### Notes\n_Add notes here during the meeting_',
-          editable: true,
+          items: [
+            { id: 'item-1', title: '5 min - Welcome & Updates' },
+            { id: 'item-2', title: '15 min - Main Topic Discussion' },
+            { id: 'item-3', title: '10 min - Action Items Review' },
+            { id: 'item-4', title: '5 min - Q&A & Wrap-up' },
+          ],
+          allowMemberAdd: true,
         },
         position: { x: 0, y: 0 },
         size: { width: 300, height: 320 },
@@ -887,6 +898,7 @@ export const BUDGET_OVERVIEW_TEMPLATE: QuickTemplate = {
   icon: 'wallet',
   category: 'resources',
   complexity: 'simple',
+  status: 'hidden', // progress-indicator renderer not yet complete
   spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -944,12 +956,32 @@ export const WEEKLY_UPDATE_TEMPLATE: QuickTemplate = {
     description: 'Weekly bulletin',
     elements: [
       {
-        elementId: 'markdown-element',
+        elementId: 'announcement',
         instanceId: generateId(),
         config: {
-          title: 'This Week\'s Update',
-          content: '## Weekly Update\n\n### Highlights\n- Achievement or news item\n- Another highlight\n\n### Upcoming\n- Event or deadline\n- Another item\n\n### Reminders\n- Important reminder\n\n---\n_Last updated: This week_',
-          editable: true,
+          title: 'Weekly Update',
+          items: [
+            {
+              title: 'Highlights',
+              content: 'Achievement or news item',
+              date: new Date().toISOString(),
+              priority: 'normal',
+            },
+            {
+              title: 'Upcoming',
+              content: 'Events and deadlines this week',
+              date: new Date().toISOString(),
+              priority: 'normal',
+            },
+            {
+              title: 'Reminders',
+              content: 'Important reminders for the week',
+              date: new Date().toISOString(),
+              priority: 'high',
+            },
+          ],
+          maxItems: 5,
+          showDates: true,
         },
         position: { x: 0, y: 0 },
         size: { width: 300, height: 300 },
@@ -1755,6 +1787,7 @@ export const COMPETITION_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'trophy',
   category: 'apps',
   complexity: 'app',
+  status: 'hidden', // progress-indicator renderer not yet complete
   spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'inline',

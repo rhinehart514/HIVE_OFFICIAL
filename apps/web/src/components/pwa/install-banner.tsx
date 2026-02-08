@@ -63,7 +63,7 @@ export function InstallBanner() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-safe">
       <div className="mx-auto max-w-lg">
-        <div className="flex items-center gap-4 rounded-xl bg-zinc-900 p-4 shadow-lg border border-zinc-800">
+        <div className="flex items-center gap-4 rounded-xl bg-[var(--bg-surface)] p-4 shadow-lg border border-white/[0.06]">
           {/* App Icon - Official HIVE logo */}
           <div className="flex-shrink-0">
             <div className="h-12 w-12 rounded-xl bg-yellow-500 flex items-center justify-center p-2">

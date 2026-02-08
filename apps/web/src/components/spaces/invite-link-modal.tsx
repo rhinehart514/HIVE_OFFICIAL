@@ -81,7 +81,7 @@ function QRCodeDisplay({ value }: { value: string }) {
   // In production, you'd use a library like 'qrcode' or 'qrcode.react'
   return (
     <div className="flex flex-col items-center gap-3 p-6 bg-white rounded-xl">
-      <div className="w-32 h-32 bg-[#0A0A09] rounded-lg flex items-center justify-center">
+      <div className="w-32 h-32 bg-[var(--bg-ground)] rounded-lg flex items-center justify-center">
         <QrCodeIcon className="w-16 h-16 text-white/20" />
       </div>
       <Text size="xs" className="text-[#0A0A09]/60 text-center max-w-[200px] break-all">
@@ -340,7 +340,7 @@ export function InviteLinkModal({
               'fixed z-50',
               'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
               'w-full max-w-lg',
-              'bg-[#141414] border border-white/[0.08]',
+              'bg-[var(--bg-surface)] border border-white/[0.08]',
               'rounded-2xl shadow-2xl',
               'overflow-hidden'
             )}

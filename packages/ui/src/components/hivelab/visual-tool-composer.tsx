@@ -195,7 +195,7 @@ export function VisualToolComposer({
         from: { instanceId: conn.from.instanceId, output: conn.from.output },
         to: { instanceId: conn.to.instanceId, input: conn.to.input },
       })),
-      layout: 'grid',
+      layout: 'flow',
     };
   };
 

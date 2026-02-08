@@ -64,7 +64,7 @@ export function SpaceLayout({
     <div
       className={cn(
         'flex flex-col h-screen overflow-hidden',
-        'bg-[#0A0A09]',
+        'bg-[var(--bg-ground)]',
         className
       )}
       style={{
@@ -159,7 +159,7 @@ export function SpaceLayout({
                 }}
                 className={cn(
                   'fixed bottom-0 left-0 right-0 z-50',
-                  'bg-[#0A0A09] border-t rounded-t-2xl',
+                  'bg-[var(--bg-ground)] border-t rounded-t-2xl',
                   'max-h-[80vh] overflow-y-auto'
                 )}
                 style={{ borderColor: SPACE_COLORS.borderSubtle }}

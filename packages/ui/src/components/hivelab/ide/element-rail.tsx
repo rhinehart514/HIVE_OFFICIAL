@@ -15,6 +15,7 @@ import { AutomationsPanel, type AutomationSummary } from './automations-panel';
 import type { CanvasElement, Connection } from './types';
 
 const AUTOMATIONS_ENABLED = true;
+const CROSS_TOOL_CONNECTIONS_ENABLED = false; // Sprint 3: gate until runtime connections work
 
 // ============================================
 // HiveLab Element Rail - Uses CSS variables from globals.css
@@ -253,17 +254,19 @@ function CollapsedRail({
       {/* Elements Tab */}
       <TabButton icon={<Shapes className="h-5 w-5" />} label="Elements" active={activeTab === 'elements'} onClick={() => { onTabChange('elements'); onExpand(); }} />
       <TabButton icon={<Layers className="h-5 w-5" />} label="Layers" active={activeTab === 'layers'} onClick={() => { onTabChange('layers'); onExpand(); }} />
-      {/* Space Tools Tab - Sprint 3 */}
-      <TabButton
-        icon={
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-          </svg>
-        }
-        label="Space Tools"
-        active={activeTab === 'spaceTools'}
-        onClick={() => { onTabChange('spaceTools'); onExpand(); }}
-      />
+      {/* Space Tools Tab - Sprint 3 (gated until runtime connections work) */}
+      {CROSS_TOOL_CONNECTIONS_ENABLED && (
+        <TabButton
+          icon={
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+            </svg>
+          }
+          label="Space Tools"
+          active={activeTab === 'spaceTools'}
+          onClick={() => { onTabChange('spaceTools'); onExpand(); }}
+        />
+      )}
       {/* Automations Tab - Sprint 4 (hidden until backend ready) */}
       {AUTOMATIONS_ENABLED && (
         <TabButton
@@ -475,23 +478,25 @@ function ExpandedRail({
           >
             Layers
           </button>
-          <button
-            type="button"
-            onClick={() => onTabChange('spaceTools')}
-            className={cn(
-              'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
-              'transition-all duration-200',
-              activeTab === 'spaceTools'
-                ? 'bg-[var(--hivelab-surface)] shadow-sm'
-                : 'hover:bg-[var(--hivelab-surface-hover)]',
-              focusRing
-            )}
-            style={{
-              color: activeTab === 'spaceTools' ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-tertiary)',
-            }}
-          >
-            Space
-          </button>
+          {CROSS_TOOL_CONNECTIONS_ENABLED && (
+            <button
+              type="button"
+              onClick={() => onTabChange('spaceTools')}
+              className={cn(
+                'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
+                'transition-all duration-200',
+                activeTab === 'spaceTools'
+                  ? 'bg-[var(--hivelab-surface)] shadow-sm'
+                  : 'hover:bg-[var(--hivelab-surface-hover)]',
+                focusRing
+              )}
+              style={{
+                color: activeTab === 'spaceTools' ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-tertiary)',
+              }}
+            >
+              Space
+            </button>
+          )}
           {AUTOMATIONS_ENABLED && (
             <button
               type="button"
@@ -630,7 +635,7 @@ function ExpandedRail({
                 onReorder={onReorder}
               />
             </motion.div>
-          ) : activeTab === 'spaceTools' ? (
+          ) : (CROSS_TOOL_CONNECTIONS_ENABLED && activeTab === 'spaceTools') ? (
             <motion.div
               key="spaceTools"
               initial={{ opacity: 0, x: 10 }}
