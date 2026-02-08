@@ -100,8 +100,20 @@ export interface RouteParams {
  * Derive campus ID from email domain
  * Add new campus domains here as they onboard
  */
+// Admin emails that bypass campus domain checks (maps to ub-buffalo)
+const ADMIN_EMAIL_WHITELIST: Record<string, string> = {
+  'rhinehart514@gmail.com': 'ub-buffalo',
+};
+
 export function deriveCampusFromEmail(email: string): string | undefined {
-  const domain = email.split('@')[1]?.toLowerCase();
+  const normalized = email.toLowerCase().trim();
+
+  // Admin whitelist bypass
+  if (ADMIN_EMAIL_WHITELIST[normalized]) {
+    return ADMIN_EMAIL_WHITELIST[normalized];
+  }
+
+  const domain = normalized.split('@')[1];
 
   // UB Buffalo domains
   if (domain === 'buffalo.edu' || domain === 'ub.edu') {
@@ -430,7 +442,12 @@ const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
  * Verify admin status in Firestore with caching
  * This catches the "zombie admin" case where an admin is removed but their session is still valid
  */
-async function verifyAdminStatusInFirestore(userId: string): Promise<boolean> {
+async function verifyAdminStatusInFirestore(userId: string, email?: string): Promise<boolean> {
+  // Whitelist bypass — admin emails are always admin
+  if (email && ADMIN_EMAIL_WHITELIST[email.toLowerCase().trim()]) {
+    return true;
+  }
+
   // Check cache first
   const cached = adminStatusCache.get(userId);
   if (cached && Date.now() < cached.expiry) {
@@ -512,7 +529,7 @@ export function withAdminAuth<T extends RouteParams>(
 
       // SECURITY FIX: Second check - verify admin status in Firestore
       // This catches "zombie admins" who have valid tokens but were removed from admin list
-      const firestoreAdminStatus = await verifyAdminStatusInFirestore(userId);
+      const firestoreAdminStatus = await verifyAdminStatusInFirestore(userId, request.user.email);
       if (!firestoreAdminStatus) {
         logger.warn('Admin access denied - not found in admins collection', {
           userId,

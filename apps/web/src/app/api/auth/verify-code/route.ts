@@ -10,6 +10,9 @@ import { SESSION_CONFIG, createTokenPair, setTokenPairCookies } from "@/lib/sess
 import { validateOrigin } from "@/lib/security-middleware";
 import { isDevAuthBypassAllowed, getDevUserId } from "@/lib/dev-auth-bypass";
 
+// Admin emails that get isAdmin flag on session creation
+const ADMIN_EMAILS = new Set(['rhinehart514@gmail.com']);
+
 // Security constants
 const MAX_ATTEMPTS_PER_CODE = 5;
 const LOCKOUT_DURATION_SECONDS = 60; // 1 minute lockout after max attempts
@@ -299,18 +302,21 @@ async function createSessionResponse(
       const userRef = dbAdmin.collection('users').doc();
       userId = userRef.id;
 
+      const isAdminEmail = ADMIN_EMAILS.has(email);
       await userRef.set({
         id: userId,
         email,
         campusId,
         schoolId: campusId,
         emailVerified: true,
+        ...(isAdminEmail && { isAdmin: true }),
         verifiedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
       needsOnboarding = true;
+      isAdmin = isAdminEmail;
     } else {
       // Update existing user
       const userDoc = existingUsers.docs[0];
@@ -330,7 +336,7 @@ async function createSessionResponse(
         userData?.onboardingCompletedAt ||
         (userData?.handle && userData?.fullName) // Legacy check: has handle + name means completed
       );
-      isAdmin = userData?.isAdmin || false;
+      isAdmin = userData?.isAdmin || ADMIN_EMAILS.has(email) || false;
     }
   } else {
     // Development mode - generate a deterministic user ID

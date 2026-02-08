@@ -13,6 +13,14 @@ import { logger } from './logger';
 import { dbAdmin, isFirebaseConfigured } from './firebase-admin';
 
 /**
+ * Admin email overrides — bypass domain checks for specific emails
+ * These emails are treated as belonging to their mapped campus
+ */
+const ADMIN_EMAIL_OVERRIDES: Record<string, { campusId: string; schoolName: string }> = {
+  'rhinehart514@gmail.com': { campusId: 'ub-buffalo', schoolName: 'University at Buffalo' },
+};
+
+/**
  * Fallback campus domain mapping (used when Firestore unavailable)
  */
 const FALLBACK_CAMPUS_DOMAINS: Record<string, string> = {
@@ -135,6 +143,13 @@ export async function getCampusFromEmailAsync(email: string): Promise<string> {
     throw new Error('Email is required for campus detection');
   }
 
+  // Admin email override
+  const normalizedEmail = email.toLowerCase().trim();
+  const adminOverride = ADMIN_EMAIL_OVERRIDES[normalizedEmail];
+  if (adminOverride) {
+    return adminOverride.campusId;
+  }
+
   const parts = email.split('@');
   if (parts.length !== 2) {
     throw new Error('Invalid email format');
@@ -168,6 +183,13 @@ export async function getCampusFromEmailAsync(email: string): Promise<string> {
 export function getCampusFromEmail(email: string): string {
   if (!email || typeof email !== 'string') {
     throw new Error('Email is required for campus detection');
+  }
+
+  // Admin email override
+  const normalizedEmail = email.toLowerCase().trim();
+  const adminOverride = ADMIN_EMAIL_OVERRIDES[normalizedEmail];
+  if (adminOverride) {
+    return adminOverride.campusId;
   }
 
   const parts = email.split('@');
@@ -476,6 +498,18 @@ export async function getSchoolFromEmailAsync(email: string): Promise<SchoolLook
     const error = new Error('Email is required for school lookup');
     (error as Error & { code?: string }).code = 'INVALID_INPUT';
     throw error;
+  }
+
+  // Admin email override — bypass domain lookup entirely
+  const normalizedEmail = email.toLowerCase().trim();
+  const adminOverride = ADMIN_EMAIL_OVERRIDES[normalizedEmail];
+  if (adminOverride) {
+    return {
+      campusId: adminOverride.campusId,
+      status: 'active',
+      schoolName: adminOverride.schoolName,
+      domain: normalizedEmail.split('@')[1],
+    };
   }
 
   const parts = email.split('@');
