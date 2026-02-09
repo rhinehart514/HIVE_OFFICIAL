@@ -18,6 +18,8 @@ import { useAuth } from '@hive/auth-logic';
 import type { Board, SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@hive/ui';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 import { logger } from '@/lib/logger';
+import { isSlashCommand } from '@/lib/slash-command-parser';
+import type { InlineComponentData } from '@/components/spaces/chat/inline-components';
 
 // Re-export types locally for convenience
 type OnlineMember = SpacePanelOnlineMember;
@@ -97,6 +99,8 @@ export interface ChatMessage {
   isEdited?: boolean;
   /** When the message was last edited (ISO timestamp) */
   editedAt?: string;
+  /** Inline component (poll, countdown, RSVP) */
+  inlineComponent?: InlineComponentData;
 }
 
 export interface SpaceMember {
@@ -167,6 +171,10 @@ interface UseSpaceResidenceStateReturn {
 
   // Refresh
   refreshSpace: () => Promise<void>;
+
+  // Component interaction
+  handleComponentVote: (componentId: string, optionIndex: number) => Promise<void>;
+  handleComponentRsvp: (componentId: string, response: 'yes' | 'no' | 'maybe') => Promise<void>;
 }
 
 // ============================================
@@ -544,7 +552,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
   const sendMessage = React.useCallback(async (content: string, attachments?: ChatAttachment[]) => {
     if (!space?.id) return;
 
-    // Optimistic update
+    // Check if this is a slash command
+    const isCommand = isSlashCommand(content);
+
+    // Optimistic update (show message immediately)
     const tempId = `temp-${Date.now()}`;
     const optimisticMessage: ChatMessage = {
       id: tempId,
@@ -560,6 +571,72 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     setMessages((prev) => [...prev, optimisticMessage]);
 
     try {
+      // If slash command, call intent API first
+      if (isCommand) {
+        const intentResponse = await fetch(`/api/spaces/${space.id}/chat/intent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: content,
+            boardId: activeBoard,
+            createIfDetected: true,
+            messageId: tempId,
+          }),
+        });
+
+        if (intentResponse.ok) {
+          const intentData = await intentResponse.json();
+
+          // If component was created, also send the message with componentData
+          if (intentData.created && intentData.component) {
+            // Send message with component reference
+            const messageResponse = await fetch(`/api/spaces/${space.id}/chat`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                boardId: activeBoard,
+                content,
+                componentId: intentData.component.id,
+                attachments,
+              }),
+            });
+
+            if (!messageResponse.ok) {
+              // Revert optimistic update on failure
+              setMessages((prev) => prev.filter((m) => m.id !== tempId));
+              throw new Error('Failed to send message with component');
+            }
+
+            const messageData = await messageResponse.json();
+
+            // Refetch messages to get the full component data
+            const messagesResponse = await fetch(
+              `/api/spaces/${space.id}/chat?boardId=${activeBoard}&limit=${INITIAL_MESSAGE_LIMIT}`
+            );
+            if (messagesResponse.ok) {
+              const messagesData = await messagesResponse.json();
+              setMessages(messagesData.messages || []);
+            }
+            return;
+          }
+
+          // If it was a help command, show help text
+          if (intentData.helpText) {
+            toast.info("Command Help", intentData.helpText);
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
+            return;
+          }
+
+          // If invalid command, show error
+          if (!intentData.isValid) {
+            toast.error("Invalid Command", intentData.error || "Check command syntax");
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
+            return;
+          }
+        }
+      }
+
+      // Regular message send
       const response = await fetch(`/api/spaces/${space.id}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -773,6 +850,175 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     }
   }, [space?.id]);
 
+  // Handle component vote (poll)
+  const handleComponentVote = React.useCallback(async (componentId: string, optionIndex: number) => {
+    if (!space?.id) return;
+
+    // Find the message with this component
+    const message = messages.find(m => m.inlineComponent?.id === componentId);
+    if (!message?.inlineComponent) return;
+
+    const component = message.inlineComponent;
+    if (component.type !== 'poll') return;
+
+    const config = component.config as { options: string[] };
+    const selectedOption = config.options[optionIndex];
+    if (!selectedOption) return;
+
+    // Optimistic update
+    const previousUserVote = component.userVote || [];
+    const newUserVote = [selectedOption];
+
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === message.id && m.inlineComponent
+          ? {
+              ...m,
+              inlineComponent: {
+                ...m.inlineComponent,
+                userVote: newUserVote,
+              },
+            }
+          : m
+      )
+    );
+
+    try {
+      const response = await fetch(
+        `/api/spaces/${space.id}/components/${componentId}/participate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            selectedOptions: newUserVote,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        // Revert on failure
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === message.id && m.inlineComponent
+              ? {
+                  ...m,
+                  inlineComponent: {
+                    ...m.inlineComponent,
+                    userVote: previousUserVote,
+                  },
+                }
+              : m
+          )
+        );
+        throw new Error('Failed to submit vote');
+      }
+
+      const data = await response.json();
+      // Update with server response
+      if (data.component) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === message.id && m.inlineComponent
+              ? {
+                  ...m,
+                  inlineComponent: {
+                    ...m.inlineComponent,
+                    sharedState: data.component.aggregations || m.inlineComponent.sharedState,
+                    userVote: newUserVote,
+                  },
+                }
+              : m
+          )
+        );
+      }
+    } catch (error) {
+      logger.error('Failed to submit vote', error instanceof Error ? error : new Error(String(error)));
+      toast.error("Vote failed", "Please try again");
+    }
+  }, [space?.id, messages, toast]);
+
+  // Handle component RSVP
+  const handleComponentRsvp = React.useCallback(async (componentId: string, response: 'yes' | 'no' | 'maybe') => {
+    if (!space?.id) return;
+
+    // Find the message with this component
+    const message = messages.find(m => m.inlineComponent?.id === componentId);
+    if (!message?.inlineComponent) return;
+
+    const component = message.inlineComponent;
+    if (component.type !== 'rsvp') return;
+
+    // Optimistic update
+    const previousResponse = component.userResponse;
+
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === message.id && m.inlineComponent
+          ? {
+              ...m,
+              inlineComponent: {
+                ...m.inlineComponent,
+                userResponse: response,
+              },
+            }
+          : m
+      )
+    );
+
+    try {
+      const apiResponse = await fetch(
+        `/api/spaces/${space.id}/components/${componentId}/participate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            response,
+          }),
+        }
+      );
+
+      if (!apiResponse.ok) {
+        // Revert on failure
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === message.id && m.inlineComponent
+              ? {
+                  ...m,
+                  inlineComponent: {
+                    ...m.inlineComponent,
+                    userResponse: previousResponse,
+                  },
+                }
+              : m
+          )
+        );
+        throw new Error('Failed to submit RSVP');
+      }
+
+      const data = await apiResponse.json();
+      // Update with server response
+      if (data.component) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === message.id && m.inlineComponent
+              ? {
+                  ...m,
+                  inlineComponent: {
+                    ...m.inlineComponent,
+                    sharedState: data.component.aggregations || m.inlineComponent.sharedState,
+                    userResponse: response,
+                  },
+                }
+              : m
+          )
+        );
+      }
+    } catch (error) {
+      logger.error('Failed to submit RSVP', error instanceof Error ? error : new Error(String(error)));
+      toast.error("RSVP failed", "Please try again");
+    }
+  }, [space?.id, messages, toast]);
+
   return {
     // Space data
     space,
@@ -827,6 +1073,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
 
     // Refresh
     refreshSpace,
+
+    // Component interaction
+    handleComponentVote,
+    handleComponentRsvp,
   };
 }
 

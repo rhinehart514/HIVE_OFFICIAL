@@ -166,6 +166,9 @@ export default function SpacePageUnified() {
     // "Since you left" feature
     lastReadAt,
     unreadCount,
+    // Component interaction
+    handleComponentVote,
+    handleComponentRsvp,
   } = useSpaceResidenceState(handle);
 
   // Permissions hook for message deletion
@@ -862,6 +865,8 @@ export default function SpacePageUnified() {
                       onEdit={handleEditMessage}
                       canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
                       onReport={handleReportMessage}
+                      onComponentVote={handleComponentVote}
+                      onComponentRsvp={handleComponentRsvp}
                     />
                   )}
                 </MainContent>

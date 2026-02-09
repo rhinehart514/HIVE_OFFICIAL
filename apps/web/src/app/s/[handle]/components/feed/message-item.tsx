@@ -19,6 +19,7 @@ import { SmilePlus, MessageSquare, MoreHorizontal, Trash2, Pencil, Check, X, Fla
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { SPACE_COMPONENTS, spaceTypographyClasses } from '@hive/tokens';
+import { InlineComponent, type InlineComponentData } from '@/components/spaces/chat/inline-components';
 
 export interface MessageReaction {
   emoji: string;
@@ -46,6 +47,8 @@ export interface Message {
   isEdited?: boolean;
   /** When the message was last edited */
   editedAt?: string;
+  /** Inline component (poll, countdown, RSVP, etc.) */
+  inlineComponent?: InlineComponentData;
 }
 
 interface MessageItemProps {
@@ -64,6 +67,10 @@ interface MessageItemProps {
   onEdit?: (newContent: string) => void;
   /** Report handler */
   onReport?: () => void;
+  /** Component vote handler */
+  onComponentVote?: (componentId: string, optionIndex: number) => void;
+  /** Component RSVP handler */
+  onComponentRsvp?: (componentId: string, response: 'yes' | 'no' | 'maybe') => void;
 }
 
 export function MessageItem({
@@ -75,6 +82,8 @@ export function MessageItem({
   onDelete,
   onEdit,
   onReport,
+  onComponentVote,
+  onComponentRsvp,
 }: MessageItemProps) {
   const [isHovered, setIsHovered] = React.useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
@@ -263,6 +272,23 @@ export function MessageItem({
                 </a>
               ))}
             </div>
+          )}
+
+          {/* Inline component (poll, countdown, RSVP) */}
+          {message.inlineComponent && (
+            <InlineComponent
+              component={message.inlineComponent}
+              onVote={
+                onComponentVote
+                  ? (optionIndex) => onComponentVote(message.inlineComponent!.id, optionIndex)
+                  : undefined
+              }
+              onRsvp={
+                onComponentRsvp
+                  ? (response) => onComponentRsvp(message.inlineComponent!.id, response)
+                  : undefined
+              }
+            />
           )}
 
           {/* Reactions */}

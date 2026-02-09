@@ -43,6 +43,9 @@ interface MessageFeedProps {
   onReport?: (messageId: string, authorName: string, content: string) => void;
   /** Permission check */
   canDeleteMessage?: (messageId: string, authorId: string) => boolean;
+  /** Component interaction handlers */
+  onComponentVote?: (componentId: string, optionIndex: number) => void;
+  onComponentRsvp?: (componentId: string, response: 'yes' | 'no' | 'maybe') => void;
   className?: string;
 }
 
@@ -61,6 +64,8 @@ export function MessageFeed({
   onEdit,
   onReport,
   canDeleteMessage,
+  onComponentVote,
+  onComponentRsvp,
   className,
 }: MessageFeedProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -246,6 +251,8 @@ export function MessageFeed({
                               ? () => onReport(message.id, message.authorName, message.content)
                               : undefined
                           }
+                          onComponentVote={onComponentVote}
+                          onComponentRsvp={onComponentRsvp}
                         />
                       </motion.div>
                     </React.Fragment>

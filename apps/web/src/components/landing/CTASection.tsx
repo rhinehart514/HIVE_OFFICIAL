@@ -2,12 +2,7 @@
 
 import { useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  RevealSection,
-  FadeUp,
-  Magnetic,
-  Button,
-} from '@hive/ui/design-system/primitives';
+import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 
 const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
@@ -24,51 +19,43 @@ export function CTASection() {
     router.push(enterUrl);
   }, [router, searchParams]);
 
-  const handleCreateSpace = useCallback(() => {
-    router.push(`/enter?redirect=${encodeURIComponent('/spaces?create=true')}`);
-  }, [router]);
-
   return (
-    <RevealSection className="py-32 md:py-40 border-t border-white/[0.04]">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Gold gradient line */}
-        <div className="w-16 h-px bg-gradient-to-r from-[#FFD700]/40 to-transparent mb-12" />
-
-        <FadeUp>
-          <h2 className={`${clashDisplay} text-[clamp(28px,4.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em] mb-4`}>
-            <span className="text-white">Build something real.</span>
-            <br />
-            <span className="text-white/20">Share it everywhere.</span>
+    <section className="py-20 md:py-32 px-6">
+      <div className="max-w-4xl mx-auto text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Headline */}
+          <h2 className={`${clashDisplay} text-[clamp(32px,6vw,56px)] font-semibold leading-tight text-white mb-6`}>
+            Build something real.
           </h2>
-          <p className="text-base text-white/30 mb-10">
+
+          {/* Subhead */}
+          <p className="text-lg text-white/50 mb-10 max-w-2xl mx-auto">
             From idea to live tool in 30 seconds. No code, no app store, no waiting.
           </p>
-        </FadeUp>
 
-        <FadeUp delay={0.2}>
-          <div className="flex flex-wrap gap-4">
-            <Magnetic>
-              <Button
-                variant="primary"
-                size="xl"
-                className="rounded-full"
-                trailingIcon={<ArrowRight />}
-                onClick={handleJoinUB}
-              >
-                Join UB
-              </Button>
-            </Magnetic>
-            <Button
-              variant="secondary"
-              size="xl"
-              className="rounded-full"
-              onClick={handleCreateSpace}
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={handleJoinUB}
+              className="px-8 py-4 bg-[#FFD700] text-black text-base font-medium rounded-lg hover:bg-[#FFD700]/90 transition-colors flex items-center justify-center gap-2"
+            >
+              Join UB
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => router.push('/enter')}
+              className="px-8 py-4 bg-white/10 text-white text-base font-medium rounded-lg hover:bg-white/15 transition-colors"
             >
               Create a space
-            </Button>
+            </button>
           </div>
-        </FadeUp>
+        </motion.div>
       </div>
-    </RevealSection>
+    </section>
   );
 }

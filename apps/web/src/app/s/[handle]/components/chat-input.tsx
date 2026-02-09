@@ -9,9 +9,13 @@
  */
 
 import * as React from 'react';
-import { Send, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Send, X, Image as ImageIcon, Loader2, Command } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@hive/ui/design-system/primitives';
+import {
+  isSlashCommand,
+  getAutocompleteSuggestions,
+} from '@/lib/slash-command-parser';
 
 export interface ChatAttachment {
   url: string;
@@ -43,6 +47,9 @@ export function ChatInput({
   const [isUploading, setIsUploading] = React.useState(false);
   const [attachments, setAttachments] = React.useState<ChatAttachment[]>([]);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
+  const [showSlashMenu, setShowSlashMenu] = React.useState(false);
+  const [slashSuggestions, setSlashSuggestions] = React.useState<string[]>([]);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = React.useState(0);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -136,20 +143,66 @@ export function ChatInput({
 
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Handle slash menu navigation
+      if (showSlashMenu) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setSelectedSuggestionIndex((prev) =>
+            Math.min(prev + 1, slashSuggestions.length - 1)
+          );
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setSelectedSuggestionIndex((prev) => Math.max(prev - 1, 0));
+          return;
+        }
+        if (e.key === 'Tab' || (e.key === 'Enter' && slashSuggestions.length > 0)) {
+          e.preventDefault();
+          const suggestion = slashSuggestions[selectedSuggestionIndex];
+          if (suggestion) {
+            setValue(suggestion + ' ');
+            setShowSlashMenu(false);
+            textareaRef.current?.focus();
+          }
+          return;
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setShowSlashMenu(false);
+          return;
+        }
+      }
+
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleSend();
       }
     },
-    [handleSend]
+    [handleSend, showSlashMenu, slashSuggestions, selectedSuggestionIndex]
   );
 
   // Auto-resize textarea and handle typing indicator
   const handleInput = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
-    setValue(textarea.value);
+    const newValue = textarea.value;
+    setValue(newValue);
     textarea.style.height = 'auto';
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+
+    // Check for slash command
+    if (newValue.startsWith('/')) {
+      const suggestions = getAutocompleteSuggestions(newValue);
+      if (suggestions.length > 0) {
+        setSlashSuggestions(suggestions);
+        setShowSlashMenu(true);
+        setSelectedSuggestionIndex(0);
+      } else {
+        setShowSlashMenu(false);
+      }
+    } else {
+      setShowSlashMenu(false);
+    }
 
     // Trigger typing indicator
     if (onTypingChange && textarea.value.length > 0) {
@@ -168,7 +221,44 @@ export function ChatInput({
   }, [onTypingChange]);
 
   return (
-    <div className={cn('p-3', className)}>
+    <div className={cn('p-3 relative', className)}>
+      {/* Slash command menu */}
+      {showSlashMenu && slashSuggestions.length > 0 && (
+        <div
+          className={cn(
+            'absolute bottom-full left-3 right-3 mb-2',
+            'bg-[var(--bg-elevated)] border border-white/[0.08] rounded-xl shadow-lg',
+            'py-2 max-h-[200px] overflow-y-auto'
+          )}
+        >
+          <div className="px-3 py-1.5 text-xs text-white/40 flex items-center gap-1.5">
+            <Command className="w-3 h-3" />
+            Quick Actions
+          </div>
+          {slashSuggestions.map((suggestion, index) => (
+            <button
+              key={suggestion}
+              onClick={() => {
+                setValue(suggestion + ' ');
+                setShowSlashMenu(false);
+                textareaRef.current?.focus();
+              }}
+              className={cn(
+                'w-full px-3 py-2 text-left text-sm transition-colors',
+                index === selectedSuggestionIndex
+                  ? 'bg-white/[0.08] text-white'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+              )}
+            >
+              {suggestion}
+            </button>
+          ))}
+          <div className="px-3 py-1.5 mt-1 text-xs text-white/30 border-t border-white/[0.06]">
+            Tab or Enter to select • Esc to dismiss
+          </div>
+        </div>
+      )}
+
       {/* Attachment preview */}
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">

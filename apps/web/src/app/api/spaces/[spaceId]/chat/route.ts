@@ -186,6 +186,58 @@ export const GET = withAuthAndErrors(async (
     logger.warn('Failed to fetch read receipt', { error, spaceId, boardId, userId });
   }
 
+  // Fetch inline components for these messages
+  const messageIds = messages.map(msg => msg.id);
+  const componentsMap = new Map<string, unknown>();
+
+  if (messageIds.length > 0) {
+    try {
+      const componentsSnapshot = await dbAdmin
+        .collection('spaces')
+        .doc(spaceId)
+        .collection('boards')
+        .doc(boardId)
+        .collection('inline_components')
+        .where('messageId', 'in', messageIds.slice(0, 10)) // Firestore 'in' limit is 10
+        .get();
+
+      for (const doc of componentsSnapshot.docs) {
+        const data = doc.data();
+        if (data.messageId) {
+          // Fetch user's participation record
+          let userVote: string[] | undefined;
+          let userResponse: 'yes' | 'no' | 'maybe' | undefined;
+
+          try {
+            const participantDoc = await doc.ref
+              .collection('participants')
+              .doc(userId)
+              .get();
+
+            if (participantDoc.exists) {
+              const participantData = participantDoc.data();
+              userVote = participantData?.selectedOptions;
+              userResponse = participantData?.response;
+            }
+          } catch (err) {
+            logger.warn('Failed to fetch participant data', { componentId: doc.id, userId });
+          }
+
+          componentsMap.set(data.messageId as string, {
+            id: doc.id,
+            type: data.componentType,
+            config: data.config,
+            sharedState: data.sharedState || { totalResponses: 0 },
+            userVote,
+            userResponse,
+          });
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to fetch inline components', { error, spaceId, boardId });
+    }
+  }
+
   // Transform messages to API response format
   const apiMessages = messages.map(msg => {
     const dto = msg.toDTO();
@@ -196,6 +248,7 @@ export const GET = withAuthAndErrors(async (
       type: dto.type,
       authorId: dto.authorId,
       authorName: dto.authorName,
+      authorHandle: dto.authorHandle || 'unknown',
       authorAvatarUrl: dto.authorAvatarUrl,
       authorRole: dto.authorRole,
       content: dto.content,
@@ -214,6 +267,8 @@ export const GET = withAuthAndErrors(async (
       replyToId: dto.replyToId,
       replyToPreview: dto.replyToPreview,
       threadCount: dto.threadCount,
+      // Inline component data (poll, countdown, RSVP)
+      inlineComponent: componentsMap.get(msg.id) || undefined,
     };
   });
 
