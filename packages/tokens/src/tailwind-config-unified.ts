@@ -216,30 +216,19 @@ export const hiveTailwindTransitionTimingFunction = {
 };
 
 export const hiveTailwindAnimation = {
-  'hive-glow': 'hive-glow 2s ease-in-out infinite alternate',
-  'hive-float': 'hive-float 3s ease-in-out infinite',
-  'hive-scale': 'hive-scale 0.3s ease-out',
-  'hive-pulse': 'hive-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+  'hive-fade': 'hive-fade 150ms cubic-bezier(0.22, 1, 0.36, 1)',
+  'hive-scale': 'hive-scale 150ms cubic-bezier(0.22, 1, 0.36, 1)',
   'hive-spin-slow': 'spin 3s linear infinite',
 };
 
 export const hiveTailwindKeyframes = {
-  'hive-glow': {
-    '0%': { boxShadow: '0 0 20px rgba(255, 215, 0, 0.3)' },
-    '100%': { boxShadow: '0 0 30px rgba(255, 215, 0, 0.6)' },
-  },
-  'hive-float': {
-    '0%, 100%': { transform: 'translateY(0px)' },
-    '50%': { transform: 'translateY(-10px)' },
+  'hive-fade': {
+    '0%': { opacity: '0' },
+    '100%': { opacity: '1' },
   },
   'hive-scale': {
-    '0%': { transform: 'scale(1)' },
-    '50%': { transform: 'scale(1.05)' },
+    '0%': { transform: 'scale(0.98)' },
     '100%': { transform: 'scale(1)' },
-  },
-  'hive-pulse': {
-    '0%, 100%': { opacity: '1' },
-    '50%': { opacity: '0.5' },
   },
 };
 

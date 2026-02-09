@@ -1,10 +1,7 @@
 export { LandingHeader } from './LandingHeader';
 export { HeroSection } from './HeroSection';
-export { ProblemSection } from './ProblemSection';
 export { ProductSection } from './ProductSection';
 export { ProductMock } from './ProductMock';
-export { ComparisonSection } from './ComparisonSection';
-export { SocialProofSection } from './SocialProofSection';
 export { CTASection } from './CTASection';
 export { LandingFooter } from './LandingFooter';
 export { WaitlistModal } from './WaitlistModal';

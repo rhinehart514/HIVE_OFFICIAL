@@ -191,7 +191,7 @@ const WelcomePage = () => (
 const NavCard = ({ title, desc, path }: { title: string; desc: string; path: string }) => (
   <button
     className="group p-6 rounded-xl bg-gray-900/50 border border-gray-800 hover:border-gray-700
-               transition-all duration-240 hover:-translate-y-1 text-left"
+               transition-all duration-240 hover:opacity-95 text-left"
     onClick={() => {
       // Storybook navigation would go here
       console.log(`Navigate to ${path}`);

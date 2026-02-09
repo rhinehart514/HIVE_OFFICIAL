@@ -30,12 +30,9 @@ export {
   PUNCH_TRANSITION,
   SNAP_TRANSITION,
   // HIVE signature variants (Design Principles)
-  revealVariants,
   surfaceVariants,
-  staggerContainerVariants,
   // Micro-interaction presets
   buttonPressVariants,
-  cardHoverVariants,
   messageEntryVariants,
   successVariants,
   errorShakeVariants,
@@ -67,13 +64,13 @@ export {
   getWarmthConfig,
   getEnergyDotCount,
   getAmbientGlow,
-} from './spaces-motion';
+} from './spaces';
 export type {
   WarmthLevel,
   AmbientGlowLevel,
   SpacesMotionConfig,
   SpacesGoldConfig,
-} from './spaces-motion';
+} from './spaces';
 
 // Density tokens
 export {
@@ -121,18 +118,6 @@ export {
   morphWidth,
   morphCheckPath,
   morphReduced,
-  // CASCADE - List stagger
-  CASCADE,
-  cascadeContainer,
-  cascadeContainerFast,
-  cascadeContainerSlow,
-  cascadeItem,
-  cascadeItemFade,
-  cascadeItemScale,
-  cascadeItemSlide,
-  cascadeMessage,
-  cascadeExit,
-  cascadeReduced,
   // OVERLAY - Modals, dialogs
   OVERLAY,
   overlayBackdrop,

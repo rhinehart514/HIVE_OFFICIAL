@@ -222,10 +222,7 @@ export function MessageFeed({
                           onDismiss={handleDismissUnread}
                         />
                       )}
-                      <motion.div
-                        initial={spaceMotionVariants.messageEnter.initial}
-                        animate={spaceMotionVariants.messageEnter.animate}
-                        transition={spaceMotionVariants.messageEnter.transition}
+                      <div
                         className={cn(
                           msgIndex > 0 && !showDividerBefore && 'mt-1.5' // 6px within same author (not after divider)
                         )}
@@ -254,7 +251,7 @@ export function MessageFeed({
                           onComponentVote={onComponentVote}
                           onComponentRsvp={onComponentRsvp}
                         />
-                      </motion.div>
+                      </div>
                     </React.Fragment>
                   );
                 })}
@@ -288,7 +285,6 @@ export function MessageFeed({
               'text-xs font-medium text-white/70',
               'hover:bg-white/[0.14] hover:text-white/90',
               'transition-colors duration-150',
-              'shadow-lg shadow-black/20',
               'mx-auto w-fit'
             )}
           >

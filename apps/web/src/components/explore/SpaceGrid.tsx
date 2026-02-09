@@ -15,7 +15,7 @@ import { Users, Plus, Search } from 'lucide-react';
 import { SpaceCard, type SpaceCardData } from './SpaceCard';
 import { GhostSpaceCard, type GhostSpaceData } from './GhostSpaceCard';
 import { Button, GlassSurface } from '@hive/ui/design-system/primitives';
-import { MOTION, revealVariants, staggerContainerVariants } from '@hive/tokens';
+import { MOTION } from '@hive/tokens';
 
 export interface SpaceGridProps {
   spaces: SpaceCardData[];
@@ -140,19 +140,16 @@ export function SpaceGrid({
       {spaces.length > 0 && (
         <motion.div
           className="space-y-4"
-          variants={staggerContainerVariants}
           initial="initial"
           animate="animate"
         >
           <motion.h3
             className="text-label text-white/40 uppercase tracking-wider"
-            variants={revealVariants}
           >
             Active Spaces · {spaces.length}
           </motion.h3>
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-            variants={staggerContainerVariants}
           >
             {spaces.map((space) => (
               <SpaceCard key={space.id} space={space} />
@@ -165,19 +162,16 @@ export function SpaceGrid({
       {ghostSpaces.length > 0 && (
         <motion.div
           className="space-y-4"
-          variants={staggerContainerVariants}
           initial="initial"
           animate="animate"
         >
           <motion.h3
             className="text-label text-white/40 uppercase tracking-wider"
-            variants={revealVariants}
           >
             Waiting for Leaders · {ghostSpaces.length}
           </motion.h3>
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-            variants={staggerContainerVariants}
           >
             {ghostSpaces.map((space) => (
               <GhostSpaceCard key={space.id} space={space} />

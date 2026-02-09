@@ -14,13 +14,52 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { CheckIcon, BoltIcon, UsersIcon, StarIcon, TrophyIcon } from '@heroicons/react/24/outline';
 
 import { cn } from '../../lib/utils';
-import {
-  spaceJoinCelebrationVariants,
-  goldGlowPulseVariants,
-  confettiParticleVariants,
-  successCheckVariants,
-  withReducedMotion,
-} from '../../lib/motion-variants-spaces';
+
+const spaceJoinCelebrationVariants = {
+  initial: { opacity: 0, scale: 0.98 },
+  animate: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: { opacity: 0, transition: { duration: 0.15 } },
+};
+
+const goldGlowPulseVariants = {
+  animate: {
+    opacity: [0.05, 0.14, 0.05],
+    transition: { duration: 1.2, repeat: Infinity, ease: 'easeInOut' },
+  },
+};
+
+const confettiParticleVariants = {
+  initial: { opacity: 0, x: 0, y: 0 },
+  animate: (index: number) => {
+    const angle = (index / 30) * Math.PI * 2;
+    const distance = 60 + (index % 10) * 4;
+    return {
+      opacity: [0, 1, 0],
+      x: Math.cos(angle) * distance,
+      y: Math.sin(angle) * distance,
+      transition: { duration: 0.7, ease: 'easeOut' },
+    };
+  },
+};
+
+const successCheckVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.2 } },
+};
+
+function withReducedMotion<T extends Record<string, unknown>>(variants: T, reduced: boolean): T {
+  if (!reduced) return variants;
+  return {
+    ...variants,
+    initial: { opacity: 1 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+  } as T;
+}
 
 // ============================================
 // GOLD CONFETTI BURST

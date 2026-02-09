@@ -27,9 +27,9 @@ export const MONOCHROME = {
   /** Gold background - very subtle, earned state only */
   goldBg: 'bg-gold-500/[0.04]',
   /** Gold box-shadow for glows */
-  goldGlow: '0 0 20px rgba(255, 215, 0, 0.5)',
+  goldGlow: 'none',
   /** Gold hover glow - final CTA buttons only */
-  goldHoverGlow: '0 0 30px rgba(255, 215, 0, 0.15)',
+  goldHoverGlow: 'none',
 
   // === GRAYSCALE SURFACES ===
   /** Card background - barely-there glass */
@@ -145,26 +145,26 @@ export const warmthSpectrum = {
   /** Empty/quiet - pure cool neutral */
   empty: {
     bg: '#0A0A0A',
-    border: 'rgba(255, 255, 255, 0.04)',
+    border: 'rgba(255, 255, 255, 0.08)',
     glow: 'none',
   },
-  /** Quiet (1-5 members) - very subtle warmth */
+  /** Quiet (1-5 members) - collapsed to same neutral surface */
   quiet: {
-    bg: '#0B0A09', // Barely perceptible warm shift
-    border: 'rgba(255, 255, 255, 0.06)',
+    bg: '#0A0A0A',
+    border: 'rgba(255, 255, 255, 0.08)',
     glow: 'none',
   },
-  /** Active (5-20 members) - subtle amber presence */
+  /** Active (5-20 members) - collapsed to same neutral surface */
   active: {
-    bg: '#0C0B09',
-    border: 'rgba(255, 215, 0, 0.08)',
-    glow: '0 0 40px rgba(255, 215, 0, 0.03)',
+    bg: '#0A0A0A',
+    border: 'rgba(255, 255, 255, 0.08)',
+    glow: 'none',
   },
-  /** Live (20+ members) - gold presence signals */
+  /** Live (20+ members) - collapsed to same neutral surface */
   live: {
-    bg: '#0D0B08',
-    border: 'rgba(255, 215, 0, 0.15)',
-    glow: '0 0 60px rgba(255, 215, 0, 0.06)',
+    bg: '#0A0A0A',
+    border: 'rgba(255, 255, 255, 0.08)',
+    glow: 'none',
   },
 } as const;
 

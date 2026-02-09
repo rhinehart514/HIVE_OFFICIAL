@@ -12,7 +12,7 @@
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { GOLD, EASE_PREMIUM } from './entry-motion';
+import { GOLD, EASE_PREMIUM } from './constants';
 
 export interface ConfettiBurstProps {
   /** Whether to trigger the animation */

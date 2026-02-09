@@ -44,7 +44,7 @@ export function ToolCard({
 
   return (
     <motion.div
-      whileHover={{ y: -2 }}
+      whileHover={{ opacity: 0.96 }}
       transition={{ duration: 0.15 }}
       className={cn(
         'rounded-xl',

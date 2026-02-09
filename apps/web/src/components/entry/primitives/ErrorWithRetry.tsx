@@ -11,7 +11,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { RefreshCw, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { errorInlineVariants } from '../motion/section-motion';
+import { errorInlineVariants } from '../motion/variants';
 
 interface ErrorWithRetryProps {
   error: string | null | undefined;

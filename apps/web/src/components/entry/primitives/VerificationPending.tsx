@@ -8,7 +8,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { GOLD, EASE_PREMIUM } from '../motion/entry-motion';
+import { GOLD, EASE_PREMIUM } from '../motion/constants';
 
 interface VerificationPendingProps {
   /** Primary message */

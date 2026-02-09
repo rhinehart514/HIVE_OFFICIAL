@@ -18,11 +18,13 @@ import {
   PlayIcon,
   ArrowTopRightOnSquareIcon,
   WrenchScrewdriverIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { MapPinIcon } from '@heroicons/react/20/solid';
 import { cn } from '@/lib/utils';
 import { Text } from '@hive/ui/design-system/primitives';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
+import { useUnpinTool } from '@/hooks/mutations/use-unpin-tool';
 
 // ============================================================
 // Types
@@ -31,10 +33,14 @@ import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 export interface SidebarToolCardProps {
   /** The placed tool data */
   tool: PlacedToolDTO;
+  /** Space ID (required for unpin action) */
+  spaceId?: string;
   /** Whether this tool is currently active/selected */
   isActive?: boolean;
   /** Whether drag handle should be shown (leaders only) */
   isDraggable?: boolean;
+  /** Whether user is a leader (enables unpin button) */
+  isLeader?: boolean;
   /** Handler when tool is clicked (default action) */
   onClick?: () => void;
   /** Handler for "Run" action (opens tool in modal) */
@@ -111,11 +117,15 @@ function ToolIcon({
 function HoverActions({
   onRun,
   onViewFull,
+  onUnpin,
   showViewFull,
+  showUnpin,
 }: {
   onRun?: () => void;
   onViewFull?: () => void;
+  onUnpin?: () => void;
   showViewFull: boolean;
+  showUnpin: boolean;
 }) {
   return (
     <motion.div
@@ -160,6 +170,24 @@ function HoverActions({
           <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
         </button>
       )}
+
+      {/* Unpin Button (leaders only, for pinned tools) */}
+      {showUnpin && onUnpin && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onUnpin();
+          }}
+          className={cn(
+            'p-1 rounded transition-colors',
+            'hover:bg-red-500/20',
+            'text-white/40 hover:text-red-400'
+          )}
+          title="Unpin from sidebar"
+        >
+          <XMarkIcon className="w-3.5 h-3.5" />
+        </button>
+      )}
     </motion.div>
   );
 }
@@ -170,19 +198,31 @@ function HoverActions({
 
 export function SidebarToolCard({
   tool,
+  spaceId,
   isActive = false,
   isDraggable: _isDraggable = false,
+  isLeader = false,
   onClick,
   onRun,
   onViewFull,
 }: SidebarToolCardProps) {
   const [isHovered, setIsHovered] = React.useState(false);
+  const unpinMutation = useUnpinTool();
 
   // Display name (use override if set)
   const displayName = tool.titleOverride || tool.name;
 
   // Is this a leader-pinned tool?
   const isPinned = tool.source === 'leader';
+
+  // Handle unpin
+  const handleUnpin = React.useCallback(() => {
+    if (!spaceId) return;
+    unpinMutation.mutate({
+      spaceId,
+      placementId: tool.placementId,
+    });
+  }, [spaceId, tool.placementId, unpinMutation]);
 
   return (
     <motion.button
@@ -237,7 +277,9 @@ export function SidebarToolCard({
             key="actions"
             onRun={onRun}
             onViewFull={onViewFull}
+            onUnpin={handleUnpin}
             showViewFull={!!onViewFull}
+            showUnpin={isLeader && isPinned}
           />
         ) : (
           tool.activityCount !== undefined &&

@@ -102,7 +102,7 @@ function TemplateCard({
       <motion.button
         type="button"
         onClick={isSelected ? onUse : onSelect}
-        whileHover={{ y: -4, opacity: 0.9 }}
+        whileHover={{ opacity: 0.9 }}
         whileTap={{ opacity: 0.8 }}
         transition={springSnappy}
         className={cn(

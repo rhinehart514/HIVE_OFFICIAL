@@ -285,7 +285,7 @@ export function EventCard({ event, onClick, index = 0 }: EventCardProps) {
         delay: index * 0.05,
         ease: MOTION.ease.premium,
       }}
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ opacity: 0.97 }}
       whileTap={{ scale: 0.99 }}
     >
       <Card

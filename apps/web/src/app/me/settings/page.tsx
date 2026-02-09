@@ -17,7 +17,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import { logger } from '@/lib/structured-logger';
 import { toast } from '@hive/ui';
-import { fadeInUpVariants, staggerContainerVariants, staggerItemVariants } from '@hive/ui/lib/motion-variants';
 import { Card, Button, Text } from '@hive/ui/design-system/primitives';
 import { ProfileContextProvider, useProfileContext } from '@/components/profile/ProfileContextProvider';
 import { ProfileSection } from '@/app/settings/components/profile-section';
@@ -31,6 +30,43 @@ import { useSettingsState } from '@/app/settings/hooks/use-settings-state';
 import { useProfileForm } from '@/app/settings/hooks/use-profile-form';
 import { useDataExport } from '@/app/settings/hooks/use-data-export';
 import type { UserSpace } from '@/app/settings/types';
+
+const fadeInUpVariants = {
+  initial: { opacity: 0, y: 10 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+  },
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const listVariants = {
+  initial: { opacity: 1 },
+  animate: { opacity: 1, transition: { staggerChildren: 0.04 } },
+  hidden: { opacity: 1 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
+};
+
+const staggerItemVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+  },
+  hidden: { opacity: 0, y: 8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 type SettingsSection = 'profile' | 'notifications' | 'privacy' | 'account' | null;
 
@@ -361,7 +397,7 @@ function SettingsContent() {
 
         <CompletionCard />
 
-        <motion.section className="mb-16" variants={staggerContainerVariants} initial="hidden" animate="visible">
+        <motion.section className="mb-16" initial="hidden" animate="visible">
           <motion.div
             className="grid gap-3 md:grid-cols-2 p-4 -mx-4 rounded-2xl"
             style={{ backgroundColor: 'rgba(255,255,255,0.015)' }}

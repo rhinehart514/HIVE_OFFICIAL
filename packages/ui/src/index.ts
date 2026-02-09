@@ -182,7 +182,6 @@ export {
   REVEAL,
   SURFACE,
   MORPH,
-  CASCADE,
   OVERLAY,
   SNAP,
   CELEBRATE,
@@ -198,10 +197,6 @@ export {
   surfacePanel,
   surfaceDrawer,
   surfaceFloat,
-  // Cascade variants
-  cascadeContainer,
-  cascadeItem,
-  cascadeMessage,
   // Overlay variants
   overlayBackdrop,
   overlayModal,
@@ -253,76 +248,6 @@ export type {
   ArrivalTransitionProps,
   ArrivalZoneProps,
 } from "./design-system/primitives/motion";
-
-// Premium Subtle Motion Variants (Dec 2025 - Vercel/Linear style)
-export {
-  premiumContainerVariants,
-  premiumItemVariants,
-  premiumStatVariants,
-  premiumCardHover,
-  fadeInUpVariants,
-  scaleInVariants,
-  staggerContainerVariants,
-  staggerItemVariants,
-  // 2026 State Transitions
-  selectionVariants,
-  arrowRotationVariants,
-  collapseVariants,
-  checkDrawVariants,
-  successSettleVariants,
-  errorShakeVariants,
-  loadingPulseVariants,
-  skeletonShimmerVariants,
-  // 2026 Elevation & Celebration
-  elevationClasses,
-  cardElevationVariants,
-  floatingElevationVariants,
-  modalElevationVariants,
-  microCelebrationVariants,
-  standardCelebrationVariants,
-  majorCelebrationVariants,
-  celebrationGlowVariants,
-} from "./lib/motion-variants";
-
-// Spaces Motion Variants (Nov 2025 - Motion-Rich Premium)
-export {
-  // Tier 1: High motion
-  spaceHeroCardVariants,
-  spaceJoinCelebrationVariants,
-  goldGlowPulseVariants,
-  kenBurnsVariants,
-  // Tier 2: Medium motion
-  spaceDiscoveryCardVariants,
-  categoryPillVariants,
-  momentumPulseVariants,
-  filterBarVariants,
-  // Tier 3: Subtle motion
-  railWidgetVariants,
-  nowCardVariants,
-  spaceHeaderVariants,
-  sectionRevealVariants,
-  collapsibleVariants,
-  chevronRotateVariants,
-  // Tier 4: Minimal
-  staticVariants,
-  // Scroll-triggered
-  scrollRevealVariants,
-  scrollFadeVariants,
-  parallaxVariants,
-  // Stagger containers
-  sectionStaggerVariants,
-  gridStaggerVariants,
-  heroStaggerVariants,
-  listStaggerVariants,
-  // Stagger items
-  staggerItemVariants as spaceStaggerItemVariants,
-  staggerFadeItemVariants,
-  // Celebrations
-  confettiParticleVariants,
-  successCheckVariants,
-  // Utility
-  withReducedMotion,
-} from "./lib/motion-variants-spaces";
 
 // Glass Morphism System (Nov 2025 - Subtle 8px blur)
 export {
@@ -1368,21 +1293,6 @@ export type { SpacePanelProps, OnlineMember as SpacePanelOnlineMember, UpcomingE
 // ActivityBar - 10-segment activity visualization
 export { ActivityBar } from "./design-system/primitives/ActivityBar";
 export type { ActivityBarProps } from "./design-system/primitives/ActivityBar";
-
-// === Premium Space Components (Dec 2025 - ChatGPT/Apple Fusion) ===
-// Design System
-export {
-  premium,
-  premiumTypography,
-  premiumColors,
-  premiumSpacing,
-  premiumGlass,
-  premiumMotion,
-  premiumPresets,
-  glassClasses,
-  hoverClasses,
-  focusClasses,
-} from "./lib/premium-design";
 
 // Premium UI Components - REMOVED (Use design-system components)
 // NOTE: PremiumHeader - Use SpaceHeader from design-system

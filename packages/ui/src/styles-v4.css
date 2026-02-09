@@ -49,7 +49,7 @@
 
   /* === FONT FAMILIES === */
   --font-family-sans: 'Geist Sans', system-ui, sans-serif;
-  --font-family-display: 'Geist Sans', system-ui, sans-serif;
+  --font-family-display: 'Clash Display', system-ui, sans-serif;
   --font-family-mono: 'Geist Mono', monospace;
 
   /* === SPACING SYSTEM === */
@@ -59,8 +59,8 @@
   /* === ANIMATIONS === */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
-  --animate-hive-glow: hive-glow 2s ease-in-out infinite;
-  --animate-hive-pulse: hive-pulse 2s ease-in-out infinite;
+  --animate-hive-glow: none;
+  --animate-hive-pulse: none;
 
   /* === BOX SHADOWS === */
   --shadow-hive-level1: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -80,44 +80,29 @@
   to { height: 0; }
 }
 
-/* Removed hive-glow keyframe - reserved gold for CTAs only */
-
-@keyframes hive-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.02); opacity: 0.9; }
-}
-
 /* === LAYER UTILITIES === */
 @layer utilities {
   .hive-glass {
-    backdrop-filter: blur(12px) saturate(150%);
-    -webkit-backdrop-filter: blur(12px) saturate(150%);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--bg-surface, #0A0A0A);
+    border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
   }
 
   .hive-glass-strong {
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--bg-elevated, #141414);
+    border: 1px solid var(--border-emphasis, rgba(255, 255, 255, 0.12));
   }
 
   .hive-interactive {
-    transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
-    transform-origin: center;
-    backface-visibility: hidden;
-    transform: translateZ(0);
+    transition: background-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .hive-interactive:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    background: var(--interactive-hover, rgba(255, 255, 255, 0.10));
   }
 
   .hive-interactive:active {
-    transform: translateY(0) scale(0.98);
-    transition-duration: 0.15s;
+    background: var(--interactive-active, rgba(255, 255, 255, 0.14));
   }
 }
 

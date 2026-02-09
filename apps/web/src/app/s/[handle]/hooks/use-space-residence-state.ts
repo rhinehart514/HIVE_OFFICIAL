@@ -84,7 +84,6 @@ export interface ChatAttachment {
 
 export interface ChatMessage {
   id: string;
-  boardId: string;
   authorId: string;
   authorName: string;
   authorHandle: string;
@@ -122,12 +121,6 @@ interface UseSpaceResidenceStateReturn {
   space: SpaceResidenceData | null;
   isLoading: boolean;
   error: string | null;
-
-  // Board tabs
-  boards: Board[];
-  activeBoard: string;
-  setActiveBoard: (boardId: string) => void;
-  canAddBoard: boolean;
 
   // Chat (main content)
   messages: ChatMessage[];
@@ -181,10 +174,7 @@ interface UseSpaceResidenceStateReturn {
 // DEFAULT EMPTY STATES (no mock data)
 // ============================================
 
-// Default board for new spaces
-const DEFAULT_BOARDS: Board[] = [
-  { id: 'general', name: 'general', isDefault: true, unreadCount: 0 },
-];
+// Removed: Default boards (multi-board switching deprecated)
 
 // ============================================
 // HOOK
@@ -200,16 +190,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
   usePresence();
   const { onlineUsers: campusOnlineUsers } = useOnlineUsers();
 
-  // URL-driven board selection
-  const initialBoard = searchParams.get('board') || 'general';
-
   // State
   const [space, setSpace] = React.useState<SpaceResidenceData | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-
-  const [boards, setBoards] = React.useState<Board[]>(DEFAULT_BOARDS);
-  const [activeBoard, setActiveBoardInternal] = React.useState(initialBoard);
 
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = React.useState(false);
@@ -314,21 +298,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
           socialLinks: spaceData.socialLinks,
         });
 
-        // Fetch boards for this space
-        const boardsResponse = await fetch(`/api/spaces/${spaceId}/boards`);
-        if (boardsResponse.ok) {
-          const boardsData = await boardsResponse.json();
-          if (boardsData.boards && boardsData.boards.length > 0) {
-            // Set boards with unread counts from API
-            // The API returns unread counts directly; if not available, use 0
-            const boardsWithUnread = boardsData.boards.map((board: Board) => ({
-              ...board,
-              unreadCount: board.unreadCount ?? 0,
-            }));
-
-            setBoards(boardsWithUnread);
-          }
-        }
+        // Removed: Board fetching (multi-board switching deprecated)
 
         // Fetch upcoming events for this space (increased limit from 5 to 20 for better coverage)
         const eventsResponse = await fetch(`/api/events?spaceId=${spaceId}&upcoming=true&limit=20`);
@@ -382,21 +352,21 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     }
   }, [handle]);
 
-  // Load messages when board changes (initial load with limit for fast first paint)
+  // Load messages on space load (initial load with limit for fast first paint)
   React.useEffect(() => {
     async function loadMessages() {
       if (!space?.id) return;
 
       setIsLoadingMessages(true);
       setHasMoreMessages(false);
-      // Reset "Since you left" state on board change
+      // Reset "Since you left" state on load
       setLastReadAt(null);
       setUnreadCount(0);
 
       try {
         // Initial load: fetch first N messages for fast render
         const response = await fetch(
-          `/api/spaces/${space.id}/chat?boardId=${activeBoard}&limit=${INITIAL_MESSAGE_LIMIT}`
+          `/api/spaces/${space.id}/chat?limit=${INITIAL_MESSAGE_LIMIT}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -421,7 +391,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  boardId: activeBoard,
+                  // Removed boardId (single feed per space)
                   lastReadTimestamp,
                 }),
               }).catch(() => {
@@ -432,13 +402,6 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
               setLastReadAt(null);
               setUnreadCount(0);
             }, 3000); // 3 second delay to let user see the divider
-
-            // Optimistically clear unread count for this board
-            setBoards((prev) =>
-              prev.map((board) =>
-                board.id === activeBoard ? { ...board, unreadCount: 0 } : board
-              )
-            );
           }
         } else {
           // No messages yet - that's okay
@@ -454,7 +417,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     }
 
     loadMessages();
-  }, [activeBoard, space?.id]);
+  }, [space?.id]);
 
   // Load more messages (cursor-based pagination - loads older messages)
   const loadMoreMessages = React.useCallback(async () => {
@@ -468,7 +431,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       const before = oldestMessage?.timestamp;
 
       const response = await fetch(
-        `/api/spaces/${space.id}/chat?boardId=${activeBoard}&limit=${LOAD_MORE_MESSAGE_LIMIT}&before=${before}`
+        `/api/spaces/${space.id}/chat?limit=${LOAD_MORE_MESSAGE_LIMIT}&before=${before}`
       );
 
       if (response.ok) {
@@ -485,7 +448,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     } finally {
       setIsLoadingMoreMessages(false);
     }
-  }, [space?.id, activeBoard, hasMoreMessages, isLoadingMoreMessages, messages, toast]);
+  }, [space?.id, hasMoreMessages, isLoadingMoreMessages, messages, toast]);
 
   // Load all members when space loads
   React.useEffect(() => {
@@ -532,21 +495,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     );
   }, [allMembers, campusOnlineUsers]);
 
-  // Update URL when board changes
-  const setActiveBoard = React.useCallback(
-    (boardId: string) => {
-      setActiveBoardInternal(boardId);
-      const params = new URLSearchParams(searchParams.toString());
-      if (boardId === 'general') {
-        params.delete('board');
-      } else {
-        params.set('board', boardId);
-      }
-      const newUrl = params.toString() ? `/s/${handle}?${params.toString()}` : `/s/${handle}`;
-      window.history.replaceState(null, '', newUrl);
-    },
-    [handle, searchParams]
-  );
+  // Removed: setActiveBoard (multi-board switching deprecated)
 
   // Actions
   const sendMessage = React.useCallback(async (content: string, attachments?: ChatAttachment[]) => {
@@ -559,7 +508,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     const tempId = `temp-${Date.now()}`;
     const optimisticMessage: ChatMessage = {
       id: tempId,
-      boardId: activeBoard,
+      // Removed boardId (single feed per space)
       authorId: authUser?.id || 'current-user',
       authorName: authUser?.fullName || authUser?.displayName || 'You',
       authorHandle: authUser?.handle || 'you',
@@ -578,7 +527,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: content,
-            boardId: activeBoard,
+            // Removed boardId (single feed per space)
             createIfDetected: true,
             messageId: tempId,
           }),
@@ -594,7 +543,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                boardId: activeBoard,
+                // Removed boardId (single feed per space)
                 content,
                 componentId: intentData.component.id,
                 attachments,
@@ -611,7 +560,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
 
             // Refetch messages to get the full component data
             const messagesResponse = await fetch(
-              `/api/spaces/${space.id}/chat?boardId=${activeBoard}&limit=${INITIAL_MESSAGE_LIMIT}`
+              `/api/spaces/${space.id}/chat?limit=${INITIAL_MESSAGE_LIMIT}`
             );
             if (messagesResponse.ok) {
               const messagesData = await messagesResponse.json();
@@ -641,7 +590,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          boardId: activeBoard,
+          // Removed boardId (single feed per space)
           content,
           attachments,
         }),
@@ -668,7 +617,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       toast.error("Message failed to send", "Please try again");
       throw error;
     }
-  }, [activeBoard, space?.id, toast, authUser]);
+  }, [space?.id, toast, authUser]);
 
   const joinSpace = React.useCallback(async () => {
     if (!space?.id) return;
@@ -833,18 +782,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         } : null);
       }
 
-      // Refetch boards
-      const boardsResponse = await fetch(`/api/spaces/${space.id}/boards`);
-      if (boardsResponse.ok) {
-        const boardsData = await boardsResponse.json();
-        if (boardsData.boards && boardsData.boards.length > 0) {
-          const boardsWithUnread = boardsData.boards.map((board: Board) => ({
-            ...board,
-            unreadCount: board.unreadCount ?? 0,
-          }));
-          setBoards(boardsWithUnread);
-        }
-      }
+      // Removed: Board refetch (multi-board switching deprecated)
     } catch (error) {
       logger.error('Failed to refresh space', error instanceof Error ? error : new Error(String(error)));
     }
@@ -1024,12 +962,6 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     space,
     isLoading,
     error,
-
-    // Board tabs
-    boards,
-    activeBoard,
-    setActiveBoard,
-    canAddBoard: space?.isLeader ?? false,
 
     // Chat
     messages,

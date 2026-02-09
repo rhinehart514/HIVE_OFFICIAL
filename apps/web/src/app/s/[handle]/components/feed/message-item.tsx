@@ -237,10 +237,10 @@ export function MessageItem({
               </div>
             </div>
           ) : (
-            <p className={cn(spaceTypographyClasses.messageContent, 'text-white/80 break-words')}>
+            <p className={cn(spaceTypographyClasses.messageContent, 'text-white break-words')}>
               {message.content}
               {message.isEdited && (
-                <span className="ml-1 text-xs text-white/30" title={message.editedAt ? `Edited ${new Date(message.editedAt).toLocaleString()}` : 'Edited'}>
+                <span className="ml-1 text-xs text-white/50" title={message.editedAt ? `Edited ${new Date(message.editedAt).toLocaleString()}` : 'Edited'}>
                   (edited)
                 </span>
               )}
@@ -326,20 +326,15 @@ export function MessageItem({
       </div>
 
       {/* Hover actions */}
-      <AnimatePresence>
-        {isHovered && (
-          <motion.div
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
-            transition={{ duration: 0.1 }}
-            className={cn(
-              'absolute top-0 right-2',
-              'flex items-center gap-0.5',
-              'bg-[var(--bg-surface)] border border-white/[0.08] rounded-lg shadow-lg',
-              'p-0.5'
-            )}
-          >
+      {isHovered && (
+        <div
+          className={cn(
+            'absolute top-0 right-2',
+            'flex items-center gap-0.5',
+            'bg-[var(--bg-surface)] border border-white/[0.06] rounded-lg',
+            'p-0.5'
+          )}
+        >
             {/* Quick emoji picker */}
             {showEmojiPicker ? (
               <div className="flex items-center gap-0.5 px-1">
@@ -422,7 +417,7 @@ export function MessageItem({
                         <div
                           className={cn(
                             'absolute right-0 top-full mt-1 z-20',
-                            'bg-[var(--bg-elevated)] border border-white/[0.08] rounded-xl shadow-lg',
+                            'bg-[var(--bg-elevated)] border border-white/[0.08] rounded-xl',
                             'py-1 min-w-[120px]'
                           )}
                         >
@@ -448,9 +443,8 @@ export function MessageItem({
                 )}
               </>
             )}
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }

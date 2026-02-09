@@ -10,8 +10,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../design-system/primiti
 import { Badge } from "../../design-system/primitives/Badge";
 import { Button } from "../../design-system/primitives/Button";
 import { Surface } from "../../layout";
-import { duration, easing } from "../../lib/motion-variants";
 import { cn } from "../../lib/utils";
+
+const duration = {
+  instant: 0.15,
+  quick: 0.2,
+  standard: 0.3,
+};
+
+const easing = {
+  smooth: [0.22, 1, 0.36, 1] as const,
+  snap: [0.22, 1, 0.36, 1] as const,
+};
 
 export interface SpaceCardHost {
   name: string;
@@ -63,17 +73,16 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
 
   // Card hover animation variants
   const cardVariants = {
-    initial: { y: 0, scale: 1 },
+    initial: { opacity: 1 },
     hover: {
-      y: -6,
-      scale: 1.02,
+      opacity: 0.98,
       transition: {
         duration: duration.quick,
         ease: easing.smooth,
       },
     },
     tap: {
-      scale: 0.99,
+      opacity: 0.92,
       transition: {
         duration: duration.instant,
         ease: easing.snap,
@@ -100,12 +109,12 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
           )}
         >
           {space.bannerImage ? (
-            <motion.img
+          <motion.img
               src={space.bannerImage}
               alt=""
               className="h-28 w-full object-cover opacity-90"
               animate={{
-                scale: isHovered ? 1.05 : 1,
+                opacity: isHovered ? 1 : 0.9,
               }}
               transition={{
                 duration: duration.standard,
@@ -154,7 +163,7 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
           <motion.p
             className="text-xs uppercase tracking-caps-wider text-[var(--hive-text-muted,#8d93a7)]"
             animate={{
-              scale: isHovered ? 1.02 : 1,
+              opacity: isHovered ? 1 : 0.92,
             }}
             transition={{
               duration: duration.quick,
@@ -221,8 +230,8 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
       {/* Action buttons with smooth transitions */}
       <div className="mt-6 flex items-center justify-between">
         <motion.div
-          whileHover={joinState === 'idle' ? { scale: 1.02 } : undefined}
-          whileTap={joinState === 'idle' ? { scale: 0.98 } : undefined}
+          whileHover={joinState === 'idle' ? { opacity: 0.96 } : undefined}
+          whileTap={joinState === 'idle' ? { opacity: 0.9 } : undefined}
           transition={springPresets.snappy}
         >
           <Button
@@ -285,8 +294,8 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
           </Button>
         </motion.div>
         <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ opacity: 0.96 }}
+          whileTap={{ opacity: 0.9 }}
           transition={springPresets.snappy}
         >
           <Button variant="ghost" className="text-xs uppercase tracking-caps-wide">

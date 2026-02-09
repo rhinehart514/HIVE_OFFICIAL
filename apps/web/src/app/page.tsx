@@ -2,10 +2,7 @@ import type { Metadata } from 'next';
 import {
   LandingHeader,
   HeroSection,
-  ProblemSection,
   ProductSection,
-  ComparisonSection,
-  SocialProofSection,
   CTASection,
   LandingFooter,
 } from '@/components/landing';

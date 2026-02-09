@@ -131,10 +131,10 @@ export const SPACE_TYPOGRAPHY = {
 export const spaceTypographyClasses = {
   spaceName: 'text-base font-semibold tracking-tight',
   boardName: 'text-sm font-medium',
-  sectionLabel: 'text-[11px] font-semibold uppercase tracking-wider text-white/40',
+  sectionLabel: 'text-[11px] font-semibold uppercase tracking-wider text-white/50 font-mono',
   messageAuthor: 'text-sm font-semibold',
   messageContent: 'text-sm font-normal leading-relaxed',
-  timestamp: 'text-xs text-white/40',
+  timestamp: 'text-xs text-white/50 font-mono',
 } as const;
 
 // ============================================

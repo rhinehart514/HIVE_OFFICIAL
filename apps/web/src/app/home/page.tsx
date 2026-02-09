@@ -14,7 +14,7 @@ export default function HomePage() {
   }, [hasCampus, isLoading, router]);
 
   return (
-    <div className="h-screen bg-foundation-gray-1000 flex items-center justify-center">
+    <div className="h-screen bg-black flex items-center justify-center">
       <div className="animate-pulse text-white/30 text-body">Redirecting...</div>
     </div>
   );

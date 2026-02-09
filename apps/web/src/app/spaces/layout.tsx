@@ -2,12 +2,6 @@
 
 import { LayoutProvider } from '@hive/ui';
 
-// Note: metadata can't be exported from client components
-// export const metadata: Metadata = {
-//   title: 'Spaces',
-//   description: 'Your campus headquarters',
-// };
-
 /**
  * Spaces Layout
  *

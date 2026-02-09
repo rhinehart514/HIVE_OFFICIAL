@@ -16,11 +16,27 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, MOTION, Button } from '@hive/ui/design-system/primitives';
-import { fadeInUpVariants, staggerContainerVariants } from '@hive/ui/lib/motion-variants';
 import { useSpacesHQ } from '../hooks/useSpacesHQ';
 import { IdentityRow } from './IdentityRow';
 import { OrganizationsPanel } from './OrganizationsPanel';
 import { SpaceCreationModal } from '@/components/spaces/SpaceCreationModal';
+
+const fadeInUpVariants = {
+  initial: { opacity: 0, y: 10 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const listVariants = {
+  initial: { opacity: 1 },
+  animate: {
+    opacity: 1,
+    transition: { staggerChildren: 0.04 },
+  },
+};
 
 // ============================================================
 // Empty State — Manifesto-style with identity quadrants
@@ -433,7 +449,6 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
       {/* Main content */}
       <motion.main
         className="flex-1 px-6 pb-8 flex flex-col gap-8"
-        variants={staggerContainerVariants}
         initial="initial"
         animate="animate"
       >

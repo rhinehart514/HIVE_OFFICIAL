@@ -478,7 +478,7 @@ export const Variable4_HoverBehavior: Story = {
           {/* C: Lift + Shadow (motion) */}
           <div className="flex flex-col gap-2">
             <Text size="xs" tone="muted" className="uppercase tracking-wider">C: Lift + Shadow</Text>
-            <motion.div whileHover={{ y: -2, boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }} transition={{ duration: 0.2 }}>
+            <motion.div whileHover={{ boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }} transition={{ duration: 0.2 }}>
               <Card size="compact" noPadding className="w-[260px] px-4 py-3 flex items-center gap-3 cursor-pointer">
                 <BaseCardContent />
               </Card>
@@ -488,7 +488,7 @@ export const Variable4_HoverBehavior: Story = {
           {/* D: Scale Subtle */}
           <div className="flex flex-col gap-2">
             <Text size="xs" tone="muted" className="uppercase tracking-wider">D: Scale Subtle</Text>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+            <motion.div whileHover={{ opacity: 0.96 }} transition={{ duration: 0.2 }}>
               <Card size="compact" noPadding className="w-[260px] px-4 py-3 flex items-center gap-3 cursor-pointer">
                 <BaseCardContent />
               </Card>

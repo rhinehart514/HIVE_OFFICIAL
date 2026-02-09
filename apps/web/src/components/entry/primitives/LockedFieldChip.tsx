@@ -12,8 +12,8 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Pencil } from 'lucide-react';
-import { chipCheckVariants, chipContentVariants } from '../motion/section-motion';
-import { GOLD } from '../motion/entry-motion';
+import { chipCheckVariants, chipContentVariants } from '../motion/variants';
+import { GOLD } from '../motion/constants';
 
 interface LockedFieldChipProps {
   /** The locked value to display */

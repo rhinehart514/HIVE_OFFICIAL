@@ -192,7 +192,7 @@ const TokensOverview = () => (
       <SpacingList />
     </Section>
 
-    <Section title="Typography Scale" description="Font size tokens for headings, body copy, and display text using Geist Sans / Space Grotesk stack.">
+    <Section title="Typography Scale" description="Font size tokens for headings, body copy, and display text using Clash Display / Geist stack.">
       <TypographyScale />
     </Section>
 

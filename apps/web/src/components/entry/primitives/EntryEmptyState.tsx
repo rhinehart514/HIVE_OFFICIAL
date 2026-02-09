@@ -11,7 +11,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { Search, Sparkles, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
+import { DURATION, EASE_PREMIUM } from '../motion/constants';
 
 export type EntryEmptyVariant = 'interests' | 'majors' | 'schools';
 

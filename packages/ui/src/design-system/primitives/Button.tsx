@@ -2,13 +2,13 @@
 
 /**
  * Button Primitive
- * REFINED: Jan 29, 2026 - Matches /about aesthetic
+ * REFINED: Feb 9, 2026 - Cold, minimal spec
  *
  * Design principles:
- * - No gold fills - gold only as accent text when needed
- * - Subtle borders over heavy shadows
- * - White hierarchy for emphasis
- * - Minimal, restrained motion
+ * - Pill radius for all button forms
+ * - Primary action is flat yellow (#FFD700), no gradient/glow
+ * - No scale transforms on interaction
+ * - Cold black focus offset
  */
 
 import * as React from 'react';
@@ -21,115 +21,63 @@ const buttonVariants = cva(
     'relative',
     'inline-flex items-center justify-center gap-2',
     'font-medium',
-    'rounded-xl',
-    'transition-all duration-200 ease-out',
+    'rounded-full',
+    'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
     'disabled:pointer-events-none disabled:opacity-40',
-    // Spring-like active state
-    'active:scale-[0.98] active:transition-transform',
   ].join(' '),
   {
     variants: {
       variant: {
-        /**
-         * Default: Subtle border, transparent background
-         * The standard button - minimal, border-defined
-         */
         default: [
-          'bg-white/[0.03]',
+          'bg-[#1A1A1A]',
           'text-white',
-          'border border-white/10',
-          'hover:bg-white/[0.06] hover:border-white/15',
-          'active:bg-white/[0.04]',
+          'border border-white/[0.10]',
+          'hover:bg-[#202020] hover:border-white/[0.16]',
+          'active:bg-[#171717]',
         ].join(' '),
-        /**
-         * Primary: Solid white - for primary actions
-         * Use for main CTAs
-         */
         primary: [
-          'bg-white',
-          'text-[#0A0A09]',
-          'border border-white/20',
-          'hover:bg-white/90',
-          'active:bg-white/80',
+          'bg-[#FFD700]',
+          'text-black',
+          'border border-[#FFD700]',
+          'hover:bg-[#F2CC00]',
+          'active:bg-[#E6BF00]',
         ].join(' '),
-        /**
-         * Secondary: Lighter ghost for secondary actions
-         */
         secondary: [
-          'bg-transparent',
-          'text-white/50',
-          'border border-white/[0.06]',
-          'hover:text-white/70 hover:bg-white/[0.03] hover:border-white/10',
-          'active:bg-white/[0.02]',
+          'bg-[#1A1A1A]',
+          'text-white',
+          'border border-white/[0.10]',
+          'hover:bg-[#202020] hover:border-white/[0.16]',
+          'active:bg-[#171717]',
         ].join(' '),
-        /**
-         * Ghost: Invisible until hovered
-         */
         ghost: [
           'bg-transparent',
           'text-white/50',
           'border border-transparent',
-          'hover:text-white hover:bg-white/[0.04]',
-          'active:bg-white/[0.02]',
+          'hover:text-white/80 hover:bg-white/[0.06]',
+          'active:bg-white/[0.08]',
         ].join(' '),
-        /**
-         * Destructive: Red for dangerous actions
-         */
         destructive: [
-          'bg-red-500/10',
-          'text-red-400',
-          'border border-red-500/20',
-          'hover:bg-red-500/15 hover:border-red-500/30',
-          'active:bg-red-500/10',
+          'bg-[#2A1212]',
+          'text-[#EF4444]',
+          'border border-[#EF4444]/30',
+          'hover:bg-[#331515] hover:border-[#EF4444]/40',
+          'active:bg-[#241010]',
         ].join(' '),
-        /**
-         * Link: Text-only style
-         */
         link: [
           'bg-transparent',
-          'text-white/50',
+          'text-white/70',
           'border-none',
           'underline underline-offset-4',
           'hover:text-white',
           'p-0 h-auto',
         ].join(' '),
         // Legacy aliases for backwards compatibility
-        solid: [
-          'bg-white',
-          'text-[#0A0A09]',
-          'border border-white/20',
-          'hover:bg-white/90',
-          'active:bg-white/80',
-        ].join(' '),
-        outline: [
-          'bg-white/[0.03]',
-          'text-white',
-          'border border-white/10',
-          'hover:bg-white/[0.06] hover:border-white/15',
-          'active:bg-white/[0.04]',
-        ].join(' '),
-        /**
-         * CTA: Gold gradient for primary call-to-action (1% rule)
-         * Use sparingly - only for the most important action on screen
-         */
-        cta: [
-          'bg-gradient-to-r from-[#FFD700] to-[#FFA500]',
-          'text-black font-semibold',
-          'border border-[#FFD700]/30',
-          'shadow-[0_0_20px_rgba(255,215,0,0.3)]',
-          'hover:shadow-[0_0_30px_rgba(255,215,0,0.4)]',
-          'hover:from-[#FFE44D] hover:to-[#FFB833]',
-          'active:from-[#E6C200] active:to-[#E69500]',
-        ].join(' '),
-        brand: [
-          'bg-white',
-          'text-[#0A0A09]',
-          'border border-white/20',
-          'hover:bg-white/90',
-          'active:bg-white/80',
-        ].join(' '),
+        solid: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
+        outline: 'bg-[#1A1A1A] text-white border border-white/[0.10] hover:bg-[#202020] hover:border-white/[0.16] active:bg-[#171717]',
+        cta: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
+        brand: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
       },
       size: {
         xs: 'h-8 px-3 text-xs',

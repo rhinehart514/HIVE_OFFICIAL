@@ -31,7 +31,6 @@ import {
   type ReportContentInput,
 } from '@hive/ui';
 import { MOTION } from '@hive/ui/design-system/primitives';
-import { staggerContainerVariants, staggerItemVariants as tokenStaggerItemVariants, fadeInUpVariants } from '@hive/ui/lib/motion-variants';
 import { cn } from '@/lib/utils';
 import { useProfileByHandle } from './hooks';
 import { useDM } from '@/contexts/dm-context';
@@ -45,11 +44,37 @@ const MAX_SPACES_VISIBLE = 6;
 const MAX_EVENTS_VISIBLE = 3;
 const MAX_TOOLS_VISIBLE = 3;
 
+const fadeInUpVariants = {
+  initial: { opacity: 0, y: 10 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const listVariants = {
+  initial: { opacity: 1 },
+  animate: {
+    opacity: 1,
+    transition: { staggerChildren: 0.04 },
+  },
+};
+
+const tokenStaggerItemVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
 // Animation variants mapped to hidden/visible keys for compatibility with parent orchestration
 const containerVariants = {
-  hidden: staggerContainerVariants.initial,
+  hidden: listVariants.initial,
   visible: {
-    ...staggerContainerVariants.animate,
+    ...listVariants.animate,
   },
 };
 
@@ -59,9 +84,9 @@ const zoneVariants = {
 };
 
 const staggerGridVariants = {
-  hidden: staggerContainerVariants.initial,
+  hidden: listVariants.initial,
   visible: {
-    ...staggerContainerVariants.animate,
+    ...listVariants.animate,
   },
 };
 
@@ -76,7 +101,7 @@ const staggerItemVariants = {
 
 function ProfileLoadingState() {
   return (
-    <div className="min-h-screen bg-foundation-gray-1000 flex items-center justify-center">
+    <div className="min-h-screen bg-black flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -96,7 +121,7 @@ function ProfileLoadingState() {
 
 function ProfileNotFoundState({ handle }: { handle: string }) {
   return (
-    <div className="min-h-screen bg-foundation-gray-1000 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-black flex items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -129,7 +154,7 @@ function ProfileNotFoundState({ handle }: { handle: string }) {
 
 function ProfilePrivateState({ handle }: { handle: string }) {
   return (
-    <div className="min-h-screen bg-foundation-gray-1000 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-black flex items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -162,7 +187,7 @@ function ProfilePrivateState({ handle }: { handle: string }) {
 
 function ProfileErrorState({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="min-h-screen bg-foundation-gray-1000 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-black flex items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

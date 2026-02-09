@@ -45,29 +45,29 @@
 
   /* Semantic - Background hierarchy */
   --hive-background-primary: #000000;
-  --hive-background-secondary: #171717;
-  --hive-background-tertiary: #262626;
+  --hive-background-secondary: #0A0A0A;
+  --hive-background-tertiary: #141414;
   --hive-background-interactive: #404040;
   --hive-background-overlay: rgba(0, 0, 0, 0.6);
   --hive-background-muted: #0A0A0A;
 
   /* Semantic - Text hierarchy */
   --hive-text-primary: #FFFFFF;
-  --hive-text-secondary: #D4D4D4;
-  --hive-text-tertiary: #A3A3A3;
-  --hive-text-muted: #737373;
+  --hive-text-secondary: rgba(255, 255, 255, 0.5);
+  --hive-text-tertiary: rgba(255, 255, 255, 0.35);
+  --hive-text-muted: rgba(255, 255, 255, 0.25);
   --hive-text-disabled: #525252;
   --hive-text-inverse: #000000;
 
   /* Semantic - Brand system */
   --hive-brand-primary: #FFD700;
-  --hive-brand-hover: #FFD700;
+  --hive-brand-hover: #FFE033;
   --hive-brand-onGold: #000000;
 
   /* Semantic - Interactive states (grayscale default) */
-  --hive-interactive-hover: rgba(255, 255, 255, 0.04);
-  --hive-interactive-focus: rgba(255, 255, 255, 0.20);
-  --hive-interactive-active: rgba(255, 255, 255, 0.08);
+  --hive-interactive-hover: rgba(255, 255, 255, 0.10);
+  --hive-interactive-focus: rgba(255, 255, 255, 0.50);
+  --hive-interactive-active: rgba(255, 255, 255, 0.14);
   --hive-interactive-disabled: #404040;
 
   /* Semantic - Gold reserved for key moments */
@@ -77,20 +77,20 @@
   --hive-gold-featured: #FFD700;
 
   /* Semantic - Status colors */
-  --hive-status-success: #00D46A;
-  --hive-status-successHover: #22DD77;
-  --hive-status-warning: #FFB800;
-  --hive-status-warningHover: #FFC533;
-  --hive-status-error: #FF3737;
-  --hive-status-errorHover: #FF5555;
+  --hive-status-success: #22C55E;
+  --hive-status-successHover: #4ADE80;
+  --hive-status-warning: #F59E0B;
+  --hive-status-warningHover: #FBBF24;
+  --hive-status-error: #EF4444;
+  --hive-status-errorHover: #F87171;
   --hive-status-info: #0070F3;
   --hive-status-infoHover: #2D7FF9;
 
   /* Semantic - Border system */
   --hive-border-default: rgba(255, 255, 255, 0.08);
-  --hive-border-muted: rgba(255, 255, 255, 0.04);
-  --hive-border-hover: rgba(255, 255, 255, 0.16);
-  --hive-border-focus: rgba(255, 255, 255, 0.40);
+  --hive-border-muted: rgba(255, 255, 255, 0.06);
+  --hive-border-hover: rgba(255, 255, 255, 0.12);
+  --hive-border-focus: rgba(255, 255, 255, 0.50);
   --hive-border-strong: #404040;
 
   /* === COMPONENT TOKENS === */
@@ -253,8 +253,8 @@
 
   /* Typography - Font families */
   --font-family-sans: Geist Sans,system-ui,sans-serif;
-  --font-family-display: Space Grotesk,system-ui,sans-serif;
-  --font-family-mono: JetBrains Mono,monospace;
+  --font-family-display: Clash Display,system-ui,sans-serif;
+  --font-family-mono: Geist Mono,monospace;
 
   /* Typography - Font sizes */
   --font-size-display-2xl: 2.5rem;
@@ -401,39 +401,30 @@
 /* HIVE Utility Classes - Auto-generated from design tokens */
 
 .hive-glass {
-  background: var(--hive-overlay-glass, rgba(255, 255, 255, 0.05));
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border: 1px solid var(--hive-border-subtle, rgba(255, 255, 255, 0.05));
+  background: var(--hive-background-secondary, #0A0A0A);
+  border: 1px solid var(--hive-border-default, rgba(255, 255, 255, 0.08));
 }
 
 .hive-glass-strong {
-  background: var(--hive-overlay-glass-strong, rgba(255, 255, 255, 0.12));
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--hive-border-glass-strong, rgba(255, 255, 255, 0.12));
+  background: var(--hive-background-tertiary, #141414);
+  border: 1px solid var(--hive-border-hover, rgba(255, 255, 255, 0.12));
 }
 
 .hive-interactive {
-  transition: all var(--hive-duration-smooth, 0.4s) var(--hive-easing, cubic-bezier(0.23, 1, 0.32, 1));
-  will-change: transform, box-shadow;
-  transform-origin: center;
-  backface-visibility: hidden;
-  transform: translateZ(0);
+  transition: background-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hive-interactive:hover {
-  transform: translateY(-2px) scale(var(--hive-transform-scaleHover, 1.02));
-  box-shadow: var(--hive-shadow-hover, 0 8px 25px rgba(0, 0, 0, 0.3)), var(--hive-shadow-gold-glow, 0 0 20px rgba(255, 215, 0, 0.3));
+  background: var(--hive-interactive-hover, rgba(255, 255, 255, 0.10));
 }
 
 .hive-interactive:active {
-  transform: translateY(0) scale(var(--hive-transform-scaleTap, 0.98));
-  transition-duration: var(--hive-duration-quick, 0.2s);
+  background: var(--hive-interactive-active, rgba(255, 255, 255, 0.14));
 }
 
 .hive-font-display {
-  font-family: var(--hive-font-family-sans, 'Geist Sans', system-ui, sans-serif);
+  font-family: var(--hive-font-family-display, 'Clash Display', system-ui, sans-serif);
   font-feature-settings: "rlig" 1, "calt" 1;
   font-weight: var(--hive-font-weight-semibold, 600);
   letter-spacing: -0.025em;

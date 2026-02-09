@@ -85,7 +85,6 @@ function QueueCard({ config, count, loading: _loading }: { config: QueueConfig; 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
     >
       <HiveCard className={`${config.bgColor} border ${config.borderColor} h-full`}>

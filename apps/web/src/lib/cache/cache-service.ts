@@ -1,4 +1,3 @@
-// TODO: Remove types from @hive/core once they are properly exported
 // High-level caching service for HIVE platform
 // Provides domain-specific caching methods with optimized TTL and invalidation strategies
 

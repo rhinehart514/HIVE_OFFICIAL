@@ -103,7 +103,7 @@ function SetupCard({
         delay: shouldReduceMotion ? 0 : index * 0.06,
         ease: EASE,
       }}
-      whileHover={{ y: -2 }}
+      whileHover={{ opacity: 0.96 }}
       onClick={onClick}
       className={`
         text-left p-5 rounded-xl border transition-all duration-200 group

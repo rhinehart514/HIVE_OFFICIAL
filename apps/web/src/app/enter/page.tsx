@@ -3,17 +3,13 @@
 /**
  * /enter - The Threshold
  *
- * 4-phase entry flow (same URL):
- * 1. Gate     → Email + code verification
- * 2. Naming   → First/last name (THE WEDGE)
- * 3. Field    → Year + major selection
- * 4. Crossing → Interests selection
- *
- * Narrative Arc: Outsider → Proven → Named → Claimed → Arrived
+ * Streamlined 2-screen entry flow:
+ * 1) Email
+ * 2) Code + Name (name appears inline after code verification for new users)
  */
 
 import { Suspense } from 'react';
-import { Entry } from '@/components/entry/Entry';
+import { EntryFlowV2 } from '@/components/entry/EntryFlowV2';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +24,7 @@ function EntryFallback() {
 export default function EnterPage() {
   return (
     <Suspense fallback={<EntryFallback />}>
-      <Entry />
+      <EntryFlowV2 />
     </Suspense>
   );
 }

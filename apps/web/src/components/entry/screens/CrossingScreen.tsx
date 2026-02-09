@@ -13,7 +13,7 @@ import { ArrowLeft, Search, X, Loader2, ArrowRight } from 'lucide-react';
 import { EntryEmptyState } from '../primitives/EntryEmptyState';
 import { cn } from '@/lib/utils';
 import type { UseEntryReturn } from '../hooks/useEntry';
-import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
+import { DURATION, EASE_PREMIUM } from '../motion/constants';
 import { clashDisplay } from '../Entry';
 
 // 150+ interests organized by category

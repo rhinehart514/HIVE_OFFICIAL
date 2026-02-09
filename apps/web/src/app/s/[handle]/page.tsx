@@ -28,36 +28,30 @@ import {
 } from '@hive/ui/design-system/primitives';
 import { toast, type ReportContentInput } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
-import { useSpaceResidenceState, useKeyboardNav } from './hooks';
+import { useSpaceResidenceState } from './hooks';
 import {
   SpaceHeader,
   SpaceThreshold,
   ChatInput,
-  BoardEmptyState,
-  getBoardType,
   SpaceLayout,
   SpaceSidebar,
   MainContent,
   MessageFeed,
   TypingIndicator,
-  type Board,
   type OnlineMember,
+  LeaderDashboard,
 } from './components';
-import { SpaceTabs, type SpaceTab } from './components/space-tabs';
-import { ToolsFeed } from './components/tools-feed';
-import { EventsTab } from './components/events-tab';
+import { SpaceTabs } from './components/space-tabs';
+import { LeaderCreateFAB } from './components/leader-create-fab';
+import { useLeaderDashboard } from '@/hooks/use-leader-dashboard';
 import { useTypingIndicator } from '@/hooks/use-presence';
-import { GatheringThreshold } from './components/threshold';
+import { useClaimSpace } from '@/hooks/mutations/use-claim-space';
 import {
   type FeedItem,
 } from '@/components/spaces';
 import type { CreateEventData } from '@/components/events/create-event-modal';
 
 // Dynamic imports — conditionally rendered components (modals, drawers, panels, overlays)
-const BoardCreationModal = dynamic(() =>
-  import('./components/board-creation-modal').then(m => ({ default: m.BoardCreationModal })),
-  { ssr: false }
-);
 const MembersList = dynamic(() =>
   import('./components/members-list').then(m => ({ default: m.MembersList })),
   { ssr: false }
@@ -102,20 +96,17 @@ export default function SpacePageUnified() {
   const { user } = useAuth();
   const [isJoining, setIsJoining] = React.useState(false);
   const [joinError, setJoinError] = React.useState<string | null>(null);
-  const [showBoardModal, setShowBoardModal] = React.useState(false);
   const [showMembersPanel, setShowMembersPanel] = React.useState(false);
+  const [showDashboardPanel, setShowDashboardPanel] = React.useState(false);
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
   const [showInfoDrawer, setShowInfoDrawer] = React.useState(false);
   const [showEventModal, setShowEventModal] = React.useState(false);
   const [, setIsFirstEntry] = React.useState(true);
   const [showDeleteSpaceConfirm, setShowDeleteSpaceConfirm] = React.useState(false);
-  const [showDeleteBoardConfirm, setShowDeleteBoardConfirm] = React.useState<string | null>(null);
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
-  const [, setIsCreatingBoard] = React.useState(false);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
-  const [isDeletingBoard, setIsDeletingBoard] = React.useState(false);
   const [reportModal, setReportModal] = React.useState<{
     messageId: string;
     authorName: string;
@@ -124,9 +115,6 @@ export default function SpacePageUnified() {
 
   // Thread panel state - driven by URL param
   const [activeThreadId, setActiveThreadId] = React.useState<string | null>(null);
-
-  // Tab state - Chat is default (post inline-components)
-  const [activeTab, setActiveTab] = React.useState<SpaceTab>('chat');
 
   // Detect first entry to this space for ArrivalTransition
   React.useEffect(() => {
@@ -139,10 +127,6 @@ export default function SpacePageUnified() {
     space,
     isLoading,
     error,
-    boards,
-    activeBoard,
-    setActiveBoard,
-    canAddBoard: _canAddBoard,
     messages,
     isLoadingMessages,
     isLoadingMoreMessages,
@@ -170,6 +154,19 @@ export default function SpacePageUnified() {
     handleComponentVote,
     handleComponentRsvp,
   } = useSpaceResidenceState(handle);
+
+  // Leader dashboard data (for leaders only)
+  const {
+    metrics: dashboardMetrics,
+    pendingItems,
+    isLoading: isDashboardLoading,
+  } = useLeaderDashboard({
+    spaceId: space?.id,
+    enabled: space?.isLeader || false,
+  });
+
+  // Claim space mutation
+  const claimSpaceMutation = useClaimSpace();
 
   // Permissions hook for message deletion
   const { canDeleteMessage } = usePermissions(space?.id, user?.id);
@@ -246,8 +243,8 @@ export default function SpacePageUnified() {
     }
   }, [user, space?.id]);
 
-  // Typing indicator hook - contextId is spaceId/boardId for per-board tracking
-  const typingContextId = space?.id && activeBoard ? `${space.id}/${activeBoard}` : '';
+  // Typing indicator hook - contextId is spaceId for space-wide tracking
+  const typingContextId = space?.id || '';
   const { typingUsers, setTyping } = useTypingIndicator(typingContextId);
 
   // Sync thread state with URL on mount and URL changes
@@ -299,15 +296,7 @@ export default function SpacePageUnified() {
   // (React hooks must be called in the same order every render)
   // ============================================
 
-  // Transform sidebar boards (called unconditionally)
-  const sidebarBoardsNew: Board[] = React.useMemo(() => {
-    return (boards || []).map((b) => ({
-      id: b.id,
-      name: b.name,
-      unreadCount: b.unreadCount || 0,
-      isPinned: b.name === 'general',
-    }));
-  }, [boards]);
+  // Removed: Board transformation (multi-board deprecated)
 
 
   // Transform online members for preview (called unconditionally)
@@ -319,14 +308,7 @@ export default function SpacePageUnified() {
     }));
   }, [onlineMembers]);
 
-  // Keyboard navigation (called unconditionally)
-  const { highlightedBoard: _highlightedBoard } = useKeyboardNav({
-    boardIds: (boards || []).map((b) => b.id),
-    activeBoard: activeBoard || boards?.[0]?.id || 'general',
-    onBoardChange: setActiveBoard,
-    onOpenSearch: () => setSearchOpen(true),
-    enabled: !showSettingsModal && !showMembersPanel && !showBoardModal && !searchOpen && !!space?.isMember,
-  });
+  // Removed: Keyboard navigation for board switching (multi-board deprecated)
 
   // Transform messages to Message type (called unconditionally)
   const feedMessages = React.useMemo(() => {
@@ -428,61 +410,17 @@ export default function SpacePageUnified() {
     setJoinError(null);
   };
 
-  // Handle board creation
-  const handleCreateBoard = () => {
-    setShowBoardModal(true);
-  };
-
-  const handleBoardCreate = async (name: string, description?: string) => {
+  // Handle space claim
+  const handleClaimSpace = () => {
     if (!space?.id) return;
-
-    setIsCreatingBoard(true);
-    try {
-      // Create board via API
-      const response = await fetch(`/api/spaces/${space.id}/boards`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || 'Failed to create board');
-      }
-
-      const newBoard = await response.json();
-
-      // Close modal
-      setShowBoardModal(false);
-
-      // Refresh space data to update boards list
-      await refreshSpace();
-
-      // Switch to the new board
-      setActiveBoard(newBoard.id);
-
-      toast.success('Board created');
-    } catch (error) {
-      logger.error('Failed to create board', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-      toast.error(error instanceof Error ? error.message : 'Failed to create board');
-    } finally {
-      setIsCreatingBoard(false);
-    }
+    claimSpaceMutation.mutate({
+      spaceId: space.id,
+      role: 'leader', // Default role for claiming
+      proofType: 'email', // Default proof type (user's verified campus email)
+    });
   };
 
-  // Handle board reorder
-  const handleReorderBoards = async (boardIds: string[]) => {
-    if (!space?.id) return;
-    try {
-      await fetch(`/api/spaces/${space.id}/boards/reorder`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ boardIds }),
-      });
-    } catch (error) {
-      logger.error('Failed to reorder boards', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-    }
-  };
+  // Removed: Board creation and reorder handlers (multi-board deprecated)
 
   // Handle event creation from space
   const handleCreateEvent = async (eventData: CreateEventData) => {
@@ -521,10 +459,10 @@ export default function SpacePageUnified() {
 
   // Handle message deletion
   const handleDeleteMessage = async (messageId: string) => {
-    if (!space?.id || !activeBoard) return;
+    if (!space?.id) return;
 
     try {
-      const response = await fetch(`/api/spaces/${space.id}/chat/${messageId}?boardId=${activeBoard}`, {
+      const response = await fetch(`/api/spaces/${space.id}/chat/${messageId}`, {
         method: 'DELETE',
       });
 
@@ -544,7 +482,7 @@ export default function SpacePageUnified() {
 
   // Handle message editing
   const handleEditMessage = async (messageId: string, newContent: string) => {
-    if (!space?.id || !activeBoard) return;
+    if (!space?.id) return;
 
     try {
       const response = await fetch(`/api/spaces/${space.id}/chat/${messageId}`, {
@@ -552,7 +490,6 @@ export default function SpacePageUnified() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: newContent,
-          boardId: activeBoard,
         }),
       });
 
@@ -626,46 +563,8 @@ export default function SpacePageUnified() {
     );
   }
 
-  // Non-member: Show appropriate threshold based on activation status
+  // Non-member: Show simplified threshold (same for all activation states)
   if (!space.isMember) {
-    // Ghost or Gathering spaces show quorum-based GatheringThreshold
-    const showGatheringThreshold = space.activationStatus === 'ghost' || space.activationStatus === 'gathering';
-
-    if (showGatheringThreshold) {
-      // Use API-provided gatherers (includes isFoundingMember status)
-      // These are the people waiting for quorum to be reached
-      const gatherers = (space.gatherers || []).slice(0, 10).map((g) => ({
-        id: g.id,
-        name: g.name,
-        avatarUrl: g.avatarUrl ?? undefined, // Convert null to undefined for component compatibility
-      }));
-
-      return (
-        <AnimatePresence mode="wait">
-          <GatheringThreshold
-            key="gathering-threshold"
-            space={{
-              id: space.id,
-              handle: space.handle,
-              name: space.name,
-              description: space.description,
-              avatarUrl: space.avatarUrl,
-              category: undefined,
-              isVerified: space.isVerified,
-            }}
-            memberCount={space.memberCount}
-            threshold={space.activationThreshold}
-            gatherers={gatherers}
-            onJoin={handleJoin}
-            isJoining={isJoining}
-            joinError={joinError}
-            onClearError={handleClearJoinError}
-          />
-        </AnimatePresence>
-      );
-    }
-
-    // Open/claimed spaces show the regular threshold
     return (
       <AnimatePresence mode="wait">
         <SpaceThreshold
@@ -678,17 +577,7 @@ export default function SpacePageUnified() {
             avatarUrl: space.avatarUrl,
             memberCount: space.memberCount,
             onlineCount: space.onlineCount,
-            isVerified: space.isVerified,
           }}
-          upcomingEvents={upcomingEvents}
-          recentActivity={
-            messages.length > 0
-              ? {
-                  messageCount: messages.length,
-                  lastActiveLabel: 'recently',
-                }
-              : undefined
-          }
           onJoin={handleJoin}
           isJoining={isJoining}
           joinError={joinError}
@@ -730,6 +619,7 @@ export default function SpacePageUnified() {
                   isVerified: space.isVerified,
                   socialLinks: space.socialLinks,
                   recentMessageCount: messages.length,
+                  isClaimed: space.isClaimed,
                 }}
                 isLeader={space.isLeader}
                 isMember={space.isMember}
@@ -745,6 +635,7 @@ export default function SpacePageUnified() {
                 }}
                 onCreateEventClick={() => setShowEventModal(true)}
                 onModerationClick={() => setShowModerationPanel(true)}
+                onClaimClick={handleClaimSpace}
                 canModerate={space.isLeader || space.userRole === 'moderator' || space.userRole === 'admin'}
                 isMuted={isSpaceMuted}
                 onMuteChange={handleMuteChange}
@@ -753,153 +644,100 @@ export default function SpacePageUnified() {
           </div>
 
           {/* Tab Navigation */}
-          <SpaceTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            toolsCount={sidebarTools?.length || 0}
-            unreadCount={unreadCount}
-            eventsCount={upcomingEvents?.length || 0}
-          />
+          <SpaceTabs unreadCount={unreadCount} />
 
           {/* Tab Content */}
           <div className="flex-1 overflow-hidden">
-            {activeTab === 'tools' && (
-              <ToolsFeed
-                tools={sidebarTools || []}
-                isLoading={isLoadingTools}
-                isLeader={space.isLeader}
-                spaceHandle={handle}
-                onAddTool={() => {
-                  const params = new URLSearchParams({
+            <SpaceLayout
+              mobileSidebarOpen={mobileSidebarOpen}
+              onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              header={<div />}
+              sidebar={
+                <SpaceSidebar
+                  tools={{
+                    tools: sidebarTools,
                     spaceId: space.id,
-                    spaceName: space.name,
-                  });
-                  if (space.orgTypeName) params.set('spaceType', space.orgTypeName);
-                  router.push(`/lab/new?${params.toString()}`);
-                }}
-              />
-            )}
-
-            {activeTab === 'chat' && (
-              <SpaceLayout
-                mobileSidebarOpen={mobileSidebarOpen}
-                onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-                header={<div />}
-                sidebar={
-                  <SpaceSidebar
-                    boards={{
-                      boards: sidebarBoardsNew,
-                      activeBoard: activeBoard || boards[0]?.id || 'general',
-                      onBoardChange: setActiveBoard,
-                      onCreateBoard: space.isLeader ? handleCreateBoard : undefined,
-                      onReorderBoards: space.isLeader ? handleReorderBoards : undefined,
-                    }}
-                    tools={{
-                      tools: [],
-                      isLoading: false,
-                      isLeader: space.isLeader,
-                      onToolClick: () => {},
-                      onToolRun: () => {},
-                      onViewFull: () => {},
-                      onAddTool: () => {},
-                    }}
-                    members={{
-                      onlineCount: space.onlineCount,
-                      totalCount: space.memberCount,
-                      onlineMembers: onlineMembersPreview,
-                      onClick: () => setShowMembersPanel(true),
-                    }}
+                    isLoading: isLoadingTools,
+                    isLeader: space.isLeader,
+                    onToolClick: () => {},
+                    onToolRun: () => {},
+                    onViewFull: () => {},
+                    onAddTool: () => {},
+                  }}
+                  events={{
+                    events: upcomingEvents.map(event => ({
+                      id: event.id,
+                      title: event.title,
+                      startDate: event.time,
+                      rsvpCount: event.goingCount,
+                    })),
+                    maxEvents: 3,
+                    onClick: () => {}, // TODO: Open event details
+                  }}
+                  members={{
+                    onlineCount: space.onlineCount,
+                    totalCount: space.memberCount,
+                    onlineMembers: onlineMembersPreview,
+                    onClick: () => setShowMembersPanel(true),
+                  }}
+                />
+              }
+              input={
+                <div>
+                  <TypingIndicator typingUsers={typingUsers} />
+                  <ChatInput
+                    spaceId={space.id}
+                    onSend={sendMessage}
+                    placeholder={`Message ${space.name}`}
+                    onTypingChange={setTyping}
                   />
-                }
-                input={
-                  <div>
-                    <TypingIndicator typingUsers={typingUsers} />
-                    <ChatInput
-                      spaceId={space.id}
-                      onSend={sendMessage}
-                      placeholder={`Message #${boards.find((b) => b.id === activeBoard)?.name || 'general'}`}
-                      onTypingChange={setTyping}
-                    />
-                  </div>
-                }
+                </div>
+              }
+            >
+              <MainContent
+                boardName={space.name}
+                contentKey="chat"
+                isLoading={isLoadingMessages}
               >
-                <MainContent
-                  boardName={boards.find((b) => b.id === activeBoard)?.name || 'general'}
-                  contentKey={activeBoard || 'default'}
-                  isLoading={isLoadingMessages}
-                >
-                  {feedMessages.length === 0 && !isLoadingMessages ? (
-                    <BoardEmptyState
-                      boardType={getBoardType(boards.find((b) => b.id === activeBoard)?.name || 'general')}
-                      boardName={boards.find((b) => b.id === activeBoard)?.name}
-                      isLeader={space.isLeader}
-                      onAction={() => {
-                        const input = document.querySelector('textarea[placeholder^="Message #"]') as HTMLTextAreaElement;
-                        input?.focus();
-                      }}
-                    />
-                  ) : (
-                    <MessageFeed
-                      messages={feedMessages}
-                      currentUserId={user?.id}
-                      lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
-                      unreadCount={unreadCount}
-                      isLoading={isLoadingMessages}
-                      isLoadingMore={isLoadingMoreMessages}
-                      hasMore={hasMoreMessages}
-                      onLoadMore={loadMoreMessages}
-                      onReact={async (messageId, emoji) => {
-                        if (!space?.id) return;
-                        try {
-                          await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ emoji }),
-                          });
-                        } catch (error) {
-                          logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-                        }
-                      }}
-                      onReply={(messageId) => handleOpenThread(messageId)}
-                      onDelete={handleDeleteMessage}
-                      onEdit={handleEditMessage}
-                      canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
-                      onReport={handleReportMessage}
-                      onComponentVote={handleComponentVote}
-                      onComponentRsvp={handleComponentRsvp}
-                    />
-                  )}
-                </MainContent>
-              </SpaceLayout>
-            )}
-
-            {activeTab === 'events' && (
-              <EventsTab
-                events={upcomingEvents.map(e => ({
-                  id: e.id,
-                  title: e.title,
-                  startTime: e.time || new Date().toISOString(),
-                  goingCount: e.goingCount,
-                }))}
-                isLoading={false}
-                isLeader={space.isLeader}
-                onCreateEvent={() => setShowEventModal(true)}
-              />
-            )}
+                {feedMessages.length === 0 && !isLoadingMessages ? (
+                  <div className="flex-1 flex items-center justify-center text-hive-text-tertiary">
+                    <p>No messages yet. Start the conversation!</p>
+                  </div>
+                ) : (
+                  <MessageFeed
+                    messages={feedMessages}
+                    currentUserId={user?.id}
+                    lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
+                    unreadCount={unreadCount}
+                    isLoading={isLoadingMessages}
+                    isLoadingMore={isLoadingMoreMessages}
+                    hasMore={hasMoreMessages}
+                    onLoadMore={loadMoreMessages}
+                    onReact={async (messageId, emoji) => {
+                      if (!space?.id) return;
+                      try {
+                        await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ emoji }),
+                        });
+                      } catch (error) {
+                        logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+                      }
+                    }}
+                    onReply={(messageId) => handleOpenThread(messageId)}
+                    onDelete={handleDeleteMessage}
+                    onEdit={handleEditMessage}
+                    canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
+                    onReport={handleReportMessage}
+                    onComponentVote={handleComponentVote}
+                    onComponentRsvp={handleComponentRsvp}
+                  />
+                )}
+              </MainContent>
+            </SpaceLayout>
           </div>
         </div>
-
-        {/* Board Creation Modal */}
-        <AnimatePresence>
-          {showBoardModal && (
-            <BoardCreationModal
-              isOpen={showBoardModal}
-              onClose={() => setShowBoardModal(false)}
-              onCreate={handleBoardCreate}
-              spaceHandle={space.handle}
-            />
-          )}
-        </AnimatePresence>
 
         {/* Event Creation Modal */}
         <CreateEventModal
@@ -960,6 +798,70 @@ export default function SpacePageUnified() {
                     />
                   </div>
                 </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Leader Dashboard Panel */}
+        <AnimatePresence>
+          {showDashboardPanel && space.isLeader && (
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-end"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: MOTION.duration.quick }}
+            >
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={() => setShowDashboardPanel(false)}
+              />
+
+              {/* Panel */}
+              <motion.div
+                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] shadow-2xl overflow-y-auto"
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ duration: MOTION.duration.quick, ease: MOTION.ease.premium }}
+              >
+                <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[var(--bg-ground)]">
+                  <h2 className="text-lg font-semibold text-white">
+                    Dashboard
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDashboardPanel(false)}
+                  >
+                    Close
+                  </Button>
+                </div>
+
+                <LeaderDashboard
+                  spaceId={space.id}
+                  metrics={dashboardMetrics || undefined}
+                  pendingItems={pendingItems}
+                  isLoading={isDashboardLoading}
+                  onCreateEvent={() => {
+                    setShowDashboardPanel(false);
+                    setShowEventModal(true);
+                  }}
+                  onAddTool={() => {
+                    setShowDashboardPanel(false);
+                    toast.info('Tool picker coming soon');
+                  }}
+                  onOpenSettings={() => {
+                    setShowDashboardPanel(false);
+                    setShowSettingsModal(true);
+                  }}
+                  onViewPending={(item) => {
+                    setShowDashboardPanel(false);
+                    toast.info(`Opening ${item.type}: ${item.title}`);
+                  }}
+                />
               </motion.div>
             </motion.div>
           )}
@@ -1038,12 +940,7 @@ export default function SpacePageUnified() {
                       contactName: space.contactName,
                       socialLinks: space.socialLinks,
                     }}
-                    boards={boards.map(b => ({
-                      id: b.id,
-                      name: b.name,
-                      isDefault: b.name === 'general',
-                      isLocked: false,
-                    }))}
+                    boards={[]} // Removed: Multi-board deprecated
                     isLeader={space.isLeader}
                     currentUserId={user?.id}
                     currentUserRole={space.userRole && space.userRole !== 'guest' ? space.userRole : (space.isLeader ? 'admin' : 'member')}
@@ -1067,10 +964,6 @@ export default function SpacePageUnified() {
                     onDelete={space.isLeader ? async () => {
                       // Open confirmation dialog instead of window.confirm
                       setShowDeleteSpaceConfirm(true);
-                    } : undefined}
-                    onBoardDelete={space.isLeader ? async (boardId) => {
-                      // Open confirmation dialog for board deletion
-                      setShowDeleteBoardConfirm(boardId);
                     } : undefined}
                     onTransferOwnership={space.userRole === 'owner' ? async (newOwnerId) => {
                       try {
@@ -1142,39 +1035,7 @@ export default function SpacePageUnified() {
           }}
         />
 
-        {/* Delete Board Confirmation */}
-        <ConfirmDialog
-          open={!!showDeleteBoardConfirm}
-          onOpenChange={(open) => !open && setShowDeleteBoardConfirm(null)}
-          title="Delete Board"
-          description="All messages in this board will be permanently deleted. This cannot be undone."
-          variant="danger"
-          confirmText="Delete"
-          cancelText="Cancel"
-          loading={isDeletingBoard}
-          onConfirm={async () => {
-            if (!showDeleteBoardConfirm) return;
-            setIsDeletingBoard(true);
-            try {
-              const response = await fetch(`/api/spaces/${space.id}/boards/${showDeleteBoardConfirm}`, {
-                method: 'DELETE',
-              });
-              if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error?.message || 'Failed to delete board');
-              }
-              setShowDeleteBoardConfirm(null);
-              // Refresh space data to update boards list
-              await refreshSpace();
-              toast.success('Board deleted');
-            } catch (error) {
-              logger.error('Failed to delete board', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-              toast.error(error instanceof Error ? error.message : 'Failed to delete board');
-            } finally {
-              setIsDeletingBoard(false);
-            }
-          }}
-        />
+        {/* Removed: Delete Board Confirmation (multi-board deprecated) */}
 
         {/* Moderation Panel */}
         <ModerationPanel
@@ -1199,7 +1060,6 @@ export default function SpacePageUnified() {
           onClose={handleCloseThread}
           spaceId={space.id}
           currentUserId={user?.id || ''}
-          boardId={activeBoard}
         />
 
         {/* Report Content Modal */}
@@ -1213,6 +1073,18 @@ export default function SpacePageUnified() {
           contentPreview={reportModal?.content}
           onSubmit={handleSubmitReport}
         />
+
+        {/* Leader Create FAB */}
+        {space.isLeader && (
+          <LeaderCreateFAB
+            context="feed"
+            onCreateEvent={() => setShowEventModal(true)}
+            onAddTool={() => {
+              toast.info('Tool picker coming soon');
+            }}
+            onCreateAnnouncement={() => setShowDashboardPanel(true)}
+          />
+        )}
       </motion.div>
     </AnimatePresence>
   );

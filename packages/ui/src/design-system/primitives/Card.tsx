@@ -2,12 +2,12 @@
 
 /**
  * Card Primitive
- * REFINED: Jan 29, 2026 - Matches /about aesthetic
+ * REFINED: Feb 9, 2026 - Cold, minimal spec
  *
  * Design principles:
- * - Simple dark surface with subtle border
- * - No heavy shadows or gradients
- * - Minimal warmth indication (subtle, not glowing)
+ * - Flat dark surfaces (no gradients, no glow)
+ * - 12px radius card system
+ * - Three practical tiers via elevation: standard, subtle, overlay
  */
 
 import * as React from 'react';
@@ -17,26 +17,23 @@ import { useAtmosphereOptional, type AtmosphereLevel, type WarmthLevel } from '.
 
 const cardVariants = cva(
   [
-    // Glass surface treatment
     'relative overflow-hidden',
-    'bg-gradient-to-br from-[#1c1c1c]/95 to-[#121212]/92',
+    'bg-[#0A0A0A]',
     'border border-white/[0.08]',
-    // Layered shadow system
-    'shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)]',
-    'transition-all duration-200 ease-out',
+    'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
   ].join(' '),
   {
     variants: {
       elevation: {
         resting: '',
-        raised: 'border-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)]',
-        floating: 'border-white/12 shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_16px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.15)]',
+        raised: 'bg-[#141414] border-white/[0.10]',
+        floating: 'bg-[#141414] border-white/[0.12] shadow-[0_16px_32px_rgba(0,0,0,0.45)]',
       },
       size: {
-        default: 'rounded-xl',
-        compact: 'rounded-lg',
-        modal: 'rounded-xl',
-        tooltip: 'rounded-lg',
+        default: 'rounded-[12px]',
+        compact: 'rounded-[12px]',
+        modal: 'rounded-[12px]',
+        tooltip: 'rounded-[12px]',
       },
     },
     defaultVariants: {
@@ -76,26 +73,16 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     const atmosphereContext = useAtmosphereOptional();
     const atmosphere = atmosphereProp ?? atmosphereContext?.atmosphere ?? 'spaces';
 
-    // Warmth system: border + glow for high warmth
-    const warmthStyles = {
-      none: '',
-      low: 'border-[var(--color-gold)]/10',
-      medium: 'border-[var(--color-gold)]/20',
-      high: 'border-[var(--color-gold)]/30 shadow-[0_0_20px_rgba(255,215,0,0.15),0_0_0_1px_rgba(255,215,0,0.1)]',
-    }[warmth];
-
     const sharedProps = {
       ref,
       className: cn(
         cardVariants({ elevation, size }),
         !noPadding && 'p-5',
-        warmth !== 'none' && warmthStyles,
         interactive && [
           'cursor-pointer select-none',
-          'hover:bg-[#1e1e1e]/95 hover:border-white/12',
-          'hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)]',
+          'hover:bg-[#141414] hover:border-white/[0.12]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-          'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+          'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
         ],
         className
       ),

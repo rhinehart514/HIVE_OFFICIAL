@@ -4,7 +4,7 @@ import React from 'react';
 import { ExclamationTriangleIcon, ArrowPathIcon, HomeIcon, BugAntIcon } from '@heroicons/react/24/outline';
 import { Button, Card } from "@hive/ui";
 import { logger } from '../lib/logger';
-import { errorReporting } from '../lib/error-reporting';
+import { captureError, LogLevel, addBreadcrumb } from '../lib/error-monitoring';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -42,39 +42,30 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
     this.setState({ error, errorInfo, errorId });
 
-    // Enhanced error logging with context and Firebase integration
-    logger.error('Error Boundary caught an error', {
+    // Add breadcrumb for context before the error
+    addBreadcrumb('error-boundary', `Error caught in ${context}ErrorBoundary`, {
       errorId,
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack ?? undefined,
-      errorBoundary: `${context}ErrorBoundary`,
-      context,
       retryCount: this.state.retryCount,
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
-      url: typeof window !== 'undefined' ? window.location.href : undefined,
-      timestamp: new Date().toISOString(),
-      // Production-ready metadata
-      buildVersion: process.env.NEXT_PUBLIC_APP_VERSION || 'unknown',
-      environment: process.env.NODE_ENV,
+      componentStack: errorInfo.componentStack ?? undefined,
     });
 
-    // Send to production error reporting service
-    errorReporting.reportError({
-      errorId,
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack ?? undefined,
-      context: `${context}ErrorBoundary`,
-      retryCount: this.state.retryCount,
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
-      url: typeof window !== 'undefined' ? window.location.href : undefined,
-    }).catch((reportingError) => {
-      logger.error('Failed to report error to external service', {
-        originalErrorId: errorId,
-        reportingError: reportingError instanceof Error ? reportingError.message : 'Unknown'
-      });
-    });
+    // Capture error using new monitoring system (includes Sentry in production)
+    captureError(
+      error,
+      {
+        errorId,
+        componentStack: errorInfo.componentStack ?? undefined,
+        errorBoundary: `${context}ErrorBoundary`,
+        context,
+        retryCount: this.state.retryCount,
+        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
+        url: typeof window !== 'undefined' ? window.location.href : undefined,
+        timestamp: new Date().toISOString(),
+        buildVersion: process.env.NEXT_PUBLIC_APP_VERSION || 'unknown',
+        environment: process.env.NODE_ENV,
+      },
+      LogLevel.ERROR
+    );
 
     // Auto-recovery for non-critical contexts
     if (this.props.enableRecovery && context !== 'global') {
@@ -95,12 +86,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   retry = () => {
     const newRetryCount = this.state.retryCount + 1;
+    const context = this.props.context || 'global';
 
-    // Log retry attempt
-    logger.info('Error boundary retry attempt', {
+    // Add breadcrumb for retry attempt
+    addBreadcrumb('error-boundary', `Retry attempt ${newRetryCount} in ${context}ErrorBoundary`, {
       errorId: this.state.errorId,
       retryCount: newRetryCount,
-      context: this.props.context || 'global'
     });
 
     if (this.retryTimeout) {

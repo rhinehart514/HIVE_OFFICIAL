@@ -191,7 +191,7 @@ export function BuilderAction({
           'bg-white/5 text-white/80 hover:bg-white/10 border border-white/10',
         className
       )}
-      whileHover={{ scale: disabled ? 1 : 1.01 }}
+      whileHover={{ opacity: disabled ? 1 : 0.97 }}
       whileTap={{ scale: disabled ? 1 : 0.99 }}
     >
       {loading ? (

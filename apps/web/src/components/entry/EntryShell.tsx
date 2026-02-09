@@ -7,7 +7,7 @@
  * Full-screen void layout inspired by OpenAI/Apple + About page:
  * - Centered content on dark void background
  * - Animated line that draws in on load
- * - Ambient glow that responds to emotional state
+ * - Ambient glow that responds to entry tone
  * - Logo at top, minimal chrome
  *
  * Philosophy: Entry is confidence. Luxuriously slow. Premium.
@@ -19,12 +19,12 @@ import Link from 'next/link';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import {
-  type EmotionalState,
+  type EntryTone,
   EASE_PREMIUM,
   DURATION,
   lineDrawVariants,
   GOLD,
-} from './motion/entry-motion';
+} from './motion/constants';
 
 // LOCKED: Entry content max-width for consistency across shell variants
 const ENTRY_MAX_WIDTH = 'max-w-[460px]';
@@ -33,8 +33,8 @@ export type EntryStep = 'school' | 'email' | 'code' | 'role' | 'identity' | 'arr
 
 export interface EntryShellProps {
   children: React.ReactNode;
-  /** Current emotional state for ambient effects */
-  emotionalState?: EmotionalState;
+  /** Current tone for ambient effects */
+  entryTone?: EntryTone;
   /** Current step (unused in void design but kept for compatibility) */
   currentStep?: EntryStep;
   /** Whether to show progress indicator (unused in void design) */
@@ -53,7 +53,7 @@ export interface EntryShellProps {
 
 export function EntryShell({
   children,
-  emotionalState = 'neutral',
+  entryTone = 'neutral',
   currentStep: _currentStep = 'school',
   showProgress: _showProgress = false,
   className,
@@ -64,11 +64,11 @@ export function EntryShell({
 }: EntryShellProps) {
   const shouldReduceMotion = useReducedMotion();
 
-  // Emotional state determines glow intensity
-  const isCelebration = emotionalState === 'celebration';
-  const isAnticipation = emotionalState === 'anticipation';
+  // Entry tone determines glow intensity
+  const isCelebration = entryTone === 'celebration';
+  const isAnticipation = entryTone === 'anticipation';
 
-  // Glow configuration based on emotional state
+  // Glow configuration based on entry tone
   const glowConfig = React.useMemo(() => {
     if (isCelebration) {
       return {
@@ -105,7 +105,7 @@ export function EntryShell({
         animate="animate"
       />
 
-      {/* Ambient glow - responds to emotional state */}
+      {/* Ambient glow - responds to entry tone */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
         initial={{ opacity: 0 }}

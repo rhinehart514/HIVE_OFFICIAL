@@ -122,7 +122,7 @@ function ElementButton({
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onDragEnd={handleDragEnd as any}
           onClick={onClick}
-          whileHover={{ opacity: 0.9, y: -2 }}
+          whileHover={{ opacity: 0.9 }}
           whileTap={{ opacity: 0.8 }}
           className={cn(
             'relative flex flex-col items-center justify-center gap-1',

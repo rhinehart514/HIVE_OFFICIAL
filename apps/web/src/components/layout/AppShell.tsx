@@ -148,7 +148,7 @@ function Sidebar({ onNavigate, onQuickCreate }: SidebarProps) {
       {/* Header - ChatGPT style: 56px, centered */}
       <div className="h-14 flex items-center px-4 border-b border-white/[0.06] relative z-10">
         <motion.div
-          whileHover={{ scale: 1.03 }}
+          whileHover={{ opacity: 0.95 }}
           whileTap={{ scale: 0.97 }}
           transition={{ duration: 0.2 }}
         >

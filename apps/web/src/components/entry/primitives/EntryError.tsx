@@ -17,7 +17,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, AlertCircle, Clock, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { errorInlineVariants } from '../motion/section-motion';
+import { errorInlineVariants } from '../motion/variants';
 
 // ============================================
 // ERROR TYPES

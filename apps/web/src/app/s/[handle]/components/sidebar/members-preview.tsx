@@ -49,7 +49,7 @@ export function MembersPreview({
         'w-full px-2 py-2 rounded-lg',
         'flex items-center gap-3',
         'hover:bg-white/[0.04]',
-        'transition-colors duration-150',
+        'transition-colors',
         'text-left group'
       )}
     >
@@ -105,16 +105,16 @@ export function MembersPreview({
           {onlineCount > 0 && (
             <>
               <span
-                className="w-1.5 h-1.5 rounded-full animate-pulse"
+                className="w-1.5 h-1.5 rounded-full"
                 style={{ backgroundColor: SPACE_COLORS.onlineIndicator }}
               />
-              <span className="text-xs font-medium text-white/60">
+              <span className="text-xs font-medium text-white/50">
                 {onlineCount} online
               </span>
             </>
           )}
           {onlineCount === 0 && (
-            <span className="text-xs text-white/40">
+            <span className="text-xs text-white/50">
               {totalCount} members
             </span>
           )}
@@ -124,7 +124,7 @@ export function MembersPreview({
       {/* Chevron on hover */}
       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
         <svg
-          className="w-4 h-4 text-white/30"
+          className="w-4 h-4 text-white/50"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

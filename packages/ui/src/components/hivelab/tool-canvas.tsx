@@ -502,7 +502,7 @@ function CanvasError({ error, onRetry }: CanvasErrorProps) {
       <p className="text-sm text-red-400/60 mb-4">{errorObj.message}</p>
       {showRetry && (
         <motion.button
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ opacity: 0.96 }}
           whileTap={{ scale: 0.98 }}
           onClick={onRetry}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-sm font-medium"
@@ -703,7 +703,7 @@ function ToolErrorFallback({
         </pre>
       )}
       <motion.button
-        whileHover={{ scale: 1.02 }}
+        whileHover={{ opacity: 0.96 }}
         whileTap={{ scale: 0.98 }}
         onClick={onRetry}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-sm font-medium min-h-[44px]"

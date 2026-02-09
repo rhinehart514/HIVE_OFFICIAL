@@ -366,23 +366,70 @@ export function NoiseOverlay({ className, opacity = 0.015 }: NoiseOverlayProps) 
 // REVEAL PRIMITIVES
 // ============================================
 
-export {
-  RevealSection,
-  NarrativeReveal,
-  AnimatedBorder,
-  type RevealSectionProps,
-  type NarrativeRevealProps,
-  type AnimatedBorderProps,
-} from './Reveal';
+export interface RevealSectionProps {
+  children: React.ReactNode;
+  className?: string;
+  margin?: string;
+  as?: 'section' | 'div' | 'article';
+}
+
+export function RevealSection({
+  children,
+  className,
+  as = 'section',
+}: RevealSectionProps) {
+  const Component = as;
+  return <Component className={className}>{children}</Component>;
+}
+
+export interface NarrativeRevealProps {
+  children: React.ReactNode;
+  className?: string;
+  stagger?: number;
+}
+
+export function NarrativeReveal({ children, className }: NarrativeRevealProps) {
+  return <span className={className}>{children}</span>;
+}
+
+export interface AnimatedBorderProps {
+  className?: string;
+  variant?: 'horizontal' | 'container';
+  children?: React.ReactNode;
+}
+
+export function AnimatedBorder({ className, variant = 'horizontal', children }: AnimatedBorderProps) {
+  if (variant === 'container') {
+    return <div className={cn('border border-white/10', className)}>{children}</div>;
+  }
+  return (
+    <div className={className}>
+      <div className="pointer-events-none h-px w-full bg-white/10" />
+      {children}
+    </div>
+  );
+}
 
 // ============================================
 // DRAMATIC REVEAL PRIMITIVES
 // ============================================
 
-export {
-  WordReveal,
-  type WordRevealProps,
-} from './WordReveal';
+export interface WordRevealProps {
+  text?: string;
+  children?: React.ReactNode;
+  className?: string;
+  delay?: number;
+  stagger?: number;
+  variant?: string;
+}
+
+export function WordReveal({
+  text,
+  children,
+  className,
+}: WordRevealProps) {
+  return <span className={className}>{text ?? children}</span>;
+}
 
 export {
   ThresholdReveal,
@@ -400,18 +447,49 @@ export {
 // SCROLL PRIMITIVES
 // ============================================
 
-export {
-  ParallaxText,
-  ScrollIndicator,
-  HeroParallax,
-  ScrollProgress,
-  ScrollSpacer,
-  type ParallaxTextProps,
-  type ScrollIndicatorProps,
-  type HeroParallaxProps,
-  type ScrollProgressProps,
-  type ScrollSpacerProps,
-} from './Scroll';
+export interface ParallaxTextProps {
+  children: React.ReactNode;
+  className?: string;
+  speed?: number;
+}
+
+export function ParallaxText({ children, className }: ParallaxTextProps) {
+  return <div className={className}>{children}</div>;
+}
+
+export interface ScrollIndicatorProps {
+  className?: string;
+}
+
+export function ScrollIndicator({ className }: ScrollIndicatorProps) {
+  return <div className={cn('h-10 w-px bg-white/20', className)} />;
+}
+
+export interface HeroParallaxProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function HeroParallax({ children, className }: HeroParallaxProps) {
+  return <div className={className}>{children}</div>;
+}
+
+export interface ScrollProgressProps {
+  className?: string;
+}
+
+export function ScrollProgress({ className }: ScrollProgressProps) {
+  return <div className={cn('h-0.5 w-full bg-white/20', className)} />;
+}
+
+export interface ScrollSpacerProps {
+  height?: number;
+  className?: string;
+}
+
+export function ScrollSpacer({ height = 24, className }: ScrollSpacerProps) {
+  return <div className={className} style={{ height }} />;
+}
 
 // ============================================
 // GRADIENT PRIMITIVES
@@ -464,20 +542,69 @@ export {
 // SCROLL TRANSFORM PRIMITIVES
 // ============================================
 
-export {
-  ScrollTransform,
-  ScrollFade,
-  ScrollSticky,
-  ScrollCounter,
-  ScrollProgressBar,
-  useScrollTransform,
-  type ScrollTransformProps,
-  type ScrollFadeProps,
-  type ScrollStickyProps,
-  type ScrollCounterProps,
-  type ScrollProgressBarProps,
-  type UseScrollTransformOptions,
-} from './ScrollTransform';
+export interface ScrollTransformProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function ScrollTransform({ children, className }: ScrollTransformProps) {
+  return <div className={className}>{children}</div>;
+}
+
+export interface ScrollFadeProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function ScrollFade({ children, className }: ScrollFadeProps) {
+  return <div className={className}>{children}</div>;
+}
+
+export interface ScrollStickyProps {
+  children: React.ReactNode;
+  className?: string;
+  top?: number;
+}
+
+export function ScrollSticky({ children, className, top = 0 }: ScrollStickyProps) {
+  return (
+    <div className={cn('sticky', className)} style={{ top }}>
+      {children}
+    </div>
+  );
+}
+
+export interface ScrollCounterProps {
+  value: number;
+  className?: string;
+}
+
+export function ScrollCounter({ value, className }: ScrollCounterProps) {
+  return <span className={className}>{value}</span>;
+}
+
+export interface ScrollProgressBarProps {
+  progress: number;
+  className?: string;
+}
+
+export function ScrollProgressBar({ progress, className }: ScrollProgressBarProps) {
+  return (
+    <div className={cn('h-0.5 w-full bg-white/10', className)}>
+      <div className="h-full bg-white/40" style={{ width: `${Math.max(0, Math.min(100, progress * 100))}%` }} />
+    </div>
+  );
+}
+
+export interface UseScrollTransformOptions {
+  offset?: ['start end', 'end start'];
+}
+
+export function useScrollTransform(options: UseScrollTransformOptions = {}) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: options.offset ?? ['start end', 'end start'] });
+  return { ref, scrollYProgress };
+}
 
 // Re-export framer-motion for convenience
 export { motion, useScroll, useTransform, useSpring, useMotionValue, useInView };

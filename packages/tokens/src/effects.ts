@@ -15,14 +15,14 @@ export const effects = {
     level3: '0 4px 8px -2px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3)',
     level4: '0 8px 16px -4px rgba(0, 0, 0, 0.4), 0 4px 8px -4px rgba(0, 0, 0, 0.3)',
     level5: '0 16px 32px -8px rgba(0, 0, 0, 0.5), 0 8px 16px -8px rgba(0, 0, 0, 0.4)',
-    // Gold glow variants
-    goldGlow: '0 0 20px rgba(255, 215, 0, 0.3)',
-    goldGlowStrong: '0 0 40px rgba(255, 215, 0, 0.4)',
+    // Legacy aliases - glow removed
+    goldGlow: 'none',
+    goldGlowStrong: 'none',
     // Inset shadows
     inset: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.3)',
-    // Ring focus
-    ring: '0 0 0 2px rgba(255, 215, 0, 0.5)',
-    ringOffset: '0 0 0 2px #0a0a0a, 0 0 0 4px rgba(255, 215, 0, 0.5)',
+    // Ring focus (white)
+    ring: '0 0 0 2px rgba(255, 255, 255, 0.5)',
+    ringOffset: '0 0 0 2px #000000, 0 0 0 4px rgba(255, 255, 255, 0.5)',
   },
 
   /**
@@ -30,13 +30,13 @@ export const effects = {
    */
   backdropBlur: {
     none: '0',
-    sm: '4px',
-    DEFAULT: '8px',
-    md: '12px',
-    lg: '16px',
-    xl: '24px',
-    '2xl': '40px',
-    '3xl': '64px',
+    sm: '0',
+    DEFAULT: '0',
+    md: '0',
+    lg: '0',
+    xl: '0',
+    '2xl': '0',
+    '3xl': '0',
   },
 
   /**

@@ -893,7 +893,7 @@ export {
 export {
   WordReveal,
   type WordRevealProps,
-} from './motion/WordReveal';
+} from './motion';
 
 export {
   ThresholdReveal,

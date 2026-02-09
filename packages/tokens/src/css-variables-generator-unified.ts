@@ -357,11 +357,10 @@ export function generateUnifiedCSSVariables(): string {
   lines.push('/* Common patterns */');
   lines.push('');
 
-  // Glass effect
+  // Legacy surface alias
   lines.push('.hive-glass {');
-  lines.push('  background: rgba(255, 255, 255, 0.05);');
-  lines.push('  backdrop-filter: blur(12px) saturate(180%);');
-  lines.push('  -webkit-backdrop-filter: blur(12px) saturate(180%);');
+  lines.push('  background: var(--hive-background-secondary);');
+  lines.push('  border: 1px solid var(--hive-border-default);');
   lines.push('}');
   lines.push('');
 

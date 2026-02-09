@@ -23,31 +23,31 @@
 export const colors = {
   // Backgrounds - Neutral, no tint
   black: '#000000',
-  bgBase: '#0A0A0A',        // Page background
-  bgSurface: '#141414',     // Cards, inputs, elevated
-  bgElevated: '#1A1A1A',    // Hover states
-  bgActive: '#242424',      // Active/pressed states
+  bgBase: '#000000',        // Page background
+  bgSurface: '#0A0A0A',     // Cards, inputs, elevated
+  bgElevated: '#141414',    // Hover states
+  bgActive: '#1A1A1A',      // Active/pressed states
 
   // Text hierarchy
-  textPrimary: '#FAFAFA',   // Main content
-  textSecondary: '#A1A1A6', // Supporting content
-  textSubtle: '#818187',    // Timestamps, metadata (bumped for accessibility)
-  textDisabled: '#52525B',  // Disabled states
+  textPrimary: '#FFFFFF',                 // Main content
+  textSecondary: 'rgba(255, 255, 255, 0.5)', // Supporting content
+  textSubtle: 'rgba(255, 255, 255, 0.35)',   // Timestamps, metadata
+  textDisabled: 'rgba(255, 255, 255, 0.25)', // Disabled states
 
   // Borders
-  borderDefault: '#2A2A2A', // Standard borders
-  borderHover: '#3A3A3A',   // Hover state borders
+  borderDefault: 'rgba(255, 255, 255, 0.08)', // Standard borders
+  borderHover: 'rgba(255, 255, 255, 0.12)',   // Hover state borders
   borderFocus: 'rgba(255, 255, 255, 0.50)', // Focus rings (white, NOT gold)
 
   // Brand - Gold
   gold: '#FFD700',          // Primary gold (canonical)
-  goldDim: '#CC9900',       // Muted gold
-  goldGlow: 'rgba(255, 215, 0, 0.15)', // Glow effect
+  goldDim: '#E6C200',       // Muted gold
+  goldGlow: 'transparent',  // Glow removed
 
   // Status
-  success: '#00D46A',       // Green
-  error: '#FF3737',         // Red
-  warning: '#FFB800',       // Amber
+  success: '#22C55E',       // Green
+  error: '#EF4444',         // Red
+  warning: '#F59E0B',       // Amber
 
   // Pure
   white: '#FFFFFF',
@@ -60,18 +60,18 @@ export const colors = {
 export const scale = {
   // Gray scale - 12 steps, neutral
   gray: {
-    1: '#0A0A0A',   // App background
-    2: '#141414',   // Subtle background / surface
-    3: '#1A1A1A',   // UI element background
-    4: '#242424',   // Hovered element
+    1: '#000000',   // App background
+    2: '#0A0A0A',   // Subtle background / surface
+    3: '#141414',   // UI element background
+    4: '#1A1A1A',   // Hovered element
     5: '#2E2E2E',   // Active element
-    6: '#2A2A2A',   // Subtle border
-    7: '#3A3A3A',   // Element border
-    8: '#4A4A4A',   // Hovered border
+    6: '#262626',   // Subtle border
+    7: '#2E2E2E',   // Element border
+    8: '#3A3A3A',   // Hovered border
     9: '#6A6A6A',   // Solid background
-    10: '#818187',  // Subtle text
-    11: '#A1A1A6',  // Secondary text
-    12: '#FAFAFA',  // Primary text
+    10: '#808080',  // Subtle text
+    11: '#B3B3B3',  // Secondary text
+    12: '#FFFFFF',  // Primary text
   },
 
   // Gold scale - brand accent
@@ -92,16 +92,16 @@ export const scale = {
 
   // Status colors
   green: {
-    9: '#00D46A',   // Success
-    10: '#22DD77',  // Success hover
+    9: '#22C55E',   // Success
+    10: '#4ADE80',  // Success hover
   },
   red: {
-    9: '#FF3737',   // Error
-    10: '#FF5555',  // Error hover
+    9: '#EF4444',   // Error
+    10: '#F87171',  // Error hover
   },
   amber: {
-    9: '#FFB800',   // Warning
-    10: '#FFC933',  // Warning hover
+    9: '#F59E0B',   // Warning
+    10: '#FBBF24',  // Warning hover
   },
 } as const;
 
@@ -365,8 +365,8 @@ export const radius = {
 export const typography = {
   fontFamily: {
     sans: ['Geist Sans', 'system-ui', 'sans-serif'],
-    display: ['Geist Sans', 'system-ui', 'sans-serif'], // System font for display too
-    mono: ['JetBrains Mono', 'SF Mono', 'monospace'],
+    display: ['Clash Display', 'system-ui', 'sans-serif'],
+    mono: ['Geist Mono', 'SF Mono', 'monospace'],
   },
   fontSize: {
     // HIVE Type Scale - aligned with design principles
@@ -391,7 +391,7 @@ export const typography = {
     '4xl': ['2.5rem', { lineHeight: '2.5rem' }],    // 40px
     '5xl': ['3rem', { lineHeight: '1.2' }],         // 48px
 
-    // Mono scale (JetBrains Mono)
+    // Mono scale (Geist Mono)
     'mono-sm': ['0.75rem', { lineHeight: '1.4' }],  // 12px
     'mono-md': ['0.875rem', { lineHeight: '1.5' }], // 14px
   },

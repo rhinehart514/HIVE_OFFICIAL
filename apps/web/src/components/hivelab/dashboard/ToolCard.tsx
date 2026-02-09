@@ -22,7 +22,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/hivelab/create-tool';
-import { cardHoverVariants } from '@hive/tokens';
+import { } from '@hive/tokens';
 
 export interface ToolData {
   id: string;
@@ -113,7 +113,7 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
   if (variant === 'compact') {
     return (
       <motion.button
-        whileHover={cardHoverVariants.hover}
+        whileHover={{ opacity: 0.96 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => onClick(tool.id)}
         className="group relative flex flex-col items-start p-4 rounded-xl
@@ -151,7 +151,7 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
 
   return (
     <motion.div
-      whileHover={cardHoverVariants.hover}
+      whileHover={{ opacity: 0.96 }}
       className="group relative flex flex-col p-4 rounded-xl
         border border-white/[0.06] bg-white/[0.02]
         hover:border-white/[0.12] hover:bg-white/[0.04]
@@ -268,7 +268,7 @@ interface NewToolCardProps {
 export function NewToolCard({ onClick, index: _index = 0 }: NewToolCardProps) {
   return (
     <motion.button
-      whileHover={cardHoverVariants.hover}
+      whileHover={{ opacity: 0.96 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className="group flex flex-col items-center justify-center p-4 rounded-xl

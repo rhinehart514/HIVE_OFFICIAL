@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Search, Check, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { UseEntryReturn } from '../hooks/useEntry';
-import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
+import { DURATION, EASE_PREMIUM } from '../motion/constants';
 import { clashDisplay } from '../Entry';
 
 const ALL_MAJORS = [

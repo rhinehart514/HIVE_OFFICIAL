@@ -13,7 +13,7 @@ export default function ProfileError({
   reset: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-foundation-gray-1000 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-black flex items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

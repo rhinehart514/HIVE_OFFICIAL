@@ -76,7 +76,7 @@ function ActionButton({
           ? 'bg-white/[0.08] hover:bg-white/[0.12] text-white'
           : 'bg-white/[0.02] hover:bg-white/[0.06] text-white/60 hover:text-white/80'
       )}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ opacity: 0.96 }}
       whileTap={{ scale: 0.98 }}
     >
       <span className="flex-shrink-0">{icon}</span>

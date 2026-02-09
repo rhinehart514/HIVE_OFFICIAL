@@ -15,8 +15,7 @@
 
 import * as React from 'react';
 import { cn } from '../../../lib/utils';
-import { RevealSection } from '../motion/Reveal';
-import { AnimatedBorder } from '../motion/Reveal';
+import { RevealSection, AnimatedBorder } from '../motion';
 import { MOTION } from '../../../tokens/motion';
 
 // ============================================

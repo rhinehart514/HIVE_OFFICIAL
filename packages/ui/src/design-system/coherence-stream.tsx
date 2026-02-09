@@ -610,7 +610,7 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
                   <motion.button
                     className="absolute left-0 w-12 h-12 flex items-center justify-center"
                     onClick={() => setActiveLevel(activeLevel === level.id ? null : level.id)}
-                    whileHover={{ scale: 1.1 }}
+                    whileHover={{ opacity: 0.9 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <motion.div
@@ -724,7 +724,7 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
                 color: showDemo ? tokens.colors.textPrimary : tokens.colors.void,
               }}
               onClick={() => setShowDemo(!showDemo)}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ opacity: 0.96 }}
               whileTap={{ scale: 0.98 }}
             >
               {showDemo ? "Hide Demo" : "Open Demo"}

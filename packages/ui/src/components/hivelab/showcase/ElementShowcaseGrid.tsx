@@ -12,7 +12,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BUNDLE_ORDER } from './element-showcase-data';
 import { ElementBundleCard } from './ElementBundleCard';
 import { cn } from '../../../lib/utils';
-import { staggerContainerVariants } from '../../../lib/motion-variants';
+
+const listContainerVariants = {
+  hidden: { opacity: 1 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.04 },
+  },
+};
 
 // ============================================================================
 // Types
@@ -119,7 +126,7 @@ export function ElementShowcaseGrid({
         layoutClasses[layout],
         className
       )}
-      variants={staggerContainerVariants}
+      variants={listContainerVariants}
       initial="hidden"
       animate="visible"
     >

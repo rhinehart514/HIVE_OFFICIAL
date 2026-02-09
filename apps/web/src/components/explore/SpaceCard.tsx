@@ -9,14 +9,14 @@
  * - Recent activity indicator
  * - Join/Preview CTA
  *
- * Uses revealVariants for stagger-coordinated entrance.
+ * Uses for stagger-coordinated entrance.
  */
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Tilt, GlassSurface, Badge } from '@hive/ui/design-system/primitives';
-import { revealVariants, cardHoverVariants } from '@hive/tokens';
+import { } from '@hive/tokens';
 import { CATEGORY_LABELS, SpaceCategoryEnum } from '@hive/core';
 import { cn } from '@/lib/utils';
 
@@ -43,13 +43,12 @@ export function SpaceCard({ space }: SpaceCardProps) {
 
   return (
     <motion.div
-      variants={revealVariants}
       whileHover="hover"
       initial="initial"
     >
       <Tilt intensity={4}>
         <Link href={`/s/${space.handle}`}>
-          <motion.div variants={cardHoverVariants}>
+          <motion.div>
             <GlassSurface
               intensity="subtle"
               className={cn(

@@ -23,12 +23,12 @@ const config: Config = {
       fontFamily: {
         ...hiveTailwindConfig.fontFamily,
         sans: ['var(--hive-font-sans)', 'Geist Sans', 'system-ui', 'sans-serif'],
-        display: ['var(--hive-font-display)', 'Space Grotesk', 'system-ui', 'sans-serif'],
-        mono: ['var(--hive-font-mono)', 'JetBrains Mono', 'monospace'],
+        display: ['var(--hive-font-display)', 'Clash Display', 'system-ui', 'sans-serif'],
+        mono: ['var(--hive-font-mono)', 'Geist Mono', 'monospace'],
         manifesto: ['var(--hive-font-manifesto)', 'Clash Display', 'system-ui', 'sans-serif'],
       },
 
-      // Web-specific color overrides (glass, overlay, gold shorthand not in tokens)
+      // Web-specific color overrides (compatibility aliases)
       colors: {
         ...hiveTailwindConfig.colors,
         // Gold shorthand for direct usage (e.g. text-gold-500)
@@ -37,12 +37,12 @@ const config: Config = {
           400: '#FFE033',
           600: '#E6C200',
         },
-        // Glass surfaces - semi-transparent overlays
+        // Legacy glass aliases collapsed into solid cold surfaces
         glass: {
-          bg: 'rgba(255, 255, 255, var(--opacity-ghost, 0.04))',
-          border: 'rgba(255, 255, 255, var(--opacity-muted, 0.08))',
-          hover: 'rgba(255, 255, 255, var(--opacity-soft, 0.10))',
-          active: 'rgba(255, 255, 255, var(--opacity-visible, 0.15))',
+          bg: 'var(--bg-surface)',
+          border: 'var(--border-default)',
+          hover: 'var(--bg-surface-hover)',
+          active: 'var(--bg-elevated)',
         },
         // Semantic opacity-based colors
         overlay: {
@@ -64,8 +64,8 @@ const config: Config = {
         'hive-md': 'var(--hive-shadow-md)',
         'hive-lg': 'var(--hive-shadow-lg)',
         'hive-xl': 'var(--hive-shadow-xl)',
-        'hive-gold': 'var(--hive-shadow-gold)',
-        'hive-gold-lg': 'var(--hive-shadow-gold-lg)',
+        'hive-gold': 'none',
+        'hive-gold-lg': 'none',
         'hive-level1': 'var(--hive-shadow-level1)',
         'hive-level2': 'var(--hive-shadow-level2)',
         'hive-level3': 'var(--hive-shadow-level3)',

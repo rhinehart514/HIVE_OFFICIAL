@@ -18,6 +18,7 @@ import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 
 export interface ToolsListProps {
   tools: PlacedToolDTO[];
+  spaceId?: string;
   isLoading?: boolean;
   activeToolId?: string;
   isLeader?: boolean;
@@ -29,6 +30,7 @@ export interface ToolsListProps {
 
 export function ToolsList({
   tools,
+  spaceId,
   isLoading = false,
   activeToolId,
   isLeader = false,
@@ -54,8 +56,10 @@ export function ToolsList({
           <SidebarToolCard
             key={tool.placementId}
             tool={tool}
+            spaceId={spaceId}
             isActive={isActive}
             isDraggable={isLeader}
+            isLeader={isLeader}
             onClick={() => onToolClick?.(tool)}
             onRun={() => onToolRun?.(tool)}
             onViewFull={onViewFull ? () => onViewFull(tool) : undefined}
@@ -70,10 +74,10 @@ export function ToolsList({
           className={cn(
             'w-full px-3 py-2 rounded-lg',
             'flex items-center gap-2',
-            'text-white/40 hover:text-white/60',
+            'text-white/50 hover:text-white',
             'hover:bg-white/[0.04]',
-            'transition-all duration-150',
-            'border border-dashed border-white/[0.06] hover:border-white/[0.12]',
+            'transition-colors',
+            'border border-dashed border-white/[0.06]',
             tools.length > 0 && 'mt-2'
           )}
         >
@@ -86,8 +90,8 @@ export function ToolsList({
       {tools.length === 0 && isLeader && (
         <div className="text-center py-4">
           <Wrench className="w-5 h-5 text-white/20 mx-auto mb-2" />
-          <p className="text-xs text-white/40 mb-2">Build tools for your org</p>
-          <p className="text-xs text-white/30">Track dues, collect RSVPs, run polls...</p>
+          <p className="text-xs text-white mb-2">Build tools for your org</p>
+          <p className="text-xs text-white/50">Track dues, collect RSVPs, run polls...</p>
         </div>
       )}
 
@@ -95,7 +99,7 @@ export function ToolsList({
       {tools.length === 0 && !isLeader && (
         <div className="text-center py-4">
           <Wrench className="w-5 h-5 text-white/20 mx-auto mb-2" />
-          <p className="text-xs text-white/30">No tools yet</p>
+          <p className="text-xs text-white/50">No tools yet</p>
         </div>
       )}
 
@@ -104,9 +108,9 @@ export function ToolsList({
         href="/explore?tab=tools"
         className={cn(
           'flex items-center gap-2 px-3 py-1.5 rounded-lg',
-          'text-xs text-white/30 hover:text-white/60',
+          'text-xs text-white/50 hover:text-white',
           'hover:bg-white/[0.04]',
-          'transition-colors duration-150',
+          'transition-colors',
           tools.length > 0 && 'mt-1'
         )}
       >

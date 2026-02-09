@@ -151,7 +151,7 @@ function TemplateCard({ template, onSelect, compact }: TemplateCardProps) {
         colorClass,
         compact ? 'p-3' : 'p-4'
       )}
-      whileHover={{ y: -2 }}
+      whileHover={{ opacity: 0.96 }}
       whileTap={{ opacity: 0.8 }}
     >
       {/* Icon */}

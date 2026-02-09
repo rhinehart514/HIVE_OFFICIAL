@@ -25,10 +25,7 @@ import {
   type UserSuggestion,
 } from '@hive/ui';
 import {
-  revealVariants,
-  staggerContainerVariants,
-  cardHoverVariants,
-} from '@hive/tokens';
+  } from '@hive/tokens';
 import { useAuth } from '@hive/auth-logic';
 import { useConnectionsEnabled } from '@/hooks/use-feature-flags';
 
@@ -397,12 +394,11 @@ export default function ConnectionsPage() {
     <div className="min-h-screen w-full overflow-y-auto">
       <motion.div
         className="max-w-4xl mx-auto px-6 py-12"
-        variants={staggerContainerVariants}
         initial="initial"
         animate="animate"
       >
         {/* Header */}
-        <motion.div className="mb-10" variants={revealVariants}>
+        <motion.div className="mb-10">
           <h1
             className="text-heading-sm font-semibold text-white mb-2 tracking-tight"
           >
@@ -415,7 +411,7 @@ export default function ConnectionsPage() {
 
         {/* People You May Know */}
         {(suggestionsLoading || suggestions.length > 0) && (
-          <motion.div className="mb-8" variants={revealVariants}>
+          <motion.div className="mb-8">
             <PeopleYouMayKnow
               suggestions={suggestions}
               isLoading={suggestionsLoading}
@@ -427,7 +423,7 @@ export default function ConnectionsPage() {
         )}
 
         {/* Stats */}
-        <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8" variants={revealVariants}>
+        <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           <Card elevation="resting" className="text-center py-4">
             <div className="text-2xl font-semibold text-white">
               {stats.totalConnections}
@@ -463,7 +459,7 @@ export default function ConnectionsPage() {
         </motion.div>
 
         {/* Tabs */}
-        <motion.div className="mb-6" variants={revealVariants}>
+        <motion.div className="mb-6">
           <div className="flex gap-2 overflow-x-auto pb-2">
             {[
               { id: 'all', label: 'All' },
@@ -495,7 +491,7 @@ export default function ConnectionsPage() {
         </motion.div>
 
         {/* Search */}
-        <motion.div className="mb-6" variants={revealVariants}>
+        <motion.div className="mb-6">
           <Input
             placeholder="Search connections..."
             value={searchQuery}
@@ -504,7 +500,7 @@ export default function ConnectionsPage() {
         </motion.div>
 
         {/* Content */}
-        <motion.div variants={revealVariants}>
+        <motion.div>
           {activeTab === 'requests' && receivedRequests.length > 0 && (
             <div className="mb-8">
               <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">
@@ -622,7 +618,6 @@ function ConnectionCard({
 
   return (
     <motion.div
-      variants={cardHoverVariants}
       initial="rest"
       whileHover="hover"
     >

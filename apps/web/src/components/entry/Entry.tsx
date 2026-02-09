@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEntry, type EntryPhase } from './hooks/useEntry';
 import { EntryShell } from './EntryShell';
-import { type EmotionalState, DURATION, EASE_PREMIUM, GOLD } from './motion/entry-motion';
+import { type EntryTone, DURATION, EASE_PREMIUM, GOLD } from './motion/constants';
 
 // Screens
 import { GateScreen } from './screens/GateScreen';
@@ -34,9 +34,9 @@ const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)
 export { clashDisplay };
 
 /**
- * Map entry phase to emotional state for ambient glow
+ * Map entry phase to tone for ambient background
  */
-function getEmotionalState(phase: EntryPhase): EmotionalState {
+function getEntryTone(phase: EntryPhase): EntryTone {
   switch (phase) {
     case 'gate':
       return 'neutral';
@@ -142,7 +142,7 @@ export function Entry() {
 
   return (
     <EntryShell
-      emotionalState={getEmotionalState(entry.phase)}
+      entryTone={getEntryTone(entry.phase)}
       isLoading={false}
       contentMaxWidth={entry.phase === 'field' ? 'max-w-2xl' : 'max-w-md'}
       footer={<ProgressDots currentPhase={entry.phase} />}

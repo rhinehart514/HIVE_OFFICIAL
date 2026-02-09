@@ -45,7 +45,7 @@ const config: Config = {
       // ============================================
       colors: {
         // Foundation Surfaces - Neutral grays from tokens
-        void: '#050505',
+        void: '#000000',
         ground: foundation.gray[1000],       // #0A0A0A
         surface: {
           DEFAULT: foundation.gray[900],     // #141414
@@ -74,10 +74,10 @@ const config: Config = {
           gold: foundation.gold[500],          // #FFD700
           'gold-hover': foundation.gold.hover, // #E6C200
           'gold-active': foundation.gold.dim,  // #CC9900
-          pulse: 'rgba(255, 215, 0, 0.60)',
-          glow: foundation.gold.glow,          // rgba(255, 215, 0, 0.15)
+          pulse: foundation.gold[500],
+          glow: 'transparent',
           subtle: foundation.gold.subtle,      // rgba(255, 215, 0, 0.1)
-          edge: foundation.gold.glow,
+          edge: foundation.gold.border,
         },
 
         // Status - From semantic tokens
@@ -166,21 +166,21 @@ const config: Config = {
         'md': '0 4px 12px rgba(0, 0, 0, 0.4)',
         'lg': '0 8px 24px rgba(0, 0, 0, 0.5)',
         'xl': '0 16px 48px rgba(0, 0, 0, 0.6)',
-        // Gold glows (for life elements)
-        'glow-sm': '0 0 20px rgba(255, 215, 0, 0.15)',
-        'glow-md': '0 0 40px rgba(255, 215, 0, 0.20)',
-        'glow-lg': '0 0 60px rgba(255, 215, 0, 0.25)',
+        // Legacy aliases with no glow behavior
+        'glow-sm': 'none',
+        'glow-md': 'none',
+        'glow-lg': 'none',
         // White glow (for focus/hover)
-        'glow-white': '0 0 30px rgba(255, 255, 255, 0.10)',
+        'glow-white': 'none',
         // Focus ring
         'focus': '0 0 0 2px rgba(255, 255, 255, 0.5)',
       },
       backdropBlur: {
-        'subtle': '4px',
-        'glass': '8px',
-        'medium': '12px',
-        'heavy': '16px',
-        'atmosphere': '40px',
+        'subtle': '0px',
+        'glass': '0px',
+        'medium': '0px',
+        'heavy': '0px',
+        'atmosphere': '0px',
       },
       zIndex: {
         'base': '0',
@@ -201,13 +201,11 @@ const config: Config = {
         'instant': '0ms',
         'snap': '100ms',
         'fast': '150ms',
-        'quick': '200ms',
-        'smooth': '300ms',
-        'gentle': '400ms',
-        'slow': '500ms',
-        'dramatic': '700ms',
-        'breathe': '3000ms',
-        'drift': '20000ms',
+        'quick': '150ms',
+        'smooth': '150ms',
+        'gentle': '200ms',
+        'slow': '250ms',
+        'dramatic': '300ms',
       },
       transitionTimingFunction: {
         'smooth': 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -215,29 +213,11 @@ const config: Config = {
         'in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
       keyframes: {
-        // Life animations (from LANGUAGE.md)
-        breathe: {
-          '0%, 100%': { opacity: '0.6' },
-          '50%': { opacity: '1' },
-        },
-        pulse: {
-          '0%, 100%': { transform: 'scale(1)', opacity: '1' },
-          '50%': { transform: 'scale(1.05)', opacity: '0.8' },
-        },
         // Error feedback animation
         shake: {
           '0%, 100%': { transform: 'translateX(0)' },
           '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-4px)' },
           '20%, 40%, 60%, 80%': { transform: 'translateX(4px)' },
-        },
-        drift: {
-          '0%': { transform: 'translate(0, 0)' },
-          '50%': { transform: 'translate(10px, 5px)' },
-          '100%': { transform: 'translate(0, 0)' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
         },
         // Legacy animations (preserved)
         'shine-rotate': {
@@ -249,28 +229,13 @@ const config: Config = {
           '0%': { offsetDistance: '0%' },
           '100%': { offsetDistance: '100%' },
         },
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-5px)' },
-        },
-        'pulse-gold': {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(255, 215, 0, 0.4)' },
-          '50%': { boxShadow: '0 0 0 8px rgba(255, 215, 0, 0)' },
-        },
       },
       animation: {
-        // Design system animations
-        'breathe': 'breathe 4s ease-in-out infinite',
-        'pulse-life': 'pulse 3s ease-in-out infinite',
-        'drift': 'drift 20s ease-in-out infinite',
-        'shimmer': 'shimmer 2s linear infinite',
         // Error feedback
         'shake': 'shake 0.5s ease-in-out',
         // Legacy animations
         'shine-rotate': 'shine-rotate var(--shine-duration, 14s) linear infinite',
         'border-beam': 'border-beam var(--beam-duration, 12s) linear infinite',
-        'float': 'float 3s ease-in-out infinite',
-        'pulse-gold': 'pulse-gold 2s ease-in-out infinite',
       },
 
       // ============================================

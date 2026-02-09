@@ -165,7 +165,7 @@ export function CompactSurface({
         {expandable && (
           <motion.div
             className="flex-shrink-0 text-gray-500"
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ opacity: 0.9 }}
             whileTap={{ scale: 0.95 }}
           >
             <svg

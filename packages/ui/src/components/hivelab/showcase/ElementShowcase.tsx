@@ -179,7 +179,7 @@ export function ElementShowcase({
         className
       )}
       onClick={handleClick}
-      whileHover={{ y: -4, opacity: 0.9 }}
+      whileHover={{ opacity: 0.9 }}
       whileTap={{ opacity: 0.8 }}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}

@@ -34,7 +34,7 @@ export const elevationLevels = {
   2: {
     zIndex: 'z-20',
     shadow: 'shadow-xl',
-    transform: '-translate-y-2',
+    transform: '',
     description: 'Hover states, lifted cards',
   },
   3: {
@@ -64,8 +64,8 @@ export const elevation = {
   /** Level 1: Cards at rest */
   rest: 'z-10 shadow-lg',
 
-  /** Level 2: Hover state with lift */
-  hover: 'z-20 shadow-xl -translate-y-2',
+  /** Level 2: Hover state with emphasis */
+  hover: 'z-20 shadow-xl',
 
   /** Level 3: Floating UI */
   floating: 'z-30 shadow-2xl',
@@ -204,22 +204,22 @@ export const cardDepth = {
   default: cn(
     elevation.rest,
     'transition-all duration-200',
-    'hover:shadow-xl hover:-translate-y-2'
+    'hover:shadow-xl'
   ),
 
   /** Interactive card with pronounced lift */
   interactive: cn(
     elevation.rest,
     'transition-all duration-200',
-    'hover:shadow-[0_24px_48px_rgba(0,0,0,0.3)] hover:-translate-y-2',
-    'active:shadow-xl active:-translate-y-1'
+    'hover:shadow-[0_24px_48px_rgba(0,0,0,0.3)]',
+    'active:shadow-xl'
   ),
 
   /** Hero card with maximum lift */
   hero: cn(
     'z-10 shadow-xl',
     'transition-all duration-300',
-    'hover:shadow-[0_32px_64px_rgba(0,0,0,0.4)] hover:-translate-y-3'
+    'hover:shadow-[0_32px_64px_rgba(0,0,0,0.4)]'
   ),
 
   /** Static card - no hover effects */

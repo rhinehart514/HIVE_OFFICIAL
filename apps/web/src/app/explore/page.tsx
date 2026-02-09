@@ -41,10 +41,7 @@ import {
   MOTION,
 } from '@hive/ui/design-system/primitives';
 import {
-  staggerContainerVariants,
-  revealVariants,
-  cardHoverVariants,
-} from '@hive/tokens';
+  } from '@hive/tokens';
 import { Calendar, Users, TrendingUp, Sparkles, Wrench } from 'lucide-react';
 import { toast } from '@hive/ui';
 import { logger } from '@/lib/logger';
@@ -384,7 +381,6 @@ function ForYouSection({
     >
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        variants={staggerContainerVariants}
         initial="initial"
         animate="animate"
       >
@@ -396,7 +392,6 @@ function ForYouSection({
       {personalizedSpaces.length < 3 && ghostSpaces.length > 0 && (
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4"
-          variants={staggerContainerVariants}
           initial="initial"
           animate="animate"
         >
@@ -440,7 +435,6 @@ function PopularSection({
     <FeedSection title="Popular This Week" icon={<TrendingUp className="w-4 h-4" />}>
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        variants={staggerContainerVariants}
         initial="initial"
         animate="animate"
       >
@@ -492,7 +486,6 @@ function PeopleMajorSection({
     >
       <motion.div
         className="grid grid-cols-2 md:grid-cols-3 gap-3"
-        variants={staggerContainerVariants}
         initial="initial"
         animate="animate"
       >
@@ -561,7 +554,6 @@ function UpcomingEventsSection({
     <FeedSection title="Upcoming Events" icon={<Calendar className="w-4 h-4" />}>
       <motion.div
         className="space-y-3"
-        variants={staggerContainerVariants}
         initial="initial"
         animate="animate"
       >
@@ -723,7 +715,6 @@ function SearchResultsSection({
         <FeedSection title={`Spaces matching "${query}"`}>
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-            variants={staggerContainerVariants}
             initial="initial"
             animate="animate"
           >
@@ -738,7 +729,6 @@ function SearchResultsSection({
         <FeedSection title="Unclaimed Spaces">
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-            variants={staggerContainerVariants}
             initial="initial"
             animate="animate"
           >
@@ -753,7 +743,6 @@ function SearchResultsSection({
         <FeedSection title={`People matching "${query}"`}>
           <motion.div
             className="grid grid-cols-2 md:grid-cols-3 gap-3"
-            variants={staggerContainerVariants}
             initial="initial"
             animate="animate"
           >
@@ -768,7 +757,6 @@ function SearchResultsSection({
         <FeedSection title={`Events matching "${query}"`}>
           <motion.div
             className="space-y-3"
-            variants={staggerContainerVariants}
             initial="initial"
             animate="animate"
           >
@@ -832,9 +820,9 @@ function FeedSection({
 
 function PersonCompactCard({ person }: { person: PersonData & { spacesCount?: number } }) {
   return (
-    <motion.div variants={revealVariants} whileHover="hover" initial="initial">
+    <motion.div whileHover="hover" initial="initial">
       <Link href={`/profile/${person.id}`}>
-        <motion.div variants={cardHoverVariants}>
+        <motion.div>
           <GlassSurface
             intensity="subtle"
             className={cn(
@@ -911,9 +899,9 @@ function EventCompactCard({
   });
 
   return (
-    <motion.div variants={revealVariants} whileHover="hover" initial="initial">
+    <motion.div whileHover="hover" initial="initial">
       <Link href={event.spaceHandle ? `/s/${event.spaceHandle}/events/${event.id}` : '#'}>
-        <motion.div variants={cardHoverVariants}>
+        <motion.div>
           <GlassSurface
             intensity="subtle"
             className={cn(

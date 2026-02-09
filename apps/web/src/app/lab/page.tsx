@@ -26,7 +26,6 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { MOTION, staggerPresets, durationSeconds } from '@hive/tokens';
-import { staggerContainerVariants, staggerItemVariants, fadeInUpVariants } from '@hive/ui/lib/motion-variants';
 import {
   BrandSpinner,
   getQuickTemplate,
@@ -56,6 +55,43 @@ const DURATION = {
 
 // Stagger for word reveals
 const STAGGER = staggerPresets;
+
+const fadeInUpVariants = {
+  initial: { opacity: 0, y: 10 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+  },
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const listVariants = {
+  initial: { opacity: 1 },
+  animate: { opacity: 1, transition: { staggerChildren: 0.04 } },
+  hidden: { opacity: 1 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
+};
+
+const staggerItemVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+  },
+  hidden: { opacity: 0, y: 8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 // Featured template IDs (shown for new users)
 const FEATURED_TEMPLATE_IDS = [
@@ -462,7 +498,6 @@ export default function BuilderDashboard() {
               </div>
               <motion.div
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
-                variants={staggerContainerVariants}
                 initial="hidden"
                 animate="visible"
               >

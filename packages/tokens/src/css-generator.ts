@@ -16,8 +16,8 @@ const colors = {
 };
 
 const overlay = {
-  glass: 'rgba(255, 255, 255, 0.04)',
-  'glass-strong': 'rgba(255, 255, 255, 0.08)',
+  glass: '#0A0A0A',
+  'glass-strong': '#141414',
   modal: 'rgba(0, 0, 0, 0.6)',
 };
 
@@ -29,8 +29,8 @@ const shadows = {
   sm: '0 1px 2px rgba(0, 0, 0, 0.3)',
   md: '0 4px 12px rgba(0, 0, 0, 0.4)',
   lg: '0 8px 24px rgba(0, 0, 0, 0.5)',
-  'gold-glow': '0 0 20px rgba(255, 215, 0, 0.15)',
-  'gold-glow-strong': '0 0 30px rgba(255, 215, 0, 0.25)',
+  'gold-glow': 'none',
+  'gold-glow-strong': 'none',
 };
 
 const border = {
@@ -163,9 +163,9 @@ export function generateCSSCustomProperties(): string {
   });
   
   // Add missing shadow variants that components expect
-  cssVars.push(`  --hive-shadow-gold-glow: 0 0 20px rgba(255, 215, 0, 0.3);`);
-  cssVars.push(`  --hive-shadow-gold-glow-strong: 0 0 30px rgba(255, 215, 0, 0.4);`);
-  cssVars.push(`  --hive-shadow-emerald-glow: 0 0 20px rgba(16, 185, 129, 0.3);`);
+  cssVars.push(`  --hive-shadow-gold-glow: none;`);
+  cssVars.push(`  --hive-shadow-gold-glow-strong: none;`);
+  cssVars.push(`  --hive-shadow-emerald-glow: none;`);
   
   Object.entries(effects.backdropBlur).forEach(([key, value]) => {
     cssVars.push(`  --hive-backdrop-blur-${key}: ${value};`);
@@ -218,22 +218,20 @@ export function generateUtilityClasses(): string {
   const utilities: string[] = [];
   
   utilities.push('@layer utilities {');
-  utilities.push('  /* HIVE Glass Morphism */');
+  utilities.push('  /* HIVE Surface Utilities (legacy aliases) */');
   utilities.push('  .hive-glass {');
   utilities.push(`    background: ${overlay.glass};`);
-  utilities.push('    backdrop-filter: blur(12px) saturate(180%);');
-  utilities.push('    border: 1px solid var(--hive-overlay-glass);');
+  utilities.push('    border: 1px solid var(--hive-border-default);');
   utilities.push('  }');
   utilities.push('');
   
   utilities.push('  .hive-glass-strong {');
   utilities.push(`    background: ${overlay['glass-strong']};`);
-  utilities.push('    backdrop-filter: blur(16px) saturate(200%);');
-  utilities.push('    border: 1px solid var(--hive-overlay-glass-strong);');
+  utilities.push('    border: 1px solid var(--hive-border-hover);');
   utilities.push('  }');
   utilities.push('');
   
-  utilities.push('  /* HIVE Gold Glow Effects */');
+  utilities.push('  /* HIVE Gold Glow Effects (disabled) */');
   utilities.push('  .hive-gold-glow {');
   utilities.push(`    box-shadow: ${shadows['gold-glow']};`);
   utilities.push('  }');
@@ -246,21 +244,17 @@ export function generateUtilityClasses(): string {
   
   utilities.push('  /* HIVE Interactive States */');
   utilities.push('  .hive-interactive {');
-  utilities.push('    transition: all var(--hive-duration-smooth) var(--hive-easing-liquid);');
-  utilities.push('    will-change: transform, box-shadow;');
-  utilities.push('    transform-origin: center;');
-  utilities.push('    backface-visibility: hidden;');
-  utilities.push('    transform: translateZ(0);');
+  utilities.push('    transition: background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);');
   utilities.push('  }');
   utilities.push('');
   
   utilities.push('  .hive-interactive:hover {');
-  utilities.push('    transform: translateY(var(--hive-transform-moveHover)) scale(var(--hive-transform-scaleHover));');
+  utilities.push('    background: var(--hive-interactive-hover);');
   utilities.push('  }');
   utilities.push('');
   
   utilities.push('  .hive-interactive:active {');
-  utilities.push('    transform: translateY(var(--hive-transform-movePress)) scale(var(--hive-transform-scaleTap));');
+  utilities.push('    background: var(--hive-interactive-active);');
   utilities.push('  }');
   utilities.push('');
   
@@ -290,13 +284,13 @@ export function generateUtilityClasses(): string {
   utilities.push('  /* HIVE Glow Effects */');
   utilities.push('  .hive-glow-gold {');
   utilities.push('    box-shadow: var(--hive-shadow-goldGlow);');
-  utilities.push('    transition: box-shadow var(--hive-duration-smooth) var(--hive-easing-liquid);');
+  utilities.push('    transition: box-shadow 150ms cubic-bezier(0.22, 1, 0.36, 1);');
   utilities.push('  }');
   utilities.push('');
   
   utilities.push('  .hive-glow-emerald {');
   utilities.push('    box-shadow: var(--hive-shadow-emeraldGlow);');
-  utilities.push('    transition: box-shadow var(--hive-duration-smooth) var(--hive-easing-liquid);');
+  utilities.push('    transition: box-shadow 150ms cubic-bezier(0.22, 1, 0.36, 1);');
   utilities.push('  }');
   utilities.push('}');
   

@@ -214,7 +214,7 @@ function TemplateCard({ template, onClick, index }: TemplateCardProps) {
         delay: shouldReduceMotion ? 0 : 0.1 + index * 0.08,
         ease: EASE,
       }}
-      whileHover={{ y: -2 }}
+      whileHover={{ opacity: 0.96 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
         'relative flex flex-col items-center text-center p-5 rounded-xl',

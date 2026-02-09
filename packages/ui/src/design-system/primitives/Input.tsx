@@ -2,13 +2,12 @@
 
 /**
  * Input Primitive
- * REFINED: Jan 29, 2026 - Matches /about aesthetic
+ * REFINED: Feb 9, 2026 - Cold, minimal spec
  *
  * Design principles:
- * - Subtle border, not heavy shadows
- * - Flat background with slight transparency
- * - White focus ring
- * - Minimal, restrained
+ * - Flat cold surface
+ * - 12px card radius
+ * - Quiet borders with clear focus
  */
 
 import * as React from 'react';
@@ -18,16 +17,16 @@ import { cn } from '../../lib/utils';
 const inputVariants = cva(
   [
     'w-full',
-    'bg-white/[0.03]',
+    'bg-[#0A0A0A]',
     'text-white',
-    'placeholder:text-white/25',
-    'border border-white/10',
-    'rounded-xl',
+    'placeholder:text-white/40',
+    'border border-white/[0.08]',
+    'rounded-[12px]',
     'outline-none',
-    'transition-all duration-200 ease-out',
-    'focus:border-white/20 focus:bg-white/[0.05]',
-    'focus-visible:ring-2 focus-visible:ring-white/20',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]',
+    'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
+    'focus:border-white/[0.2] focus:bg-[#141414]',
+    'focus-visible:ring-2 focus-visible:ring-white/[0.20]',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
     'disabled:opacity-40 disabled:cursor-not-allowed',
   ].join(' '),
   {

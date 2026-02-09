@@ -74,7 +74,7 @@ export function ProfileStatsWidget({
         border: '1px solid var(--border-default)',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
       }}
-      whileHover={{ y: -2 }}
+      whileHover={{ opacity: 0.96 }}
       transition={{ duration: 0.2 }}
     >
       {/* Gradient overlay */}

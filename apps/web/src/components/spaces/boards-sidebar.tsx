@@ -595,7 +595,7 @@ export function BoardsSidebar({
             'transition-all duration-150',
             'border border-dashed border-white/[0.06] hover:border-white/[0.12]'
           )}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ opacity: 0.96 }}
           whileTap={{ scale: 0.98 }}
         >
           <PlusIcon className="w-4 h-4" />

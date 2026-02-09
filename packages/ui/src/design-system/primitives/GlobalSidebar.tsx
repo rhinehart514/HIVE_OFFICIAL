@@ -19,7 +19,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { easingArrays, durationSeconds, springPresets, SPRING_SNAP_NAV, staggerContainerVariants, staggerPresets } from '@hive/tokens';
+import { easingArrays, durationSeconds, springPresets, SPRING_SNAP_NAV } from '@hive/tokens';
 
 // ============================================
 // TOKENS
@@ -68,6 +68,16 @@ const itemEntranceVariants: Variants = {
   animate: {
     opacity: 1,
     transition: { duration: durationSeconds.smooth, ease: easingArrays.default },
+  },
+};
+
+/** Stagger wrapper for nav lists */
+const listContainerVariants: Variants = {
+  initial: {},
+  animate: {
+    transition: {
+      staggerChildren: 0.05,
+    },
   },
 };
 
@@ -248,7 +258,7 @@ export function NavCard({ children }: NavCardProps) {
     <nav className="px-3 py-1">
       <motion.div
         className="space-y-0.5"
-        variants={staggerContainerVariants}
+        variants={listContainerVariants}
         initial="initial"
         animate="animate"
       >
@@ -386,7 +396,7 @@ export function SpacesCard({ children, onBrowseClick }: SpacesCardProps) {
       {/* List */}
       <motion.div
         className="flex-1 overflow-y-auto px-3 space-y-0.5"
-        variants={staggerContainerVariants}
+        variants={listContainerVariants}
         initial="initial"
         animate="animate"
       >

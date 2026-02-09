@@ -8,6 +8,8 @@ import { DMProvider } from "@/contexts/dm-context";
 import { DMPanel } from "@/components/dm";
 import { AdminToolbarProvider } from "@/components/admin/AdminToolbarProvider";
 import { useFCMRegistration } from "@/hooks/use-fcm-registration";
+import { initErrorMonitoring, setUserContext, clearUserContext } from "@/lib/error-monitoring";
+import { useAuth } from "@hive/auth-logic";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -65,6 +67,26 @@ function FCMRegistration() {
   return null;
 }
 
+/**
+ * ErrorUserContextTracker - Tracks user context for error monitoring
+ *
+ * Updates Sentry/error monitoring with user info when they log in/out.
+ * Helps identify which user experienced an error.
+ */
+function ErrorUserContextTracker() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      setUserContext(user.id, user.email || undefined);
+    } else {
+      clearUserContext();
+    }
+  }, [user]);
+
+  return null;
+}
+
 export function Providers({ children }: ProvidersProps) {
   // Create QueryClient instance once per app lifecycle
   const [queryClient] = useState(
@@ -85,6 +107,11 @@ export function Providers({ children }: ProvidersProps) {
       })
   );
 
+  // Initialize error monitoring on mount
+  useEffect(() => {
+    initErrorMonitoring();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
@@ -103,6 +130,7 @@ export function Providers({ children }: ProvidersProps) {
               <Toaster />
               <ToastBridge />
               <FCMRegistration />
+              <ErrorUserContextTracker />
             </DMProvider>
           </PageTransitionProvider>
         </AtmosphereProvider>

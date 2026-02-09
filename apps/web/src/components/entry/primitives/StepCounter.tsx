@@ -8,7 +8,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { EASE_PREMIUM, DURATION } from '../motion/entry-motion';
+import { EASE_PREMIUM, DURATION } from '../motion/constants';
 
 interface StepCounterProps {
   /** Current step (1-indexed) */

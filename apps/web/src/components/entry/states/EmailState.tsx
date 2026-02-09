@@ -17,7 +17,7 @@ import {
   errorVariants,
   EASE_PREMIUM,
   DURATION,
-} from '../motion/entry-motion';
+} from '../motion/constants';
 
 export interface EmailStateProps {
   /** Current email value */

@@ -3,31 +3,26 @@
 /**
  * SpaceTabs - Tab navigation for space pages
  *
- * Tabs: Tools (default) | Chat | Events
+ * Chat-only navigation
  */
 
 import { motion } from 'framer-motion';
-import { Wrench, MessageSquare, Calendar } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MOTION } from '@hive/ui/design-system/primitives';
 
-export type SpaceTab = 'tools' | 'chat' | 'events';
+export type SpaceTab = 'chat';
 
 interface SpaceTabsProps {
-  activeTab: SpaceTab;
-  onTabChange: (tab: SpaceTab) => void;
-  toolsCount?: number;
+  onTabChange?: (tab: SpaceTab) => void;
   unreadCount?: number;
-  eventsCount?: number;
 }
 
 export function SpaceTabs({
-  activeTab,
   onTabChange,
-  toolsCount = 0,
   unreadCount = 0,
-  eventsCount = 0,
 }: SpaceTabsProps) {
+  const activeTab: SpaceTab = 'chat';
   const tabs: Array<{
     id: SpaceTab;
     label: string;
@@ -35,22 +30,10 @@ export function SpaceTabs({
     count?: number;
   }> = [
     {
-      id: 'tools',
-      label: 'Tools',
-      icon: <Wrench className="w-4 h-4" />,
-      count: toolsCount,
-    },
-    {
       id: 'chat',
       label: 'Chat',
       icon: <MessageSquare className="w-4 h-4" />,
       count: unreadCount,
-    },
-    {
-      id: 'events',
-      label: 'Events',
-      icon: <Calendar className="w-4 h-4" />,
-      count: eventsCount,
     },
   ];
 
@@ -62,7 +45,7 @@ export function SpaceTabs({
           return (
             <button
               key={tab.id}
-              onClick={() => onTabChange(tab.id)}
+              onClick={() => onTabChange?.(tab.id)}
               className={cn(
                 'relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
                 isActive

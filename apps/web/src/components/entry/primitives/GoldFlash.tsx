@@ -13,7 +13,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { GOLD } from '../motion/entry-motion';
+import { GOLD } from '../motion/constants';
 
 interface GoldFlashProps {
   /** Whether to show the flash */

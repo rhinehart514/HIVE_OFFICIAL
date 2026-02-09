@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Wrench, Search, Sparkles, FlaskConical, Building2, TrendingUp } from 'lucide-react';
 import { Tilt, GlassSurface, Badge, Button } from '@hive/ui/design-system/primitives';
-import { MOTION, revealVariants, staggerContainerVariants, cardHoverVariants } from '@hive/tokens';
+import { MOTION } from '@hive/tokens';
 import { cn } from '@/lib/utils';
 
 export interface DeployedSpace {
@@ -142,7 +142,6 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
   return (
     <motion.div
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-      variants={staggerContainerVariants}
       initial="initial"
       animate="animate"
     >
@@ -166,12 +165,11 @@ function ToolCard({ tool }: ToolCardProps) {
 
   return (
     <motion.div
-      variants={revealVariants}
       whileHover="hover"
       initial="initial"
     >
       <Tilt intensity={4}>
-        <motion.div variants={cardHoverVariants}>
+        <motion.div>
           <GlassSurface
             intensity="subtle"
             className={cn(

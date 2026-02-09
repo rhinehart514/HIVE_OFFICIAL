@@ -19,7 +19,7 @@ import {
   Tilt,
   MOTION,
 } from '@hive/ui/design-system/primitives';
-import { staggerContainerVariants, revealVariants, cardHoverVariants } from '@hive/tokens';
+import { } from '@hive/tokens';
 import { cn } from '@/lib/utils';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 
@@ -85,7 +85,6 @@ export function ToolsFeed({
     <div className="p-6 md:p-8">
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        variants={staggerContainerVariants}
         initial="initial"
         animate="animate"
       >
@@ -145,12 +144,11 @@ function ToolCard({ tool, spaceHandle }: ToolCardProps) {
 
   return (
     <motion.div
-      variants={revealVariants}
       whileHover="hover"
       initial="initial"
     >
       <Tilt intensity={4}>
-        <motion.div variants={cardHoverVariants} onClick={handleClick}>
+        <motion.div onClick={handleClick}>
           <GlassSurface
             intensity="subtle"
             className={cn(

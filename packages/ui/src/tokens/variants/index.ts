@@ -54,21 +54,6 @@ export {
   morphReduced,
 } from './morph';
 
-// CASCADE - List stagger
-export {
-  CASCADE,
-  cascadeContainer,
-  cascadeContainerFast,
-  cascadeContainerSlow,
-  cascadeItem,
-  cascadeItemFade,
-  cascadeItemScale,
-  cascadeItemSlide,
-  cascadeMessage,
-  cascadeExit,
-  cascadeReduced,
-} from './cascade';
-
 // OVERLAY - Modals, dialogs
 export {
   OVERLAY,

@@ -7,8 +7,6 @@ import {
   Avatar,
   AvatarImage,
   AvatarFallback,
-  premiumContainerVariants,
-  premiumItemVariants,
 } from '@hive/ui';
 import {
   MapPinIcon,
@@ -19,6 +17,23 @@ import type { ProfileV2ApiResponse } from '@/components/profile/profile-adapter'
 import { ProfileStat } from './ProfileStat';
 import { ProfileActions } from './ProfileActions';
 import { ProfileInterests } from './ProfileInterests';
+
+const headerContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 },
+  },
+};
+
+const headerItemVariants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 interface ProfileHeaderProps {
   profileData: ProfileV2ApiResponse;
@@ -47,7 +62,7 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   return (
     <motion.header
-      variants={premiumContainerVariants}
+      variants={headerContainerVariants}
       initial="hidden"
       animate="visible"
       className="relative w-full border-b border-[var(--border)]"
@@ -55,7 +70,7 @@ export function ProfileHeader({
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
         {/* Avatar + Identity Row */}
         <motion.div
-          variants={premiumItemVariants}
+          variants={headerItemVariants}
           className="flex flex-col sm:flex-row items-center sm:items-start gap-6"
         >
           {/* Avatar */}
@@ -150,7 +165,7 @@ export function ProfileHeader({
 
         {/* Stats Bar */}
         <motion.div
-          variants={premiumItemVariants}
+          variants={headerItemVariants}
           className="mt-8 flex flex-wrap justify-center sm:justify-start items-center gap-4 sm:gap-8 py-4 border-t border-b border-[var(--border)]"
         >
           <ProfileStat label={statItems[0].label} value={statItems[0].value} delay={0} />
@@ -160,14 +175,14 @@ export function ProfileHeader({
         </motion.div>
 
         {/* Action Buttons */}
-        <motion.div variants={premiumItemVariants} className="mt-6">
+        <motion.div variants={headerItemVariants} className="mt-6">
           <ProfileActions isOwnProfile={isOwnProfile} onEditProfile={onEditProfile} />
         </motion.div>
 
         {/* Interests */}
         <ProfileInterests
           interests={profileData.profile.interests ?? []}
-          variants={premiumItemVariants}
+          variants={headerItemVariants}
         />
       </div>
     </motion.header>

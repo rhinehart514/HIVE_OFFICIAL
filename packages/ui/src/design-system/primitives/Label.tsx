@@ -2,9 +2,9 @@
 
 /**
  * Label Primitive
- * LOCKED: January 2026
+ * REFINED: Feb 9, 2026
  *
- * Form labels using Geist font with locked token application.
+ * Form labels use a mono uppercase treatment for compact hierarchy.
  */
 
 import * as React from 'react';
@@ -12,21 +12,23 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const labelVariants = cva(
-  // Base: Geist font, medium weight, secondary color
+  // Base: Geist Mono uppercase pattern
   [
-    'font-[var(--font-body)]',
+    'font-[var(--font-mono)]',
     'font-medium',
-    'text-[var(--color-text-secondary)]',
+    'uppercase',
+    'tracking-[0.08em]',
+    'text-white/50',
     'leading-none',
   ].join(' '),
   {
     variants: {
       size: {
-        default: 'text-[var(--font-size-body-xs)]', // 13px
-        sm: 'text-label',                          // 12px
+        default: 'text-[11px]',
+        sm: 'text-[10px]',
       },
       required: {
-        true: "after:content-['*'] after:ml-0.5 after:text-[var(--color-status-error)]",
+        true: "after:content-['*'] after:ml-0.5 after:text-[#EF4444]",
       },
       disabled: {
         true: 'opacity-50 cursor-not-allowed',

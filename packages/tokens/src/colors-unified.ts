@@ -26,47 +26,47 @@ export const foundation = {
 
   // Neutral gray scale (Apple-inspired, no tint)
   gray: {
-    1000: '#0A0A0A',      // Page background (bgBase)
-    900: '#141414',       // Surface (bgSurface) - cards, inputs
-    800: '#1A1A1A',       // Elevated (bgElevated) - hover states
-    750: '#242424',       // Active (bgActive) - pressed states
-    700: '#2A2A2A',       // Border default
-    600: '#3A3A3A',       // Border hover
-    500: '#4A4A4A',       // Border strong
-    400: '#52525B',       // Text disabled
-    350: '#71717A',       // Text placeholder
-    300: '#818187',       // Text subtle (was "muted")
-    200: '#A1A1A6',       // Text secondary
-    100: '#D4D4D8',       // Light text
-    50: '#FAFAFA',        // Text primary / Off-white
+    1000: '#000000',      // Page background (bgBase)
+    900: '#0A0A0A',       // Surface (bgSurface) - cards, inputs
+    800: '#141414',       // Elevated (bgElevated) - hover states
+    750: '#1A1A1A',       // Active (bgActive) - pressed states
+    700: '#262626',       // Border default
+    600: '#2E2E2E',       // Border hover
+    500: '#3A3A3A',       // Border strong
+    400: '#4D4D4D',       // Text disabled
+    350: '#666666',       // Text placeholder
+    300: '#808080',       // Text subtle
+    200: '#B3B3B3',       // Text secondary
+    100: '#D9D9D9',       // Light text
+    50: '#FFFFFF',        // Text primary
   },
 
   // Brand accent - Gold (Single canonical value)
   gold: {
     500: '#FFD700',       // Primary - canonical HIVE gold
-    hover: '#E6C200',     // Hover state
-    dim: '#CC9900',       // Dimmed/inactive
-    glow: 'rgba(255, 215, 0, 0.15)',    // Glow effect
+    hover: '#FFE033',     // Hover state
+    dim: '#E6C200',       // Dimmed/inactive
+    glow: 'transparent',  // Glow removed
     border: 'rgba(255, 215, 0, 0.3)',   // Gold borders
-    subtle: 'rgba(255, 215, 0, 0.1)',   // Subtle gold backgrounds
+    subtle: 'rgba(255, 215, 0, 0.12)',  // Subtle gold backgrounds
   },
 
   // Functional/Status colors
   green: {
-    500: '#00D46A',       // Success
-    dim: 'rgba(0, 212, 106, 0.15)',  // Success background
+    500: '#22C55E',       // Success
+    dim: 'rgba(34, 197, 94, 0.15)',  // Success background
   },
   yellow: {
-    500: '#FFB800',       // Warning
-    dim: 'rgba(255, 184, 0, 0.15)',  // Warning background
+    500: '#F59E0B',       // Warning
+    dim: 'rgba(245, 158, 11, 0.15)', // Warning background
   },
   red: {
-    500: '#FF3737',       // Error
-    dim: 'rgba(255, 55, 55, 0.15)',  // Error background
+    500: '#EF4444',       // Error
+    dim: 'rgba(239, 68, 68, 0.15)',  // Error background
   },
   blue: {
-    500: '#0070F3',       // Info
-    dim: 'rgba(0, 112, 243, 0.15)',  // Info background
+    500: '#3B82F6',       // Info
+    dim: 'rgba(59, 130, 246, 0.15)', // Info background
   },
 } as const;
 
@@ -91,10 +91,10 @@ export const semantic = {
   // Text hierarchy
   text: {
     primary: foundation.gray[50],       // #FAFAFA - Main content
-    secondary: foundation.gray[200],    // #A1A1A6 - Supporting content
-    subtle: foundation.gray[300],       // #818187 - Timestamps, metadata
-    placeholder: foundation.gray[350],  // #71717A - Placeholder text
-    disabled: foundation.gray[400],     // #52525B - Disabled states
+    secondary: 'rgba(255, 255, 255, 0.5)',   // Supporting content
+    subtle: 'rgba(255, 255, 255, 0.35)',     // Timestamps, metadata
+    placeholder: 'rgba(255, 255, 255, 0.35)',// Placeholder text
+    disabled: 'rgba(255, 255, 255, 0.25)',   // Disabled states
     inverse: foundation.black,          // #000000 - Text on gold/light
     // Legacy alias
     muted: foundation.gray[300],        // @deprecated use subtle
@@ -104,18 +104,18 @@ export const semantic = {
   // Brand system
   brand: {
     primary: foundation.gold[500],      // #FFD700 - HIVE gold
-    hover: foundation.gold.hover,       // #E6C200 - Gold hover
+    hover: foundation.gold.hover,       // Gold hover
     dim: foundation.gold.dim,           // #CC9900 - Dimmed gold
-    glow: foundation.gold.glow,         // Gold glow effect
+    glow: 'transparent',                // Glow removed
     onGold: foundation.black,           // #000000 - Text on gold backgrounds
   },
 
   // Interactive states
   interactive: {
-    hover: 'rgba(255, 255, 255, 0.04)',     // Subtle white hover
-    active: 'rgba(255, 255, 255, 0.08)',    // Active state
+    hover: 'rgba(255, 255, 255, 0.10)',     // Subtle white hover
+    active: 'rgba(255, 255, 255, 0.14)',    // Active state
     focus: 'rgba(255, 255, 255, 0.5)',      // White focus rings
-    focusRing: 'rgba(255, 255, 255, 0.1)',  // Focus ring glow
+    focusRing: 'rgba(255, 255, 255, 0.15)', // Focus ring
     disabled: foundation.gray[400],         // #52525B - Disabled
   },
 
@@ -127,7 +127,7 @@ export const semantic = {
     featured: foundation.gold[500],         // Featured badges
     subtle: foundation.gold.subtle,         // Subtle gold backgrounds
     border: foundation.gold.border,         // Gold borders
-    glow: foundation.gold.glow,             // Gold glow
+    glow: 'transparent',                    // Gold glow removed
   },
 
   // Status colors
@@ -144,14 +144,14 @@ export const semantic = {
 
   // Border system
   border: {
-    default: foundation.gray[700],          // #2A2A2A - Standard borders
-    hover: foundation.gray[600],            // #3A3A3A - Hover borders
-    strong: foundation.gray[500],           // #4A4A4A - Strong borders
+    default: 'rgba(255, 255, 255, 0.08)',   // Standard borders
+    hover: 'rgba(255, 255, 255, 0.12)',     // Hover borders
+    strong: 'rgba(255, 255, 255, 0.16)',    // Strong borders
     focus: 'rgba(255, 255, 255, 0.5)',      // White focus borders
     // Transparent variants
-    subtle: 'rgba(255, 255, 255, 0.04)',    // Very subtle borders
+    subtle: 'rgba(255, 255, 255, 0.06)',    // Very subtle borders
     medium: 'rgba(255, 255, 255, 0.08)',    // Medium borders
-    visible: 'rgba(255, 255, 255, 0.16)',   // Visible borders
+    visible: 'rgba(255, 255, 255, 0.12)',   // Visible borders
   },
 } as const;
 

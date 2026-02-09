@@ -2,7 +2,34 @@
 
 import * as React from 'react'
 import { motion } from 'framer-motion'
-import { gestures, transition, easing, duration } from './presets'
+
+const easing = {
+  default: [0.22, 1, 0.36, 1] as const,
+}
+
+const duration = {
+  instant: 0.15,
+  quick: 0.2,
+  smooth: 0.3,
+}
+
+const transition = {
+  default: { duration: duration.quick, ease: easing.default } as const,
+  snap: { duration: duration.instant, ease: easing.default } as const,
+  smooth: { duration: duration.smooth, ease: easing.default } as const,
+}
+
+const gestures = {
+  none: {},
+  button: {
+    whileHover: { opacity: 0.92 },
+    whileTap: { opacity: 0.86, transition: transition.snap },
+  },
+  card: {
+    whileHover: { opacity: 0.97, transition: transition.default },
+    whileTap: { opacity: 0.92, transition: transition.snap },
+  },
+} as const
 
 /**
  * HoverLift - Lifts element on hover.
@@ -18,10 +45,11 @@ export function HoverLift({
   lift = 2,
   className,
 }: HoverLiftProps) {
+  void lift
   return (
     <motion.div
       whileHover={{
-        y: -lift,
+        opacity: 0.96,
         transition: { duration: duration.quick, ease: easing.default },
       }}
       className={className}
@@ -45,14 +73,15 @@ export function HoverScale({
   scale = 1.02,
   className,
 }: HoverScaleProps) {
+  void scale
   return (
     <motion.div
       whileHover={{
-        scale,
+        opacity: 0.96,
         transition: { duration: duration.quick, ease: easing.default },
       }}
       whileTap={{
-        scale: 0.98,
+        opacity: 0.88,
         transition: { duration: duration.instant },
       }}
       className={className}
@@ -76,10 +105,11 @@ export function TapScale({
   scale = 0.98,
   className,
 }: TapScaleProps) {
+  void scale
   return (
     <motion.div
       whileTap={{
-        scale,
+        opacity: 0.88,
         transition: { duration: duration.instant },
       }}
       className={className}

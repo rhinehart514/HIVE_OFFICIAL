@@ -118,7 +118,7 @@ function ToolCard({ tool, onRun, onView, onRemove, canRemove }: ToolCardProps) {
 
   return (
     <motion.div
-      whileHover={{ y: -2 }}
+      whileHover={{ opacity: 0.96 }}
       className={cn(
         'relative rounded-2xl p-5',
         'bg-[#141312] border border-white/[0.06]',

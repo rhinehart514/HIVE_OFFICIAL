@@ -185,7 +185,7 @@ export const ELEVATION = {
   /** Level 1: Cards at rest */
   rest: 'z-10 shadow-lg',
   /** Level 2: Hover states, lifted cards */
-  hover: 'z-20 shadow-xl -translate-y-2',
+  hover: 'z-20 shadow-xl',
   /** Level 3: Floating UI, toolbars, dropdowns */
   floating: 'z-30 shadow-2xl',
   /** Level 4: Modals, overlays */

@@ -5,8 +5,8 @@
  */
 
 // Motion utilities and variants
-export * from './entry-motion';
-export * from './section-motion';
+export * from './constants';
+export * from './variants';
 
 // Motion components
 export { GoldCheckmark, type GoldCheckmarkProps } from './GoldCheckmark';

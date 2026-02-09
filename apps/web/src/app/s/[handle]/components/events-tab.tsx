@@ -10,7 +10,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Plus } from 'lucide-react';
 import { Button, MOTION } from '@hive/ui/design-system/primitives';
-import { staggerContainerVariants, revealVariants } from '@hive/tokens';
+import { } from '@hive/tokens';
 
 interface Event {
   id: string;
@@ -77,7 +77,6 @@ export function EventsTab({
     <div className="p-6 md:p-8">
       <motion.div
         className="space-y-4 max-w-4xl mx-auto"
-        variants={staggerContainerVariants}
         initial="initial"
         animate="animate"
       >
@@ -119,7 +118,6 @@ function EventCard({ event }: { event: Event }) {
 
   return (
     <motion.div
-      variants={revealVariants}
       className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/10 transition-colors"
     >
       <div className="flex items-start gap-4">

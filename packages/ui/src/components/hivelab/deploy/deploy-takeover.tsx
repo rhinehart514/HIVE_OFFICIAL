@@ -290,7 +290,7 @@ export function DeployTakeover({
                             key={space.id}
                             type="button"
                             onClick={() => handleSpaceSelect(space)}
-                            whileHover={{ scale: 1.01 }}
+                            whileHover={{ opacity: 0.97 }}
                             whileTap={{ scale: 0.99 }}
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200"
                             style={{

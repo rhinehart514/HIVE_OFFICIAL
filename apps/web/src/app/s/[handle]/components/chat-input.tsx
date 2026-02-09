@@ -227,11 +227,11 @@ export function ChatInput({
         <div
           className={cn(
             'absolute bottom-full left-3 right-3 mb-2',
-            'bg-[var(--bg-elevated)] border border-white/[0.08] rounded-xl shadow-lg',
+            'bg-[var(--bg-elevated)] border border-white/[0.06] rounded-xl',
             'py-2 max-h-[200px] overflow-y-auto'
           )}
         >
-          <div className="px-3 py-1.5 text-xs text-white/40 flex items-center gap-1.5">
+          <div className="px-3 py-1.5 text-xs text-white/50 flex items-center gap-1.5 font-mono uppercase tracking-wider">
             <Command className="w-3 h-3" />
             Quick Actions
           </div>
@@ -246,15 +246,15 @@ export function ChatInput({
               className={cn(
                 'w-full px-3 py-2 text-left text-sm transition-colors',
                 index === selectedSuggestionIndex
-                  ? 'bg-white/[0.08] text-white'
-                  : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-white/[0.04] text-white'
+                  : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
               )}
             >
               {suggestion}
             </button>
           ))}
-          <div className="px-3 py-1.5 mt-1 text-xs text-white/30 border-t border-white/[0.06]">
-            Tab or Enter to select • Esc to dismiss
+          <div className="px-3 py-1.5 mt-1 text-xs text-white/50 border-t border-white/[0.06]">
+            Tab or Enter • Esc to close
           </div>
         </div>
       )}
@@ -323,7 +323,7 @@ export function ChatInput({
           <span className="sr-only">Add image</span>
         </Button>
 
-        {/* Text input */}
+        {/* Text input - pill shape */}
         <div className="flex-1 relative">
           <textarea
             ref={textareaRef}
@@ -335,14 +335,14 @@ export function ChatInput({
             rows={1}
             className={cn(
               'w-full px-4 py-2.5',
-              'rounded-xl text-sm',
+              'rounded-full text-sm',
               'bg-white/[0.04] hover:bg-white/[0.06]',
               'border border-white/[0.06]',
-              'text-white placeholder:text-white/30',
+              'text-white placeholder:text-white/50',
               'resize-none',
-              'focus:outline-none focus:ring-2 focus:ring-white/50',
+              'focus:outline-none focus:ring-1 focus:ring-white/20',
               'disabled:opacity-50',
-              'transition-all duration-150'
+              'transition-colors'
             )}
             style={{ minHeight: 40, maxHeight: 120 }}
           />

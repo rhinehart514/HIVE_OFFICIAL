@@ -52,7 +52,7 @@ export function ModeCard({
         // Transitions
         'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
         // Hover state
-        'hover:border-white/[0.12] hover:-translate-y-1',
+        'hover:border-white/[0.12] hover:opacity-95',
         // Focus state (white, not gold)
         'focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-ground,#0A0A09)]',
         // Activity state (gold edge warmth)

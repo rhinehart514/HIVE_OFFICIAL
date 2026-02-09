@@ -6,7 +6,7 @@
  */
 
 import { type Variants } from 'framer-motion';
-import { EASE_PREMIUM, DURATION } from './entry-motion';
+import { EASE_PREMIUM, DURATION } from './constants';
 
 // ============================================
 // SECTION MORPH VARIANTS

@@ -4,13 +4,12 @@
  * SpaceSidebar - Navigation Sidebar Shell
  *
  * Contains:
- * - Boards list (with unread badges)
  * - Pinned tools section
  * - Members preview (online count + avatars)
  *
  * 200px width, 12px padding
  *
- * @version 2.0.0 - Split Panel Rebuild (Jan 2026)
+ * @version 3.0.0 - Simplified (Feb 2026) - Removed multi-board switching
  */
 
 import * as React from 'react';
@@ -19,15 +18,15 @@ import {
   SPACE_LAYOUT,
   spaceTypographyClasses,
 } from '@hive/tokens';
-import { BoardsList, type BoardsListProps } from './sidebar/boards-list';
 import { ToolsList, type ToolsListProps } from './sidebar/tools-list';
 import { MembersPreview, type MembersPreviewProps } from './sidebar/members-preview';
+import { EventsList, type EventsListProps } from './sidebar/events-list';
 
 interface SpaceSidebarProps {
-  /** Boards section props */
-  boards: BoardsListProps;
   /** Tools section props (optional) */
   tools?: ToolsListProps;
+  /** Events section props (optional) */
+  events?: EventsListProps;
   /** Members preview props */
   members: MembersPreviewProps;
   /** Whether sidebar is collapsed */
@@ -37,38 +36,15 @@ interface SpaceSidebarProps {
 }
 
 export function SpaceSidebar({
-  boards,
   tools,
+  events,
   members,
   isCollapsed = false,
   className,
 }: SpaceSidebarProps) {
-  // Collapsed state: show only icons
+  // Collapsed state is not supported (boards were the only collapsible content)
   if (isCollapsed) {
-    return (
-      <div className={cn('flex flex-col items-center gap-2 py-2', className)}>
-        {/* Collapsed board icons would go here */}
-        {boards.boards.slice(0, 5).map((board) => (
-          <button
-            key={board.id}
-            onClick={() => boards.onBoardChange(board.id)}
-            className={cn(
-              'w-8 h-8 rounded-lg flex items-center justify-center',
-              'transition-colors relative',
-              board.id === boards.activeBoard
-                ? 'bg-white/[0.08] text-white'
-                : 'hover:bg-white/[0.04] text-white/50'
-            )}
-            title={board.name}
-          >
-            <span className="text-sm font-medium">#</span>
-            {board.unreadCount && board.unreadCount > 0 && board.id !== boards.activeBoard && (
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--color-gold)]" />
-            )}
-          </button>
-        ))}
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -76,13 +52,6 @@ export function SpaceSidebar({
       className={cn('flex flex-col h-full', className)}
       style={{ gap: `${SPACE_LAYOUT.sectionGap}px` }}
     >
-      {/* Boards Section */}
-      <section>
-        <h3 className={cn(spaceTypographyClasses.sectionLabel, 'mb-3 px-1')}>
-          Boards
-        </h3>
-        <BoardsList {...boards} />
-      </section>
 
       {/* Tools Section (if provided) */}
       {tools && (tools.tools.length > 0 || tools.isLeader) && (
@@ -91,6 +60,16 @@ export function SpaceSidebar({
             Tools
           </h3>
           <ToolsList {...tools} />
+        </section>
+      )}
+
+      {/* Events Section (if provided and has events) */}
+      {events && events.events.length > 0 && (
+        <section>
+          <h3 className={cn(spaceTypographyClasses.sectionLabel, 'mb-3 px-1')}>
+            Events
+          </h3>
+          <EventsList {...events} />
         </section>
       )}
 

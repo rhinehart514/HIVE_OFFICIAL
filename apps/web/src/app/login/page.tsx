@@ -17,7 +17,7 @@ import { Button } from '@hive/ui/design-system/primitives';
 import {
   EntryShell,
   EntryShellStatic,
-  type EmotionalState,
+  type EntryTone,
 } from '@/components/entry';
 import { EmailState } from '@/components/entry/states/EmailState';
 import { CodeState } from '@/components/entry/states/CodeState';
@@ -27,15 +27,15 @@ import {
   childVariants,
   EASE_PREMIUM,
   DURATION,
-} from '@/components/entry/motion/entry-motion';
+} from '@/components/entry/motion/constants';
 import { useLoginMachine } from '@/components/login/hooks/useLoginMachine';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Map login state to emotional state for ambient glow
+ * Map login state to tone for ambient background
  */
-function getEmotionalState(state: string): EmotionalState {
+function getEntryTone(state: string): EntryTone {
   switch (state) {
     case 'email':
     case 'sending':
@@ -309,11 +309,11 @@ function LoginContent() {
     handleComplete,
   } = useLoginMachine();
 
-  const emotionalState = getEmotionalState(state);
+  const entryTone = getEntryTone(state);
 
   return (
     <EntryShell
-      emotionalState={emotionalState}
+      entryTone={entryTone}
       showProgress={false}
     >
       <AnimatePresence mode="wait" initial={false}>

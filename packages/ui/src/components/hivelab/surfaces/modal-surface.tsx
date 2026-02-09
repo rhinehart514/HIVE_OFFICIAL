@@ -216,7 +216,7 @@ export function ModalSurface({
                   </div>
                 )}
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ opacity: 0.94 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onClose}
                   className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.06] transition-colors"

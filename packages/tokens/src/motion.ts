@@ -30,17 +30,17 @@ export const MOTION = {
     instant: 50,      // Micro feedback
     micro: 100,       // State changes
     snap: 150,        // Toggles
-    quick: 200,       // Hover effects
-    standard: 300,    // Most animations (DEFAULT)
-    smooth: 400,      // Modals
-    flowing: 500,     // Page transitions
+    quick: 150,       // Hover effects
+    standard: 150,    // Most animations (DEFAULT)
+    smooth: 150,      // Modals
+    flowing: 200,     // Page transitions
     gentle: 600,      // Word reveals, gentle entrances (About page)
     dramatic: 700,    // Celebrations ONLY
     slow: 800,        // Container animations (About page)
     hero: 1200,       // Hero entrances, major reveals (About page)
   },
   ease: {
-    default: [0.23, 1, 0.32, 1] as const,      // Smooth, natural
+    default: [0.22, 1, 0.36, 1] as const,      // Smooth, natural
     snap: [0.25, 0.1, 0.25, 1] as const,       // Quick, decisive
     dramatic: [0.165, 0.84, 0.44, 1] as const, // Cinematic (achievements)
     premium: [0.22, 1, 0.36, 1] as const,      // Apple/OpenAI feel
@@ -59,8 +59,8 @@ export const MOTION = {
 
 export const easingArrays = {
   // PRIMARY: Use for 90% of animations
-  default: [0.23, 1, 0.32, 1] as const,      // Smooth, natural (Vercel-inspired)
-  silk: [0.23, 1, 0.32, 1] as const,         // Alias for default - premium feel
+  default: [0.22, 1, 0.36, 1] as const,      // Smooth, natural
+  silk: [0.22, 1, 0.36, 1] as const,         // Alias for default - premium feel
 
   // SNAP: Use for toggles, checkboxes, instant feedback
   snap: [0.25, 0.1, 0.25, 1] as const,       // Quick, decisive
@@ -78,10 +78,10 @@ export const durationSeconds = {
   instant: 0.05,      // 50ms - Immediate feedback
   micro: 0.1,         // 100ms - Micro-interactions
   snap: 0.15,         // 150ms - Button presses, toggles
-  quick: 0.2,         // 200ms - Fast interactions
-  standard: 0.3,      // 300ms - Default transitions
-  smooth: 0.4,        // 400ms - Smooth movements
-  flowing: 0.5,       // 500ms - Layout changes
+  quick: 0.15,        // Fast interactions
+  standard: 0.15,     // Default transitions
+  smooth: 0.15,       // Smooth movements
+  flowing: 0.2,       // Layout changes
   gentle: 0.6,        // 600ms - Word reveals, gentle entrances (About page)
   dramatic: 0.7,      // 700ms - Special moments
   slow: 0.8,          // 800ms - Container animations (About page)
@@ -195,8 +195,8 @@ export const motion = {
   // CSS cubic-bezier strings
   easing: {
     // PRIMARY
-    default: 'cubic-bezier(0.23, 1, 0.32, 1)',
-    silk: 'cubic-bezier(0.23, 1, 0.32, 1)',
+    default: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    silk: 'cubic-bezier(0.22, 1, 0.36, 1)',
 
     // SNAP
     snap: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
@@ -211,10 +211,10 @@ export const motion = {
     in: 'cubic-bezier(0.4, 0, 1, 1)',
 
     // Legacy aliases (map to core)
-    liquid: 'cubic-bezier(0.23, 1, 0.32, 1)',
-    magnetic: 'cubic-bezier(0.23, 1, 0.32, 1)',
-    reveal: 'cubic-bezier(0.23, 1, 0.32, 1)',
-    easeOut: 'cubic-bezier(0.23, 1, 0.32, 1)',
+    liquid: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    magnetic: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    reveal: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    easeOut: 'cubic-bezier(0.22, 1, 0.36, 1)',
     spring: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
     cinematic: 'cubic-bezier(0.165, 0.84, 0.44, 1)',
   },
@@ -223,10 +223,10 @@ export const motion = {
   duration: {
     instant: '0.1s',        // Micro-interactions
     snap: '0.15s',          // Button presses
-    quick: '0.2s',          // Button press, toggle
-    smooth: '0.25s',        // Hover states
-    liquid: '0.35s',        // Card movements
-    flowing: '0.5s',        // Layout changes
+    quick: '0.15s',         // Button press, toggle
+    smooth: '0.15s',        // Hover states
+    liquid: '0.2s',         // Card movements
+    flowing: '0.2s',        // Layout changes
     cascade: '0.75s',       // Sequential animations
     dramatic: '1.0s',       // Space activation, major state change
     orchestrated: '1.2s',   // Full sequences, achievement moments
@@ -279,12 +279,12 @@ export const motion = {
   // Transform Values - Consistent scaling and movement
   transform: {
     // Scale transforms
-    scaleHover: '1.02',     // Subtle hover scale
-    scaleTap: '0.98',       // Press down scale
+    scaleHover: '1',        // No hover scale
+    scaleTap: '1',          // No press scale
     scaleModal: '1.05',     // Modal entrance scale
-    
+
     // Translation values
-    moveHover: '-2px',      // Upward hover movement
+    moveHover: '0px',       // No hover movement
     movePress: '0px',       // Return to baseline
     moveSlide: '20px',      // Slide in/out distance
     
@@ -370,22 +370,6 @@ export const buttonPressVariants = {
     y: 1,
     boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
     transition: { type: 'spring', stiffness: 500, damping: 30 },
-  },
-} as const;
-
-/**
- * Card hover - ambient lift with subtle shadow
- */
-export const cardHoverVariants = {
-  rest: {
-    y: 0,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    transition: { type: 'spring', stiffness: 300, damping: 25 },
-  },
-  hover: {
-    y: -2,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-    transition: { type: 'spring', stiffness: 300, damping: 25 },
   },
 } as const;
 
@@ -589,32 +573,6 @@ export const reducedMotionVariants = {
 // ============================================
 
 /**
- * Reveal: Fade + slide up (y: 20px → 0)
- * Use for: List items, cards, content entry
- */
-export const revealVariants = {
-  initial: {
-    opacity: 0,
-    y: 20,
-  },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.3,
-      ease: [0.23, 1, 0.32, 1],
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -10,
-    transition: {
-      duration: 0.2,
-    },
-  },
-} as const;
-
-/**
  * Surface: Scale from 0.95 + fade
  * Use for: Modals, popovers, dropdowns
  */
@@ -637,19 +595,6 @@ export const surfaceVariants = {
     scale: 0.95,
     transition: {
       duration: 0.15,
-    },
-  },
-} as const;
-
-/**
- * Stagger container for list children
- * Use with staggerPresets for timing
- */
-export const staggerContainerVariants = {
-  initial: {},
-  animate: {
-    transition: {
-      staggerChildren: 0.05, // 50-80ms between items
     },
   },
 } as const;

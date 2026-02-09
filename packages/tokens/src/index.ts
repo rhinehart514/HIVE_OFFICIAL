@@ -139,12 +139,9 @@ export {
   PUNCH_TRANSITION,
   SNAP_TRANSITION,
   // HIVE signature variants (Design Principles)
-  revealVariants,
   surfaceVariants,
-  staggerContainerVariants,
   // Phase 5: Micro-interaction presets
   buttonPressVariants,
-  cardHoverVariants,
   messageEntryVariants,
   successVariants,
   errorShakeVariants,

@@ -35,7 +35,6 @@ function SpaceBubble({ node, onClick }: BubbleProps) {
     <motion.div
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      whileHover={{ scale: 1.1 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       onClick={() => onClick?.(node)}
       className="relative cursor-pointer"

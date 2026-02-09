@@ -91,23 +91,23 @@ export const atmospherePresets: Record<AtmosphereLevel, {
   /**
    * LANDING Atmosphere (SYSTEMS.md lines 60-75)
    *
-   * Character: Apple-level polish, first impressions
-   * - Maximum breathing room
-   * - Glass effects enabled
-   * - Ambient motion (particles, gradients)
-   * - Gold only on primary CTA
-   */
+ * Character: Apple-level polish, first impressions
+ * - Maximum breathing room
+ * - No glass effects
+ * - No ambient motion
+ * - Gold only on primary CTA
+ */
   landing: {
     density: 'spacious',
-    effectsEnabled: true,
-    ambientEnabled: true,
+    effectsEnabled: false,
+    ambientEnabled: false,
     cssVariables: {
       '--atm-gap': 'var(--space-8)',           // 32px
       '--atm-padding': 'var(--space-12)',       // 48px
-      '--atm-blur': 'var(--blur-medium)',       // 12px
-      '--atm-glass-opacity': '0.8',
-      '--atm-gradient': 'var(--glow-warm)',
-      '--atm-ambient': '1',                     // Ambient effects on
+      '--atm-blur': '0',
+      '--atm-glass-opacity': '0',
+      '--atm-gradient': 'none',
+      '--atm-ambient': '0',
       '--atm-gold-budget': 'cta-only',
     },
   },
@@ -309,11 +309,11 @@ export function getWarmthCSS(level: WarmthLevel): string {
     case 'none':
       return 'none';
     case 'low':
-      return 'inset 0 0 0 1px rgba(255, 215, 0, 0.04)';
+      return 'none';
     case 'medium':
-      return 'inset 0 0 0 1px rgba(255, 215, 0, 0.08)';
+      return 'none';
     case 'high':
-      return 'inset 0 0 0 1px rgba(255, 215, 0, 0.12)';
+      return 'none';
   }
 }
 
@@ -325,10 +325,8 @@ export function getWarmthCSS(level: WarmthLevel): string {
  * @returns Appropriate warmth level
  */
 export function getWarmthFromActivity(activityCount: number): WarmthLevel {
-  if (activityCount === 0) return 'none';
-  if (activityCount <= 2) return 'low';
-  if (activityCount <= 5) return 'medium';
-  return 'high';
+  void activityCount;
+  return 'none';
 }
 
 /**

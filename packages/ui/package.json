@@ -45,16 +45,6 @@
       "types": "./src/tokens/index.ts",
       "import": "./src/tokens/index.ts",
       "default": "./src/tokens/index.ts"
-    },
-    "./tokens/spaces-motion": {
-      "types": "./src/tokens/spaces-motion.ts",
-      "import": "./src/tokens/spaces-motion.ts",
-      "default": "./src/tokens/spaces-motion.ts"
-    },
-    "./lib/motion-variants": {
-      "types": "./src/lib/motion-variants.ts",
-      "import": "./src/lib/motion-variants.ts",
-      "default": "./src/lib/motion-variants.ts"
     }
   },
   "scripts": {

@@ -13,7 +13,7 @@ import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { SuccessCheckmark } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
-import { SPRING_BOUNCY, GOLD, DURATION, EASE_PREMIUM } from './entry-motion';
+import { SPRING_BOUNCY, GOLD, DURATION, EASE_PREMIUM } from './constants';
 
 export interface GoldCheckmarkProps {
   /** Whether to show/animate the checkmark */

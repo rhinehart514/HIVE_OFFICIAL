@@ -14,7 +14,7 @@
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { EASE_PREMIUM, DURATION } from '../motion/entry-motion';
+import { EASE_PREMIUM, DURATION } from '../motion/constants';
 
 interface ManifestoLineProps {
   /** The text to reveal word by word */

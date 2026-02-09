@@ -13,7 +13,7 @@ import { ArrowLeft, Bell, Check, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OTPInput } from '@hive/ui/design-system/primitives';
 import type { UseEntryReturn } from '../hooks/useEntry';
-import { DURATION, EASE_PREMIUM, GOLD } from '../motion/entry-motion';
+import { DURATION, EASE_PREMIUM, GOLD } from '../motion/constants';
 import { GoldCheckmark } from '../motion/GoldCheckmark';
 import { clashDisplay } from '../Entry';
 

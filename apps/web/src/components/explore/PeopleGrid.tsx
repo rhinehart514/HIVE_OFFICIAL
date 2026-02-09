@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Users, Search, UserPlus } from 'lucide-react';
 import { GlassSurface, SimpleAvatar, Badge, Button } from '@hive/ui/design-system/primitives';
-import { MOTION, revealVariants, staggerContainerVariants, cardHoverVariants } from '@hive/tokens';
+import { MOTION } from '@hive/tokens';
 import { cn } from '@/lib/utils';
 
 export interface PersonData {
@@ -135,7 +135,6 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
   return (
     <motion.div
       className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-      variants={staggerContainerVariants}
       initial="initial"
       animate="animate"
     >
@@ -157,12 +156,11 @@ interface PersonCardProps {
 function PersonCard({ person }: PersonCardProps) {
   return (
     <motion.div
-      variants={revealVariants}
       whileHover="hover"
       initial="initial"
     >
       <Link href={`/profile/${person.id}`}>
-        <motion.div variants={cardHoverVariants}>
+        <motion.div>
           <GlassSurface
             intensity="subtle"
             className={cn(

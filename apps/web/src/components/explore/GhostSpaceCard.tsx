@@ -17,7 +17,7 @@ import {
   Button,
   GradientText,
 } from '@hive/ui/design-system/primitives';
-import { revealVariants, cardHoverVariants } from '@hive/tokens';
+import { } from '@hive/tokens';
 import { toast } from '@hive/ui';
 import { cn } from '@/lib/utils';
 import { BellIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -67,8 +67,7 @@ export function GhostSpaceCard({ space, index: _index = 0 }: GhostSpaceCardProps
 
   return (
     <motion.div
-      variants={revealVariants}
-      whileHover={cardHoverVariants.hover}
+      whileHover={{ opacity: 0.96 }}
       whileTap={{ scale: 0.98 }}
     >
       <Tilt intensity={4}>

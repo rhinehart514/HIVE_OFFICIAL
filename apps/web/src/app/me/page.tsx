@@ -40,7 +40,7 @@ export default function MePage() {
 
   // Show loading while determining redirect
   return (
-    <div className="min-h-screen bg-foundation-gray-1000 flex items-center justify-center">
+    <div className="min-h-screen bg-black flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

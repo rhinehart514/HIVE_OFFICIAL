@@ -127,7 +127,7 @@ export function ProfileActivityHeatmap({
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ y: -2 }}
+      whileHover={{ opacity: 0.96 }}
       transition={{ duration: 0.2 }}
     >
       {/* Gradient overlay */}

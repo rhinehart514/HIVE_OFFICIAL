@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Calendar, Users, Search } from 'lucide-react';
 import { GlassSurface, Badge, Button } from '@hive/ui/design-system/primitives';
-import { MOTION, revealVariants, staggerContainerVariants, cardHoverVariants } from '@hive/tokens';
+import { MOTION } from '@hive/tokens';
 import { toast } from '@hive/ui';
 import { cn } from '@/lib/utils';
 
@@ -143,18 +143,16 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
   return (
     <motion.div
       className="space-y-6"
-      variants={staggerContainerVariants}
       initial="initial"
       animate="animate"
     >
       {Object.entries(groupedEvents).map(([dateKey, dateEvents]) => (
-        <motion.div key={dateKey} className="space-y-3" variants={revealVariants}>
+        <motion.div key={dateKey} className="space-y-3">
           <h3 className="text-label text-white/40 uppercase tracking-wider">
             {dateKey}
           </h3>
           <motion.div
             className="space-y-3"
-            variants={staggerContainerVariants}
           >
             {dateEvents.map((event) => (
               <EventCard key={event.id} event={event} onRSVP={onRSVP} />
@@ -204,12 +202,11 @@ function EventCard({ event, onRSVP }: EventCardProps) {
 
   return (
     <motion.div
-      variants={revealVariants}
       whileHover="hover"
       initial="initial"
     >
       <Link href={event.spaceHandle ? `/s/${event.spaceHandle}/events/${event.id}` : '#'}>
-        <motion.div variants={cardHoverVariants}>
+        <motion.div>
           <GlassSurface
             intensity="subtle"
             className={cn(

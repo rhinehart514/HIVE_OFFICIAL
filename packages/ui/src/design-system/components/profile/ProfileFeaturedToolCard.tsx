@@ -124,7 +124,7 @@ export function ProfileFeaturedToolCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onToolClick?.(tool.id)}
-      whileHover={{ y: -2 }}
+      whileHover={{ opacity: 0.96 }}
       transition={{ duration: 0.2 }}
     >
       {/* Gradient overlay */}

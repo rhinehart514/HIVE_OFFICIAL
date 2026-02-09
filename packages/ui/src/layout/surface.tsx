@@ -4,22 +4,26 @@ import * as React from "react";
 import { cn } from "../lib/utils";
 
 const surfaceVariants = cva(
-  "relative rounded-2xl border border-[var(--hive-border-subtle)] bg-[var(--hive-background-secondary)] text-[var(--hive-text-primary)] transition-[box-shadow,transform] duration-200 ease-out",
+  "relative rounded-[12px] border border-white/[0.08] bg-[#0A0A0A] text-white transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]",
   {
     variants: {
       tone: {
-        default: "bg-[var(--hive-background-secondary)] border-[var(--hive-border-subtle)]",
-        subtle: "bg-[var(--hive-background-primary)] border-[var(--hive-border-subtle)]",
-        contrast: "bg-[var(--hive-background-tertiary)] border-[var(--hive-border-primary)]",
-        inverted: "bg-[var(--hive-background-primary)] text-[var(--hive-text-inverse)] border-[var(--hive-border-primary)]",
-        glass:
-          "border-[color-mix(in_srgb,var(--hive-border-subtle) 60%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-secondary) 72%,transparent)] backdrop-blur-[12px]",
+        // Canonical 3-tier surface set
+        standard: "bg-[#0A0A0A] border-white/[0.08] text-white",
+        subtle: "bg-[#141414] border-white/[0.08] text-white",
+        overlay: "bg-[#141414] border-white/[0.12] text-white",
+
+        // Compatibility aliases
+        default: "bg-[#0A0A0A] border-white/[0.08] text-white",
+        contrast: "bg-[#141414] border-white/[0.12] text-white",
+        inverted: "bg-[#141414] border-white/[0.12] text-white",
+        glass: "bg-[#141414] border-white/[0.12] text-white",
       },
       elevation: {
         flat: "shadow-none",
-        sm: "shadow-[0_12px_24px_rgba(0,0,0,0.18)]",
-        md: "shadow-[0_16px_36px_rgba(0,0,0,0.26)]",
-        lg: "shadow-[0_24px_48px_rgba(0,0,0,0.32)]",
+        sm: "shadow-[0_8px_16px_rgba(0,0,0,0.28)]",
+        md: "shadow-[0_12px_24px_rgba(0,0,0,0.36)]",
+        lg: "shadow-[0_16px_32px_rgba(0,0,0,0.44)]",
       },
       padding: {
         none: "p-0",
@@ -30,19 +34,19 @@ const surfaceVariants = cva(
         xl: "p-10",
       },
       radius: {
-        md: "rounded-xl",
-        lg: "rounded-2xl",
+        md: "rounded-[12px]",
+        lg: "rounded-[12px]",
         full: "rounded-[24px]",
       },
       interactive: {
-        true: "hover:-translate-y-px hover:shadow-[0_24px_56px_rgba(0,0,0,0.36)]",
+        true: "hover:bg-[#141414] hover:border-white/[0.12]",
       },
     },
     defaultVariants: {
-      tone: "default",
+      tone: "standard",
       elevation: "sm",
       padding: "md",
-      radius: "lg",
+      radius: "md",
     },
   }
 );

@@ -31,7 +31,7 @@ function AdminToolbarInner() {
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-24 left-4 lg:bottom-6 lg:left-6 z-[9990] w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-lg flex items-center justify-center shadow-lg hover:bg-white/10 transition-colors"
-        whileHover={{ scale: 1.08 }}
+        whileHover={{ opacity: 0.92 }}
         whileTap={{ scale: 0.95 }}
         title="Admin Toolbar (⌘⇧D)"
       >

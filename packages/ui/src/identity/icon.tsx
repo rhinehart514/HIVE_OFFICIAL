@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "../lib/utils";
 
 const wrapperVariants = cva(
-  "relative inline-flex shrink-0 select-none items-center justify-center align-middle transition-transform duration-200 ease-out",
+  "relative inline-flex shrink-0 select-none items-center justify-center align-middle transition-[opacity] duration-200 ease-out",
   {
     variants: {
       size: {
@@ -26,7 +26,7 @@ const wrapperVariants = cva(
       },
       interactive: {
         false: "",
-        true: "cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 hover:-translate-y-0.5",
+        true: "cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 hover:opacity-90",
       },
       disabled: {
         true: "pointer-events-none opacity-40",
