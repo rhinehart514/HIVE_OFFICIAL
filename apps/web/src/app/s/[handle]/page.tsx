@@ -125,8 +125,8 @@ export default function SpacePageUnified() {
   // Thread panel state - driven by URL param
   const [activeThreadId, setActiveThreadId] = React.useState<string | null>(null);
 
-  // Tab state - Tools is default
-  const [activeTab, setActiveTab] = React.useState<SpaceTab>('tools');
+  // Tab state - Chat is default (post inline-components)
+  const [activeTab, setActiveTab] = React.useState<SpaceTab>('chat');
 
   // Detect first entry to this space for ArrivalTransition
   React.useEffect(() => {

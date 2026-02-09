@@ -360,30 +360,41 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
         </div>
       )}
 
-      {/* CTA - gold when ready */}
-      <button
-        onClick={entry.completeEntry}
-        disabled={entry.isLoading}
-        className={cn(
-          'group w-full py-4 rounded-xl font-medium transition-all duration-300',
-          'bg-gold-500 text-neutral-950 hover:bg-gold-500/90',
-          'disabled:cursor-not-allowed',
-          'flex items-center justify-center gap-2',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black'
+      {/* CTA - gold when ready, skip option */}
+      <div className="flex flex-col gap-3">
+        <button
+          onClick={entry.completeEntry}
+          disabled={entry.isLoading}
+          className={cn(
+            'group w-full py-4 rounded-xl font-medium transition-all duration-300',
+            'bg-gold-500 text-neutral-950 hover:bg-gold-500/90',
+            'disabled:cursor-not-allowed',
+            'flex items-center justify-center gap-2',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black'
+          )}
+        >
+          {entry.isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Creating your profile...</span>
+            </>
+          ) : (
+            <>
+              <span>{entry.data.interests.length > 0 ? 'Enter HIVE' : 'Skip for now'}</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </>
+          )}
+        </button>
+
+        {entry.data.interests.length > 0 && !entry.isLoading && (
+          <button
+            onClick={entry.completeEntry}
+            className="text-[13px] text-white/40 hover:text-white/60 transition-colors py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+          >
+            Skip interests
+          </button>
         )}
-      >
-        {entry.isLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Creating your profile...</span>
-          </>
-        ) : (
-          <>
-            <span>Enter HIVE</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </>
-        )}
-      </button>
+      </div>
     </div>
   );
 }

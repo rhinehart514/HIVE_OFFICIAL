@@ -1,15 +1,38 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Circle } from 'lucide-react';
 
 const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
+
+// Live demo poll data
+const DEMO_POLL = {
+  question: "Best day for club meeting?",
+  options: ["Monday", "Tuesday", "Wednesday", "Thursday"],
+};
 
 export function HeroSection() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Live poll state
+  const [votes, setVotes] = useState({ Monday: 12, Tuesday: 8, Wednesday: 15, Thursday: 5 });
+  const [userVote, setUserVote] = useState<string | null>(null);
+
+  const totalVotes = Object.values(votes).reduce((sum, v) => sum + v, 0);
+
+  const handleVote = (option: string) => {
+    if (userVote === option) return; // Already voted
+
+    setVotes((prev) => ({
+      ...prev,
+      [option]: prev[option as keyof typeof prev] + 1,
+      ...(userVote && { [userVote]: prev[userVote as keyof typeof prev] - 1 }),
+    }));
+    setUserVote(option);
+  };
 
   const handleJoinUB = useCallback(() => {
     const redirect = searchParams.get('redirect');
@@ -81,22 +104,86 @@ export function HeroSection() {
         </motion.div>
       </div>
 
-      {/* Right: Product screenshot/embed (bleeding off edge) */}
+      {/* Right: Live poll embed (bleeding off edge) */}
       <motion.div
         className="relative px-6 lg:pr-0 pb-16 lg:pb-0 lg:pl-12"
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
       >
-        <div className="aspect-[4/3] lg:aspect-auto lg:h-[600px] relative">
-          {/* Placeholder for embedded tool or screenshot */}
-          <div className="w-full h-full rounded-l-2xl lg:rounded-l-2xl lg:rounded-r-none overflow-hidden bg-zinc-900/50 border border-white/10 flex items-center justify-center">
-            <div className="text-center px-8">
-              <div className="w-12 h-12 rounded-xl bg-[#FFD700]/10 flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl text-[#FFD700]">⚡</span>
+        <div className="aspect-[4/3] lg:aspect-auto lg:h-[600px] relative flex items-center">
+          {/* Live poll tool */}
+          <div className="w-full max-w-md rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 p-6 shadow-2xl">
+            {/* Live indicator */}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-2 h-2 rounded-full bg-[#FFD700] animate-pulse" />
+              <span className="text-[10px] uppercase tracking-[0.2em] font-mono text-white/50">
+                LIVE
+              </span>
+              <span className="text-xs text-white/30 ml-auto">{totalVotes} votes</span>
+            </div>
+
+            {/* Poll question */}
+            <h3 className="text-lg font-semibold text-white mb-4">{DEMO_POLL.question}</h3>
+
+            {/* Poll options */}
+            <div className="space-y-2">
+              {DEMO_POLL.options.map((option) => {
+                const count = votes[option as keyof typeof votes];
+                const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+                const isSelected = userVote === option;
+
+                return (
+                  <button
+                    key={option}
+                    onClick={() => handleVote(option)}
+                    className="w-full relative rounded-lg p-3 text-left transition-all border border-white/10 hover:border-white/20 group"
+                    style={{
+                      background: isSelected
+                        ? 'linear-gradient(90deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%)'
+                        : 'rgba(255,255,255,0.02)'
+                    }}
+                  >
+                    {/* Vote bar background */}
+                    <div
+                      className="absolute inset-0 rounded-lg transition-all"
+                      style={{
+                        background: isSelected
+                          ? `linear-gradient(90deg, rgba(255,215,0,0.15) 0%, rgba(255,215,0,0.05) ${percentage}%, transparent ${percentage}%)`
+                          : `linear-gradient(90deg, rgba(255,255,255,0.04) 0%, transparent ${percentage}%)`,
+                        width: `${percentage}%`,
+                      }}
+                    />
+
+                    {/* Content */}
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {isSelected ? (
+                          <CheckCircle2 className="w-4 h-4 text-[#FFD700]" />
+                        ) : (
+                          <Circle className="w-4 h-4 text-white/30 group-hover:text-white/40" />
+                        )}
+                        <span className="text-sm text-white">{option}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-white/50">
+                        <span>{count}</span>
+                        {totalVotes > 0 && <span>({Math.round(percentage)}%)</span>}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+              <p className="text-xs text-white/40">Click any option to vote</p>
+              <div className="flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-[#FFD700]/60" />
+                <span className="text-[9px] uppercase tracking-wider text-[#FFD700]/60 font-mono">
+                  HIVE
+                </span>
               </div>
-              <p className="text-sm text-white/50">Live tool embed goes here</p>
-              <p className="text-xs text-white/30 mt-2">Real poll with working votes</p>
             </div>
           </div>
         </div>
