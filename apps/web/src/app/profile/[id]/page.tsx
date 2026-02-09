@@ -56,5 +56,5 @@ export default async function LegacyProfilePage({ params }: Props) {
 
   // If no handle found, redirect to home with error
   // The user might not exist or the API might be down
-  redirect('/home');
+  redirect('/discover');
 }

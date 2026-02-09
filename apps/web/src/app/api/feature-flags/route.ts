@@ -34,6 +34,13 @@ export const HIVE_FEATURE_FLAGS = {
   ENABLE_CONNECTIONS: 'enable_connections',
 } as const;
 
+// Soft-launch overrides: intentionally hidden until core collaboration is stable.
+const SOFT_LAUNCH_DISABLED_FLAGS = new Set<string>([
+  HIVE_FEATURE_FLAGS.ENABLE_DMS,
+  HIVE_FEATURE_FLAGS.ENABLE_CONNECTIONS,
+  HIVE_FEATURE_FLAGS.RITUALS,
+]);
+
 // Simple feature flag service (inlined)
 const featureFlagService = {
   async getUserFeatureFlags(
@@ -155,6 +162,20 @@ interface FlagResult {
   variant?: string;
 }
 
+function applySoftLaunchOverrides(results: Record<string, FlagResult>): Record<string, FlagResult> {
+  for (const flagId of SOFT_LAUNCH_DISABLED_FLAGS) {
+    if (results[flagId]) {
+      results[flagId] = {
+        ...results[flagId],
+        enabled: false,
+        variant: 'soft_launch_disabled',
+      };
+    }
+  }
+
+  return results;
+}
+
 /**
  * User Feature Flags API
  * Allows users to check which features are enabled for them
@@ -176,11 +197,8 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const includeConfig = searchParams.get('includeConfig') === 'true';
 
-    // Derive campusId from user's email
+    // Campus is optional in non-campus mode.
     const campusId = user.email ? deriveCampusFromEmail(user.email) : undefined;
-    if (!campusId) {
-      return NextResponse.json(ApiResponseHelper.error("Campus identification required", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
 
     // Build user context
     const userContext = await buildUserContext(user.uid, campusId);
@@ -201,6 +219,7 @@ export async function GET(request: NextRequest) {
       const allHiveFlagIds = Object.values(HIVE_FEATURE_FLAGS);
       results = await featureFlagService.getUserFeatureFlags(allHiveFlagIds, userContext) as Record<string, FlagResult>;
     }
+    results = applySoftLaunchOverrides(results);
 
     // Remove config if not requested (for security)
     if (!includeConfig) {
@@ -255,11 +274,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Derive campusId from user's email
+    // Campus is optional in non-campus mode.
     const campusId = user.email ? deriveCampusFromEmail(user.email) : undefined;
-    if (!campusId) {
-      return NextResponse.json(ApiResponseHelper.error("Campus identification required", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
 
     // Build user context with custom overrides
     const baseUserContext = await buildUserContext(user.uid, campusId);
@@ -269,7 +285,9 @@ export async function POST(request: NextRequest) {
       userId: user.uid // Always keep the real user ID
     };
 
-    const results = await featureFlagService.getUserFeatureFlags(flagIds, userContext);
+    const results = applySoftLaunchOverrides(
+      await featureFlagService.getUserFeatureFlags(flagIds, userContext)
+    );
 
     return NextResponse.json({
       success: true,
@@ -295,17 +313,20 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to build user context from database
-async function buildUserContext(userId: string, campusId: string): Promise<UserFeatureContext> {
+async function buildUserContext(userId: string, campusId?: string): Promise<UserFeatureContext> {
   try {
     // Get user profile
     const userDoc = await dbAdmin.collection('users').doc(userId).get();
     const userData = userDoc.exists ? userDoc.data() : {};
 
     // Get user's spaces
-    const membershipsQuery = dbAdmin.collection('spaceMembers')
+    let membershipsQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
-      .where('status', '==', 'active')
-      .where('campusId', '==', campusId);
+      .where('status', '==', 'active');
+
+    if (campusId) {
+      membershipsQuery = membershipsQuery.where('campusId', '==', campusId);
+    }
     
     const membershipsSnapshot = await membershipsQuery.get();
     const spaceIds = membershipsSnapshot.docs.map((doc: QueryDocumentSnapshot) => doc.data().spaceId);

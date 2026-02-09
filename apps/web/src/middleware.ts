@@ -47,7 +47,7 @@ const PUBLIC_ROUTES = [
   '/legal',         // Legal pages (/legal/privacy, /legal/terms, etc.)
   '/login',         // Login page
   '/schools',       // School selection page
-  '/t/',            // Standalone tool pages (shareable links for published tools)
+  '/t',             // Standalone tool pages (shareable links for published tools)
 ];
 
 // Routes that require session but NOT completed onboarding
@@ -64,7 +64,6 @@ const ADMIN_ROUTES = ['/admin'];
 // Auth/session redirects elsewhere use temporary (307) redirects
 export const ROUTE_REDIRECTS: Record<string, string> = {
   // Alias routes
-  '/home': '/lab',
   '/browse': '/spaces',
   '/build': '/lab/create',
   // Settings section shortcuts
@@ -77,7 +76,7 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/privacy': '/legal/privacy',
   '/terms': '/legal/terms',
   // IA Consolidation: Convert pages to modals
-  '/spaces/browse': '/explore?tab=spaces',
+  '/spaces/browse': '/discover',
   '/spaces/claim': '/spaces?claim=true',
   '/spaces/new': '/spaces?create=true',
   '/spaces/create': '/spaces?create=true',

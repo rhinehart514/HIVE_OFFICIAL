@@ -321,11 +321,51 @@ async function handlePost(
 
     // Calculate next run for scheduled automations
     if (automation.trigger.type === 'schedule') {
-      // Simplified: set next run to 1 hour from now
-      // Real implementation would parse cron expression
-      const nextRun = new Date();
-      nextRun.setHours(nextRun.getHours() + 1);
-      automation.nextRun = nextRun.toISOString();
+      const cron = automation.trigger.cron;
+      const cronParts = cron.trim().split(/\s+/);
+
+      if (cronParts.length === 5) {
+        const [minuteSpec, hourSpec, daySpec, monthSpec, weekdaySpec] = cronParts;
+
+        const matchesField = (spec: string, value: number): boolean => {
+          if (spec === '*') return true;
+          if (spec.startsWith('*/')) {
+            const step = parseInt(spec.slice(2), 10);
+            return step > 0 && value % step === 0;
+          }
+          return spec.split(',').some(v => parseInt(v, 10) === value);
+        };
+
+        const candidate = new Date();
+        candidate.setMinutes(candidate.getMinutes() + 1, 0, 0);
+        const maxMinutes = 48 * 60;
+        let found = false;
+
+        for (let i = 0; i < maxMinutes; i++) {
+          if (
+            matchesField(minuteSpec, candidate.getMinutes()) &&
+            matchesField(hourSpec, candidate.getHours()) &&
+            matchesField(daySpec, candidate.getDate()) &&
+            matchesField(monthSpec, candidate.getMonth() + 1) &&
+            matchesField(weekdaySpec, candidate.getDay())
+          ) {
+            automation.nextRun = candidate.toISOString();
+            found = true;
+            break;
+          }
+          candidate.setMinutes(candidate.getMinutes() + 1);
+        }
+
+        if (!found) {
+          const fallback = new Date();
+          fallback.setHours(fallback.getHours() + 24);
+          automation.nextRun = fallback.toISOString();
+        }
+      } else {
+        const fallback = new Date();
+        fallback.setHours(fallback.getHours() + 1);
+        automation.nextRun = fallback.toISOString();
+      }
     }
 
     // Save to Firestore

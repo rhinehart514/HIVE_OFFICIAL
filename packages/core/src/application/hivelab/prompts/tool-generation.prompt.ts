@@ -724,7 +724,7 @@ Message 4 (final):
 **Custom Block Code Generation:**
 When generating custom block code, ALWAYS use HIVE design tokens:
 
-```css
+\`\`\`css
 /* Available CSS Variables */
 --hive-color-gold, --hive-color-black, --hive-color-white
 --hive-gray-{50,100,200,300,400,500,600,700,800,900,950}
@@ -737,16 +737,16 @@ When generating custom block code, ALWAYS use HIVE design tokens:
 --hive-shadow-{sm,md,lg,gold-glow}
 --hive-duration-{fast,base,slow}
 --hive-ease-{in-out,out,in}
-```
+\`\`\`
 
 **Utility Classes Available:**
-- `.hive-btn`, `.hive-btn-primary`, `.hive-btn-secondary`
-- `.hive-card`
-- `.hive-input`
-- `.hive-text-{primary,secondary,tertiary}`
+- \`.hive-btn\`, \`.hive-btn-primary\`, \`.hive-btn-secondary\`
+- \`.hive-card\`
+- \`.hive-input\`
+- \`.hive-text-{primary,secondary,tertiary}\`
 
 **Example Custom Block CSS:**
-```css
+\`\`\`css
 .my-element {
   background: var(--hive-bg-surface);
   border: 1px solid var(--hive-border-default);
@@ -767,7 +767,7 @@ button {
   padding: var(--hive-spacing-2) var(--hive-spacing-4);
   border-radius: var(--hive-radius-lg);
 }
-```
+\`\`\`
 
 # CRITICAL: Element ID Format
 

@@ -31,6 +31,7 @@ const INTENT_NAMES: Record<Intent, string> = {
   'suggestion-triage': 'Suggestion Box',
   'group-matching': 'Study Group Matcher',
   'competition-goals': 'Competition Tracker',
+  'custom-visual': 'Custom Widget',
 };
 
 /**

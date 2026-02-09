@@ -1,7 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, withErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
-import { getSessionFromRequest } from "@/lib/session";
+import { getSession } from "@/lib/session";
 import {
   UpdateToolSchema,
   getNextVersion,
@@ -17,7 +17,7 @@ export const GET = withErrors(async (
   respond
 ) => {
   // Optional auth - allow anonymous access to public tools
-  const session = await getSessionFromRequest(request);
+  const session = await getSession(request as unknown as import('next/server').NextRequest);
   const userId = session?.userId || null;
   const campusId = session?.campusId || null;
   const { toolId } = await params;

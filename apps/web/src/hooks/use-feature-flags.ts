@@ -26,6 +26,13 @@ export const FEATURE_FLAGS = {
 
 export type FeatureFlagId = typeof FEATURE_FLAGS[keyof typeof FEATURE_FLAGS];
 
+// Keep these hidden during soft launch regardless of remote flag config.
+const SOFT_LAUNCH_DISABLED_FLAGS = new Set<string>([
+  FEATURE_FLAGS.ENABLE_DMS,
+  FEATURE_FLAGS.ENABLE_CONNECTIONS,
+  FEATURE_FLAGS.RITUALS,
+]);
+
 interface FeatureFlagState {
   flags: Record<string, boolean>;
   isLoading: boolean;
@@ -63,7 +70,20 @@ export function useFeatureFlags(flagIds?: string[]): UseFeatureFlagsReturn {
     return flagIds || Object.values(FEATURE_FLAGS);
   }, [flagIds]);
 
+  const allFlagsHardDisabled = useMemo(() => {
+    return flagsToFetch.every((flagId) => SOFT_LAUNCH_DISABLED_FLAGS.has(flagId));
+  }, [flagsToFetch]);
+
   const fetchFlags = useCallback(async () => {
+    if (allFlagsHardDisabled) {
+      setState({
+        flags: Object.fromEntries(flagsToFetch.map((flagId) => [flagId, false])),
+        isLoading: false,
+        error: null,
+      });
+      return;
+    }
+
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
@@ -86,6 +106,12 @@ export function useFeatureFlags(flagIds?: string[]): UseFeatureFlagsReturn {
         }
       }
 
+      for (const flagId of SOFT_LAUNCH_DISABLED_FLAGS) {
+        if (flagId in flags || flagsToFetch.includes(flagId)) {
+          flags[flagId] = false;
+        }
+      }
+
       setState({
         flags,
         isLoading: false,
@@ -98,7 +124,7 @@ export function useFeatureFlags(flagIds?: string[]): UseFeatureFlagsReturn {
         error: error as Error,
       }));
     }
-  }, [flagsToFetch]);
+  }, [allFlagsHardDisabled, flagsToFetch]);
 
   // Fetch flags on mount and when user changes
   useEffect(() => {
@@ -107,6 +133,9 @@ export function useFeatureFlags(flagIds?: string[]): UseFeatureFlagsReturn {
 
   const isEnabled = useCallback(
     (flagId: string): boolean => {
+      if (SOFT_LAUNCH_DISABLED_FLAGS.has(flagId)) {
+        return false;
+      }
       // Check admin override first (sessionStorage, zero overhead for non-admins)
       try {
         const overrides = sessionStorage.getItem('hive_admin_flag_overrides');

@@ -289,7 +289,7 @@ export const APPROVED_CDN_DOMAINS = {
  * Get approved domains for a specific category
  */
 export function getApprovedDomains(category: keyof typeof APPROVED_CDN_DOMAINS): string[] {
-  return APPROVED_CDN_DOMAINS[category];
+  return [...APPROVED_CDN_DOMAINS[category]];
 }
 
 // ============================================================
@@ -363,19 +363,3 @@ export function verifyCSPSecurity(policy: string): {
     issues,
   };
 }
-
-// ============================================================
-// Exports
-// ============================================================
-
-export type { CSPDirectives };
-export {
-  DEFAULT_CSP_DIRECTIVES,
-  buildCSPPolicy,
-  validateCSPDomain,
-  validateCSPDomains,
-  testCSPPolicy,
-  verifyCSPSecurity,
-  getApprovedDomains,
-  APPROVED_CDN_DOMAINS,
-};

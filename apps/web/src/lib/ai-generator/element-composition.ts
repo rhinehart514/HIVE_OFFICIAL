@@ -202,6 +202,29 @@ export const INTENT_ELEMENTS: Record<Intent, ElementSpec[]> = {
     },
   ],
 
+  'custom-visual': [{
+    elementId: 'custom-block',
+    instanceId: 'custom-widget',
+    config: {
+      metadata: {
+        name: 'Custom Widget',
+        description: 'Interactive custom widget',
+        createdBy: 'ai' as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      code: {
+        html: '<div id="app" style="font-family: var(--hive-font-sans, system-ui, sans-serif); padding: 24px; text-align: center;"><h2 style="color: var(--hive-color-text, #fff);">Custom Widget</h2><div id="content" style="background: var(--hive-color-surface, #1a1a2e); border-radius: 12px; padding: 32px; border: 1px solid var(--hive-color-border, #2a2a3e);"></div></div>',
+        css: '#app { max-width: 480px; margin: 0 auto; } button { background: var(--hive-color-primary, #6366f1); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }',
+        js: 'const hive = window.HiveSDK?.init?.() || { setState: () => {}, getState: () => ({}), emit: () => {} }; document.getElementById("content").innerHTML = "<p>Ready</p>";',
+      },
+      manifest: { actions: [], inputs: [], outputs: [] },
+    },
+    position: { x: 0, y: 0 },
+    size: { width: 12, height: 6 },
+    tier: 'universal',
+  }],
+
   // App-level intent compositions (multi-element)
   'photo-challenge': [
     {
@@ -551,6 +574,7 @@ export const COMPLEMENTARY_PAIRS: Record<Intent, Intent[]> = {
   'suggestion-triage': [], // Already complete: form + filter + list + chart
   'group-matching': [], // Already complete: form + chart + list + members
   'competition-goals': [], // Already complete: progress + counter + leaderboard + form + chart
+  'custom-visual': [], // Self-contained custom block
 };
 
 /**

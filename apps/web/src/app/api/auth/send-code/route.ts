@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from "zod";
 import { createHash, randomInt } from 'crypto';
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
-import { validateEmailDomain } from "@hive/core";
 import { getSchoolFromEmailAsync, type SchoolLookupResult } from "@/lib/campus-context";
 import { auditAuthEvent } from "@/lib/production-auth";
 import { currentEnvironment } from "@/lib/env";
@@ -52,7 +51,8 @@ const sendCodeSchema = z.object({
   schoolId: z.string()
     .max(50, "School ID too long")
     .regex(/^[a-zA-Z0-9_-]*$/, "Invalid school ID format")
-    .optional()
+    .optional(),
+  mode: z.enum(['campus', 'global']).optional(),
 });
 
 interface SchoolData {
@@ -468,7 +468,8 @@ function generateVerificationCodeHtml(code: string, _schoolName: string, _email:
 export const POST = withValidation(
   sendCodeSchema,
   async (request, _context: Record<string, string | string[]>, body: z.infer<typeof sendCodeSchema>, respond: typeof ResponseFormatter) => {
-    const { email, schoolId } = body;
+    const { email, schoolId, mode } = body;
+    const isGlobalMode = mode === 'global';
 
     try {
       // Origin validation (CSRF protection for pre-auth endpoints)
@@ -489,7 +490,7 @@ export const POST = withValidation(
       }
 
       // Security validation
-      const validationResult = await validateWithSecurity({ email, schoolId }, sendCodeSchema, {
+      const validationResult = await validateWithSecurity({ email, schoolId, mode }, sendCodeSchema, {
         operation: 'send_code',
         ip: request.headers.get('x-forwarded-for') || undefined
       });
@@ -504,19 +505,22 @@ export const POST = withValidation(
       }
 
       // Optional: Try to lookup school from email domain (for campusId association)
+      // Skip in global mode (non-campus onboarding).
       let schoolLookup: SchoolLookupResult | null = null;
-      try {
-        schoolLookup = await getSchoolFromEmailAsync(email);
-      } catch (err) {
-        // Email domain doesn't match a school - that's OK now
-        // Users can sign up without a campus affiliation
-        logger.info('Email domain not associated with a school', {
-          email: email.replace(/(.{3}).*@/, '$1***@')
-        });
+      if (!isGlobalMode) {
+        try {
+          schoolLookup = await getSchoolFromEmailAsync(email);
+        } catch {
+          // Email domain doesn't match a school - that's OK now
+          // Users can sign up without a campus affiliation
+          logger.info('Email domain not associated with a school', {
+            email: email.replace(/(.{3}).*@/, '$1***@')
+          });
+        }
       }
 
       // If schoolId was explicitly provided, validate it
-      if (schoolId) {
+      if (schoolId && !isGlobalMode) {
         const schoolData = await validateSchool(schoolId);
         if (schoolData) {
           // Create SchoolLookupResult from explicit school
@@ -539,7 +543,7 @@ export const POST = withValidation(
       }
 
       // Check if associated school is in waitlist mode (only if we found one)
-      if (schoolLookup && schoolLookup.status === 'waitlist') {
+      if (!isGlobalMode && schoolLookup && schoolLookup.status === 'waitlist') {
         await auditAuthEvent('forbidden', request as unknown as NextRequest, {
           operation: 'send_code',
           error: 'school_not_active',
@@ -646,7 +650,8 @@ export const POST = withValidation(
       logger.info('Verification code sent', {
         email: maskedEmail,
         campusId: schoolLookup?.campusId || undefined,
-        schoolName: schoolLookup?.schoolName || 'HIVE'
+        schoolName: schoolLookup?.schoolName || 'HIVE',
+        mode: isGlobalMode ? 'global' : 'campus',
       });
 
       // Calculate exact expiry time for countdown display

@@ -83,8 +83,8 @@ const schema = z.object({
   graduationYear: z.number().min(2015).max(2035).optional().nullable(),
   residenceType: z.enum(['on-campus', 'off-campus', 'commuter']).optional().nullable(),
   residentialSpaceId: z.string().max(100).optional().nullable(),
-  // Interests (2-5 for The Threshold)
-  interests: z.array(z.string()).min(2).max(5),
+  // Interests are optional during entry and can be completed later.
+  interests: z.array(z.string()).max(5).optional(),
   // Community identities (all optional)
   communityIdentities: z.object({
     international: z.boolean().optional(),
@@ -107,10 +107,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
     return respond.error('Session not found', 'UNAUTHORIZED', { status: 401 });
   }
 
-  if (!session.campusId) {
-    return respond.error('Campus identification required', 'UNAUTHORIZED', { status: 401 });
-  }
-  const campusId = session.campusId;
+  const campusId = session.campusId ?? undefined;
   const email = session.email;
   const isAdmin = session.isAdmin || false;
 
@@ -148,7 +145,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
     const tokens = await createTokenPair({
       userId,
       email: email || '',
-      campusId,
+      campusId: campusId || undefined,
       isAdmin,
       onboardingCompleted: true,
     });
@@ -164,7 +161,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         lastName: body.lastName.trim(),
       },
       autoJoinedSpaces: [],
-      redirect: '/home',
+      redirect: '/discover',
       devMode: true,
       expiresIn: tokens.accessTokenExpiresIn,
     });
@@ -276,14 +273,14 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       const existingUser = await transaction.get(userRef);
       if (existingUser.exists) {
         const userData = existingUser.data();
-        if (userData?.campusId && userData.campusId !== campusId) {
+        if (campusId && userData?.campusId && userData.campusId !== campusId) {
           throw new Error('Campus mismatch - cannot complete entry for different campus');
         }
       }
 
       // Pre-fetch major space if major is provided
       let majorSpaceSnapshot: FirebaseFirestore.QuerySnapshot | null = null;
-      if (body.major) {
+      if (body.major && campusId) {
         majorSpaceSnapshot = await transaction.get(
           dbAdmin.collection('spaces')
             .where('campusId', '==', campusId)
@@ -309,7 +306,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         snapshot: FirebaseFirestore.QuerySnapshot;
       }> = [];
 
-      if (body.communityIdentities) {
+      if (body.communityIdentities && campusId) {
         for (const [key, communityType] of Object.entries(communityMappings)) {
           if (body.communityIdentities[key as keyof typeof body.communityIdentities]) {
             const snapshot = await transaction.get(
@@ -328,7 +325,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       // Pre-fetch and validate residential space if provided
       let validatedResidentialSpaceId: string | null = null;
       let residentialSpaceData: FirebaseFirestore.DocumentData | undefined;
-      if (body.residentialSpaceId && body.residenceType === 'on-campus') {
+      if (body.residentialSpaceId && body.residenceType === 'on-campus' && campusId) {
         const residentialSpaceDoc = await transaction.get(
           dbAdmin.collection('spaces').doc(body.residentialSpaceId)
         );
@@ -373,9 +370,6 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         graduationYear: body.graduationYear ?? null,
         interests: body.interests ?? [],
         communityIdentities: body.communityIdentities ?? {},
-        // Campus isolation
-        campusId,
-        schoolId: campusId,
         // Entry completion - single source of truth
         // JWT still uses onboardingCompleted for backward compat (derived from entryCompletedAt)
         entryCompletedAt: now,
@@ -386,6 +380,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         updatedAt: now,
         createdAt: (existingUser.exists && existingUser.data()?.createdAt) || now,
       };
+      if (campusId) {
+        userData.campusId = campusId;
+        userData.schoolId = campusId;
+      }
       // Only write optional fields if they have actual values (avoids undefined)
       if (body.major) userData.major = body.major;
       if (body.residenceType) userData.residenceType = body.residenceType;
@@ -553,14 +551,14 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
     const tokens = await createTokenPair({
       userId,
       email: email || '',
-      campusId,
+      campusId: campusId || undefined,
       isAdmin,
       onboardingCompleted: true,
     });
 
-    // Determine best redirect: first auto-joined space or home
+    // Determine best redirect: first auto-joined space or discover
     const firstSpace = autoJoinedSpaces[0];
-    const redirect = firstSpace ? `/s/${firstSpace.handle}` : '/home';
+    const redirect = firstSpace ? `/s/${firstSpace.handle}` : '/discover';
 
     const response = NextResponse.json({
       success: true,

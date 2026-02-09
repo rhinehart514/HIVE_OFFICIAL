@@ -147,7 +147,7 @@ export const ELEMENT_RENDERERS: Record<string, ElementRenderer> = {
   // ----------------------------------------
   // Custom tier - Phase 5 iframe sandboxing
   // ----------------------------------------
-  'custom-block': CustomBlockElement,
+  'custom-block': CustomBlockElement as unknown as ElementRenderer,
 };
 
 // ============================================================

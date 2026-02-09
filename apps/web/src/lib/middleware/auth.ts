@@ -553,8 +553,8 @@ export function getUserEmail(request: AuthenticatedRequest): string {
  * Get campus ID from authenticated request
  * Returns undefined if user has no campus affiliation
  */
-export function getCampusId(request: AuthenticatedRequest): string | undefined {
-  return request.user.campusId;
+export function getCampusId(request: AuthenticatedRequest): string {
+  return request.user.campusId || '';
 }
 
 /**

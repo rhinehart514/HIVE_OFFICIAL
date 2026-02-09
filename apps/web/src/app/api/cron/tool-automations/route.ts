@@ -230,14 +230,48 @@ function shouldCronRun(cron: string, now: Date): boolean {
 }
 
 /**
- * Calculate next run time from cron expression
+ * Calculate next run time from cron expression.
+ * Supports standard 5-field cron: minute hour day month weekday
  */
-function calculateNextRun(_cron: string): Date {
-  // Simplified: add 1 hour
-  // Real implementation would use cron-parser library
-  const next = new Date();
-  next.setHours(next.getHours() + 1);
-  return next;
+function calculateNextRun(cron: string): Date {
+  const parts = cron.trim().split(/\s+/);
+  if (parts.length !== 5) {
+    const fallback = new Date();
+    fallback.setHours(fallback.getHours() + 1);
+    return fallback;
+  }
+
+  const [minuteSpec, hourSpec, daySpec, monthSpec, weekdaySpec] = parts;
+
+  function matchesField(spec: string, value: number): boolean {
+    if (spec === '*') return true;
+    if (spec.startsWith('*/')) {
+      const step = parseInt(spec.slice(2), 10);
+      return step > 0 && value % step === 0;
+    }
+    return spec.split(',').some(v => parseInt(v, 10) === value);
+  }
+
+  const now = new Date();
+  const candidate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes() + 1, 0, 0);
+  const maxMinutes = 48 * 60;
+
+  for (let i = 0; i < maxMinutes; i++) {
+    if (
+      matchesField(minuteSpec, candidate.getMinutes()) &&
+      matchesField(hourSpec, candidate.getHours()) &&
+      matchesField(daySpec, candidate.getDate()) &&
+      matchesField(monthSpec, candidate.getMonth() + 1) &&
+      matchesField(weekdaySpec, candidate.getDay())
+    ) {
+      return candidate;
+    }
+    candidate.setMinutes(candidate.getMinutes() + 1);
+  }
+
+  const fallback = new Date();
+  fallback.setHours(fallback.getHours() + 24);
+  return fallback;
 }
 
 /**

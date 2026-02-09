@@ -84,13 +84,13 @@ export function CustomBlockElement({
       case 'execute_action':
         // Action execution
         if (onAction && message.actionId) {
-          const result = onAction(message.actionId, message.payload);
+          onAction(message.actionId, message.payload);
           // Send result if requestId provided
           if (message.requestId) {
             sendResponse({
               type: 'action_result',
               requestId: message.requestId,
-              result: result || { success: true },
+              result: { success: true },
             });
           }
         }
@@ -161,8 +161,8 @@ export function CustomBlockElement({
   }, []);
 
   // Determine size from element config or use defaults
-  const width = config.size?.width;
-  const height = config.size?.height;
+  const width = (config as CustomBlockConfig & { size?: { width?: number; height?: number } }).size?.width;
+  const height = (config as CustomBlockConfig & { size?: { width?: number; height?: number } }).size?.height;
 
   return (
     <div className="w-full">
@@ -175,7 +175,7 @@ export function CustomBlockElement({
         onError={handleError}
         width={width}
         height={height}
-        mode={mode}
+        mode={mode === 'edit' ? 'preview' : mode}
         messageRef={messageRef}
       />
 

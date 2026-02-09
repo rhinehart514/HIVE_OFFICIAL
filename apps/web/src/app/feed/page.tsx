@@ -1,23 +1,17 @@
 'use client';
 
-/**
- * /feed - DEPRECATED
- *
- * Redirects to /home (unified dashboard)
- * Feed and Spaces have been merged into /home as part of IA simplification.
- *
- * @deprecated Use /home instead
- */
-
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCampusMode } from '@/hooks/use-campus-mode';
 
 export default function FeedPage() {
   const router = useRouter();
+  const { hasCampus, isLoading } = useCampusMode();
 
   useEffect(() => {
-    router.replace('/home');
-  }, [router]);
+    if (isLoading) return;
+    router.replace(hasCampus ? '/discover' : '/spaces');
+  }, [hasCampus, isLoading, router]);
 
   return (
     <div className="h-screen bg-foundation-gray-1000 flex items-center justify-center">

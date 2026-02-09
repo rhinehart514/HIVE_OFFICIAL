@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AnimatePresence } from 'framer-motion';
 import {
   motion,
   WordReveal,
@@ -13,19 +12,17 @@ import {
   Button,
 } from '@hive/ui/design-system/primitives';
 import { ArrowRight } from 'lucide-react';
-import { WaitlistModal } from './WaitlistModal';
 
 const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
 
 export function HeroSection() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [requestSchool, setRequestSchool] = useState<{ id: string; name: string; domain: string; isActive?: boolean } | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
-  const handleEnter = useCallback(() => {
+  const handleJoinUB = useCallback(() => {
     const redirect = searchParams.get('redirect');
     const enterUrl = redirect
       ? `/enter?schoolId=ub-buffalo&domain=buffalo.edu&redirect=${encodeURIComponent(redirect)}`
@@ -33,9 +30,9 @@ export function HeroSection() {
     router.push(enterUrl);
   }, [router, searchParams]);
 
-  const handleWaitlist = useCallback(() => {
-    setRequestSchool({ id: 'other', name: 'your school', domain: '', isActive: false });
-  }, []);
+  const handleCreateSpace = useCallback(() => {
+    router.push(`/enter?redirect=${encodeURIComponent('/spaces?create=true')}`);
+  }, [router]);
 
   if (!mounted) return <section className="min-h-screen" />;
 
@@ -82,7 +79,7 @@ export function HeroSection() {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-12">
             <div className="md:max-w-md">
               <p className="text-base text-white/40 leading-relaxed mb-8">
-                Create tools your campus actually uses. Polls, signups, countdowns, leaderboards&mdash;build in seconds, share anywhere.
+                Your campus, your spaces, your tools. Build in seconds, share anywhere, and run live tools your community actually uses.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Magnetic>
@@ -91,18 +88,18 @@ export function HeroSection() {
                     size="lg"
                     className="rounded-full"
                     trailingIcon={<ArrowRight />}
-                    onClick={handleEnter}
+                    onClick={handleJoinUB}
                   >
-                    Start building
+                    Join UB
                   </Button>
                 </Magnetic>
                 <Button
                   variant="secondary"
                   size="lg"
                   className="rounded-full"
-                  onClick={handleWaitlist}
+                  onClick={handleCreateSpace}
                 >
-                  Other campus
+                  Create a space
                 </Button>
               </div>
             </div>
@@ -123,11 +120,6 @@ export function HeroSection() {
         text="Scroll"
         pulse
       />
-
-      {/* Waitlist modal */}
-      <AnimatePresence>
-        {requestSchool && <WaitlistModal school={requestSchool} onClose={() => setRequestSchool(null)} />}
-      </AnimatePresence>
     </section>
   );
 }

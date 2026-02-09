@@ -143,7 +143,7 @@ export function FocusedToolEditor({ spaceId, onComplete, onCancel }: FocusedTool
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={MOTION.transitions.base}
+          transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         >
           <h2 className="text-2xl font-semibold text-white mb-2">Pick a Template</h2>
           <p className="text-white/60 mb-8">Start with a pre-built pattern, customize the details</p>
@@ -176,7 +176,7 @@ export function FocusedToolEditor({ spaceId, onComplete, onCancel }: FocusedTool
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={MOTION.transitions.base}
+          transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         >
           <button
             onClick={() => setStep('template')}

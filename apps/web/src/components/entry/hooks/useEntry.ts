@@ -89,6 +89,7 @@ export interface UseEntryReturn extends EntryState {
   setCode: (code: string[]) => void;
   verifyCode: () => Promise<void>;
   resendCode: () => Promise<void>;
+  continueWithoutCampus: () => Promise<void>;
 
   // Code expiry
   codeExpiresAt: Date | null;
@@ -165,7 +166,7 @@ function loadPersistedState(): PersistedEntryState | null {
 
 export function useEntry(options: UseEntryOptions): UseEntryReturn {
   const { onComplete, schoolId: initialSchoolId } = options;
-  const campusId = initialSchoolId || options.campusId || 'ub-buffalo';
+  const initialCampusId = initialSchoolId || options.campusId || undefined;
 
   // Try to restore persisted state on initial render
   const restoredState = React.useRef(loadPersistedState());
@@ -463,7 +464,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
   };
 
   // API actions
-  const sendCode = async () => {
+  const requestCode = async (mode: 'campus' | 'global' = 'campus') => {
     if (!data.email.trim()) {
       setError('Enter your email');
       analytics.trackValidationError('welcome', 'email', 'empty_email');
@@ -488,10 +489,10 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     setWaitlistSuccess(false);
     setCodeExpiresAt(null);
 
-    // Derive schoolId from email domain if not already set
-    const emailDomain = data.email.split('@')[1]?.toLowerCase() || '';
-    const schoolIdFromDomain = emailDomain.split('.')[0];
-    const schoolIdToUse = detectedSchoolId || schoolIdFromDomain || campusId;
+    const schoolIdToUse =
+      mode === 'global'
+        ? undefined
+        : (detectedSchoolId || initialCampusId);
 
     try {
       const res = await fetch('/api/auth/send-code', {
@@ -499,7 +500,8 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: data.email,
-          schoolId: schoolIdToUse,
+          ...(schoolIdToUse ? { schoolId: schoolIdToUse } : {}),
+          mode,
         }),
         signal: abortController.signal,
       });
@@ -507,8 +509,11 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       const result = await res.json();
 
       if (!res.ok) {
-        // Handle SCHOOL_NOT_ACTIVE - show waitlist UI
-        if (result.code === 'SCHOOL_NOT_ACTIVE' || result.error === 'SCHOOL_NOT_ACTIVE') {
+        // Handle SCHOOL_NOT_ACTIVE - show waitlist UI in campus mode.
+        if (
+          mode === 'campus' &&
+          (result.code === 'SCHOOL_NOT_ACTIVE' || result.error === 'SCHOOL_NOT_ACTIVE')
+        ) {
           setWaitlistSchool({
             id: result.schoolId,
             name: result.schoolName,
@@ -546,6 +551,10 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     }
   };
 
+  const sendCode = async () => {
+    await requestCode('campus');
+  };
+
   const verifyCode = async () => {
     const codeString = data.code.join('');
     if (codeString.length !== 6) {
@@ -570,7 +579,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
         body: JSON.stringify({
           email: data.email,
           code: codeString,
-          schoolId: campusId,
+          ...(detectedSchoolId ? { schoolId: detectedSchoolId } : {}),
         }),
         signal: abortController.signal,
       });
@@ -601,7 +610,14 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
   };
 
   const resendCode = async () => {
-    await sendCode();
+    await requestCode('campus');
+  };
+
+  const continueWithoutCampus = async () => {
+    setDetectedSchoolId(null);
+    setWaitlistSchool(null);
+    setWaitlistSuccess(false);
+    await requestCode('global');
   };
 
   // Naming phase: Submit first/last name
@@ -668,11 +684,6 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
   };
 
   const completeEntry = async () => {
-    if (data.interests.length < 2) {
-      setError('Pick at least 2 interests');
-      return;
-    }
-
     // Cancel any previous request
     cancelRequest();
 
@@ -727,8 +738,8 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
       analytics.trackStepCompleted('handle');
       analytics.trackOnboardingCompleted(0, ['welcome', 'name', 'academics', 'handle']);
 
-      // Use the server-provided redirect (first auto-joined space or /home)
-      const redirect = (result.redirect as string) || '/home';
+      // Use the server-provided redirect (first auto-joined space or /discover)
+      const redirect = (result.redirect as string) || '/discover';
       onComplete(redirect);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
@@ -841,6 +852,7 @@ export function useEntry(options: UseEntryOptions): UseEntryReturn {
     setCode,
     verifyCode,
     resendCode,
+    continueWithoutCampus,
     joinWaitlist,
     setWaitlistSuccess,
 

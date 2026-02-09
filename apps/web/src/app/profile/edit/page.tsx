@@ -117,8 +117,8 @@ export default function EditProfilePage() {
           </div>
           <h1 className="text-2xl font-semibold text-white mb-3">Profile Unavailable</h1>
           <p className="text-white/50 mb-8">We couldn&apos;t load your profile settings.</p>
-          <Button onClick={() => router.push('/feed')} variant="secondary">
-            Back to Feed
+          <Button onClick={() => router.push('/discover')} variant="secondary">
+            Back to Discover
           </Button>
         </motion.div>
       </div>

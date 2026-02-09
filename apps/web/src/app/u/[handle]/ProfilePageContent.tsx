@@ -113,7 +113,7 @@ function ProfileNotFoundState({ handle }: { handle: string }) {
           We couldn&apos;t find anyone with the handle <span className="text-white/70 font-medium">@{handle}</span>. They may have changed their handle or deleted their account.
         </p>
         <Link
-          href="/home"
+          href="/discover"
           className={cn(
             'inline-flex items-center gap-2 px-6 py-3 rounded-xl',
             'bg-white text-foundation-gray-1000 font-medium',
@@ -146,7 +146,7 @@ function ProfilePrivateState({ handle }: { handle: string }) {
           <span className="text-white/70 font-medium">@{handle}</span> has a private profile. You need to be connected to view their full profile.
         </p>
         <Link
-          href="/home"
+          href="/discover"
           className={cn(
             'inline-flex items-center gap-2 px-6 py-3 rounded-xl',
             'bg-white/[0.06] text-white/70 font-medium border border-white/[0.08]',
@@ -256,7 +256,7 @@ export default function ProfilePageContent() {
     organizingEvents,
     sharedSpacesCount,
     sharedSpaceNames,
-    mutualFriendsCount,
+    mutualFriendsCount: _mutualFriendsCount,
     activityContributions,
     handleEditProfile,
     handleToolModalClose,
@@ -439,11 +439,11 @@ export default function ProfilePageContent() {
             {hasBelonging ? (
               <div className="space-y-6">
                 {/* Shared Spaces Banner (only on other people's profiles) */}
-                {!isOwnProfile && (sharedSpacesCount > 0 || mutualFriendsCount > 0) && (
+                {!isOwnProfile && sharedSpacesCount > 0 && (
                   <ProfileSharedBanner
                     sharedSpaceNames={sharedSpaceNames}
                     sharedSpacesCount={sharedSpacesCount}
-                    mutualConnectionsCount={mutualFriendsCount}
+                    mutualConnectionsCount={0}
                   />
                 )}
 

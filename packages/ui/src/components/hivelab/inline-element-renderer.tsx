@@ -1,23 +1,13 @@
 'use client';
 
 /**
- * InlineElementRenderer - Renders HiveLab elements inside chat messages
+ * InlineElementRenderer - Unified renderer for all HiveLab elements in chat
  *
- * This component bridges the chat system with HiveLab tools by:
- * 1. Taking componentData from a chat message
- * 2. Fetching deployment state if needed (deployment mode)
- *    OR using inline component state API (inline chat mode)
- * 3. Calling renderElementSafe() with proper context (with error boundaries)
- * 4. Handling actions via the appropriate API
+ * Single component data interface, auto-detects mode:
+ * - componentId present → inline chat API (/api/spaces/[spaceId]/components)
+ * - deploymentId present → deployment API (/api/tools/state)
  *
- * Two modes of operation:
- * - Deployment mode (default): Uses tool deployment state from /api/tools/state
- * - Inline chat mode: Uses component state from /api/spaces/[spaceId]/components
- *
- * Used by SpaceChatBoard for messages with type: 'inline_component'
- *
- * @author HIVE Frontend Team
- * @version 1.1.0
+ * Used by TheaterChatBoard/SpaceChatBoard for messages with type: 'inline_component'
  */
 
 import * as React from 'react';
@@ -139,37 +129,37 @@ function isRsvpConfig(config: ComponentConfig): config is RsvpConfig {
 // ============================================================================
 
 /**
- * Component data for deployment-based inline components (legacy/deployed tools)
+ * Unified component data for all inline components in chat messages.
+ * The renderer auto-detects mode based on which IDs are present:
+ * - componentId → inline chat mode (polls, RSVP, countdowns via /slash commands)
+ * - deploymentId → deployment mode (deployed HiveLab tools)
  */
-export interface InlineComponentData {
-  /** Element type (e.g., 'poll-element', 'counter', 'form-builder') */
+export interface ComponentData {
+  /** Element type (e.g., 'poll-element', 'countdown-timer', 'rsvp-button') */
   elementType: string;
-  /** Deployment ID for state persistence */
-  deploymentId: string;
+  /** Inline component ID (for quick tools created in chat) */
+  componentId?: string;
+  /** Deployment ID for state persistence (for deployed tools) */
+  deploymentId?: string;
   /** Tool ID for reference */
-  toolId: string;
+  toolId?: string;
   /** Initial/cached state */
   state?: Record<string, unknown>;
   /** Whether the component is active */
   isActive: boolean;
 }
 
-/**
- * Component data for inline chat components (quick tools like polls in chat)
- */
-export interface InlineChatComponentData {
-  /** Inline component ID */
-  componentId: string;
-  /** Element type (e.g., 'poll-element', 'countdown-timer', 'rsvp-button') */
-  elementType: string;
-  /** Whether the component is currently active */
-  isActive: boolean;
-}
+/** @deprecated Use ComponentData instead */
+export type InlineComponentData = ComponentData;
+/** @deprecated Use ComponentData instead */
+export type InlineChatComponentData = ComponentData;
 
 /**
- * Base props shared by both modes
+ * Props for InlineElementRenderer
  */
-interface BaseRendererProps {
+export interface InlineElementRendererProps {
+  /** Component data from the chat message */
+  componentData: ComponentData;
   /** Space ID for context */
   spaceId: string;
   /** Current user ID */
@@ -188,35 +178,6 @@ interface BaseRendererProps {
   className?: string;
 }
 
-/**
- * Props for deployment-based rendering (default mode)
- */
-export interface DeploymentModeProps extends BaseRendererProps {
-  /** Component data from the chat message */
-  componentData: InlineComponentData;
-  /** Not in inline chat mode */
-  isInlineChat?: false;
-  /** Not needed in deployment mode */
-  inlineChatData?: never;
-}
-
-/**
- * Props for inline chat component rendering
- */
-export interface InlineChatModeProps extends BaseRendererProps {
-  /** Not needed in inline chat mode */
-  componentData?: never;
-  /** Enable inline chat mode */
-  isInlineChat: true;
-  /** Inline chat component data */
-  inlineChatData: InlineChatComponentData;
-}
-
-/**
- * Union type for all renderer props
- */
-export type InlineElementRendererProps = DeploymentModeProps | InlineChatModeProps;
-
 // ============================================================================
 // INLINE CHAT MODE COMPONENT (uses useInlineComponentState)
 // ============================================================================
@@ -226,7 +187,7 @@ export type InlineElementRendererProps = DeploymentModeProps | InlineChatModePro
  * Uses the inline component state hook for real-time poll/RSVP/countdown state
  */
 function InlineChatRenderer({
-  inlineChatData,
+  componentData,
   spaceId,
   userId,
   isSpaceLeader = false,
@@ -235,8 +196,8 @@ function InlineChatRenderer({
   onAction,
   compact = true,
   className,
-}: InlineChatModeProps) {
-  const { componentId, elementType, isActive } = inlineChatData;
+}: InlineElementRendererProps) {
+  const { componentId, elementType, isActive } = componentData as ComponentData & { componentId: string };
 
   // State for fetching and submitting
   const [state, setState] = React.useState<ComponentDisplayState | null>(null);
@@ -571,7 +532,7 @@ function DeploymentRenderer({
   onAction,
   compact = true,
   className,
-}: DeploymentModeProps) {
+}: InlineElementRendererProps) {
   const { elementType, deploymentId, state: initialState, isActive } = componentData;
 
   // Local state management
@@ -676,7 +637,7 @@ function DeploymentRenderer({
 
   // Build element props
   const elementProps: ElementProps = {
-    id: deploymentId,
+    id: deploymentId || '',
     config: state.config as Record<string, unknown> || {},
     data: state,
     onChange: handleChange,
@@ -804,18 +765,16 @@ function DeploymentRenderer({
 /**
  * InlineElementRenderer - Renders HiveLab elements inside chat messages
  *
- * Routes to the appropriate internal renderer based on mode:
- * - Deployment mode (default): Uses DeploymentRenderer for tool deployments
- * - Inline chat mode: Uses InlineChatRenderer for quick polls/RSVP in chat
+ * Auto-detects mode from componentData:
+ * - componentId present → inline chat mode (polls, RSVP, countdowns)
+ * - deploymentId present → deployment mode (deployed HiveLab tools)
  */
 export function InlineElementRenderer(props: InlineElementRendererProps) {
-  // Route to the appropriate renderer based on mode
-  if (props.isInlineChat === true) {
+  if (props.componentData.componentId) {
     return <InlineChatRenderer {...props} />;
   }
 
-  // Default to deployment mode
-  return <DeploymentRenderer {...(props as DeploymentModeProps)} />;
+  return <DeploymentRenderer {...props} />;
 }
 
 export default InlineElementRenderer;

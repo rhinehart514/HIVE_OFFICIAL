@@ -804,7 +804,6 @@ export const PROGRESS_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'trending-up',
   category: 'teams',
   complexity: 'simple',
-  status: 'hidden', // progress-indicator renderer not yet complete
   spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'sidebar',
@@ -898,7 +897,6 @@ export const BUDGET_OVERVIEW_TEMPLATE: QuickTemplate = {
   icon: 'wallet',
   category: 'resources',
   complexity: 'simple',
-  status: 'hidden', // progress-indicator renderer not yet complete
   spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -1003,9 +1001,7 @@ export const WHAT_SHOULD_I_EAT_TEMPLATE: QuickTemplate = {
   icon: 'sparkles',
   category: 'resources',
   complexity: 'simple',
-  status: 'hidden',
   spaceTypes: ['residential'],
-  incompleteElements: ['dining-picker'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -1128,9 +1124,7 @@ export const STUDY_SPOT_FINDER_TEMPLATE: QuickTemplate = {
   icon: 'sparkles',
   category: 'resources',
   complexity: 'simple',
-  status: 'hidden',
   spaceTypes: ['student_org', 'residential'],
-  incompleteElements: ['study-spot-finder'],
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -1787,7 +1781,6 @@ export const COMPETITION_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'trophy',
   category: 'apps',
   complexity: 'app',
-  status: 'hidden', // progress-indicator renderer not yet complete
   spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'inline',

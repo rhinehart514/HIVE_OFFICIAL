@@ -266,11 +266,11 @@ function DefaultErrorFallback({
 
           <Button
             variant="secondary"
-            onClick={() => window.location.href = '/feed'}
+            onClick={() => window.location.href = '/discover'}
             className="border-hive-border text-hive-text-secondary"
           >
             <HomeIcon className="w-4 h-4 mr-2" />
-            Go to Feed
+            Go to Discover
           </Button>
 
           {isDevelopment && (

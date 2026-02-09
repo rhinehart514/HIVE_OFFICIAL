@@ -1,11 +1,9 @@
 /**
  * Shared Navigation Config
  *
- * 4-Pillar IA (Feb 2026):
- * - Create: Creator dashboard + builder (HIVE is a creation platform)
- * - Spaces: Distribution surfaces where tools live
- * - Explore: Discover tools, spaces, people
- * - You: Own profile + settings
+ * Campus-aware IA (Feb 2026):
+ * - Campus mode: Discover | Spaces | You (Create is a dedicated FAB/button)
+ * - Non-campus mode: Spaces | Create | You
  */
 
 import { BeakerIcon, SpacesIcon, CompassIcon, UserIcon } from '@hive/ui';
@@ -18,13 +16,13 @@ export interface NavItem {
   matchPattern?: RegExp;
 }
 
-export const NAV_ITEMS: NavItem[] = [
+export const CAMPUS_NAV_ITEMS: NavItem[] = [
   {
-    id: 'create',
-    label: 'Create',
-    href: '/lab',
-    icon: BeakerIcon,
-    matchPattern: /^\/lab(\/|$)/,
+    id: 'discover',
+    label: 'Discover',
+    href: '/discover',
+    icon: CompassIcon,
+    matchPattern: /^\/discover(\/|$)|^\/explore(\/|$)/,
   },
   {
     id: 'spaces',
@@ -34,11 +32,28 @@ export const NAV_ITEMS: NavItem[] = [
     matchPattern: /^\/spaces(\/|$)|^\/s\//,
   },
   {
-    id: 'explore',
-    label: 'Explore',
-    href: '/explore',
-    icon: CompassIcon,
-    matchPattern: /^\/explore(\/|$)/,
+    id: 'you',
+    label: 'You',
+    href: '/me',
+    icon: UserIcon,
+    matchPattern: /^\/me(\/|$)|^\/profile(\/|$)|^\/settings(\/|$)|^\/u\//,
+  },
+];
+
+export const NON_CAMPUS_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'spaces',
+    label: 'Spaces',
+    href: '/spaces',
+    icon: SpacesIcon,
+    matchPattern: /^\/spaces(\/|$)|^\/s\//,
+  },
+  {
+    id: 'create',
+    label: 'Create',
+    href: '/lab/new',
+    icon: BeakerIcon,
+    matchPattern: /^\/lab(\/|$)/,
   },
   {
     id: 'you',
@@ -48,6 +63,16 @@ export const NAV_ITEMS: NavItem[] = [
     matchPattern: /^\/me(\/|$)|^\/profile(\/|$)|^\/settings(\/|$)|^\/u\//,
   },
 ];
+
+/**
+ * Backwards-compatible default for existing imports.
+ * Campus users are the default IA.
+ */
+export const NAV_ITEMS: NavItem[] = CAMPUS_NAV_ITEMS;
+
+export function getNavItems(hasCampus: boolean): NavItem[] {
+  return hasCampus ? CAMPUS_NAV_ITEMS : NON_CAMPUS_NAV_ITEMS;
+}
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
   if (item.matchPattern) {

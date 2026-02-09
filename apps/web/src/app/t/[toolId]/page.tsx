@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { toolId } = await params;
   const tool = await fetchToolForMetadata(toolId);
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
   if (!tool) {
     return {
@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function StandaloneToolPage({ params }: Props) {
   const { toolId } = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hive.com');
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
   return <StandaloneToolClient toolId={toolId} baseUrl={baseUrl} />;
 }

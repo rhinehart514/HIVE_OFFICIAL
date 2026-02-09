@@ -23,7 +23,7 @@ import { ChatRowMessage, DateSeparator, SystemMessage } from './ChatRowMessage';
 import { ChatTypingDots } from './TypingDots';
 import type { ChatRowMessageAuthor, ChatRowMessageReaction } from './ChatRowMessage';
 import type { TypingUser } from './TypingDots';
-import { InlineElementRenderer, type InlineComponentData, type InlineChatComponentData } from '../../../components/hivelab/inline-element-renderer';
+import { InlineElementRenderer, type ComponentData } from '../../../components/hivelab/inline-element-renderer';
 
 // ============================================================
 // Types
@@ -44,10 +44,8 @@ export interface TheaterMessage {
   reactions?: ChatRowMessageReaction[];
   threadCount?: number;
   systemAction?: string;
-  /** For inline_component type: deployment-based component data */
-  componentData?: InlineComponentData;
-  /** For inline_component type: inline chat component data (quick polls/RSVP) */
-  inlineChatData?: InlineChatComponentData;
+  /** For inline_component type: unified component data (deployed tools + inline chat tools) */
+  componentData?: ComponentData;
 }
 
 export interface TheaterChatBoardProps {
@@ -388,23 +386,13 @@ function VirtualMessageRow({
         )}
         {/* Inline component renderer */}
         <div className="ml-14">
-          {message.inlineChatData ? (
-            // Inline chat mode (quick polls/RSVP created directly in chat)
-            <InlineElementRenderer
-              isInlineChat={true}
-              inlineChatData={message.inlineChatData}
-              spaceId={spaceId}
-              userId={currentUserId}
-            />
-          ) : message.componentData ? (
-            // Deployment mode (deployed tool component)
+          {message.componentData ? (
             <InlineElementRenderer
               componentData={message.componentData}
               spaceId={spaceId}
               userId={currentUserId}
             />
           ) : (
-            // Fallback for missing component data
             <div className="text-[#6B6B70] text-sm italic p-4 border border-dashed border-white/10 rounded-lg">
               Component data missing
             </div>

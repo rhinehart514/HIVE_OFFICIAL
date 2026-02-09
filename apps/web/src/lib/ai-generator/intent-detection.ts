@@ -27,7 +27,8 @@ export type Intent =
   | 'event-series'       // recurring events, series management
   | 'suggestion-triage'  // feedback with filtering and trends
   | 'group-matching'     // study groups, project teams
-  | 'competition-goals'; // fundraising, challenges with targets
+  | 'competition-goals' // fundraising, challenges with targets
+  | 'custom-visual';    // bingo, games, drag-and-drop, interactive widgets
 
 export interface DetectedIntent {
   primary: Intent;
@@ -118,12 +119,22 @@ export const INTENT_SIGNALS: Record<Intent, string[]> = {
     'fundraising goal', 'donation tracker', 'competition leaderboard', 'target tracking',
     'goal tracking', 'challenge progress', 'fundraising tracker', 'donation goal',
   ],
+  'custom-visual': [
+    'bingo', 'bingo card', 'flip card', 'flip cards', 'flashcard', 'flashcards',
+    'game', 'card game', 'matching game', 'trivia', 'trivia game', 'quiz game',
+    'drag and drop', 'drag-and-drop', 'draggable', 'sortable',
+    'spinner', 'wheel', 'spin wheel', 'random wheel', 'prize wheel',
+    'animation', 'animated', 'interactive widget', 'custom widget',
+    'interactive visualization', 'custom visualization', 'mini game', 'minigame',
+    'memory game', 'word search', 'crossword', 'puzzle',
+  ],
 };
 
 // App-level intents get 3x weight for strongest matching (they're specific use cases)
 export const APP_INTENTS: Intent[] = [
   'photo-challenge', 'attendance-tracking', 'resource-management', 'multi-vote',
   'event-series', 'suggestion-triage', 'group-matching', 'competition-goals',
+  'custom-visual',
 ];
 
 // Campus-specific intents get 2x weight for stronger matching
@@ -157,6 +168,7 @@ export function detectIntent(prompt: string): DetectedIntent {
     'suggestion-triage': 0,
     'group-matching': 0,
     'competition-goals': 0,
+    'custom-visual': 0,
   };
 
   const matchedKeywords: string[] = [];

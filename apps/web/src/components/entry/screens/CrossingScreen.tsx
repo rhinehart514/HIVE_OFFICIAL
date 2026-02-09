@@ -112,7 +112,6 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
-  const canContinue = entry.data.interests.length >= 2;
   const atLimit = entry.data.interests.length >= 5;
 
   const filteredInterests = React.useMemo(() => {
@@ -167,7 +166,7 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
         </h1>
 
         <p className="text-[15px] text-white/40">
-          Pick 2-5 interests to help us connect you.
+          Pick interests to personalize recommendations (optional).
         </p>
       </div>
 
@@ -364,12 +363,10 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
       {/* CTA - gold when ready */}
       <button
         onClick={entry.completeEntry}
-        disabled={!canContinue || entry.isLoading}
+        disabled={entry.isLoading}
         className={cn(
           'group w-full py-4 rounded-xl font-medium transition-all duration-300',
-          canContinue
-            ? 'bg-gold-500 text-neutral-950 hover:bg-gold-500/90'
-            : 'bg-white/10 text-white/40',
+          'bg-gold-500 text-neutral-950 hover:bg-gold-500/90',
           'disabled:cursor-not-allowed',
           'flex items-center justify-center gap-2',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black'
@@ -380,13 +377,11 @@ export function CrossingScreen({ entry }: CrossingScreenProps) {
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>Creating your profile...</span>
           </>
-        ) : canContinue ? (
+        ) : (
           <>
             <span>Enter HIVE</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </>
-        ) : (
-          `Pick ${2 - entry.data.interests.length} more`
         )}
       </button>
     </div>

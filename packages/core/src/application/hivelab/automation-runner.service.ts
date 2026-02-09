@@ -647,16 +647,50 @@ export class AutomationRunnerService {
   }
 
   /**
-   * Calculate next run time for scheduled automation.
+   * Calculate next run time for scheduled automation from cron expression.
    */
   private calculateNextRun(
     trigger: ToolAutomationTrigger & { type: 'schedule' }
   ): string {
-    // Simplified - real implementation would parse cron expression
-    // For now, add 1 hour
-    const next = new Date();
-    next.setHours(next.getHours() + 1);
-    return next.toISOString();
+    const cron = trigger.cron;
+    const parts = cron.trim().split(/\s+/);
+    if (parts.length !== 5) {
+      const fallback = new Date();
+      fallback.setHours(fallback.getHours() + 1);
+      return fallback.toISOString();
+    }
+
+    const [minuteSpec, hourSpec, daySpec, monthSpec, weekdaySpec] = parts;
+
+    function matchesField(spec: string, value: number): boolean {
+      if (spec === '*') return true;
+      if (spec.startsWith('*/')) {
+        const step = parseInt(spec.slice(2), 10);
+        return step > 0 && value % step === 0;
+      }
+      return spec.split(',').some(v => parseInt(v, 10) === value);
+    }
+
+    const now = new Date();
+    const candidate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes() + 1, 0, 0);
+    const maxMinutes = 48 * 60;
+
+    for (let i = 0; i < maxMinutes; i++) {
+      if (
+        matchesField(minuteSpec, candidate.getMinutes()) &&
+        matchesField(hourSpec, candidate.getHours()) &&
+        matchesField(daySpec, candidate.getDate()) &&
+        matchesField(monthSpec, candidate.getMonth() + 1) &&
+        matchesField(weekdaySpec, candidate.getDay())
+      ) {
+        return candidate.toISOString();
+      }
+      candidate.setMinutes(candidate.getMinutes() + 1);
+    }
+
+    const fallback = new Date();
+    fallback.setHours(fallback.getHours() + 24);
+    return fallback.toISOString();
   }
 }
 

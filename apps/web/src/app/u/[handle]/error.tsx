@@ -41,7 +41,7 @@ export default function ProfileError({
             Try Again
           </button>
           <Link
-            href="/home"
+            href="/discover"
             className={cn(
               'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl',
               'bg-white/[0.06] text-white/70 font-medium border border-white/[0.08]',

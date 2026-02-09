@@ -220,6 +220,60 @@ function generateWithRules(prompt: string): ToolComposition {
     }
   }
 
+  // Detect custom block (interactive widgets, games, visualizations)
+  if (
+    lowerPrompt.includes('bingo') ||
+    lowerPrompt.includes('flip') ||
+    lowerPrompt.includes('game') ||
+    lowerPrompt.includes('drag') ||
+    lowerPrompt.includes('animation') ||
+    lowerPrompt.includes('widget') ||
+    lowerPrompt.includes('interactive') ||
+    lowerPrompt.includes('custom') ||
+    lowerPrompt.includes('card game') ||
+    lowerPrompt.includes('spinner') ||
+    lowerPrompt.includes('wheel') ||
+    lowerPrompt.includes('trivia') ||
+    lowerPrompt.includes('flashcard') ||
+    lowerPrompt.includes('matching game')
+  ) {
+    const title = generateToolName(prompt);
+    elements.push({
+      type: 'custom-block',
+      instanceId: 'custom_block_1',
+      config: {
+        blockId: `block_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        version: 1,
+        metadata: {
+          name: title,
+          description: `Custom interactive widget: ${prompt}`,
+          createdBy: 'ai' as const,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        code: {
+          html: `<div id="app" style="font-family: var(--hive-font-sans, system-ui, sans-serif); padding: 24px; text-align: center;">
+  <h2 style="margin: 0 0 16px; color: var(--hive-color-text, #fff);">${title}</h2>
+  <p style="color: var(--hive-color-text-secondary, #a0a0a0); margin-bottom: 24px;">Interactive widget for: ${prompt}</p>
+  <div id="content" style="background: var(--hive-color-surface, #1a1a2e); border-radius: 12px; padding: 32px; border: 1px solid var(--hive-color-border, #2a2a3e);"></div>
+</div>`,
+          css: `#app { max-width: 480px; margin: 0 auto; }
+#content { transition: all 0.2s ease; }
+#content:hover { border-color: var(--hive-color-primary, #6366f1); }
+button { background: var(--hive-color-primary, #6366f1); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: opacity 0.15s; }
+button:hover { opacity: 0.9; }`,
+          js: `const hive = window.HiveSDK?.init?.() || { setState: () => {}, getState: () => ({}), emit: () => {} };
+const content = document.getElementById('content');
+content.innerHTML = '<p style="color: var(--hive-color-text-secondary, #a0a0a0);">Ready to interact</p><button onclick="hive.emit(\\'click\\')">Get Started</button>';`,
+          hash: `blk_${Math.abs(Date.now()).toString(36)}`,
+        },
+        manifest: { actions: [], inputs: [], outputs: [] },
+      },
+      position: { x: elements.length > 0 ? 440 : 100, y: 100 },
+      size: { width: 400, height: 350 },
+    });
+  }
+
   // Detect form
   if (lowerPrompt.includes('form') || lowerPrompt.includes('feedback')) {
     elements.push({

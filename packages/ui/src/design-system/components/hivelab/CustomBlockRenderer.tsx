@@ -29,8 +29,8 @@ import {
   validateIframeMessage,
   createParentMessage,
   extractIframePayload,
-} from '../../lib/hivelab/hive-sdk';
-import { buildCSPPolicy } from '../../lib/hivelab/csp-builder';
+} from '../../../lib/hivelab/hive-sdk';
+import { buildCSPPolicy } from '../../../lib/hivelab/csp-builder';
 
 // ============================================================
 // Types
@@ -146,8 +146,8 @@ export function CustomBlockRenderer({
         return;
       }
 
-      // Handle error message
-      if (payload.type === 'error') {
+      // Handle error message (from raw iframe postMessage, not typed in IframeMessage union)
+      if ((payload as { type: string }).type === 'error') {
         setLoadingState('error');
         const errorMsg = (payload as any).error || 'Unknown error in custom block';
         setError(errorMsg);

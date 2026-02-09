@@ -308,7 +308,7 @@ export const GET = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
-  const campusId = getCampusId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest) || '';
   const { deploymentId } = await params;
 
   const deploymentResult = await loadDeployment(deploymentId, campusId);
@@ -372,7 +372,7 @@ export const PUT = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest) || '';
     const { deploymentId } = await params;
 
     const deploymentResult = await loadDeployment(deploymentId, campusId);
@@ -460,7 +460,7 @@ export const PATCH = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest) || '';
     const { deploymentId } = await params;
 
     const deploymentResult = await loadDeployment(deploymentId, campusId);
@@ -556,7 +556,7 @@ export const DELETE = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
-  const campusId = getCampusId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest) || '';
   const { deploymentId } = await params;
 
   const deploymentResult = await loadDeployment(deploymentId, campusId);

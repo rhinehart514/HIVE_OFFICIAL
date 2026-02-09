@@ -514,6 +514,13 @@ export const FEED_RITUALS_FLAGS = {
 
 export type FeedRitualsFeatureFlag = typeof FEED_RITUALS_FLAGS[keyof typeof FEED_RITUALS_FLAGS];
 
+// Soft-launch off-switches for low-signal social surfaces.
+const SOFT_LAUNCH_DISABLED_FLAGS = new Set<string>([
+  HIVE_FEATURE_FLAGS.RITUALS_V1,
+  HIVE_FEATURE_FLAGS.ENABLE_DMS,
+  HIVE_FEATURE_FLAGS.ENABLE_CONNECTIONS,
+]);
+
 /**
  * Check if feed is enabled for a user
  */
@@ -530,6 +537,9 @@ export async function isFeedEnabled(
 export async function isRitualsEnabled(
   userContext: UserFeatureContext
 ): Promise<boolean> {
+  if (SOFT_LAUNCH_DISABLED_FLAGS.has(HIVE_FEATURE_FLAGS.RITUALS_V1)) {
+    return false;
+  }
   const result = await featureFlagService.isFeatureEnabled(HIVE_FEATURE_FLAGS.RITUALS_V1, userContext);
   return result.enabled;
 }
@@ -613,6 +623,9 @@ export type SocialFeatureFlag = typeof SOCIAL_FLAGS[keyof typeof SOCIAL_FLAGS];
 export async function isDMsEnabled(
   userContext: UserFeatureContext
 ): Promise<boolean> {
+  if (SOFT_LAUNCH_DISABLED_FLAGS.has(HIVE_FEATURE_FLAGS.ENABLE_DMS)) {
+    return false;
+  }
   const result = await featureFlagService.isFeatureEnabled(HIVE_FEATURE_FLAGS.ENABLE_DMS, userContext);
   return result.enabled;
 }
@@ -623,6 +636,9 @@ export async function isDMsEnabled(
 export async function isConnectionsEnabled(
   userContext: UserFeatureContext
 ): Promise<boolean> {
+  if (SOFT_LAUNCH_DISABLED_FLAGS.has(HIVE_FEATURE_FLAGS.ENABLE_CONNECTIONS)) {
+    return false;
+  }
   const result = await featureFlagService.isFeatureEnabled(HIVE_FEATURE_FLAGS.ENABLE_CONNECTIONS, userContext);
   return result.enabled;
 }

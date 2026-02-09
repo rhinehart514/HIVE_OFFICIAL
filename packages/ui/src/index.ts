@@ -1596,6 +1596,7 @@ export type { AppSurfaceProps } from "./components/hivelab/app-surface";
 export { InlineElementRenderer } from "./components/hivelab/inline-element-renderer";
 export type {
   InlineElementRendererProps,
+  ComponentData,
   InlineComponentData,
 } from "./components/hivelab/inline-element-renderer";
 

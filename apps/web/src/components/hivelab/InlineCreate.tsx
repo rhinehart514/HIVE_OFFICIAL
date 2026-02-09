@@ -136,7 +136,7 @@ export function InlineCreate({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              transition={MOTION.transitions.fast}
+              transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
               className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400"
             >
               {error}
@@ -187,7 +187,7 @@ export function InlineCreateModal({ isOpen, spaceId, onComplete, onClose }: Inli
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={MOTION.transitions.fast}
+      transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
       className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] px-4"
       onClick={onClose}
     >
@@ -199,7 +199,7 @@ export function InlineCreateModal({ isOpen, spaceId, onComplete, onClose }: Inli
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        transition={MOTION.transitions.base}
+        transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-2xl bg-[var(--bg-surface)] border border-white/[0.06] rounded-2xl p-6 shadow-xl"
       >

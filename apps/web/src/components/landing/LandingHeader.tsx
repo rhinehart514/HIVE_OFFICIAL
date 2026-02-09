@@ -48,7 +48,7 @@ export function LandingHeader() {
                 router.push(enterUrl);
               }}
             >
-              Enter HIVE
+              Join UB
             </Button>
           </div>
         </div>

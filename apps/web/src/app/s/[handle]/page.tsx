@@ -1095,7 +1095,7 @@ export default function SpacePageUnified() {
                       try {
                         await leaveSpace();
                         setShowSettingsModal(false);
-                        router.push('/home');
+                        router.push('/spaces');
                       } catch (error) {
                         logger.error('Failed to leave space', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
                       }
@@ -1127,7 +1127,7 @@ export default function SpacePageUnified() {
               setShowDeleteSpaceConfirm(false);
               setShowSettingsModal(false);
               toast.success('Space deleted');
-              router.push('/home');
+              router.push('/spaces');
             } catch (error) {
               logger.error('Failed to delete space', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
               toast.error('Failed to delete space');

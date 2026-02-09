@@ -398,9 +398,12 @@ export function GateScreen({ entry }: GateScreenProps) {
                     <span className="text-white/40">on HIVE yet</span>
                   </h2>
                   <p className="text-[15px] text-white/40 leading-relaxed">
-                    We'll notify you at{' '}
+                    You can join the waitlist, or continue in non-campus mode now.
+                  </p>
+                  <p className="text-[14px] text-white/35 leading-relaxed">
+                    Waitlist updates will go to{' '}
                     <span className="text-white/60">{entry.data.email}</span>
-                    {' '}when it launches.
+                    .
                   </p>
                 </div>
 
@@ -436,6 +439,22 @@ export function GateScreen({ entry }: GateScreenProps) {
                         <span>Notify me</span>
                       </>
                     )}
+                  </button>
+
+                  <button
+                    onClick={entry.continueWithoutCampus}
+                    disabled={entry.isLoading}
+                    className={cn(
+                      'w-full py-4 rounded-xl font-medium transition-all duration-300',
+                      'bg-white/[0.04] text-white/80 border border-white/[0.12]',
+                      'hover:bg-white/[0.07] hover:text-white',
+                      'disabled:opacity-50 disabled:cursor-not-allowed',
+                      'flex items-center justify-center gap-2',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black'
+                    )}
+                  >
+                    Continue without campus
+                    <ArrowRight className="w-4 h-4" />
                   </button>
 
                   <button

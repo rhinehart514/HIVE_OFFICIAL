@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AnimatePresence } from 'framer-motion';
 import {
   RevealSection,
   FadeUp,
@@ -10,16 +9,14 @@ import {
   Button,
 } from '@hive/ui/design-system/primitives';
 import { ArrowRight } from 'lucide-react';
-import { WaitlistModal } from './WaitlistModal';
 
 const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
 
 export function CTASection() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [requestSchool, setRequestSchool] = useState<{ id: string; name: string; domain: string; isActive?: boolean } | null>(null);
 
-  const handleEnter = useCallback(() => {
+  const handleJoinUB = useCallback(() => {
     const redirect = searchParams.get('redirect');
     const enterUrl = redirect
       ? `/enter?schoolId=ub-buffalo&domain=buffalo.edu&redirect=${encodeURIComponent(redirect)}`
@@ -27,9 +24,9 @@ export function CTASection() {
     router.push(enterUrl);
   }, [router, searchParams]);
 
-  const handleWaitlist = useCallback(() => {
-    setRequestSchool({ id: 'other', name: 'your school', domain: '', isActive: false });
-  }, []);
+  const handleCreateSpace = useCallback(() => {
+    router.push(`/enter?redirect=${encodeURIComponent('/spaces?create=true')}`);
+  }, [router]);
 
   return (
     <RevealSection className="py-32 md:py-40 border-t border-white/[0.04]">
@@ -39,12 +36,12 @@ export function CTASection() {
 
         <FadeUp>
           <h2 className={`${clashDisplay} text-[clamp(28px,4.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em] mb-4`}>
-            <span className="text-white">What will you</span>
+            <span className="text-white">Build something real.</span>
             <br />
-            <span className="text-white/20">build first?</span>
+            <span className="text-white/20">Share it everywhere.</span>
           </h2>
           <p className="text-base text-white/30 mb-10">
-            Pick a template. Make it yours. Share the link.
+            From idea to live tool in 30 seconds. No code, no app store, no waiting.
           </p>
         </FadeUp>
 
@@ -56,26 +53,22 @@ export function CTASection() {
                 size="xl"
                 className="rounded-full"
                 trailingIcon={<ArrowRight />}
-                onClick={handleEnter}
+                onClick={handleJoinUB}
               >
-                Start building
+                Join UB
               </Button>
             </Magnetic>
             <Button
               variant="secondary"
               size="xl"
               className="rounded-full"
-              onClick={handleWaitlist}
+              onClick={handleCreateSpace}
             >
-              Get notified
+              Create a space
             </Button>
           </div>
         </FadeUp>
       </div>
-
-      <AnimatePresence>
-        {requestSchool && <WaitlistModal school={requestSchool} onClose={() => setRequestSchool(null)} />}
-      </AnimatePresence>
     </RevealSection>
   );
 }

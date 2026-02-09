@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@hive/auth-logic';
 import { useQuery } from '@tanstack/react-query';
@@ -147,7 +148,7 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
               Sign In
             </button>
             <button
-              onClick={() => router.push('/explore')}
+              onClick={() => router.push('/discover')}
               className="px-4 py-2 bg-white/[0.06] text-white rounded-lg font-medium hover:bg-white/[0.08] transition-colors"
             >
               Explore Tools
@@ -180,7 +181,7 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
             This tool may have been deleted or the link is incorrect.
           </p>
           <button
-            onClick={() => router.push('/explore')}
+            onClick={() => router.push('/discover')}
             className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-lg font-medium hover:bg-[var(--life-gold)]/90 transition-colors"
           >
             Explore Tools
@@ -199,7 +200,7 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Logo/Back */}
           <button
-            onClick={() => router.push('/explore')}
+            onClick={() => router.push('/discover')}
             className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -322,12 +323,12 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
             </div>
             <div>
               Built with{' '}
-              <a
+              <Link
                 href="/"
                 className="text-[var(--life-gold)] hover:underline"
               >
                 HIVE
-              </a>
+              </Link>
             </div>
           </div>
         </motion.div>

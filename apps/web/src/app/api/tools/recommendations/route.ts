@@ -113,7 +113,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest) || '';
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') ?? undefined;

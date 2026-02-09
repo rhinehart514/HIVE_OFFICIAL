@@ -59,12 +59,12 @@ export default function SettingsError({
           </Button>
           <Button
             variant="secondary"
-            onClick={() => window.location.href = '/feed'}
-            aria-label="Go to feed"
+            onClick={() => window.location.href = '/discover'}
+            aria-label="Go to discover"
             className="gap-2 border-white/20 text-white hover:bg-white/10"
           >
             <HomeIcon className="h-4 w-4" aria-hidden="true" />
-            Feed
+            Discover
           </Button>
         </div>
 

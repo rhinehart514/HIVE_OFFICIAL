@@ -157,6 +157,7 @@ function mapToTheaterMessage(msg: ChatMessageData): TheaterMessage {
     })),
     threadCount: msg.threadCount,
     systemAction: msg.systemAction,
+    componentData: msg.componentData,
   };
 }
 

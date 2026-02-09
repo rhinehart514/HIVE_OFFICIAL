@@ -12,7 +12,7 @@ import type { CustomBlockConfig } from '@hive/core';
 // Example 1: Simple Bingo Card
 // ============================================================
 
-const bingoCa rdConfig: CustomBlockConfig = {
+const bingoCardConfig: CustomBlockConfig = {
   blockId: 'block_bingo_001',
   version: 1,
   metadata: {

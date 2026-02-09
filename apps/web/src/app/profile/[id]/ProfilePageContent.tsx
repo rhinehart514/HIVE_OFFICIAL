@@ -215,7 +215,7 @@ export default function ProfilePageContent() {
 
   if (isLoading) return <ProfileLoadingState />;
   if (error) return <ProfileErrorState error={error} onNavigate={() => router.push('/spaces')} />;
-  if (!profileData || !heroUser) return <ProfileNotFoundState onNavigate={() => router.push('/feed')} />;
+  if (!profileData || !heroUser) return <ProfileNotFoundState onNavigate={() => router.push('/discover')} />;
 
   // Shared spaces count from hook (computed via API)
 

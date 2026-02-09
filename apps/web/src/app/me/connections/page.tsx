@@ -108,7 +108,7 @@ export default function ConnectionsPage() {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchConnections = useCallback(async () => {
-    if (!user) return;
+    if (!user || !connectionsEnabled) return;
 
     try {
       setIsLoading(true);
@@ -150,13 +150,13 @@ export default function ConnectionsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [connectionsEnabled, user]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !flagsLoading && connectionsEnabled) {
       fetchConnections();
     }
-  }, [user, fetchConnections]);
+  }, [connectionsEnabled, fetchConnections, flagsLoading, user]);
 
   // Fetch user suggestions
   const fetchSuggestions = useCallback(async () => {
@@ -180,10 +180,22 @@ export default function ConnectionsPage() {
   }, [user]);
 
   useEffect(() => {
-    if (user && connectionsEnabled) {
+    if (user && !flagsLoading && connectionsEnabled) {
       fetchSuggestions();
     }
-  }, [user, connectionsEnabled, fetchSuggestions]);
+  }, [connectionsEnabled, fetchSuggestions, flagsLoading, user]);
+
+  useEffect(() => {
+    if (!user) {
+      router.replace('/enter');
+    }
+  }, [router, user]);
+
+  useEffect(() => {
+    if (!flagsLoading && !connectionsEnabled) {
+      router.replace('/me');
+    }
+  }, [connectionsEnabled, flagsLoading, router]);
 
   const sendFriendRequest = async (toUserId: string, message?: string) => {
     const response = await fetch('/api/friends', {
@@ -360,14 +372,7 @@ export default function ConnectionsPage() {
     return items;
   }, [activeTab, connections, friends, receivedRequests, searchQuery]);
 
-  if (!user) {
-    router.push('/enter');
-    return null;
-  }
-
-  // Feature flag gate - redirect if connections feature is not enabled
-  if (!flagsLoading && !connectionsEnabled) {
-    router.push('/me');
+  if (!user || (!flagsLoading && !connectionsEnabled)) {
     return null;
   }
 
@@ -543,7 +548,7 @@ export default function ConnectionsPage() {
           {filteredData.length === 0 ? (
             <EmptyState
               tab={activeTab}
-              onBrowseSpaces={() => router.push('/home')}
+              onBrowseSpaces={() => router.push('/spaces')}
             />
           ) : (
             <div className="grid gap-3">

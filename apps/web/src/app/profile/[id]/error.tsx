@@ -59,12 +59,12 @@ export default function ProfileViewError({
           </Button>
           <Button
             variant="secondary"
-            onClick={() => window.location.href = '/feed'}
-            aria-label="Go to feed page"
+            onClick={() => window.location.href = '/discover'}
+            aria-label="Go to discover page"
             className="gap-2 border-white/[0.08] text-white/70 hover:bg-white/[0.04]"
           >
             <HomeIcon className="h-4 w-4" aria-hidden="true" />
-            Feed
+            Discover
           </Button>
         </div>
 
