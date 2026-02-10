@@ -14,7 +14,7 @@
  */
 
 import * as React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { SmilePlus, MessageSquare, MoreHorizontal, Trash2, Pencil, Check, X, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
@@ -157,7 +157,7 @@ export function MessageItem({
       className={cn(
         'relative group',
         'rounded-lg transition-colors',
-        false && 'bg-white/[0.06]'
+        // hover highlight removed
       )}
       style={{ padding: `${messageItem.paddingY}px 8px` }}
     >

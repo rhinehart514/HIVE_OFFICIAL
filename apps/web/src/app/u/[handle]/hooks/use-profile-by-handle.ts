@@ -191,11 +191,8 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
   // Events state
   const [organizingEvents, setOrganizingEvents] = React.useState<ProfileOrganizingEvent[]>([]);
 
-  // Mutual connections state
-  const [mutualConnectionsData, setMutualConnectionsData] = React.useState<{
-    connections: Array<{ id: string; name: string; avatarUrl?: string }>;
-    count: number;
-  }>({ connections: [], count: 0 });
+  // Mutual connections state (social features removed, kept for type compat)
+  const mutualConnectionsData = { connections: [] as Array<{ id: string; name: string; avatarUrl?: string }>, count: 0 };
 
   // Activity contributions state
   const [activityData, setActivityData] = React.useState<{
@@ -207,10 +204,10 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
   // Viewer interests for shared interests computation
   const [viewerInterests, setViewerInterests] = React.useState<string[]>([]);
 
-  // Connection state
-  const [connectionState, setConnectionState] = React.useState<ConnectionState>('none');
-  const [pendingRequestId, setPendingRequestId] = React.useState<string | null>(null);
-  const [isConnectionLoading, setIsConnectionLoading] = React.useState(false);
+  // Connection state (social features removed, hardcoded)
+  const connectionState: ConnectionState = 'none';
+  const pendingRequestId: string | null = null;
+  const isConnectionLoading = false;
 
   const profileId = resolvedProfileId;
   const isOwnProfile = currentUser?.id === profileId;

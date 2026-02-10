@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -312,13 +313,13 @@ export default function VerifyPage() {
           <p className="text-xs text-white/30">
             Auto-tracked by HIVE · Generated {new Date(record.generatedAt).toLocaleDateString()}
           </p>
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-1 mt-3 text-xs text-white/40 hover:text-white/60 transition-colors"
           >
             <Shield className="w-3 h-3" />
             Powered by HIVE
-          </a>
+          </Link>
         </motion.div>
       </div>
     </div>
