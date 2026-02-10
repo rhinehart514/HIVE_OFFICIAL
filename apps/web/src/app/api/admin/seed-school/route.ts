@@ -37,7 +37,6 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
         allowedEmailDomains: ['buffalo.edu'],
         features: {
           spaces: true,
-          rituals: true,
           hiveLab: true
         }
       }

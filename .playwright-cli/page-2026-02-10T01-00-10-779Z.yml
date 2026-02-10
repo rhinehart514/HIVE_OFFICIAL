@@ -1,0 +1,16 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e69] [cursor=pointer]:
+    - img [ref=e70]
+  - alert [ref=e73]: HIVE - Your Campus. Your Spaces. Your Tools.
+  - generic [ref=e75]:
+    - img [ref=e78]
+    - heading "Something broke." [level=2] [ref=e80]
+    - paragraph [ref=e81]: Fixing it. Try again in a sec.
+    - generic [ref=e82]:
+      - button "Try again" [ref=e83]:
+        - img [ref=e84]
+        - text: Try again
+      - button "Go home" [ref=e86]:
+        - img [ref=e87]
+        - text: Go home
+    - paragraph [ref=e90]: "Loading chunk app/enter/error failed. (error: http://localhost:3100/_next/static/chunks/app/enter/error.js)"

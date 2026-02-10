@@ -13,7 +13,7 @@ import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 // Valid feature keys that users can subscribe to
-const VALID_FEATURES = ['ai_insights', 'rituals', 'campus_graph'] as const;
+const VALID_FEATURES = ['ai_insights', 'campus_graph'] as const;
 type FeatureKey = typeof VALID_FEATURES[number];
 
 // Request body schema

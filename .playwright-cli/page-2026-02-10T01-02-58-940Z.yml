@@ -1,0 +1,5 @@
+- generic [ref=e4]:
+  - heading "What's your email?" [level=1] [ref=e5]
+  - generic [ref=e6]:
+    - textbox "you@buffalo.edu" [active] [ref=e7]
+    - button "Continue" [ref=e8]

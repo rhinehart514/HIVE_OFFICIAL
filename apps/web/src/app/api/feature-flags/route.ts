@@ -26,7 +26,6 @@ export const HIVE_FEATURE_FLAGS = {
   REALTIME_FEED: 'realtime_feed',
   AI_MODERATION: 'ai_moderation',
   CALENDAR_SYNC: 'calendar_sync',
-  RITUALS: 'rituals_v1',
   TOOL_MARKETPLACE: 'tool_marketplace',
   ADVANCED_ANALYTICS: 'advanced_analytics',
   // Social features

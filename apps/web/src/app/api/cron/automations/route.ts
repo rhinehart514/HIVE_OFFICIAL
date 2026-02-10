@@ -14,7 +14,7 @@ import { NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
-import { createBulkNotifications, notifyRitualCheckIn } from '@/lib/notification-service';
+import { createBulkNotifications } from '@/lib/notification-service';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -43,8 +43,6 @@ export async function POST(request: Request) {
     // 2. Process scheduled automations
     await processScheduledAutomations(now, results);
 
-    // 3. Process ritual check-in reminders (daily at ~9am)
-    await processRitualReminders(now, results);
 
     const successCount = results.filter(r => r.success).length;
     const failCount = results.filter(r => !r.success).length;
@@ -556,109 +554,6 @@ function formatTimeUntil(eventStart: Date): string {
   return `in ${days} day${days > 1 ? 's' : ''}`;
 }
 
-/**
- * Process ritual check-in reminders
- * Sends daily reminders to participants of active rituals
- */
-async function processRitualReminders(
-  now: Date,
-  results: AutomationResult[]
-): Promise<void> {
-  // Only run during morning hours (8am-10am local time)
-  const currentHour = now.getHours();
-  if (currentHour < 8 || currentHour > 10) return;
-
-  try {
-    // Get all active rituals
-    const ritualsSnapshot = await dbAdmin
-      .collection('rituals')
-      .where('phase', '==', 'active')
-      .get();
-
-    if (ritualsSnapshot.empty) return;
-
-    for (const ritualDoc of ritualsSnapshot.docs) {
-      const ritual = ritualDoc.data();
-      const ritualId = ritualDoc.id;
-
-      // Handle both 'title' (typed) and 'name' (legacy) field names
-      const ritualName = (ritual.title || ritual.name || 'Ritual') as string;
-      const ritualSlug = (ritual.slug || ritualId) as string;
-
-      // Get active participants who haven't checked in today
-      const todayStart = new Date(now);
-      todayStart.setHours(0, 0, 0, 0);
-
-      const participantsSnapshot = await dbAdmin
-        .collection('ritual_participants')
-        .where('ritualId', '==', ritualId)
-        .where('status', '==', 'active')
-        .get();
-
-      if (participantsSnapshot.empty) continue;
-
-      let sentCount = 0;
-      for (const participantDoc of participantsSnapshot.docs) {
-        const participant = participantDoc.data();
-
-        // Check if already participated today
-        const lastParticipated = participant.lastParticipatedAt
-          ? new Date(participant.lastParticipatedAt)
-          : null;
-
-        if (lastParticipated && lastParticipated >= todayStart) {
-          // Already checked in today, skip
-          continue;
-        }
-
-        // Send reminder notification
-        try {
-          await notifyRitualCheckIn({
-            userId: participant.userId,
-            ritualId,
-            ritualName,
-            ritualSlug,
-            currentStreak: participant.streakCount || 0,
-          });
-          sentCount++;
-        } catch (err) {
-          logger.warn('Failed to send ritual check-in reminder', {
-            error: err instanceof Error ? err.message : String(err),
-            ritualId,
-            userId: participant.userId,
-          });
-        }
-      }
-
-      if (sentCount > 0) {
-        results.push({
-          automationId: `ritual_reminder_${ritualId}`,
-          spaceId: ritual.spaceId || 'global',
-          type: 'ritual_reminder',
-          success: true,
-        });
-
-        logger.info('Ritual check-in reminders sent', {
-          ritualId,
-          ritualName,
-          sentCount,
-        });
-      }
-    }
-  } catch (error) {
-    logger.error('Failed to process ritual reminders', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    results.push({
-      automationId: 'ritual_reminders',
-      spaceId: 'global',
-      type: 'ritual_reminder',
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-}
 
 // Also support GET for Vercel Cron
 export async function GET(request: Request) {

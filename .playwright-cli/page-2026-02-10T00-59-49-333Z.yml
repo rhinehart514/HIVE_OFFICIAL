@@ -1,0 +1,62 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e6]
+        - generic [ref=e8]:
+          - link "About" [ref=e9] [cursor=pointer]:
+            - /url: /about
+          - link "Leaders" [ref=e10] [cursor=pointer]:
+            - /url: /leaders
+          - link "Claim your club" [ref=e11] [cursor=pointer]:
+            - /url: /enter?schoolId=ub-buffalo&domain=buffalo.edu&redirect=%2Fspaces%3Fclaim%3Dtrue
+            - text: Claim your club
+            - img [ref=e12]
+    - generic [ref=e15]:
+      - generic [ref=e18]: UB CLUBS ARE LIVE
+      - heading "Your club is already here." [level=1] [ref=e19]:
+        - text: Your club is
+        - text: already here.
+      - paragraph [ref=e20]: Every registered UB organization starts with a space on HIVE. Claim yours, set up events and tools, and run your community from one place.
+      - generic [ref=e21]:
+        - link "Claim Your Club" [ref=e22] [cursor=pointer]:
+          - /url: /enter?schoolId=ub-buffalo&domain=buffalo.edu&redirect=%2Fspaces%3Fclaim%3Dtrue
+          - text: Claim Your Club
+          - img [ref=e23]
+        - link "Browse Campus Spaces" [ref=e25] [cursor=pointer]:
+          - /url: /enter?schoolId=ub-buffalo&domain=buffalo.edu&redirect=%2Fdiscover
+      - paragraph [ref=e26]: "@buffalo.edu required for leadership verification"
+    - generic [ref=e28]:
+      - generic [ref=e31]: CLAIM TO LEAD
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e35]: "01"
+          - heading "Find Your Club" [level=3] [ref=e36]
+          - paragraph [ref=e37]: Search the live UB directory and open your pre-seeded space. Members, chat, events, and tools are ready to go.
+        - generic [ref=e38]:
+          - generic [ref=e40]: "02"
+          - heading "Claim Leadership" [level=3] [ref=e41]
+          - paragraph [ref=e42]: Submit your leadership role and get immediate setup access while your verification is processed.
+        - generic [ref=e43]:
+          - generic [ref=e45]: "03"
+          - heading "Run Your Community" [level=3] [ref=e46]
+          - paragraph [ref=e47]: Coordinate announcements, events, signups, reminders, and custom tools in one space your members already recognize.
+    - generic [ref=e50]:
+      - heading "Your members are already looking for this space." [level=2] [ref=e51]
+      - paragraph [ref=e52]: Claim your club, verify leadership, and start running events, chat, and tools before the next meeting.
+      - link "Claim Your Club" [ref=e54] [cursor=pointer]:
+        - /url: /enter?schoolId=ub-buffalo&domain=buffalo.edu&redirect=%2Fspaces%3Fclaim%3Dtrue
+        - text: Claim Your Club
+        - img [ref=e55]
+      - paragraph [ref=e57]: Built for UB leaders · Claim takes minutes
+    - contentinfo [ref=e58]:
+      - generic [ref=e59]:
+        - paragraph [ref=e60]: © 2026 HIVE
+        - generic [ref=e61]:
+          - link "Terms" [ref=e62] [cursor=pointer]:
+            - /url: /legal/terms
+          - link "Privacy" [ref=e63] [cursor=pointer]:
+            - /url: /legal/privacy
+  - button "Open Next.js Dev Tools" [ref=e69] [cursor=pointer]:
+    - img [ref=e70]
+  - alert [ref=e73]

@@ -106,8 +106,6 @@ const FOCUS_FLOW_ROUTES = [
   // Events
   '/events/*/checkin',        // Event check-in flow
 
-  // Rituals
-  '/rituals/*',               // Ritual participation (all except index)
 ];
 
 /**
