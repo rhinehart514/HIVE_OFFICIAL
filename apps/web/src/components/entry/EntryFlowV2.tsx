@@ -301,6 +301,20 @@ export function EntryFlowV2() {
   return (
     <div className="min-h-dvh bg-[#000000] flex items-center justify-center px-6">
       <div className="w-full max-w-[400px]">
+        {/* Progress dots */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <span
+            className={`h-1.5 w-1.5 rounded-full transition-colors ${
+              step === 'email' ? 'bg-white' : 'bg-white'
+            }`}
+          />
+          <span
+            className={`h-1.5 w-1.5 rounded-full transition-colors ${
+              step === 'code' ? 'bg-white' : 'bg-white/20'
+            }`}
+          />
+        </div>
+
         <AnimatePresence mode="wait">
           {step === 'email' ? (
             <motion.div

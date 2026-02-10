@@ -157,7 +157,7 @@ export function MessageItem({
       className={cn(
         'relative group',
         'rounded-lg transition-colors',
-        isHovered && 'bg-white/[0.06]'
+        false && 'bg-white/[0.06]'
       )}
       style={{ padding: `${messageItem.paddingY}px 8px` }}
     >

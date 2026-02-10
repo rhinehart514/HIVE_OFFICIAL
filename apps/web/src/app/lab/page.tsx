@@ -843,8 +843,8 @@ export default function BuilderDashboard() {
                           key={template.id}
                           onClick={() => handleTemplateClick(template)}
                           disabled={isSubmitting}
-                          className="group text-left p-3 rounded-lg border border-white/[0.06] bg-white/[0.03]
-                            hover:bg-white/[0.06] hover:border-white/[0.12] transition-all disabled:opacity-50"
+                          className="group text-left p-3 rounded-2xl border border-white/[0.08] bg-[#0A0A0A]
+                            hover:bg-white/[0.03] transition-all disabled:opacity-50"
                         >
                           <p className="text-sm font-medium text-white mb-0.5 truncate">{template.name}</p>
                           <p className="text-xs text-white/40 line-clamp-1">{template.description}</p>

@@ -3,13 +3,8 @@
 /**
  * /lab/templates — Tool Templates Gallery
  *
- * Per Builder Dashboard plan:
- * - WordReveal title + search fade-in (300ms delay)
- * - GoldBorderContainer on search focus
- * - Category switch: cards exit left, new cards enter right (200ms)
- * - Card hover: scale 1.02, goldglow
- * - Card click: creates tool directly, redirects to IDE (no query param)
- * - Stagger entrance (80ms between cards)
+ * Template gallery for instant tool creation.
+ * Cards grouped by category with search and quick deploy.
  */
 
 import * as React from 'react';
@@ -96,57 +91,6 @@ const CATEGORY_CONFIG: Record<TemplateCategory, { label: string; order: number }
   teams: { label: 'Teams', order: 5 },
 };
 
-/**
- * WordReveal — Word-by-word text animation
- */
-function WordReveal({
-  text,
-  className,
-  delay = 0,
-  stagger = 0.06,
-  onComplete,
-}: {
-  text: string;
-  className?: string;
-  delay?: number;
-  stagger?: number;
-  onComplete?: () => void;
-}) {
-  const shouldReduceMotion = useReducedMotion();
-  const words = text.split(' ');
-  const totalDuration = delay + (words.length * stagger) + 0.2;
-
-  React.useEffect(() => {
-    if (onComplete) {
-      const timer = setTimeout(onComplete, totalDuration * 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [onComplete, totalDuration]);
-
-  if (shouldReduceMotion) {
-    return <span className={className}>{text}</span>;
-  }
-
-  return (
-    <span className={className}>
-      {words.map((word, i) => (
-        <motion.span
-          key={`${word}-${i}`}
-          className="inline-block mr-[0.25em]"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.2,
-            delay: delay + (i * stagger),
-            ease: EASE,
-          }}
-        >
-          {word}
-        </motion.span>
-      ))}
-    </span>
-  );
-}
 
 /**
  * GoldBorderInput — Search input with animated goldon focus
@@ -235,7 +179,7 @@ function TemplateCard({
         delay: shouldReduceMotion ? 0 : index * 0.08, // 80ms stagger
         ease: EASE,
       }}
-      whileHover={!isSelected ? { scale: 1.02, y: -2 } : {}}
+      whileHover={!isSelected ? { scale: 1.01 } : {}}
       onClick={() => onSelect(template)}
       className="text-left p-4 rounded-lg transition-all duration-200 group"
       style={{
@@ -332,7 +276,6 @@ export default function ToolTemplatesPage() {
   const [category, setCategory] = React.useState<TemplateCategory | 'all'>('all');
   const [selectedTemplate, setSelectedTemplate] = React.useState<QuickTemplate | null>(null);
   const [isNavigating, setIsNavigating] = React.useState(false);
-  const [titleRevealed, setTitleRevealed] = React.useState(false);
   const [quickDeployTemplate, setQuickDeployTemplate] = React.useState<QuickTemplate | null>(null);
 
   // Get available templates (excludes hidden ones)
@@ -450,30 +393,20 @@ export default function ToolTemplatesPage() {
           </motion.div>
         )}
 
-        {/* Header with WordReveal */}
+        {/* Header */}
         <div className="text-center mb-8">
           <h1
             className="text-2xl sm:text-3xl font-medium mb-3"
             style={{ color: COLORS.text }}
           >
-            {shouldReduceMotion ? (
-              'What kind of tool do you need?'
-            ) : (
-              <WordReveal
-                text="What kind of tool do you need?"
-                onComplete={() => setTitleRevealed(true)}
-              />
-            )}
+            What kind of tool do you need?
           </h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: titleRevealed || shouldReduceMotion ? 1 : 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+          <p
             className="text-sm"
             style={{ color: COLORS.textSecondary }}
           >
             {availableTemplates.length} templates to jumpstart your build
-          </motion.p>
+          </p>
         </div>
 
         {/* Search with goldon focus (fade in at 300ms) */}

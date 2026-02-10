@@ -3,8 +3,7 @@
  * ENHANCED: Jan 31, 2026 — Split Panel Rebuild
  */
 
-// Legacy components (still used)
-export { ChatMessages } from './chat-messages';
+// Core components
 export { ChatInput } from './chat-input';
 export { SpaceHeader } from './space-header';
 export { SpaceThreshold } from './space-threshold';

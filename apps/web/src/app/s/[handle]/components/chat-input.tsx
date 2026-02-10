@@ -41,7 +41,7 @@ interface ChatInputProps {
 export function ChatInput({
   spaceId,
   onSend,
-  placeholder = 'Type a message...',
+  placeholder = '/ Try /poll, /rsvp, /countdown',
   disabled,
   className,
   onTypingChange,
@@ -249,7 +249,7 @@ export function ChatInput({
         <div
           className={cn(
             'absolute bottom-full left-3 right-3 mb-2',
-            'bg-[var(--bg-elevated)] border border-white/[0.06] rounded-lg',
+            'bg-[#0A0A0A] border border-white/[0.08] rounded-xl',
             'py-2 max-h-[200px] overflow-y-auto'
           )}
         >
@@ -357,10 +357,10 @@ export function ChatInput({
             rows={1}
             className={cn(
               'w-full px-4 py-2.5',
-              'rounded-full text-sm',
-              'bg-white/[0.06] hover:bg-white/[0.06]',
+              'rounded-xl text-sm',
+              'bg-white/[0.03]',
               'border border-white/[0.06]',
-              'text-white placeholder:text-white/50',
+              'text-white placeholder:text-white/30',
               'resize-none',
               'focus:outline-none focus:ring-1 focus:ring-white/50',
               'disabled:opacity-50',

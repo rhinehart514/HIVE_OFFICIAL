@@ -41,7 +41,6 @@ import {
   type OnlineMember,
   LeaderDashboard,
 } from './components';
-import { SpaceTabs } from './components/space-tabs';
 import { LeaderCreateFAB } from './components/leader-create-fab';
 import { useLeaderDashboard } from '@/hooks/use-leader-dashboard';
 import { useTypingIndicator } from '@/hooks/use-presence';
@@ -658,8 +657,7 @@ export default function SpacePageUnified() {
               />
           </div>
 
-          {/* Tab Navigation */}
-          <SpaceTabs unreadCount={unreadCount} />
+          {/* Chat is the only view — no tab navigation */}
 
           {/* Tab Content */}
           <div className="flex-1 overflow-hidden">

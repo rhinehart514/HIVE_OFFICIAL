@@ -22,7 +22,7 @@ interface ToolData {
 // Fetch tool data for metadata (server-side)
 async function fetchToolForMetadata(toolId: string): Promise<ToolData | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.college';
     const response = await fetch(`${baseUrl}/api/tools/${toolId}`, {
       cache: 'no-store', // Always fetch fresh for OG tags
     });
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { toolId } = await params;
   const tool = await fetchToolForMetadata(toolId);
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.college';
 
   if (!tool) {
     return {
@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function StandaloneToolPage({ params }: Props) {
   const { toolId } = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.college';
 
   return <StandaloneToolClient toolId={toolId} baseUrl={baseUrl} />;
 }

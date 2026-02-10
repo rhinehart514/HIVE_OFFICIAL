@@ -105,7 +105,7 @@ function getOAuthConfig() {
  * Get the OAuth redirect URI based on environment
  */
 export function getRedirectUri(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college';
   return `${baseUrl}/api/calendar/callback`;
 }
 

@@ -46,8 +46,8 @@ const PUBLIC_ROUTES = [
   '/about',         // Marketing/info page
   '/legal',         // Legal pages (/legal/privacy, /legal/terms, etc.)
   '/login',         // Login page
-  '/schools',       // School selection page
   '/t',             // Standalone tool pages (shareable links for published tools)
+  '/verify',        // Public leadership record pages
 ];
 
 // Routes that require session but NOT completed onboarding
@@ -57,7 +57,7 @@ const PARTIAL_AUTH_ROUTES: string[] = [
 ];
 
 // Admin-only routes
-const ADMIN_ROUTES = ['/admin'];
+const ADMIN_ROUTES = ['/admin', '/design-system'];
 
 // Route redirects (replacing deleted client-side redirect pages)
 // These are PERMANENT (301) redirects per IA_INVARIANTS.md
@@ -69,12 +69,16 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   // Dead route consolidation
   '/home': '/discover',
   '/feed': '/discover',
-  // Settings section shortcuts
-  '/settings/privacy': '/settings?section=privacy',
-  '/settings/security': '/settings?section=account',
-  '/settings/profile': '/settings?section=profile',
-  '/settings/account': '/settings?section=account',
-  '/settings/notifications': '/settings?section=notifications',
+  '/calendar': '/discover?tab=events',
+  '/elements': '/lab',
+  '/schools': '/enter',
+  '/templates': '/lab',
+  // Settings — /settings is now a redirect page, these go to /me/settings sections
+  '/settings/privacy': '/me/settings?section=privacy',
+  '/settings/security': '/me/settings?section=account',
+  '/settings/profile': '/me/settings?section=profile',
+  '/settings/account': '/me/settings?section=account',
+  '/settings/notifications': '/me/settings?section=notifications',
   // Legacy routes
   '/privacy': '/legal/privacy',
   '/terms': '/legal/terms',
@@ -86,8 +90,21 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/people': '/discover?tab=people',
   '/events': '/discover?tab=events',
   '/leaders': '/spaces?claim=true',
-  // Profile redirects
+  // Profile redirects — old /profile/* routes consolidated
   '/you': '/me',
+  '/profile': '/me',
+  '/profile/edit': '/me/edit',
+  '/profile/settings': '/me/settings',
+  '/profile/calendar': '/me',
+  '/profile/connections': '/me',
+  // Killed sub-routes under /me
+  '/me/connections': '/me',
+  '/me/calendar': '/me',
+  '/me/reports': '/me/settings',
+  // Killed standalone notifications route (in-app panel)
+  '/notifications/settings': '/me/settings?section=notifications',
+  // HiveLab → Lab consolidation
+  '/hivelab': '/lab',
 };
 
 function getClientIdentifier(request: NextRequest): string {
@@ -293,6 +310,17 @@ export async function middleware(request: NextRequest) {
   // PERMANENT (301) - canonical route pattern
   if (pathname.startsWith('/spaces/new/')) {
     return NextResponse.redirect(new URL('/spaces?create=true', request.url), 301);
+  }
+
+  // Handle /profile/[id] → /u/[id] (old profile routes)
+  const profileMatch = pathname.match(/^\/profile\/([^/]+)$/);
+  if (profileMatch && profileMatch[1] !== 'edit' && profileMatch[1] !== 'settings' && profileMatch[1] !== 'calendar' && profileMatch[1] !== 'connections') {
+    return NextResponse.redirect(new URL(`/u/${profileMatch[1]}`, request.url), 301);
+  }
+
+  // Handle /hivelab/* → /lab
+  if (pathname.startsWith('/hivelab')) {
+    return NextResponse.redirect(new URL('/lab', request.url), 301);
   }
 
   // Public routes - no auth required (but redirect completed users away from landing/enter/login)

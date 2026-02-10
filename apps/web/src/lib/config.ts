@@ -36,7 +36,7 @@ export const config = {
     name: 'HIVE',
     version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
     environment: process.env.NODE_ENV || 'development',
-    domain: process.env.NEXT_PUBLIC_DOMAIN || 'localhost:3000',
+    domain: process.env.NEXT_PUBLIC_DOMAIN || 'hive.college',
   },
 
   // Logging Configuration

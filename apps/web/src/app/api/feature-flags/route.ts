@@ -37,7 +37,6 @@ export const HIVE_FEATURE_FLAGS = {
 const SOFT_LAUNCH_DISABLED_FLAGS = new Set<string>([
   HIVE_FEATURE_FLAGS.ENABLE_DMS,
   HIVE_FEATURE_FLAGS.ENABLE_CONNECTIONS,
-  HIVE_FEATURE_FLAGS.RITUALS,
 ]);
 
 // Simple feature flag service (inlined)

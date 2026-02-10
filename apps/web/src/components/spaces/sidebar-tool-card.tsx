@@ -247,7 +247,6 @@ export function SidebarToolCard({
           'text-white/50 hover:text-white',
         ]
       )}
-      whileHover={{ x: 2 }}
       whileTap={{ scale: 0.98 }}
     >
       {/* Tool Icon with Pin Indicator */}

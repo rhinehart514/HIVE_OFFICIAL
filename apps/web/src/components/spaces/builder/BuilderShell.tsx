@@ -66,7 +66,7 @@ export function BuilderShell({
               type="button"
               onClick={handleBack}
               className="flex items-center gap-2 text-white/50 hover:text-white/50 transition-colors"
-              whileHover={{ x: -2 }}
+              whileHover={{ opacity: 0.8 }}
               whileTap={{ scale: 0.98 }}
             >
               <svg

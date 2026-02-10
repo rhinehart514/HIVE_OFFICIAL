@@ -116,7 +116,7 @@ export function InlineCreate({
             <button
               type="submit"
               disabled={!prompt.trim() || isGenerating}
-              className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-lg text-sm font-medium hover:bg-[var(--life-gold)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-full text-sm font-medium hover:bg-[var(--life-gold)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isGenerating ? (
                 <span className="flex items-center gap-2">

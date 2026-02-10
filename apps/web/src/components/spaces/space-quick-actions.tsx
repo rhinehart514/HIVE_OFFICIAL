@@ -171,7 +171,7 @@ export function SpaceQuickActions({
           'hover:bg-white/[0.06]',
           'transition-all duration-150'
         )}
-        whileHover={{ x: 2 }}
+        whileHover={{ opacity: 0.8 }}
       >
         <span>View</span>
         <ChevronRightIcon className="w-3 h-3" />

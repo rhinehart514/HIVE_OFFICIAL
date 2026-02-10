@@ -173,8 +173,8 @@ function ToolCard({ tool }: ToolCardProps) {
           <div
            
             className={cn(
-              'p-5 rounded-lg transition-colors duration-200',
-              'border border-white/[0.06] hover:border-white/[0.06]'
+              'p-5 rounded-2xl transition-colors duration-200',
+              'bg-[#0A0A0A] border border-white/[0.08] hover:bg-white/[0.03]'
             )}
           >
             <div className="space-y-3">

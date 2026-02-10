@@ -504,38 +504,7 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
     fetchOrganizingEvents();
   }, [profileId]);
 
-  // ============================================================================
-  // Fetch mutual connections
-  // ============================================================================
-
-  React.useEffect(() => {
-    if (!profileId || isOwnProfile) return;
-
-    const fetchMutualConnections = async () => {
-      try {
-        const response = await fetch(`/api/profile/${profileId}/connections?type=mutual`, {
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const result = await response.json();
-          const data = result.data || result;
-          const mutualConnections = data.mutualConnections || [];
-          setMutualConnectionsData({
-            connections: mutualConnections.map((c: { id: string; firstName?: string; lastName?: string; handle?: string; profilePhoto?: string }) => ({
-              id: c.id,
-              name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.handle || 'Student',
-              avatarUrl: c.profilePhoto,
-            })),
-            count: data.mutualCount ?? mutualConnections.length,
-          });
-        }
-      } catch (err) {
-        logger.warn('Failed to fetch mutual connections', { component: 'ProfileByHandle', error: err instanceof Error ? err.message : String(err) });
-      }
-    };
-
-    fetchMutualConnections();
-  }, [profileId, isOwnProfile]);
+  // Mutual connections — social features removed
 
   // ============================================================================
   // Fetch activity contributions for heatmap
@@ -597,69 +566,8 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
     fetchViewerInterests();
   }, [currentUser?.id, isOwnProfile]);
 
-  // ============================================================================
-  // Fetch connection state
-  // ============================================================================
-
-  React.useEffect(() => {
-    if (!profileId || isOwnProfile || !currentUser?.id) {
-      setConnectionState('none');
-      setPendingRequestId(null);
-      return;
-    }
-
-    const fetchConnectionState = async () => {
-      setIsConnectionLoading(true);
-      try {
-        const response = await fetch('/api/friends?include_requests=true', {
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          setConnectionState('none');
-          return;
-        }
-
-        const data = await response.json();
-
-        const isFriend = data.friends?.some((f: { id: string }) => f.id === profileId);
-        if (isFriend) {
-          setConnectionState('friends');
-          setPendingRequestId(null);
-          return;
-        }
-
-        const sentRequest = data.sentRequests?.find(
-          (r: { toUserId: string }) => r.toUserId === profileId
-        );
-        if (sentRequest) {
-          setConnectionState('pending_outgoing');
-          setPendingRequestId(sentRequest.requestId);
-          return;
-        }
-
-        const receivedRequest = data.receivedRequests?.find(
-          (r: { fromUserId: string }) => r.fromUserId === profileId
-        );
-        if (receivedRequest) {
-          setConnectionState('pending_incoming');
-          setPendingRequestId(receivedRequest.requestId);
-          return;
-        }
-
-        setConnectionState('none');
-        setPendingRequestId(null);
-      } catch (err) {
-        logger.error('Failed to fetch connection state', { component: 'ProfileByHandle' }, err instanceof Error ? err : undefined);
-        setConnectionState('none');
-        setPendingRequestId(null);
-      } finally {
-        setIsConnectionLoading(false);
-      }
-    };
-
-    fetchConnectionState();
-  }, [profileId, isOwnProfile, currentUser?.id]);
+  // Connection state — social features removed
+  // connectionState always 'none', no API calls
 
   // ============================================================================
   // Computed Values
@@ -929,111 +837,11 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
     router.push(`/lab/${toolId}`);
   }, [router]);
 
-  const handleConnect = React.useCallback(async () => {
-    if (!profileId || isOwnProfile) return;
-
-    try {
-      const response = await fetch('/api/friends', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toUserId: profileId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error('Failed to connect', data.error || 'Something went wrong');
-        return;
-      }
-
-      if (data.type === 'accepted') {
-        setConnectionState('friends');
-        setPendingRequestId(null);
-        toast.success('Connected!', data.message || 'You are now friends');
-      } else if (data.type === 'pending') {
-        setConnectionState('pending_outgoing');
-        setPendingRequestId(data.requestId);
-        toast.success('Request sent!', 'They will be notified');
-      }
-    } catch (err) {
-      logger.error('Failed to send friend request', { component: 'ProfileByHandle' }, err instanceof Error ? err : undefined);
-      toast.error('Failed to connect', 'Please try again');
-    }
-  }, [profileId, isOwnProfile, toast]);
-
-  const handleAcceptRequest = React.useCallback(async (requestId: string) => {
-    try {
-      const response = await fetch('/api/friends', {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId, action: 'accept' }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error('Failed to accept', data.error || 'Something went wrong');
-        return;
-      }
-
-      setConnectionState('friends');
-      setPendingRequestId(null);
-      toast.success('Connected!', 'You are now friends');
-    } catch (err) {
-      logger.error('Failed to accept friend request', { component: 'ProfileByHandle' }, err instanceof Error ? err : undefined);
-      toast.error('Failed to accept', 'Please try again');
-    }
-  }, [toast]);
-
-  const handleRejectRequest = React.useCallback(async (requestId: string) => {
-    try {
-      const response = await fetch('/api/friends', {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId, action: 'reject' }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error('Failed to decline', data.error || 'Something went wrong');
-        return;
-      }
-
-      setConnectionState('none');
-      setPendingRequestId(null);
-    } catch (err) {
-      logger.error('Failed to reject friend request', { component: 'ProfileByHandle' }, err instanceof Error ? err : undefined);
-      toast.error('Failed to decline', 'Please try again');
-    }
-  }, [toast]);
-
-  const handleUnfriend = React.useCallback(async () => {
-    if (!profileId) return;
-
-    try {
-      const response = await fetch(`/api/friends?friendId=${profileId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error('Failed to unfriend', data.error || 'Something went wrong');
-        return;
-      }
-
-      setConnectionState('none');
-      setPendingRequestId(null);
-    } catch (err) {
-      logger.error('Failed to unfriend', { component: 'ProfileByHandle' }, err instanceof Error ? err : undefined);
-      toast.error('Failed to unfriend', 'Please try again');
-    }
-  }, [profileId, toast]);
+  // Social handlers — no-ops (social features removed)
+  const handleConnect = React.useCallback(async () => {}, []);
+  const handleAcceptRequest = React.useCallback(async (_requestId: string) => {}, []);
+  const handleRejectRequest = React.useCallback(async (_requestId: string) => {}, []);
+  const handleUnfriend = React.useCallback(async () => {}, []);
 
   const handleMessage = React.useCallback(() => {
     toast.info('Coming soon', 'Direct messages coming in a future update');

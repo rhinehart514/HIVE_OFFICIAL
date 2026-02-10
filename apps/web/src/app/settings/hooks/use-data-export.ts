@@ -61,15 +61,8 @@ export function useDataExport(handle: string) {
         };
       }
 
-      // 3. Connections
-      const connectionsData = await safeFetch('/api/connections', 'connections', 'Connections', 3);
-      if (connectionsData) {
-        const connections = connectionsData as { connections?: unknown[]; stats?: Record<string, number> };
-        exportData.connections = {
-          list: connections.connections || [],
-          stats: connections.stats || {},
-        };
-      }
+      // 3. Connections (removed — social features deprecated)
+      setExportProgress({ current: 3, total: 6, currentItem: 'Connections (skipped)' });
 
       // 4. Tools
       const toolsData = await safeFetch('/api/tools?limit=100&creatorOnly=true', 'tools', 'Tools', 4);

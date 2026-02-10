@@ -537,7 +537,7 @@ export default function ToolStudioPage({ params }: Props) {
           </p>
           <button
             onClick={() => router.push('/lab')}
-            className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-lg font-medium hover:bg-[var(--life-gold)]/90 transition-colors"
+            className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-full font-medium hover:bg-[var(--life-gold)]/90 transition-colors"
           >
             Back to Tools
           </button>
@@ -699,7 +699,7 @@ export default function ToolStudioPage({ params }: Props) {
                     </p>
                     <button
                       onClick={() => handleModeChange('edit')}
-                      className="px-4 py-2 text-sm font-medium text-black bg-[var(--life-gold)] rounded-lg hover:bg-[var(--life-gold)]/90 transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-black bg-[var(--life-gold)] rounded-full hover:bg-[var(--life-gold)]/90 transition-colors"
                     >
                       Switch to Edit
                     </button>

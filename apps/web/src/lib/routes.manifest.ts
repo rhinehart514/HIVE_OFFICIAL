@@ -50,18 +50,6 @@ export const routeManifest: Record<string, RouteOwnership> = {
     allowedMutations: ['markRead', 'clearAll'],
     frictionWeight: 'light',
   },
-  '/me/connections': {
-    owns: ['connectionsList'],
-    neverContains: ['socialSignals', 'publicContent'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  '/me/calendar': {
-    owns: ['timeCommitments', 'schedule'],
-    neverContains: ['discovery', 'browsing'],
-    allowedMutations: ['addEvent', 'removeEvent'],
-    frictionWeight: 'medium',
-  },
   '/me/settings': {
     owns: ['preferences', 'auth', 'accountControl'],
     neverContains: ['publicActions', 'socialFeatures'],
@@ -109,13 +97,6 @@ export const routeManifest: Record<string, RouteOwnership> = {
     allowedMutations: ['createTool'],
     frictionWeight: 'heavy',
   },
-  // Additional routes from codebase
-  '/schools': {
-    owns: ['schoolsList', 'schoolSelection'],
-    neverContains: ['settings', 'identity'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
   '/spaces': {
     owns: ['spacesList', 'spaceManagement'],
     neverContains: ['identityConfig', 'accountSettings'],
@@ -145,41 +126,6 @@ export const routeManifest: Record<string, RouteOwnership> = {
     neverContains: ['identityConfig', 'accountSettings'],
     allowedMutations: ['executeSetup'],
     frictionWeight: 'medium',
-  },
-  '/settings': {
-    owns: ['preferences', 'auth', 'accountControl'],
-    neverContains: ['publicActions', 'socialFeatures'],
-    allowedMutations: [
-      'updateProfile',
-      'changePassword',
-      'changeHandle',
-      'deleteAccount',
-    ],
-    frictionWeight: 'heavy',
-  },
-  '/notifications': {
-    owns: ['notificationList', 'notificationState'],
-    neverContains: ['creation', 'identity'],
-    allowedMutations: ['markRead', 'clearAll'],
-    frictionWeight: 'light',
-  },
-  '/profile/[id]': {
-    owns: ['identity', 'presence', 'publicTools', 'socialProof'],
-    neverContains: ['settings', 'config', 'privateState'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  '/profile/edit': {
-    owns: ['profileEditing'],
-    neverContains: ['publicContent', 'discovery'],
-    allowedMutations: ['updateProfile'],
-    frictionWeight: 'medium',
-  },
-  '/profile/connections': {
-    owns: ['connectionsList'],
-    neverContains: ['settings', 'discovery'],
-    allowedMutations: [],
-    frictionWeight: 'light',
   },
   '/lab': {
     owns: ['toolsList', 'builderDashboard'],
@@ -253,30 +199,6 @@ export const routeManifest: Record<string, RouteOwnership> = {
     allowedMutations: ['saveSetup'],
     frictionWeight: 'heavy',
   },
-  '/calendar': {
-    owns: ['timeCommitments', 'schedule'],
-    neverContains: ['discovery', 'browsing'],
-    allowedMutations: ['addEvent', 'removeEvent'],
-    frictionWeight: 'medium',
-  },
-  '/resources': {
-    owns: ['resourcesList', 'campusResources'],
-    neverContains: ['settings', 'identity'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  '/feed': {
-    owns: ['feedContent', 'socialContent'],
-    neverContains: ['settings', 'identity'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  '/feed/settings': {
-    owns: ['feedPreferences'],
-    neverContains: ['publicContent', 'discovery'],
-    allowedMutations: ['updateFeedSettings'],
-    frictionWeight: 'medium',
-  },
   // Public/marketing pages
   '/about': {
     owns: ['marketingContent', 'brandInfo'],
@@ -321,69 +243,23 @@ export const routeManifest: Record<string, RouteOwnership> = {
     allowedMutations: [],
     frictionWeight: 'light',
   },
-  // Profile (legacy - redirects to /u/[handle])
-  '/profile': {
-    owns: ['profileRedirect'],
+  // Standalone tool pages (public, shareable)
+  '/t/[toolId]': {
+    owns: ['toolExecution', 'publicTool'],
+    neverContains: ['settings', 'identity'],
+    allowedMutations: ['executeTool'],
+    frictionWeight: 'light',
+  },
+  // Verified leadership record (public)
+  '/verify/[slug]': {
+    owns: ['leadershipRecord', 'verifiedIdentity'],
     neverContains: ['settings', 'privateState'],
     allowedMutations: [],
     frictionWeight: 'light',
   },
-  // Notifications settings
-  '/notifications/settings': {
-    owns: ['notificationPreferences'],
-    neverContains: ['publicContent', 'discovery'],
-    allowedMutations: ['updateNotificationSettings'],
-    frictionWeight: 'medium',
-  },
-  // Leaders (space leadership)
-  '/leaders': {
-    owns: ['leadershipDirectory'],
-    neverContains: ['settings', 'privateState'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  // Rituals
-  '/rituals': {
-    owns: ['ritualsList', 'ritualDiscovery'],
-    neverContains: ['settings', 'identity'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  '/rituals/[slug]': {
-    owns: ['ritualDetail', 'ritualContent'],
-    neverContains: ['settings', 'identity'],
-    allowedMutations: ['participateInRitual'],
-    frictionWeight: 'medium',
-  },
-  // Templates
-  '/templates': {
-    owns: ['templateLibrary', 'templateBrowsing'],
-    neverContains: ['settings', 'identity'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  // HiveLab (internal tool development)
-  '/hivelab': {
-    owns: ['internalTools', 'labExperiments'],
-    neverContains: ['publicContent', 'userIdentity'],
-    allowedMutations: [],
-    frictionWeight: 'medium',
-  },
-  '/hivelab/demo': {
-    owns: ['demoExperience', 'labShowcase'],
-    neverContains: ['publicContent', 'userIdentity'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  // Design system/elements (internal)
+  // Design system (admin-only)
   '/design-system': {
     owns: ['componentLibrary', 'designTokens'],
-    neverContains: ['userContent', 'privateState'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  '/elements': {
-    owns: ['elementShowcase', 'componentReference'],
     neverContains: ['userContent', 'privateState'],
     allowedMutations: [],
     frictionWeight: 'light',
@@ -402,12 +278,17 @@ export const canonicalRedirects: Record<string, string> = {
   // Dead route consolidation
   '/home': '/discover',
   '/feed': '/discover',
-  // Settings section shortcuts
-  '/settings/privacy': '/settings?section=privacy',
-  '/settings/security': '/settings?section=account',
-  '/settings/profile': '/settings?section=profile',
-  '/settings/account': '/settings?section=account',
-  '/settings/notifications': '/settings?section=notifications',
+  '/calendar': '/discover?tab=events',
+  '/elements': '/lab',
+  '/schools': '/enter',
+  '/templates': '/lab',
+  '/hivelab': '/lab',
+  // Settings — canonical is /me/settings
+  '/settings/privacy': '/me/settings?section=privacy',
+  '/settings/security': '/me/settings?section=account',
+  '/settings/profile': '/me/settings?section=profile',
+  '/settings/account': '/me/settings?section=account',
+  '/settings/notifications': '/me/settings?section=notifications',
   // Legal routes
   '/privacy': '/legal/privacy',
   '/terms': '/legal/terms',
@@ -419,6 +300,17 @@ export const canonicalRedirects: Record<string, string> = {
   '/people': '/discover?tab=people',
   '/events': '/discover?tab=events',
   '/leaders': '/spaces?claim=true',
+  // Profile consolidation
+  '/you': '/me',
+  '/profile': '/me',
+  '/profile/edit': '/me/edit',
+  '/profile/settings': '/me/settings',
+  '/profile/calendar': '/me',
+  '/profile/connections': '/me',
+  '/me/connections': '/me',
+  '/me/calendar': '/me',
+  '/me/reports': '/me/settings',
+  '/notifications/settings': '/me/settings?section=notifications',
 };
 
 /**

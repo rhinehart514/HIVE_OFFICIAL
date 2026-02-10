@@ -1,71 +1,61 @@
 'use client';
 
-import { motion } from 'framer-motion';
-
 const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
 
-interface FeatureCardProps {
-  number: string;
-  title: string;
-  description: string;
-  className?: string;
-}
-
-function FeatureCard({ number, title, description, className }: FeatureCardProps) {
-  return (
-    <motion.div
-      className={`rounded-lg border border-white/[0.06] bg-[#0A0A0A] p-8 ${className || ''}`}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-100px' }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="flex items-center gap-3 mb-4">
-        <span className={`${clashDisplay} text-5xl font-bold text-[var(--life-gold,#FFD700)]`}>{number}</span>
-      </div>
-      <h3 className={`${clashDisplay} text-3xl font-semibold text-white mb-3`}>{title}</h3>
-      <p className="text-base text-white leading-relaxed">{description}</p>
-    </motion.div>
-  );
-}
+const features = [
+  {
+    label: 'Discover',
+    title: 'Find your people',
+    description:
+      'Search the live UB directory. Every registered org already has a space — just claim it.',
+    span: 'lg:col-span-2',
+  },
+  {
+    label: 'Create',
+    title: 'Build tools in seconds',
+    description:
+      'Polls, sign-ups, countdowns, RSVP forms. Describe what you need and deploy it instantly.',
+    span: 'lg:col-span-1',
+  },
+  {
+    label: 'Spaces',
+    title: 'Run everything from one place',
+    description:
+      'Chat, events, tools, and members — all in your space. No more GroupMe + Google Forms + Remind.',
+    span: 'lg:col-span-3',
+  },
+] as const;
 
 export function ProductSection() {
   return (
-    <section className="py-16 md:py-20 px-6">
+    <section className="py-20 md:py-28 px-6">
       <div className="max-w-7xl mx-auto">
         {/* Section label */}
         <div className="flex items-center gap-2 mb-12">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--life-gold,#FFD700)]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
           <span className="text-[10px] uppercase tracking-[0.2em] font-mono text-white/50">
-            CLAIM TO LEAD
+            HOW IT WORKS
           </span>
         </div>
 
-        {/* Uneven grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          {/* Discover: Biggest card (spans 2 cols on lg) */}
-          <FeatureCard
-            number="01"
-            title="Find Your Club"
-            description="Search the live UB directory and open your pre-seeded space. Members, chat, events, and tools are ready to go."
-            className="lg:col-span-2 lg:row-span-1"
-          />
-
-          {/* Create: Medium card */}
-          <FeatureCard
-            number="02"
-            title="Claim Leadership"
-            description="Submit your leadership role and get immediate setup access while your verification is processed."
-            className="lg:col-span-1"
-          />
-
-          {/* Spaces: Wide horizontal strip (spans all 3 cols) */}
-          <FeatureCard
-            number="03"
-            title="Run Your Community"
-            description="Coordinate announcements, events, signups, reminders, and custom tools in one space your members already recognize."
-            className="lg:col-span-3"
-          />
+        {/* Screenshot cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+          {features.map((feature) => (
+            <div
+              key={feature.label}
+              className={`rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-8 ${feature.span}`}
+            >
+              <span className="text-[11px] uppercase tracking-[0.15em] font-mono text-[#FFD700] mb-3 block">
+                {feature.label}
+              </span>
+              <h3 className={`${clashDisplay} text-2xl lg:text-3xl font-semibold text-white mb-3`}>
+                {feature.title}
+              </h3>
+              <p className="text-[15px] text-white/50 leading-relaxed">
+                {feature.description}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

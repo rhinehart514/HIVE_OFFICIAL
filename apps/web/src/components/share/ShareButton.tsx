@@ -118,7 +118,7 @@ export function ShareButton({ url, title, description, className = '' }: ShareBu
                   />
                   <button
                     onClick={handleCopy}
-                    className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-lg text-sm font-medium hover:bg-[var(--life-gold)]/90 transition-colors"
+                    className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-full text-sm font-medium hover:bg-[var(--life-gold)]/90 transition-colors"
                   >
                     {copied ? (
                       <span className="flex items-center gap-1.5">

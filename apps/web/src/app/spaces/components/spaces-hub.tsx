@@ -1,90 +1,62 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AlertCircle, Plus, RefreshCw } from 'lucide-react';
+import { ArrowRight, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@hive/ui/design-system/primitives';
-import { useSpacesHQ } from '../hooks/useSpacesHQ';
+import { useSpacesHQ, type Space } from '../hooks/useSpacesHQ';
 import { SpaceCreationModal, SpaceClaimModal, SpaceJoinModal } from '@/components/spaces';
-import { HubActive } from './hub-active';
 
 interface SpacesHubProps {
   isOnboarding?: boolean;
 }
 
-function Header({ onCreateSpace }: { onCreateSpace: () => void }) {
-  return (
-    <header className="flex items-center justify-between px-6 py-5">
-      <h1 className="text-xl font-medium tracking-tight text-white">Spaces</h1>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onCreateSpace}
-        className="text-white/50 hover:bg-white/[0.06] hover:text-white"
-      >
-        <Plus size={18} className="mr-2" />
-        New
-      </Button>
-    </header>
-  );
-}
+/* ── Space Row ─────────────────────────────────────────── */
 
-function LoadingState() {
+function SpaceRow({ space }: { space: Space }) {
+  const hasUnread = (space.unreadCount ?? 0) > 0;
+
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <div className="flex gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-white/50" />
-        <span className="h-2 w-2 rounded-full bg-white/50" />
-        <span className="h-2 w-2 rounded-full bg-white/50" />
+    <Link
+      href={`/s/${encodeURIComponent(space.handle ?? space.id)}`}
+      className="flex items-center gap-3 border-b border-white/[0.04] px-4 py-3 transition-colors hover:bg-white/[0.03]"
+    >
+      {/* Unread dot */}
+      <span
+        className={`h-1.5 w-1.5 shrink-0 rounded-full ${hasUnread ? 'bg-[#FFD700]' : 'bg-transparent'}`}
+        aria-hidden
+      />
+
+      {/* Avatar */}
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/[0.06]">
+        {space.avatarUrl ? (
+          <img src={space.avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-xs font-medium text-white/50">
+            {space.name.charAt(0).toUpperCase()}
+          </span>
+        )}
       </div>
-    </div>
-  );
-}
 
-function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6">
-      <div className="max-w-md text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
-          <AlertCircle size={24} className="text-red-400" />
-        </div>
-        <h2 className="mb-2 text-lg font-medium text-white">Something went wrong</h2>
-        <p className="mb-6 text-sm leading-relaxed text-white/50">
-          {error || 'Failed to load your spaces. Please try again.'}
+      {/* Name + preview */}
+      <div className="min-w-0 flex-1">
+        <p className={`truncate text-[15px] font-medium ${hasUnread ? 'text-white' : 'text-white/50'}`}>
+          {space.name}
         </p>
-        <Button onClick={onRetry} className="bg-white/[0.06] text-white hover:bg-white/[0.06]">
-          <RefreshCw size={16} className="mr-2" />
-          Try again
-        </Button>
+        <p className="truncate text-[13px] text-white/50">
+          {space.memberCount} member{space.memberCount !== 1 ? 's' : ''}
+          {space.category ? ` \u00b7 ${space.category}` : ''}
+        </p>
       </div>
-    </div>
+
+      {/* Arrow */}
+      <ArrowRight className="h-4 w-4 shrink-0 text-white/25" />
+    </Link>
   );
 }
 
-function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
-  return (
-    <div className="flex flex-1 items-center justify-center px-6">
-      <div className="max-w-xl text-center">
-        <h2 className="mb-3 text-2xl font-semibold text-white">No spaces yet</h2>
-        <p className="mb-6 text-sm text-white/50">
-          Claim your identity and join existing communities, or create a new space.
-        </p>
-        <div className="flex items-center justify-center gap-3">
-          <Button onClick={onCreateSpace} className="bg-white text-black hover:bg-white">
-            Create space
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => (window.location.href = '/discover')}
-            className="text-white hover:bg-white/[0.06]"
-          >
-            Browse spaces
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+/* ── Main Component ────────────────────────────────────── */
 
 export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProps) {
   const router = useRouter();
@@ -115,54 +87,102 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
     }
   }, [searchParams, router]);
 
-  const {
-    state,
-    loading,
-    error,
-    identityClaims,
-    organizations,
-    refresh,
-  } = useSpacesHQ();
-
-  const handleMuteSpace = async (spaceId: string) => {
-    try {
-      await fetch(`/api/spaces/${spaceId}/mute`, { method: 'POST' });
-      refresh();
-    } catch {
-      // no-op
-    }
-  };
-
-  const handleLeaveSpace = async (spaceId: string) => {
-    try {
-      await fetch(`/api/spaces/${spaceId}/leave`, { method: 'POST' });
-      refresh();
-    } catch {
-      // no-op
-    }
-  };
+  const { loading, error, organizations, refresh } = useSpacesHQ();
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-black">
-      <Header onCreateSpace={() => setShowCreateModal(true)} />
+    <div className="min-h-screen w-full bg-black">
+      <div className="mx-auto max-w-[640px] px-0 md:px-4">
+        {/* Header */}
+        <header className="flex items-center justify-between px-4 py-5 md:px-0">
+          <h1 className="text-xl font-medium tracking-tight text-white">Spaces</h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCreateModal(true)}
+            className="rounded-full text-white/50 hover:bg-white/[0.06] hover:text-white"
+          >
+            <Plus size={16} className="mr-1.5" />
+            New
+          </Button>
+        </header>
 
-      {loading && <LoadingState />}
-      {!loading && error && <ErrorState error={error} onRetry={refresh} />}
+        {/* Error state */}
+        {!loading && error && (
+          <div className="flex flex-col items-center px-6 py-16 text-center">
+            <p className="mb-4 text-sm text-white/50">{error}</p>
+            <Button
+              onClick={refresh}
+              variant="ghost"
+              className="text-white/50 hover:bg-white/[0.06] hover:text-white"
+            >
+              <RefreshCw size={14} className="mr-2" />
+              Try again
+            </Button>
+          </div>
+        )}
 
-      {!loading && !error && state === 'empty' && (
-        <EmptyState onCreateSpace={() => setShowCreateModal(true)} />
-      )}
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="space-y-0">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 border-b border-white/[0.04] px-4 py-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-transparent" />
+                <div className="h-10 w-10 rounded-lg bg-white/[0.06]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-32 rounded bg-white/[0.06]" />
+                  <div className="h-3 w-24 rounded bg-white/[0.04]" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-      {!loading && !error && state !== 'empty' && (
-        <HubActive
-          identityClaims={identityClaims}
-          organizations={organizations}
-          onCreateSpace={() => setShowCreateModal(true)}
-          onMuteSpace={handleMuteSpace}
-          onLeaveSpace={handleLeaveSpace}
-        />
-      )}
+        {/* Space list */}
+        {!loading && !error && (
+          <>
+            {organizations.length === 0 ? (
+              <div className="px-4 py-16 text-center">
+                <p className="mb-4 text-sm text-white/50">
+                  No spaces yet. Join a community or create your own.
+                </p>
+                <div className="flex justify-center gap-3">
+                  <Button
+                    onClick={() => setShowCreateModal(true)}
+                    className="rounded-full bg-[#FFD700] text-black hover:bg-[#FFD700]/90"
+                  >
+                    Create space
+                  </Button>
+                  <Link
+                    href="/discover"
+                    className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-4 py-2 text-sm text-white/50 transition-colors hover:text-white"
+                  >
+                    Browse spaces
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {organizations.map((space) => (
+                  <SpaceRow key={space.id} space={space} />
+                ))}
+              </div>
+            )}
 
+            {/* Footer */}
+            <div className="px-4 py-6">
+              <Link
+                href="/discover"
+                className="group flex items-center gap-1.5 text-sm text-white/50 transition-colors hover:text-white"
+              >
+                Browse all spaces
+                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Modals */}
       <SpaceCreationModal
         isOpen={showCreateModal}
         onClose={() => {

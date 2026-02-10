@@ -6,7 +6,7 @@ export const runtime = 'edge';
 // Fetch tool data for OG image
 async function getToolData(toolId: string) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.college';
     const response = await fetch(`${baseUrl}/api/tools/${toolId}`, {
       headers: {
         'Cache-Control': 'no-cache',

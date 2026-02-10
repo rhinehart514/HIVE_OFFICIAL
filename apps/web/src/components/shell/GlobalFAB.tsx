@@ -243,7 +243,7 @@ export function GlobalFAB({
         )}
       />
 
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-20 right-5 z-50 md:bottom-6 md:right-6">
         <div
           className={cn(
             'absolute bottom-16 right-0 flex w-56 flex-col gap-2 transition-all duration-150',

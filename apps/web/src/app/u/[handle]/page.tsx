@@ -27,7 +27,7 @@ async function fetchProfileForMetadata(handle: string) {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session')?.value;
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.college';
 
   try {
     const response = await fetch(`${baseUrl}/api/profile/handle/${encodeURIComponent(handle)}`, {

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { buildUbEnterUrl } from './entry-url';
 
@@ -10,42 +9,38 @@ const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)
 
 export function CTASection() {
   const searchParams = useSearchParams();
-  const claimHref = buildUbEnterUrl(searchParams.get('redirect'), '/spaces?claim=true');
+  const enterHref = buildUbEnterUrl(searchParams.get('redirect'));
+  const browseHref = buildUbEnterUrl(searchParams.get('redirect'), '/discover');
 
   return (
-    <section className="py-20 md:py-32 px-6">
-      <div className="max-w-4xl mx-auto text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+    <section className="py-28 md:py-40 px-6">
+      <div className="max-w-3xl mx-auto text-center">
+        <h2
+          className={`${clashDisplay} text-[clamp(32px,6vw,56px)] font-semibold leading-tight text-white mb-6`}
         >
-          {/* Headline */}
-          <h2 className={`${clashDisplay} text-[clamp(32px,6vw,56px)] font-semibold leading-tight text-white mb-6`}>
-            Your members are already looking for this space.
-          </h2>
+          Your club is already here.
+        </h2>
 
-          {/* Subhead */}
-          <p className="text-lg text-white/50 mb-10 max-w-2xl mx-auto">
-            Claim your club, verify leadership, and start running events, chat, and tools before the next meeting.
-          </p>
+        <p className="text-lg text-white/50 mb-10 max-w-xl mx-auto">
+          Claim your space, verify leadership, and start running your org before the next meeting.
+        </p>
 
-          {/* CTA */}
-          <div className="flex justify-center">
-            <Link
-              href={claimHref}
-              className="px-8 py-4 bg-[var(--life-gold,#FFD700)] text-black text-base font-medium rounded-full hover:bg-[var(--life-gold,#FFD700)]/90 transition-colors flex items-center justify-center gap-2"
-            >
-              Claim Your Club
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
-
-          <p className="mt-4 text-xs uppercase tracking-[0.12em] text-white/40 font-mono">
-            Built for UB leaders · Claim takes minutes
-          </p>
-        </motion.div>
+        {/* Two pills */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            href={enterHref}
+            className="px-8 py-4 bg-[#FFD700] text-black text-base font-medium rounded-full hover:opacity-90 transition-opacity flex items-center gap-2"
+          >
+            Get started
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+          <Link
+            href={browseHref}
+            className="px-8 py-4 bg-[#1A1A1A] text-white text-base font-medium rounded-full border border-white/[0.1] hover:bg-white/[0.06] transition-colors"
+          >
+            Browse spaces
+          </Link>
+        </div>
       </div>
     </section>
   );
