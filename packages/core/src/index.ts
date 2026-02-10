@@ -278,6 +278,9 @@ export type {
   ElementCounterConfig,
   ToolCounterConfig,
   CounterMigrationStatus,
+  // Tool Lifecycle Types (Phase 1: Living Mechanics)
+  ToolLifecycleStage,
+  ToolLifecycle,
 } from "./domain/hivelab/tool-composition.types";
 
 // Custom Block Types (Phase 5: iframe sandbox system)

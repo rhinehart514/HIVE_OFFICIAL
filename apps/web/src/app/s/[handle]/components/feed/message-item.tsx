@@ -14,7 +14,6 @@
  */
 
 import * as React from 'react';
-import { AnimatePresence } from 'framer-motion';
 import { SmilePlus, MessageSquare, MoreHorizontal, Trash2, Pencil, Check, X, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';

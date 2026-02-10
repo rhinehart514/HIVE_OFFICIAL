@@ -103,12 +103,31 @@ export interface ReactionThresholdTrigger {
   };
 }
 
+/**
+ * Trigger when a deployed tool's shared state meets a condition.
+ * Bridges space automations with the tool state system.
+ */
+export interface ToolStateChangeTrigger {
+  type: 'tool_state_change';
+  config: {
+    /** Deployment ID of the tool to watch */
+    deploymentId: string;
+    /** Dot-path into shared state (e.g. 'counters.poll_001:total') */
+    watchPath: string;
+    /** Comparison operator */
+    operator: 'eq' | 'gt' | 'gte' | 'lt' | 'lte';
+    /** Threshold value to compare against */
+    value: number | string;
+  };
+}
+
 export type AutomationTrigger =
   | MemberJoinTrigger
   | EventReminderTrigger
   | ScheduleTrigger
   | KeywordTrigger
-  | ReactionThresholdTrigger;
+  | ReactionThresholdTrigger
+  | ToolStateChangeTrigger;
 
 // ============================================================================
 // ACTION TYPES
@@ -633,6 +652,10 @@ export interface AutomationContext {
     authorId?: string;
     // reaction_threshold
     reactionCount?: number;
+    // tool_state_change
+    deploymentId?: string;
+    watchPath?: string;
+    currentValue?: number | string;
   };
 }
 

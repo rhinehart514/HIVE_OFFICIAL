@@ -1,6 +1,6 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { withAuthAndErrors, withErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, withErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { getSession } from "@/lib/session";
 import {
   UpdateToolSchema,

@@ -128,7 +128,7 @@ export function LeaderCreateFAB({
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: durationSeconds.quick, ease: MOTION.ease.premium }}
           >
-            {actions.map((action, index) => {
+            {actions.map((action, _index) => {
               const Icon = action.icon;
               return (
                 <button

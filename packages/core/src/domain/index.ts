@@ -324,6 +324,8 @@ export type {
   ElementCounterConfig,
   ToolCounterConfig,
   CounterMigrationStatus,
+  ToolLifecycleStage,
+  ToolLifecycle,
 } from './hivelab/tool-composition.types';
 
 // Sprint 2: Tool Runtime Context Types

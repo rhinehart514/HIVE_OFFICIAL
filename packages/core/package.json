@@ -66,6 +66,11 @@
       "import": "./src/domain/creation/validate-tool-elements.ts",
       "default": "./src/domain/creation/validate-tool-elements.ts"
     },
+    "./client": {
+      "types": "./src/client.ts",
+      "import": "./src/client.ts",
+      "default": "./src/client.ts"
+    },
     "./infrastructure/api/validate-tool-context": {
       "types": "./src/infrastructure/api/validate-tool-context.ts",
       "import": "./src/infrastructure/api/validate-tool-context.ts",

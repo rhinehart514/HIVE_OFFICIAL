@@ -22,7 +22,6 @@ import {
   Sparkles,
   ArrowRight,
   Plus,
-  Zap,
   LayoutGrid,
   Users,
   CalendarDays,
@@ -76,7 +75,7 @@ const fadeInUpVariants = {
   },
 };
 
-const listVariants = {
+const _listVariants = {
   initial: { opacity: 1 },
   animate: { opacity: 1, transition: { staggerChildren: 0.04 } },
   hidden: { opacity: 1 },

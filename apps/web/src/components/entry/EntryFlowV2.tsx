@@ -203,7 +203,7 @@ export function EntryFlowV2() {
     } finally {
       setIsSendingCode(false);
     }
-  }, [resendCountdown, isSendingCode, isCodeVerified, email, focusOtpIndex, triggerCodeError]);
+  }, [resendCountdown, isSendingCode, isCodeVerified, email, focusOtpIndex]);
 
   const submitProfile = React.useCallback(async () => {
     if (!firstName.trim() || !lastName.trim()) {

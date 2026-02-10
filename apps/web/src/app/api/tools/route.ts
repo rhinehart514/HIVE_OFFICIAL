@@ -2,7 +2,7 @@ import type * as admin from "firebase-admin";
 import { z } from "zod";
 import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
-import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import {
   createToolDefaults as coreCreateToolDefaults,
   type PlacementTargetType,

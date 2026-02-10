@@ -118,7 +118,7 @@ export async function enforceAdminSecurity(
   // Strict CSP for admin
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
   );
 
   // Prevent framing

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+
 import { ArrowRight, Wrench } from 'lucide-react';
 import {
   ProfileToolModal,
@@ -69,7 +69,6 @@ function ProfileErrorState({ onRetry }: { onRetry: () => void }) {
 }
 
 export default function ProfilePageContent() {
-  const router = useRouter();
   const state = useProfileByHandle();
   const [showReportModal, setShowReportModal] = React.useState(false);
 

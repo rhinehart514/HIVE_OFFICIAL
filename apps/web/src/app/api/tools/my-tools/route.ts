@@ -1,5 +1,5 @@
 import type * as admin from "firebase-admin";
-import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
+import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 // GET /api/tools/my-tools — Creator dashboard: user's tools with aggregated stats

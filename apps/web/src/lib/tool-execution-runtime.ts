@@ -24,6 +24,7 @@ export interface ExecutionContext {
   userId: string;
   toolId: string;
   spaceId?: string;
+  deploymentId?: string;
   permissions: string[];
   timeout: number;
   maxMemory: number;
@@ -69,6 +70,10 @@ class SafeExecutionEnvironment {
     this.context = context;
   }
 
+  private getDeploymentId(): string {
+    return this.context.deploymentId || `standalone:${this.context.toolId}`;
+  }
+
   // Safe console implementation
   private createSafeConsole(): typeof console {
     return {
@@ -92,72 +97,153 @@ class SafeExecutionEnvironment {
 
   // Safe HIVE API for tools
   private createHiveAPI() {
+    const deploymentId = this.getDeploymentId();
+    const context = this.context;
+
     return {
       // User data access (with permission checks)
       user: {
-        getId: () => this.context.permissions.includes('user:read') ? this.context.userId : null,
+        getId: () => context.permissions.includes('user:read') ? context.userId : null,
         getProfile: async () => {
-          if (!this.context.permissions.includes('user:read')) {
+          if (!context.permissions.includes('user:read')) {
             throw new Error('Permission denied: user:read required');
           }
-          // Return sanitized user data
-          return { id: this.context.userId, name: 'Current User' };
+          try {
+            const profileRes = await fetch('/api/profile', { credentials: 'include' });
+            if (!profileRes.ok) throw new Error(`Profile fetch failed: ${profileRes.status}`);
+            const profileData = await profileRes.json();
+            const profile = profileData.data || profileData;
+
+            let role: string = 'member';
+            if (context.spaceId) {
+              try {
+                const membershipRes = await fetch(
+                  `/api/spaces/${context.spaceId}/membership`,
+                  { credentials: 'include' }
+                );
+                if (membershipRes.ok) {
+                  const membershipData = await membershipRes.json();
+                  role = membershipData.requestingUser?.role || 'member';
+                }
+              } catch {
+                // Membership fetch failed — default to member
+              }
+            }
+
+            return {
+              id: profile.id || context.userId,
+              name: profile.fullName || profile.firstName || 'Unknown',
+              avatarUrl: profile.profileImageUrl || null,
+              role,
+            };
+          } catch {
+            return { id: context.userId, name: 'Unknown', avatarUrl: null, role: 'member' };
+          }
         }
       },
-      
+
       // Space data access
       space: {
-        getId: () => this.context.spaceId,
+        getId: () => context.spaceId,
         getMembers: async () => {
-          if (!this.context.permissions.includes('space:read')) {
+          if (!context.permissions.includes('space:read')) {
             throw new Error('Permission denied: space:read required');
           }
-          // Return mock space data for now
-          return [];
+          if (!context.spaceId) return [];
+          try {
+            const res = await fetch(
+              `/api/spaces/${context.spaceId}/members?limit=100`,
+              { credentials: 'include' }
+            );
+            if (!res.ok) return [];
+            const data = await res.json();
+            const members = data.members || [];
+            return members.map((m: Record<string, unknown>) => ({
+              id: m.id,
+              name: m.name,
+              avatarUrl: m.avatar || null,
+              role: m.role || 'member',
+              isOnline: m.isOnline || false,
+            }));
+          } catch {
+            return [];
+          }
         }
       },
-      
-      // Data storage for tools
+
+      // Data storage for tools (Firestore-backed via state API)
       storage: {
         get: async (key: string) => {
-          if (!this.context.permissions.includes('storage:read')) {
+          if (!context.permissions.includes('storage:read')) {
             throw new Error('Permission denied: storage:read required');
           }
-          // TODO: Implement secure tool storage
-          return localStorage.getItem(`tool_${this.context.toolId}_${key}`);
+          try {
+            const res = await fetch(`/api/tools/state/${deploymentId}`, { credentials: 'include' });
+            if (!res.ok) return null;
+            const data = await res.json();
+            const state = data.state || {};
+            return state[key] ?? null;
+          } catch {
+            return null;
+          }
         },
         set: async (key: string, value: unknown) => {
-          if (!this.context.permissions.includes('storage:write')) {
+          if (!context.permissions.includes('storage:write')) {
             throw new Error('Permission denied: storage:write required');
           }
-          // TODO: Implement secure tool storage
-          localStorage.setItem(`tool_${this.context.toolId}_${key}`, JSON.stringify(value));
+          try {
+            const patchRes = await fetch(`/api/tools/state/${deploymentId}`, {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: key, value, operation: 'set' }),
+            });
+            if (patchRes.status === 404) {
+              // State doc doesn't exist yet — create via PUT
+              await fetch(`/api/tools/state/${deploymentId}`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ state: { [key]: value } }),
+              });
+            }
+          } catch {
+            // Storage write failed silently — tool continues
+          }
         },
         delete: async (key: string) => {
-          if (!this.context.permissions.includes('storage:write')) {
+          if (!context.permissions.includes('storage:write')) {
             throw new Error('Permission denied: storage:write required');
           }
-          localStorage.removeItem(`tool_${this.context.toolId}_${key}`);
+          try {
+            await fetch(`/api/tools/state/${deploymentId}`, {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: key, operation: 'delete' }),
+            });
+          } catch {
+            // Storage delete failed silently
+          }
         }
       },
-      
+
       // HTTP requests (sandboxed)
       http: {
         get: async (url: string) => {
-          if (!this.context.permissions.includes('network:read')) {
+          if (!context.permissions.includes('network:read')) {
             throw new Error('Permission denied: network:read required');
           }
-          // TODO: Implement safe HTTP client with domain restrictions
           return fetch(url);
         },
         post: async (url: string, data: unknown) => {
-          if (!this.context.permissions.includes('network:write')) {
+          if (!context.permissions.includes('network:write')) {
             throw new Error('Permission denied: network:write required');
           }
           return fetch(url, { method: 'POST', body: JSON.stringify(data) });
         }
       },
-      
+
       // UI utilities
       ui: {
         showToast: (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -173,7 +259,6 @@ class SafeExecutionEnvironment {
           }
         },
         showModal: (title: string, content: string) => {
-          // TODO: Integration with modal system
           this.logs.push(`[MODAL] ${title}: ${content}`);
         }
       }
@@ -303,7 +388,6 @@ export class ToolExecutionRuntime {
           result = await env.executeJSCode(tool.code, inputs);
           break;
         case 'python':
-          // TODO: Implement Python execution (requires server-side runtime)
           result = {
             success: false,
             error: 'Python execution not yet supported in browser',
@@ -482,7 +566,7 @@ switch (action) {
     await HIVE.storage.set('todos', todos);
     HIVE.ui.showToast('Task added!', 'success');
     return { todos, added: newTodo };
-    
+
   case 'complete':
     const todo = todos.find(t => t.id === id);
     if (todo) {
@@ -491,10 +575,10 @@ switch (action) {
       HIVE.ui.showToast('Task completed!', 'success');
     }
     return { todos };
-    
+
   case 'list':
     return { todos };
-    
+
   default:
     throw new Error('Invalid action. Use: add, complete, or list');
 }

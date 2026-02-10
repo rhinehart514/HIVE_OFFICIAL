@@ -95,6 +95,7 @@ export interface ActionDeploymentData {
   permissions?: { canInteract?: boolean; allowedRoles?: string[] };
   settings?: { collectAnalytics?: boolean; [key: string]: unknown };
   usageCount?: number;
+  lifecycle?: { stage: string; transitions?: Record<string, string>; sunsetMessage?: string };
   [key: string]: unknown;
 }
 
@@ -291,29 +292,47 @@ const actionHandlers: Record<string, ActionHandler> = {
   },
 
   async increment(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId } = context;
+    const { state, elementId, userId } = context;
     const key = elementId || 'counter';
     const currentValue = (state[key] as number) || 0;
 
     return {
       success: true,
       state: { ...state, [key]: currentValue + 1 },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'counter',
+          userId,
+          elementInstanceId: key,
+          action: 'increment',
+          data: { previousValue: currentValue, newValue: currentValue + 1 },
+        }],
+      },
     };
   },
 
   async decrement(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId } = context;
+    const { state, elementId, userId } = context;
     const key = elementId || 'counter';
     const currentValue = (state[key] as number) || 0;
 
     return {
       success: true,
       state: { ...state, [key]: Math.max(0, currentValue - 1) },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'counter',
+          userId,
+          elementInstanceId: key,
+          action: 'decrement',
+          data: { previousValue: currentValue, newValue: Math.max(0, currentValue - 1) },
+        }],
+      },
     };
   },
 
   async set_progress(context: ActionContext): Promise<ActionResult> {
-    const { elementId, data, sharedState } = context;
+    const { elementId, data, sharedState, userId } = context;
     const instanceId = elementId || 'progress';
     const newValue = (data.value as number) ?? 0;
     const currentValue = sharedState.counters[`${instanceId}:value`] || 0;
@@ -325,12 +344,19 @@ const actionHandlers: Record<string, ActionHandler> = {
         counterDeltas: {
           [`${instanceId}:value`]: newValue - currentValue,
         },
+        timelineAppend: [{
+          type: 'progress',
+          userId,
+          elementInstanceId: instanceId,
+          action: 'set_progress',
+          data: { previousValue: currentValue, newValue },
+        }],
       },
     };
   },
 
   async increment_progress(context: ActionContext): Promise<ActionResult> {
-    const { elementId, data } = context;
+    const { elementId, data, userId } = context;
     const instanceId = elementId || 'progress';
     const step = (data.step as number) ?? 1;
 
@@ -341,12 +367,19 @@ const actionHandlers: Record<string, ActionHandler> = {
         counterDeltas: {
           [`${instanceId}:value`]: step,
         },
+        timelineAppend: [{
+          type: 'progress',
+          userId,
+          elementInstanceId: instanceId,
+          action: 'increment_progress',
+          data: { step },
+        }],
       },
     };
   },
 
   async reset_progress(context: ActionContext): Promise<ActionResult> {
-    const { elementId, sharedState } = context;
+    const { elementId, sharedState, userId } = context;
     const instanceId = elementId || 'progress';
     const currentValue = sharedState.counters[`${instanceId}:value`] || 0;
 
@@ -357,38 +390,71 @@ const actionHandlers: Record<string, ActionHandler> = {
         counterDeltas: {
           [`${instanceId}:value`]: -currentValue,
         },
+        timelineAppend: [{
+          type: 'progress',
+          userId,
+          elementInstanceId: instanceId,
+          action: 'reset_progress',
+          data: { previousValue: currentValue },
+        }],
       },
     };
   },
 
   async toggle(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = (data.key as string) || elementId || 'toggle';
     const currentValue = Boolean(state[key]);
 
     return {
       success: true,
       state: { ...state, [key]: !currentValue },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'toggle',
+          userId,
+          elementInstanceId: key,
+          action: 'toggle',
+          data: { previousValue: currentValue, newValue: !currentValue },
+        }],
+      },
     };
   },
 
   async save_input(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'input';
 
     return {
       success: true,
       state: { ...state, [key]: data.value },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'input',
+          userId,
+          elementInstanceId: key,
+          action: 'save_input',
+        }],
+      },
     };
   },
 
   async select(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'selection';
 
     return {
       success: true,
       state: { ...state, [key]: data.selectedValue || data.value },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'selection',
+          userId,
+          elementInstanceId: key,
+          action: 'select',
+          data: { selectedValue: data.selectedValue || data.value },
+        }],
+      },
     };
   },
 
@@ -477,7 +543,7 @@ const actionHandlers: Record<string, ActionHandler> = {
   // =============================================================================
 
   async start(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId } = context;
+    const { state, elementId, userId } = context;
     const key = elementId || 'timer';
     const timerState = (state[key] || { elapsed: 0, isRunning: false }) as { elapsed: number; isRunning: boolean; startedAt?: string };
 
@@ -491,11 +557,19 @@ const actionHandlers: Record<string, ActionHandler> = {
           startedAt: new Date().toISOString(),
         },
       },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'timer',
+          userId,
+          elementInstanceId: key,
+          action: 'start',
+        }],
+      },
     };
   },
 
   async stop(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId } = context;
+    const { state, elementId, userId } = context;
     const key = elementId || 'timer';
     const timerState = (state[key] || { elapsed: 0, isRunning: false }) as { elapsed: number; isRunning: boolean; startedAt?: string };
 
@@ -516,11 +590,20 @@ const actionHandlers: Record<string, ActionHandler> = {
           stoppedAt: new Date().toISOString(),
         },
       },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'timer',
+          userId,
+          elementInstanceId: key,
+          action: 'stop',
+          data: { elapsed },
+        }],
+      },
     };
   },
 
   async reset(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId } = context;
+    const { state, elementId, userId } = context;
     const key = elementId || 'timer';
 
     return {
@@ -533,11 +616,19 @@ const actionHandlers: Record<string, ActionHandler> = {
           resetAt: new Date().toISOString(),
         },
       },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'timer',
+          userId,
+          elementInstanceId: key,
+          action: 'reset',
+        }],
+      },
     };
   },
 
   async lap(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId } = context;
+    const { state, elementId, userId } = context;
     const key = elementId || 'timer';
     const timerState = (state[key] || { elapsed: 0, laps: [] }) as { elapsed: number; laps: number[]; startedAt?: string };
 
@@ -554,6 +645,15 @@ const actionHandlers: Record<string, ActionHandler> = {
           ...timerState,
           laps: [...(timerState.laps || []), currentElapsed],
         },
+      },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'timer',
+          userId,
+          elementInstanceId: key,
+          action: 'lap',
+          data: { lapTime: currentElapsed, lapNumber: (timerState.laps || []).length + 1 },
+        }],
       },
     };
   },
@@ -670,6 +770,104 @@ const actionHandlers: Record<string, ActionHandler> = {
         participation: { [`${instanceId}:${slotId}:signedUp`]: false },
       },
     };
+  },
+
+  // =============================================================================
+  // Availability Grid Actions
+  // =============================================================================
+
+  async select_slot(context: ActionContext): Promise<ActionResult> {
+    const { elementId, data, userId, sharedState, spaceContext } = context;
+    const instanceId = elementId || 'availability';
+    const slotId = data.slotId as string;
+    const selected = data.selected !== false; // Default to selecting
+
+    if (!slotId) {
+      return { success: false, error: 'Missing slotId' };
+    }
+
+    const slotsKey = `${instanceId}:slots`;
+    const existingSlots = sharedState.collections[slotsKey] || {};
+    const participationKey = `${instanceId}:${slotId}:selected`;
+
+    // Get user display name
+    const userDisplayName =
+      (spaceContext?.members as { list?: Array<{ id: string; displayName?: string }> })?.list
+        ?.find(m => m.id === userId)?.displayName || 'Member';
+
+    const entryId = `${userId}_${slotId}`;
+
+    if (selected) {
+      // Check if already selected
+      if (existingSlots[entryId]) {
+        return { success: false, error: 'Already selected this slot' };
+      }
+
+      return {
+        success: true,
+        data: { action: 'select_slot', slotId, selected: true },
+        sharedStateUpdate: {
+          collectionUpserts: {
+            [slotsKey]: {
+              [entryId]: {
+                id: entryId,
+                createdAt: new Date().toISOString(),
+                createdBy: userId,
+                data: {
+                  slotId,
+                  userId,
+                  userName: userDisplayName,
+                  selectedAt: new Date().toISOString(),
+                },
+              },
+            },
+          },
+          counterDeltas: {
+            [`${instanceId}:${slotId}`]: 1,
+            [`${instanceId}:total`]: 1,
+          },
+          timelineAppend: [{
+            type: 'availability',
+            userId,
+            elementInstanceId: instanceId,
+            action: 'select_slot',
+            data: { slotId, selected: true },
+          }],
+        },
+        userStateUpdate: {
+          participation: { [participationKey]: true },
+        },
+      };
+    } else {
+      // Deselect — remove entry
+      if (!existingSlots[entryId]) {
+        return { success: false, error: 'Not selected for this slot' };
+      }
+
+      return {
+        success: true,
+        data: { action: 'select_slot', slotId, selected: false },
+        sharedStateUpdate: {
+          collectionDeletes: {
+            [slotsKey]: [entryId],
+          },
+          counterDeltas: {
+            [`${instanceId}:${slotId}`]: -1,
+            [`${instanceId}:total`]: -1,
+          },
+          timelineAppend: [{
+            type: 'availability',
+            userId,
+            elementInstanceId: instanceId,
+            action: 'select_slot',
+            data: { slotId, selected: false },
+          }],
+        },
+        userStateUpdate: {
+          participation: { [participationKey]: false },
+        },
+      };
+    }
   },
 
   // =============================================================================
@@ -854,7 +1052,7 @@ const actionHandlers: Record<string, ActionHandler> = {
   // =============================================================================
 
   async search(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'search';
     const query = (data.query as string) || '';
 
@@ -866,6 +1064,15 @@ const actionHandlers: Record<string, ActionHandler> = {
           query,
           searchedAt: new Date().toISOString(),
         },
+      },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'search',
+          userId,
+          elementInstanceId: key,
+          action: 'search',
+          data: { query },
+        }],
       },
     };
   },
@@ -908,7 +1115,7 @@ const actionHandlers: Record<string, ActionHandler> = {
   // =============================================================================
 
   async select_date(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'datePicker';
 
     return {
@@ -920,11 +1127,20 @@ const actionHandlers: Record<string, ActionHandler> = {
           selectedAt: new Date().toISOString(),
         },
       },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'selection',
+          userId,
+          elementInstanceId: key,
+          action: 'select_date',
+          data: { date: data.date },
+        }],
+      },
     };
   },
 
   async select_user(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'userSelector';
 
     return {
@@ -937,11 +1153,20 @@ const actionHandlers: Record<string, ActionHandler> = {
           selectedAt: new Date().toISOString(),
         },
       },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'selection',
+          userId,
+          elementInstanceId: key,
+          action: 'select_user',
+          data: { selectedUserId: data.userId },
+        }],
+      },
     };
   },
 
   async select_event(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'eventPicker';
 
     return {
@@ -954,11 +1179,20 @@ const actionHandlers: Record<string, ActionHandler> = {
           selectedAt: new Date().toISOString(),
         },
       },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'selection',
+          userId,
+          elementInstanceId: key,
+          action: 'select_event',
+          data: { eventId: data.eventId },
+        }],
+      },
     };
   },
 
   async select_space(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'spacePicker';
 
     return {
@@ -971,11 +1205,20 @@ const actionHandlers: Record<string, ActionHandler> = {
           selectedAt: new Date().toISOString(),
         },
       },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'selection',
+          userId,
+          elementInstanceId: key,
+          action: 'select_space',
+          data: { spaceId: data.spaceId },
+        }],
+      },
     };
   },
 
   async select_item(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'resultList';
 
     return {
@@ -988,11 +1231,20 @@ const actionHandlers: Record<string, ActionHandler> = {
           selectedAt: new Date().toISOString(),
         },
       },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'selection',
+          userId,
+          elementInstanceId: key,
+          action: 'select_item',
+          data: { itemId: data.itemId },
+        }],
+      },
     };
   },
 
   async select_tag(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'tagCloud';
     const tagState = (state[key] || { selectedTags: [] }) as { selectedTags: string[] };
     const tag = data.tag as string;
@@ -1009,11 +1261,20 @@ const actionHandlers: Record<string, ActionHandler> = {
           lastUpdatedAt: new Date().toISOString(),
         },
       },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'selection',
+          userId,
+          elementInstanceId: key,
+          action: 'select_tag',
+          data: { tag, toggled: isSelected ? 'off' : 'on' },
+        }],
+      },
     };
   },
 
   async select_member(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data } = context;
+    const { state, elementId, data, userId } = context;
     const key = elementId || 'memberList';
 
     return {
@@ -1025,6 +1286,15 @@ const actionHandlers: Record<string, ActionHandler> = {
           selectedMember: data.member || null,
           selectedAt: new Date().toISOString(),
         },
+      },
+      sharedStateUpdate: {
+        timelineAppend: [{
+          type: 'selection',
+          userId,
+          elementInstanceId: key,
+          action: 'select_member',
+          data: { memberId: data.memberId },
+        }],
       },
     };
   },
@@ -1475,6 +1745,7 @@ interface ToolExecutionResult {
   };
   /** @deprecated Use sharedStateUpdate and userStateUpdate instead */
   state?: Record<string, unknown>;
+  outputs?: Record<string, unknown>;
   notifications?: Array<{
     type: 'info' | 'success' | 'warning' | 'error';
     message: string;
@@ -1711,6 +1982,27 @@ export const POST = withAuthValidationAndErrors(
     }
     if (deploymentStatus !== 'active' && deploymentStatus !== 'experimental') {
         return respond.error("Tool deployment is not active", "FORBIDDEN", { status: 403 });
+    }
+
+    // Check lifecycle stage — sunset tools allow reads only
+    const lifecycle = (placementData?.lifecycle || deployment.lifecycle) as ActionDeploymentData['lifecycle'];
+    if (lifecycle?.stage === 'sunset') {
+      const readOnlyActions = ['search', 'select', 'select_item', 'select_date', 'select_user',
+        'select_event', 'select_space', 'select_tag', 'select_member', 'select_point',
+        'apply_filters', 'clear_filters'];
+      if (!readOnlyActions.includes(action)) {
+        return respond.error(
+          lifecycle.sunsetMessage || 'This tool is winding down and no longer accepts new actions',
+          "TOOL_SUNSET" as 'FORBIDDEN',
+          { status: 403 }
+        );
+      }
+    }
+    if (lifecycle?.stage === 'archived') {
+      return respond.error('This tool has been archived', "FORBIDDEN", { status: 403 });
+    }
+    if (lifecycle?.stage === 'scheduled') {
+      return respond.error('This tool is not yet active', "FORBIDDEN", { status: 403 });
     }
 
     // Check user permissions
@@ -2363,7 +2655,8 @@ async function executeToolAction(params: {
     let result = await executeAction(action, actionContext) as ToolExecutionResult;
 
     // Process connection cascades if action was successful and tool has connections
-    if (result.success && result.state && targetElement) {
+    // Cascade triggers on legacy state OR SharedState updates (counters/collections)
+    if (result.success && targetElement && (result.state || result.sharedStateUpdate)) {
       const toolConnections = (tool as unknown as { connections?: Array<unknown> }).connections || [];
 
       // P0: Log cascade execution for debugging
@@ -2375,6 +2668,28 @@ async function executeToolAction(params: {
       });
 
       if (toolConnections.length > 0) {
+        // Build outputs from SharedState updates for cascade engine
+        const sharedStateOutputs: Record<string, unknown> = {};
+        if (result.sharedStateUpdate?.counterDeltas) {
+          for (const [key, delta] of Object.entries(result.sharedStateUpdate.counterDeltas)) {
+            sharedStateOutputs[`counter:${key}`] = (currentSharedState.counters[key] || 0) + delta;
+          }
+        }
+        if (result.sharedStateUpdate?.collectionUpserts) {
+          for (const [collectionKey, entities] of Object.entries(result.sharedStateUpdate.collectionUpserts)) {
+            const existingCount = Object.keys(currentSharedState.collections[collectionKey] || {}).length;
+            sharedStateOutputs[`collection:${collectionKey}:count`] = existingCount + Object.keys(entities).length;
+          }
+        }
+
+        // Merge shared state outputs into result.outputs
+        if (Object.keys(sharedStateOutputs).length > 0) {
+          result = {
+            ...result,
+            outputs: { ...result.outputs, ...sharedStateOutputs },
+          };
+        }
+
         const composition: ToolComposition = {
           elements: (tool.elements || []).map(el => ({
             id: el.id,
@@ -2385,9 +2700,12 @@ async function executeToolAction(params: {
           connections: toolConnections as ToolComposition['connections'],
         };
 
+        // Use legacy state for cascade, or empty object if only SharedState updated
+        const cascadeState = result.state || {};
+
         const cascadeResult = await processActionConnections(
           composition,
-          result.state,
+          cascadeState,
           action,
           targetElement.type,
           targetElement.id,
@@ -2730,11 +3048,31 @@ async function executeToolAction(params: {
                   ? 'timeline_appended'
                   : 'action_completed';
 
+            // Resolve element type for named event
+            let resolvedElementType: string | null = null;
+            if (elementId && tool.elements) {
+              const el = tool.elements.find(
+                (e: ToolElement & { instanceId?: string; elementId?: string }) =>
+                  e.id === elementId || e.instanceId === elementId
+              );
+              if (el) {
+                resolvedElementType = (el as { elementId?: string }).elementId || el.type || null;
+              }
+            }
+
+            // Build human-readable event name: "{elementType}.{action}" (e.g. "poll.voted", "rsvp.created")
+            const eventNamePrefix = resolvedElementType
+              ? resolvedElementType.replace(/-/g, '_')
+              : 'tool';
+            const eventName = `${eventNamePrefix}.${action}`;
+
             // Build event data with relevant context
             const eventData: Record<string, unknown> = {
               type: eventType,
               action,
+              eventName,
               elementId: elementId || null,
+              elementType: resolvedElementType,
               userId: user.uid,
               timestamp: admin.firestore.FieldValue.serverTimestamp(),
               processed: false,

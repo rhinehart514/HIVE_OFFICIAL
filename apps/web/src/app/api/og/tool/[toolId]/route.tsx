@@ -168,6 +168,7 @@ export async function GET(
             >
               {tool.ownerAvatar && (
                 <img
+                  alt=""
                   src={tool.ownerAvatar}
                   width={48}
                   height={48}

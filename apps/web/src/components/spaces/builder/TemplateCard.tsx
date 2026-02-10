@@ -11,7 +11,6 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Tilt } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import { Building2, BookOpen, Rocket, Target, Sparkles, type LucideIcon } from 'lucide-react';
 

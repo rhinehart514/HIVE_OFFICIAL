@@ -27,9 +27,9 @@ interface AutomationResult {
 }
 
 export async function POST(request: Request) {
-  // Verify cron secret
+  // Verify cron secret — reject if missing or mismatched
   const authHeader = request.headers.get('authorization');
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -43,6 +43,8 @@ export async function POST(request: Request) {
     // 2. Process scheduled automations
     await processScheduledAutomations(now, results);
 
+    // 3. Process tool_state_change automations (bridge space↔tool)
+    await processToolStateTriggers(now, results);
 
     const successCount = results.filter(r => r.success).length;
     const failCount = results.filter(r => !r.success).length;
@@ -554,6 +556,153 @@ function formatTimeUntil(eventStart: Date): string {
   return `in ${days} day${days > 1 ? 's' : ''}`;
 }
 
+
+/**
+ * Process tool_state_change automations
+ * Checks deployed tool shared state against trigger conditions
+ */
+async function processToolStateTriggers(
+  now: Date,
+  results: AutomationResult[]
+): Promise<void> {
+  const spacesSnapshot = await dbAdmin.collection('spaces').get();
+
+  for (const spaceDoc of spacesSnapshot.docs) {
+    const spaceId = spaceDoc.id;
+
+    // Get tool_state_change automations for this space
+    const automationsSnapshot = await dbAdmin
+      .collection('spaces')
+      .doc(spaceId)
+      .collection('automations')
+      .where('trigger.type', '==', 'tool_state_change')
+      .where('enabled', '==', true)
+      .get();
+
+    if (automationsSnapshot.empty) continue;
+
+    for (const automationDoc of automationsSnapshot.docs) {
+      const automation = automationDoc.data();
+      const trigger = automation.trigger || {};
+      const config = trigger.config || {};
+
+      const deploymentId = config.deploymentId as string;
+      const watchPath = config.watchPath as string;
+      const operator = config.operator as string;
+      const threshold = config.value;
+
+      if (!deploymentId || !watchPath || !operator || threshold === undefined) continue;
+
+      // Cooldown: 1 hour between triggers
+      const lastTriggered = automation.stats?.lastTriggered;
+      if (lastTriggered) {
+        const lastTime = lastTriggered.toDate ? lastTriggered.toDate() : new Date(lastTriggered);
+        if (now.getTime() - lastTime.getTime() < 60 * 60 * 1000) continue;
+      }
+
+      try {
+        // Read the deployment's shared state
+        const stateDoc = await dbAdmin
+          .collection('deployedTools')
+          .doc(deploymentId)
+          .collection('sharedState')
+          .doc('current')
+          .get();
+
+        if (!stateDoc.exists) continue;
+
+        const state = stateDoc.data() || {};
+
+        // Resolve watchPath (e.g. 'counters.poll_001:total')
+        const currentValue = resolveDotPath(state, watchPath);
+        if (currentValue === undefined) continue;
+
+        // Evaluate condition
+        if (!evaluateCondition(currentValue, operator, threshold)) continue;
+
+        // Condition met — execute the automation action
+        await executeScheduledAction(
+          automation.action,
+          spaceId,
+          automation
+        );
+
+        // Update stats
+        await automationDoc.ref.update({
+          'stats.timesTriggered': FieldValue.increment(1),
+          'stats.successCount': FieldValue.increment(1),
+          'stats.lastTriggered': now,
+        });
+
+        results.push({
+          automationId: automationDoc.id,
+          spaceId,
+          type: 'tool_state_change',
+          success: true,
+        });
+
+        logger.info('Tool state change automation triggered', {
+          automationId: automationDoc.id,
+          spaceId,
+          deploymentId,
+          watchPath,
+          currentValue,
+          threshold,
+        });
+      } catch (error) {
+        await automationDoc.ref.update({
+          'stats.timesTriggered': FieldValue.increment(1),
+          'stats.failureCount': FieldValue.increment(1),
+          'stats.lastTriggered': now,
+        });
+
+        results.push({
+          automationId: automationDoc.id,
+          spaceId,
+          type: 'tool_state_change',
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  }
+}
+
+/**
+ * Resolve a dot-path (e.g. 'counters.poll_001:total') to a value
+ */
+function resolveDotPath(obj: Record<string, unknown>, path: string): unknown {
+  const parts = path.split('.');
+  let current: unknown = obj;
+  for (const part of parts) {
+    if (current === null || current === undefined || typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
+}
+
+/**
+ * Evaluate a comparison condition
+ */
+function evaluateCondition(current: unknown, operator: string, threshold: unknown): boolean {
+  const numCurrent = typeof current === 'number' ? current : Number(current);
+  const numThreshold = typeof threshold === 'number' ? threshold : Number(threshold);
+
+  if (isNaN(numCurrent) || isNaN(numThreshold)) {
+    // Fall back to string comparison for 'eq'
+    if (operator === 'eq') return String(current) === String(threshold);
+    return false;
+  }
+
+  switch (operator) {
+    case 'eq': return numCurrent === numThreshold;
+    case 'gt': return numCurrent > numThreshold;
+    case 'gte': return numCurrent >= numThreshold;
+    case 'lt': return numCurrent < numThreshold;
+    case 'lte': return numCurrent <= numThreshold;
+    default: return false;
+  }
+}
 
 // Also support GET for Vercel Cron
 export async function GET(request: Request) {

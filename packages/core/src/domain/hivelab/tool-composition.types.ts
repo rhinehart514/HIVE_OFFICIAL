@@ -296,6 +296,38 @@ export interface ToolEffect {
   payload: Record<string, unknown>;
 }
 
+// ============================================================================
+// Tool Lifecycle Types (Phase 1: Living Mechanics)
+// ============================================================================
+
+/**
+ * Lifecycle stage for deployed tools.
+ * Tools progress through stages based on time or manual transitions.
+ */
+export type ToolLifecycleStage = 'draft' | 'scheduled' | 'active' | 'paused' | 'sunset' | 'archived';
+
+/**
+ * Lifecycle configuration for a deployed tool.
+ * Enables time-based tool behavior (show at event start, hide after, sunset period).
+ */
+export interface ToolLifecycle {
+  /** Current lifecycle stage */
+  stage: ToolLifecycleStage;
+
+  /** Scheduled transitions (ISO dates) */
+  transitions?: {
+    /** When to move from 'scheduled' to 'active' */
+    activateAt?: string;
+    /** When to move from 'active' to 'sunset' */
+    sunsetAt?: string;
+    /** When to move from 'sunset' to 'archived' */
+    archiveAt?: string;
+  };
+
+  /** Message shown to users during sunset stage */
+  sunsetMessage?: string;
+}
+
 /**
  * Combined state for client consumption
  */

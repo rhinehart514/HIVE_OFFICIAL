@@ -3,7 +3,6 @@
 import React from 'react';
 import { ExclamationTriangleIcon, ArrowPathIcon, HomeIcon, BugAntIcon } from '@heroicons/react/24/outline';
 import { Button, Card } from "@hive/ui";
-import { logger } from '../lib/logger';
 import { captureError, LogLevel, addBreadcrumb } from '../lib/error-monitoring';
 
 interface ErrorBoundaryState {

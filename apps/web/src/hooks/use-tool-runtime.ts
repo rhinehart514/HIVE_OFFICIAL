@@ -17,8 +17,8 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { ToolSharedState, ToolConnection, DataTransform } from "@hive/core";
-import { applyTransform, getValueAtPath } from "@hive/core";
+import type { ToolSharedState, ToolConnection, DataTransform } from "@hive/core/client";
+import { applyTransform, getValueAtPath } from "@hive/core/client";
 import { useToolStateRealtime } from "./use-tool-state-realtime";
 import { logger } from '@/lib/logger';
 

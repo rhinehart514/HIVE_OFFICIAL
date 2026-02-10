@@ -15,7 +15,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { usePresence, useOnlineUsers } from '@/hooks/use-presence';
 import { useAuth } from '@hive/auth-logic';
-import type { Board, SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@hive/ui';
+import type { SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@hive/ui';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 import { logger } from '@/lib/logger';
 import { isSlashCommand } from '@/lib/slash-command-parser';
@@ -183,7 +183,7 @@ interface UseSpaceResidenceStateReturn {
 
 export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateReturn {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const _searchParams = useSearchParams();
   const { toast } = useToast();
   const { user: authUser } = useAuth();
 
@@ -604,7 +604,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
               throw new Error('Failed to send message with component');
             }
 
-            const messageData = await messageResponse.json();
+            await messageResponse.json();
 
             // Refetch messages to get the full component data
             const messagesResponse = await fetch(

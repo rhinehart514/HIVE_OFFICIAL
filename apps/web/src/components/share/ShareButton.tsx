@@ -38,7 +38,7 @@ export function ShareButton({ url, title, description, className = '' }: ShareBu
           url,
         });
         return;
-      } catch (error) {
+      } catch {
         // User cancelled or share failed
       }
     }

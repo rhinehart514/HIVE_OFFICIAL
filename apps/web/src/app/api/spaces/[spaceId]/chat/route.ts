@@ -215,7 +215,7 @@ export const GET = withAuthAndErrors(async (
               userVote = participantData?.selectedOptions;
               userResponse = participantData?.response;
             }
-          } catch (err) {
+          } catch {
             logger.warn('Failed to fetch participant data', { componentId: doc.id, userId });
           }
 

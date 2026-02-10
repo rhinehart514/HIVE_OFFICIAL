@@ -25,9 +25,9 @@ interface AutomationResult {
 }
 
 export async function POST(request: Request) {
-  // Verify cron secret
+  // Verify cron secret — reject if missing or mismatched
   const authHeader = request.headers.get('authorization');
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -41,6 +41,9 @@ export async function POST(request: Request) {
     for (const deploymentDoc of deploymentsSnapshot.docs) {
       const deploymentId = deploymentDoc.id;
       const deploymentData = deploymentDoc.data();
+
+      // Process event-type triggers (check unprocessed events)
+      await processEventTriggers(deploymentId, deploymentData, now, results);
 
       // Get scheduled automations for this deployment
       const automationsSnapshot = await dbAdmin
@@ -354,6 +357,142 @@ async function executeAutomationAction(
     updates.lastModified = new Date().toISOString();
 
     await stateRef.set(updates, { merge: true });
+  }
+}
+
+/**
+ * Process event-type automation triggers for a deployment.
+ * Checks for unprocessed events matching trigger.eventName.
+ */
+async function processEventTriggers(
+  deploymentId: string,
+  deploymentData: Record<string, unknown>,
+  now: Date,
+  results: AutomationResult[]
+): Promise<void> {
+  // Get event-type automations
+  const automationsSnapshot = await dbAdmin
+    .collection('deployedTools')
+    .doc(deploymentId)
+    .collection('automations')
+    .where('trigger.type', '==', 'event')
+    .where('enabled', '==', true)
+    .get();
+
+  if (automationsSnapshot.empty) return;
+
+  // Get unprocessed events (limit to recent, max 50)
+  const eventsSnapshot = await dbAdmin
+    .collection('deployedTools')
+    .doc(deploymentId)
+    .collection('events')
+    .where('processed', '==', false)
+    .orderBy('timestamp', 'asc')
+    .limit(50)
+    .get();
+
+  if (eventsSnapshot.empty) return;
+
+  for (const automationDoc of automationsSnapshot.docs) {
+    const automation = automationDoc.data();
+    const triggerEventName = automation.trigger?.eventName as string;
+
+    if (!triggerEventName) continue;
+
+    // Find matching unprocessed events
+    const matchingEvents = eventsSnapshot.docs.filter(eventDoc => {
+      const eventData = eventDoc.data();
+      return eventData.eventName === triggerEventName;
+    });
+
+    if (matchingEvents.length === 0) continue;
+
+    // Rate limit: check runs today
+    const runsToday = await getRunsToday(deploymentId, automationDoc.id);
+    const maxRunsPerDay = automation.limits?.maxRunsPerDay || 100;
+    if (runsToday >= maxRunsPerDay) continue;
+
+    try {
+      // Get current tool state
+      const stateDoc = await dbAdmin
+        .collection('deployedTools')
+        .doc(deploymentId)
+        .collection('sharedState')
+        .doc('current')
+        .get();
+
+      const state = stateDoc.exists ? stateDoc.data() || {} : {};
+      const spaceId = (deploymentData.targetId as string) || (deploymentData.spaceId as string);
+
+      // Execute actions
+      for (const action of automation.actions || []) {
+        await executeAutomationAction(action, deploymentId, spaceId, state);
+      }
+
+      // Mark events as processed
+      const batch = dbAdmin.batch();
+      for (const eventDoc of matchingEvents) {
+        batch.update(eventDoc.ref, { processed: true, processedAt: now.toISOString() });
+      }
+      await batch.commit();
+
+      // Log run
+      const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      await dbAdmin
+        .collection('deployedTools')
+        .doc(deploymentId)
+        .collection('automationRuns')
+        .doc(runId)
+        .set({
+          automationId: automationDoc.id,
+          deploymentId,
+          timestamp: now.toISOString(),
+          status: 'success',
+          triggerType: 'event',
+          triggerData: {
+            eventName: triggerEventName,
+            matchedEvents: matchingEvents.length,
+          },
+          actionsExecuted: (automation.actions || []).map((a: { type: string }) => a.type),
+          duration: Date.now() - now.getTime(),
+        });
+
+      await automationDoc.ref.update({
+        lastRun: now.toISOString(),
+        runCount: FieldValue.increment(1),
+      });
+
+      results.push({
+        automationId: automationDoc.id,
+        deploymentId,
+        success: true,
+      });
+
+      logger.info('Event-triggered tool automation executed', {
+        automationId: automationDoc.id,
+        deploymentId,
+        eventName: triggerEventName,
+        matchedEvents: matchingEvents.length,
+      });
+    } catch (error) {
+      await automationDoc.ref.update({
+        errorCount: FieldValue.increment(1),
+        lastRun: now.toISOString(),
+      });
+
+      results.push({
+        automationId: automationDoc.id,
+        deploymentId,
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      logger.error('Event-triggered tool automation failed', {
+        automationId: automationDoc.id,
+        deploymentId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 }
 

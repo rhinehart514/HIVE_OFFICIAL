@@ -51,11 +51,17 @@ function applyUpdate(target: any, updates: DocData) {
       if (v && v.__op === 'inc') {
         const next = (typeof prev === 'number' ? prev : 0) + v.value;
         setNested(target, k, next);
+      } else if (v && v.__op === 'arrayUnion') {
+        const existing = Array.isArray(prev) ? prev : [];
+        setNested(target, k, [...existing, ...v.elements]);
       } else {
         setNested(target, k, v);
       }
     } else if (v && (v as any).__op === 'inc') {
       target[k] = (typeof target[k] === 'number' ? target[k] : 0) + (v as any).value;
+    } else if (v && (v as any).__op === 'arrayUnion') {
+      const existing = Array.isArray(target[k]) ? target[k] : [];
+      target[k] = [...existing, ...(v as any).elements];
     } else {
       target[k] = v;
     }
@@ -89,9 +95,8 @@ class InMemoryQuery {
   orderBy(field: string, dir: 'asc'|'desc' = 'asc') { this.order = { field, dir }; return this; }
   limit(n: number) { this._limit = n; return this; }
   offset(n: number) { this._offset = n; return this; }
-  async get() {
+  private resolveItems() {
     let items = this.coll.allDocs();
-    // apply filters
     for (const f of this.filters) {
       if (f.op === '==') {
         items = items.filter(d => compareValues(getNested(d.data, f.field), f.value) === 0);
@@ -105,6 +110,11 @@ class InMemoryQuery {
         items = items.filter(d => compareValues(getNested(d.data, f.field), f.value) < 0);
       } else if (f.op === 'in') {
         items = items.filter(d => (f.value || []).includes(getNested(d.data, f.field)));
+      } else if (f.op === 'array-contains') {
+        items = items.filter(d => {
+          const arr = getNested(d.data, f.field);
+          return Array.isArray(arr) && arr.includes(f.value);
+        });
       }
     }
     if (this.order) {
@@ -117,6 +127,18 @@ class InMemoryQuery {
     }
     if (this._offset) items = items.slice(this._offset);
     if (this._limit != null) items = items.slice(0, this._limit);
+    return items;
+  }
+  count() {
+    return {
+      get: async () => {
+        const items = this.resolveItems();
+        return { data: () => ({ count: items.length }) };
+      }
+    };
+  }
+  async get() {
+    const items = this.resolveItems();
     return {
       size: items.length,
       empty: items.length === 0,
@@ -174,7 +196,8 @@ export const adminMock = {
   firestore: {
     FieldValue: {
       serverTimestamp: () => new Date(),
-      increment: (n: number) => ({ __op: 'inc', value: n })
+      increment: (n: number) => ({ __op: 'inc', value: n }),
+      arrayUnion: (...elements: any[]) => ({ __op: 'arrayUnion', elements })
     }
   }
 };

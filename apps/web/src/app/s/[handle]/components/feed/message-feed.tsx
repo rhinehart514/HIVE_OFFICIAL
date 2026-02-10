@@ -18,7 +18,7 @@ import { Loader2, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessageItem, type Message } from './message-item';
 import { UnreadDivider } from './unread-divider';
-import { spaceMotionVariants, SPACE_MOTION } from '@hive/tokens';
+import { SPACE_MOTION } from '@hive/tokens';
 
 interface MessageFeedProps {
   messages: Message[];

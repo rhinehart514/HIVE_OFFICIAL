@@ -7,7 +7,6 @@ import { logger } from "@/lib/structured-logger";
 import {
   withAuthValidationAndErrors,
   getUserId,
-  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 

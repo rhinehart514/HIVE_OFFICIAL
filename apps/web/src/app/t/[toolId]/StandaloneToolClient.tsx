@@ -1,16 +1,35 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@hive/auth-logic';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Copy } from 'lucide-react';
-import { ToolCanvas, Skeleton } from '@hive/ui';
+import { Skeleton } from '@hive/ui';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
-import { ShareButton } from '@/components/share/ShareButton';
 import { apiClient } from '@/lib/api-client';
+
+const LazyToolCanvas = dynamic(
+  () => import('@hive/ui').then(mod => ({ default: mod.ToolCanvas })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-4 animate-pulse">
+        <div className="h-11 bg-white/[0.04] rounded-lg" />
+        <div className="h-11 bg-white/[0.04] rounded-lg" />
+        <div className="h-11 bg-white/[0.04] rounded-lg" />
+      </div>
+    ),
+  }
+);
+
+const LazyShareButton = dynamic(
+  () => import('@/components/share/ShareButton').then(mod => ({ default: mod.ShareButton })),
+  { ssr: false, loading: () => <div className="w-[72px] h-[34px] bg-white/[0.04] rounded-lg animate-pulse" /> }
+);
 
 interface ToolData {
   id: string;
@@ -187,7 +206,7 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-              <ShareButton url={toolUrl} title={tool.name} description={tool.description} />
+              <LazyShareButton url={toolUrl} title={tool.name} description={tool.description} />
               {user && tool.ownerId === user.uid && (
                 <button
                   onClick={() => router.push(`/lab/${toolId}`)}
@@ -221,7 +240,7 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
           {/* Tool canvas */}
           <div className="rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-6">
             {tool.elements.length > 0 ? (
-              <ToolCanvas
+              <LazyToolCanvas
                 elements={tool.elements}
                 state={runtime.state}
                 sharedState={runtime.sharedState}

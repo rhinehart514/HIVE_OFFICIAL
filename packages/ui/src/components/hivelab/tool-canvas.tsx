@@ -16,13 +16,13 @@ import type {
   ToolRuntimeContext,
   VisibilityCondition,
   ConditionGroup,
-} from '@hive/core';
+} from '@hive/core/client';
 import {
   isToolError,
   isRecoverableError,
   evaluateCondition,
   evaluateConditionGroup,
-} from '@hive/core';
+} from '@hive/core/client';
 
 // ============================================================================
 // DESIGN TOKENS

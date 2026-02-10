@@ -13,7 +13,6 @@ import { Send, X, Image as ImageIcon, Loader2, Command } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@hive/ui/design-system/primitives';
 import {
-  isSlashCommand,
   getAutocompleteSuggestions,
 } from '@/lib/slash-command-parser';
 
