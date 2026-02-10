@@ -1,16 +1,36 @@
 # HIVE
 
-Creation platform for students. Build tools in seconds, share them anywhere. Polls, signups, countdowns, leaderboards — no code, just results.
+## Why This Exists
 
----
+Student orgs run on chaos. GroupMe threads, Google Forms nobody checks, flyers nobody reads. Leaders burn out coordinating. Members disengage. The tools that exist weren't built for how campus actually works — fast, social, ephemeral.
+
+HIVE gives every student org leader the ability to build real tools (polls, sign-ups, countdowns, leaderboards) in seconds and deploy them directly into the spaces where their members already are. No code. No app downloads. No friction.
+
+## Value Propositions
+
+| Who | What they get | Why it matters |
+|-----|---------------|----------------|
+| **Org leaders** | Build and deploy tools in seconds, not hours | They stop being IT admins and start being leaders again |
+| **Members** | Interactive tools inside the spaces they already check | Participation goes from 5% to 50% because the friction disappears |
+| **Campuses** | Every org gets infrastructure that used to require a dev team | The playing field levels — small clubs get the same tools as funded orgs |
+
+The core loop: **Leader creates tool → deploys to space → members engage → data flows back → leader makes better decisions → creates more tools.**
+
+Every feature we build should make this loop faster, easier, or more valuable.
 
 ## Decision Filter
 
 Every decision runs through one question:
 
-**Does this help a student build something useful and share it with their campus?**
+**Does this make the create-deploy-engage loop faster or more valuable?**
 
 If no → kill it, ignore it, or defer it.
+
+Secondary filters:
+- Does it strengthen the network effect? (More users = more valuable for everyone)
+- Does it reduce time-to-first-tool for a new leader?
+- Does it increase engagement rate for deployed tools?
+- Does it make HIVE the obvious choice over "just use Google Forms"?
 
 ---
 

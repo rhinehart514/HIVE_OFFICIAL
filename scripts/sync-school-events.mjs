@@ -155,12 +155,24 @@ function parseEvent(item, sourceType, campusId) {
     imageUrl = null;
   }
 
+  const eventType = inferEventType(categories, title, description);
+
   return {
     title,
     description,
     location,
+    // Timing (write both legacy and current fields for compatibility)
     startAt,
     endAt,
+    startDate: startAt ? startAt.toDate() : null,
+    endDate: endAt ? endAt.toDate() : (startAt ? startAt.toDate() : null),
+    timezone: 'America/New_York',
+    locationType: String(location || '').toLowerCase().includes('zoom') ? 'virtual' : 'physical',
+    type: eventType,
+    eventType,
+    state: 'published',
+    status: 'scheduled',
+    isHidden: false,
     source: {
       platform: sourceType,
       guid,
@@ -175,6 +187,21 @@ function parseEvent(item, sourceType, campusId) {
     updatedAt: FieldValue.serverTimestamp(),
     importedAt: FieldValue.serverTimestamp(),
   };
+}
+
+function inferEventType(categories, title, description) {
+  const text = [
+    ...(Array.isArray(categories) ? categories : []),
+    title || '',
+    description || '',
+  ].join(' ').toLowerCase();
+
+  if (text.includes('workshop') || text.includes('lecture') || text.includes('study')) return 'academic';
+  if (text.includes('career') || text.includes('professional') || text.includes('network')) return 'professional';
+  if (text.includes('meeting') || text.includes('board')) return 'meeting';
+  if (text.includes('virtual') || text.includes('zoom') || text.includes('online')) return 'virtual';
+  if (text.includes('recreation') || text.includes('sport') || text.includes('fitness')) return 'recreational';
+  return 'social';
 }
 
 function stripHtml(html) {

@@ -365,7 +365,7 @@ export function EntryFlowV2() {
                   setLastName('');
                   setNameError(null);
                 }}
-                className="text-[13px] font-sans text-white/30 hover:text-white/50 transition-colors"
+                className="text-[13px] font-sans text-white/50 hover:text-white/50 transition-colors"
               >
                 ← Back
               </button>
@@ -399,14 +399,14 @@ export function EntryFlowV2() {
                         onKeyDown={event => handleOtpKeyDown(index, event)}
                         onPaste={handleOtpPaste}
                         className={[
-                          'h-12 w-full rounded-[12px] border bg-[#0A0A0A] text-center text-[18px] text-white',
+                          'h-12 w-full rounded-[12px] bg-[#0A0A0A] text-center text-[18px] text-white',
                           'outline-none transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
                           'focus:border-white/[0.2]',
                           codeErrorFlash
                             ? 'border-[#EF4444]'
                             : isCodeVerified
                               ? 'border-[#22C55E]'
-                              : 'border-white/[0.08]',
+                              : 'border-white/[0.06]',
                           (isVerifyingCode || isCodeVerified) ? 'cursor-not-allowed opacity-80' : '',
                         ].join(' ')}
                       />
@@ -425,12 +425,12 @@ export function EntryFlowV2() {
                 )}
 
                 {!isCodeVerified && resendCountdown === 0 && (
-                  <p className="text-[13px] text-white/40">
+                  <p className="text-[13px] text-white/50">
                     Didn&apos;t get it?{' '}
                     <button
                       type="button"
                       onClick={resendCode}
-                      className="text-white/50 hover:text-white/70 transition-colors"
+                      className="text-white/50 hover:text-white/50 transition-colors"
                     >
                       Resend
                     </button>

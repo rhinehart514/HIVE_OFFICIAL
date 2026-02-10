@@ -254,7 +254,7 @@ export function ModerationPanel({
         >
           {/* Backdrop */}
           <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 "
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -264,7 +264,7 @@ export function ModerationPanel({
           {/* Drawer Panel */}
           <motion.div
             className={cn(
-              'relative h-full w-full max-w-lg bg-[var(--bg-ground)] border-l border-white/[0.06] shadow-2xl overflow-hidden flex flex-col',
+              'relative h-full w-full max-w-lg bg-[var(--bg-ground)] border-l border-white/[0.06] overflow-hidden flex flex-col',
               className
             )}
             initial={{ x: '100%' }}
@@ -275,7 +275,7 @@ export function ModerationPanel({
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[var(--bg-ground)]">
               <div className="flex items-center gap-3">
-                <Shield className="h-5 w-5 text-white/60" />
+                <Shield className="h-5 w-5 text-white/50" />
                 <div>
                   <Text weight="medium" className="text-white">
                     Moderation Queue
@@ -289,7 +289,7 @@ export function ModerationPanel({
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-white/40 hover:text-white/60"
+                className="text-white/50 hover:text-white/50"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -304,8 +304,8 @@ export function ModerationPanel({
                   className={cn(
                     'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
                     filter === tab
-                      ? 'bg-white/[0.08] text-white'
-                      : 'text-white/50 hover:text-white/70 hover:bg-white/[0.04]'
+                      ? 'bg-white/[0.06] text-white'
+                      : 'text-white/50 hover:text-white/50 hover:bg-white/[0.06]'
                   )}
                 >
                   {tab === 'flagged' && `Flagged (${summary.flagged})`}
@@ -317,8 +317,8 @@ export function ModerationPanel({
 
             {/* Bulk Actions Bar */}
             {selectedIds.size > 0 && (
-              <div className="flex items-center justify-between px-6 py-3 bg-white/[0.02] border-b border-white/[0.06]">
-                <Text size="sm" className="text-white/70">
+              <div className="flex items-center justify-between px-6 py-3 bg-white/[0.06] border-b border-white/[0.06]">
+                <Text size="sm" className="text-white/50">
                   {selectedIds.size} selected
                 </Text>
                 <div className="flex items-center gap-2">
@@ -350,25 +350,25 @@ export function ModerationPanel({
             <div className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+                  <Loader2 className="h-6 w-6  text-white/50" />
                 </div>
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-12 px-6">
                   <AlertTriangle className="h-8 w-8 text-red-400 mb-3" />
-                  <Text className="text-white/70 text-center">{error}</Text>
+                  <Text className="text-white/50 text-center">{error}</Text>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={fetchQueue}
-                    className="mt-4 text-white/60"
+                    className="mt-4 text-white/50"
                   >
                     Try again
                   </Button>
                 </div>
               ) : items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 px-6">
-                  <Shield className="h-10 w-10 text-white/20 mb-4" />
-                  <Text weight="medium" className="text-white/60 mb-1">
+                  <Shield className="h-10 w-10 text-white/50 mb-4" />
+                  <Text weight="medium" className="text-white/50 mb-1">
                     Queue is clear
                   </Text>
                   <Text size="sm" tone="muted" className="text-center">
@@ -378,10 +378,10 @@ export function ModerationPanel({
               ) : (
                 <>
                   {/* Select All Header */}
-                  <div className="flex items-center gap-3 px-6 py-2 border-b border-white/[0.04]">
+                  <div className="flex items-center gap-3 px-6 py-2 border-b border-white/[0.06]">
                     <button
                       onClick={toggleAllSelection}
-                      className="p-0.5 text-white/40 hover:text-white/60"
+                      className="p-0.5 text-white/50 hover:text-white/50"
                     >
                       {selectedIds.size === items.length ? (
                         <CheckSquare className="h-4 w-4" />
@@ -395,7 +395,7 @@ export function ModerationPanel({
                   </div>
 
                   {/* Items List */}
-                  <div className="divide-y divide-white/[0.04]">
+                  <div className="divide-y divide-white/[0.06]">
                     {items.map(item => {
                       const TypeIcon = TYPE_ICON[item.type] || FileText;
                       const availableActions = getAvailableActions(item);
@@ -404,15 +404,15 @@ export function ModerationPanel({
                         <div
                           key={`${item.type}-${item.id}`}
                           className={cn(
-                            'px-6 py-4 hover:bg-white/[0.02] transition-colors',
-                            selectedIds.has(item.id) && 'bg-white/[0.03]'
+                            'px-6 py-4 hover:bg-white/[0.06] transition-colors',
+                            selectedIds.has(item.id) && 'bg-white/[0.06]'
                           )}
                         >
                           <div className="flex items-start gap-3">
                             {/* Checkbox */}
                             <button
                               onClick={() => toggleSelection(item.id)}
-                              className="mt-1 p-0.5 text-white/40 hover:text-white/60"
+                              className="mt-1 p-0.5 text-white/50 hover:text-white/50"
                             >
                               {selectedIds.has(item.id) ? (
                                 <CheckSquare className="h-4 w-4" />
@@ -434,7 +434,7 @@ export function ModerationPanel({
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <TypeIcon className="h-3.5 w-3.5 text-white/40" />
+                                <TypeIcon className="h-3.5 w-3.5 text-white/50" />
                                 <Text size="xs" tone="muted" className="capitalize">
                                   {item.type}
                                 </Text>
@@ -456,7 +456,7 @@ export function ModerationPanel({
                               </div>
 
                               {/* Title/Preview */}
-                              <Text size="sm" className="text-white/80 line-clamp-2 mb-1">
+                              <Text size="sm" className="text-white line-clamp-2 mb-1">
                                 {item.content.title || item.content.text || item.content.description || 'No content'}
                               </Text>
 
@@ -474,7 +474,7 @@ export function ModerationPanel({
 
                               {/* Reason if present */}
                               {item.reason && (
-                                <div className="mt-2 p-2 rounded bg-white/[0.03] border border-white/[0.06]">
+                                <div className="mt-2 p-2 rounded bg-white/[0.06] border border-white/[0.06]">
                                   <Text size="xs" tone="muted">
                                     Reason: {item.reason}
                                   </Text>
@@ -507,7 +507,7 @@ export function ModerationPanel({
                                       className={cn('h-7 px-2 text-xs', config.color, hoverBg)}
                                     >
                                       {isLoading ? (
-                                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                        <Loader2 className="h-3 w-3  mr-1" />
                                       ) : (
                                         <ActionIcon className="h-3 w-3 mr-1" />
                                       )}

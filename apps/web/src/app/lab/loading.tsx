@@ -24,7 +24,7 @@ export default function ToolsLoading() {
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30 p-6 space-y-4"
+            className="rounded-lg border border-white/[0.06] bg-[var(--bg-void)]/30 p-6 space-y-4"
           >
             {/* Tool icon */}
             <Skeleton className="h-12 w-12 rounded-lg" />
@@ -39,7 +39,7 @@ export default function ToolsLoading() {
             </div>
 
             {/* Stats */}
-            <div className="flex gap-4 pt-4 border-t border-white/[0.06]/30">
+            <div className="flex gap-4 pt-4 border-t border-white/[0.06]">
               <Skeleton className="h-4 w-16" />
               <Skeleton className="h-4 w-16" />
             </div>

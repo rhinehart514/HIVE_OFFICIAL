@@ -54,7 +54,7 @@ export function ExploreSearch({
           fill="none"
           className={cn(
             'transition-colors duration-200',
-            isFocused ? 'text-white/60' : 'text-white/30'
+            isFocused ? 'text-white/50' : 'text-white/50'
           )}
         >
           <path
@@ -77,7 +77,7 @@ export function ExploreSearch({
       {/* Scope indicator */}
       {scope && (
         <div className="absolute left-11 top-1/2 -translate-y-1/2 pointer-events-none">
-          <span className="text-[11px] font-medium text-white/30 bg-white/[0.06] px-1.5 py-0.5 rounded">
+          <span className="text-[11px] font-medium text-white/50 bg-white/[0.06] px-1.5 py-0.5 rounded">
             {SCOPE_LABELS[scope]}
           </span>
         </div>
@@ -92,7 +92,7 @@ export function ExploreSearch({
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
         className={cn(
-          'w-full h-14 pr-4 text-body-lg rounded-2xl',
+          'w-full h-14 pr-4 text-body-lg rounded-lg',
           scope ? 'pl-[7.5rem]' : 'pl-12'
         )}
       />
@@ -102,7 +102,7 @@ export function ExploreSearch({
         <button
           type="button"
           onClick={() => onChange('')}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/50 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path

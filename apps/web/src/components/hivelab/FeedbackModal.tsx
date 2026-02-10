@@ -145,7 +145,7 @@ export function FeedbackModal({
           {isReport ? (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-white/60 mb-1.5">
+                <label className="block text-sm text-white/50 mb-1.5">
                   Issue type
                 </label>
                 <Select
@@ -165,7 +165,7 @@ export function FeedbackModal({
                 </Select>
               </div>
               <div>
-                <label className="block text-sm text-white/60 mb-1.5">
+                <label className="block text-sm text-white/50 mb-1.5">
                   Describe the issue
                 </label>
                 <Textarea
@@ -180,7 +180,7 @@ export function FeedbackModal({
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-white/60 mb-2">
+                <label className="block text-sm text-white/50 mb-2">
                   Rating
                 </label>
                 <div className="flex items-center gap-1">
@@ -200,7 +200,7 @@ export function FeedbackModal({
                           className={`w-7 h-7 transition-colors ${
                             filled
                               ? 'text-[var(--life-gold)] fill-[var(--life-gold)]'
-                              : 'text-white/20'
+                              : 'text-white/50'
                           }`}
                         />
                       </motion.button>
@@ -216,7 +216,7 @@ export function FeedbackModal({
                           duration: MOTION.duration.fast,
                           ease: MOTION.ease.premium,
                         }}
-                        className="ml-2 text-sm text-white/40"
+                        className="ml-2 text-sm text-white/50"
                       >
                         {rating}/5
                       </motion.span>
@@ -225,7 +225,7 @@ export function FeedbackModal({
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-white/60 mb-1.5">
+                <label className="block text-sm text-white/50 mb-1.5">
                   Comment (optional)
                 </label>
                 <Textarea
@@ -261,7 +261,7 @@ export function FeedbackModal({
           >
             {submitting ? (
               <span className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full " />
                 Submitting...
               </span>
             ) : isReport ? (

@@ -109,15 +109,15 @@ function CategoryCard({
         ease: MOTION.ease.premium,
       }}
       className={cn(
-        'p-4 rounded-xl',
-        'bg-white/[0.02] border border-white/[0.08]',
-        'hover:bg-white/[0.04] hover:border-white/[0.12]',
+        'p-4 rounded-lg',
+        'bg-white/[0.06] border border-white/[0.06]',
+        'hover:bg-white/[0.06] hover:border-white/[0.06]',
         'transition-all duration-300'
       )}
     >
       {/* Icon + Label */}
       <div className="flex items-center gap-3 mb-2">
-        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/60">
+        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50">
           {category.icon}
         </div>
         <Text weight="medium" className="text-white">
@@ -131,7 +131,7 @@ function CategoryCard({
       </Text>
 
       {/* Examples */}
-      <Text size="xs" className="text-white/30 italic">
+      <Text size="xs" className="text-white/50 italic">
         e.g. {category.examples}
       </Text>
     </motion.div>
@@ -209,7 +209,7 @@ export function OnboardingOverlay({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/60  z-50"
             onClick={handleSkip}
           />
 
@@ -222,14 +222,14 @@ export function OnboardingOverlay({
             className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-2xl mx-auto z-50 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-[var(--color-bg-ground,#0A0A09)] border border-white/[0.12] rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <div className="bg-[var(--color-bg-ground,#0A0A09)] border border-white/[0.06] rounded-lg p-6 sm:p-8">
               {/* Close button */}
               <button
                 onClick={handleSkip}
-                className="absolute top-4 right-4 p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.06] transition-colors"
                 aria-label="Skip onboarding"
               >
-                <XMarkIcon className="w-4 h-4 text-white/40" aria-hidden="true" />
+                <XMarkIcon className="w-4 h-4 text-white/50" aria-hidden="true" />
               </button>
 
               {/* Welcome Step */}
@@ -241,13 +241,13 @@ export function OnboardingOverlay({
                 >
                   {/* Badge */}
                   <motion.div
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] mb-6"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.06] mb-6"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.4, delay: 0.1 }}
                   >
                     <SparklesIcon className="w-3.5 h-3.5 text-[var(--color-gold)]/60" />
-                    <Text size="xs" className="text-white/60">
+                    <Text size="xs" className="text-white/50">
                       Welcome to Spaces
                     </Text>
                   </motion.div>
@@ -378,9 +378,9 @@ export function OnboardingOverlay({
                     <motion.button
                       onClick={() => handleClaimIdentity('residential')}
                       className={cn(
-                        'w-full p-4 rounded-xl text-left',
-                        'bg-white/[0.02] border border-white/[0.08]',
-                        'hover:bg-white/[0.04] hover:border-white/[0.12]',
+                        'w-full p-4 rounded-lg text-left',
+                        'bg-white/[0.06] border border-white/[0.06]',
+                        'hover:bg-white/[0.06] hover:border-white/[0.06]',
                         'transition-all duration-200'
                       )}
                       initial={{ opacity: 0, x: -8 }}
@@ -388,14 +388,14 @@ export function OnboardingOverlay({
                       transition={{ duration: 0.3, delay: 0.3 }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/60">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50">
                           <HomeModernIcon className="w-5 h-5" />
                         </div>
                         <div>
                           <Text weight="medium" className="text-white">
                             Claim your dorm
                           </Text>
-                          <Text size="sm" className="text-white/40">
+                          <Text size="sm" className="text-white/50">
                             Connect with your floor or building
                           </Text>
                         </div>
@@ -405,9 +405,9 @@ export function OnboardingOverlay({
                     <motion.button
                       onClick={() => handleClaimIdentity('major')}
                       className={cn(
-                        'w-full p-4 rounded-xl text-left',
-                        'bg-white/[0.02] border border-white/[0.08]',
-                        'hover:bg-white/[0.04] hover:border-white/[0.12]',
+                        'w-full p-4 rounded-lg text-left',
+                        'bg-white/[0.06] border border-white/[0.06]',
+                        'hover:bg-white/[0.06] hover:border-white/[0.06]',
                         'transition-all duration-200'
                       )}
                       initial={{ opacity: 0, x: -8 }}
@@ -415,14 +415,14 @@ export function OnboardingOverlay({
                       transition={{ duration: 0.3, delay: 0.4 }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/60">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50">
                           <AcademicCapIcon className="w-5 h-5" />
                         </div>
                         <div>
                           <Text weight="medium" className="text-white">
                             Claim your major
                           </Text>
-                          <Text size="sm" className="text-white/40">
+                          <Text size="sm" className="text-white/50">
                             Join your academic community
                           </Text>
                         </div>
@@ -432,9 +432,9 @@ export function OnboardingOverlay({
                     <motion.button
                       onClick={() => handleClaimIdentity('greek')}
                       className={cn(
-                        'w-full p-4 rounded-xl text-left',
-                        'bg-white/[0.02] border border-white/[0.08]',
-                        'hover:bg-white/[0.04] hover:border-white/[0.12]',
+                        'w-full p-4 rounded-lg text-left',
+                        'bg-white/[0.06] border border-white/[0.06]',
+                        'hover:bg-white/[0.06] hover:border-white/[0.06]',
                         'transition-all duration-200'
                       )}
                       initial={{ opacity: 0, x: -8 }}
@@ -442,14 +442,14 @@ export function OnboardingOverlay({
                       transition={{ duration: 0.3, delay: 0.5 }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/60">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50">
                           <SparklesIcon className="w-5 h-5" />
                         </div>
                         <div>
                           <Text weight="medium" className="text-white">
                             Claim your Greek org
                           </Text>
-                          <Text size="sm" className="text-white/40">
+                          <Text size="sm" className="text-white/50">
                             Connect with your chapter
                           </Text>
                         </div>

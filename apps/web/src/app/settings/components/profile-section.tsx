@@ -111,14 +111,14 @@ export function ProfileSection({
     : '?';
 
   return (
-    <Card className="p-6 bg-white/5 border-white/[0.08]">
+    <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
       <h3 className="text-lg font-semibold text-white mb-6">Profile Information</h3>
       <div className="space-y-4">
         {/* Photo Upload Section */}
         <div className="flex items-center gap-4 pb-4 border-b border-white/[0.06]">
           <div className="relative">
             {/* Avatar Preview */}
-            <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-lg overflow-hidden bg-white/[0.06] flex items-center justify-center">
               {formData.avatarUrl ? (
                 <img
                   src={formData.avatarUrl}
@@ -131,14 +131,14 @@ export function ProfileSection({
             </div>
             {/* Upload indicator */}
             {isUploading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-xl">
-                <ArrowPathIcon className="h-6 w-6 text-white animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg">
+                <ArrowPathIcon className="h-6 w-6 text-white " />
               </div>
             )}
           </div>
           <div className="flex-1">
             <p className="text-sm text-white mb-1">Profile Photo</p>
-            <p className="text-xs text-white/40 mb-3">JPEG, PNG, or WebP. Max 5MB.</p>
+            <p className="text-xs text-white/50 mb-3">JPEG, PNG, or WebP. Max 5MB.</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -150,7 +150,7 @@ export function ProfileSection({
               variant="secondary"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="border-white/20 text-white hover:bg-white/10"
+              className="border-white/[0.06] text-white hover:bg-white/[0.06]"
             >
               <CameraIcon className="h-4 w-4 mr-2" />
               {formData.avatarUrl ? 'Change Photo' : 'Upload Photo'}
@@ -175,7 +175,7 @@ export function ProfileSection({
               type="text"
               value={formData.fullName}
               onChange={(e) => setFormData((prev) => ({ ...prev, fullName: e.target.value }))}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/30 focus:border-[var(--hive-brand-primary)] focus:outline-none"
+              className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:border-[var(--hive-brand-primary)] focus:outline-none"
             />
           </div>
           <div>
@@ -184,9 +184,9 @@ export function ProfileSection({
               type="text"
               value={formData.handle}
               onChange={(e) => setFormData((prev) => ({ ...prev, handle: e.target.value }))}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/30 focus:border-[var(--hive-brand-primary)] focus:outline-none"
+              className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:border-[var(--hive-brand-primary)] focus:outline-none"
             />
-            <p className="text-xs text-white/40 mt-1">Handle changes are rate-limited</p>
+            <p className="text-xs text-white/50 mt-1">Handle changes are rate-limited</p>
           </div>
         </div>
         <div>
@@ -195,9 +195,9 @@ export function ProfileSection({
             type="email"
             defaultValue={userEmail}
             disabled
-            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white/50 cursor-not-allowed"
+            className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white/50 cursor-not-allowed"
           />
-          <p className="text-xs text-white/40 mt-1">Email cannot be changed</p>
+          <p className="text-xs text-white/50 mt-1">Email cannot be changed</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-white mb-2">Bio</label>
@@ -205,7 +205,7 @@ export function ProfileSection({
             rows={3}
             value={formData.bio}
             onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
-            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/30 focus:border-[var(--hive-brand-primary)] focus:outline-none resize-none"
+            className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:border-[var(--hive-brand-primary)] focus:outline-none resize-none"
             placeholder="Tell others about yourself..."
           />
         </div>
@@ -215,7 +215,7 @@ export function ProfileSection({
           variant="secondary"
           onClick={() => router.push('/profile/edit')}
           aria-label="Open profile layout editor"
-          className="border-white/20 text-white hover:bg-white/10"
+          className="border-white/[0.06] text-white hover:bg-white/[0.06]"
         >
           <ArrowTopRightOnSquareIcon className="h-4 w-4 mr-2" aria-hidden="true" />
           Customize Layout
@@ -226,7 +226,7 @@ export function ProfileSection({
           aria-label={isSaving ? 'Saving profile changes' : 'Save profile changes'}
           className="bg-[var(--hive-brand-primary)] text-black hover:bg-[var(--hive-brand-primary)]/90 disabled:opacity-50"
         >
-          {isSaving ? <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden="true" /> : 'Save Changes'}
+          {isSaving ? <ArrowPathIcon className="h-4 w-4 " aria-hidden="true" /> : 'Save Changes'}
         </Button>
       </div>
     </Card>

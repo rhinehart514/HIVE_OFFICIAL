@@ -142,10 +142,10 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
               ease: easingArrays.default,
             }}
           >
-            <div className="bg-[var(--bg-surface)] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="bg-[var(--bg-surface)] border border-white/[0.06] rounded-lg overflow-hidden">
               {/* Search Input */}
               <div className="flex items-center gap-3 px-4 border-b border-white/[0.06]">
-                <Search className="w-4 h-4 text-white/30 flex-shrink-0" />
+                <Search className="w-4 h-4 text-white/50 flex-shrink-0" />
                 <input
                   ref={inputRef}
                   type="text"
@@ -153,17 +153,17 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Search messages, members, events..."
-                  className="flex-1 h-12 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
+                  className="flex-1 h-12 bg-transparent text-sm text-white placeholder:text-white/50 focus:outline-none"
                 />
                 {query && (
                   <button
                     onClick={() => setQuery('')}
-                    className="p-1 rounded-md hover:bg-white/[0.06] text-white/30 hover:text-white/60 transition-colors"
+                    className="p-1 rounded-md hover:bg-white/[0.06] text-white/50 hover:text-white/50 transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-white/20 bg-white/[0.04] border border-white/[0.06]">
+                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-white/50 bg-white/[0.06] border border-white/[0.06]">
                   ESC
                 </kbd>
               </div>
@@ -173,12 +173,12 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
                 <div className="max-h-[50vh] overflow-y-auto py-2">
                   {isSearching ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="w-4 h-4 border-2 border-white/20 border-t-white/50 rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white/[0.06] border-t-white/50 rounded-full " />
                     </div>
                   ) : results.length === 0 ? (
                     <div className="text-center py-8 px-4">
-                      <p className="text-sm text-white/40">No results for &ldquo;{query}&rdquo;</p>
-                      <p className="text-xs text-white/20 mt-1">Try different keywords</p>
+                      <p className="text-sm text-white/50">No results for &ldquo;{query}&rdquo;</p>
+                      <p className="text-xs text-white/50 mt-1">Try different keywords</p>
                     </div>
                   ) : (
                     results.map((result, index) => {
@@ -190,20 +190,20 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
                             'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors',
                             index === selectedIndex
                               ? 'bg-white/[0.06]'
-                              : 'hover:bg-white/[0.03]'
+                              : 'hover:bg-white/[0.06]'
                           )}
                           onMouseEnter={() => setSelectedIndex(index)}
                           onClick={() => navigateToResult(result)}
                         >
-                          <Icon className="w-4 h-4 text-white/30 flex-shrink-0" />
+                          <Icon className="w-4 h-4 text-white/50 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white/80 truncate">{result.title}</p>
+                            <p className="text-sm text-white truncate">{result.title}</p>
                             {result.subtitle && (
-                              <p className="text-xs text-white/30 truncate">{result.subtitle}</p>
+                              <p className="text-xs text-white/50 truncate">{result.subtitle}</p>
                             )}
                           </div>
                           {result.timestamp && (
-                            <span className="text-xs text-white/20 flex-shrink-0">{result.timestamp}</span>
+                            <span className="text-xs text-white/50 flex-shrink-0">{result.timestamp}</span>
                           )}
                         </button>
                       );
@@ -214,8 +214,8 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
 
               {/* Footer hint */}
               {!query.trim() && (
-                <div className="px-4 py-3 border-t border-white/[0.04]">
-                  <p className="text-xs text-white/20">
+                <div className="px-4 py-3 border-t border-white/[0.06]">
+                  <p className="text-xs text-white/50">
                     Search messages, members, events, and tools in this space
                   </p>
                 </div>

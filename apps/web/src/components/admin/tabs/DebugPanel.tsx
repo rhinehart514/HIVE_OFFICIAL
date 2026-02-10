@@ -86,7 +86,7 @@ export function DebugPanel() {
       {/* Feature Flags */}
       <Section label="Feature Flags">
         {flagsLoading ? (
-          <p className="text-[11px] text-white/30">Loading...</p>
+          <p className="text-[11px] text-white/50">Loading...</p>
         ) : (
           Object.values(FEATURE_FLAGS).map(flagId => {
             const serverValue = flags[flagId] === true;
@@ -95,14 +95,14 @@ export function DebugPanel() {
 
             return (
               <div key={flagId} className="flex items-center justify-between py-0.5">
-                <span className="text-[11px] text-white/60 font-mono">{flagId}</span>
+                <span className="text-[11px] text-white/50 font-mono">{flagId}</span>
                 <div className="flex items-center gap-1.5">
                   {hasOverride && (
                     <span className="text-[9px] text-blue-400 font-medium uppercase">override</span>
                   )}
                   <span
                     className={`text-[11px] font-medium ${
-                      effectiveValue ? 'text-emerald-400' : 'text-white/30'
+                      effectiveValue ? 'text-emerald-400' : 'text-white/50'
                     }`}
                   >
                     {effectiveValue ? 'ON' : 'OFF'}
@@ -124,7 +124,7 @@ export function DebugPanel() {
       {/* Copy */}
       <button
         onClick={handleCopy}
-        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/8 border border-white/10 rounded-lg text-[12px] text-white/60 font-medium transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/[0.06] hover:bg-white/8 border border-white/[0.06] rounded-lg text-[12px] text-white/50 font-medium transition-colors"
       >
         {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
         {copied ? 'Copied!' : 'Copy Debug JSON'}
@@ -148,9 +148,9 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 function Row({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between py-0.5">
-      <span className="text-[11px] text-white/40">{label}</span>
+      <span className="text-[11px] text-white/50">{label}</span>
       <span
-        className={`text-[11px] text-white/70 max-w-[200px] truncate ${mono ? 'font-mono' : ''}`}
+        className={`text-[11px] text-white/50 max-w-[200px] truncate ${mono ? 'font-mono' : ''}`}
         title={value || undefined}
       >
         {value || '—'}

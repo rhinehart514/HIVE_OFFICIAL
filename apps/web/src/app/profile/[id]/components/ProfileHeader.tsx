@@ -89,13 +89,13 @@ export function ProfileHeader({
                 alt={profileData.profile.fullName}
                 className="object-cover"
               />
-              <AvatarFallback className="text-2xl font-semibold bg-[var(--bg-surface)] text-white/80">
+              <AvatarFallback className="text-2xl font-semibold bg-[var(--bg-surface)] text-white">
                 {initials}
               </AvatarFallback>
             </Avatar>
             {isOnline && (
               <div
-                className="absolute bottom-2 right-2 w-4 h-4 rounded-full border-2"
+                className="absolute bottom-2 right-2 w-4 h-4 rounded-full border border-2"
                 style={{
                   backgroundColor: 'var(--life-gold)',
                   borderColor: 'var(--bg-void)',

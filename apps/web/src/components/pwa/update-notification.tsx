@@ -45,7 +45,7 @@ export function UpdateNotification() {
 
   return (
     <div className="fixed top-4 left-4 right-4 z-50 flex justify-center">
-      <div className="flex items-center gap-3 rounded-lg bg-blue-600 px-4 py-3 text-white shadow-lg max-w-md">
+      <div className="flex items-center gap-3 rounded-lg bg-blue-600 px-4 py-3 text-white max-w-md">
         {/* Icon */}
         <svg
           className="h-5 w-5 flex-shrink-0"

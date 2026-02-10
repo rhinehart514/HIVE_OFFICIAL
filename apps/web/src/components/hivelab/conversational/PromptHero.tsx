@@ -93,7 +93,7 @@ export function PromptHero({ onSubmit, initialPrompt, disabled, spaceName }: Pro
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: durationSeconds.standard, delay: 0.3 }}
-          className="mt-3 text-white/40 text-base sm:text-lg"
+          className="mt-3 text-white/50 text-base sm:text-lg"
         >
           Describe it in plain English. AI builds it for you.
         </motion.p>
@@ -108,17 +108,17 @@ export function PromptHero({ onSubmit, initialPrompt, disabled, spaceName }: Pro
       >
         <div
           className={`
-            relative rounded-2xl border transition-all duration-200
+            relative rounded-lg transition-all duration-200
             ${isFocused
               ? 'border-[var(--life-gold)]/30 bg-white/[0.06] shadow-[0_0_0_1px_var(--life-gold)]/10'
-              : 'border-white/10 bg-white/[0.03] hover:border-white/15'
+              : 'border-white/[0.06] bg-white/[0.06] hover:border-white/15'
             }
             ${disabled ? 'opacity-50 pointer-events-none' : ''}
           `}
         >
           <div className="flex items-start gap-3 px-4 py-4">
             <Sparkles className={`w-5 h-5 mt-0.5 flex-shrink-0 transition-colors duration-200 ${
-              isFocused ? 'text-[var(--life-gold)]' : 'text-white/30'
+              isFocused ? 'text-[var(--life-gold)]' : 'text-white/50'
             }`} />
             <textarea
               ref={inputRef}
@@ -137,11 +137,11 @@ export function PromptHero({ onSubmit, initialPrompt, disabled, spaceName }: Pro
               onClick={handleSubmit}
               disabled={!value.trim() || disabled}
               className={`
-                flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center
+                flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center
                 transition-all duration-200 mt-0.5
                 ${value.trim()
                   ? 'bg-[var(--life-gold)] text-black hover:brightness-110'
-                  : 'bg-white/10 text-white/30 cursor-not-allowed'
+                  : 'bg-white/[0.06] text-white/50 cursor-not-allowed'
                 }
               `}
               whileTap={value.trim() ? { scale: 0.95 } : undefined}
@@ -172,8 +172,8 @@ export function PromptHero({ onSubmit, initialPrompt, disabled, spaceName }: Pro
               ease: EASE,
             }}
             className="px-3 py-1.5 rounded-full text-sm
-              bg-white/[0.05] text-white/50 border border-white/[0.08]
-              hover:bg-white/[0.08] hover:text-white/70 hover:border-white/[0.12]
+              bg-white/[0.06] text-white/50border-white/[0.06]
+              hover:bg-white/[0.06] hover:text-white/50 hover:border-white/[0.06]
               transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {chip}

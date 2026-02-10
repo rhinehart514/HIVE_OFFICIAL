@@ -63,10 +63,10 @@ export function InstallBanner() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-safe">
       <div className="mx-auto max-w-lg">
-        <div className="flex items-center gap-4 rounded-xl bg-[var(--bg-surface)] p-4 shadow-lg border border-white/[0.06]">
+        <div className="flex items-center gap-4 rounded-lg bg-[var(--bg-surface)] p-4border-white/[0.06]">
           {/* App Icon - Official HIVE logo */}
           <div className="flex-shrink-0">
-            <div className="h-12 w-12 rounded-xl bg-yellow-500 flex items-center justify-center p-2">
+            <div className="h-12 w-12 rounded-lg bg-yellow-500 flex items-center justify-center p-2">
               <svg
                 className="h-full w-full text-black"
                 viewBox="0 0 1500 1500"
@@ -80,7 +80,7 @@ export function InstallBanner() {
           {/* Text */}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-white text-sm">Install HIVE</p>
-            <p className="text-xs text-zinc-400 truncate">
+            <p className="text-xs text-white/50 truncate">
               Add to home screen for the best experience
             </p>
           </div>
@@ -89,7 +89,7 @@ export function InstallBanner() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={handleDismiss}
-              className="p-2 text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="p-2 text-white/50 hover:text-white transition-colors"
               aria-label="Dismiss"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

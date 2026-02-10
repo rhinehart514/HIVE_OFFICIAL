@@ -47,11 +47,11 @@ export function RefinementBar({ onSubmit, isGenerating, disabled }: RefinementBa
     >
       <div
         className={`
-          flex items-center gap-3 px-4 py-3 rounded-xl
-          border transition-all duration-200
+          flex items-center gap-3 px-4 py-3 rounded-lg
+         transition-all duration-200
           ${isFocused
-            ? 'border-white/20 bg-white/[0.06]'
-            : 'border-white/[0.08] bg-white/[0.03] hover:border-white/[0.12]'
+            ? 'border-white/[0.06] bg-white/[0.06]'
+            : 'border-white/[0.06] bg-white/[0.06] hover:border-white/[0.06]'
           }
           ${disabled ? 'opacity-50 pointer-events-none' : ''}
         `}
@@ -67,7 +67,7 @@ export function RefinementBar({ onSubmit, isGenerating, disabled }: RefinementBa
             </motion.div>
           ) : (
             <Sparkles className={`w-4 h-4 transition-colors duration-150 ${
-              isFocused ? 'text-[var(--life-gold)]' : 'text-white/30'
+              isFocused ? 'text-[var(--life-gold)]' : 'text-white/50'
             }`} />
           )}
         </div>

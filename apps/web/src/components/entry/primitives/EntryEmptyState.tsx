@@ -76,23 +76,23 @@ export function EntryEmptyState({
     >
       {/* Icon */}
       <motion.div
-        className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mb-4"
+        className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-white/[0.06]"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: DURATION.snap, delay: 0.05 }}
       >
-        <Icon className="w-5 h-5 text-white/30" />
+        <Icon className="w-5 h-5 text-white/50" />
       </motion.div>
 
       {/* Title */}
       <motion.p
-        className="text-[15px] text-white/60 mb-1"
+        className="text-[15px] text-white/50 mb-1"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: DURATION.snap, delay: 0.1 }}
       >
         {searchQuery ? (
-          <>No results for "<span className="text-white/80">{searchQuery}</span>"</>
+          <>No results for "<span className="text-white">{searchQuery}</span>"</>
         ) : (
           config.title
         )}
@@ -100,7 +100,7 @@ export function EntryEmptyState({
 
       {/* Subtitle */}
       <motion.p
-        className="text-[13px] text-white/40 max-w-[280px]"
+        className="text-[13px] text-white/50 max-w-[280px]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: DURATION.snap, delay: 0.15 }}
@@ -131,7 +131,7 @@ export function EntryEmptyState({
           {onClearSearch && searchQuery && (
             <button
               onClick={onClearSearch}
-              className="px-4 py-2 text-[13px] text-white/50 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.06] rounded-lg transition-all"
+              className="rounded-lg bg-white/[0.06] px-4 py-2 text-[13px] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/50"
             >
               Clear search
             </button>
@@ -139,7 +139,7 @@ export function EntryEmptyState({
           {onAction && config.actionLabel && (
             <button
               onClick={onAction}
-              className="px-4 py-2 text-[13px] text-white/60 hover:text-white/80 flex items-center gap-1.5 transition-colors"
+              className="px-4 py-2 text-[13px] text-white/50 hover:text-white flex items-center gap-1.5 transition-colors"
             >
               {config.actionLabel}
               <ArrowRight className="w-3.5 h-3.5" />

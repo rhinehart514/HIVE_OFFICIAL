@@ -153,7 +153,7 @@ export function BentoProfileGrid({
         >
           <motion.button
             onClick={toggleEditMode}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.04)',
               color: 'var(--text-secondary)',
@@ -191,7 +191,7 @@ export function BentoProfileGrid({
         >
           <motion.button
             onClick={() => setShowWidgetPicker(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
             style={{
               backgroundColor: 'rgba(255, 215, 0, 0.08)',
               color: 'var(--life-gold)',
@@ -260,7 +260,7 @@ export function BentoProfileGrid({
         <DragOverlay>
           {activeId && (
             <div
-              className="rounded-3xl p-4 opacity-80"
+              className="rounded-full p-4 opacity-80"
               style={{
                 backgroundColor: 'var(--bg-surface)',
                 border: '2px solid var(--life-gold)',

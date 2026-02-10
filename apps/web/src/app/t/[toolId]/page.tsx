@@ -2,7 +2,7 @@
  * Standalone Tool Page - /t/[toolId]
  *
  * Server component for metadata generation and public tool access.
- * Delegates interactive UI to StandaloneToolClient.
+ * Delegates UI to StandaloneToolClient.
  */
 
 import { Metadata } from 'next';

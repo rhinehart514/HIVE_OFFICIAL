@@ -7,7 +7,7 @@
  * - WordReveal title + search fade-in (300ms delay)
  * - GoldBorderContainer on search focus
  * - Category switch: cards exit left, new cards enter right (200ms)
- * - Card hover: scale 1.02, gold border glow
+ * - Card hover: scale 1.02, goldglow
  * - Card click: creates tool directly, redirects to IDE (no query param)
  * - Stagger entrance (80ms between cards)
  */
@@ -149,7 +149,7 @@ function WordReveal({
 }
 
 /**
- * GoldBorderInput — Search input with animated gold border on focus
+ * GoldBorderInput — Search input with animated goldon focus
  */
 function GoldBorderInput({
   value,
@@ -165,11 +165,11 @@ function GoldBorderInput({
 
   return (
     <div className="relative">
-      {/* Gold border container */}
-      <div className="relative rounded-xl overflow-hidden">
+      {/* Goldcontainer */}
+      <div className="relative rounded-lg overflow-hidden">
         {/* Gold borders on focus */}
         <motion.div
-          className="absolute inset-0 rounded-xl pointer-events-none"
+          className="absolute inset-0 rounded-lg pointer-events-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: isFocused ? 1 : 0 }}
           transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
@@ -189,7 +189,7 @@ function GoldBorderInput({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
-            className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.03] border transition-colors text-sm outline-none"
+            className="w-full pl-11 pr-4 py-3 rounded-lg bg-white/[0.06] transition-colors text-sm outline-none"
             style={{
               borderColor: isFocused ? `${COLORS.gold}30` : COLORS.border,
               color: COLORS.text,
@@ -237,7 +237,7 @@ function TemplateCard({
       }}
       whileHover={!isSelected ? { scale: 1.02, y: -2 } : {}}
       onClick={() => onSelect(template)}
-      className="text-left p-4 rounded-xl border transition-all duration-200 group"
+      className="text-left p-4 rounded-lg transition-all duration-200 group"
       style={{
         backgroundColor: COLORS.surface,
         borderColor: isApp ? `${COLORS.gold}20` : COLORS.border,
@@ -324,6 +324,10 @@ export default function ToolTemplatesPage() {
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const spaceType = searchParams.get('spaceType') as SpaceType | null;
 
+  // Preserve space context from FAB or deep link
+  const originSpaceId = searchParams.get('spaceId');
+  const originSpaceName = searchParams.get('spaceName');
+
   const [search, setSearch] = React.useState('');
   const [category, setCategory] = React.useState<TemplateCategory | 'all'>('all');
   const [selectedTemplate, setSelectedTemplate] = React.useState<QuickTemplate | null>(null);
@@ -380,14 +384,16 @@ export default function ToolTemplatesPage() {
     try {
       const toolId = await createToolFromTemplateApi(template);
       await new Promise((resolve) => setTimeout(resolve, shouldReduceMotion ? 100 : 200));
-      router.push(`/lab/${toolId}`);
+      // If we have space context, auto-open deploy modal targeting that space
+      const spaceParam = originSpaceId ? `?deploy=true&spaceId=${originSpaceId}` : '';
+      router.push(`/lab/${toolId}${spaceParam}`);
     } catch (error) {
       logger.error('Failed to create tool from template', { component: 'ToolTemplatesPage' }, error instanceof Error ? error : undefined);
       toast.error('Failed to create tool from template');
       setIsNavigating(false);
       setSelectedTemplate(null);
     }
-  }, [isNavigating, router, shouldReduceMotion]);
+  }, [isNavigating, router, shouldReduceMotion, originSpaceId]);
 
   // Handle quick deploy: create tool with user config, open deploy modal
   const handleQuickDeploy = React.useCallback(async (result: { templateId: string; templateName: string; config: Record<string, string> }) => {
@@ -427,6 +433,23 @@ export default function ToolTemplatesPage() {
           </Link>
         </motion.div>
 
+        {/* Space deploy context banner */}
+        {originSpaceName && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="mb-6 p-3 rounded-lg text-center text-sm"
+            style={{
+              backgroundColor: `${COLORS.gold}10`,
+              border: `1px solid ${COLORS.gold}20`,
+              color: COLORS.gold,
+            }}
+          >
+            Deploying to <span className="font-medium">{decodeURIComponent(originSpaceName)}</span>
+          </motion.div>
+        )}
+
         {/* Header with WordReveal */}
         <div className="text-center mb-8">
           <h1
@@ -453,7 +476,7 @@ export default function ToolTemplatesPage() {
           </motion.p>
         </div>
 
-        {/* Search with gold border on focus (fade in at 300ms) */}
+        {/* Search with goldon focus (fade in at 300ms) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -686,7 +709,7 @@ export default function ToolTemplatesPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: shouldReduceMotion ? 0 : 0.8 }}
-          className="mt-8 p-4 rounded-xl border-dashed"
+          className="mt-8 p-4 rounded-lg border border-dashed"
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.02)',
             border: `1px dashed ${COLORS.border}`,

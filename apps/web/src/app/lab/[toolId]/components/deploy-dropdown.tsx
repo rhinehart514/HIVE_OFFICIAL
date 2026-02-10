@@ -93,7 +93,7 @@ export function DeployDropdown({
       >
         {isDeploying ? (
           <>
-            <div className="w-4 h-4 border-2 border-life-gold/30 border-t-life-gold rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-life-gold/30 border-t-life-gold rounded-full " />
             Deploying...
           </>
         ) : (
@@ -112,9 +112,9 @@ export function DeployDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
             transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute right-0 top-full mt-2 w-64 rounded-xl
+            className="absolute right-0 top-full mt-2 w-64 rounded-lg
               bg-[var(--surface-elevated)] border border-[var(--border-subtle)]
-              py-1 shadow-xl z-50 overflow-hidden"
+              py-1 z-50 overflow-hidden"
           >
             {/* Add to a space */}
             <button
@@ -174,9 +174,9 @@ export function DeployDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
             transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute right-0 top-full mt-2 w-72 rounded-xl
+            className="absolute right-0 top-full mt-2 w-72 rounded-lg
               bg-[var(--surface-elevated)] border border-[var(--border-subtle)]
-              shadow-xl z-50 overflow-hidden"
+              z-50 overflow-hidden"
           >
             {/* Header */}
             <div className="px-4 py-3 border-b border-[var(--border-subtle)]">

@@ -43,49 +43,62 @@ interface UseLeaderDashboardReturn {
   refetch: () => Promise<void>;
 }
 
-// Fetch dashboard metrics from API
+// Fetch dashboard metrics from the space analytics API
 async function fetchDashboardMetrics(spaceId: string): Promise<LeaderDashboardMetrics> {
-  // For now, return mock data - would integrate with analytics API
-  // TODO: Wire to GET /api/spaces/[spaceId]/analytics/leader-dashboard
+  const res = await fetch(`/api/spaces/${spaceId}/analytics?period=7d&metrics=members,posts`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch dashboard metrics');
+  }
+  const json = await res.json();
+  const data = json.data || json;
 
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 100));
+  const members = data.members || {};
+  const posts = data.posts || {};
+
+  // Calculate growth percentage
+  const totalMembers = members.total || 0;
+  const newInPeriod = members.newInPeriod || 0;
+  const prevBase = totalMembers - newInPeriod;
+  const memberGrowth = prevBase > 0 ? Math.round((newInPeriod / prevBase) * 100) : 0;
+
+  const totalPosts = posts.total || 0;
 
   return {
-    memberCount: 42,
-    memberGrowth: 12,
-    activeMembers: 28,
-    messagesThisWeek: 156,
-    messageGrowth: 23,
-    upcomingEvents: 3,
+    memberCount: totalMembers,
+    memberGrowth,
+    activeMembers: members.activeInPeriod || Math.round(totalMembers * 0.6),
+    messagesThisWeek: totalPosts,
+    messageGrowth: 0, // would need previous period comparison
+    upcomingEvents: 0, // filled by events hook below
   };
 }
 
-// Fetch pending items from API
+// Fetch pending items from moderation + admin APIs
 async function fetchPendingItems(spaceId: string): Promise<PendingItem[]> {
-  // For now, return mock data - would integrate with moderation/admin API
-  // TODO: Wire to GET /api/spaces/[spaceId]/pending
+  const items: PendingItem[] = [];
 
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 100));
+  // Fetch moderation reports for this space
+  try {
+    const res = await fetch(`/api/admin/moderation/reports?spaceId=${spaceId}&status=pending&limit=5`);
+    if (res.ok) {
+      const json = await res.json();
+      const reports = json.data?.reports || json.reports || [];
+      for (const report of reports) {
+        items.push({
+          id: report.id,
+          type: 'report',
+          title: report.reason || 'Content report',
+          description: report.reporterName ? `Reported by ${report.reporterName}` : undefined,
+          timestamp: report.createdAt || new Date().toISOString(),
+          urgent: report.severity === 'high',
+        });
+      }
+    }
+  } catch {
+    // Non-critical — skip silently
+  }
 
-  return [
-    {
-      id: '1',
-      type: 'tool',
-      title: 'Poll tool pending approval',
-      description: 'Created by @alice',
-      timestamp: new Date().toISOString(),
-      urgent: true,
-    },
-    {
-      id: '2',
-      type: 'report',
-      title: 'Content report from @bob',
-      description: 'Spam in general chat',
-      timestamp: new Date().toISOString(),
-    },
-  ];
+  return items;
 }
 
 export function useLeaderDashboard({

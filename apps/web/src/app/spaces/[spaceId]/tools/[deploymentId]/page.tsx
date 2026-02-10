@@ -218,7 +218,7 @@ export default function PlacementDetailPage() {
           <div className="flex items-center gap-4">
             <Link
               href={`/spaces/${spaceId}/tools`}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               <ArrowLeft className="h-5 w-5" style={{ color: COLORS.textSecondary }} />
             </Link>
@@ -362,7 +362,7 @@ export default function PlacementDetailPage() {
               onChange={(e) => setTitleOverride(e.target.value)}
               disabled={!canEdit}
               placeholder={detail.tool?.name || 'Tool name'}
-              className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+              className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
               style={{
                 borderColor: COLORS.border,
                 color: COLORS.text,
@@ -382,7 +382,7 @@ export default function PlacementDetailPage() {
                   key={option.value}
                   onClick={() => canEdit && setPlacement(option.value)}
                   disabled={!canEdit}
-                  className="p-3 rounded-lg border text-left transition-colors"
+                  className="p-3 rounded-lg text-left transition-colors"
                   style={{
                     backgroundColor:
                       placement === option.value
@@ -415,7 +415,7 @@ export default function PlacementDetailPage() {
                   key={option.value}
                   onClick={() => canEdit && setVisibility(option.value)}
                   disabled={!canEdit}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors"
+                  className="w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors"
                   style={{
                     backgroundColor:
                       visibility === option.value

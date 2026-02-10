@@ -126,10 +126,10 @@ export function InterestsSection({
   };
 
   return (
-    <Card className="p-6 bg-white/5 border-white/[0.08]">
+    <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Interests</h3>
-        <span className="text-sm text-white/40">
+        <span className="text-sm text-white/50">
           {localInterests.length}/{MAX_INTERESTS}
         </span>
       </div>
@@ -140,17 +140,17 @@ export function InterestsSection({
       {/* Current Interests */}
       <div className="flex flex-wrap gap-2 mb-4">
         {localInterests.length === 0 ? (
-          <p className="text-sm text-white/30 italic">No interests added yet</p>
+          <p className="text-sm text-white/50 italic">No interests added yet</p>
         ) : (
           localInterests.map((interest) => (
             <span
               key={interest}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-sm text-white"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.06] text-sm text-white"
             >
               {interest}
               <button
                 onClick={() => handleRemoveInterest(interest)}
-                className="p-0.5 rounded hover:bg-white/20 transition-colors"
+                className="p-0.5 rounded hover:bg-white/[0.06] transition-colors"
                 aria-label={`Remove ${interest}`}
               >
                 <XMarkIcon className="h-3.5 w-3.5" />
@@ -175,13 +175,13 @@ export function InterestsSection({
               onFocus={() => setShowSuggestions(true)}
               onKeyDown={handleKeyDown}
               placeholder="Add an interest..."
-              className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
+              className="flex-1 px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:border-white/50 focus:outline-none"
             />
             <Button
               variant="secondary"
               onClick={() => handleAddInterest(inputValue)}
               disabled={!inputValue.trim()}
-              className="border-white/20 text-white hover:bg-white/10"
+              className="border-white/[0.06] text-white hover:bg-white/[0.06]"
             >
               <PlusIcon className="h-4 w-4" />
             </Button>
@@ -191,13 +191,13 @@ export function InterestsSection({
           {showSuggestions && filteredSuggestions.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="absolute top-full left-0 right-0 mt-1 py-1 bg-[var(--bg-surface-hover)] border border-white/10 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto"
+              className="absolute top-full left-0 right-0 mt-1 py-1 bg-[var(--bg-surface-hover)] border border-white/[0.06] rounded-lg z-50 max-h-48 overflow-y-auto"
             >
               {filteredSuggestions.map((suggestion) => (
                 <button
                   key={suggestion}
                   onClick={() => handleAddInterest(suggestion)}
-                  className="w-full px-3 py-2 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  className="w-full px-3 py-2 text-left text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
                 >
                   {suggestion}
                 </button>

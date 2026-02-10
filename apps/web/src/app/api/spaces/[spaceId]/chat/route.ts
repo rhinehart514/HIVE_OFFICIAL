@@ -35,7 +35,7 @@ const AttachmentSchema = z.object({
 });
 
 const SendMessageSchema = z.object({
-  boardId: z.string().min(1),
+  boardId: z.string().min(1).default('main'),
   content: z.string().max(4000),
   replyToId: z.string().optional(),
   componentData: z.object({
@@ -117,17 +117,13 @@ export const GET = withAuthAndErrors(async (
   const campusId = getCampusId(request as AuthenticatedRequest);
   const url = new URL(request.url);
 
-  const boardId = url.searchParams.get('boardId');
+  const boardId = url.searchParams.get('boardId') || 'main';
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
   const before = url.searchParams.get('before');
   const after = url.searchParams.get('after');
 
   if (!spaceId) {
     return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });
-  }
-
-  if (!boardId) {
-    return respond.error("Board ID is required", "INVALID_INPUT", { status: 400 });
   }
 
   // Create the chat service with DDD repositories

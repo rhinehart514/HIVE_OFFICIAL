@@ -93,7 +93,7 @@ function SetupDeploymentCard({
     >
       <Link
         href={`/spaces/${spaceId}/setups/${deployment.id}`}
-        className="block p-4 rounded-lg border transition-colors hover:border-white/15"
+        className="block p-4 rounded-lg transition-colors hover:border-white/15"
         style={{ backgroundColor: COLORS.surface, borderColor: COLORS.border }}
       >
         <div className="flex items-start justify-between mb-3">
@@ -188,7 +188,7 @@ export default function SpaceSetupsPage() {
           <div className="flex items-center gap-4">
             <Link
               href={`/spaces/${spaceId}/tools`}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               <ArrowLeft className="h-5 w-5" style={{ color: COLORS.textSecondary }} />
             </Link>

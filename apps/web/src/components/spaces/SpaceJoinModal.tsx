@@ -130,13 +130,13 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
       >
         {/* Backdrop */}
         <div
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/70 "
           onClick={handleClose}
         />
 
         {/* Modal */}
         <motion.div
-          className="relative w-full max-w-md bg-[var(--bg-ground)] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden"
+          className="relative w-full max-w-md bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg overflow-hidden"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -146,7 +146,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
           {status !== 'joining' && (
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 text-white/40 hover:text-white/60 transition-colors z-10"
+              className="absolute top-4 right-4 text-white/50 hover:text-white/50 transition-colors z-10"
             >
               <X size={20} />
             </button>
@@ -157,7 +157,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
             {status === 'loading' && (
               <div className="text-center py-8">
                 <motion.div
-                  className="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center mx-auto mb-4"
+                  className="w-12 h-12 rounded-full border border-2 border-white/[0.06] flex items-center justify-center mx-auto mb-4"
                   animate={{
                     scale: [1, 1.05, 1],
                     borderColor: ['rgba(255,255,255,0.2)', 'rgba(255,215,0,0.3)', 'rgba(255,255,255,0.2)'],
@@ -165,7 +165,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
                   transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                 >
                   <motion.div
-                    className="w-2 h-2 rounded-full bg-white/40"
+                    className="w-2 h-2 rounded-full bg-white/50"
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                   />
@@ -186,11 +186,11 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
                   <Text className="text-white/50">You&apos;ve been invited to</Text>
                 </div>
 
-                <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/[0.06]">
+                <div className="bg-white/[0.06] rounded-lg p-6border-white/[0.06]">
                   <div className="flex flex-col items-center text-center gap-4">
-                    <Avatar className="h-20 w-20 rounded-xl">
+                    <Avatar className="h-20 w-20 rounded-lg">
                       <AvatarImage src={space.avatarUrl} alt={space.name} />
-                      <AvatarFallback className="text-2xl bg-white/[0.04] rounded-xl">
+                      <AvatarFallback className="text-2xl bg-white/[0.06] rounded-lg">
                         {space.name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -198,7 +198,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
                     <div>
                       <h1 className="text-xl font-semibold mb-1">{space.name}</h1>
                       {space.description && (
-                        <Text size="sm" className="text-white/60 line-clamp-2">
+                        <Text size="sm" className="text-white/50 line-clamp-2">
                           {space.description}
                         </Text>
                       )}
@@ -223,7 +223,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
 
                 <button
                   onClick={handleClose}
-                  className="w-full text-sm text-white/40 hover:text-white/60 transition-colors"
+                  className="w-full text-sm text-white/50 hover:text-white/50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -280,7 +280,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
 
                     {/* Space name */}
                     <motion.p
-                      className="text-white/60 text-lg mb-8"
+                      className="text-white/50 text-lg mb-8"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.6 }}
@@ -316,7 +316,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
                 transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
                 className="text-center space-y-6 py-4"
               >
-                <div className="h-16 w-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto">
+                <div className="h-16 w-16 rounded-lg bg-red-500/10 flex items-center justify-center mx-auto">
                   <AlertCircle className="h-8 w-8 text-red-400" />
                 </div>
                 <div>

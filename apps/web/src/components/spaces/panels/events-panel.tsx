@@ -147,7 +147,7 @@ function RSVPBadge({ status }: { status: RSVPStatus }) {
       'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
       status === 'going'
         ? 'text-[var(--life-gold)] bg-[var(--life-gold)]/10 ring-1 ring-[var(--life-gold)]/20'
-        : 'text-white/70 bg-white/5'
+        : 'text-white/50 bg-white/[0.06]'
     )}>
       {status === 'going' ? "You're going" : 'Maybe'}
     </span>
@@ -168,8 +168,8 @@ function EventCard({
     <motion.button
       onClick={onClick}
       className={cn(
-        'w-full text-left p-4 rounded-xl transition-all',
-        'bg-white/[0.02] hover:bg-white/[0.05]',
+        'w-full text-left p-4 rounded-lg transition-all',
+        'bg-white/[0.06] hover:bg-white/[0.06]',
         'border border-white/[0.06] hover:border-white/[0.1]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
         isUrgent && 'ring-1 ring-[var(--life-gold)]/30'
@@ -181,7 +181,7 @@ function EventCard({
         {/* Date Column */}
         <div className={cn(
           'flex flex-col items-center justify-center min-w-[48px] p-2 rounded-lg',
-          isEventUpcoming ? 'bg-[var(--life-gold)]/10' : 'bg-white/5'
+          isEventUpcoming ? 'bg-[var(--life-gold)]/10' : 'bg-white/[0.06]'
         )}>
           <span className={cn(
             'text-xs font-medium uppercase',
@@ -191,7 +191,7 @@ function EventCard({
           </span>
           <span className={cn(
             'text-xl font-bold',
-            isEventUpcoming ? 'text-white' : 'text-white/70'
+            isEventUpcoming ? 'text-white' : 'text-white/50'
           )}>
             {new Date(event.startDate).getDate()}
           </span>
@@ -202,7 +202,7 @@ function EventCard({
           <div className="flex items-start justify-between gap-2 mb-1">
             <h3 className={cn(
               'font-medium truncate',
-              isEventUpcoming ? 'text-white' : 'text-white/70'
+              isEventUpcoming ? 'text-white' : 'text-white/50'
             )}>
               {event.title}
             </h3>
@@ -225,7 +225,7 @@ function EventCard({
 
           {/* Location / Link */}
           {(event.location || event.virtualLink) && (
-            <div className="flex items-center gap-1 text-sm text-white/70 mb-2">
+            <div className="flex items-center gap-1 text-sm text-white/50 mb-2">
               {event.virtualLink ? (
                 <>
                   <VideoCameraIcon className="w-3.5 h-3.5 text-cyan-400" />
@@ -255,7 +255,7 @@ function EventCard({
           {/* RSVP Progress Bar (only for events with capacity) */}
           {event.maxAttendees && isEventUpcoming && (
             <div className="mt-3">
-              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                 <div
                   className={cn(
                     'h-full transition-all duration-300',
@@ -274,7 +274,7 @@ function EventCard({
                   ? 'text-red-400'
                   : event.currentAttendees >= event.maxAttendees * 0.8
                     ? 'text-[var(--life-gold)]'
-                    : 'text-white/40'
+                    : 'text-white/50'
               )}>
                 {event.currentAttendees >= event.maxAttendees
                   ? 'Event is full'
@@ -305,22 +305,22 @@ function EmptyState({
         ? 'Events bring your community together. Study sessions, meetings, social hangouts — you decide.'
         : 'The leaders haven\'t posted any events yet. Check back soon!',
       icon: CalendarIcon,
-      iconBg: isLeader ? 'bg-[var(--life-gold)]/10' : 'bg-white/[0.03]',
-      iconColor: isLeader ? 'text-[var(--life-gold)]' : 'text-white/40',
+      iconBg: isLeader ? 'bg-[var(--life-gold)]/10' : 'bg-white/[0.06]',
+      iconColor: isLeader ? 'text-[var(--life-gold)]' : 'text-white/50',
     },
     past: {
       title: 'No past events',
       description: 'Events you\'ve attended will show up here for reference.',
       icon: ClockIcon,
-      iconBg: 'bg-white/[0.03]',
-      iconColor: 'text-white/40',
+      iconBg: 'bg-white/[0.06]',
+      iconColor: 'text-white/50',
     },
     'my-rsvps': {
       title: "You haven't RSVP'd yet",
       description: 'Browse upcoming events and let others know you\'re coming.',
       icon: UsersIcon,
-      iconBg: 'bg-white/[0.03]',
-      iconColor: 'text-white/40',
+      iconBg: 'bg-white/[0.06]',
+      iconColor: 'text-white/50',
     },
   };
 
@@ -329,7 +329,7 @@ function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className={cn(
-        'w-16 h-16 rounded-2xl flex items-center justify-center mb-5',
+        'w-16 h-16 rounded-lg flex items-center justify-center mb-5',
         iconBg
       )}>
         <Icon className={cn('w-8 h-8', iconColor)} />
@@ -349,7 +349,7 @@ function EmptyState({
         </Button>
       )}
       {!isLeader && type === 'upcoming' && (
-        <p className="text-xs text-white/30">
+        <p className="text-xs text-white/50">
           Want to host events? Ask a leader for permissions.
         </p>
       )}
@@ -459,7 +459,7 @@ export function EventsPanel({
         </div>
 
         {/* Tab Bar */}
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-white/[0.03]">
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-white/[0.06]">
           {(['upcoming', 'past', 'my-rsvps'] as const).map((tab) => (
             <button
               key={tab}
@@ -467,8 +467,8 @@ export function EventsPanel({
               className={cn(
                 'flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all',
                 activeTab === tab
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/50 hover:text-white/70'
+                  ? 'bg-white/[0.06] text-white'
+                  : 'text-white/50 hover:text-white/50'
               )}
             >
               {tab === 'upcoming' && 'Upcoming'}
@@ -491,7 +491,7 @@ export function EventsPanel({
             placeholder="MagnifyingGlassIcon events..."
             className={cn(
               'w-full pl-9 pr-10 py-2 rounded-lg',
-              'bg-white/[0.03] border border-white/[0.06]',
+              'bg-white/[0.06] border border-white/[0.06]',
               'text-white placeholder:text-white/50',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
               'text-sm'
@@ -503,7 +503,7 @@ export function EventsPanel({
               'absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors',
               showFilters || selectedTypes.size > 0
                 ? 'bg-[var(--life-gold)]/10 text-[var(--life-gold)]'
-                : 'text-white/50 hover:text-white/70'
+                : 'text-white/50 hover:text-white/50'
             )}
           >
             <FunnelIcon className="w-4 h-4" />
@@ -531,7 +531,7 @@ export function EventsPanel({
                         'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
                         isSelected
                           ? config.color
-                          : 'text-white/50 bg-white/[0.03] hover:bg-white/[0.06]'
+                          : 'text-white/50 bg-white/[0.06] hover:bg-white/[0.06]'
                       )}
                     >
                       <config.icon className="w-3 h-3" />
@@ -547,7 +547,7 @@ export function EventsPanel({
         {/* Active Filters Indicator */}
         {hasActiveFilters && (
           <div className="flex items-center justify-between text-xs">
-            <span className="text-white/70">
+            <span className="text-white/50">
               {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} found
             </span>
             <button
@@ -569,7 +569,7 @@ export function EventsPanel({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-28 rounded-xl bg-white/[0.02] animate-pulse"
+                className="h-28 rounded-lg bg-white/[0.06]"
               />
             ))}
           </div>

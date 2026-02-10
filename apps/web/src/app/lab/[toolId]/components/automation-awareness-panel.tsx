@@ -130,7 +130,7 @@ function AutomationCard({ automation }: { automation: Automation }) {
   return (
     <Link
       href={`/spaces/${automation.spaceId}/automations/${automation.id}`}
-      className="block p-3 rounded-lg border transition-colors hover:border-white/15"
+      className="block p-3 rounded-lg transition-colors hover:border-white/15"
       style={{ backgroundColor: COLORS.panel, borderColor: COLORS.border }}
     >
       <div className="flex items-start gap-3">
@@ -252,7 +252,7 @@ export function AutomationAwarenessPanel({ toolId, toolName, elementIds: _elemen
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
+          className="w-full max-w-lg rounded-lg overflow-hidden"
           style={{ backgroundColor: COLORS.bg }}
         >
           {/* Header */}
@@ -270,7 +270,7 @@ export function AutomationAwarenessPanel({ toolId, toolName, elementIds: _elemen
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               <X className="h-5 w-5" style={{ color: COLORS.textSecondary }} />
             </button>

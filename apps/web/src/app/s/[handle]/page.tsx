@@ -112,6 +112,7 @@ export default function SpacePageUnified() {
     authorName: string;
     content: string;
   } | null>(null);
+  const [chatPrefill, setChatPrefill] = React.useState<string | null>(null);
 
   // Thread panel state - driven by URL param
   const [activeThreadId, setActiveThreadId] = React.useState<string | null>(null);
@@ -577,9 +578,12 @@ export default function SpacePageUnified() {
             avatarUrl: space.avatarUrl,
             memberCount: space.memberCount,
             onlineCount: space.onlineCount,
+            isClaimed: space.isClaimed,
           }}
           onJoin={handleJoin}
+          onClaim={!space.isClaimed ? handleClaimSpace : undefined}
           isJoining={isJoining}
+          isClaiming={claimSpaceMutation.isPending}
           joinError={joinError}
           onClearError={handleClearJoinError}
         />
@@ -603,7 +607,7 @@ export default function SpacePageUnified() {
           <div className="border-b border-white/[0.06] px-4 h-14 flex items-center flex-shrink-0">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 mr-2 text-white/60 hover:text-white transition-colors"
+              className="lg:hidden p-2 mr-2 text-white/50 hover:text-white transition-colors"
               aria-label="Open sidebar"
             >
               <Menu size={20} />
@@ -636,6 +640,17 @@ export default function SpacePageUnified() {
                 onCreateEventClick={() => setShowEventModal(true)}
                 onModerationClick={() => setShowModerationPanel(true)}
                 onClaimClick={handleClaimSpace}
+                onCreatePoll={() => setChatPrefill('/poll ')}
+                onCreateRsvp={() => setChatPrefill('/rsvp ')}
+                onCreateSignup={() => setChatPrefill('/signup ')}
+                onCreateCountdown={() => setChatPrefill('/countdown ')}
+                onCreateWithAI={() => {
+                  const params = new URLSearchParams({
+                    spaceId: space.id,
+                    spaceName: space.name,
+                  });
+                  router.push(`/lab/new?${params.toString()}`);
+                }}
                 canModerate={space.isLeader || space.userRole === 'moderator' || space.userRole === 'admin'}
                 isMuted={isSpaceMuted}
                 onMuteChange={handleMuteChange}
@@ -668,11 +683,11 @@ export default function SpacePageUnified() {
                     events: upcomingEvents.map(event => ({
                       id: event.id,
                       title: event.title,
-                      startDate: event.time,
-                      rsvpCount: event.goingCount,
+                      startDate: event.time || new Date().toISOString(),
+                      rsvpCount: event.goingCount || 0,
                     })),
                     maxEvents: 3,
-                    onClick: () => {}, // TODO: Open event details
+                    onClick: () => {},
                   }}
                   members={{
                     onlineCount: space.onlineCount,
@@ -690,6 +705,8 @@ export default function SpacePageUnified() {
                     onSend={sendMessage}
                     placeholder={`Message ${space.name}`}
                     onTypingChange={setTyping}
+                    prefill={chatPrefill}
+                    onPrefillConsumed={() => setChatPrefill(null)}
                   />
                 </div>
               }
@@ -760,13 +777,13 @@ export default function SpacePageUnified() {
             >
               {/* Backdrop */}
               <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 "
                 onClick={() => setShowMembersPanel(false)}
               />
 
               {/* Panel */}
               <motion.div
-                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] shadow-2xl"
+                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06]"
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
@@ -815,13 +832,13 @@ export default function SpacePageUnified() {
             >
               {/* Backdrop */}
               <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 "
                 onClick={() => setShowDashboardPanel(false)}
               />
 
               {/* Panel */}
               <motion.div
-                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] shadow-2xl overflow-y-auto"
+                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] overflow-y-auto"
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
@@ -851,7 +868,11 @@ export default function SpacePageUnified() {
                   }}
                   onAddTool={() => {
                     setShowDashboardPanel(false);
-                    toast.info('Tool picker coming soon');
+                    const params = new URLSearchParams({
+                      spaceId: space.id,
+                      spaceName: space.name,
+                    });
+                    router.push(`/lab/new?${params.toString()}`);
                   }}
                   onOpenSettings={() => {
                     setShowDashboardPanel(false);
@@ -901,13 +922,13 @@ export default function SpacePageUnified() {
             >
               {/* Backdrop */}
               <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 "
                 onClick={() => setShowSettingsModal(false)}
               />
 
               {/* Modal */}
               <motion.div
-                className="relative w-full max-w-4xl max-h-[90vh] bg-[var(--bg-ground)] border border-white/[0.06] rounded-2xl shadow-2xl overflow-hidden"
+                className="relative w-full max-w-4xl max-h-[90vh] bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg overflow-hidden"
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
@@ -1080,7 +1101,11 @@ export default function SpacePageUnified() {
             context="feed"
             onCreateEvent={() => setShowEventModal(true)}
             onAddTool={() => {
-              toast.info('Tool picker coming soon');
+              const params = new URLSearchParams({
+                spaceId: space.id,
+                spaceName: space.name,
+              });
+              router.push(`/lab/new?${params.toString()}`);
             }}
             onCreateAnnouncement={() => setShowDashboardPanel(true)}
           />
@@ -1113,7 +1138,7 @@ function SpacePageSkeleton() {
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.smooth }}
           />
           <motion.div
-            className="h-3 w-20 rounded bg-white/[0.04]"
+            className="h-3 w-20 rounded bg-white/[0.06]"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
           />
@@ -1130,14 +1155,14 @@ function SpacePageSkeleton() {
         {/* Sidebar skeleton (left, 200px) */}
         <div className="w-[200px] border-r border-white/[0.06] p-3 space-y-2 flex-shrink-0">
           <motion.div
-            className="h-3 w-16 rounded bg-white/[0.04] mb-3"
+            className="h-3 w-16 rounded bg-white/[0.06] mb-3"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
           />
           {[1, 2, 3].map((i) => (
             <motion.div
               key={`board-${i}`}
-              className="h-8 rounded-lg bg-white/[0.04]"
+              className="h-8 rounded-lg bg-white/[0.06]"
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{
                 duration: 1.5,
@@ -1149,7 +1174,7 @@ function SpacePageSkeleton() {
           ))}
           <div className="pt-4 mt-4 border-t border-white/[0.06] space-y-2">
             <motion.div
-              className="h-3 w-20 rounded bg-white/[0.04]"
+              className="h-3 w-20 rounded bg-white/[0.06]"
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.6, ease: MOTION.ease.smooth }}
             />
@@ -1157,7 +1182,7 @@ function SpacePageSkeleton() {
               {[1, 2, 3].map((i) => (
                 <motion.div
                   key={`avatar-${i}`}
-                  className="h-6 w-6 rounded-full bg-white/[0.04]"
+                  className="h-6 w-6 rounded-full bg-white/[0.06]"
                   animate={{ opacity: [0.3, 0.6, 0.3] }}
                   transition={{
                     duration: 1.5,
@@ -1186,17 +1211,17 @@ function SpacePageSkeleton() {
                   ease: MOTION.ease.smooth,
                 }}
               >
-                <div className="h-8 w-8 rounded-full bg-white/[0.04] flex-shrink-0" />
+                <div className="h-8 w-8 rounded-full bg-white/[0.06] flex-shrink-0" />
                 <div className="space-y-1.5 flex-1">
                   <div className="h-3 w-24 rounded bg-white/[0.06]" />
-                  <div className="h-4 rounded bg-white/[0.04]" style={{ width: `${60 + (i * 7) % 30}%` }} />
+                  <div className="h-4 rounded bg-white/[0.06]" style={{ width: `${60 + (i * 7) % 30}%` }} />
                 </div>
               </motion.div>
             ))}
           </div>
           <div className="p-3 border-t border-white/[0.06]">
             <motion.div
-              className="h-10 rounded-xl bg-white/[0.04]"
+              className="h-10 rounded-lg bg-white/[0.06]"
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.5, ease: MOTION.ease.smooth }}
             />

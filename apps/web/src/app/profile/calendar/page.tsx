@@ -65,7 +65,7 @@ const getEventColor = (event: CalendarEvent) => {
     case 'study': return 'bg-emerald-500/80';
     case 'assignment': return 'bg-yellow-500/80';
     case 'meeting': return 'bg-purple-500/80';
-    default: return 'bg-zinc-500/80';
+    default: return 'bg-white/50';
   }
 };
 
@@ -270,7 +270,7 @@ export default function ProfileCalendarPage() {
     return (
       <div className="min-h-screen bg-[var(--bg-ground)] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-white/10 border-t-white/50 rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-8 h-8 border-2 border-white/[0.06] border-t-white/50 rounded-full  mx-auto mb-4" />
           <p className="text-[var(--text-secondary)]">Loading calendar...</p>
         </div>
       </div>
@@ -492,7 +492,7 @@ export default function ProfileCalendarPage() {
                   {getTimeBlocks(date).map((block) => (
                     <div
                       key={block.hour}
-                      className={`h-20 border border-[var(--border-subtle)] rounded-lg p-1 ${
+                      className={`h-20border-[var(--border-subtle)] rounded-lg p-1 ${
                         block.isFreeTime ? 'bg-[var(--bg-muted)]/30' : 'bg-[var(--bg-surface)]'
                       }`}
                     >
@@ -508,13 +508,13 @@ export default function ProfileCalendarPage() {
                         >
                           <div className="font-medium truncate text-white">{event.title}</div>
                           {event.type === 'space' && event.spaceName && (
-                            <div className="text-white/70 truncate flex items-center gap-1">
+                            <div className="text-white/50 truncate flex items-center gap-1">
                               <UserGroupIcon className="w-3 h-3" />
                               {event.spaceName}
                             </div>
                           )}
                           {event.location && (
-                            <div className="text-white/70 truncate flex items-center gap-1">
+                            <div className="text-white/50 truncate flex items-center gap-1">
                               <MapPinIcon className="w-3 h-3" />
                               {event.location}
                             </div>
@@ -535,7 +535,7 @@ export default function ProfileCalendarPage() {
             {getTimeBlocks(currentDate).map((block) => (
               <div
                 key={block.hour}
-                className={`flex gap-4 p-3 rounded-lg border ${
+                className={`flex gap-4 p-3 rounded-lg${
                   block.isFreeTime
                     ? 'border-[var(--border-subtle)] bg-[var(--bg-muted)]/30'
                     : 'border-[var(--border-default)] bg-[var(--bg-surface)]'
@@ -560,7 +560,7 @@ export default function ProfileCalendarPage() {
                           }}
                         >
                           <div className="font-medium text-white">{event.title}</div>
-                          <div className="flex items-center gap-4 mt-1 text-sm text-white/70">
+                          <div className="flex items-center gap-4 mt-1 text-sm text-white/50">
                             {event.type === 'space' && event.spaceName && (
                               <span className="flex items-center gap-1">
                                 <UserGroupIcon className="w-4 h-4" />

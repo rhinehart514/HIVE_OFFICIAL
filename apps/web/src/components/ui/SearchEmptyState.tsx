@@ -51,13 +51,13 @@ export function SearchEmptyState({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
+        <div className="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center mb-4">
           <AlertCircle className="w-6 h-6 text-red-400" />
         </div>
-        <h3 className="text-body font-medium text-white/80 mb-2">
+        <h3 className="text-body font-medium text-white mb-2">
           Search failed
         </h3>
-        <p className="text-body-sm text-white/40 max-w-xs mb-4">
+        <p className="text-body-sm text-white/50 max-w-xs mb-4">
           We couldn't complete your search. Please try again.
         </p>
         {onRetry && (
@@ -84,13 +84,13 @@ export function SearchEmptyState({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
         >
-          <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mb-4">
-            <Search className="w-6 h-6 text-white/30" />
+          <div className="w-12 h-12 rounded-lg bg-white/[0.06] flex items-center justify-center mb-4">
+            <Search className="w-6 h-6 text-white/50" />
           </div>
-          <h3 className="text-body font-medium text-white/70 mb-1">
+          <h3 className="text-body font-medium text-white/50 mb-1">
             Search HIVE
           </h3>
-          <p className="text-body-sm text-white/40">
+          <p className="text-body-sm text-white/50">
             Find spaces, people, events, and more
           </p>
         </motion.div>
@@ -108,8 +108,8 @@ export function SearchEmptyState({
         {hasRecent && (
           <div className="mb-6">
             <div className="flex items-center gap-2 px-2 mb-2">
-              <Clock className="w-3.5 h-3.5 text-white/30" />
-              <span className="text-label-sm text-white/30 uppercase tracking-wider">
+              <Clock className="w-3.5 h-3.5 text-white/50" />
+              <span className="text-label-sm text-white/50 uppercase tracking-wider">
                 Recent
               </span>
             </div>
@@ -120,8 +120,8 @@ export function SearchEmptyState({
                   onClick={() => onSuggestionClick?.(search)}
                   className={cn(
                     'w-full text-left px-3 py-2 rounded-lg',
-                    'text-body-sm text-white/60 hover:text-white',
-                    'hover:bg-white/[0.04] transition-colors',
+                    'text-body-sm text-white/50 hover:text-white',
+                    'hover:bg-white/[0.06] transition-colors',
                     'flex items-center justify-between group'
                   )}
                   initial={{ opacity: 0, x: -10 }}
@@ -140,8 +140,8 @@ export function SearchEmptyState({
         {hasPopular && (
           <div>
             <div className="flex items-center gap-2 px-2 mb-2">
-              <TrendingUp className="w-3.5 h-3.5 text-white/30" />
-              <span className="text-label-sm text-white/30 uppercase tracking-wider">
+              <TrendingUp className="w-3.5 h-3.5 text-white/50" />
+              <span className="text-label-sm text-white/50 uppercase tracking-wider">
                 Popular
               </span>
             </div>
@@ -152,8 +152,8 @@ export function SearchEmptyState({
                   onClick={() => onSuggestionClick?.(search)}
                   className={cn(
                     'w-full text-left px-3 py-2 rounded-lg',
-                    'text-body-sm text-white/60 hover:text-white',
-                    'hover:bg-white/[0.04] transition-colors',
+                    'text-body-sm text-white/50 hover:text-white',
+                    'hover:bg-white/[0.06] transition-colors',
                     'flex items-center justify-between group'
                   )}
                   initial={{ opacity: 0, x: -10 }}
@@ -182,20 +182,20 @@ export function SearchEmptyState({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mb-4">
-        <Search className="w-6 h-6 text-white/30" />
+      <div className="w-12 h-12 rounded-lg bg-white/[0.06] flex items-center justify-center mb-4">
+        <Search className="w-6 h-6 text-white/50" />
       </div>
-      <h3 className="text-body font-medium text-white/70 mb-1">
+      <h3 className="text-body font-medium text-white/50 mb-1">
         No results for "{query}"
       </h3>
-      <p className="text-body-sm text-white/40 max-w-xs mb-4">
+      <p className="text-body-sm text-white/50 max-w-xs mb-4">
         Try a different search term or check your spelling
       </p>
 
       {/* Suggestions */}
       {suggestions.length > 0 && (
         <div className="w-full max-w-xs">
-          <p className="text-label-sm text-white/30 mb-2">Try searching for:</p>
+          <p className="text-label-sm text-white/50 mb-2">Try searching for:</p>
           <div className="flex flex-wrap gap-2 justify-center">
             {suggestions.slice(0, 4).map((suggestion) => (
               <button
@@ -203,8 +203,8 @@ export function SearchEmptyState({
                 onClick={() => onSuggestionClick?.(suggestion)}
                 className={cn(
                   'px-3 py-1.5 rounded-full',
-                  'text-label text-white/60 hover:text-white',
-                  'bg-white/[0.04] hover:bg-white/[0.08]',
+                  'text-label text-white/50 hover:text-white',
+                  'bg-white/[0.06] hover:bg-white/[0.06]',
                   'border border-white/[0.06] hover:border-white/[0.1]',
                   'transition-all duration-150'
                 )}

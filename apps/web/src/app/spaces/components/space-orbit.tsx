@@ -90,7 +90,7 @@ function WarmthGlow({
 
   return (
     <motion.div
-      className="absolute inset-0 pointer-events-none rounded-xl"
+      className="absolute inset-0 pointer-events-none rounded-lg"
       initial={{ opacity: 0 }}
       animate={{
         opacity: isHovered ? hoverOpacity : baseOpacity,
@@ -209,7 +209,7 @@ export function SpaceOrbit({
         className="block cursor-pointer group"
       >
         <motion.div
-          className="relative rounded-xl p-3 overflow-hidden"
+          className="relative rounded-lg p-3 overflow-hidden"
           style={{
             background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
@@ -230,7 +230,7 @@ export function SpaceOrbit({
                   onClick={(e) => e.stopPropagation()}
                   className="p-1.5 rounded-md bg-black/40 hover:bg-black/60 transition-colors"
                 >
-                  <MoreHorizontal className="w-3.5 h-3.5 text-white/60" />
+                  <MoreHorizontal className="w-3.5 h-3.5 text-white/50" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
@@ -285,7 +285,7 @@ export function SpaceOrbit({
             {/* Name and stats */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-white/90 truncate">
+                <p className="text-sm font-medium text-white truncate">
                   {space.name}
                 </p>
                 {/* Unread badge */}
@@ -304,7 +304,7 @@ export function SpaceOrbit({
               <div className="flex items-center gap-2 mt-0.5">
                 {/* Energy dots */}
                 <EnergyDots count={energyDotCount} />
-                {energyDotCount > 0 && <span className="text-white/20">·</span>}
+                {energyDotCount > 0 && <span className="text-white/50">·</span>}
                 {/* Member count or online */}
                 {(space.onlineCount ?? 0) > 0 ? (
                   <div className="flex items-center gap-1">
@@ -314,7 +314,7 @@ export function SpaceOrbit({
                     </span>
                   </div>
                 ) : (
-                  <span className="text-xs text-white/30">
+                  <span className="text-xs text-white/50">
                     {space.memberCount} members
                   </span>
                 )}
@@ -352,12 +352,12 @@ export function OrganizationsGrid({
   if (spaces.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-white/40 italic">
+        <p className="text-sm text-white/50 italic">
           No organizations yet
         </p>
         <Link
-          href="/spaces/browse"
-          className="inline-block mt-3 text-sm text-white/50 hover:text-white/70 transition-colors"
+          href="/discover"
+          className="inline-block mt-3 text-sm text-white/50 hover:text-white/50 transition-colors"
         >
           Browse spaces →
         </Link>
@@ -384,7 +384,7 @@ export function OrganizationsGrid({
         <div className="mt-4 text-center">
           <Link
             href="/spaces"
-            className="text-sm text-white/40 hover:text-white/60 transition-colors"
+            className="text-sm text-white/50 hover:text-white/50 transition-colors"
           >
             +{remainingCount} more spaces
           </Link>

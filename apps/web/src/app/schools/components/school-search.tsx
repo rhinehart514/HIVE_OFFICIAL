@@ -104,14 +104,14 @@ export function SchoolSearch() {
     <div className="space-y-4">
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40 z-10" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/50 z-10" />
         <motion.input
           ref={inputRef}
           type="search"
           placeholder="Search for your school..."
           className={cn(
-            "w-full pl-12 pr-4 py-4 bg-black/40 backdrop-blur-xl border rounded-xl text-white placeholder:text-white/40 transition-all duration-300",
-            "focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30",
+            "w-full pl-12 pr-4 py-4 bg-black/40 rounded-lg text-white placeholder:text-white/50 transition-all duration-300",
+            "focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50",
             "hover:bg-black/50 hover:border-white/25"
           )}
           value={query}
@@ -131,10 +131,10 @@ export function SchoolSearch() {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-center py-4 text-white/60"
+          className="flex items-center justify-center py-4 text-white/50"
           aria-live="polite"
         >
-          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          <Loader2 className="w-4 h-4  mr-2" />
           <span className="text-sm">Searching schools...</span>
         </motion.div>
       )}
@@ -144,7 +144,7 @@ export function SchoolSearch() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-xl text-red-400 text-sm"
+          className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm"
           aria-live="assertive"
         >
           {error}
@@ -159,7 +159,7 @@ export function SchoolSearch() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-            className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden max-h-80 overflow-y-auto"
+            className="bg-black/40 border border-white/[0.06] rounded-lg overflow-hidden max-h-80 overflow-y-auto"
           >
             {filteredSchools.length > 0 ? (
               <ul id="school-results" role="listbox" ref={listRef} className="p-2">
@@ -170,10 +170,10 @@ export function SchoolSearch() {
                     role="option"
                     aria-selected={index === activeIndex}
                     className={cn(
-                      "p-4 rounded-xl cursor-pointer transition-all duration-200 border border-transparent",
+                      "p-4 rounded-lg cursor-pointer transition-all duration-200border-transparent",
                       index === activeIndex 
-                        ? "bg-white/10 border-white/20" 
-                        : "hover:bg-white/5 hover:border-white/10"
+                        ? "bg-white/[0.06] border-white/[0.06]" 
+                        : "hover:bg-white/[0.06] hover:border-white/[0.06]"
                     )}
                     onClick={() => handleSchoolSelect(school)}
                     onKeyDown={(e) => {
@@ -190,13 +190,13 @@ export function SchoolSearch() {
                     whileTap={{ opacity: 0.8 }}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
-                        <GraduationCap className="w-5 h-5 text-white/70" />
+                      <div className="w-10 h-10 bg-white/[0.06] rounded-lg flex items-center justify-centerborder-white/[0.06]">
+                        <GraduationCap className="w-5 h-5 text-white/50" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-white text-sm">{school.name}</div>
                         <div className="flex items-center space-x-4 mt-1">
-                          <div className="flex items-center text-xs text-white/60">
+                          <div className="flex items-center text-xs text-white/50">
                             <MapPin className="w-3 h-3 mr-1" />
                             <span>{school.domain}</span>
                           </div>
@@ -211,8 +211,8 @@ export function SchoolSearch() {
                       <div className={cn(
                         "px-3 py-1 rounded-full text-xs font-medium",
                         school.status === "active" 
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                          : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                          ? "bg-emerald-500/20 text-emerald-400border-emerald-500/30"
+                          : "bg-amber-500/20 text-amber-400border-amber-500/30"
                       )}>
                         {school.status === "active" ? "Active" : "Waitlist"}
                       </div>
@@ -224,11 +224,11 @@ export function SchoolSearch() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="p-8 text-center text-white/60"
+                className="p-8 text-center text-white/50"
               >
-                <GraduationCap className="w-12 h-12 mx-auto mb-3 text-white/40" />
+                <GraduationCap className="w-12 h-12 mx-auto mb-3 text-white/50" />
                 <p className="text-sm">No schools found</p>
-                <p className="text-xs text-white/40 mt-1">
+                <p className="text-xs text-white/50 mt-1">
                   Try a different search term
                 </p>
               </motion.div>

@@ -40,17 +40,17 @@ function StatCard({
         delay: shouldReduceMotion ? 0 : index * 0.08,
         ease: EASE,
       }}
-      className="flex items-center gap-3 px-4 py-3 rounded-xl
-        border border-white/[0.06] bg-white/[0.02]"
+      className="flex items-center gap-3 px-4 py-3 rounded-lg
+       border-white/[0.06] bg-white/[0.06]"
     >
-      <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-        <Icon className="w-4 h-4 text-white/40" />
+      <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-white/50" />
       </div>
       <div className="min-w-0">
         <div className="text-lg font-semibold text-white leading-tight">
           {value.toLocaleString()}
         </div>
-        <div className="text-[11px] text-white/40 leading-tight">{label}</div>
+        <div className="text-[11px] text-white/50 leading-tight">{label}</div>
       </div>
     </motion.div>
   );

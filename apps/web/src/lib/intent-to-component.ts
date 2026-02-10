@@ -20,6 +20,8 @@ import type {
   PollCommand,
   RsvpCommand,
   CountdownCommand,
+  SignupCommand,
+  EventCommand,
 } from './slash-command-parser';
 import { logger } from './logger';
 
@@ -66,8 +68,13 @@ export function createComponentFromIntent(
       case 'countdown':
         return createCountdownFromIntent(intent.params, context);
 
+      case 'signup':
+        return createSignupFromIntent(intent.params, context);
+
+      case 'event':
+        return createEventFromIntent(intent.params, context);
+
       case 'announcement':
-        // Announcements are handled differently - they're styled messages
         return {
           success: false,
           error: 'Announcements are styled messages, not components',
@@ -120,8 +127,13 @@ export function createComponentFromSlashCommand(
       case 'countdown':
         return createCountdownFromCommand(command as CountdownCommand, context);
 
+      case 'signup':
+        return createSignupFromCommand(command as SignupCommand, context);
+
+      case 'event':
+        return createEventFromCommand(command as EventCommand, context);
+
       case 'announce':
-        // Announcements are handled differently
         return {
           success: false,
           error: 'Announcements are styled messages, not inline components',
@@ -400,6 +412,145 @@ function createCountdownFromCommand(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Signup Creation (from AI intent)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createSignupFromIntent(
+  params: IntentParams,
+  context: ComponentCreationContext
+): ComponentCreationResult {
+  const title = params.signupTitle || params.title || 'Signup';
+  const slots = params.slots || [];
+
+  if (slots.length === 0) {
+    return {
+      success: false,
+      error: 'At least one slot is required for a signup sheet',
+    };
+  }
+
+  const result = InlineComponent.createSignup({
+    spaceId: context.spaceId,
+    boardId: context.boardId,
+    messageId: context.messageId,
+    createdBy: context.createdBy,
+    title,
+    slots,
+    limitPerSlot: params.limitPerSlot,
+  });
+
+  if (result.isFailure) {
+    return { success: false, error: result.error || 'Failed to create signup' };
+  }
+
+  return { success: true, component: result.getValue() };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Event Creation (from AI intent)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createEventFromIntent(
+  params: IntentParams,
+  context: ComponentCreationContext
+): ComponentCreationResult {
+  const title = params.eventTitle || params.title || 'Event';
+  const date = params.eventDate || params.targetDate;
+
+  if (!date) {
+    return {
+      success: false,
+      error: 'Event date is required',
+    };
+  }
+
+  const result = InlineComponent.createEvent({
+    spaceId: context.spaceId,
+    boardId: context.boardId,
+    messageId: context.messageId,
+    createdBy: context.createdBy,
+    title,
+    date,
+    location: params.location,
+    description: params.description,
+  });
+
+  if (result.isFailure) {
+    return { success: false, error: result.error || 'Failed to create event' };
+  }
+
+  return { success: true, component: result.getValue() };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Signup Creation (from slash command)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createSignupFromCommand(
+  command: SignupCommand,
+  context: ComponentCreationContext
+): ComponentCreationResult {
+  const { parsed } = command;
+
+  const result = InlineComponent.createSignup({
+    spaceId: context.spaceId,
+    boardId: context.boardId,
+    messageId: context.messageId,
+    createdBy: context.createdBy,
+    title: parsed.title,
+    slots: parsed.slots,
+    limitPerSlot: parsed.limitPerSlot,
+    deadline: parsed.deadline,
+  });
+
+  if (result.isFailure) {
+    return {
+      success: false,
+      error: result.error || 'Failed to create signup',
+    };
+  }
+
+  return {
+    success: true,
+    component: result.getValue(),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Event Creation
+// ─────────────────────────────────────────────────────────────────────────────
+
+function createEventFromCommand(
+  command: EventCommand,
+  context: ComponentCreationContext
+): ComponentCreationResult {
+  const { parsed } = command;
+
+  const result = InlineComponent.createEvent({
+    spaceId: context.spaceId,
+    boardId: context.boardId,
+    messageId: context.messageId,
+    createdBy: context.createdBy,
+    title: parsed.title,
+    date: parsed.date,
+    location: parsed.location,
+    description: parsed.description,
+  });
+
+  if (result.isFailure) {
+    return {
+      success: false,
+      error: result.error || 'Failed to create event',
+    };
+  }
+
+  return {
+    success: true,
+    component: result.getValue(),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Unified Handler
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -507,6 +658,16 @@ export function describeCreation(
       case 'countdown': {
         const countdown = intent as CountdownCommand;
         return `Creating countdown to: "${countdown.parsed.title}"`;
+      }
+
+      case 'signup': {
+        const signup = intent as SignupCommand;
+        return `Creating signup: "${signup.parsed.title}" with ${signup.parsed.slots.length} slots`;
+      }
+
+      case 'event': {
+        const event = intent as EventCommand;
+        return `Creating event: "${event.parsed.title}"`;
       }
 
       default:

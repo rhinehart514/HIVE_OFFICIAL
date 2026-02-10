@@ -68,7 +68,7 @@ export function PageContainer({
  * - Event cards grid
  *
  * Uses staggered wave animation (0.15s delay between elements)
- * Base color: white/[0.08] per design tokens
+ * Base color: white/[0.06] per design tokens
  */
 export function CalendarLoadingSkeleton() {
   return (
@@ -77,12 +77,12 @@ export function CalendarLoadingSkeleton() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <motion.div
-            className="h-7 w-24 bg-white/[0.08] rounded mb-2"
+            className="h-7 w-24 bg-white/[0.06] rounded mb-2"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.premium }}
           />
           <motion.div
-            className="h-4 w-56 bg-white/[0.08] rounded"
+            className="h-4 w-56 bg-white/[0.06] rounded"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.premium }}
           />
@@ -90,12 +90,12 @@ export function CalendarLoadingSkeleton() {
         {/* Action buttons */}
         <div className="flex items-center gap-3">
           <motion.div
-            className="h-9 w-20 bg-white/[0.08] rounded-lg"
+            className="h-9 w-20 bg-white/[0.06] rounded-lg"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.15, ease: MOTION.ease.premium }}
           />
           <motion.div
-            className="h-9 w-24 bg-white/[0.08] rounded-lg"
+            className="h-9 w-24 bg-white/[0.06] rounded-lg"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.premium }}
           />
@@ -113,23 +113,23 @@ export function CalendarLoadingSkeleton() {
           {/* Prev/Next + Month */}
           <div className="flex items-center gap-2">
             <motion.div
-              className="h-9 w-9 bg-white/[0.08] rounded-lg"
+              className="h-9 w-9 bg-white/[0.06] rounded-lg"
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.3, ease: MOTION.ease.premium }}
             />
             <motion.div
-              className="h-7 w-44 bg-white/[0.08] rounded"
+              className="h-7 w-44 bg-white/[0.06] rounded"
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.35, ease: MOTION.ease.premium }}
             />
             <motion.div
-              className="h-9 w-9 bg-white/[0.08] rounded-lg"
+              className="h-9 w-9 bg-white/[0.06] rounded-lg"
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.4, ease: MOTION.ease.premium }}
             />
           </div>
           <motion.div
-            className="h-9 w-16 bg-white/[0.08] rounded-lg"
+            className="h-9 w-16 bg-white/[0.06] rounded-lg"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.45, ease: MOTION.ease.premium }}
           />
@@ -138,12 +138,12 @@ export function CalendarLoadingSkeleton() {
         {/* Filter dropdown */}
         <div className="flex items-center gap-2">
           <motion.div
-            className="h-4 w-4 bg-white/[0.08] rounded"
+            className="h-4 w-4 bg-white/[0.06] rounded"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.5, ease: MOTION.ease.premium }}
           />
           <motion.div
-            className="h-8 w-32 bg-white/[0.08] rounded-lg"
+            className="h-8 w-32 bg-white/[0.06] rounded-lg"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: 0.55, ease: MOTION.ease.premium }}
           />
@@ -155,7 +155,7 @@ export function CalendarLoadingSkeleton() {
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <motion.div
             key={i}
-            className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+            className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{
               duration: 1.5,
@@ -168,12 +168,12 @@ export function CalendarLoadingSkeleton() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <motion.div
-                  className="w-3 h-3 rounded-full bg-white/[0.08]"
+                  className="w-3 h-3 rounded-full bg-white/[0.06]"
                   animate={{ opacity: [0.5, 1, 0.5] }}
                   transition={{ duration: 1.5, repeat: Infinity, delay: 0.65 + i * 0.1, ease: MOTION.ease.premium }}
                 />
                 <motion.div
-                  className="w-5 h-5 bg-white/[0.08] rounded"
+                  className="w-5 h-5 bg-white/[0.06] rounded"
                   animate={{ opacity: [0.5, 1, 0.5] }}
                   transition={{ duration: 1.5, repeat: Infinity, delay: 0.7 + i * 0.1, ease: MOTION.ease.premium }}
                 />
@@ -182,7 +182,7 @@ export function CalendarLoadingSkeleton() {
 
             {/* Event title */}
             <motion.div
-              className="h-5 w-3/4 bg-white/[0.08] rounded mb-3"
+              className="h-5 w-3/4 bg-white/[0.06] rounded mb-3"
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 + i * 0.1, ease: MOTION.ease.premium }}
             />
@@ -204,12 +204,12 @@ export function CalendarLoadingSkeleton() {
             {/* Footer badges */}
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.06]">
               <motion.div
-                className="h-5 w-16 bg-white/[0.08] rounded-full"
+                className="h-5 w-16 bg-white/[0.06] rounded-full"
                 animate={{ opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: 0.9 + i * 0.1, ease: MOTION.ease.premium }}
               />
               <motion.div
-                className="h-5 w-14 bg-white/[0.08] rounded-full"
+                className="h-5 w-14 bg-white/[0.06] rounded-full"
                 animate={{ opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: 0.95 + i * 0.1, ease: MOTION.ease.premium }}
               />
@@ -393,7 +393,7 @@ function ConflictGroup({ events, onResolve, isResolving }: ConflictGroupProps) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className="bg-[var(--hive-status-error)]/5 border border-[var(--hive-status-error)]/20 rounded-xl overflow-hidden"
+      className="bg-[var(--hive-status-error)]/5 border border-[var(--hive-status-error)]/20 rounded-lg overflow-hidden"
     >
       {/* Header */}
       <button
@@ -468,14 +468,14 @@ function ConflictEventRow({ event, onResolve, isResolving, index }: ConflictEven
       transition={{ delay: index * 0.05, duration: 0.2, ease: MOTION.ease.premium }}
       className={`flex items-center justify-between p-3 rounded-lg transition-all ${
         isNotGoing
-          ? 'bg-white/[0.02] opacity-60'
+          ? 'bg-white/[0.06] opacity-60'
           : 'bg-[var(--surface-elevated)]'
       }`}
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Event indicator */}
         <div className={`w-1 h-10 rounded-full ${
-          isNotGoing ? 'bg-white/10' : getTypeColor(event.type)
+          isNotGoing ? 'bg-white/[0.06]' : getTypeColor(event.type)
         }`} />
 
         <div className="min-w-0 flex-1">
@@ -628,7 +628,7 @@ export function ConflictResolutionPanel({
         animate={{ opacity: 1, scale: 1 }}
         className="text-center py-12"
       >
-        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--hive-status-success)]/10 flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-[var(--hive-status-success)]/10 flex items-center justify-center">
           <CheckIcon className="h-8 w-8 text-[var(--hive-status-success)]" />
         </div>
         <h3 className="text-heading-sm text-[var(--text-primary)] mb-2">

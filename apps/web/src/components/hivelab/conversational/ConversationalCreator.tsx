@@ -193,11 +193,11 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: durationSeconds.quick, ease: EASE }}
           className="sticky top-0 z-10 flex items-center gap-3 px-6 py-4
-            bg-[var(--bg-ground,#0A0A09)]/80 backdrop-blur-sm border-b border-white/[0.04]"
+            bg-[var(--bg-ground,#0A0A09)]/80 border-b border-white/[0.06]"
         >
           <button
             onClick={handleStartOver}
-            className="flex items-center gap-1.5 text-white/40 hover:text-white/70
+            className="flex items-center gap-1.5 text-white/50 hover:text-white/50
               transition-colors duration-150 text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -205,7 +205,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
           </button>
           <div className="flex-1" />
           {toolName && (
-            <span className="text-white/30 text-xs truncate max-w-48">{toolName}</span>
+            <span className="text-white/50 text-xs truncate max-w-48">{toolName}</span>
           )}
         </motion.div>
       )}
@@ -257,7 +257,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
             className="min-h-[60vh] flex flex-col items-center justify-center"
           >
             <BrandSpinner size="md" variant="gold" />
-            <p className="mt-4 text-white/40 text-sm">Setting up your workspace...</p>
+            <p className="mt-4 text-white/50 text-sm">Setting up your workspace...</p>
           </motion.div>
         )}
 
@@ -334,7 +334,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: durationSeconds.smooth, delay: 0.1, ease: EASE }}
-              className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-6 mb-6"
+              className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4 sm:p-6 mb-6"
             >
               {elements.length > 0 ? (
                 <ToolCanvas
@@ -343,7 +343,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
                   layout="flow"
                 />
               ) : (
-                <div className="py-12 text-center text-white/30 text-sm">
+                <div className="py-12 text-center text-white/50 text-sm">
                   No elements generated. Try a more specific prompt.
                 </div>
               )}
@@ -372,7 +372,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               <button
                 onClick={handleDeploy}
                 className="flex-1 flex items-center justify-center gap-2 px-5 py-3
-                  rounded-xl bg-[var(--life-gold)] text-black font-medium text-sm
+                  rounded-lg bg-[var(--life-gold)] text-black font-medium text-sm
                   hover:brightness-110 transition-all duration-150"
               >
                 <Rocket className="w-4 h-4" />
@@ -381,7 +381,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               <button
                 onClick={handleEditManually}
                 className="flex-1 flex items-center justify-center gap-2 px-5 py-3
-                  rounded-xl bg-white/[0.06] text-white/70 text-sm border border-white/[0.08]
+                  rounded-lg bg-white/[0.06] text-white/50 text-smborder-white/[0.06]
                   hover:bg-white/[0.10] hover:text-white transition-all duration-150"
               >
                 <Pencil className="w-4 h-4" />
@@ -390,8 +390,8 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               <button
                 onClick={handleStartOver}
                 className="flex items-center justify-center gap-2 px-5 py-3
-                  rounded-xl text-white/40 text-sm
-                  hover:text-white/60 hover:bg-white/[0.03] transition-all duration-150"
+                  rounded-lg text-white/50 text-sm
+                  hover:text-white/50 hover:bg-white/[0.06] transition-all duration-150"
               >
                 <RotateCcw className="w-4 h-4" />
                 Start Over

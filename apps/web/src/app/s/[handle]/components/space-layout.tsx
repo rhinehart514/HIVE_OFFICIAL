@@ -143,7 +143,7 @@ export function SpaceLayout({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                className="fixed inset-0 bg-black/60  z-40"
                 onClick={onToggleMobileSidebar}
               />
 
@@ -166,7 +166,7 @@ export function SpaceLayout({
               >
                 {/* Drag handle */}
                 <div className="flex justify-center py-3">
-                  <div className="w-10 h-1 rounded-full bg-white/20" />
+                  <div className="w-10 h-1 rounded-full bg-white/[0.06]" />
                 </div>
 
                 {/* Sidebar content */}

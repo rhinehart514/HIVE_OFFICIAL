@@ -165,10 +165,10 @@ function SearchResultRow({
         size="sm"
       />
       <div className="flex-1 min-w-0">
-        <Text weight="medium" className="text-white/90 truncate">
+        <Text weight="medium" className="text-white truncate">
           {space.name}
         </Text>
-        <Text size="xs" className="text-white/40">
+        <Text size="xs" className="text-white/50">
           {space.memberCount.toLocaleString()} members
         </Text>
       </div>
@@ -292,7 +292,7 @@ export function IdentityClaimModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/60 "
           />
 
           {/* Modal */}
@@ -305,29 +305,29 @@ export function IdentityClaimModal({
               'fixed z-50',
               'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
               'w-full max-w-md',
-              'bg-[var(--bg-surface)] border border-white/[0.08]',
-              'rounded-2xl shadow-2xl',
+              'bg-[var(--bg-surface)] border border-white/[0.06]',
+              'rounded-lg',
               'overflow-hidden'
             )}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-white/[0.04]">
-                  <Icon className="w-5 h-5 text-white/60" />
+                <div className="p-2 rounded-lg bg-white/[0.06]">
+                  <Icon className="w-5 h-5 text-white/50" />
                 </div>
                 <div>
                   <Text weight="semibold" className="text-white">
                     {config.title}
                   </Text>
-                  <Text size="xs" className="text-white/40">
+                  <Text size="xs" className="text-white/50">
                     {config.description}
                   </Text>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-colors"
+                className="p-2 rounded-lg text-white/50 hover:text-white/50 hover:bg-white/[0.06] transition-colors"
                 aria-label="Close modal"
               >
                 <XMarkIcon className="w-5 h-5" aria-hidden="true" />
@@ -337,7 +337,7 @@ export function IdentityClaimModal({
             {/* Search */}
             <div className="px-5 py-3 border-b border-white/[0.06]">
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -345,10 +345,10 @@ export function IdentityClaimModal({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={config.searchPlaceholder}
                   className={cn(
-                    'w-full bg-white/[0.04] border border-white/[0.06]',
+                    'w-full bg-white/[0.06] border border-white/[0.06]',
                     'rounded-lg py-2.5 pl-9 pr-4',
-                    'text-sm text-white placeholder:text-white/30',
-                    'focus:outline-none focus:ring-2 focus:ring-white/20'
+                    'text-sm text-white placeholder:text-white/50',
+                    'focus:outline-none focus:ring-2 focus:ring-white/50'
                   )}
                 />
               </div>
@@ -359,7 +359,7 @@ export function IdentityClaimModal({
               {loading ? (
                 <div className="p-4 space-y-3">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 animate-pulse">
+                    <div key={i} className="flex items-center gap-3">
                       <Skeleton className="w-8 h-8 rounded-lg" />
                       <div className="flex-1 space-y-2">
                         <Skeleton className="h-4 w-32" />
@@ -370,12 +370,12 @@ export function IdentityClaimModal({
                 </div>
               ) : filteredResults.length === 0 ? (
                 <div className="py-12 text-center">
-                  <Text className="text-white/40">
+                  <Text className="text-white/50">
                     {searchQuery ? 'No results found' : 'No options available'}
                   </Text>
                 </div>
               ) : (
-                <div className="divide-y divide-white/[0.04]">
+                <div className="divide-y divide-white/[0.06]">
                   {filteredResults.map((space) => (
                     <SearchResultRow
                       key={space.id}
@@ -389,7 +389,7 @@ export function IdentityClaimModal({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/[0.06] bg-white/[0.02]">
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/[0.06] bg-white/[0.06]">
               <Button variant="ghost" size="sm" onClick={onClose}>
                 Cancel
               </Button>

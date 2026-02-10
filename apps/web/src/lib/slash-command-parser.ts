@@ -17,7 +17,7 @@
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type SlashCommandType = 'poll' | 'rsvp' | 'countdown' | 'announce' | 'automate' | 'welcome' | 'remind' | 'help' | 'unknown';
+export type SlashCommandType = 'poll' | 'rsvp' | 'countdown' | 'announce' | 'automate' | 'welcome' | 'remind' | 'signup' | 'event' | 'help' | 'unknown';
 
 export interface SlashCommand {
   command: SlashCommandType;
@@ -97,6 +97,26 @@ export interface WelcomeCommand extends SlashCommand {
   };
 }
 
+export interface SignupCommand extends SlashCommand {
+  command: 'signup';
+  parsed: {
+    title: string;
+    slots: string[];
+    limitPerSlot?: number;
+    deadline?: Date;
+  };
+}
+
+export interface EventCommand extends SlashCommand {
+  command: 'event';
+  parsed: {
+    title: string;
+    date: Date;
+    location?: string;
+    description?: string;
+  };
+}
+
 export interface RemindCommand extends SlashCommand {
   command: 'remind';
   parsed: {
@@ -114,6 +134,8 @@ export type ParsedSlashCommand =
   | AutomateCommand
   | WelcomeCommand
   | RemindCommand
+  | SignupCommand
+  | EventCommand
   | HelpCommand
   | SlashCommand;
 
@@ -121,7 +143,7 @@ export type ParsedSlashCommand =
 // Command Registry
 // ─────────────────────────────────────────────────────────────────────────────
 
-const COMMANDS: readonly SlashCommandType[] = ['poll', 'rsvp', 'countdown', 'announce', 'automate', 'welcome', 'remind', 'help'];
+const COMMANDS: readonly SlashCommandType[] = ['poll', 'rsvp', 'countdown', 'announce', 'automate', 'welcome', 'remind', 'signup', 'event', 'help'];
 
 export const COMMAND_HELP: Record<SlashCommandType, { syntax: string; description: string; examples: string[] }> = {
   poll: {
@@ -184,6 +206,24 @@ export const COMMAND_HELP: Record<SlashCommandType, { syntax: string; descriptio
       '/remind 30',
       '/remind 60 "Don\'t forget about {event}!"',
       '/remind 15 --board=events',
+    ],
+  },
+  signup: {
+    syntax: '/signup "Title" Slot1 Slot2 [Slot3...] [--limit=<number>] [--deadline=<date>]',
+    description: 'Create a slot-based signup sheet',
+    examples: [
+      '/signup "Bake Sale" Cookies Brownies Cupcakes',
+      '/signup "Setup Crew" Tables Chairs AV --limit=4',
+      '/signup "Carpool" Driver1 Driver2 Driver3 --limit=5 --deadline=friday',
+    ],
+  },
+  event: {
+    syntax: '/event "Title" --date=<date> [--location="Place"] [--description="Details"]',
+    description: 'Create an event inline in chat',
+    examples: [
+      '/event "Weekly Meeting" --date=tuesday --location="SU 330"',
+      '/event "Study Session" --date=2026-02-15 --location="Library 2F"',
+      '/event "End of Year Party" --date=2026-05-01 --description="Celebrate the semester!"',
     ],
   },
   help: {
@@ -250,6 +290,10 @@ export function parseSlashCommand(input: string): ParsedSlashCommand {
       return parseWelcomeCommand(argsStr, input);
     case 'remind':
       return parseRemindCommand(argsStr, input);
+    case 'signup':
+      return parseSignupCommand(argsStr, input);
+    case 'event':
+      return parseEventCommand(argsStr, input);
     case 'help':
       return parseHelpCommand(argsStr, input);
     default:
@@ -693,6 +737,159 @@ function parseHelpCommand(argsStr: string, raw: string): HelpCommand {
   };
 }
 
+/**
+ * Parse signup command
+ * /signup "Title" Slot1 Slot2 [--limit=<number>] [--deadline=<date>]
+ */
+function parseSignupCommand(argsStr: string, raw: string): SignupCommand {
+  const { quoted, positional, flags } = parseArgsAndFlags(argsStr);
+
+  const title = quoted[0];
+  if (!title) {
+    return {
+      command: 'signup',
+      args: positional,
+      flags,
+      raw,
+      isValid: false,
+      error: 'Signup title required. Use: /signup "Title" Slot1 Slot2',
+      parsed: {
+        title: '',
+        slots: [],
+      },
+    };
+  }
+
+  const slots = positional.filter(s => s.length > 0);
+  if (slots.length < 1) {
+    return {
+      command: 'signup',
+      args: positional,
+      flags,
+      raw,
+      isValid: false,
+      error: 'At least one slot is required. Use: /signup "Title" Slot1 Slot2',
+      parsed: {
+        title,
+        slots: [],
+      },
+    };
+  }
+
+  if (slots.length > 20) {
+    return {
+      command: 'signup',
+      args: positional,
+      flags,
+      raw,
+      isValid: false,
+      error: 'Signup cannot have more than 20 slots.',
+      parsed: {
+        title,
+        slots,
+      },
+    };
+  }
+
+  let limitPerSlot: number | undefined;
+  if (typeof flags.limit === 'number') {
+    limitPerSlot = flags.limit;
+  } else if (typeof flags.limit === 'string') {
+    limitPerSlot = parseInt(flags.limit, 10) || undefined;
+  }
+
+  let deadline: Date | undefined;
+  if (flags.deadline) {
+    deadline = parseDate(String(flags.deadline));
+  }
+
+  return {
+    command: 'signup',
+    args: positional,
+    flags,
+    raw,
+    isValid: true,
+    parsed: {
+      title,
+      slots,
+      limitPerSlot,
+      deadline,
+    },
+  };
+}
+
+/**
+ * Parse event command
+ * /event "Title" --date=<date> [--location="Place"] [--description="Details"]
+ */
+function parseEventCommand(argsStr: string, raw: string): EventCommand {
+  const { quoted, flags } = parseArgsAndFlags(argsStr);
+
+  const title = quoted[0];
+  if (!title) {
+    return {
+      command: 'event',
+      args: [],
+      flags,
+      raw,
+      isValid: false,
+      error: 'Event title required. Use: /event "Title" --date=tomorrow',
+      parsed: {
+        title: '',
+        date: new Date(),
+      },
+    };
+  }
+
+  if (!flags.date) {
+    return {
+      command: 'event',
+      args: [],
+      flags,
+      raw,
+      isValid: false,
+      error: 'Event date required. Use: /event "Title" --date=2026-02-20',
+      parsed: {
+        title,
+        date: new Date(),
+      },
+    };
+  }
+
+  const date = parseDate(String(flags.date));
+  if (!date || isNaN(date.getTime())) {
+    return {
+      command: 'event',
+      args: [],
+      flags,
+      raw,
+      isValid: false,
+      error: `Invalid date: ${flags.date}. Use format like 2026-02-20 or "tomorrow"`,
+      parsed: {
+        title,
+        date: new Date(),
+      },
+    };
+  }
+
+  const location = typeof flags.location === 'string' ? flags.location : (quoted[1] || undefined);
+  const description = typeof flags.description === 'string' ? flags.description : (quoted[2] || undefined);
+
+  return {
+    command: 'event',
+    args: [],
+    flags,
+    raw,
+    isValid: true,
+    parsed: {
+      title,
+      date,
+      location,
+      description,
+    },
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilities
 // ─────────────────────────────────────────────────────────────────────────────
@@ -882,6 +1079,10 @@ export function getAutocompleteSuggestions(input: string): string[] {
       return ['--delay=', '--board='];
     case 'remind':
       return ['--board='];
+    case 'signup':
+      return ['--limit=', '--deadline='];
+    case 'event':
+      return ['--date=', '--location=', '--description='];
     default:
       return [];
   }

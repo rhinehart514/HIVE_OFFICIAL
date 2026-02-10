@@ -119,10 +119,10 @@ function SpaceCard({
   return (
     <motion.div
       className={cn(
-        'group relative flex flex-col items-center gap-3 p-4 rounded-xl text-center',
+        'group relative flex flex-col items-center gap-3 p-4 rounded-lg text-center',
         'transition-all duration-200',
-        'bg-white/[0.02] hover:bg-white/[0.05]',
-        'ring-1 ring-white/[0.04] hover:ring-white/[0.08]',
+        'bg-white/[0.06] hover:bg-white/[0.06]',
+        'ring-1 ring-white/[0.06] hover:ring-white/[0.06]',
         'cursor-pointer'
       )}
       onClick={() => router.push(`/s/${space.handle || space.id}`)}
@@ -142,7 +142,7 @@ function SpaceCard({
               onClick={(e) => e.stopPropagation()}
               className="p-1.5 rounded-md bg-black/40 hover:bg-black/60 transition-colors"
             >
-              <MoreHorizontal className="w-3.5 h-3.5 text-white/60" />
+              <MoreHorizontal className="w-3.5 h-3.5 text-white/50" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
@@ -177,7 +177,7 @@ function SpaceCard({
       <div className="relative">
         <Avatar size="lg" className="ring-1 ring-white/[0.06]">
           {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-          <AvatarFallback className="text-body bg-white/[0.04]">
+          <AvatarFallback className="text-body bg-white/[0.06]">
             {getInitials(space.name)}
           </AvatarFallback>
         </Avatar>
@@ -203,7 +203,7 @@ function SpaceCard({
       </div>
 
       {/* Name */}
-      <span className="text-body-sm text-white/70 line-clamp-2 leading-snug">
+      <span className="text-body-sm text-white/50 line-clamp-2 leading-snug">
         {space.name}
       </span>
 
@@ -214,7 +214,7 @@ function SpaceCard({
             {space.onlineCount} here
           </span>
         ) : (
-          <span className="text-label text-white/30">
+          <span className="text-label text-white/50">
             {space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}
           </span>
         )}
@@ -236,12 +236,12 @@ function EmptySpaces() {
 
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-12">
-      <p className="text-body text-white/30 text-center mb-4">
+      <p className="text-body text-white/50 text-center mb-4">
         You haven't joined any spaces yet
       </p>
       <button
-        onClick={() => router.push('/spaces/browse')}
-        className="text-body-sm text-white/50 hover:text-white/70 transition-colors"
+        onClick={() => router.push('/discover')}
+        className="text-body-sm text-white/50 hover:text-white/50 transition-colors"
       >
         Browse spaces →
       </button>
@@ -282,19 +282,19 @@ export function OrganizationsPanel({
       {/* More card */}
       {remainingCount > 0 && (
         <motion.button
-          onClick={() => router.push('/spaces/browse')}
+          onClick={() => router.push('/discover')}
           className={cn(
-            'flex flex-col items-center justify-center gap-2 p-4 rounded-xl',
-            'bg-white/[0.02] hover:bg-white/[0.04]',
-            'ring-1 ring-white/[0.04] hover:ring-white/[0.06]',
+            'flex flex-col items-center justify-center gap-2 p-4 rounded-lg',
+            'bg-white/[0.06] hover:bg-white/[0.06]',
+            'ring-1 ring-white/[0.06] hover:ring-white/[0.06]',
             'transition-all duration-200'
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
         >
-          <span className="text-heading text-white/20">+{remainingCount}</span>
-          <span className="text-label text-white/30">more</span>
+          <span className="text-heading text-white/50">+{remainingCount}</span>
+          <span className="text-label text-white/50">more</span>
         </motion.button>
       )}
     </div>

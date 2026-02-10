@@ -80,9 +80,9 @@ function QRCodeDisplay({ value }: { value: string }) {
   // For simplicity, we'll show a placeholder with a copy link option
   // In production, you'd use a library like 'qrcode' or 'qrcode.react'
   return (
-    <div className="flex flex-col items-center gap-3 p-6 bg-white rounded-xl">
+    <div className="flex flex-col items-center gap-3 p-6 bg-white rounded-lg">
       <div className="w-32 h-32 bg-[var(--bg-ground)] rounded-lg flex items-center justify-center">
-        <QrCodeIcon className="w-16 h-16 text-white/20" />
+        <QrCodeIcon className="w-16 h-16 text-white/50" />
       </div>
       <Text size="xs" className="text-[#0A0A09]/60 text-center max-w-[200px] break-all">
         {value}
@@ -123,15 +123,15 @@ function InviteLinkRow({
     : `${invite.uses} uses`;
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.06] border border-white/[0.06]">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <LinkIcon className="w-4 h-4 text-white/40 flex-shrink-0" />
-          <Text size="sm" className="text-white/80 font-mono truncate">
+          <LinkIcon className="w-4 h-4 text-white/50 flex-shrink-0" />
+          <Text size="sm" className="text-white font-mono truncate">
             .../{invite.code.slice(0, 8)}
           </Text>
         </div>
-        <div className="flex items-center gap-3 text-xs text-white/40">
+        <div className="flex items-center gap-3 text-xs text-white/50">
           <span className="flex items-center gap-1">
             <ClockIcon className="w-3 h-3" />
             {expiresIn}
@@ -149,7 +149,7 @@ function InviteLinkRow({
             'p-2 rounded-lg transition-colors',
             copied
               ? 'bg-[var(--status-success-subtle)] text-[var(--status-success)]'
-              : 'bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white/80'
+              : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.06] hover:text-white'
           )}
           aria-label={copied ? 'Link copied' : 'Copy invite link'}
         >
@@ -162,11 +162,11 @@ function InviteLinkRow({
         <button
           onClick={onRevoke}
           disabled={isRevoking}
-          className="p-2 rounded-lg bg-white/[0.04] text-white/60 hover:bg-red-500/20 hover:text-red-400 transition-colors disabled:opacity-50"
+          className="p-2 rounded-lg bg-white/[0.06] text-white/50 hover:bg-red-500/20 hover:text-red-400 transition-colors disabled:opacity-50"
           aria-label={isRevoking ? 'Revoking link' : 'Revoke invite link'}
         >
           {isRevoking ? (
-            <ArrowPathIcon className="w-4 h-4 animate-spin" aria-hidden="true" />
+            <ArrowPathIcon className="w-4 h-4 " aria-hidden="true" />
           ) : (
             <TrashIcon className="w-4 h-4" aria-hidden="true" />
           )}
@@ -327,7 +327,7 @@ export function InviteLinkModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/60 "
           />
 
           {/* Modal */}
@@ -340,29 +340,29 @@ export function InviteLinkModal({
               'fixed z-50',
               'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
               'w-full max-w-lg',
-              'bg-[var(--bg-surface)] border border-white/[0.08]',
-              'rounded-2xl shadow-2xl',
+              'bg-[var(--bg-surface)] border border-white/[0.06]',
+              'rounded-lg',
               'overflow-hidden'
             )}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-white/[0.04]">
-                  <LinkIcon className="w-5 h-5 text-white/60" />
+                <div className="p-2 rounded-lg bg-white/[0.06]">
+                  <LinkIcon className="w-5 h-5 text-white/50" />
                 </div>
                 <div>
                   <Text weight="semibold" className="text-white">
                     Invite Members
                   </Text>
-                  <Text size="xs" className="text-white/40">
+                  <Text size="xs" className="text-white/50">
                     Share a link to invite people to {spaceName}
                   </Text>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-colors"
+                className="p-2 rounded-lg text-white/50 hover:text-white/50 hover:bg-white/[0.06] transition-colors"
               >
                 <XMarkIcon className="w-5 h-5" />
               </button>
@@ -386,7 +386,7 @@ export function InviteLinkModal({
 
               {/* Generate New Invite */}
               <div className="space-y-3">
-                <Text weight="medium" size="sm" className="text-white/60">
+                <Text weight="medium" size="sm" className="text-white/50">
                   Create New Link
                 </Text>
 
@@ -397,7 +397,7 @@ export function InviteLinkModal({
                     onChange={(e) => setExpiryDays(Number(e.target.value))}
                     className={cn(
                       'flex-1 px-3 py-2 rounded-lg',
-                      'bg-white/[0.04] border border-white/[0.08]',
+                      'bg-white/[0.06] border border-white/[0.06]',
                       'text-white text-sm',
                       'focus:outline-none focus:ring-2 focus:ring-white/50'
                     )}
@@ -417,7 +417,7 @@ export function InviteLinkModal({
                     }
                     className={cn(
                       'flex-1 px-3 py-2 rounded-lg',
-                      'bg-white/[0.04] border border-white/[0.08]',
+                      'bg-white/[0.06] border border-white/[0.06]',
                       'text-white text-sm',
                       'focus:outline-none focus:ring-2 focus:ring-white/50'
                     )}
@@ -437,7 +437,7 @@ export function InviteLinkModal({
                   className="w-full"
                 >
                   {generating ? (
-                    <ArrowPathIcon className="w-4 h-4 animate-spin mr-2" />
+                    <ArrowPathIcon className="w-4 h-4  mr-2" />
                   ) : (
                     <LinkIcon className="w-4 h-4 mr-2" />
                   )}
@@ -448,13 +448,13 @@ export function InviteLinkModal({
               {/* Existing Invites */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Text weight="medium" size="sm" className="text-white/60">
+                  <Text weight="medium" size="sm" className="text-white/50">
                     Active Links
                   </Text>
                   {invites.length > 0 && (
                     <button
                       onClick={() => setShowQR(!showQR)}
-                      className="flex items-center gap-1 text-xs text-white/40 hover:text-white/60 transition-colors"
+                      className="flex items-center gap-1 text-xs text-white/50 hover:text-white/50 transition-colors"
                     >
                       <QrCodeIcon className="w-3.5 h-3.5" />
                       {showQR ? 'Hide QR' : 'Show QR'}
@@ -470,11 +470,11 @@ export function InviteLinkModal({
                   </div>
                 ) : invites.length === 0 ? (
                   <div className="py-8 text-center">
-                    <LinkIcon className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                    <Text size="sm" className="text-white/40">
+                    <LinkIcon className="w-8 h-8 text-white/50 mx-auto mb-2" />
+                    <Text size="sm" className="text-white/50">
                       No active invite links
                     </Text>
-                    <Text size="xs" className="text-white/30">
+                    <Text size="xs" className="text-white/50">
                       Generate one to start inviting members
                     </Text>
                   </div>
@@ -498,8 +498,8 @@ export function InviteLinkModal({
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-white/[0.06] bg-white/[0.02]">
-              <Text size="xs" className="text-white/30 text-center">
+            <div className="px-5 py-4 border-t border-white/[0.06] bg-white/[0.06]">
+              <Text size="xs" className="text-white/50 text-center">
                 Invite links allow anyone with the link to join your space
               </Text>
             </div>

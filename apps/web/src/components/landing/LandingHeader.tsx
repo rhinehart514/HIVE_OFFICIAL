@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Logo } from '@hive/ui/design-system/primitives';
 import { ArrowRight } from 'lucide-react';
+import { buildUbEnterUrl } from './entry-url';
 
 export function LandingHeader() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
+  const claimHref = buildUbEnterUrl(searchParams.get('redirect'), '/spaces?claim=true');
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -21,9 +22,7 @@ export function LandingHeader() {
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-200"
       style={{
-        background: scrolled ? 'rgba(0, 0, 0, 0.9)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(12px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
+        background: scrolled ? 'rgba(0, 0, 0, 0.95)' : 'transparent',
         borderBottom: scrolled ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid transparent',
       }}
     >
@@ -33,19 +32,16 @@ export function LandingHeader() {
           <Link href="/about" className="text-sm text-white/50 hover:text-white transition-colors">
             About
           </Link>
-          <button
-            onClick={() => {
-              const redirect = searchParams.get('redirect');
-              const enterUrl = redirect
-                ? `/enter?schoolId=ub-buffalo&domain=buffalo.edu&redirect=${encodeURIComponent(redirect)}`
-                : '/enter?schoolId=ub-buffalo&domain=buffalo.edu';
-              router.push(enterUrl);
-            }}
-            className="px-4 py-2 bg-[#FFD700] text-black text-sm font-medium rounded-lg hover:bg-[#FFD700]/90 transition-colors flex items-center gap-2"
+          <Link href="/leaders" className="text-sm text-white/50 hover:text-white transition-colors">
+            Leaders
+          </Link>
+          <Link
+            href={claimHref}
+            className="px-4 py-2 bg-[var(--life-gold,#FFD700)] text-black text-sm font-medium rounded-full hover:bg-[var(--life-gold,#FFD700)]/90 transition-colors flex items-center gap-2"
           >
-            Join UB
+            Claim your club
             <ArrowRight className="w-4 h-4" />
-          </button>
+          </Link>
         </div>
       </div>
     </header>

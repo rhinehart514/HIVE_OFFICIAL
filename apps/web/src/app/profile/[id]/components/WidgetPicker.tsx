@@ -130,7 +130,7 @@ export function WidgetPicker({
                   <motion.button
                     key={widget.id}
                     onClick={() => onToggleWidget(widget.id)}
-                    className="flex flex-col items-start p-4 rounded-2xl text-left"
+                    className="flex flex-col items-start p-4 rounded-lg text-left"
                     style={{
                       backgroundColor: 'rgba(255, 255, 255, 0.04)',
                       border: '1px solid rgba(255, 255, 255, 0.06)',
@@ -143,7 +143,7 @@ export function WidgetPicker({
                   >
                     {/* Widget preview icon */}
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                      className="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
                       style={{
                         backgroundColor: 'rgba(255, 255, 255, 0.06)',
                       }}

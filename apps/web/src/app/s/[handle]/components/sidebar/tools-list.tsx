@@ -42,7 +42,7 @@ export function ToolsList({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <Loader2 className="w-4 h-4 text-white/30 animate-spin" />
+        <Loader2 className="w-4 h-4 text-white/50 " />
       </div>
     );
   }
@@ -75,7 +75,7 @@ export function ToolsList({
             'w-full px-3 py-2 rounded-lg',
             'flex items-center gap-2',
             'text-white/50 hover:text-white',
-            'hover:bg-white/[0.04]',
+            'hover:bg-white/[0.06]',
             'transition-colors',
             'border border-dashed border-white/[0.06]',
             tools.length > 0 && 'mt-2'
@@ -89,7 +89,7 @@ export function ToolsList({
       {/* Enhanced empty state for leaders */}
       {tools.length === 0 && isLeader && (
         <div className="text-center py-4">
-          <Wrench className="w-5 h-5 text-white/20 mx-auto mb-2" />
+          <Wrench className="w-5 h-5 text-white/50 mx-auto mb-2" />
           <p className="text-xs text-white mb-2">Build tools for your org</p>
           <p className="text-xs text-white/50">Track dues, collect RSVPs, run polls...</p>
         </div>
@@ -98,18 +98,18 @@ export function ToolsList({
       {/* Empty state for members */}
       {tools.length === 0 && !isLeader && (
         <div className="text-center py-4">
-          <Wrench className="w-5 h-5 text-white/20 mx-auto mb-2" />
+          <Wrench className="w-5 h-5 text-white/50 mx-auto mb-2" />
           <p className="text-xs text-white/50">No tools yet</p>
         </div>
       )}
 
       {/* Browse more tools link */}
       <Link
-        href="/explore?tab=tools"
+        href="/discover?tab=tools"
         className={cn(
           'flex items-center gap-2 px-3 py-1.5 rounded-lg',
           'text-xs text-white/50 hover:text-white',
-          'hover:bg-white/[0.04]',
+          'hover:bg-white/[0.06]',
           'transition-colors',
           tools.length > 0 && 'mt-1'
         )}

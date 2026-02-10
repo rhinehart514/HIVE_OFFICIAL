@@ -138,6 +138,8 @@ export type {
   PollConfig,
   CountdownConfig,
   RsvpConfig,
+  SignupConfig,
+  EventConfig,
   CustomConfig,
   ComponentConfig,
   SharedState,
@@ -709,6 +711,21 @@ export {
 // Webhooks Domain
 // =============================================================================
 export * from './webhooks';
+
+// =============================================================================
+// Leadership Domain
+// =============================================================================
+export {
+  BADGES,
+  evaluateBadges,
+  getEarnedBadges,
+  getNextBadge,
+} from './leadership/badges';
+export type {
+  LeadershipBadge,
+  BadgeEvaluation,
+  LeaderMetrics,
+} from './leadership/badges';
 
 // =============================================================================
 // Creation Domain (Tool Validation)

@@ -44,7 +44,7 @@ export function BentoEditToolbar({
           transition={{ duration: 0.3, ease: EASE }}
         >
           <motion.div
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl pointer-events-auto"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg pointer-events-auto"
             style={{
               backgroundColor: 'rgba(12, 12, 12, 0.95)',
               backdropFilter: 'blur(20px)',
@@ -78,7 +78,7 @@ export function BentoEditToolbar({
             <motion.button
               onClick={onReset}
               disabled={isSaving}
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               style={{
                 color: 'var(--text-tertiary)',
                 backgroundColor: 'transparent',
@@ -93,7 +93,7 @@ export function BentoEditToolbar({
             <motion.button
               onClick={onCancel}
               disabled={isSaving}
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               style={{
                 color: 'var(--text-secondary)',
                 backgroundColor: 'rgba(255, 255, 255, 0.06)',
@@ -109,7 +109,7 @@ export function BentoEditToolbar({
             <motion.button
               onClick={onSave}
               disabled={!isDirty || isSaving}
-              className="px-5 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+              className="px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
               style={{
                 backgroundColor: isDirty ? 'rgba(255, 215, 0, 0.15)' : 'rgba(255, 255, 255, 0.06)',
                 color: isDirty ? 'var(--life-gold)' : 'var(--text-tertiary)',

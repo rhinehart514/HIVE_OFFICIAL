@@ -57,6 +57,8 @@ interface SpaceSummary {
   memberCount?: number;
   slug?: string;
   handle?: string;
+  claimed?: boolean;
+  ownerName?: string;
 }
 
 interface SearchResult {
@@ -203,7 +205,7 @@ export default function DiscoverPage() {
                 {hasCampus ? 'Live campus intel + events + tools' : 'Trending tools and communities'}
               </p>
             </div>
-            <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-white/55">
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.06] px-3 py-1 text-xs text-white/55">
               {hasCampus ? 'Campus Mode' : 'Community Mode'}
             </span>
           </div>
@@ -214,12 +216,12 @@ export default function DiscoverPage() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search tools, spaces, events, and people"
-              className="h-11 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-white/20"
+              className="h-11 w-full rounded-lg border border-white/[0.06] bg-white/[0.06] pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-white/[0.06]"
             />
           </div>
 
           {trimmedSearch.length >= 2 && (
-            <div className="mt-3 rounded-xl border border-white/[0.08] bg-black/20 p-2">
+            <div className="mt-3 rounded-lg border border-white/[0.06] bg-black/20 p-2">
               {searchResultsQuery.isLoading && (
                 <div className="px-2 py-2 text-xs text-white/45">Searching…</div>
               )}
@@ -232,11 +234,11 @@ export default function DiscoverPage() {
                     <Link
                       key={`${result.type}-${result.id}`}
                       href={result.url}
-                      className="block rounded-lg px-2 py-2 hover:bg-white/[0.05]"
+                      className="block rounded-lg px-2 py-2 hover:bg-white/[0.06]"
                     >
                       <div className="flex items-center justify-between">
                         <p className="truncate text-sm text-white">{result.title}</p>
-                        <span className="ml-3 shrink-0 text-[11px] uppercase tracking-wide text-white/40">
+                        <span className="ml-3 shrink-0 text-[11px] uppercase tracking-wide text-white/50">
                           {result.type}
                         </span>
                       </div>
@@ -258,21 +260,21 @@ export default function DiscoverPage() {
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className="h-36 animate-pulse rounded-xl border border-white/[0.06] bg-white/[0.02]"
+                className="h-36 rounded-lg border border-white/[0.06] bg-white/[0.06]"
               />
             ))}
           </div>
         )}
 
         {hasError && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
             Failed to load discover data. Please refresh.
           </div>
         )}
 
         {!isLoading && !hasError && hasCampus && discoverData && (
           <div className="space-y-6">
-            <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <section className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4">
               <SectionTitle
                 title="Open Now"
                 subtitle="Dining locations that are currently open"
@@ -285,14 +287,14 @@ export default function DiscoverPage() {
                       {entry.isOpen ? `Closes in ${entry.minutesUntilClose || '--'} min` : 'Closed'}
                     </p>
                     {entry.currentMealPeriod && (
-                      <p className="mt-1 text-[11px] uppercase tracking-wide text-white/40">{entry.currentMealPeriod}</p>
+                      <p className="mt-1 text-[11px] uppercase tracking-wide text-white/50">{entry.currentMealPeriod}</p>
                     )}
                   </div>
                 ))}
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <section className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4">
               <SectionTitle
                 title="Study Spots"
                 subtitle="Best places to focus right now"
@@ -313,7 +315,7 @@ export default function DiscoverPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <section className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4">
               <SectionTitle
                 title="Happening This Week"
                 subtitle="Events ranked for you"
@@ -339,7 +341,7 @@ export default function DiscoverPage() {
             </section>
 
             <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4">
                 <SectionTitle
                   title="Trending Tools"
                   subtitle="Most active tools right now"
@@ -351,7 +353,7 @@ export default function DiscoverPage() {
                       <Link
                         key={`${toolId || index}`}
                         href={toolId ? `/t/${toolId}` : '/lab'}
-                        className="block rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.03]"
+                        className="block rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.06]"
                       >
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-white">{tool.name || 'Untitled tool'}</p>
@@ -366,7 +368,7 @@ export default function DiscoverPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4">
                 <SectionTitle
                   title="Spaces to Join"
                   subtitle="Recommended communities"
@@ -374,18 +376,27 @@ export default function DiscoverPage() {
                 <div className="space-y-2">
                   {(discoverData as CampusDiscoverData).spacesToJoin.slice(0, 6).map((space) => {
                     const routeKey = space.slug || space.handle || space.id;
+                    const isClaimed = space.claimed ?? (space.memberCount || 0) > 2;
                     return (
                       <Link
                         key={space.id}
                         href={`/s/${routeKey}`}
-                        className="block rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.03]"
+                        className="block rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.06]"
                       >
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-white">{space.name || 'Untitled space'}</p>
-                          <Users className="h-4 w-4 text-white/45" />
+                          {isClaimed ? (
+                            <Users className="h-4 w-4 text-white/45" />
+                          ) : (
+                            <span className="shrink-0 rounded-full bg-[var(--life-gold,#FFD700)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--life-gold,#FFD700)]">
+                              Claim
+                            </span>
+                          )}
                         </div>
                         <p className="mt-1 text-xs text-white/45">
-                          {space.memberCount || 0} members
+                          {isClaimed
+                            ? `${space.memberCount || 0} members`
+                            : 'No leader yet — claim this space'}
                         </p>
                       </Link>
                     );
@@ -398,7 +409,7 @@ export default function DiscoverPage() {
 
         {!isLoading && !hasError && !hasCampus && discoverData && (
           <div className="space-y-6">
-            <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <section className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4">
               <SectionTitle
                 title="Trending Tools"
                 subtitle="Popular public tools"
@@ -410,7 +421,7 @@ export default function DiscoverPage() {
                     <Link
                       key={`${toolId || index}`}
                       href={toolId ? `/t/${toolId}` : '/lab'}
-                      className="rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.03]"
+                      className="rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.06]"
                     >
                       <p className="text-sm font-medium text-white">{tool.name || 'Untitled tool'}</p>
                       {tool.description && (
@@ -422,7 +433,7 @@ export default function DiscoverPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <section className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4">
               <SectionTitle
                 title="Public Spaces"
                 subtitle="Communities open to join"
@@ -430,26 +441,35 @@ export default function DiscoverPage() {
               <div className="space-y-2">
                 {(discoverData as NonCampusDiscoverData).publicSpaces.slice(0, 8).map((space) => {
                   const routeKey = space.slug || space.handle || space.id;
+                  const isClaimed = space.claimed ?? (space.memberCount || 0) > 2;
                   return (
                     <Link
                       key={space.id}
                       href={`/s/${routeKey}`}
-                      className="block rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.03]"
+                      className="block rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.06]"
                     >
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-white">{space.name || 'Untitled space'}</p>
-                        <ArrowRight className="h-4 w-4 text-white/45" />
+                        {isClaimed ? (
+                          <ArrowRight className="h-4 w-4 text-white/45" />
+                        ) : (
+                          <span className="shrink-0 rounded-full bg-[var(--life-gold,#FFD700)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--life-gold,#FFD700)]">
+                            Claim
+                          </span>
+                        )}
                       </div>
-                      {space.description && (
-                        <p className="mt-1 line-clamp-1 text-xs text-white/45">{space.description}</p>
-                      )}
+                      <p className="mt-1 line-clamp-1 text-xs text-white/45">
+                        {isClaimed
+                          ? (space.description || `${space.memberCount || 0} members`)
+                          : 'No leader yet — claim this space'}
+                      </p>
                     </Link>
                   );
                 })}
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <section className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4">
               <SectionTitle
                 title="Featured Tools"
                 subtitle="Editor picks"
@@ -461,7 +481,7 @@ export default function DiscoverPage() {
                     <Link
                       key={`${toolId || index}`}
                       href={toolId ? `/t/${toolId}` : '/lab'}
-                      className="rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.03]"
+                      className="rounded-lg border border-white/[0.06] bg-black/20 p-3 hover:bg-white/[0.06]"
                     >
                       <div className="mb-2 flex items-center gap-1 text-[11px] uppercase tracking-wide text-gold-400">
                         <Sparkles className="h-3.5 w-3.5" />
@@ -480,7 +500,7 @@ export default function DiscoverPage() {
         )}
 
         {!isLoading && !hasError && (
-          <footer className="mt-8 flex items-center gap-2 text-xs text-white/40">
+          <footer className="mt-8 flex items-center gap-2 text-xs text-white/50">
             <Clock3 className="h-3.5 w-3.5" />
             Live data from campus and discovery APIs
           </footer>

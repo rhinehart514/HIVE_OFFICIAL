@@ -42,7 +42,7 @@ import { useDMsEnabled, useConnectionsEnabled } from '@/hooks/use-feature-flags'
 
 const MAX_SPACES_VISIBLE = 6;
 const MAX_EVENTS_VISIBLE = 3;
-const MAX_TOOLS_VISIBLE = 3;
+const MAX_TOOLS_VISIBLE = 6;
 
 const fadeInUpVariants = {
   initial: { opacity: 0, y: 10 },
@@ -108,8 +108,8 @@ function ProfileLoadingState() {
         transition={{ duration: MOTION.duration.fast }}
         className="text-center"
       >
-        <div className="w-12 h-12 rounded-full bg-white/[0.04] animate-pulse mx-auto mb-4" />
-        <p className="text-white/30 text-body">Loading profile...</p>
+        <div className="w-12 h-12 rounded-full bg-white/[0.06] mx-auto mb-4" />
+        <p className="text-white/50 text-body">Loading profile...</p>
       </motion.div>
     </div>
   );
@@ -128,21 +128,21 @@ function ProfileNotFoundState({ handle }: { handle: string }) {
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center max-w-md"
       >
-        <div className="w-20 h-20 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-6">
           <span className="text-3xl">&#128100;</span>
         </div>
         <h1 className="text-title-lg font-semibold text-white mb-3">
           Profile Not Found
         </h1>
         <p className="text-body text-white/50 mb-8">
-          We couldn&apos;t find anyone with the handle <span className="text-white/70 font-medium">@{handle}</span>. They may have changed their handle or deleted their account.
+          We couldn&apos;t find anyone with the handle <span className="text-white/50 font-medium">@{handle}</span>. They may have changed their handle or deleted their account.
         </p>
         <Link
           href="/discover"
           className={cn(
-            'inline-flex items-center gap-2 px-6 py-3 rounded-xl',
+            'inline-flex items-center gap-2 px-6 py-3 rounded-full',
             'bg-white text-foundation-gray-1000 font-medium',
-            'hover:bg-white/90 transition-colors'
+            'hover:bg-white transition-colors'
           )}
         >
           Go Home
@@ -161,21 +161,21 @@ function ProfilePrivateState({ handle }: { handle: string }) {
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center max-w-md"
       >
-        <div className="w-20 h-20 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-6">
           <span className="text-3xl">&#128274;</span>
         </div>
         <h1 className="text-title-lg font-semibold text-white mb-3">
           Private Profile
         </h1>
         <p className="text-body text-white/50 mb-8">
-          <span className="text-white/70 font-medium">@{handle}</span> has a private profile. You need to be connected to view their full profile.
+          <span className="text-white/50 font-medium">@{handle}</span> has a private profile. You need to be connected to view their full profile.
         </p>
         <Link
           href="/discover"
           className={cn(
-            'inline-flex items-center gap-2 px-6 py-3 rounded-xl',
-            'bg-white/[0.06] text-white/70 font-medium border border-white/[0.08]',
-            'hover:bg-white/[0.08] transition-colors'
+            'inline-flex items-center gap-2 px-6 py-3 rounded-full',
+            'bg-white/[0.06] text-white/50 font-mediumborder-white/[0.06]',
+            'hover:bg-white/[0.06] transition-colors'
           )}
         >
           Go Home
@@ -194,7 +194,7 @@ function ProfileErrorState({ onRetry }: { onRetry: () => void }) {
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center max-w-md"
       >
-        <div className="w-20 h-20 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-6">
           <span className="text-3xl">&#9888;&#65039;</span>
         </div>
         <h1 className="text-title-lg font-semibold text-white mb-3">
@@ -206,9 +206,9 @@ function ProfileErrorState({ onRetry }: { onRetry: () => void }) {
         <button
           onClick={onRetry}
           className={cn(
-            'inline-flex items-center gap-2 px-6 py-3 rounded-xl',
+            'inline-flex items-center gap-2 px-6 py-3 rounded-full',
             'bg-white text-foundation-gray-1000 font-medium',
-            'hover:bg-white/90 transition-colors'
+            'hover:bg-white transition-colors'
           )}
         >
           Try Again
@@ -393,13 +393,22 @@ export default function ProfilePageContent() {
 
   const activityTools: ProfileActivityTool[] = profileTools
     .sort((a, b) => (b.runs || 0) - (a.runs || 0))
-    .map((tool) => ({
-      id: tool.id,
-      name: tool.name,
-      emoji: tool.emoji,
-      runs: tool.runs || 0,
-      spaceName: (tool as unknown as { spaceName?: string }).spaceName,
-    }));
+    .map((tool) => {
+      const extended = tool as unknown as {
+        spaceName?: string;
+        deploymentCount?: number;
+        weeklyActiveUsers?: number;
+      };
+      return {
+        id: tool.id,
+        name: tool.name,
+        emoji: tool.emoji,
+        runs: tool.runs || 0,
+        spaceName: extended.spaceName,
+        deploymentCount: extended.deploymentCount,
+        weeklyActiveUsers: extended.weeklyActiveUsers,
+      };
+    });
 
   const visibleTools = showAllTools ? activityTools : activityTools.slice(0, MAX_TOOLS_VISIBLE);
   const overflowToolsCount = showAllTools ? 0 : Math.max(0, activityTools.length - MAX_TOOLS_VISIBLE);
@@ -606,7 +615,7 @@ export default function ProfilePageContent() {
                         className="text-xs font-semibold uppercase tracking-wider"
                         style={{ color: 'var(--text-tertiary)' }}
                       >
-                        Tools Built
+                        Tools Built ({activityTools.length})
                       </h3>
                       {isOwnProfile && (
                         <div className="flex items-center gap-3">
@@ -644,7 +653,7 @@ export default function ProfilePageContent() {
                       <div className="mt-4 flex justify-center">
                         <Link
                           href="/lab"
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
                           style={{
                             color: 'var(--text-secondary)',
                             backgroundColor: 'rgba(255,255,255,0.04)',

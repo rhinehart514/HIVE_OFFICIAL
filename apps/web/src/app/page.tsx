@@ -8,17 +8,17 @@ import {
 } from '@/components/landing';
 
 export const metadata: Metadata = {
-  title: 'HIVE — Your Campus. Your Spaces. Your Tools.',
-  description: 'Run your campus communities with shared spaces and live tools. Build in seconds, share anywhere.',
+  title: 'HIVE — Your Club Is Already Here',
+  description: 'Find and claim your UB organization on HIVE. Lead events, tools, and communication from one shared space.',
   openGraph: {
-    title: 'HIVE — Your Campus. Your Spaces. Your Tools.',
-    description: 'Run your campus communities with shared spaces and live tools. Build in seconds, share anywhere.',
+    title: 'HIVE — Your Club Is Already Here',
+    description: 'Find and claim your UB organization on HIVE. Lead events, tools, and communication from one shared space.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HIVE — Your Campus. Your Spaces. Your Tools.',
-    description: 'Run your campus communities with shared spaces and live tools. Build in seconds, share anywhere.',
+    title: 'HIVE — Your Club Is Already Here',
+    description: 'Find and claim your UB organization on HIVE. Lead events, tools, and communication from one shared space.',
   },
 };
 

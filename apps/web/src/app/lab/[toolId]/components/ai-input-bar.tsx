@@ -50,7 +50,7 @@ export function AIInputBar({
     <div className="px-4 py-3 bg-[var(--bg-ground)] border-t border-[var(--border-subtle)]">
       <div
         className={`
-          flex items-center gap-3 px-4 py-3 rounded-xl
+          flex items-center gap-3 px-4 py-3 rounded-lg
           bg-[var(--bg-subtle)] border
           transition-all duration-200
           ${isFocused

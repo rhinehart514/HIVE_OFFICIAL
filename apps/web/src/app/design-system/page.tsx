@@ -35,7 +35,7 @@ export default function DesignSystemPage() {
           <h2 className="text-xl font-semibold mb-4">Color Tokens</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {colorVars.map((v) => (
-              <div key={v} className="rounded-xl border p-4" style={{ borderColor: "var(--hive-border-primary)" }}>
+              <div key={v} className="rounded-lg p-4" style={{ borderColor: "var(--hive-border-primary)" }}>
                 <div className="h-16 rounded-lg mb-3" style={{ background: `var(${v})` }} />
                 <div className="text-sm font-mono text-white/80">{v}</div>
               </div>
@@ -93,7 +93,7 @@ export default function DesignSystemPage() {
           <h2 className="text-xl font-semibold">Dev Tools</h2>
           <p className="text-white/60">Quick links to development tools</p>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Link className="rounded-xl border p-5 hover:bg-white/5 transition" href="/lab">
+            <Link className="rounded-lg p-5 hover:bg-white/[0.06] transition" href="/lab">
               <div className="text-lg font-medium mb-1">HiveLab IDE</div>
               <div className="text-sm text-white/60">Visual tool builder</div>
             </Link>

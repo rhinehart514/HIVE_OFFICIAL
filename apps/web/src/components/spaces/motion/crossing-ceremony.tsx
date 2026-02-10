@@ -11,7 +11,7 @@
  * 0.5s   GoldFlash pulses (0.2s, intensity 0.6)
  * 0.7s   Welcome card enters (border draws, content reveals)
  * 1.2s   Welcome card fades up and exits
- * 1.4s   Header border draws in (handled by residence)
+ * 1.4s   Headerdraws in (handled by residence)
  * 1.8s   Feed items stagger in (handled by residence)
  * 2.5s   Ceremony complete → residence state
  *

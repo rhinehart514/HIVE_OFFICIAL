@@ -116,10 +116,10 @@ export function SpacePreviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <ModalOverlay className="bg-black/80 backdrop-blur-sm" />
+      <ModalOverlay className="bg-black/80 " />
       <DialogContent className="max-w-md p-0 bg-[var(--bg-surface)] border-white/[0.06] overflow-hidden">
         {/* Banner/Header */}
-        <div className="relative h-32 bg-gradient-to-br from-white/[0.04] to-white/[0.02]">
+        <div className="relative h-32 bg-white/[0.06]">
           {space.bannerUrl && (
             <div
               className="absolute inset-0 bg-cover bg-center opacity-40"
@@ -133,14 +133,14 @@ export function SpacePreviewModal({
             className="absolute top-3 right-3 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors"
             aria-label="Close preview"
           >
-            <XMarkIcon className="w-4 h-4 text-white/70" aria-hidden="true" />
+            <XMarkIcon className="w-4 h-4 text-white/50" aria-hidden="true" />
           </button>
 
           {/* Avatar positioned at bottom, overlapping */}
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
             <Avatar className="h-20 w-20 border-4 border-[var(--bg-surface)]">
               <AvatarImage src={space.avatarUrl} alt={space.name} />
-              <AvatarFallback className="text-2xl bg-white/[0.08] text-white/60">
+              <AvatarFallback className="text-2xl bg-white/[0.06] text-white/50">
                 {space.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -158,7 +158,7 @@ export function SpacePreviewModal({
               )}
             </h2>
             {space.category && (
-              <Text size="sm" className="text-white/40 capitalize">
+              <Text size="sm" className="text-white/50 capitalize">
                 {space.category.replace(/_/g, ' ')}
               </Text>
             )}
@@ -166,7 +166,7 @@ export function SpacePreviewModal({
 
           {/* Description */}
           {space.description && (
-            <Text className="text-center text-white/60 text-sm mb-6 line-clamp-3">
+            <Text className="text-center text-white/50 text-sm mb-6 line-clamp-3">
               {space.description}
             </Text>
           )}
@@ -188,21 +188,21 @@ export function SpacePreviewModal({
           {/* Upcoming Events (if any) */}
           {space.upcomingEvents && space.upcomingEvents.length > 0 && (
             <div className="mb-6">
-              <Text size="xs" className="text-white/30 uppercase tracking-wider mb-2 text-center">
+              <Text size="xs" className="text-white/50 uppercase tracking-wider mb-2 text-center">
                 Upcoming Events
               </Text>
               <div className="space-y-2">
                 {space.upcomingEvents.slice(0, 2).map((event) => (
                   <div
                     key={event.id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06]"
                   >
-                    <CalendarIcon className="w-4 h-4 text-white/30 flex-shrink-0" />
+                    <CalendarIcon className="w-4 h-4 text-white/50 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <Text size="sm" className="text-white/80 truncate">
+                      <Text size="sm" className="text-white truncate">
                         {event.title}
                       </Text>
-                      <Text size="xs" className="text-white/40">
+                      <Text size="xs" className="text-white/50">
                         {new Date(event.date).toLocaleDateString('en-US', {
                           weekday: 'short',
                           month: 'short',
@@ -218,7 +218,7 @@ export function SpacePreviewModal({
 
           {/* Tool Count (if any) */}
           {space.toolCount !== undefined && space.toolCount > 0 && (
-            <div className="flex items-center justify-center gap-2 mb-6 text-sm text-white/40">
+            <div className="flex items-center justify-center gap-2 mb-6 text-sm text-white/50">
               <WrenchScrewdriverIcon className="w-4 h-4" />
               <span>{space.toolCount} {space.toolCount === 1 ? 'tool' : 'tools'} available</span>
             </div>
@@ -256,7 +256,7 @@ export function SpacePreviewModal({
               >
                 {isJoining ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin mr-2" />
+                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full  mr-2" />
                     Joining...
                   </>
                 ) : (
@@ -267,7 +267,7 @@ export function SpacePreviewModal({
 
             <button
               onClick={onClose}
-              className="w-full py-2 text-sm text-white/40 hover:text-white/60 transition-colors"
+              className="w-full py-2 text-sm text-white/50 hover:text-white/50 transition-colors"
             >
               Cancel
             </button>

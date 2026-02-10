@@ -139,8 +139,8 @@ function NotificationItem({
         'w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left',
         'transition-colors duration-150',
         isUnread
-          ? 'bg-white/[0.04] hover:bg-white/[0.06]'
-          : 'hover:bg-white/[0.03]'
+          ? 'bg-white/[0.06] hover:bg-white/[0.06]'
+          : 'hover:bg-white/[0.06]'
       )}
     >
       {/* Unread indicator */}
@@ -157,19 +157,19 @@ function NotificationItem({
       <div className="flex-1 min-w-0">
         <p className={cn(
           'text-xs leading-relaxed',
-          isUnread ? 'text-white/90 font-medium' : 'text-white/60'
+          isUnread ? 'text-white font-medium' : 'text-white/50'
         )}>
           {notification.title}
         </p>
         {notification.body && (
-          <p className="text-[11px] text-white/40 mt-0.5 line-clamp-1">
+          <p className="text-[11px] text-white/50 mt-0.5 line-clamp-1">
             {notification.body}
           </p>
         )}
       </div>
 
       {/* Time */}
-      <span className="flex-shrink-0 text-[10px] text-white/30 pt-0.5">
+      <span className="flex-shrink-0 text-[10px] text-white/50 pt-0.5">
         {formatTimestamp(notification)}
       </span>
     </motion.button>
@@ -190,13 +190,13 @@ function CollapsibleGroup({
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
-    <div className="border-b border-white/[0.04] last:border-b-0">
+    <div className="border-b border-white/[0.06] last:border-b-0">
       {/* Group header */}
       <button
         onClick={() => setExpanded(!expanded)}
         className={cn(
           'w-full flex items-center justify-between px-3 py-2',
-          'hover:bg-white/[0.02] transition-colors duration-150'
+          'hover:bg-white/[0.06] transition-colors duration-150'
         )}
       >
         <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ function CollapsibleGroup({
             animate={{ rotate: expanded ? 0 : -90 }}
             transition={{ duration: durationSeconds.snap }}
           >
-            <ChevronDown className="w-3 h-3 text-white/30" />
+            <ChevronDown className="w-3 h-3 text-white/50" />
           </motion.span>
           <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wider">
             {group.label}
@@ -238,7 +238,7 @@ function CollapsibleGroup({
                 />
               ))}
               {group.notifications.length > 5 && (
-                <p className="px-3 py-1.5 text-[10px] text-white/30 text-center">
+                <p className="px-3 py-1.5 text-[10px] text-white/50 text-center">
                   +{group.notifications.length - 5} more
                 </p>
               )}
@@ -297,8 +297,8 @@ export const HiveNotificationBell: React.FC<HiveNotificationBellProps> = ({
           disabled={disabled}
           className={cn(
             'relative p-2 rounded-lg',
-            'text-white/50 hover:text-white/80',
-            'hover:bg-white/[0.04]',
+            'text-white/50 hover:text-white',
+            'hover:bg-white/[0.06]',
             'transition-all duration-150',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-gold)]/30',
             disabled && 'opacity-40 pointer-events-none',
@@ -350,7 +350,7 @@ export const HiveNotificationBell: React.FC<HiveNotificationBellProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleMarkAllRead}
-                className="text-[10px] text-white/40 hover:text-white/60 px-2 h-6"
+                className="text-[10px] text-white/50 hover:text-white/50 px-2 h-6"
               >
                 <CheckCheck className="w-3 h-3 mr-1" />
                 Mark all read
@@ -363,12 +363,12 @@ export const HiveNotificationBell: React.FC<HiveNotificationBellProps> = ({
         <div className="flex-1 overflow-y-auto">
           {loading && notifications.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-5 h-5 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-white/[0.06] border-t-white/50 rounded-full " />
             </div>
           ) : groups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-              <Bell className="w-8 h-8 text-white/10 mb-3" />
-              <p className="text-xs text-white/40">No notifications yet</p>
+              <Bell className="w-8 h-8 text-white/[0.06] mb-3" />
+              <p className="text-xs text-white/50">No notifications yet</p>
               <p className="text-[11px] text-white/25 mt-1">
                 You'll see updates from your spaces here
               </p>
@@ -392,7 +392,7 @@ export const HiveNotificationBell: React.FC<HiveNotificationBellProps> = ({
         <div className="border-t border-white/[0.06] px-4 py-2">
           <button
             onClick={() => handleNavigate('/me/notifications')}
-            className="w-full text-center text-[11px] text-white/40 hover:text-white/60 transition-colors py-1"
+            className="w-full text-center text-[11px] text-white/50 hover:text-white/50 transition-colors py-1"
           >
             View all notifications
           </button>

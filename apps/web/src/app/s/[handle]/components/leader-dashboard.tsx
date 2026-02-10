@@ -82,7 +82,7 @@ function MetricCard({ icon: Icon, label, value, growth, color = 'text-white/50' 
 
   return (
     <div
-      className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors"
+      className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.06] transition-colors"
     >
       <div className="flex items-start justify-between mb-2">
         <Icon className={cn('w-5 h-5', color)} />
@@ -133,7 +133,7 @@ function PendingItemRow({ item, onClick }: PendingItemRowProps) {
       className={cn(
         'w-full px-3 py-2.5 rounded-lg',
         'flex items-center gap-3',
-        'hover:bg-white/[0.04] transition-colors',
+        'hover:bg-white/[0.06] transition-colors',
         'text-left group'
       )}
     >
@@ -186,8 +186,8 @@ function QuickAction({ icon: Icon, label, onClick }: QuickActionProps) {
       className={cn(
         'p-3 rounded-lg',
         'flex items-center gap-3',
-        'bg-white/[0.02] border border-white/[0.06]',
-        'hover:bg-white/[0.04] hover:border-white/[0.12]',
+        'bg-white/[0.06] border border-white/[0.06]',
+        'hover:bg-white/[0.06] hover:border-white/[0.06]',
         'transition-colors'
       )}
     >
@@ -219,7 +219,7 @@ export function LeaderDashboard({
       <div className={cn('p-6 space-y-6', className)}>
         {/* Loading skeleton */}
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-white/[0.02] rounded-lg animate-pulse" />
+          <div key={i} className="h-20 bg-white/[0.06] rounded-lg" />
         ))}
       </div>
     );
@@ -287,7 +287,7 @@ export function LeaderDashboard({
               {pendingItems.length} item{pendingItems.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="space-y-1 p-2 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+          <div className="space-y-1 p-2 rounded-lg bg-white/[0.06] border border-white/[0.06]">
             {pendingItems.slice(0, 3).map((item) => (
               <PendingItemRow
                 key={item.id}
@@ -297,7 +297,7 @@ export function LeaderDashboard({
             ))}
             {pendingItems.length > 3 && (
               <button
-                className="w-full py-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+                className="w-full py-2 text-xs text-white/50 hover:text-white/50 transition-colors"
               >
                 View all {pendingItems.length} items
               </button>

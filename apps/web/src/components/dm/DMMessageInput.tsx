@@ -69,10 +69,10 @@ export function DMMessageInput() {
           rows={1}
           className={cn(
             'w-full px-4 py-2.5',
-            'rounded-xl text-sm',
-            'bg-white/[0.04] hover:bg-white/[0.06]',
+            'rounded-lg text-sm',
+            'bg-white/[0.06] hover:bg-white/[0.06]',
             'border border-white/[0.06]',
-            'text-white placeholder:text-white/30',
+            'text-white placeholder:text-white/50',
             'resize-none',
             'focus:outline-none focus:ring-2 focus:ring-white/50',
             'disabled:opacity-50',
@@ -95,7 +95,7 @@ export function DMMessageInput() {
         }}
       >
         {isSending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 " />
         ) : (
           <Send className="h-4 w-4" />
         )}

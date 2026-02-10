@@ -17,7 +17,7 @@ export default function SpaceToolsLoading() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30 p-5 space-y-3"
+            className="rounded-lg border border-white/[0.06] bg-[var(--bg-void)]/30 p-5 space-y-3"
           >
             <div className="flex items-start gap-3">
               <Skeleton className="h-10 w-10 rounded-lg" />
@@ -28,7 +28,7 @@ export default function SpaceToolsLoading() {
             </div>
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-2/3" />
-            <div className="flex gap-3 pt-2 border-t border-white/[0.06]/30">
+            <div className="flex gap-3 pt-2 border-t border-white/[0.06]">
               <Skeleton className="h-3 w-16" />
               <Skeleton className="h-3 w-16" />
             </div>

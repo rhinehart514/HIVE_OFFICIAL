@@ -60,23 +60,23 @@ export function TerritoryHeader({
         transition={{ duration: durationSeconds.gentle, delay: 0.4, ease: MOTION.ease.premium }}
       >
         <StatCounter value={totalSpaces} suffix="spaces" delay={0.5} />
-        <span className="text-white/20">·</span>
+        <span className="text-white/50">·</span>
         <StatCounter value={claimedSpaces} suffix="claimed" delay={0.6} highlight />
-        <span className="text-white/20">·</span>
+        <span className="text-white/50">·</span>
         <motion.span
-          className="text-white/60"
+          className="text-white/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: durationSeconds.smooth, delay: 0.7, ease: MOTION.ease.premium }}
         >
           <span className="text-white">{waitingSpaces.toLocaleString()}</span>
-          <span className="text-white/40 ml-1">waiting for leaders</span>
+          <span className="text-white/50 ml-1">waiting for leaders</span>
         </motion.span>
       </motion.div>
 
       {/* Subtext based on auth state */}
       <motion.p
-        className="text-body-lg text-white/40 max-w-md"
+        className="text-body-lg text-white/50 max-w-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: durationSeconds.gentle, delay: 0.8, ease: MOTION.ease.premium }}
@@ -85,7 +85,7 @@ export function TerritoryHeader({
           yourSpaceCount > 0 ? (
             <>
               You're in{' '}
-              <span className="text-white/60">{yourSpaceCount}</span>{' '}
+              <span className="text-white/50">{yourSpaceCount}</span>{' '}
               {yourSpaceCount === 1 ? 'space' : 'spaces'}.
               Explore more or claim your territory.
             </>

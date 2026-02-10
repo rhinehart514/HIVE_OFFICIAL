@@ -4,13 +4,13 @@
  * Inline Component Renderers
  *
  * Renders poll, countdown, and RSVP components inline in chat messages.
- * These are the interactive tools that appear below messages when created
+ * These are the tools that appear below messages when created
  * via slash commands or AI intent.
  */
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Circle, Clock } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, MapPin, CalendarDays, Users } from 'lucide-react';
 import { Button } from '@hive/ui/design-system/primitives';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,9 +41,25 @@ interface RsvpConfig {
   allowMaybe: boolean;
 }
 
+interface SignupConfig {
+  title: string;
+  slots: string[];
+  limitPerSlot?: number;
+  deadline?: string;
+}
+
+interface EventConfig {
+  title: string;
+  date: string;
+  location?: string;
+  description?: string;
+}
+
 interface SharedState {
   optionCounts?: Record<string, number>;
   rsvpCounts?: { yes: number; no: number; maybe: number };
+  slotCounts?: Record<string, number>;
+  slotMembers?: Record<string, string[]>;
   totalResponses: number;
   timeRemaining?: {
     days: number;
@@ -56,17 +72,19 @@ interface SharedState {
 
 export interface InlineComponentData {
   id: string;
-  type: 'poll' | 'countdown' | 'rsvp' | 'custom';
-  config: PollConfig | CountdownConfig | RsvpConfig | Record<string, unknown>;
+  type: 'poll' | 'countdown' | 'rsvp' | 'signup' | 'event' | 'custom';
+  config: PollConfig | CountdownConfig | RsvpConfig | SignupConfig | EventConfig | Record<string, unknown>;
   sharedState: SharedState;
   userVote?: string[];
   userResponse?: 'yes' | 'no' | 'maybe';
+  userSlot?: string;
 }
 
 interface InlineComponentProps {
   component: InlineComponentData;
   onVote?: (optionIndex: number) => void;
   onRsvp?: (response: 'yes' | 'no' | 'maybe') => void;
+  onSignup?: (slot: string) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -79,7 +97,7 @@ function PollComponent({ component, onVote }: InlineComponentProps) {
   const userVote = component.userVote || [];
 
   return (
-    <div className="mt-3 rounded-xl bg-white/[0.04] border border-white/[0.08] p-4 space-y-3">
+    <div className="mt-3 rounded-lg bg-white/[0.06] border border-white/[0.06] p-4 space-y-3">
       <div className="text-sm font-medium text-white">{config.question}</div>
 
       <div className="space-y-2">
@@ -95,10 +113,10 @@ function PollComponent({ component, onVote }: InlineComponentProps) {
               disabled={!onVote}
               className={cn(
                 'w-full relative rounded-lg p-3 text-left transition-all',
-                'border border-white/[0.08]',
+                'border border-white/[0.06]',
                 isSelected
                   ? 'bg-[var(--color-gold)]/10 border-[var(--color-gold)]/30'
-                  : 'bg-white/[0.02] hover:bg-white/[0.04]',
+                  : 'bg-white/[0.06] hover:bg-white/[0.06]',
                 !onVote && 'cursor-default'
               )}
             >
@@ -106,7 +124,7 @@ function PollComponent({ component, onVote }: InlineComponentProps) {
               <div
                 className={cn(
                   'absolute inset-0 rounded-lg transition-all',
-                  isSelected ? 'bg-[var(--color-gold)]/5' : 'bg-white/[0.02]'
+                  isSelected ? 'bg-[var(--color-gold)]/5' : 'bg-white/[0.06]'
                 )}
                 style={{ width: `${percentage}%` }}
               />
@@ -117,7 +135,7 @@ function PollComponent({ component, onVote }: InlineComponentProps) {
                   {isSelected ? (
                     <CheckCircle2 className="w-4 h-4 text-[var(--color-gold)]" />
                   ) : (
-                    <Circle className="w-4 h-4 text-white/30" />
+                    <Circle className="w-4 h-4 text-white/50" />
                   )}
                   <span className="text-sm text-white">{option}</span>
                 </div>
@@ -131,7 +149,7 @@ function PollComponent({ component, onVote }: InlineComponentProps) {
         })}
       </div>
 
-      <div className="text-xs text-white/40">
+      <div className="text-xs text-white/50">
         {totalResponses} {totalResponses === 1 ? 'vote' : 'votes'}
       </div>
     </div>
@@ -156,7 +174,7 @@ function CountdownComponent({ component }: InlineComponentProps) {
 
   if (timeRemaining.isComplete) {
     return (
-      <div className="mt-3 rounded-xl bg-white/[0.04] border border-white/[0.08] p-4">
+      <div className="mt-3 rounded-lg bg-white/[0.06] border border-white/[0.06] p-4">
         <div className="text-sm font-medium text-white mb-2">{config.title}</div>
         <div className="text-xs text-white/50">Event has started!</div>
       </div>
@@ -164,7 +182,7 @@ function CountdownComponent({ component }: InlineComponentProps) {
   }
 
   return (
-    <div className="mt-3 rounded-xl bg-white/[0.04] border border-white/[0.08] p-4">
+    <div className="mt-3 rounded-lg bg-white/[0.06] border border-white/[0.06] p-4">
       <div className="text-sm font-medium text-white mb-3">{config.title}</div>
 
       <div className="flex items-center gap-4">
@@ -191,7 +209,7 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
       <div className="text-2xl font-bold text-white tabular-nums">
         {String(value).padStart(2, '0')}
       </div>
-      <div className="text-xs text-white/40 mt-0.5">{label}</div>
+      <div className="text-xs text-white/50 mt-0.5">{label}</div>
     </div>
   );
 }
@@ -232,7 +250,7 @@ function RsvpComponent({ component, onRsvp }: InlineComponentProps) {
   });
 
   return (
-    <div className="mt-3 rounded-xl bg-white/[0.04] border border-white/[0.08] p-4 space-y-3">
+    <div className="mt-3 rounded-lg bg-white/[0.06] border border-white/[0.06] p-4 space-y-3">
       <div>
         <div className="text-sm font-medium text-white">{config.eventTitle}</div>
         <div className="flex items-center gap-1.5 mt-1 text-xs text-white/50">
@@ -276,7 +294,7 @@ function RsvpComponent({ component, onRsvp }: InlineComponentProps) {
       </div>
 
       {config.maxCapacity && (
-        <div className="text-xs text-white/40">
+        <div className="text-xs text-white/50">
           {rsvpCounts.yes} / {config.maxCapacity} spots filled
         </div>
       )}
@@ -285,10 +303,166 @@ function RsvpComponent({ component, onRsvp }: InlineComponentProps) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Signup Renderer
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SignupComponent({ component, onSignup }: InlineComponentProps) {
+  const config = component.config as SignupConfig;
+  const { slotCounts = {}, slotMembers = {}, totalResponses = 0 } = component.sharedState;
+  const userSlot = component.userSlot;
+
+  const hasDeadline = !!config.deadline;
+  const deadlinePassed = hasDeadline && new Date(config.deadline!) <= new Date();
+
+  return (
+    <div className="mt-3 rounded-lg bg-white/[0.06] border border-white/[0.06] p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Users className="w-4 h-4 text-[var(--color-gold)]" />
+        <div className="text-sm font-medium text-white">{config.title}</div>
+      </div>
+
+      <div className="space-y-2">
+        {config.slots.map((slot) => {
+          const count = slotCounts[slot] || 0;
+          const members = slotMembers[slot] || [];
+          const isFull = config.limitPerSlot ? count >= config.limitPerSlot : false;
+          const isSelected = userSlot === slot;
+
+          return (
+            <button
+              key={slot}
+              onClick={() => !isFull && !deadlinePassed && onSignup?.(slot)}
+              disabled={!onSignup || isFull || deadlinePassed}
+              className={cn(
+                'w-full rounded-lg p-3 text-left transition-all',
+                'border border-white/[0.06]',
+                isSelected
+                  ? 'bg-[var(--color-gold)]/10 border-[var(--color-gold)]/30'
+                  : isFull
+                    ? 'bg-white/[0.02] opacity-60'
+                    : 'bg-white/[0.06] hover:bg-white/[0.06]',
+                (!onSignup || deadlinePassed) && 'cursor-default'
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {isSelected ? (
+                    <CheckCircle2 className="w-4 h-4 text-[var(--color-gold)]" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-white/50" />
+                  )}
+                  <span className="text-sm text-white">{slot}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-white/50">
+                  <span>{count}{config.limitPerSlot ? `/${config.limitPerSlot}` : ''}</span>
+                  {isFull && <span className="text-[var(--color-gold)]/70">Full</span>}
+                </div>
+              </div>
+              {members.length > 0 && (
+                <div className="mt-1.5 ml-6 text-xs text-white/40">
+                  {members.slice(0, 3).join(', ')}
+                  {members.length > 3 && ` +${members.length - 3} more`}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center justify-between text-xs text-white/50">
+        <span>{totalResponses} signed up</span>
+        {hasDeadline && (
+          <span className={deadlinePassed ? 'text-red-400' : ''}>
+            {deadlinePassed ? 'Closed' : `Deadline: ${new Date(config.deadline!).toLocaleDateString()}`}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Event Renderer
+// ─────────────────────────────────────────────────────────────────────────────
+
+function EventComponent({ component, onRsvp }: InlineComponentProps) {
+  const config = component.config as EventConfig;
+  const { rsvpCounts = { yes: 0, no: 0, maybe: 0 } } = component.sharedState;
+  const userResponse = component.userResponse;
+
+  const eventDate = new Date(config.date);
+  const formattedDate = eventDate.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  return (
+    <div className="mt-3 rounded-lg bg-white/[0.06] border border-white/[0.06] p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="p-2 rounded-lg bg-[var(--color-gold)]/10">
+          <CalendarDays className="w-4 h-4 text-[var(--color-gold)]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-white">{config.title}</div>
+          <div className="flex items-center gap-3 mt-1 text-xs text-white/50">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {formattedDate}
+            </span>
+            {config.location && (
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {config.location}
+              </span>
+            )}
+          </div>
+          {config.description && (
+            <p className="mt-2 text-xs text-white/60 line-clamp-2">{config.description}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant={userResponse === 'yes' ? 'cta' : 'secondary'}
+          onClick={() => onRsvp?.('yes')}
+          disabled={!onRsvp}
+          className="flex-1"
+        >
+          Going ({rsvpCounts.yes})
+        </Button>
+        <Button
+          size="sm"
+          variant={userResponse === 'maybe' ? 'cta' : 'secondary'}
+          onClick={() => onRsvp?.('maybe')}
+          disabled={!onRsvp}
+          className="flex-1"
+        >
+          Maybe ({rsvpCounts.maybe})
+        </Button>
+        <Button
+          size="sm"
+          variant={userResponse === 'no' ? 'ghost' : 'secondary'}
+          onClick={() => onRsvp?.('no')}
+          disabled={!onRsvp}
+          className="flex-1"
+        >
+          Can't go ({rsvpCounts.no})
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main Renderer
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function InlineComponent({ component, onVote, onRsvp }: InlineComponentProps) {
+export function InlineComponent({ component, onVote, onRsvp, onSignup }: InlineComponentProps) {
   switch (component.type) {
     case 'poll':
       return <PollComponent component={component} onVote={onVote} />;
@@ -296,6 +470,10 @@ export function InlineComponent({ component, onVote, onRsvp }: InlineComponentPr
       return <CountdownComponent component={component} />;
     case 'rsvp':
       return <RsvpComponent component={component} onRsvp={onRsvp} />;
+    case 'signup':
+      return <SignupComponent component={component} onSignup={onSignup} />;
+    case 'event':
+      return <EventComponent component={component} onRsvp={onRsvp} />;
     default:
       return null;
   }

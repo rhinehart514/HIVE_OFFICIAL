@@ -677,7 +677,7 @@ async function searchEvents(
         description: data.description,
         type: 'event',
         category: 'events',
-        url: data.spaceId ? `/s/${data.spaceId}` : `/explore?tab=events`,
+        url: data.spaceId ? `/s/${data.spaceId}` : `/discover?tab=events`,
         metadata: {
           startTime: startTime?.toISOString(),
           endTime: endTime?.toISOString(),
@@ -733,7 +733,7 @@ async function searchEvents(
           description: data.description,
           type: 'event',
           category: 'events',
-          url: data.spaceId ? `/s/${data.spaceId}` : `/explore?tab=events`,
+          url: data.spaceId ? `/s/${data.spaceId}` : `/discover?tab=events`,
           metadata: {
             startTime: startTime?.toISOString(),
             endTime: endTime?.toISOString(),

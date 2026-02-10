@@ -204,7 +204,7 @@ export default function NotificationsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background-primary flex items-center justify-center" role="status" aria-label="Loading notifications">
-        <ArrowPathIcon className="w-8 h-8 animate-spin text-brand-primary" aria-hidden="true" />
+        <ArrowPathIcon className="w-8 h-8  text-brand-primary" aria-hidden="true" />
         <span className="sr-only">Loading notifications...</span>
       </div>
     );
@@ -233,7 +233,7 @@ export default function NotificationsPage() {
                 aria-label="Mark all notifications as read"
               >
                 {isMarkingRead ? (
-                  <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                  <ArrowPathIcon className="w-4 h-4 mr-2 " aria-hidden="true" />
                 ) : (
                   <CheckCheck className="w-4 h-4 mr-2" aria-hidden="true" />
                 )}

@@ -16,7 +16,7 @@
 import * as React from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
+import { Logo } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import {
   type EntryTone,
@@ -95,11 +95,11 @@ export function EntryShell({
         scrollable ? 'overflow-auto' : 'overflow-hidden'
       )}
     >
-      <NoiseOverlay />
+      
 
-      {/* Animated line at top (about-page style) */}
+      {/* Static line at top */}
       <motion.div
-        className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        className="absolute top-0 left-6 right-6 h-px bg-white/[0.06]"
         variants={lineDrawVariants}
         initial="initial"
         animate="animate"
@@ -125,18 +125,14 @@ export function EntryShell({
             transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
           >
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-[var(--color-bg-void)]/80 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-[var(--color-bg-void)]/80" />
 
-            {/* Loading indicator - subtle gold spinner with pulse */}
-            <motion.div
-              className="relative z-10"
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
+            {/* Loading indicator */}
+            <motion.div className="relative z-10">
               <div
-                className="w-10 h-10 rounded-full border-2 border-white/10 animate-spin"
+                className="w-10 h-10 rounded-full border border-white/[0.06]"
                 style={{
-                  borderTopColor: GOLD.primary,
+                  backgroundColor: GOLD.glowSubtle,
                 }}
               />
             </motion.div>
@@ -156,7 +152,7 @@ export function EntryShell({
         </Link>
         <Link
           href="/"
-          className="text-body-sm text-white/40 hover:text-white/60 transition-colors"
+          className="text-body-sm text-white/50 hover:text-white/50 transition-colors"
         >
           Back
         </Link>
@@ -189,7 +185,7 @@ export function EntryShell({
 
       {/* Footer */}
       <motion.footer
-        className="relative z-10 px-6 py-6 flex items-center justify-center gap-4 text-label text-white/30"
+        className="relative z-10 px-6 py-6 flex items-center justify-center gap-4 text-label text-white/50"
         initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: DURATION.gentle, delay: 0.5, ease: EASE_PREMIUM }}
@@ -199,7 +195,7 @@ export function EntryShell({
             <Link href="/legal/terms" className="hover:text-white/50 transition-colors">
               Terms
             </Link>
-            <span className="text-white/20">·</span>
+            <span className="text-white/50">·</span>
             <Link href="/legal/privacy" className="hover:text-white/50 transition-colors">
               Privacy
             </Link>
@@ -219,7 +215,7 @@ export function EntryShellStatic({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="px-6 py-6 flex items-center justify-between">
         <Logo variant="mark" size="sm" color="gold" />
-        <span className="text-body-sm text-white/40">Back</span>
+        <span className="text-body-sm text-white/50">Back</span>
       </header>
 
       {/* Main content */}
@@ -230,9 +226,9 @@ export function EntryShellStatic({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <footer className="px-6 py-6 flex items-center justify-center gap-4 text-label text-white/30">
+      <footer className="px-6 py-6 flex items-center justify-center gap-4 text-label text-white/50">
         <span>Terms</span>
-        <span className="text-white/20">·</span>
+        <span className="text-white/50">·</span>
         <span>Privacy</span>
       </footer>
     </div>

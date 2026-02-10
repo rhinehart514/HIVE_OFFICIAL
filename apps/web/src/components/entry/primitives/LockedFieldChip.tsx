@@ -47,7 +47,7 @@ export function LockedFieldChip({
     <motion.div
       className={`
         relative flex items-center gap-3 h-10 px-3
-        bg-white/[0.04] border border-white/10 rounded-lg
+        bg-white/[0.06] border border-white/[0.06] rounded-lg
         ${hasAccent ? 'pl-0 overflow-hidden' : ''}
         ${className}
       `}
@@ -96,11 +96,11 @@ export function LockedFieldChip({
           exit="exit"
         >
           {label && (
-            <span className="text-white/40 text-body-sm shrink-0">
+            <span className="text-white/50 text-body-sm shrink-0">
               {label}
             </span>
           )}
-          <span className="text-white/90 text-body font-medium truncate">
+          <span className="text-white text-body font-medium truncate">
             {value}
           </span>
         </motion.div>
@@ -112,9 +112,9 @@ export function LockedFieldChip({
           type="button"
           onClick={onChangeClick}
           className="
-            shrink-0 text-white/40 hover:text-white/70
+            shrink-0 text-white/50 hover:text-white/50
             transition-colors text-body-sm flex items-center gap-1
-            focus:outline-none focus:text-white/70
+            focus:outline-none focus:text-white/50
           "
         >
           <Pencil size={12} />
@@ -149,7 +149,7 @@ export function SchoolBadgeChip({
     <motion.div
       className={`
         relative flex items-center gap-3 h-10 px-3
-        bg-white/[0.04] border border-white/10 rounded-lg
+        bg-white/[0.06] border border-white/[0.06] rounded-lg
         overflow-hidden
         ${className}
       `}
@@ -170,7 +170,7 @@ export function SchoolBadgeChip({
       </div>
 
       {/* School name */}
-      <span className="flex-1 text-white/90 text-body font-medium truncate">
+      <span className="flex-1 text-white text-body font-medium truncate">
         {schoolName}
       </span>
 
@@ -193,9 +193,9 @@ export function SchoolBadgeChip({
           type="button"
           onClick={onChangeClick}
           className="
-            shrink-0 text-white/40 hover:text-white/70
+            shrink-0 text-white/50 hover:text-white/50
             transition-colors text-body-sm
-            focus:outline-none focus:text-white/70
+            focus:outline-none focus:text-white/50
           "
         >
           change
@@ -231,7 +231,7 @@ export function RoleChip({
     <motion.div
       className={`
         relative flex items-center gap-2 h-10 px-3
-        bg-white/[0.04] border border-white/10 rounded-lg
+        bg-white/[0.06] border border-white/[0.06] rounded-lg
         ${className}
       `}
       initial={{ opacity: 0, scale: 0.9 }}
@@ -251,7 +251,7 @@ export function RoleChip({
         />
       </motion.div>
 
-      <span className="text-white/90 text-body font-medium">
+      <span className="text-white text-body font-medium">
         {roleLabels[role] || role}
       </span>
 
@@ -260,9 +260,9 @@ export function RoleChip({
           type="button"
           onClick={onChangeClick}
           className="
-            ml-auto shrink-0 text-white/40 hover:text-white/70
+            ml-auto shrink-0 text-white/50 hover:text-white/50
             transition-colors text-body-sm
-            focus:outline-none focus:text-white/70
+            focus:outline-none focus:text-white/50
           "
         >
           change

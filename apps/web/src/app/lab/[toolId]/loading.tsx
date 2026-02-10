@@ -8,7 +8,7 @@ export default function ToolDetailLoading() {
 
       {/* Tool header */}
       <div className="flex items-start gap-6 mb-8">
-        <Skeleton className="h-20 w-20 rounded-xl flex-shrink-0" />
+        <Skeleton className="h-20 w-20 rounded-lg flex-shrink-0" />
         <div className="flex-1 space-y-3">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-full max-w-md" />
@@ -24,7 +24,7 @@ export default function ToolDetailLoading() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-white/[0.06]/50 mb-6">
+      <div className="flex gap-4 border-b border-white/[0.06] mb-6">
         {['Overview', 'Canvas', 'Settings'].map((tab) => (
           <Skeleton key={tab} className="h-10 w-24" />
         ))}
@@ -33,10 +33,10 @@ export default function ToolDetailLoading() {
       {/* Content area */}
       <div className="space-y-6">
         {/* Canvas preview */}
-        <div className="rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30 p-6 min-h-[400px]">
+        <div className="rounded-lg border border-white/[0.06] bg-[var(--bg-void)]/30 p-6 min-h-[400px]">
           <div className="flex items-center justify-center h-full">
             <div className="text-center space-y-4">
-              <Skeleton className="h-24 w-24 rounded-xl mx-auto" />
+              <Skeleton className="h-24 w-24 rounded-lg mx-auto" />
               <Skeleton className="h-4 w-48 mx-auto" />
             </div>
           </div>
@@ -47,7 +47,7 @@ export default function ToolDetailLoading() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30 p-4"
+              className="rounded-lg border border-white/[0.06] bg-[var(--bg-void)]/30 p-4"
             >
               <Skeleton className="h-3 w-20 mb-2" />
               <Skeleton className="h-6 w-12" />

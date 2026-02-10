@@ -284,7 +284,7 @@ function SettingsContent() {
   if (profileLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
-        <Text className="text-white/40">Loading settings...</Text>
+        <Text className="text-white/50">Loading settings...</Text>
       </div>
     );
   }
@@ -296,7 +296,7 @@ function SettingsContent() {
           <motion.div className="mb-8" variants={fadeInUpVariants} initial="initial" animate="animate">
             <button
               onClick={() => setActiveSection(null)}
-              className="text-sm text-white/40 hover:text-white/60 transition-colors"
+              className="text-sm text-white/50 hover:text-white/50 transition-colors"
             >
               ← Back to Settings
             </button>
@@ -390,7 +390,7 @@ function SettingsContent() {
           >
             Settings
           </h1>
-          <p className="text-base text-white/40">
+          <p className="text-base text-white/50">
             Account preferences and security
           </p>
         </motion.section>
@@ -399,24 +399,24 @@ function SettingsContent() {
 
         <motion.section className="mb-16" initial="hidden" animate="visible">
           <motion.div
-            className="grid gap-3 md:grid-cols-2 p-4 -mx-4 rounded-2xl"
+            className="grid gap-3 md:grid-cols-2 p-4 -mx-4 rounded-lg"
             style={{ backgroundColor: 'rgba(255,255,255,0.015)' }}
           >
             <motion.div variants={staggerItemVariants}>
               <Card
                 as="button"
                 elevation="resting"
-                interactive
+               
                 onClick={() => setActiveSection('profile')}
                 className="text-left"
               >
                 <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
+                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/50">
                     Profile
                   </span>
-                  <span className="text-white/30">→</span>
+                  <span className="text-white/50">→</span>
                 </div>
-                <Text size="sm" className="text-white/60">
+                <Text size="sm" className="text-white/50">
                   Name, bio, interests
                 </Text>
               </Card>
@@ -426,17 +426,17 @@ function SettingsContent() {
               <Card
                 as="button"
                 elevation="resting"
-                interactive
+               
                 onClick={() => setActiveSection('notifications')}
                 className="text-left"
               >
                 <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
+                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/50">
                     Notifications
                   </span>
-                  <span className="text-white/30">→</span>
+                  <span className="text-white/50">→</span>
                 </div>
-                <Text size="sm" className="text-white/60">
+                <Text size="sm" className="text-white/50">
                   Email, push, quiet hours
                 </Text>
               </Card>
@@ -446,17 +446,17 @@ function SettingsContent() {
               <Card
                 as="button"
                 elevation="resting"
-                interactive
+               
                 onClick={() => setActiveSection('privacy')}
                 className="text-left"
               >
                 <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
+                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/50">
                     Privacy
                   </span>
-                  <span className="text-white/30">→</span>
+                  <span className="text-white/50">→</span>
                 </div>
-                <Text size="sm" className="text-white/60">
+                <Text size="sm" className="text-white/50">
                   Visibility, permissions
                 </Text>
               </Card>
@@ -466,17 +466,17 @@ function SettingsContent() {
               <Card
                 as="button"
                 elevation="resting"
-                interactive
+               
                 onClick={() => setActiveSection('account')}
                 className="text-left"
               >
                 <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
+                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/50">
                     Account
                   </span>
-                  <span className="text-white/30">→</span>
+                  <span className="text-white/50">→</span>
                 </div>
-                <Text size="sm" className="text-white/60">
+                <Text size="sm" className="text-white/50">
                   Calendar, data, security
                 </Text>
               </Card>
@@ -495,7 +495,7 @@ function SettingsContent() {
             </Button>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="text-sm text-white/30 hover:text-red-400/80 transition-colors"
+              className="text-sm text-white/50 hover:text-red-400/80 transition-colors"
             >
               Delete account
             </button>

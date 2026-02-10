@@ -55,19 +55,19 @@ export function WaitlistModal({ school, onClose }: { school: School | null; onCl
     >
       <motion.div className="absolute inset-0 bg-black/90" onClick={onClose} />
       <motion.div
-        className="relative w-full max-w-sm bg-[var(--bg-ground)] border border-white/10 rounded-2xl p-8"
+        className="relative w-full max-w-sm rounded-lg border border-white/[0.06] bg-[var(--bg-ground)] p-8"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
       >
-        <button onClick={onClose} className="absolute top-4 right-4 text-white/30 hover:text-white/50 transition-colors">
+        <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white/50 transition-colors">
           <X className="w-5 h-5" />
         </button>
 
         {submitted ? (
           <div className="text-center py-4">
             <motion.div
-              className="w-12 h-12 rounded-full border border-[#FFD700]/30 flex items-center justify-center mx-auto mb-5"
+              className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-[#FFD700]/30"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 15 }}
@@ -75,12 +75,12 @@ export function WaitlistModal({ school, onClose }: { school: School | null; onCl
               <Check className="w-5 h-5 text-[#FFD700]" />
             </motion.div>
             <p className={`text-lg font-medium text-white mb-2 ${clashDisplay}`}>You&apos;re on the list</p>
-            <p className="text-sm text-white/40">We&apos;ll let you know when we expand.</p>
+            <p className="text-sm text-white/50">We&apos;ll let you know when we expand.</p>
           </div>
         ) : (
           <>
             <p className={`text-lg font-medium text-white mb-1 ${clashDisplay}`}>Get notified</p>
-            <p className="text-sm text-white/40 mb-6">We&apos;ll let you know when your campus is ready.</p>
+            <p className="text-sm text-white/50 mb-6">We&apos;ll let you know when your campus is ready.</p>
             <form onSubmit={handleSubmit}>
               <input
                 type="email"
@@ -88,7 +88,7 @@ export function WaitlistModal({ school, onClose }: { school: School | null; onCl
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
-                className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-[#FFD700]/30 transition-colors mb-4"
+                className="mb-4 w-full rounded-lg border border-white/[0.06] bg-white/[0.06] px-4 py-3 text-sm text-white placeholder:text-white/25 transition-colors focus:outline-none focus:border-[#FFD700]/30"
               />
               {error && <p className="text-sm text-red-400/80 mb-4">{error}</p>}
               <Button
@@ -96,7 +96,7 @@ export function WaitlistModal({ school, onClose }: { school: School | null; onCl
                 variant="primary"
                 size="lg"
                 disabled={!email.trim() || isSubmitting}
-                className="w-full rounded-xl"
+                className="w-full rounded-lg"
               >
                 {isSubmitting ? 'Joining...' : 'Notify me'}
               </Button>

@@ -69,7 +69,7 @@ const STATUS_CONFIG = {
     label: 'Draft',
     bg: 'bg-white/[0.06]',
     text: 'text-white/50',
-    dot: 'bg-white/40',
+    dot: 'bg-white/50',
   },
 };
 
@@ -116,9 +116,9 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
         whileHover={{ opacity: 0.96 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => onClick(tool.id)}
-        className="group relative flex flex-col items-start p-4 rounded-xl
-          border border-white/[0.06] bg-white/[0.02]
-          hover:border-white/[0.12] hover:bg-white/[0.04]
+        className="group relative flex flex-col items-start p-4 rounded-lg
+         border-white/[0.06] bg-white/[0.06]
+          hover:border-white/[0.06] hover:bg-white/[0.06]
           transition-all duration-200 text-left w-full"
       >
         <div className="flex items-center justify-between w-full mb-1.5">
@@ -131,7 +131,7 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
             {status.label}
           </span>
         </div>
-        <div className="flex items-center gap-3 mt-auto pt-2 text-white/40 text-xs w-full">
+        <div className="flex items-center gap-3 mt-auto pt-2 text-white/50 text-xs w-full">
           {(tool.useCount ?? 0) > 0 && (
             <span className="flex items-center gap-1">
               <BarChart3 className="w-3 h-3" />
@@ -144,7 +144,7 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
           </span>
         </div>
         <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4
-          text-transparent group-hover:text-white/30 transition-colors" />
+          text-transparent group-hover:text-white/50 transition-colors" />
       </motion.button>
     );
   }
@@ -152,9 +152,9 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
   return (
     <motion.div
       whileHover={{ opacity: 0.96 }}
-      className="group relative flex flex-col p-4 rounded-xl
-        border border-white/[0.06] bg-white/[0.02]
-        hover:border-white/[0.12] hover:bg-white/[0.04]
+      className="group relative flex flex-col p-4 rounded-lg
+       border-white/[0.06] bg-white/[0.06]
+        hover:border-white/[0.06] hover:bg-white/[0.06]
         transition-all duration-200 text-left w-full cursor-pointer"
       onClick={() => onClick(tool.id)}
     >
@@ -172,13 +172,13 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
 
       {/* Description */}
       {tool.description && (
-        <p className="text-white/40 text-xs line-clamp-1 w-full mb-3">
+        <p className="text-white/50 text-xs line-clamp-1 w-full mb-3">
           {tool.description}
         </p>
       )}
 
       {/* Stats row */}
-      <div className="flex items-center gap-3 text-white/40 text-xs mb-3">
+      <div className="flex items-center gap-3 text-white/50 text-xs mb-3">
         {(tool.wau ?? 0) > 0 && (
           <span className="flex items-center gap-1" title="Weekly active users">
             <Users className="w-3 h-3" />
@@ -200,8 +200,8 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
       </div>
 
       {/* Footer: Updated + Quick Actions */}
-      <div className="flex items-center justify-between w-full pt-2 border-t border-white/[0.04]">
-        <span className="flex items-center gap-1 text-white/30 text-xs">
+      <div className="flex items-center justify-between w-full pt-2 border-t border-white/[0.06]">
+        <span className="flex items-center gap-1 text-white/50 text-xs">
           <Clock className="w-3 h-3" />
           {formatRelativeTime(tool.updatedAt)}
         </span>
@@ -210,21 +210,21 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleEdit}
-            className="p-1.5 rounded-md hover:bg-white/[0.08] text-white/40 hover:text-white/70 transition-colors"
+            className="p-1.5 rounded-md hover:bg-white/[0.06] text-white/50 hover:text-white/50 transition-colors"
             title="Edit"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleAnalytics}
-            className="p-1.5 rounded-md hover:bg-white/[0.08] text-white/40 hover:text-white/70 transition-colors"
+            className="p-1.5 rounded-md hover:bg-white/[0.06] text-white/50 hover:text-white/50 transition-colors"
             title="Analytics"
           >
             <BarChart3 className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleFeedback}
-            className="p-1.5 rounded-md hover:bg-white/[0.08] text-white/40 hover:text-white/70 transition-colors"
+            className="p-1.5 rounded-md hover:bg-white/[0.06] text-white/50 hover:text-white/50 transition-colors"
             title="Feedback"
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -232,7 +232,7 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
           {tool.status === 'draft' || tool.status === 'published' ? (
             <button
               onClick={handleDeploy}
-              className="p-1.5 rounded-md hover:bg-white/[0.08] text-white/40 hover:text-white/70 transition-colors"
+              className="p-1.5 rounded-md hover:bg-white/[0.06] text-white/50 hover:text-white/50 transition-colors"
               title="Deploy"
             >
               <Rocket className="w-3.5 h-3.5" />
@@ -244,7 +244,7 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
               className={`p-1.5 rounded-md transition-colors ${
                 confirmDelete
                   ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                  : 'hover:bg-white/[0.08] text-white/40 hover:text-red-400'
+                  : 'hover:bg-white/[0.06] text-white/50 hover:text-red-400'
               }`}
               title={confirmDelete ? 'Click again to confirm' : 'Delete'}
             >
@@ -271,18 +271,18 @@ export function NewToolCard({ onClick, index: _index = 0 }: NewToolCardProps) {
       whileHover={{ opacity: 0.96 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="group flex flex-col items-center justify-center p-4 rounded-xl
-        border border-dashed border-white/[0.08] bg-transparent
-        hover:border-white/[0.15] hover:bg-white/[0.03]
+      className="group flex flex-col items-center justify-center p-4 rounded-lg
+       border-dashed border-white/[0.06] bg-transparent
+        hover:border-white/[0.15] hover:bg-white/[0.06]
         transition-all duration-200 min-h-[140px]"
     >
-      <div className="w-10 h-10 rounded-full bg-white/[0.04] flex items-center justify-center
-        group-hover:bg-white/[0.08] transition-colors mb-2">
-        <span className="text-white/40 group-hover:text-white/60 text-xl transition-colors">
+      <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center
+        group-hover:bg-white/[0.06] transition-colors mb-2">
+        <span className="text-white/50 group-hover:text-white/50 text-xl transition-colors">
           +
         </span>
       </div>
-      <span className="text-white/40 text-xs group-hover:text-white/60 transition-colors">
+      <span className="text-white/50 text-xs group-hover:text-white/50 transition-colors">
         New Tool
       </span>
     </motion.button>

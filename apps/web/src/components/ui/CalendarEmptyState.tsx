@@ -78,17 +78,17 @@ export function CalendarEmptyState({
     >
       {/* Icon */}
       <motion.div
-        className="w-16 h-16 rounded-xl bg-white/[0.04] flex items-center justify-center mb-5"
+        className="w-16 h-16 rounded-lg bg-white/[0.06] flex items-center justify-center mb-5"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.1 }}
       >
-        <Icon className="w-7 h-7 text-white/30" />
+        <Icon className="w-7 h-7 text-white/50" />
       </motion.div>
 
       {/* Title */}
       <motion.h3
-        className="text-heading-sm font-medium text-white/80 mb-2"
+        className="text-heading-sm font-medium text-white mb-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.15 }}
@@ -98,7 +98,7 @@ export function CalendarEmptyState({
 
       {/* Subtitle */}
       <motion.p
-        className="text-body text-white/40 max-w-sm mb-6"
+        className="text-body text-white/50 max-w-sm mb-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.2 }}
@@ -115,13 +115,13 @@ export function CalendarEmptyState({
           transition={{ duration: 0.2, delay: 0.25 }}
         >
           <Button asChild variant="secondary">
-            <Link href="/explore?tab=events">
+            <Link href="/discover?tab=events">
               <Calendar className="w-4 h-4 mr-2" />
               Browse Events
             </Link>
           </Button>
           <Button asChild variant="ghost">
-            <Link href="/explore">
+            <Link href="/discover">
               <Users className="w-4 h-4 mr-2" />
               Find Spaces
             </Link>

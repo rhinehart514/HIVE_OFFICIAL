@@ -79,9 +79,10 @@ interface Space {
 interface SpaceClaimModalProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultQuery?: string;
 }
 
-export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
+export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceClaimModalProps) {
   const router = useRouter();
 
   // Flow state: search → confirm → success
@@ -89,7 +90,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
   const [selectedSpace, setSelectedSpace] = React.useState<Space | null>(null);
 
   // Search state
-  const [query, setQuery] = React.useState('');
+  const [query, setQuery] = React.useState(defaultQuery);
   const [spaces, setSpaces] = React.useState<Space[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
 
@@ -98,6 +99,13 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
   const [customRole, setCustomRole] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  // Sync defaultQuery when modal opens
+  React.useEffect(() => {
+    if (isOpen && defaultQuery && !query) {
+      setQuery(defaultQuery);
+    }
+  }, [isOpen, defaultQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced search
   const searchTimeoutRef = React.useRef<NodeJS.Timeout>(undefined);
@@ -220,13 +228,13 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
       >
         {/* Backdrop */}
         <div
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/70 "
           onClick={handleClose}
         />
 
         {/* Modal */}
         <motion.div
-          className="relative w-full max-w-lg bg-[var(--bg-ground)] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden"
+          className="relative w-full max-w-lg bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg overflow-hidden"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -269,7 +277,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
 
                   {/* Space name */}
                   <motion.p
-                    className="text-white/60 text-lg mb-2"
+                    className="text-white/50 text-lg mb-2"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.6 }}
@@ -280,7 +288,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                   {/* Waitlist notification */}
                   {selectedSpace.memberCount > 0 && (
                     <motion.p
-                      className="text-white/40 text-sm mb-8"
+                      className="text-white/50 text-sm mb-8"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.8 }}
@@ -316,7 +324,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                     setStep('search');
                     setError(null);
                   }}
-                  className="text-white/40 hover:text-white/60 text-sm transition-colors flex items-center gap-1"
+                  className="text-white/50 hover:text-white/50 text-sm transition-colors flex items-center gap-1"
                 >
                   {step === 'search' ? 'Cancel' : (
                     <>
@@ -325,10 +333,10 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                     </>
                   )}
                 </button>
-                <span className="text-white/30 text-sm font-medium">
+                <span className="text-white/50 text-sm font-medium">
                   Claim Space
                 </span>
-                <button onClick={handleClose} className="text-white/40 hover:text-white/60 transition-colors">
+                <button onClick={handleClose} className="text-white/50 hover:text-white/50 transition-colors">
                   <X size={20} />
                 </button>
               </div>
@@ -357,7 +365,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                       {/* Search */}
                       <div className="relative">
                         <svg
-                          className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50"
                           viewBox="0 0 16 16"
                           fill="none"
                         >
@@ -384,9 +392,9 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                           autoFocus
                           className={cn(
                             'w-full pl-10 pr-4 py-3',
-                            'bg-white/[0.04] border border-white/20',
-                            'rounded-xl text-white placeholder:text-white/30',
-                            'focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/30',
+                            'bg-white/[0.06] border border-white/[0.06]',
+                            'rounded-lg text-white placeholder:text-white/50',
+                            'focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50',
                             'transition-all duration-300'
                           )}
                         />
@@ -396,7 +404,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                       <div className="space-y-2 max-h-[300px] overflow-y-auto">
                         {isSearching && (
                           <div className="flex items-center justify-center py-6">
-                            <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                            <Loader2 className="h-4 w-4  text-white/50" />
                           </div>
                         )}
 
@@ -419,17 +427,17 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                                   'w-full flex items-center gap-3 p-3 rounded-lg text-left',
                                   'border transition-all',
                                   isLocked || isClaimed
-                                    ? 'border-white/[0.04] opacity-50 cursor-not-allowed'
-                                    : 'border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02]'
+                                    ? 'border-white/[0.06] opacity-50 cursor-not-allowed'
+                                    : 'border-white/[0.06] hover:border-white/[0.06] hover:bg-white/[0.06]'
                                 )}
                               >
                                 {/* Colored accent bar */}
                                 <div className={cn('w-1 h-10 rounded-full flex-shrink-0', colors.accent)} />
                                 <div className="flex-1 min-w-0">
-                                  <Text weight="medium" className="text-white/90 truncate">
+                                  <Text weight="medium" className="text-white truncate">
                                     {space.name}
                                   </Text>
-                                  <Text size="xs" className="text-white/40">
+                                  <Text size="xs" className="text-white/50">
                                     {space.memberCount > 0 ? (
                                       <span className="text-[#FFD700]/70">
                                         {space.memberCount} student{space.memberCount !== 1 ? 's' : ''} waiting
@@ -440,11 +448,11 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                                   </Text>
                                 </div>
                                 {isLocked ? (
-                                  <Text size="xs" className="text-white/40 whitespace-nowrap">
+                                  <Text size="xs" className="text-white/50 whitespace-nowrap">
                                     RA only
                                   </Text>
                                 ) : isClaimed ? (
-                                  <Text size="xs" className="text-white/40">Has admin</Text>
+                                  <Text size="xs" className="text-white/50">Has admin</Text>
                                 ) : (
                                   <Text size="xs" className="text-white/50">Claim</Text>
                                 )}
@@ -456,7 +464,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                         {!isSearching && query && spaces.length === 0 && (
                           <div className="text-center py-6">
                             <Text className="text-white/50 mb-1">No spaces found</Text>
-                            <Text size="sm" className="text-white/30">
+                            <Text size="sm" className="text-white/50">
                               Try a different search
                             </Text>
                           </div>
@@ -478,7 +486,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                       {(() => {
                         const colors = CATEGORY_COLORS[selectedSpace.category] || CATEGORY_COLORS.university;
                         return (
-                          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                          <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                             <div className="flex items-center gap-4 mb-3">
                               <div className={cn('w-1 h-12 rounded-full', colors.accent)} />
                               <div>
@@ -490,7 +498,7 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                                 </Text>
                               </div>
                             </div>
-                            <Text size="sm" className="text-white/60 pl-5">
+                            <Text size="sm" className="text-white/50 pl-5">
                               {selectedSpace.memberCount > 0 ? (
                                 <>
                                   <strong className="text-[#FFD700]">{selectedSpace.memberCount}</strong>{' '}
@@ -506,18 +514,18 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
 
                       {/* Role selection */}
                       <div>
-                        <label className="block text-sm font-medium text-white/70 mb-2">
-                          Your role <span className="text-white/40">(optional)</span>
+                        <label className="block text-sm font-medium text-white/50 mb-2">
+                          Your role <span className="text-white/50">(optional)</span>
                         </label>
                         <select
                           value={role}
                           onChange={(e) => setRole(e.target.value)}
                           className={cn(
-                            'w-full px-4 py-3 rounded-xl',
-                            'bg-white/[0.04] border border-white/20',
+                            'w-full px-4 py-3 rounded-lg',
+                            'bg-white/[0.06] border border-white/[0.06]',
                             'text-white',
                             'transition-all duration-300',
-                            'focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/30',
+                            'focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50',
                             'hover:bg-white/[0.06] hover:border-white/25',
                             'appearance-none bg-no-repeat bg-right cursor-pointer'
                           )}
@@ -546,15 +554,15 @@ export function SpaceClaimModal({ isOpen, onClose }: SpaceClaimModalProps) {
                       </div>
 
                       {/* Admin benefits */}
-                      <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                         <Text size="xs" weight="medium" className="text-white/50 mb-3">
                           As admin, you&apos;ll be able to:
                         </Text>
                         <ul className="space-y-2">
                           {['Create official events', 'Pin announcements', 'Deploy tools', 'Manage members'].map((benefit) => (
                             <li key={benefit} className="flex items-center gap-3">
-                              <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
-                              <Text size="sm" className="text-white/60">{benefit}</Text>
+                              <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
+                              <Text size="sm" className="text-white/50">{benefit}</Text>
                             </li>
                           ))}
                         </ul>

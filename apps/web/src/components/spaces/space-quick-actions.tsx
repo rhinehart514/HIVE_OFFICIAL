@@ -73,8 +73,8 @@ function ActionButton({
         'text-xs font-medium',
         'transition-all duration-150',
         variant === 'primary'
-          ? 'bg-white/[0.08] hover:bg-white/[0.12] text-white'
-          : 'bg-white/[0.02] hover:bg-white/[0.06] text-white/60 hover:text-white/80'
+          ? 'bg-white/[0.06] hover:bg-white/[0.06] text-white'
+          : 'bg-white/[0.06] hover:bg-white/[0.06] text-white/50 hover:text-white'
       )}
       whileHover={{ opacity: 0.96 }}
       whileTap={{ scale: 0.98 }}
@@ -167,8 +167,8 @@ export function SpaceQuickActions({
         className={cn(
           'group ml-auto px-3 py-1.5 rounded-lg',
           'flex items-center gap-1',
-          'text-xs font-medium text-white/40 hover:text-white/60',
-          'hover:bg-white/[0.04]',
+          'text-xs font-medium text-white/50 hover:text-white/50',
+          'hover:bg-white/[0.06]',
           'transition-all duration-150'
         )}
         whileHover={{ x: 2 }}

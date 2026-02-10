@@ -80,7 +80,7 @@ export function DeployModalProvider({ toolId, children }: { toolId?: string; chi
       <button
         type="button"
         onClick={() => (toolId ? setOpen(true) : router.push('/lab'))}
-        className="fixed bottom-6 right-6 z-50 rounded-full px-5 py-3 bg-[var(--hive-brand-primary)] text-hive-brand-on-gold shadow-lg hover:bg-hive-brand-hover"
+        className="fixed bottom-6 right-6 z-50 rounded-full px-5 py-3 bg-[var(--hive-brand-primary)] text-hive-brand-on-gold hover:bg-hive-brand-hover"
         aria-label="Launch on campus"
       >
         Launch on campus

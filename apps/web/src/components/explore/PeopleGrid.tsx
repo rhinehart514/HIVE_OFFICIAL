@@ -12,7 +12,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Users, Search, UserPlus } from 'lucide-react';
-import { GlassSurface, SimpleAvatar, Badge, Button } from '@hive/ui/design-system/primitives';
+import { SimpleAvatar, Badge, Button } from '@hive/ui/design-system/primitives';
 import { MOTION } from '@hive/tokens';
 import { cn } from '@/lib/utils';
 
@@ -54,27 +54,27 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
         transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
         className="flex flex-col items-center justify-center py-16 px-4"
       >
-        <GlassSurface
-          intensity="subtle"
-          className="p-8 rounded-xl max-w-md w-full text-center"
+        <div
+         
+          className="p-8 rounded-lg max-w-md w-full text-center"
         >
           {/* Icon */}
           <motion.div
-            className="w-14 h-14 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-5"
+            className="w-14 h-14 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-5"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.1 }}
           >
             {searchQuery ? (
-              <Search className="w-6 h-6 text-white/30" />
+              <Search className="w-6 h-6 text-white/50" />
             ) : (
-              <UserPlus className="w-6 h-6 text-white/30" />
+              <UserPlus className="w-6 h-6 text-white/50" />
             )}
           </motion.div>
 
           {/* Title */}
           <motion.h3
-            className="text-body-lg font-medium text-white/80 mb-2"
+            className="text-body-lg font-medium text-white mb-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.15 }}
@@ -86,7 +86,7 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
 
           {/* Subtitle */}
           <motion.p
-            className="text-body-sm text-white/40 mb-6 max-w-xs mx-auto"
+            className="text-body-sm text-white/50 mb-6 max-w-xs mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.2 }}
@@ -104,14 +104,14 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
             transition={{ duration: 0.2, delay: 0.25 }}
           >
             <Button variant="default" size="sm" asChild>
-              <Link href="/explore?tab=spaces">
+              <Link href="/discover?tab=spaces">
                 <Users className="w-4 h-4 mr-1.5" />
                 Browse Spaces
               </Link>
             </Button>
             {searchQuery && (
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/explore?tab=people">Clear Search</Link>
+                <Link href="/discover?tab=people">Clear Search</Link>
               </Button>
             )}
           </motion.div>
@@ -127,7 +127,7 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
               Tip: Filter by major or year to find classmates
             </motion.p>
           )}
-        </GlassSurface>
+        </div>
       </motion.div>
     );
   }
@@ -161,11 +161,11 @@ function PersonCard({ person }: PersonCardProps) {
     >
       <Link href={`/profile/${person.id}`}>
         <motion.div>
-          <GlassSurface
-            intensity="subtle"
+          <div
+           
             className={cn(
-              'group p-4 rounded-xl transition-colors duration-200',
-              'border border-white/[0.06] hover:border-white/10'
+              'group p-4 rounded-lg transition-colors duration-200',
+              'border border-white/[0.06] hover:border-white/[0.06]'
             )}
           >
             <div className="flex items-start gap-3">
@@ -185,7 +185,7 @@ function PersonCard({ person }: PersonCardProps) {
               <div className="flex-1 min-w-0">
                 {/* Name + Connection Badge */}
                 <div className="flex items-center gap-2">
-                  <h3 className="text-body font-medium text-white truncate group-hover:text-white/90">
+                  <h3 className="text-body font-medium text-white truncate group-hover:text-white">
                     {person.name}
                   </h3>
                   {person.isConnected && (
@@ -202,21 +202,21 @@ function PersonCard({ person }: PersonCardProps) {
 
                 {/* Handle if available */}
                 {person.handle && (
-                  <p className="text-label-sm text-white/30 truncate">
+                  <p className="text-label-sm text-white/50 truncate">
                     @{person.handle}
                   </p>
                 )}
 
                 {/* Role */}
                 {person.role && (
-                  <p className="text-label text-white/40 truncate mt-0.5">
+                  <p className="text-label text-white/50 truncate mt-0.5">
                     {person.role}
                   </p>
                 )}
 
                 {/* Mutual spaces - now with icon for clarity */}
                 {person.mutualSpaces && person.mutualSpaces > 0 && (
-                  <div className="flex items-center gap-1 mt-2 text-white/30">
+                  <div className="flex items-center gap-1 mt-2 text-white/50">
                     <Users className="w-3 h-3" />
                     <span className="text-label-sm">
                       {person.mutualSpaces} mutual {person.mutualSpaces === 1 ? 'space' : 'spaces'}
@@ -227,12 +227,12 @@ function PersonCard({ person }: PersonCardProps) {
             </div>
 
             {/* View profile affordance - appears on hover */}
-            <div className="mt-3 pt-3 border-t border-white/[0.04] opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-label-sm text-white/40 group-hover:text-white/60">
+            <div className="mt-3 pt-3 border-t border-white/[0.06] opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-label-sm text-white/50 group-hover:text-white/50">
                 View profile →
               </span>
             </div>
-          </GlassSurface>
+          </div>
         </motion.div>
       </Link>
     </motion.div>
@@ -249,17 +249,17 @@ function PersonCardSkeleton({ index }: { index: number }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: index * 0.02 }}
-      className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+      className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]"
     >
       <div className="flex items-start gap-3">
         {/* Avatar skeleton */}
-        <div className="w-12 h-12 rounded-xl bg-white/[0.06] shrink-0 animate-pulse" />
+        <div className="w-12 h-12 rounded-lg bg-white/[0.06] shrink-0" />
 
         {/* Info skeleton */}
         <div className="flex-1 space-y-2">
-          <div className="h-4 w-3/4 bg-white/[0.06] rounded animate-pulse" />
-          <div className="h-3 w-1/2 bg-white/[0.04] rounded animate-pulse" />
-          <div className="h-3 w-2/3 bg-white/[0.04] rounded animate-pulse" />
+          <div className="h-4 w-3/4 bg-white/[0.06] rounded" />
+          <div className="h-3 w-1/2 bg-white/[0.06] rounded" />
+          <div className="h-3 w-2/3 bg-white/[0.06] rounded" />
         </div>
       </div>
     </motion.div>

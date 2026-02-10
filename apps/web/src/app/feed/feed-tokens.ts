@@ -30,30 +30,30 @@ interface HierarchyConfig {
 export const FEED_HIERARCHY: Record<FeedPriority, HierarchyConfig> = {
   primary: {
     // TODAY section - highest prominence
-    background: 'bg-white/[0.04]',
+    background: 'bg-white/[0.06]',
     border: 'border-white/[0.12]',
     title: 'text-title font-semibold text-white',
     cardBg: 'bg-white/[0.06]',
-    cardBorder: 'border-white/[0.10]',
-    cardHover: 'hover:bg-white/[0.08]',
+    cardBorder: 'border-white/[0.06]',
+    cardHover: 'hover:bg-white/[0.06]',
   },
   secondary: {
     // YOUR SPACES, THIS WEEK - standard prominence
-    background: 'bg-white/[0.02]',
-    border: 'border-white/[0.08]',
+    background: 'bg-white/[0.06]',
+    border: 'border-white/[0.06]',
     title: 'text-body-lg font-medium text-white/90',
-    cardBg: 'bg-white/[0.03]',
+    cardBg: 'bg-white/[0.06]',
     cardBorder: 'border-white/[0.06]',
-    cardHover: 'hover:bg-white/[0.05]',
+    cardHover: 'hover:bg-white/[0.06]',
   },
   tertiary: {
     // DISCOVER, CREATIONS - lower prominence
     background: 'bg-transparent',
     border: 'border-white/[0.06]',
     title: 'text-body font-medium text-white/70',
-    cardBg: 'bg-white/[0.02]',
-    cardBorder: 'border-white/[0.04]',
-    cardHover: 'hover:bg-white/[0.04]',
+    cardBg: 'bg-white/[0.06]',
+    cardBorder: 'border-white/[0.06]',
+    cardHover: 'hover:bg-white/[0.06]',
   },
 };
 

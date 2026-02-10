@@ -215,6 +215,34 @@ describe('Events Backend Endpoints', () => {
       expect(json.data.events.length).toBe(2);
     });
 
+    it('includes imported events that only have startAt/endAt fields', async () => {
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      getCollection('events').doc('imported-startAt').set({
+        title: 'Imported RSS Event',
+        description: 'CampusLabs imported event',
+        type: 'social',
+        spaceId: 'space1',
+        campusId: 'ub-buffalo',
+        organizerId: 'u1',
+        startAt: { toDate: () => tomorrow },
+        endAt: { toDate: () => new Date(tomorrow.getTime() + 60 * 60 * 1000) },
+        source: { platform: 'campuslabs' },
+        isHidden: false,
+      });
+
+      const res = await EventsRoute.GET(
+        makeReq('http://localhost/api/spaces/space1/events?upcoming=true', {}, { hive_session: 'test' }),
+        { params: Promise.resolve({ spaceId: 'space1' }) }
+      );
+
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.success).toBe(true);
+      expect(json.data.events.length).toBe(1);
+      expect(json.data.events[0].title).toBe('Imported RSS Event');
+    });
+
     it('filters hidden events from results', async () => {
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
 

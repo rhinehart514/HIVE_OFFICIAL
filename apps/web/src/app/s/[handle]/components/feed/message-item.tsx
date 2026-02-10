@@ -157,7 +157,7 @@ export function MessageItem({
       className={cn(
         'relative group',
         'rounded-lg transition-colors',
-        isHovered && 'bg-white/[0.02]'
+        isHovered && 'bg-white/[0.06]'
       )}
       style={{ padding: `${messageItem.paddingY}px 8px` }}
     >
@@ -198,9 +198,9 @@ export function MessageItem({
                 onKeyDown={handleEditKeyDown}
                 className={cn(
                   'w-full px-3 py-2 rounded-lg',
-                  'bg-white/[0.04] border border-white/[0.08]',
-                  'text-white text-sm placeholder:text-white/30',
-                  'focus:outline-none focus:ring-2 focus:ring-white/20',
+                  'bg-white/[0.06] border border-white/[0.06]',
+                  'text-white text-sm placeholder:text-white/50',
+                  'focus:outline-none focus:ring-2 focus:ring-white/50',
                   'resize-none'
                 )}
                 rows={Math.max(2, editContent.split('\n').length)}
@@ -224,14 +224,14 @@ export function MessageItem({
                   onClick={handleEditCancel}
                   className={cn(
                     'flex items-center gap-1 px-2 py-1 rounded text-xs',
-                    'text-white/60 hover:text-white hover:bg-white/[0.06]',
+                    'text-white/50 hover:text-white hover:bg-white/[0.06]',
                     'transition-colors'
                   )}
                 >
                   <X className="w-3 h-3" />
                   Cancel
                 </button>
-                <span className="text-xs text-white/30 ml-2">
+                <span className="text-xs text-white/50 ml-2">
                   Enter to save, Esc to cancel
                 </span>
               </div>
@@ -265,7 +265,7 @@ export function MessageItem({
                       className="max-w-xs max-h-48 rounded-lg border border-white/[0.06]"
                     />
                   ) : (
-                    <div className="px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white/60 hover:bg-white/[0.06] transition-colors">
+                    <div className="px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-sm text-white/50 hover:bg-white/[0.06] transition-colors">
                       {attachment.filename}
                     </div>
                   )}
@@ -303,7 +303,7 @@ export function MessageItem({
                     'text-xs transition-colors',
                     reaction.userReacted
                       ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
-                      : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.10]'
+                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.10]'
                   )}
                 >
                   <span>{reaction.emoji}</span>
@@ -317,7 +317,7 @@ export function MessageItem({
           {message.replyCount && message.replyCount > 0 && (
             <button
               onClick={onReply}
-              className="mt-2 text-xs text-white/50 hover:text-white/70 transition-colors"
+              className="mt-2 text-xs text-white/50 hover:text-white/50 transition-colors"
             >
               {message.replyCount} {message.replyCount === 1 ? 'reply' : 'replies'}
             </button>
@@ -345,7 +345,7 @@ export function MessageItem({
                       onReact?.(emoji);
                       setShowEmojiPicker(false);
                     }}
-                    className="p-1 hover:bg-white/[0.08] rounded transition-colors text-sm"
+                    className="p-1 hover:bg-white/[0.06] rounded transition-colors text-sm"
                   >
                     {emoji}
                   </button>
@@ -357,7 +357,7 @@ export function MessageItem({
                 {onReact && (
                   <button
                     onClick={() => setShowEmojiPicker(true)}
-                    className="p-1.5 hover:bg-white/[0.08] rounded transition-colors"
+                    className="p-1.5 hover:bg-white/[0.06] rounded transition-colors"
                     title="Add reaction"
                   >
                     <SmilePlus className="w-4 h-4 text-white/50" />
@@ -368,7 +368,7 @@ export function MessageItem({
                 {onReply && (
                   <button
                     onClick={onReply}
-                    className="p-1.5 hover:bg-white/[0.08] rounded transition-colors"
+                    className="p-1.5 hover:bg-white/[0.06] rounded transition-colors"
                     title="Reply in thread"
                   >
                     <MessageSquare className="w-4 h-4 text-white/50" />
@@ -379,7 +379,7 @@ export function MessageItem({
                 {isOwn && onEdit && !isEditing && (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="p-1.5 hover:bg-white/[0.08] rounded transition-colors"
+                    className="p-1.5 hover:bg-white/[0.06] rounded transition-colors"
                     title="Edit message"
                   >
                     <Pencil className="w-4 h-4 text-white/50" />
@@ -402,7 +402,7 @@ export function MessageItem({
                   <div className="relative">
                     <button
                       onClick={() => setShowMoreMenu(!showMoreMenu)}
-                      className="p-1.5 hover:bg-white/[0.08] rounded transition-colors"
+                      className="p-1.5 hover:bg-white/[0.06] rounded transition-colors"
                       title="More options"
                       data-testid="message-actions-button"
                     >
@@ -417,7 +417,7 @@ export function MessageItem({
                         <div
                           className={cn(
                             'absolute right-0 top-full mt-1 z-20',
-                            'bg-[var(--bg-elevated)] border border-white/[0.08] rounded-xl',
+                            'bg-[var(--bg-elevated)] border border-white/[0.06] rounded-lg',
                             'py-1 min-w-[120px]'
                           )}
                         >
@@ -428,7 +428,7 @@ export function MessageItem({
                             }}
                             className={cn(
                               'w-full px-3 py-1.5 text-left text-sm',
-                              'text-white/60 hover:text-white hover:bg-white/[0.06]',
+                              'text-white/50 hover:text-white hover:bg-white/[0.06]',
                               'flex items-center gap-2'
                             )}
                             data-testid="report-button"

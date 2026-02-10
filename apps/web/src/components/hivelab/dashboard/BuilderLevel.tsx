@@ -57,11 +57,11 @@ export function BuilderLevel() {
 
   if (isLoading || !profile) {
     return (
-      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] animate-pulse">
+      <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-white/[0.06] bg-white/[0.06]">
         <div className="w-8 h-8 rounded-lg bg-white/[0.06]" />
         <div className="flex-1 min-w-0">
           <div className="h-3.5 w-20 rounded bg-white/[0.06] mb-2" />
-          <div className="h-1.5 w-full rounded-full bg-white/[0.04]" />
+          <div className="h-1.5 w-full rounded-full bg-white/[0.06]" />
         </div>
       </div>
     );
@@ -69,7 +69,7 @@ export function BuilderLevel() {
 
   const config = LEVEL_CONFIG[profile.level] || LEVEL_CONFIG.creator;
   const Icon = config.icon;
-  const barColor = PROGRESS_BAR_COLORS[profile.level] || 'bg-white/40';
+  const barColor = PROGRESS_BAR_COLORS[profile.level] || 'bg-white/50';
 
   return (
     <motion.div
@@ -79,7 +79,7 @@ export function BuilderLevel() {
         duration: shouldReduceMotion ? 0 : 0.25,
         ease: EASE,
       }}
-      className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+      className="flex items-center gap-3 px-4 py-3 rounded-lg border border-white/[0.06] bg-white/[0.06]"
     >
       {/* Level icon */}
       <div
@@ -94,7 +94,7 @@ export function BuilderLevel() {
           <span className={`text-xs font-medium ${config.color}`}>
             {profile.levelLabel}
           </span>
-          <span className="text-[10px] text-white/30 tabular-nums">
+          <span className="text-[10px] text-white/50 tabular-nums">
             {profile.xp.toLocaleString()} XP
           </span>
         </div>

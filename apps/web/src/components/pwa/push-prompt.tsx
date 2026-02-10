@@ -35,7 +35,7 @@ export function PushNotificationPrompt() {
 
   return (
     <div className="fixed bottom-20 left-4 right-4 z-40 flex justify-center sm:left-auto sm:right-4 sm:bottom-4">
-      <div className="w-full max-w-sm rounded-xl bg-[var(--bg-surface)] p-4 shadow-lg border border-white/[0.06]">
+      <div className="w-full max-w-sm rounded-lg bg-[var(--bg-surface)] p-4border-white/[0.06]">
         {/* Icon */}
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 p-2 bg-yellow-500/10 rounded-lg">
@@ -58,7 +58,7 @@ export function PushNotificationPrompt() {
             <h3 className="font-semibold text-white text-sm">
               Stay in the loop
             </h3>
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="text-xs text-white/50 mt-1">
               Get notified about new events, messages, and updates from your spaces.
             </p>
           </div>
@@ -68,7 +68,7 @@ export function PushNotificationPrompt() {
         <div className="flex items-center justify-end gap-2 mt-4">
           <button
             onClick={dismiss}
-            className="px-3 py-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+            className="px-3 py-1.5 text-sm text-white/50 hover:text-white transition-colors"
           >
             Not now
           </button>

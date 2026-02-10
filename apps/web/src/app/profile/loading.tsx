@@ -6,8 +6,8 @@
 function AvatarSkeleton() {
   return (
     <div className="relative">
-      <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[var(--bg-ground)] animate-pulse" />
-      <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white/[0.08] animate-pulse" />
+      <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[var(--bg-ground)] " />
+      <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white/[0.06] " />
     </div>
   );
 }
@@ -15,15 +15,15 @@ function AvatarSkeleton() {
 function StatSkeleton() {
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="h-6 w-8 bg-[var(--bg-ground)] rounded animate-pulse" />
-      <div className="h-3 w-12 bg-[var(--bg-ground)]/60 rounded animate-pulse" />
+      <div className="h-6 w-8 bg-[var(--bg-ground)] rounded " />
+      <div className="h-3 w-12 bg-[var(--bg-ground)]/60 rounded " />
     </div>
   );
 }
 
 function BentoCardSkeleton({ className = '' }: { className?: string }) {
   return (
-    <div className={`bg-[var(--bg-void)]/50 border border-white/[0.06]/50 rounded-2xl p-5 animate-pulse ${className}`}>
+    <div className={`bg-[var(--bg-void)]/50 border border-white/[0.06] rounded-lg p-5  ${className}`}>
       <div className="h-4 w-24 bg-[var(--bg-ground)] rounded mb-4" />
       <div className="space-y-2">
         <div className="h-3 w-full bg-[var(--bg-ground)]/60 rounded" />
@@ -58,7 +58,7 @@ export default function ProfileLoading() {
           </div>
 
           {/* Edit Button */}
-          <div className="h-10 w-24 bg-[var(--bg-ground)] rounded-lg animate-pulse" />
+          <div className="h-10 w-24 bg-[var(--bg-ground)] rounded-lg " />
         </div>
 
         {/* Bento Grid */}

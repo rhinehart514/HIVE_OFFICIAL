@@ -13,13 +13,10 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Wrench, Plus, TrendingUp, FlaskConical } from 'lucide-react';
 import {
-  GlassSurface,
   Button,
   Badge,
-  Tilt,
   MOTION,
 } from '@hive/ui/design-system/primitives';
-import { } from '@hive/tokens';
 import { cn } from '@/lib/utils';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 
@@ -58,8 +55,8 @@ export function ToolsFeed({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
       >
-        <div className="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-6">
-          <Wrench className="w-8 h-8 text-white/30" />
+        <div className="w-16 h-16 rounded-lg bg-white/[0.06] flex items-center justify-center mb-6">
+          <Wrench className="w-8 h-8 text-white/50" />
         </div>
         <h3 className="text-xl font-semibold text-white mb-2">
           No tools yet
@@ -113,7 +110,7 @@ export function ToolsFeed({
             variant="cta"
             size="lg"
             onClick={onAddTool}
-            className="rounded-full shadow-lg"
+            className="rounded-full"
           >
             <Plus className="w-5 h-5 mr-2" />
             Post Tool
@@ -147,21 +144,21 @@ function ToolCard({ tool, spaceHandle }: ToolCardProps) {
       whileHover="hover"
       initial="initial"
     >
-      <Tilt intensity={4}>
+      <>
         <motion.div onClick={handleClick}>
-          <GlassSurface
-            intensity="subtle"
+          <div
+           
             className={cn(
-              'p-5 rounded-xl cursor-pointer transition-colors duration-200',
-              'border border-white/[0.06] hover:border-white/10'
+              'p-5 rounded-lg cursor-pointer transition-colors duration-200',
+              'border border-white/[0.06] hover:border-white/[0.06]'
             )}
           >
             <div className="space-y-3">
               {/* Header */}
               <div className="flex items-start gap-3">
                 {/* Icon */}
-                <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                  <Wrench className="w-5 h-5 text-white/40" />
+                <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center">
+                  <Wrench className="w-5 h-5 text-white/50" />
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -169,7 +166,7 @@ function ToolCard({ tool, spaceHandle }: ToolCardProps) {
                     {tool.name}
                   </h3>
                   {tool.category && (
-                    <p className="text-label text-white/40">{tool.category}</p>
+                    <p className="text-label text-white/50">{tool.category}</p>
                   )}
                 </div>
               </div>
@@ -189,9 +186,9 @@ function ToolCard({ tool, spaceHandle }: ToolCardProps) {
                 </div>
               </div>
             </div>
-          </GlassSurface>
+          </div>
         </motion.div>
-      </Tilt>
+      </>
     </motion.div>
   );
 }
@@ -202,17 +199,17 @@ function ToolCard({ tool, spaceHandle }: ToolCardProps) {
 
 function ToolCardSkeleton() {
   return (
-    <div className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse">
+    <div className="p-5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
       <div className="space-y-3">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-white/[0.06]" />
           <div className="flex-1 space-y-1">
             <div className="h-4 w-24 bg-white/[0.06] rounded" />
-            <div className="h-3 w-16 bg-white/[0.04] rounded" />
+            <div className="h-3 w-16 bg-white/[0.06] rounded" />
           </div>
         </div>
-        <div className="h-3 w-full bg-white/[0.04] rounded" />
-        <div className="h-3 w-2/3 bg-white/[0.04] rounded" />
+        <div className="h-3 w-full bg-white/[0.06] rounded" />
+        <div className="h-3 w-2/3 bg-white/[0.06] rounded" />
       </div>
     </div>
   );

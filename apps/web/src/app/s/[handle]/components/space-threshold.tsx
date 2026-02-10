@@ -26,9 +26,12 @@ interface SpaceThresholdProps {
     avatarUrl?: string;
     memberCount: number;
     onlineCount: number;
+    isClaimed?: boolean;
   };
   onJoin: () => void;
+  onClaim?: () => void;
   isJoining?: boolean;
+  isClaiming?: boolean;
   joinError?: string | null;
   onClearError?: () => void;
 }
@@ -36,7 +39,9 @@ interface SpaceThresholdProps {
 export function SpaceThreshold({
   space,
   onJoin,
+  onClaim,
   isJoining = false,
+  isClaiming = false,
   joinError = null,
   onClearError,
 }: SpaceThresholdProps) {
@@ -52,7 +57,7 @@ export function SpaceThreshold({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: durationSeconds.gentle, ease: MOTION.ease.premium }}
     >
-      <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-6">
+      <div className="rounded-lg bg-white/[0.06] border border-white/[0.06] p-6">
         {/* Header: Avatar + Info */}
         <div className="flex items-start gap-4 mb-6">
           <Avatar size="lg" className="flex-shrink-0">
@@ -68,19 +73,19 @@ export function SpaceThreshold({
 
             {/* Handle + Stats */}
             <div className="flex items-center gap-3 mb-2">
-              <Text size="sm" className="text-white/40 font-mono">
+              <Text size="sm" className="text-white/50 font-mono">
                 @{space.handle}
               </Text>
-              <span className="text-white/20">·</span>
+              <span className="text-white/50">·</span>
               <div className="flex items-center gap-2">
-                <Users className="h-3.5 w-3.5 text-white/30" />
+                <Users className="h-3.5 w-3.5 text-white/50" />
                 <Text size="sm" tone="muted">
                   {space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}
                 </Text>
               </div>
               {space.onlineCount > 0 && (
                 <>
-                  <span className="text-white/20">·</span>
+                  <span className="text-white/50">·</span>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)]" />
                     <Text size="sm" className="text-[var(--color-gold)]/80">
@@ -123,20 +128,33 @@ export function SpaceThreshold({
         </AnimatePresence>
 
         {/* CTA */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Text size="sm" tone="muted">
             Join to see the full conversation
           </Text>
-          <Button
-            variant="cta"
-            size="default"
-            onClick={handleJoin}
-            disabled={isJoining}
-            loading={isJoining}
-          >
-            {isJoining ? 'Joining...' : joinError ? 'Try Again' : 'Join Space'}
-            {!isJoining && <ArrowRight className="h-4 w-4 ml-2" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            {!space.isClaimed && onClaim && (
+              <Button
+                variant="default"
+                size="default"
+                onClick={onClaim}
+                disabled={isClaiming}
+                loading={isClaiming}
+              >
+                {isClaiming ? 'Claiming...' : 'Claim This Space'}
+              </Button>
+            )}
+            <Button
+              variant="cta"
+              size="default"
+              onClick={handleJoin}
+              disabled={isJoining}
+              loading={isJoining}
+            >
+              {isJoining ? 'Joining...' : joinError ? 'Try Again' : 'Join Space'}
+              {!isJoining && <ArrowRight className="h-4 w-4 ml-2" />}
+            </Button>
+          </div>
         </div>
       </div>
     </motion.div>

@@ -41,8 +41,8 @@ export function MajorSpaceCard({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          'rounded-xl border border-white/10 bg-white/[0.02] p-5',
-          'hover:border-white/20 hover:bg-white/[0.03] transition-all duration-200',
+          'rounded-lg border border-white/[0.06] bg-white/[0.06] p-5',
+          'hover:border-white/[0.06] hover:bg-white/[0.06] transition-all duration-200',
           className
         )}
       >
@@ -110,7 +110,7 @@ export function MajorSpaceCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'rounded-xl border border-white/10 bg-white/[0.02] p-5',
+        'rounded-lg border border-white/[0.06] bg-white/[0.06] p-5',
         className
       )}
     >
@@ -122,7 +122,7 @@ export function MajorSpaceCard({
             height="14"
             viewBox="0 0 14 14"
             fill="none"
-            className="text-white/40"
+            className="text-white/50"
           >
             <path
               d="M11.0833 6.41667H2.91667C2.32233 6.41667 1.83333 6.90567 1.83333 7.5V11.0833C1.83333 11.6777 2.32233 12.1667 2.91667 12.1667H11.0833C11.6777 12.1667 12.1667 11.6777 12.1667 11.0833V7.5C12.1667 6.90567 11.6777 6.41667 11.0833 6.41667Z"
@@ -166,13 +166,13 @@ export function MajorSpaceCard({
         )}
 
         {isOnWaitlist && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/10">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06]">
             <svg
               width="14"
               height="14"
               viewBox="0 0 14 14"
               fill="none"
-              className="text-white/60"
+              className="text-white/50"
             >
               <path
                 d="M11.6667 3.5L5.25 9.91667L2.33333 7"
@@ -182,7 +182,7 @@ export function MajorSpaceCard({
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="text-label text-white/70">
+            <span className="text-label text-white/50">
               On Waitlist
             </span>
           </div>

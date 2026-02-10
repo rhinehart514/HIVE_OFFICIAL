@@ -29,7 +29,7 @@ export function EventsList({
   if (displayedEvents.length === 0) {
     return (
       <div className="text-center py-4">
-        <Calendar className="w-5 h-5 text-white/20 mx-auto mb-2" />
+        <Calendar className="w-5 h-5 text-white/50 mx-auto mb-2" />
         <p className="text-xs text-white/50">No upcoming events</p>
       </div>
     );
@@ -63,7 +63,7 @@ export function EventsList({
             className={cn(
               'w-full p-2 rounded-lg',
               'text-left',
-              'bg-white/[0.02] hover:bg-white/[0.04]',
+              'bg-white/[0.06] hover:bg-white/[0.06]',
               'border border-white/[0.06] hover:border-white/[0.10]',
               'transition-colors'
             )}

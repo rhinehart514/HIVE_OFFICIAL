@@ -318,14 +318,8 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
           }) => ({
             id: e.id,
             title: e.title,
-            startTime: e.startTime,
-            location: e.locationName || 'TBD',
+            time: e.startTime || new Date().toISOString(),
             goingCount: e.goingCount || 0,
-            // P1.4: Map rsvpStatus from API to userRsvp for proper RSVP button state
-            userRsvp: e.rsvpStatus || null,
-            description: e.description,
-            isOnline: e.locationType === 'virtual',
-            virtualLink: e.virtualLink,
           })));
         }
 

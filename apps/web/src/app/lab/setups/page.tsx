@@ -106,7 +106,7 @@ function SetupCard({
       whileHover={{ opacity: 0.96 }}
       onClick={onClick}
       className={`
-        text-left p-5 rounded-xl border transition-all duration-200 group
+        text-left p-5 rounded-lg transition-all duration-200 group
         bg-[var(--hivelab-surface)] hover:bg-[var(--hivelab-surface-hover)] hover:brightness-105
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-ground)]
         ${setup.isFeatured
@@ -255,7 +255,7 @@ export default function SetupsGalleryPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search setups..."
-              className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/[0.03] border border-[var(--hivelab-border)] text-[var(--hivelab-text-primary)] transition-colors text-sm outline-none focus:border-white/20"
+              className="w-full pl-11 pr-4 py-3 rounded-lg bg-white/[0.06] border border-[var(--hivelab-border)] text-[var(--hivelab-text-primary)] transition-colors text-sm outline-none focus:border-white/[0.06]"
             />
           </div>
         </motion.div>
@@ -271,7 +271,7 @@ export default function SetupsGalleryPage() {
             onClick={() => setCategory('all')}
             className={`
               px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-              border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
+             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
               ${category === 'all'
                 ? 'bg-[var(--life-gold)]/20 text-[var(--life-gold)] border-[var(--life-gold)]/40'
                 : 'bg-transparent text-[var(--hivelab-text-secondary)] border-[var(--hivelab-border)] hover:border-white/15'
@@ -286,7 +286,7 @@ export default function SetupsGalleryPage() {
               onClick={() => setCategory(key)}
               className={`
                 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-                border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
                 ${category === key
                   ? 'border-opacity-40'
                   : 'bg-transparent text-[var(--hivelab-text-secondary)] border-[var(--hivelab-border)] hover:border-white/15'
@@ -393,7 +393,7 @@ export default function SetupsGalleryPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: shouldReduceMotion ? 0 : 0.6 }}
-          className="mt-8 p-4 rounded-xl border-dashed bg-white/[0.02] border border-dashed border-[var(--hivelab-border)]"
+          className="mt-8 p-4 rounded-lg border border-dashed bg-white/[0.06] border border-dashed border-[var(--hivelab-border)]"
         >
           <div className="flex items-center justify-between">
             <div>

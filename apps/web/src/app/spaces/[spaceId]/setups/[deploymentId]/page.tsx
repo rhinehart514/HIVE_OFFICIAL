@@ -231,7 +231,7 @@ function RuleCard({
             style={{ minWidth: 80 }}
           >
             {isTriggering ? (
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              <RefreshCw className="h-3.5 w-3.5 " />
             ) : (
               <Play className="h-3.5 w-3.5" />
             )}
@@ -275,7 +275,7 @@ function ExecutionLogItem({ log }: { log: ExecutionLog }) {
               {log.ruleName}
             </span>
             <StatusIcon
-              className={`h-3.5 w-3.5 ${log.status === 'running' ? 'animate-spin' : ''}`}
+              className={`h-3.5 w-3.5 ${log.status === 'running' ? '' : ''}`}
               style={{ color: config.color }}
             />
           </div>
@@ -386,7 +386,7 @@ export default function SetupDeploymentDetailPage() {
           <div className="flex items-center gap-4">
             <Link
               href={`/spaces/${spaceId}/setups`}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               <ArrowLeft className="h-5 w-5" style={{ color: COLORS.textSecondary }} />
             </Link>
@@ -537,7 +537,7 @@ export default function SetupDeploymentDetailPage() {
               </div>
             ) : (
               <div
-                className="rounded-lg border p-4"
+                className="rounded-lg p-4"
                 style={{ backgroundColor: COLORS.surface, borderColor: COLORS.border }}
               >
                 {deployment.executionLog?.map((log) => (
@@ -559,7 +559,7 @@ export default function SetupDeploymentDetailPage() {
               <Link
                 key={tool.slotId}
                 href={`/spaces/${spaceId}/tools/${tool.toolId}`}
-                className="flex items-center gap-3 p-3 rounded-lg border transition-colors hover:border-white/15"
+                className="flex items-center gap-3 p-3 rounded-lg transition-colors hover:border-white/15"
                 style={{
                   backgroundColor: COLORS.surface,
                   borderColor: COLORS.border,

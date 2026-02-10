@@ -8,10 +8,19 @@ import {
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { isContentHidden } from "@/lib/content-moderation";
+import {
+  getEventEndDate,
+  getEventStartDate,
+  toEventIso,
+} from "@/lib/events/event-time";
 
 /**
  * Campus-wide Events API
- * Returns all public events for the user's campus, regardless of space membership
+ * Returns all public events for the user's campus, regardless of space membership.
+ *
+ * Supports both event schemas:
+ * - Legacy/imported: startAt/endAt
+ * - Current app:      startDate/endDate
  */
 
 const GetEventsSchema = z.object({
@@ -29,6 +38,130 @@ const GetEventsSchema = z.object({
   to: z.string().optional(),   // ISO date string: filter events starting on or before this date
 });
 
+type GetEventsQuery = z.infer<typeof GetEventsSchema>;
+type TimeField = "startDate" | "startAt";
+
+const TIME_FIELDS: TimeField[] = ["startDate", "startAt"];
+const RSVP_COLLECTIONS = ["rsvps", "eventRsvps"] as const;
+const MAX_FETCH_WINDOW = 500;
+
+function resolveSortDirection(fromDate: Date | null, toDate: Date | null, upcoming: boolean) {
+  if (fromDate && toDate) return "asc" as const;
+  if (fromDate) return "asc" as const;
+  if (toDate) return "desc" as const;
+  return upcoming ? "asc" as const : "desc" as const;
+}
+
+function matchesTimeRange(
+  eventStart: Date,
+  now: Date,
+  fromDate: Date | null,
+  toDate: Date | null,
+  upcoming: boolean
+) {
+  if (fromDate && eventStart < fromDate) return false;
+  if (toDate && eventStart > toDate) return false;
+  if (!fromDate && !toDate) {
+    if (upcoming && eventStart < now) return false;
+    if (!upcoming && eventStart >= now) return false;
+  }
+  return true;
+}
+
+async function fetchDocsForTimeField({
+  campusId,
+  queryParams,
+  now,
+  fromDate,
+  toDate,
+  dateField,
+  fetchWindow,
+  includeCampusFilter,
+}: {
+  campusId: string;
+  queryParams: GetEventsQuery;
+  now: Date;
+  fromDate: Date | null;
+  toDate: Date | null;
+  dateField: TimeField;
+  fetchWindow: number;
+  includeCampusFilter: boolean;
+}): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  let query: FirebaseFirestore.Query = dbAdmin.collection("events");
+
+  if (includeCampusFilter) {
+    query = query.where("campusId", "==", campusId);
+  }
+
+  if (queryParams.type) {
+    query = query.where("type", "==", queryParams.type);
+  }
+
+  if (queryParams.spaceId) {
+    query = query.where("spaceId", "==", queryParams.spaceId);
+  }
+
+  if (queryParams.campusWide) {
+    query = query.where("isCampusWide", "==", true);
+  }
+
+  const sortDirection = resolveSortDirection(fromDate, toDate, queryParams.upcoming);
+
+  if (fromDate) {
+    query = query.where(dateField, ">=", fromDate);
+  } else if (queryParams.upcoming) {
+    query = query.where(dateField, ">=", now);
+  } else {
+    query = query.where(dateField, "<", now);
+  }
+
+  if (toDate) {
+    query = query.where(dateField, "<=", toDate);
+  }
+
+  query = query.orderBy(dateField, sortDirection).limit(fetchWindow);
+  const snapshot = await query.get();
+  return snapshot.docs;
+}
+
+async function fetchUserRsvpStatuses(eventIds: string[], userId: string) {
+  const userRsvpMap = new Map<string, string>();
+  if (eventIds.length === 0) return userRsvpMap;
+
+  const chunks: string[][] = [];
+  for (let i = 0; i < eventIds.length; i += 30) {
+    chunks.push(eventIds.slice(i, i + 30));
+  }
+
+  for (const chunk of chunks) {
+    for (const collectionName of RSVP_COLLECTIONS) {
+      try {
+        const userRsvps = await dbAdmin
+          .collection(collectionName)
+          .where("eventId", "in", chunk)
+          .where("userId", "==", userId)
+          .get();
+
+        for (const rsvpDoc of userRsvps.docs) {
+          const rsvpData = rsvpDoc.data();
+          const eventId = rsvpData.eventId;
+          const status = rsvpData.status;
+          if (typeof eventId === "string" && typeof status === "string" && !userRsvpMap.has(eventId)) {
+            userRsvpMap.set(eventId, status);
+          }
+        }
+      } catch (error) {
+        logger.warn("Failed to read RSVP collection for event statuses", {
+          collectionName,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  }
+
+  return userRsvpMap;
+}
+
 export const GET = withOptionalAuth(async (
   request: Request,
   _context: unknown,
@@ -38,107 +171,86 @@ export const GET = withOptionalAuth(async (
     // Optional auth: get user if authenticated, null otherwise
     const user = getUser(request as import("next/server").NextRequest);
     const userId = user?.uid || null;
-    const campusId = user?.campusId || 'ub-buffalo'; // Default campus for public
+    const campusId = user?.campusId || "ub-buffalo"; // Default campus for public
 
     const queryParams = GetEventsSchema.parse(
       Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
 
-    // Parse date range filters
     const now = new Date();
     const fromDate = queryParams.from ? new Date(queryParams.from) : null;
     const toDate = queryParams.to ? new Date(queryParams.to) : null;
-    const hasSearch = queryParams.search && queryParams.search.trim().length > 0;
-    const searchLower = hasSearch ? queryParams.search!.toLowerCase().trim() : '';
+    const hasSearch = Boolean(queryParams.search && queryParams.search.trim().length > 0);
+    const searchLower = hasSearch ? queryParams.search!.toLowerCase().trim() : "";
 
-    // When searching, fetch more results so post-query text filtering still
-    // yields enough matches. The limit is applied after filtering.
-    const fetchLimit = hasSearch
-      ? Math.min(queryParams.limit * 5, 500)
-      : queryParams.limit;
+    // When searching, fetch more before post-query filtering.
+    const fetchLimit = hasSearch ? Math.min(queryParams.limit * 5, 500) : queryParams.limit;
+    const fetchWindow = Math.min(
+      Math.max((queryParams.offset + fetchLimit) * 2, fetchLimit),
+      MAX_FETCH_WINDOW
+    );
 
-    // Build query for campus-wide events
-    // First try with campusId filter, then fall back to include imported events
-    let query: FirebaseFirestore.Query = dbAdmin
-      .collection("events")
-      .where("campusId", "==", campusId);
+    // Query both date fields and merge for mixed-schema compatibility.
+    const docsById = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+    let foundWithCampusFilter = false;
 
-    // Date filtering: explicit from/to range takes priority over upcoming flag
-    if (fromDate && toDate) {
-      query = query
-        .where("startDate", ">=", fromDate)
-        .where("startDate", "<=", toDate)
-        .orderBy("startDate", "asc");
-    } else if (fromDate) {
-      query = query
-        .where("startDate", ">=", fromDate)
-        .orderBy("startDate", "asc");
-    } else if (toDate) {
-      query = query
-        .where("startDate", "<=", toDate)
-        .orderBy("startDate", "desc");
-    } else if (queryParams.upcoming) {
-      query = query.where("startDate", ">=", now).orderBy("startDate", "asc");
-    } else {
-      query = query.where("startDate", "<", now).orderBy("startDate", "desc");
+    for (const dateField of TIME_FIELDS) {
+      try {
+        const docs = await fetchDocsForTimeField({
+          campusId,
+          queryParams,
+          now,
+          fromDate,
+          toDate,
+          dateField,
+          fetchWindow,
+          includeCampusFilter: true,
+        });
+        if (docs.length > 0) {
+          foundWithCampusFilter = true;
+        }
+        for (const doc of docs) docsById.set(doc.id, doc);
+      } catch (error) {
+        logger.warn("Failed to query events for date field", {
+          dateField,
+          campusId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
 
-    // Filter by type if provided
-    if (queryParams.type) {
-      query = query.where("type", "==", queryParams.type);
-    }
-
-    // Filter by space if provided
-    if (queryParams.spaceId) {
-      query = query.where("spaceId", "==", queryParams.spaceId);
-    }
-
-    // Filter for campus-wide events (events without a space)
-    if (queryParams.campusWide) {
-      query = query.where("isCampusWide", "==", true);
-    }
-
-    query = query.offset(queryParams.offset).limit(fetchLimit);
-
-    let eventsSnapshot = await query.get();
-
-    // Fallback: If querying for a specific space and no events found,
-    // try without campusId filter to include imported/legacy events
-    if (eventsSnapshot.empty && queryParams.spaceId) {
-      logger.info('No events found with campusId, trying fallback query for space', {
+    // Space-specific fallback for imported/legacy events that may have missing campusId.
+    if (!foundWithCampusFilter && queryParams.spaceId) {
+      logger.info("No events found with campus filter, trying space fallback", {
         spaceId: queryParams.spaceId,
         campusId,
       });
-      let fallbackQuery: FirebaseFirestore.Query = dbAdmin
-        .collection("events")
-        .where("spaceId", "==", queryParams.spaceId);
 
-      if (fromDate && toDate) {
-        fallbackQuery = fallbackQuery
-          .where("startDate", ">=", fromDate)
-          .where("startDate", "<=", toDate)
-          .orderBy("startDate", "asc");
-      } else if (fromDate) {
-        fallbackQuery = fallbackQuery
-          .where("startDate", ">=", fromDate)
-          .orderBy("startDate", "asc");
-      } else if (toDate) {
-        fallbackQuery = fallbackQuery
-          .where("startDate", "<=", toDate)
-          .orderBy("startDate", "desc");
-      } else if (queryParams.upcoming) {
-        fallbackQuery = fallbackQuery.where("startDate", ">=", now).orderBy("startDate", "asc");
-      } else {
-        fallbackQuery = fallbackQuery.where("startDate", "<", now).orderBy("startDate", "desc");
+      for (const dateField of TIME_FIELDS) {
+        try {
+          const docs = await fetchDocsForTimeField({
+            campusId,
+            queryParams,
+            now,
+            fromDate,
+            toDate,
+            dateField,
+            fetchWindow,
+            includeCampusFilter: false,
+          });
+          for (const doc of docs) docsById.set(doc.id, doc);
+        } catch (error) {
+          logger.warn("Fallback event query failed for date field", {
+            dateField,
+            spaceId: queryParams.spaceId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
-
-      if (queryParams.type) {
-        fallbackQuery = fallbackQuery.where("type", "==", queryParams.type);
-      }
-
-      fallbackQuery = fallbackQuery.offset(queryParams.offset).limit(fetchLimit);
-      eventsSnapshot = await fallbackQuery.get();
     }
+
+    const candidateDocs = Array.from(docsById.values());
+
     // Get user's spaces for membership-based filtering
     let userSpaceIds: Set<string> = new Set();
     if (queryParams.myEvents && userId) {
@@ -148,192 +260,220 @@ export const GET = withOptionalAuth(async (
         .get();
       userSpaceIds = new Set(membershipsSnapshot.docs.map(doc => {
         const data = doc.data();
-        return data.spaceId || doc.id.split('_')[0];
+        return data.spaceId || doc.id.split("_")[0];
       }));
     }
 
-    // COST OPTIMIZATION: Collect all unique IDs for batch fetching
-    const organizerIds = new Set<string>();
-    const spaceIds = new Set<string>();
-    const eventIds: string[] = [];
-
-    for (const doc of eventsSnapshot.docs) {
+    // Preload spaces for visibility filtering.
+    const allSpaceIds = new Set<string>();
+    for (const doc of candidateDocs) {
       const eventData = doc.data();
-      eventIds.push(doc.id);
-      if (eventData.organizerId) organizerIds.add(eventData.organizerId);
-      if (eventData.spaceId) spaceIds.add(eventData.spaceId);
+      if (typeof eventData.spaceId === "string" && eventData.spaceId.length > 0) {
+        allSpaceIds.add(eventData.spaceId);
+      }
     }
 
-    // COST OPTIMIZATION: Batch fetch all organizers in ONE call (N+1 → 1)
+    const spaceMap = new Map<string, Record<string, unknown>>();
+    if (allSpaceIds.size > 0) {
+      const refs = Array.from(allSpaceIds).map(id => dbAdmin.collection("spaces").doc(id));
+      const docs = await dbAdmin.getAll(...refs);
+      for (const doc of docs) {
+        if (doc.exists) spaceMap.set(doc.id, doc.data() as Record<string, unknown>);
+      }
+    }
+
+    // Apply security/content/search filters in memory after merging schemas.
+    const filtered: Array<{
+      doc: FirebaseFirestore.QueryDocumentSnapshot;
+      eventData: Record<string, unknown>;
+      eventStart: Date;
+    }> = [];
+
+    for (const doc of candidateDocs) {
+      const eventData = doc.data();
+      const eventStart = getEventStartDate(eventData);
+
+      // Skip events with invalid timestamps.
+      if (!eventStart) continue;
+
+      if (!matchesTimeRange(eventStart, now, fromDate, toDate, queryParams.upcoming)) {
+        continue;
+      }
+
+      // SECURITY: Skip hidden/moderated content.
+      if (isContentHidden(eventData)) {
+        continue;
+      }
+
+      // Filter by myEvents if requested.
+      if (queryParams.myEvents) {
+        const spaceId = typeof eventData.spaceId === "string" ? eventData.spaceId : "";
+        if (!spaceId || !userSpaceIds.has(spaceId)) continue;
+      }
+
+      // Get space to check visibility.
+      const spaceId = typeof eventData.spaceId === "string" ? eventData.spaceId : "";
+      const spaceData = spaceId ? spaceMap.get(spaceId) : null;
+
+      // Skip events from private spaces unless user is a member.
+      if (spaceData && spaceData.isPublic === false && !userSpaceIds.has(spaceId)) {
+        continue;
+      }
+
+      // Skip private events unless user is organizer.
+      if (eventData.isPrivate && eventData.organizerId !== userId) {
+        continue;
+      }
+
+      // Server-side text search: title, description, tags, categories.
+      if (searchLower) {
+        const title = String(eventData.title || "").toLowerCase();
+        const description = String(eventData.description || "").toLowerCase();
+        const tags: string[] = Array.isArray(eventData.tags) ? eventData.tags : [];
+        const categories: string[] = Array.isArray(eventData.categories) ? eventData.categories : [];
+        const labels = [...tags, ...categories];
+        const labelsMatch = labels.some((value: string) =>
+          String(value).toLowerCase().includes(searchLower)
+        );
+
+        if (!title.includes(searchLower) && !description.includes(searchLower) && !labelsMatch) {
+          continue;
+        }
+      }
+
+      filtered.push({ doc, eventData, eventStart });
+    }
+
+    const sortDirection = resolveSortDirection(fromDate, toDate, queryParams.upcoming);
+    filtered.sort((a, b) =>
+      sortDirection === "asc"
+        ? a.eventStart.getTime() - b.eventStart.getTime()
+        : b.eventStart.getTime() - a.eventStart.getTime()
+    );
+
+    const start = queryParams.offset;
+    const end = start + queryParams.limit;
+    const page = filtered.slice(start, end);
+    const hasMore = filtered.length > end;
+
+    // Batch data fetch only for paginated events.
+    const organizerIds = new Set<string>();
+    const pageSpaceIds = new Set<string>();
+    const eventIds: string[] = [];
+
+    for (const { doc, eventData } of page) {
+      eventIds.push(doc.id);
+      if (typeof eventData.organizerId === "string" && eventData.organizerId.length > 0) {
+        organizerIds.add(eventData.organizerId);
+      }
+      if (typeof eventData.spaceId === "string" && eventData.spaceId.length > 0) {
+        pageSpaceIds.add(eventData.spaceId);
+      }
+    }
+
     const organizerMap = new Map<string, Record<string, unknown>>();
     if (organizerIds.size > 0) {
       const organizerRefs = Array.from(organizerIds).map(id => dbAdmin.collection("users").doc(id));
       const organizerDocs = await dbAdmin.getAll(...organizerRefs);
       for (const doc of organizerDocs) {
-        if (doc.exists) {
-          organizerMap.set(doc.id, doc.data() as Record<string, unknown>);
-        }
+        if (doc.exists) organizerMap.set(doc.id, doc.data() as Record<string, unknown>);
       }
     }
 
-    // COST OPTIMIZATION: Batch fetch all spaces in ONE call (N+1 → 1)
-    const spaceMap = new Map<string, Record<string, unknown>>();
-    if (spaceIds.size > 0) {
-      const spaceRefs = Array.from(spaceIds).map(id => dbAdmin.collection("spaces").doc(id));
+    const pageSpaceMap = new Map<string, Record<string, unknown>>();
+    if (pageSpaceIds.size > 0) {
+      const spaceRefs = Array.from(pageSpaceIds).map(id => dbAdmin.collection("spaces").doc(id));
       const spaceDocs = await dbAdmin.getAll(...spaceRefs);
       for (const doc of spaceDocs) {
-        if (doc.exists) {
-          spaceMap.set(doc.id, doc.data() as Record<string, unknown>);
-        }
+        if (doc.exists) pageSpaceMap.set(doc.id, doc.data() as Record<string, unknown>);
       }
     }
 
-    // COST OPTIMIZATION: Batch fetch user's RSVPs for all events (N+1 → 1)
-    // Note: Firestore 'in' queries support up to 30 values
-    // Only fetch RSVPs if user is authenticated
-    const userRsvpMap = new Map<string, string>();
-    if (userId && eventIds.length > 0) {
-      const chunks = [];
-      for (let i = 0; i < eventIds.length; i += 30) {
-        chunks.push(eventIds.slice(i, i + 30));
-      }
-      for (const chunk of chunks) {
-        const userRsvps = await dbAdmin
-          .collection("rsvps")
-          .where("eventId", "in", chunk)
-          .where("userId", "==", userId)
-          .get();
-        for (const rsvpDoc of userRsvps.docs) {
-          const rsvpData = rsvpDoc.data();
-          userRsvpMap.set(rsvpData.eventId, rsvpData.status);
-        }
-      }
-    }
+    const userRsvpMap = userId
+      ? await fetchUserRsvpStatuses(eventIds, userId)
+      : new Map<string, string>();
 
-    // COST OPTIMIZATION: Use cached RSVP counts from event data instead of N+1 queries
-    // Events should store attendeeCount/goingCount that gets updated on RSVP changes
-    // This avoids N queries for RSVP counts
+    const events = page.map(({ doc, eventData, eventStart }) => {
+      const eventEnd = getEventEndDate(eventData);
+      const organizer =
+        typeof eventData.organizerId === "string"
+          ? organizerMap.get(eventData.organizerId)
+          : null;
+      const spaceData =
+        typeof eventData.spaceId === "string"
+          ? pageSpaceMap.get(eventData.spaceId)
+          : null;
 
-    const events: Array<Record<string, unknown>> = [];
+      const goingCount = Number(
+        eventData.attendeeCount || eventData.goingCount || eventData.rsvpCount || 0
+      );
 
-    for (const doc of eventsSnapshot.docs) {
-      const eventData = doc.data();
+      const location = eventData.locationName || eventData.location || "TBD";
+      const tags = Array.isArray(eventData.tags)
+        ? eventData.tags
+        : Array.isArray(eventData.categories)
+          ? eventData.categories
+          : [];
 
-      // SECURITY: Skip hidden/moderated content
-      if (isContentHidden(eventData)) {
-        continue;
-      }
-
-      // Filter by myEvents if requested
-      if (queryParams.myEvents && !userSpaceIds.has(eventData.spaceId)) {
-        continue;
-      }
-
-      // Get space to check visibility
-      const spaceData = eventData.spaceId ? spaceMap.get(eventData.spaceId) : null;
-
-      // Skip events from private spaces unless user is a member
-      if (spaceData && spaceData.isPublic === false && !userSpaceIds.has(eventData.spaceId)) {
-        continue;
-      }
-
-      // Skip private events unless user is organizing or RSVP'd
-      if (eventData.isPrivate && eventData.organizerId !== userId) {
-        continue;
-      }
-
-      // Server-side text search: match against title, description, and tags
-      if (searchLower) {
-        const title = (eventData.title || '').toLowerCase();
-        const description = (eventData.description || '').toLowerCase();
-        const tags: string[] = Array.isArray(eventData.tags) ? eventData.tags : [];
-        const tagsMatch = tags.some((tag: string) => String(tag).toLowerCase().includes(searchLower));
-
-        if (!title.includes(searchLower) && !description.includes(searchLower) && !tagsMatch) {
-          continue;
-        }
-      }
-
-      // Enforce original limit after all filters
-      if (events.length >= queryParams.limit) {
-        break;
-      }
-
-      const organizer = eventData.organizerId ? organizerMap.get(eventData.organizerId) : null;
-
-      // Use batch-fetched RSVP status (no per-event query)
-      const userRsvpStatus = userRsvpMap.get(doc.id) || null;
-
-      // Use cached count from event data (avoids N+1 RSVP count queries)
-      const goingCount = eventData.attendeeCount || eventData.goingCount || eventData.rsvpCount || 0;
-
-      events.push({
+      return {
         id: doc.id,
         title: eventData.title,
         description: eventData.description,
-        type: eventData.type || 'social',
-        startTime: eventData.startDate?.toDate?.()?.toISOString() || eventData.startDate,
-        endTime: eventData.endDate?.toDate?.()?.toISOString() || eventData.endDate,
-        timezone: eventData.timezone || 'America/New_York',
-        locationType: eventData.locationType || (eventData.virtualLink ? 'virtual' : 'physical'),
-        locationName: eventData.location || 'TBD',
+        type: eventData.type || eventData.eventType || "social",
+        startTime: eventStart.toISOString(),
+        endTime: eventEnd?.toISOString() || null,
+        timezone: eventData.timezone || "America/New_York",
+        locationType: eventData.locationType || (eventData.virtualLink ? "virtual" : "physical"),
+        locationName: location,
         locationAddress: eventData.address,
         virtualLink: eventData.virtualLink,
         organizer: organizer
           ? {
               id: eventData.organizerId,
-              name: organizer.fullName || organizer.displayName || 'Event Organizer',
-              handle: organizer.handle || 'organizer',
+              name: organizer.fullName || organizer.displayName || "Event Organizer",
+              handle: organizer.handle || "organizer",
               verified: organizer.isVerified || false,
             }
           : {
               id: eventData.organizerId,
-              name: 'Event Organizer',
-              handle: 'organizer',
+              name: "Event Organizer",
+              handle: "organizer",
               verified: false,
             },
         space: spaceData
           ? {
               id: eventData.spaceId,
-              name: spaceData.name || 'Campus',
-              type: spaceData.category || 'general',
+              name: spaceData.name || "Campus",
+              type: spaceData.category || "general",
             }
           : null,
         isCampusWide: eventData.isCampusWide === true || !eventData.spaceId,
         maxCapacity: eventData.maxAttendees || 100,
         currentCapacity: goingCount,
-        tags: eventData.tags || [],
-        visibility: eventData.isPrivate ? 'invited_only' : 'public',
-        rsvpStatus: userRsvpStatus,
-        isBookmarked: false, // Would need separate bookmarks collection
-        goingCount: goingCount,
-        interestedCount: 0, // Would need separate collection/cached field
-        commentsCount: 0, // Would need separate collection/cached field
+        tags,
+        visibility: eventData.isPrivate ? "invited_only" : "public",
+        rsvpStatus: userRsvpMap.get(doc.id) || null,
+        isBookmarked: false,
+        goingCount,
+        interestedCount: 0,
+        commentsCount: 0,
         sharesCount: 0,
-        createdAt: eventData.createdAt?.toDate?.()?.toISOString() || eventData.createdAt,
-        updatedAt: eventData.updatedAt?.toDate?.()?.toISOString() || eventData.updatedAt,
-        // CampusLabs imported event metadata
+        createdAt: toEventIso(eventData.createdAt),
+        updatedAt: toEventIso(eventData.updatedAt),
         theme: eventData.theme || null,
         benefits: eventData.benefits || [],
-        source: eventData.source || 'user-created',
+        source: eventData.source || "user-created",
         sourceUrl: eventData.sourceUrl || null,
-      });
-    }
-
-    // When searching, hasMore is based on whether we filled the requested limit
-    // (there may be more matching results beyond our fetchLimit window)
-    const resultsFull = events.length >= queryParams.limit;
-    const moreInSnapshot = eventsSnapshot.size >= fetchLimit;
+      };
+    });
 
     return respond.success({
       events,
-      hasMore: resultsFull || moreInSnapshot,
+      hasMore,
       pagination: {
         limit: queryParams.limit,
         offset: queryParams.offset,
-        nextOffset: resultsFull
-          ? queryParams.offset + queryParams.limit
-          : null,
+        nextOffset: hasMore ? queryParams.offset + queryParams.limit : null,
       },
     });
   } catch (error) {

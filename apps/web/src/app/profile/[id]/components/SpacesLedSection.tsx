@@ -30,10 +30,10 @@ export function SpacesLedSection({
       transition={{ duration: 0.5, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
       viewOptions={{ once: true, margin: '0px 0px -100px 0px' }}
     >
-      <div className="rounded-2xl bg-[var(--bg-surface)]/50 border border-[var(--border)]/50 overflow-hidden">
+      <div className="rounded-lg bg-[var(--bg-surface)]/50 border border-[var(--border)]/50 overflow-hidden">
         <div className="p-6 border-b border-[var(--border)]/50">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[var(--life-gold)]/10">
+            <div className="p-2 rounded-lg bg-[var(--life-gold)]/10">
               <TrophyIcon className="w-5 h-5 text-[var(--life-gold)]" />
             </div>
             <div>
@@ -49,9 +49,9 @@ export function SpacesLedSection({
             <button
               key={space.id}
               onClick={() => onSpaceClick(space.id)}
-              className="w-full p-4 flex items-center gap-4 hover:bg-white/[0.02] transition-colors text-left group"
+              className="w-full p-4 flex items-center gap-4 hover:bg-white/[0.06] transition-colors text-left group"
             >
-              <div className="w-12 h-12 rounded-xl bg-[var(--bg-surface)] flex items-center justify-center overflow-hidden flex-shrink-0">
+              <div className="w-12 h-12 rounded-lg bg-[var(--bg-surface)] flex items-center justify-center overflow-hidden flex-shrink-0">
                 {space.imageUrl ? (
                   <img src={space.imageUrl} alt={space.name} className="w-full h-full object-cover" />
                 ) : (
@@ -76,7 +76,7 @@ export function SpacesLedSection({
           <div className="p-4 bg-[var(--bg-surface)]/30 border-t border-[var(--border)]/50">
             <button
               onClick={onClaimSpace}
-              className="w-full py-2.5 px-4 rounded-xl bg-[var(--life-gold)]/10 hover:bg-[var(--life-gold)]/20 text-[var(--life-gold)] text-sm font-medium transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-lg bg-[var(--life-gold)]/10 hover:bg-[var(--life-gold)]/20 text-[var(--life-gold)] text-sm font-medium transition-colors flex items-center justify-center gap-2"
             >
               <TrophyIcon className="w-4 h-4" />
               Claim Another Space

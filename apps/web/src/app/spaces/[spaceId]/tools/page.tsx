@@ -185,7 +185,7 @@ function ToolCard({
           {/* Quick toggle */}
           <button
             onClick={onToggle}
-            className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+            className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             title={tool.isActive ? 'Pause tool' : 'Activate tool'}
           >
             {tool.isActive ? (
@@ -198,7 +198,7 @@ function ToolCard({
           {/* Configure link */}
           <Link
             href={`/spaces/${spaceId}/tools/${tool.placementId}`}
-            className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+            className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             title="Configure"
           >
             <Settings className="h-4 w-4" style={{ color: COLORS.textSecondary }} />
@@ -208,7 +208,7 @@ function ToolCard({
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               <MoreHorizontal className="h-4 w-4" style={{ color: COLORS.textSecondary }} />
             </button>
@@ -224,12 +224,12 @@ function ToolCard({
                     initial={{ opacity: 0, scale: 0.95, y: -5 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                    className="absolute right-0 top-full mt-1 z-20 min-w-[160px] rounded-lg border py-1 shadow-xl"
+                    className="absolute right-0 top-full mt-1 z-20 min-w-[160px] rounded-lg py-1"
                     style={{ backgroundColor: COLORS.surface, borderColor: COLORS.border }}
                   >
                     <Link
                       href={`/lab/${tool.toolId}`}
-                      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/[0.06] transition-colors"
                       style={{ color: COLORS.text }}
                     >
                       <ExternalLink className="h-4 w-4" />
@@ -258,7 +258,7 @@ function ToolCard({
       {!canManage && (
         <Link
           href={`/spaces/${spaceId}/tools/${tool.placementId}`}
-          className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+          className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
         >
           <ChevronRight className="h-4 w-4" style={{ color: COLORS.textSecondary }} />
         </Link>
@@ -346,7 +346,7 @@ export default function SpaceToolsPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               <ArrowLeft className="h-5 w-5" style={{ color: COLORS.textSecondary }} />
             </button>

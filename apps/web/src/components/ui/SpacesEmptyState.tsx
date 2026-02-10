@@ -103,17 +103,17 @@ export function SpacesEmptyState({
     >
       {/* Icon */}
       <motion.div
-        className="w-14 h-14 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center mb-5"
+        className="w-14 h-14 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center mb-5"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.1 }}
       >
-        <Icon className="w-6 h-6 text-white/40" />
+        <Icon className="w-6 h-6 text-white/50" />
       </motion.div>
 
       {/* Title */}
       <motion.h3
-        className="text-body font-medium text-white/70 mb-2"
+        className="text-body font-medium text-white/50 mb-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.15 }}
@@ -123,7 +123,7 @@ export function SpacesEmptyState({
 
       {/* Subtitle */}
       <motion.p
-        className="text-body-sm text-white/40 max-w-xs mb-6"
+        className="text-body-sm text-white/50 max-w-xs mb-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.2 }}
@@ -157,7 +157,7 @@ export function SpacesEmptyState({
       {/* Helpful hint for new users */}
       {variant === 'no_spaces' && (
         <motion.div
-          className="mt-8 flex items-center gap-2 text-label text-white/20"
+          className="mt-8 flex items-center gap-2 text-label text-white/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}

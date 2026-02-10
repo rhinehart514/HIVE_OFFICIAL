@@ -30,14 +30,6 @@ const fadeInUpVariants = {
   },
 };
 
-const listVariants = {
-  initial: { opacity: 1 },
-  animate: {
-    opacity: 1,
-    transition: { staggerChildren: 0.04 },
-  },
-};
-
 // ============================================================
 // Empty State — Manifesto-style with identity quadrants
 // ============================================================
@@ -53,7 +45,7 @@ function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
       {/* Your Territory section */}
       <section className="mb-8">
         <motion.h2
-          className="text-label text-white/40 uppercase tracking-wider mb-6"
+          className="text-label text-white/50 uppercase tracking-wider mb-6"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: MOTION.duration.fast, delay: 0.1, ease: MOTION.ease.premium }}
@@ -63,7 +55,7 @@ function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
 
         {/* Manifesto + Identity Quadrants Card */}
         <motion.div
-          className="rounded-2xl p-6 md:p-8"
+          className="rounded-lg p-6 md:p-8"
           style={{
             background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
@@ -74,7 +66,7 @@ function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
         >
           {/* Manifesto copy */}
           <div className="text-center mb-8">
-            <p className="text-body-lg text-white/60 leading-relaxed italic">
+            <p className="text-body-lg text-white/50 leading-relaxed italic">
               "Every student has a shape on campus.
               <br />
               Yours is waiting to be drawn."
@@ -90,8 +82,8 @@ function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
 
           {/* Primary CTA */}
           <div className="text-center">
-            <Link href="/spaces/browse">
-              <Button className="bg-white/[0.08] hover:bg-white/[0.12] text-white/90 px-6">
+            <Link href="/discover">
+              <Button className="bg-white/[0.06] hover:bg-white/[0.06] text-white px-6">
                 Discover Your Spaces
                 <ArrowRight size={16} className="ml-2" />
               </Button>
@@ -110,13 +102,13 @@ function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
         animate={{ opacity: 1 }}
         transition={{ duration: MOTION.duration.fast, delay: 0.4, ease: MOTION.ease.premium }}
       >
-        <p className="text-body text-white/40 mb-4">
+        <p className="text-body text-white/50 mb-4">
           Or create something new
         </p>
         <Button
           variant="ghost"
           onClick={onCreateSpace}
-          className="text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
+          className="text-white/50 hover:text-white hover:bg-white/[0.06]"
         >
           <Plus size={16} className="mr-2" />
           Create a Space
@@ -132,26 +124,23 @@ function IdentityQuadrantPlaceholder({ type, delay }: { type: 'major' | 'home' |
     major: {
       label: 'Major',
       emptyText: 'Choose your major',
-      gradient: 'from-blue-500/10 via-blue-500/5 to-transparent',
       accent: 'text-blue-400',
     },
     home: {
       label: 'Home',
       emptyText: 'Find your residence',
-      gradient: 'from-emerald-500/10 via-emerald-500/5 to-transparent',
       accent: 'text-emerald-400',
     },
     greek: {
       label: 'Greek',
       emptyText: 'Join your letters',
-      gradient: 'from-rose-500/10 via-rose-500/5 to-transparent',
       accent: 'text-rose-400',
     },
   }[type];
 
   return (
     <motion.div
-      className="rounded-xl p-4 text-center"
+      className="rounded-lg p-4 text-center"
       style={{
         background: 'rgba(255,255,255,0.02)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03), 0 0 0 1px rgba(255,255,255,0.02)',
@@ -164,11 +153,11 @@ function IdentityQuadrantPlaceholder({ type, delay }: { type: 'major' | 'home' |
         {config.label}
       </span>
       <div className="flex justify-center gap-1 mt-3 mb-2">
-        <span className="w-1 h-1 rounded-full bg-white/20" />
-        <span className="w-1 h-1 rounded-full bg-white/20" />
-        <span className="w-1 h-1 rounded-full bg-white/20" />
+        <span className="w-1 h-1 rounded-full bg-white/[0.06]" />
+        <span className="w-1 h-1 rounded-full bg-white/[0.06]" />
+        <span className="w-1 h-1 rounded-full bg-white/[0.06]" />
       </div>
-      <p className="text-label text-white/30 italic">
+      <p className="text-label text-white/50 italic">
         {config.emptyText}
       </p>
     </motion.div>
@@ -201,7 +190,7 @@ function OnboardingBanner({ progress, onBrowse, isFirstWeek = false }: Onboardin
 
   return (
     <motion.div
-      className="mx-6 mb-6 p-4 rounded-xl"
+      className="mx-6 mb-6 p-4 rounded-lg"
       style={bannerStyle}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -215,12 +204,12 @@ function OnboardingBanner({ progress, onBrowse, isFirstWeek = false }: Onboardin
               <div
                 key={i}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  i < progress ? 'bg-gold-500' : isFirstWeek ? 'bg-gold-500/20' : 'bg-white/10'
+                  i < progress ? 'bg-gold-500' : isFirstWeek ? 'bg-gold-500/20' : 'bg-white/[0.06]'
                 }`}
               />
             ))}
           </div>
-          <span className={`text-body-sm ${isFirstWeek ? 'text-gold-500/80' : 'text-white/60'}`}>
+          <span className={`text-body-sm ${isFirstWeek ? 'text-gold-500/80' : 'text-white/50'}`}>
             {remaining === 0
               ? 'Identity complete!'
               : isFirstWeek
@@ -233,7 +222,7 @@ function OnboardingBanner({ progress, onBrowse, isFirstWeek = false }: Onboardin
           className={`text-label transition-colors ${
             isFirstWeek
               ? 'text-gold-500/60 hover:text-gold-500'
-              : 'text-white/40 hover:text-white/60'
+              : 'text-white/50 hover:text-white/50'
           }`}
         >
           {isFirstWeek ? 'Find spaces' : 'Complete setup'}
@@ -253,7 +242,7 @@ function LoadingState() {
       {/* Identity Row Skeleton */}
       <section>
         <motion.div
-          className="h-4 w-24 rounded bg-white/[0.04] mb-4"
+          className="h-4 w-24 rounded bg-white/[0.06] mb-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.smooth }}
@@ -262,7 +251,7 @@ function LoadingState() {
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="h-24 rounded-xl bg-white/[0.02]"
+              className="h-24 rounded-lg bg-white/[0.06]"
               initial={{ opacity: 0 }}
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{
@@ -279,7 +268,7 @@ function LoadingState() {
       {/* Your Spaces Skeleton */}
       <section className="flex-1">
         <motion.div
-          className="h-4 w-28 rounded bg-white/[0.04] mb-4"
+          className="h-4 w-28 rounded bg-white/[0.06] mb-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
@@ -288,7 +277,7 @@ function LoadingState() {
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <motion.div
               key={i}
-              className="h-16 rounded-lg bg-white/[0.02]"
+              className="h-16 rounded-lg bg-white/[0.06]"
               initial={{ opacity: 0 }}
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{
@@ -305,7 +294,7 @@ function LoadingState() {
       {/* Browse link skeleton */}
       <div className="pt-4 border-t border-white/[0.06]">
         <motion.div
-          className="h-4 w-36 rounded bg-white/[0.04]"
+          className="h-4 w-36 rounded bg-white/[0.06]"
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, delay: 0.5, ease: MOTION.ease.smooth }}
@@ -331,15 +320,15 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
         <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
           <AlertCircle size={24} className="text-red-500" />
         </div>
-        <h2 className="text-heading font-medium text-white/90 tracking-tight mb-2">
+        <h2 className="text-heading font-medium text-white tracking-tight mb-2">
           Something went wrong
         </h2>
-        <p className="text-body text-white/40 leading-relaxed mb-6">
+        <p className="text-body text-white/50 leading-relaxed mb-6">
           {error || 'Failed to load your spaces. Please try again.'}
         </p>
         <Button
           onClick={onRetry}
-          className="bg-white/[0.08] hover:bg-white/[0.12] text-white/90"
+          className="bg-white/[0.06] hover:bg-white/[0.06] text-white"
         >
           <RefreshCw size={16} className="mr-2" />
           Try again
@@ -441,7 +430,7 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
       {state === 'onboarding' && (
         <OnboardingBanner
           progress={identityProgress}
-          onBrowse={() => router.push('/spaces/browse')}
+          onBrowse={() => router.push('/discover')}
           isFirstWeek={isOnboarding}
         />
       )}
@@ -458,7 +447,7 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
             <h2 className={`text-label uppercase tracking-wider ${
               isOnboarding && state === 'onboarding'
                 ? 'text-gold-500/60'
-                : 'text-white/40'
+                : 'text-white/50'
             }`}>
               {isOnboarding && state === 'onboarding' ? 'Claim Your Identity' : 'Your Identity'}
             </h2>
@@ -478,7 +467,7 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
 
         {/* Your Organizations - full width */}
         <motion.section className="flex-1" variants={fadeInUpVariants}>
-          <h2 className="text-label text-white/40 uppercase tracking-wider mb-4">
+          <h2 className="text-label text-white/50 uppercase tracking-wider mb-4">
             Your Organizations
           </h2>
           <OrganizationsPanel
@@ -492,8 +481,8 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
         {/* Browse link */}
         <motion.div className="pt-4 border-t border-white/[0.06]" variants={fadeInUpVariants}>
           <Link
-            href="/spaces/browse"
-            className="group flex items-center gap-2 text-body text-white/50 hover:text-white/80 transition-colors"
+            href="/discover"
+            className="group flex items-center gap-2 text-body text-white/50 hover:text-white transition-colors"
           >
             Browse more spaces
             <ArrowRight
@@ -519,14 +508,14 @@ export function SpacesHQ({ isOnboarding = false }: SpacesHQProps) {
 function Header({ onCreateSpace }: { onCreateSpace: () => void }) {
   return (
     <header className="px-6 py-5 flex items-center justify-between shrink-0">
-      <h1 className="text-title-lg font-medium text-white/90 tracking-tight">
+      <h1 className="text-title-lg font-medium text-white tracking-tight">
         Spaces
       </h1>
       <Button
         variant="ghost"
         size="sm"
         onClick={onCreateSpace}
-        className="text-white/50 hover:text-white/80 hover:bg-white/[0.06]"
+        className="text-white/50 hover:text-white hover:bg-white/[0.06]"
       >
         <Plus size={18} className="mr-2" />
         New

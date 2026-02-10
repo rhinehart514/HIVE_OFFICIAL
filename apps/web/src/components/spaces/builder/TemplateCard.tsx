@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Tilt, GlassSurface } from '@hive/ui/design-system/primitives';
+import { Tilt } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import { Building2, BookOpen, Rocket, Target, Sparkles, type LucideIcon } from 'lucide-react';
 
@@ -35,20 +35,20 @@ export interface TemplateCardProps {
 
 export function TemplateCard({ template, selected, onSelect }: TemplateCardProps) {
   return (
-    <Tilt intensity={6}>
+    <>
       <motion.button
         type="button"
         onClick={() => onSelect(template)}
         className="w-full text-left"
         whileTap={{ scale: 0.99 }}
       >
-        <GlassSurface
-          intensity="subtle"
+        <div
+         
           className={cn(
-            'p-5 rounded-xl transition-all duration-200',
+            'p-5 rounded-lg transition-all duration-200',
             selected
               ? 'border-2 border-[var(--life-gold)]/40 bg-[var(--life-gold)]/5'
-              : 'border border-white/[0.06] hover:border-white/10 hover:bg-white/[0.02]'
+              : 'border border-white/[0.06] hover:border-white/[0.06] hover:bg-white/[0.06]'
           )}
         >
           <div className="flex items-start gap-4">
@@ -56,12 +56,12 @@ export function TemplateCard({ template, selected, onSelect }: TemplateCardProps
             <div
               className={cn(
                 'w-12 h-12 rounded-lg flex items-center justify-center',
-                selected ? 'bg-[var(--life-gold)]/10' : 'bg-white/[0.04]'
+                selected ? 'bg-[var(--life-gold)]/10' : 'bg-white/[0.06]'
               )}
             >
               <template.icon className={cn(
                 'w-6 h-6',
-                selected ? 'text-[var(--life-gold)]' : 'text-white/60'
+                selected ? 'text-[var(--life-gold)]' : 'text-white/50'
               )} />
             </div>
 
@@ -75,7 +75,7 @@ export function TemplateCard({ template, selected, onSelect }: TemplateCardProps
               >
                 {template.name}
               </h3>
-              <p className="text-body-sm text-white/40 mt-0.5 line-clamp-2">
+              <p className="text-body-sm text-white/50 mt-0.5 line-clamp-2">
                 {template.description}
               </p>
             </div>
@@ -99,9 +99,9 @@ export function TemplateCard({ template, selected, onSelect }: TemplateCardProps
               </motion.div>
             )}
           </div>
-        </GlassSurface>
+        </div>
       </motion.button>
-    </Tilt>
+    </>
   );
 }
 

@@ -103,7 +103,7 @@ export function MembersList({
       {/* Search */}
       <div className="px-6 py-4 border-b border-white/[0.06]">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
           <input
             type="text"
             value={searchQuery}
@@ -112,9 +112,9 @@ export function MembersList({
             className={cn(
               'w-full pl-10 pr-4 py-2',
               'rounded-lg text-sm',
-              'bg-white/[0.04] border border-white/[0.06]',
-              'text-white placeholder:text-white/30',
-              'focus:outline-none focus:ring-2 focus:ring-white/20',
+              'bg-white/[0.06] border border-white/[0.06]',
+              'text-white placeholder:text-white/50',
+              'focus:outline-none focus:ring-2 focus:ring-white/50',
               'transition-all duration-150'
             )}
           />
@@ -125,7 +125,7 @@ export function MembersList({
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {filteredMembers.length === 0 ? (
           <div className="py-12 text-center">
-            <UsersIcon className="w-8 h-8 text-white/20 mx-auto mb-3" />
+            <UsersIcon className="w-8 h-8 text-white/50 mx-auto mb-3" />
             <Text tone="muted">
               {searchQuery ? 'No members found' : 'No members yet'}
             </Text>
@@ -186,7 +186,7 @@ function MemberSection({
       <Text
         size="xs"
         weight="medium"
-        className="uppercase tracking-wider text-white/40 mb-3"
+        className="uppercase tracking-wider text-white/50 mb-3"
       >
         {title}
       </Text>
@@ -254,9 +254,9 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
       }}
       className={cn(
         'w-full flex items-center gap-3 p-3 rounded-lg',
-        'hover:bg-white/[0.04] transition-colors',
+        'hover:bg-white/[0.06] transition-colors',
         'text-left',
-        isCurrentUser && 'bg-white/[0.02]'
+        isCurrentUser && 'bg-white/[0.06]'
       )}
     >
       {/* Avatar with online indicator */}
@@ -267,7 +267,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
         </Avatar>
         {/* Online indicator - green for online, grey for offline */}
         {member.isOnline ? (
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[var(--bg-ground)]" />
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border border-2 border-[var(--bg-ground)]" />
         ) : (() => {
           // Show amber dot for recently active (< 1h), grey otherwise
           const lastSeenDate = member.lastSeen
@@ -277,8 +277,8 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
           return (
             <span
               className={cn(
-                'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-ground)]',
-                recentlyActive ? 'bg-amber-400/60' : 'bg-white/10'
+                'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-2 border-[var(--bg-ground)]',
+                recentlyActive ? 'bg-amber-400/60' : 'bg-white/[0.06]'
               )}
             />
           );
@@ -290,7 +290,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
         <div className="flex items-center gap-2 flex-wrap">
           <Text size="sm" weight="medium" className="truncate">
             {member.name}
-            {isCurrentUser && <span className="text-white/40 ml-1">(you)</span>}
+            {isCurrentUser && <span className="text-white/50 ml-1">(you)</span>}
           </Text>
           {getRoleBadge()}
         </div>
@@ -310,7 +310,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
             const activityLabel = formatActivityTime(member.lastSeen);
             if (!activityLabel) return null;
             return (
-              <Text size="xs" className="text-white/30">
+              <Text size="xs" className="text-white/50">
                 {activityLabel}
               </Text>
             );
@@ -326,10 +326,10 @@ function MembersListSkeleton() {
     <div className="px-6 py-4 space-y-3">
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <div key={i} className="flex items-center gap-3 p-3">
-          <div className="w-10 h-10 rounded-lg bg-white/[0.06] animate-pulse" />
+          <div className="w-10 h-10 rounded-lg bg-white/[0.06]" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 rounded bg-white/[0.06] animate-pulse" />
-            <div className="h-3 w-24 rounded bg-white/[0.04] animate-pulse" />
+            <div className="h-4 w-32 rounded bg-white/[0.06]" />
+            <div className="h-3 w-24 rounded bg-white/[0.06]" />
           </div>
         </div>
       ))}

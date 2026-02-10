@@ -39,8 +39,8 @@ const VARIANT_CONFIG: Record<
 > = {
   new_user: {
     icon: Bell,
-    iconColor: 'text-white/30',
-    iconBg: 'bg-white/[0.04]',
+    iconColor: 'text-white/50',
+    iconBg: 'bg-white/[0.06]',
     title: 'Stay in the loop',
     subtitle: 'Join spaces and participate to start receiving updates about activity that matters to you.',
     showCta: true,
@@ -49,8 +49,8 @@ const VARIANT_CONFIG: Record<
   },
   filtered: {
     icon: Inbox,
-    iconColor: 'text-white/30',
-    iconBg: 'bg-white/[0.04]',
+    iconColor: 'text-white/50',
+    iconBg: 'bg-white/[0.06]',
     title: 'Nothing here',
     subtitle: 'No notifications match this filter. Try checking a different category.',
     showCta: false,
@@ -90,7 +90,7 @@ export function NotificationsEmptyState({
       {/* Icon */}
       <motion.div
         className={cn(
-          'w-14 h-14 rounded-xl flex items-center justify-center mb-5',
+          'w-14 h-14 rounded-lg flex items-center justify-center mb-5',
           config.iconBg
         )}
         initial={{ scale: 0.9, opacity: 0 }}
@@ -102,7 +102,7 @@ export function NotificationsEmptyState({
 
       {/* Title */}
       <motion.h3
-        className="text-body font-medium text-white/80 mb-2"
+        className="text-body font-medium text-white mb-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.15 }}
@@ -112,7 +112,7 @@ export function NotificationsEmptyState({
 
       {/* Subtitle */}
       <motion.p
-        className="text-body-sm text-white/40 max-w-xs mb-6"
+        className="text-body-sm text-white/50 max-w-xs mb-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.2 }}
@@ -141,8 +141,8 @@ export function NotificationsEmptyState({
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <Sparkles className="absolute top-1/4 left-1/4 w-4 h-4 text-emerald-400/20 animate-pulse" />
-          <Sparkles className="absolute top-1/3 right-1/3 w-3 h-3 text-emerald-400/15 animate-pulse" style={{ animationDelay: '0.3s' }} />
+          <Sparkles className="absolute top-1/4 left-1/4 w-4 h-4 text-emerald-400/20" />
+          <Sparkles className="absolute top-1/3 right-1/3 w-3 h-3 text-emerald-400/15" style={{ animationDelay: '0.3s' }} />
         </motion.div>
       )}
     </motion.div>

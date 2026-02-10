@@ -6,7 +6,7 @@ export default function SpaceToolLoading() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-start gap-4 mb-8">
-          <Skeleton className="h-14 w-14 rounded-xl" />
+          <Skeleton className="h-14 w-14 rounded-lg" />
           <div className="flex-1">
             <Skeleton className="h-6 w-48 mb-2" />
             <Skeleton className="h-4 w-32" />
@@ -15,7 +15,7 @@ export default function SpaceToolLoading() {
 
         {/* Tool content area */}
         <div
-          className="rounded-xl border p-6 min-h-[500px]"
+          className="rounded-lg p-6 min-h-[500px]"
           style={{
             backgroundColor: 'var(--bg-void, #0A0A09)',
             borderColor: 'rgba(255, 255, 255, 0.06)',

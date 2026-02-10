@@ -44,7 +44,7 @@ export function UnlockCelebration({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-50 bg-black/80 "
             onClick={onClose}
           />
 
@@ -65,10 +65,10 @@ export function UnlockCelebration({
               <div
                 className={cn(
                   'relative overflow-hidden',
-                  'rounded-3xl border border-[var(--color-gold)]/20',
-                  'bg-gradient-to-br from-[#0A0A09] to-[#0D0D0C]',
+                  'rounded-lg border border-[var(--color-gold)]/20',
+                  'bg-[#0A0A09]',
                   'p-10',
-                  'shadow-2xl shadow-[var(--color-gold)]/10'
+                  'shadow-[var(--color-gold)]/10'
                 )}
               >
                 {/* Content */}
@@ -109,7 +109,7 @@ export function UnlockCelebration({
                       delay: 0.4,
                       ease: MOTION.ease.premium,
                     }}
-                    className="text-body text-white/60 text-center mb-2 leading-relaxed"
+                    className="text-body text-white/50 text-center mb-2 leading-relaxed"
                   >
                     You unlocked this major space for everyone
                   </motion.p>
@@ -161,7 +161,7 @@ export function UnlockCelebration({
 
                     <button
                       onClick={onClose}
-                      className="w-full mt-4 py-2 text-body-sm text-white/40 hover:text-white/70 transition-colors"
+                      className="w-full mt-4 py-2 text-body-sm text-white/50 hover:text-white/50 transition-colors"
                     >
                       Close
                     </button>

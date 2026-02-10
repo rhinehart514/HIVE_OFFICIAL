@@ -73,7 +73,7 @@ function StatCard({
   icon: React.ElementType;
 }) {
   return (
-    <div className="bg-[var(--hivelab-surface)] rounded-xl p-4 border border-[var(--hivelab-border)]">
+    <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
       <div className="flex items-start justify-between mb-2">
         <div className="w-8 h-8 rounded-lg bg-[var(--hive-gold)]/10 flex items-center justify-center">
           <Icon className="h-4 w-4 text-[var(--hive-gold)]" />
@@ -143,7 +143,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/20 "
         onClick={onClose}
       />
 
@@ -153,7 +153,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="relative w-full max-w-lg bg-[var(--hivelab-bg)] shadow-2xl h-full overflow-y-auto border-l border-[var(--hivelab-border)]"
+        className="relative w-full max-w-lg bg-[var(--hivelab-bg)] h-full overflow-y-auto border-l border-[var(--hivelab-border)]"
       >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-[var(--hivelab-panel)] border-b border-[var(--hivelab-border)] px-6 py-4 flex items-center justify-between">
@@ -174,7 +174,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-24 bg-[var(--hivelab-surface)] rounded-xl border border-[var(--hivelab-border)] animate-pulse" />
+                <div key={i} className="h-24 bg-[var(--hivelab-surface)] rounded-lg border border-[var(--hivelab-border)]" />
               ))}
             </div>
           ) : error ? (
@@ -219,7 +219,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
               </div>
 
               {/* Usage Chart */}
-              <div className="bg-[var(--hivelab-surface)] rounded-xl p-4 border border-[var(--hivelab-border)]">
+              <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
                 <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-4">Daily Usage</h3>
                 <MiniBarChart data={data.usage.daily} />
                 <div className="flex justify-between mt-2 text-xs text-[var(--hivelab-text-tertiary)]">
@@ -230,7 +230,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
 
               {/* Top Spaces */}
               {data.usage.spaces.length > 0 && (
-                <div className="bg-[var(--hivelab-surface)] rounded-xl p-4 border border-[var(--hivelab-border)]">
+                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
                   <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-3">Top Spaces</h3>
                   <div className="space-y-3">
                     {data.usage.spaces.slice(0, 5).map((space, i) => (
@@ -250,7 +250,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
 
               {/* Feature Usage */}
               {data.usage.features.length > 0 && (
-                <div className="bg-[var(--hivelab-surface)] rounded-xl p-4 border border-[var(--hivelab-border)]">
+                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
                   <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-3">Top Actions</h3>
                   <div className="space-y-2">
                     {data.usage.features.slice(0, 5).map((feature, i) => (
@@ -275,7 +275,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
 
               {/* Ratings */}
               {data.feedback.totalReviews > 0 && (
-                <div className="bg-[var(--hivelab-surface)] rounded-xl p-4 border border-[var(--hivelab-border)]">
+                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)]">Ratings</h3>
                     <span className="text-sm text-[var(--hivelab-text-secondary)]">{data.feedback.totalReviews} reviews</span>
@@ -295,7 +295,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
 
               {/* Recent Comments */}
               {data.feedback.comments.length > 0 && (
-                <div className="bg-[var(--hivelab-surface)] rounded-xl p-4 border border-[var(--hivelab-border)]">
+                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
                   <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-3">Recent Reviews</h3>
                   <div className="space-y-3">
                     {data.feedback.comments.slice(0, 3).map((comment, i) => (

@@ -77,7 +77,7 @@ export function QuickStartChips({
     // Primary variant: larger cards in a grid (for new users)
     return (
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-white/40 text-xs uppercase tracking-wider">
+        <div className="flex items-center gap-2 text-white/50 text-xs uppercase tracking-wider">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Quick Start</span>
         </div>
@@ -97,13 +97,13 @@ export function QuickStartChips({
                 }}
                 onClick={() => handleClick(template)}
                 disabled={disabled || !!loadingId}
-                className="group relative p-3 rounded-xl border border-white/[0.08] bg-white/[0.02]
-                  hover:border-white/15 hover:bg-white/[0.04]
+                className="group relative p-3 rounded-lg border border-white/[0.06] bg-white/[0.06]
+                  hover:border-white/15 hover:bg-white/[0.06]
                   transition-all duration-200 text-center
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className="p-2 rounded-lg bg-white/[0.04] group-hover:bg-[var(--life-gold)]/10
+                  <div className="p-2 rounded-lg bg-white/[0.06] group-hover:bg-[var(--life-gold)]/10
                     transition-colors">
                     {isLoading ? (
                       <motion.div
@@ -117,7 +117,7 @@ export function QuickStartChips({
                         transition-colors" />
                     )}
                   </div>
-                  <span className="text-white/80 text-xs font-medium truncate w-full">
+                  <span className="text-white text-xs font-medium truncate w-full">
                     {template.name.replace(' Tool', '').replace(' Generator', '')}
                   </span>
                 </div>
@@ -131,7 +131,7 @@ export function QuickStartChips({
           transition={{ delay: 0.3 }}
           onClick={onViewAll}
           disabled={disabled}
-          className="flex items-center gap-1 text-white/40 hover:text-white/60 text-xs
+          className="flex items-center gap-1 text-white/50 hover:text-white/50 text-xs
             transition-colors disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
         >
           <span>See all templates</span>
@@ -144,7 +144,7 @@ export function QuickStartChips({
   // Secondary variant: compact horizontal chips (for active builders)
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-white/30 text-xs uppercase tracking-wider mr-1">
+      <span className="text-white/50 text-xs uppercase tracking-wider mr-1">
         Quick Start
       </span>
       {displayTemplates.map((template, index) => {
@@ -163,9 +163,9 @@ export function QuickStartChips({
             onClick={() => handleClick(template)}
             disabled={disabled || !!loadingId}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full
-              border border-white/[0.06] bg-transparent
-              hover:border-white/12 hover:bg-white/[0.03]
-              text-white/50 hover:text-white/70
+             border-white/[0.06] bg-transparent
+              hover:border-white/12 hover:bg-white/[0.06]
+              text-white/50 hover:text-white/50
               transition-all duration-200 text-xs
               disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -186,7 +186,7 @@ export function QuickStartChips({
       <button
         onClick={onViewAll}
         disabled={disabled}
-        className="flex items-center gap-0.5 text-white/30 hover:text-white/50 text-xs
+        className="flex items-center gap-0.5 text-white/50 hover:text-white/50 text-xs
           transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span>All</span>

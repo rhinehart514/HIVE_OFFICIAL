@@ -114,6 +114,10 @@ function parseEvent(item) {
   // Parse timestamps
   const startTimestamp = parseInt(item.start, 10);
   const endTimestamp = parseInt(item.end, 10);
+  const startAt = startTimestamp ? Timestamp.fromMillis(startTimestamp * 1000) : null;
+  const endAt = endTimestamp ? Timestamp.fromMillis(endTimestamp * 1000) : null;
+  const categories = Array.isArray(item.category) ? item.category : (item.category ? [item.category] : []);
+  const eventType = inferEventType(categories, item.title, item.description);
 
   return {
     // Core fields
@@ -121,9 +125,18 @@ function parseEvent(item) {
     description: stripHtml(item.description || ''),
     location: item.location || 'TBD',
 
-    // Timing
-    startAt: startTimestamp ? Timestamp.fromMillis(startTimestamp * 1000) : null,
-    endAt: endTimestamp ? Timestamp.fromMillis(endTimestamp * 1000) : null,
+    // Timing (write both legacy and current fields for compatibility)
+    startAt,
+    endAt,
+    startDate: startAt ? startAt.toDate() : null,
+    endDate: endAt ? endAt.toDate() : (startAt ? startAt.toDate() : null),
+    timezone: 'America/New_York',
+    locationType: String(item.location || '').toLowerCase().includes('zoom') ? 'virtual' : 'physical',
+    type: eventType,
+    eventType,
+    state: 'published',
+    status: 'scheduled',
+    isHidden: false,
 
     // Source tracking
     source: {
@@ -135,7 +148,8 @@ function parseEvent(item) {
     },
 
     // Categories from RSS
-    categories: Array.isArray(item.category) ? item.category : (item.category ? [item.category] : []),
+    categories,
+    tags: categories,
 
     // Event image
     imageUrl: item.enclosure?.['$']?.url || null,
@@ -148,6 +162,21 @@ function parseEvent(item) {
     updatedAt: FieldValue.serverTimestamp(),
     importedAt: FieldValue.serverTimestamp(),
   };
+}
+
+function inferEventType(categories, title, description) {
+  const text = [
+    ...(Array.isArray(categories) ? categories : []),
+    title || '',
+    description || '',
+  ].join(' ').toLowerCase();
+
+  if (text.includes('workshop') || text.includes('lecture') || text.includes('study')) return 'academic';
+  if (text.includes('career') || text.includes('professional') || text.includes('network')) return 'professional';
+  if (text.includes('meeting') || text.includes('board')) return 'meeting';
+  if (text.includes('virtual') || text.includes('zoom') || text.includes('online')) return 'virtual';
+  if (text.includes('recreation') || text.includes('sport') || text.includes('fitness')) return 'recreational';
+  return 'social';
 }
 
 function stripHtml(html) {

@@ -247,15 +247,15 @@ export default function CalendarPage() {
             </div>
 
             {/* Keyboard Shortcut Hints */}
-            <span className="hidden md:flex items-center gap-2 text-xs text-white/20">
-              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">&larr;</kbd>
-              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">&rarr;</kbd>
+            <span className="hidden md:flex items-center gap-2 text-xs text-white/50">
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] border border-white/[0.06]">&larr;</kbd>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] border border-white/[0.06]">&rarr;</kbd>
               <span>navigate</span>
-              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">t</kbd>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] border border-white/[0.06]">t</kbd>
               <span>today</span>
-              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">d</kbd>
-              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">w</kbd>
-              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.04] border border-white/[0.06]">m</kbd>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] border border-white/[0.06]">d</kbd>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] border border-white/[0.06]">w</kbd>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] border border-white/[0.06]">m</kbd>
               <span>view</span>
             </span>
           </div>

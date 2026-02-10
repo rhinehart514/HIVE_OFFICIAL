@@ -10,14 +10,14 @@ export default function SchoolsLoading() {
       </div>
 
       {/* Search */}
-      <Skeleton className="h-12 w-full max-w-md mx-auto mb-10 rounded-xl" />
+      <Skeleton className="h-12 w-full max-w-md mx-auto mb-10 rounded-lg" />
 
       {/* School list */}
       <div className="space-y-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="flex items-center gap-4 p-4 rounded-xl border border-white/[0.06]/50 bg-[var(--bg-void)]/30"
+            className="flex items-center gap-4 p-4 rounded-lg border border-white/[0.06] bg-[var(--bg-void)]/30"
           >
             {/* School logo */}
             <Skeleton className="h-14 w-14 rounded-lg flex-shrink-0" />

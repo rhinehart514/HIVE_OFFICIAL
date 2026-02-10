@@ -73,7 +73,7 @@ function ReviewCard({
         delay: shouldReduceMotion ? 0 : index * 0.06,
         ease: EASE,
       }}
-      className="p-4 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+      className="p-4 rounded-lg border border-white/[0.06] bg-white/[0.06]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-1.5">
@@ -97,22 +97,22 @@ function ReviewCard({
             </span>
           )}
         </div>
-        <span className="text-xs text-white/30 shrink-0">
+        <span className="text-xs text-white/50 shrink-0">
           {formatRelativeTime(review.createdAt)}
         </span>
       </div>
 
       {review.title && (
-        <p className="mt-2 text-sm font-medium text-white/90">
+        <p className="mt-2 text-sm font-medium text-white">
           {review.title}
         </p>
       )}
 
-      <p className="mt-1.5 text-sm text-white/60 leading-relaxed">
+      <p className="mt-1.5 text-sm text-white/50 leading-relaxed">
         {review.content}
       </p>
 
-      <p className="mt-2 text-xs text-white/30">
+      <p className="mt-2 text-xs text-white/50">
         {review.author}
       </p>
     </motion.div>
@@ -141,14 +141,14 @@ function EmptyFeedbackState({ onShare }: { onShare: () => void }) {
           damping: 20,
           delay: shouldReduceMotion ? 0 : 0.15,
         }}
-        className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-white/[0.04] flex items-center justify-center"
+        className="w-14 h-14 mx-auto mb-5 rounded-lg bg-white/[0.06] flex items-center justify-center"
       >
-        <ChatBubbleLeftIcon className="w-7 h-7 text-white/30" />
+        <ChatBubbleLeftIcon className="w-7 h-7 text-white/50" />
       </motion.div>
       <h3 className="text-lg font-semibold text-white mb-1.5">
         No feedback yet
       </h3>
-      <p className="text-sm text-white/40 max-w-sm mx-auto mb-6">
+      <p className="text-sm text-white/50 max-w-sm mx-auto mb-6">
         Share your tool to start collecting feedback from your community.
       </p>
       <Button
@@ -222,10 +222,10 @@ export default function ToolFeedbackPage({ params }: Props) {
             <Skeleton className="h-10 w-10" />
             <Skeleton className="h-8 w-48" />
           </div>
-          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-lg" />
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-32 w-full rounded-xl" />
+              <Skeleton key={i} className="h-32 w-full rounded-lg" />
             ))}
           </div>
         </div>
@@ -300,7 +300,7 @@ export default function ToolFeedbackPage({ params }: Props) {
                 ease: EASE,
               }}
             >
-              <Card className="bg-white/[0.02] border-white/[0.06]">
+              <Card className="bg-white/[0.06] border-white/[0.06]">
                 <CardContent className="pt-5 pb-5">
                   <div className="flex items-center gap-6">
                     <div>
@@ -323,7 +323,7 @@ export default function ToolFeedbackPage({ params }: Props) {
                         )}
                       </div>
                     </div>
-                    <div className="text-sm text-white/40">
+                    <div className="text-sm text-white/50">
                       {reviews.length} review{reviews.length !== 1 ? 's' : ''}
                     </div>
                   </div>

@@ -85,31 +85,31 @@ export function DataFactory() {
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder="Space name..."
-          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+          className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/[0.06]"
           onKeyDown={e => e.key === 'Enter' && handleCreate()}
         />
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[11px] text-white/40 block mb-1">Members</label>
+            <label className="text-[11px] text-white/50 block mb-1">Members</label>
             <input
               type="number"
               value={memberCount}
               onChange={e => setMemberCount(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
               min={0}
               max={20}
-              className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/20"
+              className="w-full px-3 py-1.5 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white focus:outline-none focus:border-white/[0.06]"
             />
           </div>
           <div>
-            <label className="text-[11px] text-white/40 block mb-1">Posts</label>
+            <label className="text-[11px] text-white/50 block mb-1">Posts</label>
             <input
               type="number"
               value={postCount}
               onChange={e => setPostCount(Math.min(50, Math.max(0, parseInt(e.target.value) || 0)))}
               min={0}
               max={50}
-              className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/20"
+              className="w-full px-3 py-1.5 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white focus:outline-none focus:border-white/[0.06]"
             />
           </div>
         </div>
@@ -120,7 +120,7 @@ export function DataFactory() {
           className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-sm text-blue-400 font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           whileTap={{ scale: 0.98 }}
         >
-          {isCreating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+          {isCreating ? <Loader2 size={14} className="" /> : <Plus size={14} />}
           {isCreating ? 'Creating...' : 'Create Test Space'}
         </motion.button>
       </div>
@@ -128,20 +128,20 @@ export function DataFactory() {
       {/* Created Spaces */}
       {created.length > 0 && (
         <div className="space-y-2">
-          <div className="text-[11px] text-white/40 font-medium uppercase tracking-wider">
+          <div className="text-[11px] text-white/50 font-medium uppercase tracking-wider">
             Created This Session
           </div>
           {created.map(space => (
-            <div key={space.id} className="flex items-center justify-between px-3 py-2 bg-white/5 rounded-lg">
+            <div key={space.id} className="flex items-center justify-between px-3 py-2 bg-white/[0.06] rounded-lg">
               <div className="min-w-0">
-                <p className="text-sm text-white/80 truncate">{space.handle}</p>
-                <p className="text-[11px] text-white/30 font-mono">{space.id.slice(0, 12)}...</p>
+                <p className="text-sm text-white truncate">{space.handle}</p>
+                <p className="text-[11px] text-white/50 font-mono">{space.id.slice(0, 12)}...</p>
               </div>
               <a
                 href={space.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
+                className="p-1.5 hover:bg-white/[0.06] rounded-md transition-colors"
               >
                 <ExternalLink size={14} className="text-white/50" />
               </a>
@@ -151,14 +151,14 @@ export function DataFactory() {
       )}
 
       {/* Cleanup */}
-      <div className="pt-2 border-t border-white/5">
+      <div className="pt-2 border-t border-white/[0.06]">
         <motion.button
           onClick={handleCleanup}
           disabled={isCleaning}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-sm text-red-400 font-medium disabled:opacity-40 transition-colors"
           whileTap={{ scale: 0.98 }}
         >
-          {isCleaning ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+          {isCleaning ? <Loader2 size={14} className="" /> : <Trash2 size={14} />}
           {isCleaning ? 'Cleaning...' : 'Clean Up All My Test Data'}
         </motion.button>
       </div>

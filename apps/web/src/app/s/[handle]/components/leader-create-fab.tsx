@@ -58,7 +58,7 @@ export function LeaderCreateFAB({
         id: 'event',
         label: 'Create Event',
         icon: Calendar,
-        color: 'bg-white/[0.08]',
+        color: 'bg-white/[0.06]',
         handler: onCreateEvent,
       });
     }
@@ -68,7 +68,7 @@ export function LeaderCreateFAB({
         id: 'tool',
         label: 'Add Tool',
         icon: Wrench,
-        color: 'bg-white/[0.08]',
+        color: 'bg-white/[0.06]',
         handler: onAddTool,
       });
     }
@@ -78,7 +78,7 @@ export function LeaderCreateFAB({
         id: 'announcement',
         label: 'Dashboard',
         icon: LayoutDashboard,
-        color: 'bg-white/[0.08]',
+        color: 'bg-white/[0.06]',
         handler: onCreateAnnouncement,
       });
     }
@@ -136,8 +136,8 @@ export function LeaderCreateFAB({
                   onClick={() => handleActionClick(action)}
                   className={cn(
                     'group flex items-center gap-3 px-4 py-3 rounded-full',
-                    'border border-white/[0.08]',
-                    'hover:bg-white/[0.12]',
+                    'border border-white/[0.06]',
+                    'hover:bg-white/[0.06]',
                     'transition-colors',
                     action.color
                   )}

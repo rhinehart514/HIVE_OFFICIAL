@@ -24,6 +24,11 @@ import {
   Plus,
   Zap,
   LayoutGrid,
+  Users,
+  CalendarDays,
+  MessageSquare,
+  Trophy,
+  BarChart3,
 } from 'lucide-react';
 import { MOTION, staggerPresets, durationSeconds } from '@hive/tokens';
 import {
@@ -93,13 +98,43 @@ const staggerItemVariants = {
   },
 };
 
-// Featured template IDs (shown for new users)
-const FEATURED_TEMPLATE_IDS = [
-  'quick-poll',
-  'event-rsvp',
-  'event-countdown',
-  'member-leaderboard',
-  'study-group-signup',
+// Curated library sections — grouped by use case, not raw category
+const LIBRARY_SECTIONS = [
+  {
+    id: 'meetings',
+    title: 'Run Your Meetings',
+    desc: 'Agendas, notes, attendance, and follow-ups',
+    Icon: MessageSquare,
+    templateIds: ['meeting-agenda', 'meeting-notes', 'attendance-tracker'],
+  },
+  {
+    id: 'events',
+    title: 'Plan Events',
+    desc: 'RSVPs, countdowns, check-ins, and recaps',
+    Icon: CalendarDays,
+    templateIds: ['event-rsvp', 'event-countdown', 'event-checkin'],
+  },
+  {
+    id: 'engage',
+    title: 'Engage Members',
+    desc: 'Polls, leaderboards, spotlights, and challenges',
+    Icon: Trophy,
+    templateIds: ['quick-poll', 'member-leaderboard', 'member-spotlight'],
+  },
+  {
+    id: 'feedback',
+    title: 'Get Feedback',
+    desc: 'Anonymous Q&A, suggestion boxes, and surveys',
+    Icon: BarChart3,
+    templateIds: ['anonymous-qa', 'feedback-form', 'suggestion-box'],
+  },
+  {
+    id: 'coordinate',
+    title: 'Coordinate Teams',
+    desc: 'Sign-ups, study groups, and resource scheduling',
+    Icon: Users,
+    templateIds: ['study-group-signup', 'study-group-matcher', 'resource-signup'],
+  },
 ];
 
 // Submit loading state
@@ -158,7 +193,7 @@ function WordReveal({
 }
 
 /**
- * GoldBorderInput -- Input with animated gold border on focus
+ * GoldBorderInput -- Input with animated goldon focus
  */
 function GoldBorderInput({
   value,
@@ -186,11 +221,11 @@ function GoldBorderInput({
 
   return (
     <div className="relative">
-      {/* Gold border container */}
-      <div className="relative rounded-2xl overflow-hidden">
-        {/* Top border */}
+      {/* Goldcontainer */}
+      <div className="relative rounded-lg overflow-hidden">
+        {/* Top*/}
         <motion.div
-          className="absolute top-0 left-0 right-0 h-px bg-white/20"
+          className="absolute top-0 left-0 right-0 h-px bg-white/[0.06]"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: isFocused ? 1 : 0 }}
           transition={{
@@ -200,9 +235,9 @@ function GoldBorderInput({
           }}
           style={{ transformOrigin: 'left' }}
         />
-        {/* Bottom border */}
+        {/* Bottom*/}
         <motion.div
-          className="absolute bottom-0 left-0 right-0 h-px bg-white/20"
+          className="absolute bottom-0 left-0 right-0 h-px bg-white/[0.06]"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: isFocused ? 1 : 0 }}
           transition={{
@@ -212,9 +247,9 @@ function GoldBorderInput({
           }}
           style={{ transformOrigin: 'right' }}
         />
-        {/* Left border */}
+        {/* Left*/}
         <motion.div
-          className="absolute top-0 bottom-0 left-0 w-px bg-white/20"
+          className="absolute top-0 bottom-0 left-0 w-px bg-white/[0.06]"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: isFocused ? 1 : 0 }}
           transition={{
@@ -224,9 +259,9 @@ function GoldBorderInput({
           }}
           style={{ transformOrigin: 'top' }}
         />
-        {/* Right border */}
+        {/* Right*/}
         <motion.div
-          className="absolute top-0 bottom-0 right-0 w-px bg-white/20"
+          className="absolute top-0 bottom-0 right-0 w-px bg-white/[0.06]"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: isFocused ? 1 : 0 }}
           transition={{
@@ -240,10 +275,10 @@ function GoldBorderInput({
         {/* Input container */}
         <div
           className={`
-            relative rounded-2xl border transition-colors duration-200
+            relative rounded-lg transition-colors duration-200
             ${isFocused
-              ? 'border-white/20 bg-white/[0.05]'
-              : 'border-white/10 bg-white/[0.03]'
+              ? 'border-white/[0.06] bg-white/[0.06]'
+              : 'border-white/[0.06] bg-white/[0.06]'
             }
           `}
         >
@@ -257,7 +292,7 @@ function GoldBorderInput({
             placeholder={placeholder}
             rows={2}
             disabled={disabled}
-            className="w-full px-5 py-4 pr-14 bg-transparent text-white placeholder-white/30
+            className="w-full px-5 py-4 pr-14 bg-transparent text-white placeholder-white/50
               resize-none outline-none text-base leading-relaxed"
           />
         </div>
@@ -265,7 +300,7 @@ function GoldBorderInput({
 
       {/* Start hint */}
       <div className="absolute -top-3 left-4 flex items-center gap-1.5 px-2 py-0.5
-        bg-[var(--bg-ground,#0A0A09)] text-white/40 text-xs">
+        bg-[var(--bg-ground,#0A0A09)] text-white/50 text-xs">
         <Sparkles className="w-3 h-3" />
         <span>Quick start</span>
       </div>
@@ -290,11 +325,6 @@ export default function BuilderDashboard() {
 
   // Preserve space context when arriving from a space's "Build Tool" button
   const originSpaceId = searchParams.get('spaceId');
-
-  // Get featured templates
-  const featuredTemplates = FEATURED_TEMPLATE_IDS
-    .map(id => getQuickTemplate(id))
-    .filter((t): t is QuickTemplate => t !== undefined);
 
   // Get all available templates for quick-start chips
   const allTemplates = React.useMemo(() => getAvailableTemplates().slice(0, 8), []);
@@ -398,8 +428,8 @@ export default function BuilderDashboard() {
           </p>
           <button
             onClick={() => router.push('/enter?redirect=/lab')}
-            className="px-6 py-3 bg-white text-[var(--color-bg-void,#0A0A09)] rounded-xl font-medium
-              hover:bg-white/90 transition-colors"
+            className="px-6 py-3 bg-white text-[var(--color-bg-void,#0A0A09)] rounded-lg font-medium
+              hover:bg-white transition-colors"
           >
             Sign in to start building
           </button>
@@ -417,7 +447,7 @@ export default function BuilderDashboard() {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-4 text-white/60 text-sm"
+            className="mt-4 text-white/50 text-sm"
           >
             {statusText || 'Creating tool...'}
           </motion.p>
@@ -446,14 +476,17 @@ export default function BuilderDashboard() {
               className="flex items-center justify-between mb-6"
             >
               <div className="flex items-center gap-3">
-                <LayoutGrid className="w-5 h-5 text-white/40" />
+                <LayoutGrid className="w-5 h-5 text-white/50" />
                 <h1 className="text-xl font-medium text-white">Your Lab</h1>
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => router.push('/lab/templates')}
+                  onClick={() => {
+                    const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
+                    router.push(`/lab/templates${spaceParam}`);
+                  }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                    text-white/50 hover:text-white/70 bg-white/[0.03] hover:bg-white/[0.06]
+                    text-white/50 hover:text-white/50 bg-white/[0.06] hover:bg-white/[0.06]
                     transition-colors text-sm"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
@@ -462,7 +495,7 @@ export default function BuilderDashboard() {
                 <button
                   onClick={handleNewTool}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                    text-white/80 hover:text-white bg-white/[0.06] hover:bg-white/[0.10]
+                    text-white hover:text-white bg-white/[0.06] hover:bg-white/[0.10]
                     transition-colors text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
@@ -493,7 +526,7 @@ export default function BuilderDashboard() {
               animate="animate"
               className="mb-8"
             >
-              <div className="text-xs font-medium text-white/40 tracking-wide mb-3">
+              <div className="text-xs font-medium text-white/50 tracking-wide mb-3">
                 Your Tools
               </div>
               <motion.div
@@ -523,7 +556,7 @@ export default function BuilderDashboard() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
                   onClick={() => setShowAllTools(!showAllTools)}
-                  className="mt-3 text-white/40 hover:text-white/60 text-xs transition-colors"
+                  className="mt-3 text-white/50 hover:text-white/50 text-xs transition-colors"
                 >
                   {showAllTools ? 'Show less' : `View all ${userTools.length} tools`}
                 </motion.button>
@@ -573,7 +606,7 @@ export default function BuilderDashboard() {
                 <motion.button
                   onClick={handleSubmit}
                   disabled={!prompt.trim() || isSubmitting}
-                  className="absolute right-3 bottom-3 p-2.5 rounded-xl
+                  className="absolute right-3 bottom-3 p-2.5 rounded-lg
                     disabled:cursor-not-allowed transition-all duration-200"
                   animate={{
                     backgroundColor: isSubmitting
@@ -602,7 +635,7 @@ export default function BuilderDashboard() {
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.1 }}
                       >
-                        <ArrowRight className={`w-5 h-5 ${prompt.trim() ? 'text-black' : 'text-white/40'}`} />
+                        <ArrowRight className={`w-5 h-5 ${prompt.trim() ? 'text-black' : 'text-white/50'}`} />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -610,7 +643,7 @@ export default function BuilderDashboard() {
 
                 {/* Dimming overlay during ceremony */}
                 <motion.div
-                  className="absolute inset-0 rounded-2xl pointer-events-none bg-[var(--bg-ground,#0A0A09)]"
+                  className="absolute inset-0 rounded-lg pointer-events-none bg-[var(--bg-ground,#0A0A09)]"
                   initial={{ opacity: 0 }}
                   animate={{
                     opacity: showStatus ? 0.4 : 0,
@@ -649,7 +682,7 @@ export default function BuilderDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: EASE }}
-              className="text-center mb-10 pt-8"
+              className="text-center mb-8 pt-8"
             >
               <h1 className="text-2xl sm:text-3xl font-medium text-white mb-2">
                 {shouldReduceMotion ? (
@@ -672,92 +705,12 @@ export default function BuilderDashboard() {
               </motion.p>
             </motion.div>
 
-            {/* Value prop */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : 0.15, ease: EASE }}
-              className="mb-10 max-w-2xl mx-auto"
-            >
-              <div
-                className="rounded-2xl border p-6"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.02)',
-                  borderColor: 'rgba(255,255,255,0.06)',
-                }}
-              >
-                <p
-                  className="text-sm font-medium mb-4"
-                  style={{ color: 'var(--text-secondary, rgba(255,255,255,0.7))' }}
-                >
-                  Build interactive tools for your spaces -- polls, sign-ups, generators, and more.
-                  No coding required.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { label: 'Engage members', desc: 'Polls, quizzes, and reactions that drive participation' },
-                    { label: 'Organize events', desc: 'RSVPs, countdowns, and sign-up sheets' },
-                    { label: 'Track progress', desc: 'Leaderboards, task lists, and group trackers' },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="p-3 rounded-xl"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
-                    >
-                      <p
-                        className="text-xs font-medium mb-1"
-                        style={{ color: 'var(--text-primary, white)' }}
-                      >
-                        {item.label}
-                      </p>
-                      <p
-                        className="text-xs leading-relaxed"
-                        style={{ color: 'var(--text-tertiary, rgba(255,255,255,0.4))' }}
-                      >
-                        {item.desc}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Quick Start Templates Grid */}
+            {/* AI Prompt — Primary Action */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.2, ease: EASE }}
-              className="mb-10"
-            >
-              <QuickStartChips
-                templates={featuredTemplates}
-                onTemplateClick={handleTemplateClick}
-                onViewAll={() => router.push('/lab/templates')}
-                disabled={isSubmitting}
-                variant="primary"
-              />
-            </motion.div>
-
-            {/* Divider */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: shouldReduceMotion ? 0 : 0.4 }}
-              className="flex items-center gap-4 mb-8 max-w-xl mx-auto"
-            >
-              <div className="flex-1 h-px bg-white/[0.06]" />
-              <span className="text-white/30 text-xs tracking-wide">
-                or start from scratch
-              </span>
-              <div className="flex-1 h-px bg-white/[0.06]" />
-            </motion.div>
-
-            {/* AI Prompt Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.5, ease: EASE }}
-              className="max-w-xl mx-auto"
+              transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.15, ease: EASE }}
+              className="max-w-xl mx-auto mb-10"
             >
               <div className="relative">
                 <GoldBorderInput
@@ -768,7 +721,7 @@ export default function BuilderDashboard() {
                   onBlur={() => setIsFocused(false)}
                   disabled={isSubmitting}
                   isFocused={isFocused}
-                  placeholder="Name your tool to get started..."
+                  placeholder="Describe what you want to build..."
                   inputRef={inputRef}
                 />
 
@@ -776,7 +729,7 @@ export default function BuilderDashboard() {
                 <motion.button
                   onClick={handleSubmit}
                   disabled={!prompt.trim() || isSubmitting}
-                  className="absolute right-3 bottom-3 p-2.5 rounded-xl
+                  className="absolute right-3 bottom-3 p-2.5 rounded-lg
                     disabled:cursor-not-allowed transition-all duration-200"
                   animate={{
                     backgroundColor: isSubmitting
@@ -805,7 +758,7 @@ export default function BuilderDashboard() {
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.1 }}
                       >
-                        <ArrowRight className={`w-5 h-5 ${prompt.trim() ? 'text-black' : 'text-white/40'}`} />
+                        <ArrowRight className={`w-5 h-5 ${prompt.trim() ? 'text-black' : 'text-white/50'}`} />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -813,7 +766,7 @@ export default function BuilderDashboard() {
 
                 {/* Dimming overlay */}
                 <motion.div
-                  className="absolute inset-0 rounded-2xl pointer-events-none bg-[var(--bg-ground,#0A0A09)]"
+                  className="absolute inset-0 rounded-lg pointer-events-none bg-[var(--bg-ground,#0A0A09)]"
                   initial={{ opacity: 0 }}
                   animate={{
                     opacity: showStatus ? 0.4 : 0,
@@ -840,20 +793,108 @@ export default function BuilderDashboard() {
               </AnimatePresence>
             </motion.div>
 
-            {/* Empty state hint */}
+            {/* Divider */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: shouldReduceMotion ? 0 : 0.3 }}
+              className="flex items-center gap-4 mb-8 max-w-2xl mx-auto"
+            >
+              <div className="flex-1 h-px bg-white/[0.06]" />
+              <span className="text-white/50 text-xs tracking-wide">
+                or start with a template
+              </span>
+              <div className="flex-1 h-px bg-white/[0.06]" />
+            </motion.div>
+
+            {/* Curated Library */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.35, ease: EASE }}
+              className="max-w-3xl mx-auto mb-10 space-y-6"
+            >
+              {LIBRARY_SECTIONS.map((section, sectionIndex) => {
+                const sectionTemplates = section.templateIds
+                  .map(id => getQuickTemplate(id))
+                  .filter((t): t is QuickTemplate => t !== undefined);
+
+                if (sectionTemplates.length === 0) return null;
+
+                return (
+                  <motion.div
+                    key={section.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.3,
+                      delay: shouldReduceMotion ? 0 : 0.35 + (sectionIndex * 0.08),
+                      ease: EASE,
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <section.Icon className="w-4 h-4 text-white/40" />
+                      <h3 className="text-sm font-medium text-white">{section.title}</h3>
+                      <span className="text-xs text-white/30">{section.desc}</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {sectionTemplates.map((template) => (
+                        <button
+                          key={template.id}
+                          onClick={() => handleTemplateClick(template)}
+                          disabled={isSubmitting}
+                          className="group text-left p-3 rounded-lg border border-white/[0.06] bg-white/[0.03]
+                            hover:bg-white/[0.06] hover:border-white/[0.12] transition-all disabled:opacity-50"
+                        >
+                          <p className="text-sm font-medium text-white mb-0.5 truncate">{template.name}</p>
+                          <p className="text-xs text-white/40 line-clamp-1">{template.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+              <div className="flex items-center justify-center gap-4 pt-2">
+                <button
+                  onClick={() => {
+                    const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
+                    router.push(`/lab/templates${spaceParam}`);
+                  }}
+                  className="text-white/50 hover:text-white text-xs transition-colors flex items-center gap-1.5"
+                >
+                  View all templates
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Build from scratch CTA */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.7 }}
-              className="text-center py-12 mt-8"
+              className="max-w-3xl mx-auto"
             >
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-white/[0.05]
-                flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white/30" />
+              <div
+                className="p-4 rounded-lg border border-dashed border-white/[0.08] bg-white/[0.02]
+                  flex items-center justify-between"
+              >
+                <div>
+                  <p className="text-sm font-medium text-white">Build from scratch</p>
+                  <p className="text-xs text-white/40">
+                    Describe what you need and AI builds it
+                  </p>
+                </div>
+                <button
+                  onClick={handleNewTool}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-white/[0.06]
+                    text-white hover:bg-white/[0.10] border border-white/[0.06]
+                    hover:border-white/[0.12] transition-all"
+                >
+                  Blank Canvas
+                </button>
               </div>
-              <p className="text-white/30 text-sm">
-                Tools you create will appear here
-              </p>
             </motion.div>
           </>
         )}
@@ -866,27 +907,27 @@ export default function BuilderDashboard() {
             transition={{ duration: 0.3 }}
           >
             <div className="flex items-center justify-between mb-6">
-              <div className="h-6 w-24 rounded-lg bg-white/[0.06] animate-pulse" />
-              <div className="h-8 w-16 rounded-lg bg-white/[0.04] animate-pulse" />
+              <div className="h-6 w-24 rounded-lg bg-white/[0.06]" />
+              <div className="h-8 w-16 rounded-lg bg-white/[0.06]" />
             </div>
             {/* Stats skeleton */}
             <div className="grid grid-cols-3 gap-3 mb-6">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-16 rounded-xl bg-white/[0.03] animate-pulse"
+                  className="h-16 rounded-lg bg-white/[0.06]"
                   style={{ animationDelay: `${i * 80}ms` }}
                 />
               ))}
             </div>
-            <div className="text-xs font-medium text-white/40 tracking-wide mb-3">
+            <div className="text-xs font-medium text-white/50 tracking-wide mb-3">
               Your Tools
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-[140px] rounded-xl bg-white/[0.03] animate-pulse"
+                  className="h-[140px] rounded-lg bg-white/[0.06]"
                   style={{ animationDelay: `${i * 100}ms` }}
                 />
               ))}

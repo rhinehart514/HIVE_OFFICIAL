@@ -23,7 +23,7 @@ export default function SetupEditLoading() {
         <div className="space-y-8">
           {/* Basic info */}
           <div
-            className="p-6 rounded-xl border"
+            className="p-6 rounded-lg border"
             style={{
               backgroundColor: 'var(--hivelab-surface, #141414)',
               borderColor: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
@@ -44,7 +44,7 @@ export default function SetupEditLoading() {
 
           {/* Tools section */}
           <div
-            className="p-6 rounded-xl border"
+            className="p-6 rounded-lg border"
             style={{
               backgroundColor: 'var(--hivelab-surface, #141414)',
               borderColor: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',

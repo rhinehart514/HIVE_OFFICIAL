@@ -231,7 +231,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
           <ModalBody className="space-y-6">
             {/* Event Title */}
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-sm font-medium text-white/80">
+              <Label htmlFor="title" className="text-sm font-medium text-white">
                 Event Title *
               </Label>
               <Input
@@ -250,7 +250,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
             {/* Event Type */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-white/80">Event Type</Label>
+              <Label className="text-sm font-medium text-white">Event Type</Label>
               <div className="grid grid-cols-5 gap-2">
                 {EVENT_TYPES.map((type) => {
                   const Icon = type.icon;
@@ -259,14 +259,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                       key={type.value}
                       type="button"
                       onClick={() => handleInputChange("type", type.value)}
-                      className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
+                      className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${
                         formData.type === type.value
                           ? "border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/10"
-                          : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+                          : "border-white/[0.06] hover:border-white/[0.06] bg-white/[0.06]"
                       }`}
                     >
-                      <Icon className="w-5 h-5 text-white/80" />
-                      <span className="text-xs text-white/60">{type.label}</span>
+                      <Icon className="w-5 h-5 text-white" />
+                      <span className="text-xs text-white/50">{type.label}</span>
                     </button>
                   );
                 })}
@@ -275,7 +275,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
             {/* Date & Time */}
             <div className="space-y-4">
-              <Label className="text-sm font-medium text-white/80 flex items-center gap-2">
+              <Label className="text-sm font-medium text-white flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4" />
                 Date & Time *
               </Label>
@@ -283,7 +283,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 {/* Start */}
                 <div className="space-y-2">
-                  <Label className="text-xs text-white/60">Starts</Label>
+                  <Label className="text-xs text-white/50">Starts</Label>
                   <div className="flex gap-2">
                     <Input
                       type="date"
@@ -312,7 +312,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
                 {/* End */}
                 <div className="space-y-2">
-                  <Label className="text-xs text-white/60">Ends</Label>
+                  <Label className="text-xs text-white/50">Ends</Label>
                   <div className="flex gap-2">
                     <Input
                       type="date"
@@ -343,7 +343,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
             {/* Location Type */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-white/80 flex items-center gap-2">
+              <Label className="text-sm font-medium text-white flex items-center gap-2">
                 <MapPinIcon className="w-4 h-4" />
                 Location *
               </Label>
@@ -355,10 +355,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                       key={loc.value}
                       type="button"
                       onClick={() => handleInputChange("locationType", loc.value)}
-                      className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
+                      className={`flex items-center justify-center gap-2 p-3 rounded-lg transition-all ${
                         formData.locationType === loc.value
                           ? "border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/10"
-                          : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+                          : "border-white/[0.06] hover:border-white/[0.06] bg-white/[0.06]"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -420,7 +420,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             <div className="space-y-2">
               <Label
                 htmlFor="description"
-                className="text-sm font-medium text-white/80 flex items-center gap-2"
+                className="text-sm font-medium text-white flex items-center gap-2"
               >
                 <DocumentTextIcon className="w-4 h-4" />
                 Description
@@ -431,7 +431,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 onChange={(e) => handleInputChange("description", e.target.value)}
                 placeholder="Tell people what this event is about..."
                 rows={4}
-                className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
+                className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 resize-none"
               />
             </div>
           </ModalBody>

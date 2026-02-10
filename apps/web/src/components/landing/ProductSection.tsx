@@ -14,14 +14,14 @@ interface FeatureCardProps {
 function FeatureCard({ number, title, description, className }: FeatureCardProps) {
   return (
     <motion.div
-      className={`p-8 rounded-2xl bg-zinc-900/50 border border-white/10 ${className || ''}`}
+      className={`rounded-lg border border-white/[0.06] bg-[#0A0A0A] p-8 ${className || ''}`}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-100px' }}
       transition={{ duration: 0.5 }}
     >
       <div className="flex items-center gap-3 mb-4">
-        <span className={`${clashDisplay} text-5xl font-bold text-[#FFD700]`}>{number}</span>
+        <span className={`${clashDisplay} text-5xl font-bold text-[var(--life-gold,#FFD700)]`}>{number}</span>
       </div>
       <h3 className={`${clashDisplay} text-3xl font-semibold text-white mb-3`}>{title}</h3>
       <p className="text-base text-white leading-relaxed">{description}</p>
@@ -35,9 +35,9 @@ export function ProductSection() {
       <div className="max-w-7xl mx-auto">
         {/* Section label */}
         <div className="flex items-center gap-2 mb-12">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--life-gold,#FFD700)]" />
           <span className="text-[10px] uppercase tracking-[0.2em] font-mono text-white/50">
-            HOW IT WORKS
+            CLAIM TO LEAD
           </span>
         </div>
 
@@ -46,24 +46,24 @@ export function ProductSection() {
           {/* Discover: Biggest card (spans 2 cols on lg) */}
           <FeatureCard
             number="01"
-            title="Discover"
-            description="See every space on campus. Clubs, Greek life, dorms, study groups. Real names, real people. No bots, no noise."
+            title="Find Your Club"
+            description="Search the live UB directory and open your pre-seeded space. Members, chat, events, and tools are ready to go."
             className="lg:col-span-2 lg:row-span-1"
           />
 
           {/* Create: Medium card */}
           <FeatureCard
             number="02"
-            title="Create"
-            description="Polls. Signups. Countdowns. RSVPs. Built in 30 seconds. Share anywhere. No code."
+            title="Claim Leadership"
+            description="Submit your leadership role and get immediate setup access while your verification is processed."
             className="lg:col-span-1"
           />
 
           {/* Spaces: Wide horizontal strip (spans all 3 cols) */}
           <FeatureCard
             number="03"
-            title="Spaces"
-            description="Chat with inline tools. Every space gets boards, events, tools, and members. Run it like a community, not a group chat."
+            title="Run Your Community"
+            description="Coordinate announcements, events, signups, reminders, and custom tools in one space your members already recognize."
             className="lg:col-span-3"
           />
         </div>

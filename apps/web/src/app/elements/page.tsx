@@ -73,9 +73,9 @@ const ELEMENTS = {
 };
 
 const TIER_COLORS: Record<string, string> = {
-  emerald: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/30',
-  blue: 'from-blue-500/20 to-blue-500/5 border-blue-500/30',
-  amber: 'from-amber-500/20 to-amber-500/5 border-amber-500/30',
+  emerald: 'bg-emerald-500/10 border-emerald-500/30',
+  blue: 'bg-blue-500/10 border-blue-500/30',
+  amber: 'bg-amber-500/10 border-amber-500/30',
 };
 
 const TIER_TEXT_COLORS: Record<string, string> = {
@@ -123,7 +123,7 @@ export default function ElementGalleryPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="border-b border-white/[0.08] sticky top-0 bg-black/90 backdrop-blur-xl z-50">
+      <header className="border-b border-white/[0.06] sticky top-0 bg-black/90 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
@@ -135,7 +135,7 @@ export default function ElementGalleryPage() {
 
             <div className="flex items-center gap-3">
               <Link href="/lab">
-                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
+                <Button variant="ghost" size="sm" className="text-white/50 hover:text-white">
                   <WrenchIcon className="w-4 h-4 mr-2" />
                   My Tools
                 </Button>
@@ -151,7 +151,7 @@ export default function ElementGalleryPage() {
       </header>
 
       {/* Hero */}
-      <section className="py-16 sm:py-24 border-b border-white/[0.08]">
+      <section className="py-16 sm:py-24 border-b border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -161,7 +161,7 @@ export default function ElementGalleryPage() {
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
               <span className="text-[var(--hive-gold-cta)]">{totalElements}</span> Building Blocks
             </h1>
-            <p className="mt-4 text-lg text-white/60 max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-white/50 max-w-2xl mx-auto">
               Drag, drop, and combine elements to create powerful tools for your space.
               No coding required.
             </p>
@@ -175,17 +175,17 @@ export default function ElementGalleryPage() {
             className="mt-8 max-w-md mx-auto"
           >
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="MagnifyingGlassIcon elements..."
                 className={cn(
-                  'w-full pl-12 pr-4 py-3 rounded-xl',
-                  'bg-white/[0.04] border border-white/[0.08]',
-                  'text-white placeholder:text-white/40',
-                  'focus:outline-none focus:border-white/20',
+                  'w-full pl-12 pr-4 py-3 rounded-lg',
+                  'bg-white/[0.06] border border-white/[0.06]',
+                  'text-white placeholder:text-white/50',
+                  'focus:outline-none focus:border-white/[0.06]',
                   'transition-colors'
                 )}
               />
@@ -204,8 +204,8 @@ export default function ElementGalleryPage() {
               className={cn(
                 'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                 !selectedTier
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-white/[0.06] text-white'
+                  : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
               )}
             >
               All
@@ -217,8 +217,8 @@ export default function ElementGalleryPage() {
                 className={cn(
                   'px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
                   selectedTier === tier
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                    ? 'bg-white/[0.06] text-white'
+                    : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
                 )}
               >
                 <data.icon className="w-4 h-4" />
@@ -246,8 +246,8 @@ export default function ElementGalleryPage() {
                 <div className="flex items-center gap-3 mb-6">
                   <div
                     className={cn(
-                      'w-10 h-10 rounded-xl flex items-center justify-center',
-                      `bg-gradient-to-br ${TIER_COLORS[data.color]}`
+                      'w-10 h-10 rounded-lg flex items-center justify-center',
+                      TIER_COLORS[data.color]
                     )}
                   >
                     <data.icon className={cn('w-5 h-5', TIER_TEXT_COLORS[data.color])} />
@@ -257,7 +257,7 @@ export default function ElementGalleryPage() {
                     <p className="text-sm text-white/50">{data.description}</p>
                   </div>
                   <div className="ml-auto">
-                    <span className="text-sm text-white/40">
+                    <span className="text-sm text-white/50">
                       {data.elements.length} element{data.elements.length !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -272,9 +272,9 @@ export default function ElementGalleryPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.2, delay: index * 0.03 }}
                       className={cn(
-                        'group relative p-4 rounded-xl border transition-all duration-200',
-                        'bg-white/[0.02] border-white/[0.08]',
-                        'hover:bg-white/[0.04] hover:border-white/[0.12]',
+                        'group relative p-4 rounded-lg transition-all duration-200',
+                        'bg-white/[0.06] border-white/[0.06]',
+                        'hover:bg-white/[0.06] hover:border-white/[0.06]',
                         'cursor-pointer'
                       )}
                     >
@@ -287,7 +287,7 @@ export default function ElementGalleryPage() {
                             {element.description}
                           </p>
                         </div>
-                        <ChevronRightIcon className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors" />
+                        <ChevronRightIcon className="w-4 h-4 text-white/50 group-hover:text-white/50 transition-colors" />
                       </div>
 
                       {/* Tier badge */}
@@ -311,8 +311,8 @@ export default function ElementGalleryPage() {
               animate={{ opacity: 1 }}
               className="text-center py-16"
             >
-              <MagnifyingGlassIcon className="w-12 h-12 text-white/20 mx-auto mb-4" />
-              <p className="text-white/60">No elements match your search.</p>
+              <MagnifyingGlassIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
+              <p className="text-white/50">No elements match your search.</p>
               <button
                 onClick={() => setSearchQuery('')}
                 className="mt-4 text-[var(--hive-gold-cta)] hover:underline"
@@ -325,12 +325,12 @@ export default function ElementGalleryPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 border-t border-white/[0.08]">
+      <section className="py-16 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-4">
             Ready to build something?
           </h2>
-          <p className="text-white/60 mb-8 max-w-lg mx-auto">
+          <p className="text-white/50 mb-8 max-w-lg mx-auto">
             Combine these elements to create custom tools for your space.
             AI helps you build faster.
           </p>
@@ -342,7 +342,7 @@ export default function ElementGalleryPage() {
               </Button>
             </Link>
             <Link href="/templates">
-              <Button size="lg" variant="ghost" className="text-white/60 hover:text-white">
+              <Button size="lg" variant="ghost" className="text-white/50 hover:text-white">
                 Browse Templates
                 <ChevronRightIcon className="w-4 h-4 ml-1" />
               </Button>
@@ -352,10 +352,10 @@ export default function ElementGalleryPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.08] py-8">
+      <footer className="border-t border-white/[0.06] py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-white/40">
-            Part of <Link href="/" className="text-white/60 hover:text-white">HIVE</Link> — The operating system for campus communities
+          <p className="text-center text-sm text-white/50">
+            Part of <Link href="/" className="text-white/50 hover:text-white">HIVE</Link> — The operating system for campus communities
           </p>
         </div>
       </footer>

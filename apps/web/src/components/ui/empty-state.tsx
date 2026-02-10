@@ -52,7 +52,7 @@ export function EmptyState({
     >
       {/* Icon */}
       {icon && (
-        <div className={`${compact ? 'mb-3' : 'mb-4'} text-white/20`}>
+        <div className={`${compact ? 'mb-3' : 'mb-4'} text-white/50`}>
           {icon}
         </div>
       )}
@@ -61,7 +61,7 @@ export function EmptyState({
       <Text
         size={compact ? 'default' : 'lg'}
         weight="medium"
-        className="text-white/60 mb-1"
+        className="text-white/50 mb-1"
       >
         {title}
       </Text>
@@ -70,7 +70,7 @@ export function EmptyState({
       {description && (
         <Text
           size="sm"
-          className="text-white/40 max-w-sm mb-6"
+          className="text-white/50 max-w-sm mb-6"
         >
           {description}
         </Text>

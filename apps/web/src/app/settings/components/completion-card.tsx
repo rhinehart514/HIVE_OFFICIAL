@@ -85,7 +85,7 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
           <button
             onClick={handleDismiss}
             aria-label="Dismiss for 7 days"
-            className="absolute top-3 right-3 p-1 text-white/30 hover:text-white/60 transition-colors"
+            className="absolute top-3 right-3 p-1 text-white/50 hover:text-white/50 transition-colors"
           >
             <XMarkIcon className="h-4 w-4" />
           </button>
@@ -106,7 +106,7 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
               <Text size="sm" weight="medium" className="text-white">
                 Complete your profile
               </Text>
-              <Text size="xs" className="text-white/40 mt-0.5">
+              <Text size="xs" className="text-white/50 mt-0.5">
                 {percentage}% complete
               </Text>
             </div>
@@ -128,21 +128,21 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
                 <Link
                   key={field}
                   href={config.href}
-                  className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-white/[0.04] transition-colors group"
+                  className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-white/[0.06] transition-colors group"
                 >
                   <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${required ? 'bg-amber-400' : 'bg-white/20'}`} />
-                    <Text size="sm" className="text-white/70 group-hover:text-white transition-colors">
+                    <div className={`w-1.5 h-1.5 rounded-full ${required ? 'bg-amber-400' : 'bg-white/[0.06]'}`} />
+                    <Text size="sm" className="text-white/50 group-hover:text-white transition-colors">
                       {config.label}
                     </Text>
                   </div>
-                  <ArrowRightIcon className="h-3.5 w-3.5 text-white/30 group-hover:text-white/60 transition-colors" />
+                  <ArrowRightIcon className="h-3.5 w-3.5 text-white/50 group-hover:text-white/50 transition-colors" />
                 </Link>
               );
             })}
 
             {remainingCount > 0 && (
-              <Text size="xs" className="text-white/30 pl-3.5">
+              <Text size="xs" className="text-white/50 pl-3.5">
                 +{remainingCount} more {remainingCount === 1 ? 'field' : 'fields'}
               </Text>
             )}
@@ -150,7 +150,7 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
 
           {/* Action */}
           <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
-            <Text size="xs" className="text-white/30">
+            <Text size="xs" className="text-white/50">
               Dismiss for 7 days
             </Text>
             <Button

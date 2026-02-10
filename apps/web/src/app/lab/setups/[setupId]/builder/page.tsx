@@ -340,7 +340,7 @@ export default function SetupBuilderPage() {
                 {/* Add Tool Button */}
                 <button
                   onClick={addToolSlot}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-dashed text-sm font-medium transition-all mb-4"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed text-sm font-medium transition-all mb-4"
                   style={{
                     border: `1px dashed ${COLORS.border}`,
                     color: COLORS.textSecondary,
@@ -405,7 +405,7 @@ export default function SetupBuilderPage() {
                 {/* Add Rule Button */}
                 <button
                   onClick={addRule}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-dashed text-sm font-medium transition-all mb-4"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed text-sm font-medium transition-all mb-4"
                   style={{
                     border: `1px dashed ${COLORS.border}`,
                     color: COLORS.textSecondary,
@@ -501,7 +501,7 @@ export default function SetupBuilderPage() {
                     type="text"
                     value={selectedToolSlot.name}
                     onChange={(e) => updateToolSlot(selectedToolSlot.slotId, { name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                    className="w-full px-4 py-3 rounded-lg bg-white/[0.06] text-sm outline-none"
                     style={{ borderColor: COLORS.border, color: COLORS.text }}
                   />
                 </div>
@@ -531,7 +531,7 @@ export default function SetupBuilderPage() {
 
                 {/* Initial Visibility */}
                 <div className="mb-5">
-                  <label className="flex items-center justify-between p-4 rounded-lg border cursor-pointer" style={{ borderColor: COLORS.border }}>
+                  <label className="flex items-center justify-between p-4 rounded-lg cursor-pointer" style={{ borderColor: COLORS.border }}>
                     <div>
                       <p className="text-sm font-medium" style={{ color: COLORS.text }}>Initially Visible</p>
                       <p className="text-xs" style={{ color: COLORS.textTertiary }}>
@@ -583,14 +583,14 @@ export default function SetupBuilderPage() {
                     type="text"
                     value={selectedOrcheRule.name}
                     onChange={(e) => updateRule(selectedOrcheRule.id, { name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                    className="w-full px-4 py-3 rounded-lg bg-white/[0.06] text-sm outline-none"
                     style={{ borderColor: COLORS.border, color: COLORS.text }}
                   />
                 </div>
 
                 {/* Enabled */}
                 <div className="mb-5">
-                  <label className="flex items-center justify-between p-4 rounded-lg border cursor-pointer" style={{ borderColor: COLORS.border }}>
+                  <label className="flex items-center justify-between p-4 rounded-lg cursor-pointer" style={{ borderColor: COLORS.border }}>
                     <div>
                       <p className="text-sm font-medium" style={{ color: COLORS.text }}>Enabled</p>
                       <p className="text-xs" style={{ color: COLORS.textTertiary }}>
@@ -630,7 +630,7 @@ export default function SetupBuilderPage() {
                         };
                         updateRule(selectedOrcheRule.id, { trigger: defaultTriggers[newType] });
                       }}
-                      className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                       style={{ borderColor: COLORS.border, color: COLORS.text }}
                     >
                       <option value="manual">Manual (Button)</option>
@@ -650,7 +650,7 @@ export default function SetupBuilderPage() {
                         onChange={(e) => updateRule(selectedOrcheRule.id, {
                           trigger: { ...selectedOrcheRule.trigger, buttonLabel: e.target.value }
                         })}
-                        className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                        className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                         style={{ borderColor: COLORS.border, color: COLORS.text }}
                         placeholder="Run"
                       />
@@ -666,7 +666,7 @@ export default function SetupBuilderPage() {
                           onChange={(e) => updateRule(selectedOrcheRule.id, {
                             trigger: { ...selectedOrcheRule.trigger, toolSlotId: e.target.value }
                           })}
-                          className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                           style={{ borderColor: COLORS.border, color: COLORS.text }}
                         >
                           <option value="">Select tool...</option>
@@ -682,7 +682,7 @@ export default function SetupBuilderPage() {
                           onChange={(e) => updateRule(selectedOrcheRule.id, {
                             trigger: { ...selectedOrcheRule.trigger, event: e.target.value }
                           })}
-                          className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                           style={{ borderColor: COLORS.border, color: COLORS.text }}
                         >
                           <option value="submit">Submit</option>
@@ -705,7 +705,7 @@ export default function SetupBuilderPage() {
                             onChange={(e) => updateRule(selectedOrcheRule.id, {
                               trigger: { ...selectedOrcheRule.trigger, delay: parseInt(e.target.value) || 0 }
                             })}
-                            className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                            className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                             style={{ borderColor: COLORS.border, color: COLORS.text }}
                             min="1"
                           />
@@ -717,7 +717,7 @@ export default function SetupBuilderPage() {
                             onChange={(e) => updateRule(selectedOrcheRule.id, {
                               trigger: { ...selectedOrcheRule.trigger, unit: e.target.value }
                             })}
-                            className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                            className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                             style={{ borderColor: COLORS.border, color: COLORS.text }}
                           >
                             <option value="minutes">Minutes</option>
@@ -733,7 +733,7 @@ export default function SetupBuilderPage() {
                           onChange={(e) => updateRule(selectedOrcheRule.id, {
                             trigger: { ...selectedOrcheRule.trigger, relativeTo: e.target.value }
                           })}
-                          className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                           style={{ borderColor: COLORS.border, color: COLORS.text }}
                         >
                           <option value="deployment">Setup Deployment</option>
@@ -754,7 +754,7 @@ export default function SetupBuilderPage() {
                           onChange={(e) => updateRule(selectedOrcheRule.id, {
                             trigger: { ...selectedOrcheRule.trigger, field: e.target.value }
                           })}
-                          className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                           style={{ borderColor: COLORS.border, color: COLORS.text }}
                           placeholder="e.g., responses.count"
                         />
@@ -767,7 +767,7 @@ export default function SetupBuilderPage() {
                             onChange={(e) => updateRule(selectedOrcheRule.id, {
                               trigger: { ...selectedOrcheRule.trigger, operator: e.target.value }
                             })}
-                            className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                            className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                             style={{ borderColor: COLORS.border, color: COLORS.text }}
                           >
                             <option value="equals">Equals</option>
@@ -785,7 +785,7 @@ export default function SetupBuilderPage() {
                             onChange={(e) => updateRule(selectedOrcheRule.id, {
                               trigger: { ...selectedOrcheRule.trigger, value: e.target.value }
                             })}
-                            className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                            className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                             style={{ borderColor: COLORS.border, color: COLORS.text }}
                             placeholder="Value"
                           />
@@ -836,7 +836,7 @@ export default function SetupBuilderPage() {
                                 newActions[i] = defaults[newType] ?? { type: newType };
                                 updateRule(selectedOrcheRule.id, { actions: newActions });
                               }}
-                              className="px-2 py-1 rounded bg-white/[0.03] border text-xs outline-none"
+                              className="px-2 py-1 rounded bg-white/[0.06] text-xs outline-none"
                               style={{ borderColor: COLORS.border, color: COLORS.text }}
                             >
                               <option value="notify">Send Notification</option>
@@ -869,7 +869,7 @@ export default function SetupBuilderPage() {
                                   newActions[i] = { ...action, title: e.target.value };
                                   updateRule(selectedOrcheRule.id, { actions: newActions });
                                 }}
-                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none"
                                 style={{ borderColor: COLORS.border, color: COLORS.text }}
                                 placeholder="Notification title"
                               />
@@ -881,7 +881,7 @@ export default function SetupBuilderPage() {
                                   newActions[i] = { ...action, body: e.target.value };
                                   updateRule(selectedOrcheRule.id, { actions: newActions });
                                 }}
-                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none"
                                 style={{ borderColor: COLORS.border, color: COLORS.text }}
                                 placeholder="Notification body"
                               />
@@ -892,7 +892,7 @@ export default function SetupBuilderPage() {
                                   newActions[i] = { ...action, to: e.target.value };
                                   updateRule(selectedOrcheRule.id, { actions: newActions });
                                 }}
-                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none"
                                 style={{ borderColor: COLORS.border, color: COLORS.text }}
                               >
                                 <option value="all_members">All Members</option>
@@ -911,7 +911,7 @@ export default function SetupBuilderPage() {
                                   newActions[i] = { ...action, toolSlotId: e.target.value };
                                   updateRule(selectedOrcheRule.id, { actions: newActions });
                                 }}
-                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none"
                                 style={{ borderColor: COLORS.border, color: COLORS.text }}
                               >
                                 <option value="">Select tool...</option>
@@ -931,7 +931,7 @@ export default function SetupBuilderPage() {
                                   newActions[i] = { ...action, toolSlotId: e.target.value };
                                   updateRule(selectedOrcheRule.id, { actions: newActions });
                                 }}
-                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none"
                                 style={{ borderColor: COLORS.border, color: COLORS.text }}
                               >
                                 <option value="">Select tool...</option>
@@ -952,7 +952,7 @@ export default function SetupBuilderPage() {
                                     // Invalid JSON, ignore
                                   }
                                 }}
-                                className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none font-mono"
+                                className="w-full px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none font-mono"
                                 style={{ borderColor: COLORS.border, color: COLORS.text }}
                                 placeholder='{"key": "value"}'
                               />

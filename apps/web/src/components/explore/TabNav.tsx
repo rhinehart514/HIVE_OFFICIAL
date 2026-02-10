@@ -32,7 +32,7 @@ export function TabNav({ activeTab, onTabChange, className }: TabNavProps) {
   return (
     <div
       className={cn(
-        'flex items-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]',
+        'flex items-center gap-1 p-1 rounded-lg bg-white/[0.06] border border-white/[0.06]',
         className
       )}
     >
@@ -48,7 +48,7 @@ export function TabNav({ activeTab, onTabChange, className }: TabNavProps) {
             onMouseLeave={() => setHoveredTab(null)}
             className={cn(
               'relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-body font-medium transition-colors',
-              isActive ? 'text-white' : 'text-white/50 hover:text-white/70'
+              isActive ? 'text-white' : 'text-white/50 hover:text-white/50'
             )}
           >
             {/* Active/hover background with glass treatment */}
@@ -58,8 +58,8 @@ export function TabNav({ activeTab, onTabChange, className }: TabNavProps) {
                 className={cn(
                   'absolute inset-0 rounded-lg',
                   isActive
-                    ? 'bg-white/[0.08] border border-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
-                    : 'bg-white/[0.04]'
+                    ? 'bg-white/[0.06] border border-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
+                    : 'bg-white/[0.06]'
                 )}
                 transition={{
                   type: 'spring',

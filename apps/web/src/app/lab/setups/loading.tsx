@@ -15,7 +15,7 @@ export default function SetupsLoading() {
 
         {/* Search skeleton */}
         <div className="max-w-xl mx-auto mb-6">
-          <Skeleton className="h-12 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-lg" />
         </div>
 
         {/* Category pills skeleton */}
@@ -30,7 +30,7 @@ export default function SetupsLoading() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="p-5 rounded-xl border"
+              className="p-5 rounded-lg border"
               style={{
                 backgroundColor: 'var(--hivelab-surface, #141414)',
                 borderColor: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',

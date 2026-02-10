@@ -54,10 +54,6 @@ export type { ActivityItem, ActivityType, HomebaseActivityFeedProps } from './ho
 export { SpaceQuickActions } from './space-quick-actions';
 export type { SpaceQuickActionsProps } from './space-quick-actions';
 
-// Boards sidebar (unified space view)
-export { BoardsSidebar } from './boards-sidebar';
-export type { Board, BoardsSidebarProps, SidebarEvent } from './boards-sidebar';
-
 // Unified activity feed (space residence)
 export { UnifiedActivityFeed } from './unified-activity-feed';
 export type {

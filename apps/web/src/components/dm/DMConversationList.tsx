@@ -34,7 +34,7 @@ export function DMConversationList({ onSelectConversation }: DMConversationListP
   if (isLoadingConversations) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--text-tertiary)' }} />
+        <Loader2 className="w-6 h-6 " style={{ color: 'var(--text-tertiary)' }} />
       </div>
     );
   }
@@ -72,8 +72,8 @@ export function DMConversationList({ onSelectConversation }: DMConversationListP
             onClick={() => handleSelect(conversation.id)}
             className={cn(
               'w-full flex items-start gap-3 px-4 py-3',
-              'transition-colors hover:bg-white/[0.04]',
-              'border-b border-white/[0.04]'
+              'transition-colors hover:bg-white/[0.06]',
+              'border-b border-white/[0.06]'
             )}
           >
             {/* Avatar */}
@@ -105,7 +105,7 @@ export function DMConversationList({ onSelectConversation }: DMConversationListP
 
               <div className="flex items-center justify-between gap-2">
                 <p
-                  className={cn('text-sm truncate', hasUnread ? 'text-white/80' : 'text-white/50')}
+                  className={cn('text-sm truncate', hasUnread ? 'text-white' : 'text-white/50')}
                 >
                   {conversation.lastMessage?.content || 'No messages yet'}
                 </p>

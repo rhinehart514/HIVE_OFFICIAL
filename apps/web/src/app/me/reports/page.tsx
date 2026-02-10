@@ -57,7 +57,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   },
   dismissed: {
     label: 'Dismissed',
-    color: 'bg-white/[0.06] text-white/40 border-white/[0.08]',
+    color: 'bg-white/[0.06] text-white/50 border-white/[0.06]',
     icon: <XCircle className="w-3.5 h-3.5" />,
   },
 };
@@ -130,7 +130,7 @@ function ReportCard({ report }: { report: Report }) {
             className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
             style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
           >
-            <Flag className="w-5 h-5 text-white/40" />
+            <Flag className="w-5 h-5 text-white/50" />
           </div>
 
           {/* Content */}
@@ -147,7 +147,7 @@ function ReportCard({ report }: { report: Report }) {
 
               {/* Status badge */}
               <div
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${statusConfig.color}`}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
               >
                 {statusConfig.icon}
                 {statusConfig.label}
@@ -172,7 +172,7 @@ function ReportCard({ report }: { report: Report }) {
             )}
 
             {/* Footer */}
-            <div className="flex items-center gap-2 text-xs text-white/30">
+            <div className="flex items-center gap-2 text-xs text-white/50">
               <span>Submitted {formatDate(report.createdAt)}</span>
               {report.resolvedAt && (
                 <>
@@ -229,7 +229,7 @@ export default function ReportsPage() {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 text-white/30 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 text-white/50  mx-auto mb-4" />
           <Text size="sm" tone="muted">Loading your reports...</Text>
         </div>
       </div>
@@ -265,7 +265,7 @@ export default function ReportsPage() {
           >
             Your Reports
           </h1>
-          <p className="text-base text-white/40">
+          <p className="text-base text-white/50">
             Track the status of content you&apos;ve reported
           </p>
         </motion.section>
@@ -308,7 +308,7 @@ export default function ReportsPage() {
 
         {/* Info footer */}
         <motion.div
-          className="mt-8 p-4 rounded-xl"
+          className="mt-8 p-4 rounded-lg"
           style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

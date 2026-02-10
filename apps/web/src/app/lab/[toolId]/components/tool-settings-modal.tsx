@@ -148,7 +148,7 @@ export function ToolSettingsModal({
                 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]',
                 'transition-all duration-200',
                 'hover:border-[var(--border-default)]',
-                'focus:outline-none focus:border-[var(--border-emphasis)] focus:ring-2 focus:ring-white/10'
+                'focus:outline-none focus:border-[var(--border-emphasis)] focus:ring-2 focus:ring-white/[0.06]'
               )}
             />
           </div>
@@ -169,7 +169,7 @@ export function ToolSettingsModal({
                 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]',
                 'transition-all duration-200',
                 'hover:border-[var(--border-default)]',
-                'focus:outline-none focus:border-[var(--border-emphasis)] focus:ring-2 focus:ring-white/10'
+                'focus:outline-none focus:border-[var(--border-emphasis)] focus:ring-2 focus:ring-white/[0.06]'
               )}
             />
           </div>
@@ -190,7 +190,7 @@ export function ToolSettingsModal({
                     type="button"
                     onClick={() => setVisibility(option.value)}
                     className={cn(
-                      'w-full flex items-center gap-4 p-4 rounded-lg border transition-all duration-200 text-left',
+                      'w-full flex items-center gap-4 p-4 rounded-lg transition-all duration-200 text-left',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
                       isSelected
                         ? 'border-[var(--border-emphasis)] bg-[var(--bg-muted)]'
@@ -250,7 +250,7 @@ export function ToolSettingsModal({
                     'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
                     category === option.value
-                      ? 'bg-[var(--text-primary)] text-[var(--bg-ground)]'
+                      ? 'bg-[var(-- text-primary)] text-[var(--bg-ground)]'
                       : 'bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:bg-[var(--bg-emphasis)] hover:text-[var(--text-primary)]'
                   )}
                 >
@@ -283,7 +283,7 @@ export function ToolSettingsModal({
             )}
           >
             {isSubmitting ? (
-              <ArrowPathIcon className="h-4 w-4 animate-spin" />
+              <ArrowPathIcon className="h-4 w-4 " />
             ) : (
               'Save Changes'
             )}

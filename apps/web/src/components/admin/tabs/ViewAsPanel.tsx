@@ -103,11 +103,11 @@ export function ViewAsPanel() {
 
         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg space-y-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center overflow-hidden flex-shrink-0">
               {impersonation.profile.avatarUrl ? (
                 <img src={impersonation.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <User size={18} className="text-white/40" />
+                <User size={18} className="text-white/50" />
               )}
             </div>
             <div className="min-w-0">
@@ -121,18 +121,18 @@ export function ViewAsPanel() {
           </div>
 
           {/* Profile snapshot */}
-          <div className="space-y-1 text-[11px] text-white/40 pt-1 border-t border-red-500/10">
+          <div className="space-y-1 text-[11px] text-white/50 pt-1 border-t border-red-500/10">
             {impersonation.profile.major && (
-              <p>Major: <span className="text-white/60">{impersonation.profile.major}</span></p>
+              <p>Major: <span className="text-white/50">{impersonation.profile.major}</span></p>
             )}
             {impersonation.profile.graduationYear && (
-              <p>Grad Year: <span className="text-white/60">{impersonation.profile.graduationYear}</span></p>
+              <p>Grad Year: <span className="text-white/50">{impersonation.profile.graduationYear}</span></p>
             )}
             {impersonation.profile.bio && (
-              <p>Bio: <span className="text-white/60">{impersonation.profile.bio}</span></p>
+              <p>Bio: <span className="text-white/50">{impersonation.profile.bio}</span></p>
             )}
-            <p>Builder: <span className="text-white/60">{impersonation.profile.isBuilder ? 'Yes' : 'No'}</span></p>
-            <p>Onboarded: <span className="text-white/60">{impersonation.profile.onboardingCompleted ? 'Yes' : 'No'}</span></p>
+            <p>Builder: <span className="text-white/50">{impersonation.profile.isBuilder ? 'Yes' : 'No'}</span></p>
+            <p>Onboarded: <span className="text-white/50">{impersonation.profile.onboardingCompleted ? 'Yes' : 'No'}</span></p>
           </div>
         </div>
 
@@ -142,11 +142,11 @@ export function ViewAsPanel() {
           className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-sm text-red-400 font-medium transition-colors"
           whileTap={{ scale: 0.98 }}
         >
-          {isEnding ? <Loader2 size={14} className="animate-spin" /> : <EyeOff size={14} />}
+          {isEnding ? <Loader2 size={14} className="" /> : <EyeOff size={14} />}
           {isEnding ? 'Ending...' : 'End View As'}
         </motion.button>
 
-        <p className="text-[10px] text-white/30 text-center">
+        <p className="text-[10px] text-white/50 text-center">
           Read-only view — no session mutation
         </p>
       </div>
@@ -162,16 +162,16 @@ export function ViewAsPanel() {
       </div>
 
       <div className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
         <input
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search by email or handle..."
-          className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+          className="w-full pl-9 pr-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/[0.06]"
         />
         {isSearching && (
-          <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 animate-spin" />
+          <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 " />
         )}
       </div>
 
@@ -181,18 +181,18 @@ export function ViewAsPanel() {
           {results.map(user => (
             <div
               key={user.id}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.06] transition-colors group"
             >
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center overflow-hidden flex-shrink-0">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <User size={14} className="text-white/40" />
+                  <User size={14} className="text-white/50" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white/80 truncate">{user.displayName || 'No name'}</p>
-                <p className="text-[11px] text-white/40 truncate">{user.email}</p>
+                <p className="text-sm text-white truncate">{user.displayName || 'No name'}</p>
+                <p className="text-[11px] text-white/50 truncate">{user.email}</p>
               </div>
               <motion.button
                 onClick={() => handleStartViewAs(user.id)}
@@ -200,7 +200,7 @@ export function ViewAsPanel() {
                 className="opacity-0 group-hover:opacity-100 px-2 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded text-[11px] text-blue-400 font-medium transition-all"
                 whileTap={{ scale: 0.95 }}
               >
-                {isStarting === user.id ? <Loader2 size={12} className="animate-spin" /> : 'View'}
+                {isStarting === user.id ? <Loader2 size={12} className="" /> : 'View'}
               </motion.button>
             </div>
           ))}
@@ -208,7 +208,7 @@ export function ViewAsPanel() {
       )}
 
       {query.length >= 2 && !isSearching && results.length === 0 && (
-        <p className="text-[11px] text-white/30 text-center py-4">No users found</p>
+        <p className="text-[11px] text-white/50 text-center py-4">No users found</p>
       )}
     </div>
   );

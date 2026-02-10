@@ -119,9 +119,9 @@ function MemberGrowthChart({
 }) {
   if (!data || data.length === 0) {
     return (
-      <Card className="p-6 bg-white/5 border-white/[0.08]">
+      <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
         <Text size="lg" weight="semibold" className="mb-4">{title}</Text>
-        <div className="h-40 flex items-center justify-center text-white/40">
+        <div className="h-40 flex items-center justify-center text-white/50">
           No data available
         </div>
       </Card>
@@ -132,7 +132,7 @@ function MemberGrowthChart({
   const chartHeight = 120;
 
   return (
-    <Card className="p-6 bg-white/5 border-white/[0.08]">
+    <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
       <Text size="lg" weight="semibold" className="mb-4">{title}</Text>
       <div className="relative h-32">
         <svg width="100%" height={chartHeight} className="overflow-visible">
@@ -214,7 +214,7 @@ function EngagementMetrics({
   const maxValue = Math.max(...metrics.map(m => m.value), 1);
 
   return (
-    <Card className="p-6 bg-white/5 border-white/[0.08]">
+    <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
       <Text size="lg" weight="semibold" className="mb-4">Engagement Breakdown</Text>
       <div className="space-y-4">
         {metrics.map((metric, index) => (
@@ -226,9 +226,9 @@ function EngagementMetrics({
               </div>
               <Text size="sm" weight="semibold">{metric.value.toLocaleString()}</Text>
             </div>
-            <div className="w-full bg-white/10 rounded-full h-2">
+            <div className="w-full bg-white/[0.06] rounded-full h-2">
               <motion.div
-                className="bg-gradient-to-r from-[var(--hive-brand-primary)] to-[var(--hive-brand-hover)] h-2 rounded-full"
+                className="h-2 rounded-full bg-[var(--hive-brand-primary)]"
                 initial={{ width: 0 }}
                 animate={{ width: `${(metric.value / maxValue) * 100}%` }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -259,19 +259,19 @@ function HealthScoreCard({ summary }: { summary: SpaceAnalytics['summary'] }) {
     'bg-red-500/20';
 
   return (
-    <Card className="p-6 bg-white/5 border-white/[0.08]">
+    <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
       <div className="flex items-start justify-between mb-4">
         <div>
           <Text size="lg" weight="semibold">Space Health</Text>
           <Text size="xs" tone="muted" className="mt-1">Based on engagement and activity</Text>
         </div>
-        <div className={cn('w-14 h-14 rounded-xl flex items-center justify-center', scoreBg)}>
+        <div className={cn('w-14 h-14 rounded-lg flex items-center justify-center', scoreBg)}>
           <Text size="lg" weight="bold" className={cn('text-2xl', scoreColor)}>{score}</Text>
         </div>
       </div>
 
       {summary.topInsights && summary.topInsights.length > 0 && (
-        <div className="space-y-2 mt-4 pt-4 border-t border-white/[0.08]">
+        <div className="space-y-2 mt-4 pt-4 border-t border-white/[0.06]">
           <Text size="sm" weight="medium" className="flex items-center gap-2">
             <SparklesIcon className="h-4 w-4 text-[var(--hive-brand-primary)]" />
             Insights
@@ -307,7 +307,7 @@ function PeriodSelector({
   ];
 
   return (
-    <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg">
+    <div className="flex items-center gap-1 bg-white/[0.06] p-1 rounded-lg">
       {periods.map((period) => (
         <button
           key={period.value}
@@ -316,7 +316,7 @@ function PeriodSelector({
             'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
             value === period.value
               ? 'bg-[var(--hive-brand-primary)] text-black'
-              : 'text-white/60 hover:text-white hover:bg-white/10'
+              : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
           )}
         >
           {period.label}
@@ -339,15 +339,15 @@ function AnalyticsSkeleton() {
       </StatCardGroup>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6 bg-white/5 border-white/[0.08] animate-pulse">
-          <div className="h-4 w-32 bg-white/10 rounded mb-4" />
-          <div className="h-32 bg-white/5 rounded" />
+        <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
+          <div className="h-4 w-32 bg-white/[0.06] rounded mb-4" />
+          <div className="h-32 bg-white/[0.06] rounded" />
         </Card>
-        <Card className="p-6 bg-white/5 border-white/[0.08] animate-pulse">
-          <div className="h-4 w-32 bg-white/10 rounded mb-4" />
+        <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
+          <div className="h-4 w-32 bg-white/[0.06] rounded mb-4" />
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-6 bg-white/5 rounded" />
+              <div key={i} className="h-6 bg-white/[0.06] rounded" />
             ))}
           </div>
         </Card>
@@ -366,7 +366,7 @@ function AccessDenied({ onBack }: { onBack: () => void }) {
       animate={{ opacity: 1, y: 0 }}
       className="min-h-screen bg-[var(--bg-ground)] flex items-center justify-center p-4"
     >
-      <Card className="p-8 bg-white/5 border-white/[0.08] max-w-md text-center">
+      <Card className="p-8 bg-white/[0.06] border-white/[0.06] max-w-md text-center">
         <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <ChartBarIcon className="h-8 w-8 text-red-400" />
         </div>
@@ -448,7 +448,7 @@ export default function SpaceAnalyticsPage() {
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="sticky top-0 z-40 bg-[var(--bg-ground)]/80 backdrop-blur-xl border-b border-white/[0.06]"
+        className="sticky top-0 z-40 bg-[var(--bg-ground)] border-b border-white/[0.06]"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -457,12 +457,12 @@ export default function SpaceAnalyticsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleBack}
-                className="text-white/60 hover:text-white"
+                className="text-white/50 hover:text-white"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
                 Back
               </Button>
-              <div className="h-6 w-px bg-white/10" />
+              <div className="h-6 w-px bg-white/[0.06]" />
               <div className="flex items-center gap-2">
                 <ChartBarIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
                 <Text size="lg" weight="semibold">Space Analytics</Text>

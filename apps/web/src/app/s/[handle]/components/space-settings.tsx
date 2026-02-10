@@ -614,10 +614,10 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     placeholder="Space name"
                     className={cn(
                       'w-full px-4 py-2.5',
-                      'rounded-xl text-sm',
-                      'bg-white/[0.04] border border-white/[0.08]',
-                      'text-white placeholder:text-white/30',
-                      'focus:outline-none focus:ring-2 focus:ring-white/20',
+                      'rounded-lg text-sm',
+                      'bg-white/[0.06] border border-white/[0.06]',
+                      'text-white placeholder:text-white/50',
+                      'focus:outline-none focus:ring-2 focus:ring-white/50',
                       'transition-all duration-150'
                     )}
                   />
@@ -637,11 +637,11 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     rows={4}
                     className={cn(
                       'w-full px-4 py-2.5',
-                      'rounded-xl text-sm',
-                      'bg-white/[0.04] border border-white/[0.08]',
-                      'text-white placeholder:text-white/30',
+                      'rounded-lg text-sm',
+                      'bg-white/[0.06] border border-white/[0.06]',
+                      'text-white placeholder:text-white/50',
                       'resize-none',
-                      'focus:outline-none focus:ring-2 focus:ring-white/20',
+                      'focus:outline-none focus:ring-2 focus:ring-white/50',
                       'transition-all duration-150'
                     )}
                   />
@@ -658,15 +658,15 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     <button
                       onClick={() => setIsPublic(true)}
                       className={cn(
-                        'w-full p-4 rounded-xl text-left transition-all',
+                        'w-full p-4 rounded-lg text-left transition-all',
                         'border',
                         isPublic
-                          ? 'bg-white/[0.06] border-white/[0.12]'
-                          : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                          ? 'bg-white/[0.06] border-white/[0.06]'
+                          : 'bg-white/[0.06] border-white/[0.06] hover:bg-white/[0.06]'
                       )}
                     >
                       <div className="flex items-start gap-3">
-                        <Globe className="w-5 h-5 text-white/60 flex-shrink-0 mt-0.5" />
+                        <Globe className="w-5 h-5 text-white/50 flex-shrink-0 mt-0.5" />
                         <div>
                           <Text weight="medium" className="mb-1">
                             Public
@@ -681,15 +681,15 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     <button
                       onClick={() => setIsPublic(false)}
                       className={cn(
-                        'w-full p-4 rounded-xl text-left transition-all',
+                        'w-full p-4 rounded-lg text-left transition-all',
                         'border',
                         !isPublic
-                          ? 'bg-white/[0.06] border-white/[0.12]'
-                          : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                          ? 'bg-white/[0.06] border-white/[0.06]'
+                          : 'bg-white/[0.06] border-white/[0.06] hover:bg-white/[0.06]'
                       )}
                     >
                       <div className="flex items-start gap-3">
-                        <Lock className="w-5 h-5 text-white/60 flex-shrink-0 mt-0.5" />
+                        <Lock className="w-5 h-5 text-white/50 flex-shrink-0 mt-0.5" />
                         <div>
                           <Text weight="medium" className="mb-1">
                             Private
@@ -796,12 +796,12 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
               </Text>
 
               <div
-                className="p-6 rounded-xl bg-white/[0.02] border border-white/[0.06] cursor-pointer hover:bg-white/[0.04] transition-colors"
+                className="p-6 rounded-lg bg-white/[0.06] border border-white/[0.06] cursor-pointer hover:bg-white/[0.06] transition-colors"
                 onClick={() => setShowModerationPanel(true)}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-white/[0.04]">
-                    <Shield className="w-6 h-6 text-white/60" />
+                  <div className="p-3 rounded-lg bg-white/[0.06]">
+                    <Shield className="w-6 h-6 text-white/50" />
                   </div>
                   <div className="flex-1">
                     <Text weight="medium" className="mb-1">Open Moderation Queue</Text>
@@ -809,7 +809,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       Review and act on flagged or hidden content in your space
                     </Text>
                   </div>
-                  <ChevronDown className="w-5 h-5 text-white/30 -rotate-90" />
+                  <ChevronDown className="w-5 h-5 text-white/50 -rotate-90" />
                 </div>
               </div>
             </>
@@ -829,12 +829,12 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
 
               {joinRequestsLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-white/40" />
+                  <Loader2 className="w-6 h-6  text-white/50" />
                 </div>
               ) : joinRequests.length === 0 ? (
-                <div className="text-center py-12 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                  <Inbox className="w-10 h-10 mx-auto mb-4 text-white/20" />
-                  <Text weight="medium" className="text-white/60 mb-1">
+                <div className="text-center py-12 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                  <Inbox className="w-10 h-10 mx-auto mb-4 text-white/50" />
+                  <Text weight="medium" className="text-white/50 mb-1">
                     No pending requests
                   </Text>
                   <Text size="sm" tone="muted">
@@ -843,7 +843,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <Text size="xs" weight="medium" className="uppercase tracking-wider text-white/40 px-1">
+                  <Text size="xs" weight="medium" className="uppercase tracking-wider text-white/50 px-1">
                     Pending ({joinRequests.length})
                   </Text>
                   {joinRequests.map((request) => {
@@ -855,7 +855,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.2, ease: MOTION.ease.premium }}
-                        className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+                        className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]"
                       >
                         <div className="flex items-center gap-3">
                           <Avatar size="default">
@@ -878,7 +878,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                             )}
                             {request.createdAt && (
                               <div className="flex items-center gap-1.5 mt-1">
-                                <Clock className="w-3 h-3 text-white/30" />
+                                <Clock className="w-3 h-3 text-white/50" />
                                 <Text size="xs" tone="muted">
                                   {new Date(request.createdAt).toLocaleDateString('en-US', {
                                     month: 'short',
@@ -899,7 +899,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                               className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
                             >
                               {isProcessing && joinRequestActionId === request.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-4 h-4 " />
                               ) : (
                                 <XCircle className="w-4 h-4 mr-1.5" />
                               )}
@@ -912,7 +912,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                               disabled={isProcessing}
                             >
                               {isProcessing && joinRequestActionId === request.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                                <Loader2 className="w-4 h-4  mr-1.5" />
                               ) : (
                                 <CheckCircle className="w-4 h-4 mr-1.5" />
                               )}
@@ -922,9 +922,9 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                         </div>
 
                         {request.message && (
-                          <div className="mt-3 p-3 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+                          <div className="mt-3 p-3 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                             <Text size="xs" tone="muted" className="mb-1">Message</Text>
-                            <Text size="sm" className="text-white/70">
+                            <Text size="sm" className="text-white/50">
                               {request.message}
                             </Text>
                           </div>
@@ -950,12 +950,12 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
               </Text>
 
               <div
-                className="p-6 rounded-xl bg-white/[0.02] border border-white/[0.06] cursor-pointer hover:bg-white/[0.04] transition-colors"
+                className="p-6 rounded-lg bg-white/[0.06] border border-white/[0.06] cursor-pointer hover:bg-white/[0.06] transition-colors"
                 onClick={() => setShowAnalyticsPanel(true)}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-white/[0.04]">
-                    <BarChart3 className="w-6 h-6 text-white/60" />
+                  <div className="p-3 rounded-lg bg-white/[0.06]">
+                    <BarChart3 className="w-6 h-6 text-white/50" />
                   </div>
                   <div className="flex-1">
                     <Text weight="medium" className="mb-1">Open Analytics Dashboard</Text>
@@ -963,7 +963,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       View member growth, engagement metrics, and activity insights
                     </Text>
                   </div>
-                  <ChevronDown className="w-5 h-5 text-white/30 -rotate-90" />
+                  <ChevronDown className="w-5 h-5 text-white/50 -rotate-90" />
                 </div>
               </div>
             </>
@@ -996,10 +996,10 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     placeholder="contact@organization.edu"
                     className={cn(
                       'w-full px-4 py-2.5',
-                      'rounded-xl text-sm',
-                      'bg-white/[0.04] border border-white/[0.08]',
-                      'text-white placeholder:text-white/30',
-                      'focus:outline-none focus:ring-2 focus:ring-white/20',
+                      'rounded-lg text-sm',
+                      'bg-white/[0.06] border border-white/[0.06]',
+                      'text-white placeholder:text-white/50',
+                      'focus:outline-none focus:ring-2 focus:ring-white/50',
                       'transition-all duration-150'
                     )}
                   />
@@ -1022,10 +1022,10 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     placeholder="e.g., Club President"
                     className={cn(
                       'w-full px-4 py-2.5',
-                      'rounded-xl text-sm',
-                      'bg-white/[0.04] border border-white/[0.08]',
-                      'text-white placeholder:text-white/30',
-                      'focus:outline-none focus:ring-2 focus:ring-white/20',
+                      'rounded-lg text-sm',
+                      'bg-white/[0.06] border border-white/[0.06]',
+                      'text-white placeholder:text-white/50',
+                      'focus:outline-none focus:ring-2 focus:ring-white/50',
                       'transition-all duration-150'
                     )}
                   />
@@ -1040,7 +1040,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                   </label>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <LinkIcon className="w-4 h-4 text-white/40 flex-shrink-0" />
+                      <LinkIcon className="w-4 h-4 text-white/50 flex-shrink-0" />
                       <input
                         type="url"
                         value={websiteUrl}
@@ -1048,16 +1048,16 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                         placeholder="https://your-website.com"
                         className={cn(
                           'flex-1 px-4 py-2.5',
-                          'rounded-xl text-sm',
-                          'bg-white/[0.04] border border-white/[0.08]',
-                          'text-white placeholder:text-white/30',
-                          'focus:outline-none focus:ring-2 focus:ring-white/20',
+                          'rounded-lg text-sm',
+                          'bg-white/[0.06] border border-white/[0.06]',
+                          'text-white placeholder:text-white/50',
+                          'focus:outline-none focus:ring-2 focus:ring-white/50',
                           'transition-all duration-150'
                         )}
                       />
                     </div>
                     <div className="flex items-center gap-3">
-                      <Text size="xs" className="w-4 text-white/40 text-center flex-shrink-0">IG</Text>
+                      <Text size="xs" className="w-4 text-white/50 text-center flex-shrink-0">IG</Text>
                       <input
                         type="url"
                         value={instagramUrl}
@@ -1065,16 +1065,16 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                         placeholder="https://instagram.com/yourhandle"
                         className={cn(
                           'flex-1 px-4 py-2.5',
-                          'rounded-xl text-sm',
-                          'bg-white/[0.04] border border-white/[0.08]',
-                          'text-white placeholder:text-white/30',
-                          'focus:outline-none focus:ring-2 focus:ring-white/20',
+                          'rounded-lg text-sm',
+                          'bg-white/[0.06] border border-white/[0.06]',
+                          'text-white placeholder:text-white/50',
+                          'focus:outline-none focus:ring-2 focus:ring-white/50',
                           'transition-all duration-150'
                         )}
                       />
                     </div>
                     <div className="flex items-center gap-3">
-                      <Text size="xs" className="w-4 text-white/40 text-center flex-shrink-0">X</Text>
+                      <Text size="xs" className="w-4 text-white/50 text-center flex-shrink-0">X</Text>
                       <input
                         type="url"
                         value={twitterUrl}
@@ -1082,16 +1082,16 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                         placeholder="https://twitter.com/yourhandle"
                         className={cn(
                           'flex-1 px-4 py-2.5',
-                          'rounded-xl text-sm',
-                          'bg-white/[0.04] border border-white/[0.08]',
-                          'text-white placeholder:text-white/30',
-                          'focus:outline-none focus:ring-2 focus:ring-white/20',
+                          'rounded-lg text-sm',
+                          'bg-white/[0.06] border border-white/[0.06]',
+                          'text-white placeholder:text-white/50',
+                          'focus:outline-none focus:ring-2 focus:ring-white/50',
                           'transition-all duration-150'
                         )}
                       />
                     </div>
                     <div className="flex items-center gap-3">
-                      <Text size="xs" className="w-4 text-white/40 text-center flex-shrink-0">FB</Text>
+                      <Text size="xs" className="w-4 text-white/50 text-center flex-shrink-0">FB</Text>
                       <input
                         type="url"
                         value={facebookUrl}
@@ -1099,10 +1099,10 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                         placeholder="https://facebook.com/yourpage"
                         className={cn(
                           'flex-1 px-4 py-2.5',
-                          'rounded-xl text-sm',
-                          'bg-white/[0.04] border border-white/[0.08]',
-                          'text-white placeholder:text-white/30',
-                          'focus:outline-none focus:ring-2 focus:ring-white/20',
+                          'rounded-lg text-sm',
+                          'bg-white/[0.06] border border-white/[0.06]',
+                          'text-white placeholder:text-white/50',
+                          'focus:outline-none focus:ring-2 focus:ring-white/50',
                           'transition-all duration-150'
                         )}
                       />
@@ -1161,7 +1161,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
               </Text>
 
               {boards.length === 0 ? (
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                   <Text size="sm" tone="muted">No boards yet</Text>
                 </div>
               ) : (
@@ -1169,7 +1169,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                   {boards.map((board) => (
                     <div
                       key={board.id}
-                      className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+                      className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]"
                     >
                       {editingBoardId === board.id ? (
                         // Edit mode
@@ -1188,9 +1188,9 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                               className={cn(
                                 'w-full px-3 py-2',
                                 'rounded-lg text-sm',
-                                'bg-white/[0.04] border border-white/[0.08]',
-                                'text-white placeholder:text-white/30',
-                                'focus:outline-none focus:ring-2 focus:ring-white/20',
+                                'bg-white/[0.06] border border-white/[0.06]',
+                                'text-white placeholder:text-white/50',
+                                'focus:outline-none focus:ring-2 focus:ring-white/50',
                                 'transition-all duration-150'
                               )}
                             />
@@ -1210,10 +1210,10 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                               className={cn(
                                 'w-full px-3 py-2',
                                 'rounded-lg text-sm',
-                                'bg-white/[0.04] border border-white/[0.08]',
-                                'text-white placeholder:text-white/30',
+                                'bg-white/[0.06] border border-white/[0.06]',
+                                'text-white placeholder:text-white/50',
                                 'resize-none',
-                                'focus:outline-none focus:ring-2 focus:ring-white/20',
+                                'focus:outline-none focus:ring-2 focus:ring-white/50',
                                 'transition-all duration-150'
                               )}
                             />
@@ -1243,7 +1243,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                         // View mode
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3 flex-1 min-w-0">
-                            <Hash className="w-4 h-4 text-white/40 mt-0.5 flex-shrink-0" />
+                            <Hash className="w-4 h-4 text-white/50 mt-0.5 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
                               <Text weight="medium">{board.name}</Text>
                               {board.description && (
@@ -1319,22 +1319,22 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                 Tools
               </h2>
               <Text size="sm" tone="muted" className="mb-8">
-                Add interactive tools to engage your members
+                Add tools to engage your members
               </Text>
 
               {/* Deployed tools list */}
               {spaceToolsLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-white/40" />
+                  <Loader2 className="w-6 h-6  text-white/50" />
                 </div>
               ) : spaceTools.length === 0 ? (
-                <div className="text-center py-12 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                  <Wrench className="w-10 h-10 mx-auto mb-4 text-white/20" />
-                  <Text weight="medium" className="text-white/60 mb-1">
+                <div className="text-center py-12 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                  <Wrench className="w-10 h-10 mx-auto mb-4 text-white/50" />
+                  <Text weight="medium" className="text-white/50 mb-1">
                     No tools deployed yet
                   </Text>
                   <Text size="sm" tone="muted" className="mb-6 max-w-sm mx-auto">
-                    Add polls, sign-ups, countdowns, and more to make your space interactive.
+                    Add polls, sign-ups, countdowns, and more to make your space.
                   </Text>
                   <div className="flex items-center justify-center gap-3">
                     <Button
@@ -1347,7 +1347,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     </Button>
                     <a
                       href={`/lab/new?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white/60 hover:text-white/80 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white/50 hover:text-white transition-colors"
                     >
                       Build a tool
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -1373,7 +1373,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     {spaceTools.map((tool) => (
                       <div
                         key={tool.id}
-                        className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-3"
+                        className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center gap-3"
                       >
                         <span className="text-xl">{tool.icon || '🔧'}</span>
                         <div className="flex-1 min-w-0">
@@ -1392,7 +1392,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                   <div className="pt-4 border-t border-white/[0.06]">
                     <a
                       href={`/lab/new?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
-                      className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/60 transition-colors"
+                      className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/50 transition-colors"
                     >
                       Build custom tools in HiveLab
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -1417,7 +1417,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
 
               {/* Empty state with templates */}
               {automations.length === 0 && !automationsLoading && (
-                <div className="text-center py-12 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="text-center py-12 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                   <Zap className="w-12 h-12 mx-auto mb-4 text-amber-500/40" />
                   <Text weight="medium" className="mb-2">No automations yet</Text>
                   <Text size="sm" tone="muted" className="mb-6 max-w-sm mx-auto">
@@ -1520,7 +1520,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
               <div className="space-y-4">
                 {/* Leave Space - Available to all members (P1.6) */}
                 {onLeave && (
-                  <div className="p-4 rounded-xl bg-orange-500/[0.06] border border-orange-500/20">
+                  <div className="p-4 rounded-lg bg-orange-500/[0.06] border border-orange-500/20">
                     <div className="flex items-start gap-3 mb-4">
                       <AlertTriangle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
                       <div>
@@ -1545,7 +1545,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
 
                     {confirmLeave && (
                       <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 mt-3">
-                        <p className="text-sm text-white/70 flex-1">Are you sure you want to leave this space?</p>
+                        <p className="text-sm text-white/50 flex-1">Are you sure you want to leave this space?</p>
                         <button
                           onClick={handleLeave}
                           disabled={isLeaving}
@@ -1556,7 +1556,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                         <button
                           onClick={() => setConfirmLeave(false)}
                           disabled={isLeaving}
-                          className="text-sm text-white/40 hover:text-white/60"
+                          className="text-sm text-white/50 hover:text-white/50"
                         >
                           Cancel
                         </button>
@@ -1567,7 +1567,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
 
                 {/* Transfer Ownership - Only for owner */}
                 {isOwner && onTransferOwnership && (
-                  <div className="p-4 rounded-xl bg-amber-500/[0.06] border border-amber-500/20">
+                  <div className="p-4 rounded-lg bg-amber-500/[0.06] border border-amber-500/20">
                     <div className="flex items-start gap-3 mb-4">
                       <ArrowRightLeft className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                       <div>
@@ -1588,12 +1588,12 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       </Text>
 
                       {isLoadingCandidates ? (
-                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
-                          <Loader2 className="w-4 h-4 animate-spin text-white/40" />
+                        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                          <Loader2 className="w-4 h-4  text-white/50" />
                           <Text size="sm" tone="muted">Loading members...</Text>
                         </div>
                       ) : transferCandidates.length === 0 ? (
-                        <div className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                        <div className="px-3 py-2.5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                           <Text size="sm" tone="muted">No eligible members found</Text>
                         </div>
                       ) : (
@@ -1603,15 +1603,15 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                             onClick={() => setShowTransferDropdown(!showTransferDropdown)}
                             className={cn(
                               'w-full flex items-center justify-between px-3 py-2.5',
-                              'rounded-xl text-sm text-left',
-                              'bg-white/[0.04] border border-white/[0.08]',
+                              'rounded-lg text-sm text-left',
+                              'bg-white/[0.06] border border-white/[0.06]',
                               'hover:bg-white/[0.06] transition-colors',
                               showTransferDropdown && 'ring-2 ring-white/20'
                             )}
                           >
                             {selectedCandidate ? (
                               <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-md bg-white/[0.08] flex items-center justify-center text-xs font-medium text-white/60 overflow-hidden flex-shrink-0">
+                                <div className="w-6 h-6 rounded-md bg-white/[0.06] flex items-center justify-center text-xs font-medium text-white/50 overflow-hidden flex-shrink-0">
                                   {selectedCandidate.avatar ? (
                                     <img src={selectedCandidate.avatar} alt="" className="w-full h-full object-cover" />
                                   ) : (
@@ -1629,10 +1629,10 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                                 </span>
                               </div>
                             ) : (
-                              <span className="text-white/30">Choose a member...</span>
+                              <span className="text-white/50">Choose a member...</span>
                             )}
                             <ChevronDown className={cn(
-                              'w-4 h-4 text-white/40 transition-transform',
+                              'w-4 h-4 text-white/50 transition-transform',
                               showTransferDropdown && 'rotate-180'
                             )} />
                           </button>
@@ -1647,7 +1647,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                                 className={cn(
                                   'absolute left-0 right-0 top-full mt-1 z-50',
                                   'max-h-[240px] overflow-y-auto',
-                                  'rounded-xl border border-white/[0.08] bg-[var(--bg-elevated)] shadow-xl',
+                                  'rounded-lg border border-white/[0.06] bg-[var(--bg-elevated)]',
                                   'py-1'
                                 )}
                               >
@@ -1661,11 +1661,11 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                                     }}
                                     className={cn(
                                       'w-full flex items-center gap-2 px-3 py-2 text-left',
-                                      'hover:bg-white/[0.04] transition-colors',
+                                      'hover:bg-white/[0.06] transition-colors',
                                       selectedTransferTarget === candidate.id && 'bg-white/[0.06]'
                                     )}
                                   >
-                                    <div className="w-6 h-6 rounded-md bg-white/[0.08] flex items-center justify-center text-xs font-medium text-white/60 overflow-hidden flex-shrink-0">
+                                    <div className="w-6 h-6 rounded-md bg-white/[0.06] flex items-center justify-center text-xs font-medium text-white/50 overflow-hidden flex-shrink-0">
                                       {candidate.avatar ? (
                                         <img src={candidate.avatar} alt="" className="w-full h-full object-cover" />
                                       ) : (
@@ -1713,7 +1713,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
 
                 {/* Delete Space - Only for leaders */}
                 {isLeader && onDelete && (
-                  <div className="p-4 rounded-xl bg-red-500/[0.06] border border-red-500/20">
+                  <div className="p-4 rounded-lg bg-red-500/[0.06] border border-red-500/20">
                     <div className="flex items-start gap-3 mb-4">
                       <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                       <div>
@@ -1760,7 +1760,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                           <button
                             onClick={() => setConfirmDelete(false)}
                             disabled={isDeleting}
-                            className="text-sm text-white/40 hover:text-white/60"
+                            className="text-sm text-white/50 hover:text-white/50"
                           >
                             Cancel
                           </button>
@@ -1851,20 +1851,20 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
       {showTemplates && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 "
             onClick={() => setShowTemplates(false)}
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative z-10 bg-[var(--bg-surface-hover)] rounded-2xl border border-white/[0.08] shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+            className="relative z-10 bg-[var(--bg-surface-hover)] rounded-lg border border-white/[0.06] max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
           >
             <div className="sticky top-0 bg-[var(--bg-surface-hover)] border-b border-white/[0.06] p-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Automation Templates</h3>
               <button
                 onClick={() => setShowTemplates(false)}
-                className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/60 hover:text-white transition-colors"
+                className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/50 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1906,7 +1906,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     });
                     setShowAutomationBuilder(true);
                   }}
-                  className="w-full p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-amber-500/30 transition-all text-left group"
+                  className="w-full p-4 rounded-lg bg-white/[0.06] border border-white/[0.06] hover:border-amber-500/30 transition-all text-left group"
                 >
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
@@ -1925,7 +1925,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     setShowTemplates(false);
                     setShowAutomationBuilder(true);
                   }}
-                  className="text-sm text-white/60 hover:text-white transition-colors"
+                  className="text-sm text-white/50 hover:text-white transition-colors"
                 >
                   Or create from scratch →
                 </button>
@@ -1961,10 +1961,10 @@ function SettingsNavItem({
         'transition-all duration-150',
         'text-left',
         active
-          ? 'bg-white/[0.08] text-white'
+          ? 'bg-white/[0.06] text-white'
           : variant === 'danger'
           ? 'text-red-400/60 hover:text-red-400 hover:bg-red-500/[0.04]'
-          : 'text-white/60 hover:text-white/80 hover:bg-white/[0.04]'
+          : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
       )}
     >
       <span className="flex-shrink-0">{icon}</span>

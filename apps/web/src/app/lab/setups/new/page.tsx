@@ -44,7 +44,7 @@ const CATEGORIES = [
   { id: 'event', label: 'Event', icon: Calendar, color: '#10B981', description: 'Recurring events with RSVPs, reminders, and analytics' },
   { id: 'campaign', label: 'Campaign', icon: Trophy, color: '#F59E0B', description: 'Time-bound initiatives with goals and tracking' },
   { id: 'workflow', label: 'Workflow', icon: GitBranch, color: '#6366F1', description: 'Multi-step processes with automation' },
-  { id: 'engagement', label: 'Engagement', icon: Vote, color: '#EC4899', description: 'Polls, voting, and interactive content' },
+  { id: 'engagement', label: 'Engagement', icon: Vote, color: '#EC4899', description: 'Polls, voting, and content' },
   { id: 'governance', label: 'Governance', icon: Users, color: '#8B5CF6', description: 'Elections, decisions, and member management' },
 ];
 
@@ -221,7 +221,7 @@ export default function NewSetupPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="p-6 rounded-xl border"
+          className="p-6 rounded-lg border"
           style={{ backgroundColor: COLORS.surface, borderColor: COLORS.border }}
         >
           <AnimatePresence mode="wait">
@@ -248,7 +248,7 @@ export default function NewSetupPage() {
                     value={formData.name}
                     onChange={(e) => updateField('name', e.target.value)}
                     placeholder="e.g., Weekly Meeting Series"
-                    className="w-full px-4 py-3 rounded-lg bg-white/[0.03] border text-sm outline-none transition-colors"
+                    className="w-full px-4 py-3 rounded-lg bg-white/[0.06] text-sm outline-none transition-colors"
                     style={{ borderColor: COLORS.border, color: COLORS.text }}
                     maxLength={100}
                   />
@@ -264,7 +264,7 @@ export default function NewSetupPage() {
                     onChange={(e) => updateField('description', e.target.value)}
                     placeholder="What does this setup do?"
                     rows={3}
-                    className="w-full px-4 py-3 rounded-lg bg-white/[0.03] border text-sm outline-none transition-colors resize-none"
+                    className="w-full px-4 py-3 rounded-lg bg-white/[0.06] text-sm outline-none transition-colors resize-none"
                     style={{ borderColor: COLORS.border, color: COLORS.text }}
                     maxLength={500}
                   />
@@ -369,7 +369,7 @@ export default function NewSetupPage() {
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                       placeholder="Add a tag..."
-                      className="flex-1 px-4 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                      className="flex-1 px-4 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                       style={{ borderColor: COLORS.border, color: COLORS.text }}
                     />
                     <button

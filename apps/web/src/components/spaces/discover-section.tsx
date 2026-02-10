@@ -170,17 +170,17 @@ interface SearchInputProps {
 function SearchInput({ value, onChange, onClear, placeholder }: SearchInputProps) {
   return (
     <div className="relative">
-      <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+      <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || 'Search spaces...'}
         className={cn(
-          'w-full bg-white/[0.02] border border-white/[0.06]',
+          'w-full bg-white/[0.06] border border-white/[0.06]',
           'rounded-lg py-2.5 pl-9 pr-9',
-          'text-sm text-white placeholder:text-white/30',
-          'focus:outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/[0.04]',
+          'text-sm text-white placeholder:text-white/50',
+          'focus:outline-none focus:ring-1 focus:ring-white/50 focus:bg-white/[0.06]',
           'transition-all duration-150'
         )}
       />
@@ -190,7 +190,7 @@ function SearchInput({ value, onChange, onClear, placeholder }: SearchInputProps
           className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
           aria-label="Clear search"
         >
-          <XMarkIcon className="w-3 h-3 text-white/40" aria-hidden="true" />
+          <XMarkIcon className="w-3 h-3 text-white/50" aria-hidden="true" />
         </button>
       )}
     </div>
@@ -238,12 +238,12 @@ function EmptyState({ isSearch }: { isSearch?: boolean }) {
     >
       {/* Icon with entrance */}
       <motion.div
-        className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center"
+        className="w-16 h-16 mx-auto mb-6 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
       >
-        <MagnifyingGlassIcon className="w-6 h-6 text-white/20" />
+        <MagnifyingGlassIcon className="w-6 h-6 text-white/50" />
       </motion.div>
 
       {/* Narrative headline */}
@@ -258,7 +258,7 @@ function EmptyState({ isSearch }: { isSearch?: boolean }) {
         >
           {isSearch ? 'Nothing here yet' : 'This category is empty'}
         </h3>
-        <p className="text-body-lg text-white/40 max-w-sm mx-auto mb-6">
+        <p className="text-body-lg text-white/50 max-w-sm mx-auto mb-6">
           {isSearch
             ? 'Try adjusting your search or explore other categories to find your community.'
             : 'Check back soon — new spaces are being created every day.'
@@ -486,7 +486,7 @@ export function DiscoverSection({
       {/* Header */}
       <Text
         weight="medium"
-        className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
+        className="text-label-sm uppercase tracking-wider text-white/50 mb-4"
       >
         Discover
       </Text>
@@ -518,7 +518,7 @@ export function DiscoverSection({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.15 }}
-          className="rounded-xl border border-white/[0.06] overflow-hidden"
+          className="rounded-lg border border-white/[0.06] overflow-hidden"
         >
           {loading ? (
             // Loading skeleton
@@ -526,7 +526,7 @@ export function DiscoverSection({
               {Array.from({ length: 6 }).map((_, i) => (
                 <motion.div
                   key={i}
-                  className={cn(i !== 5 && 'border-b border-white/[0.04]')}
+                  className={cn(i !== 5 && 'border-b border-white/[0.06]')}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{
@@ -552,7 +552,7 @@ export function DiscoverSection({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: Math.min(index * 0.02, 0.3), duration: 0.15 }}
                   className={cn(
-                    'border-b border-white/[0.04] last:border-b-0'
+                    'border-b border-white/[0.06] last:border-b-0'
                   )}
                 >
                   <SpaceListRow
@@ -574,7 +574,7 @@ export function DiscoverSection({
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div
                       key={`loading-${i}`}
-                      className={cn(i !== 2 && 'border-b border-white/[0.04]')}
+                      className={cn(i !== 2 && 'border-b border-white/[0.06]')}
                     >
                       <SpaceListRowSkeleton />
                     </div>
@@ -594,7 +594,7 @@ export function DiscoverSection({
               {/* End of results indicator */}
               {!hasMore && displayedSpaces.length > ITEMS_PER_PAGE && (
                 <div className="py-4 text-center">
-                  <Text size="sm" className="text-white/30">
+                  <Text size="sm" className="text-white/50">
                     You've seen all {displayedSpaces.length} spaces
                   </Text>
                 </div>

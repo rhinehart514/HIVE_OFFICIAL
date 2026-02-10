@@ -74,10 +74,10 @@ export default function EditProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-ground)]">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-pulse">
+          <div className="">
             <HiveLogo className="w-10 h-10 text-[var(--life-gold)]" />
           </div>
-          <p className="text-sm text-white/40">Loading your profile...</p>
+          <p className="text-sm text-white/50">Loading your profile...</p>
         </div>
       </div>
     );
@@ -91,7 +91,7 @@ export default function EditProfilePage() {
           {...fadeIn(0)}
           className="text-center max-w-md"
         >
-          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[var(--life-gold)]/10 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-lg bg-[var(--life-gold)]/10 flex items-center justify-center">
             <span className="text-2xl">🔐</span>
           </div>
           <h1 className="text-2xl font-semibold text-white mb-3">Sign In Required</h1>
@@ -112,7 +112,7 @@ export default function EditProfilePage() {
           {...fadeIn(0)}
           className="text-center max-w-md"
         >
-          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white/[0.04] flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-lg bg-white/[0.06] flex items-center justify-center">
             <span className="text-2xl">⚠️</span>
           </div>
           <h1 className="text-2xl font-semibold text-white mb-3">Profile Unavailable</h1>
@@ -130,7 +130,7 @@ export default function EditProfilePage() {
       {/* Compact Header */}
       <motion.header
         {...fadeIn(0)}
-        className="sticky top-0 z-40 border-b border-white/[0.06] bg-[var(--bg-ground)]/80 backdrop-blur-xl"
+        className="sticky top-0 z-40 border-b border-white/[0.06] bg-[var(--bg-ground)]/80"
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
@@ -139,24 +139,24 @@ export default function EditProfilePage() {
               <button
                 onClick={handleCancel}
                 aria-label="Go back to profile"
-                className="p-2 -ml-2 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.04] transition-colors"
+                className="p-2 -ml-2 rounded-lg text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
               >
                 <ArrowLeftIcon className="w-5 h-5" aria-hidden="true" />
               </button>
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9 ring-2 ring-white/20">
                   <AvatarImage src={profileData.profile.avatarUrl ?? undefined} alt={profileData.profile.fullName} />
-                  <AvatarFallback className="text-sm bg-white/[0.04] text-white">{initials}</AvatarFallback>
+                  <AvatarFallback className="text-sm bg-white/[0.06] text-white">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block">
                   <p className="text-sm font-medium text-white">{profileData.profile.fullName}</p>
-                  <p className="text-xs text-white/40">Editing profile</p>
+                  <p className="text-xs text-white/50">Editing profile</p>
                 </div>
               </div>
             </div>
 
             {/* Center: Edit mode indicator (mobile only) */}
-            <div className="sm:hidden flex items-center gap-2 text-white/60">
+            <div className="sm:hidden flex items-center gap-2 text-white/50">
               <Bars3Icon className="w-4 h-4" />
               <span className="text-sm font-medium">Edit Mode</span>
             </div>
@@ -172,7 +172,7 @@ export default function EditProfilePage() {
                 variant={hasPendingChanges ? 'cta' : 'secondary'}
               >
                 {isSaving ? (
-                  <><ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                  <><ArrowPathIcon className="w-4 h-4 mr-2 " />Saving...</>
                 ) : hasPendingChanges ? (
                   <><CheckIcon className="w-4 h-4 mr-2" />Save & Done</>
                 ) : (
@@ -194,13 +194,13 @@ export default function EditProfilePage() {
           {/* Avatar Upload */}
           <div className="sm:col-span-2 flex items-center gap-6">
             <div className="relative">
-              <Avatar className="h-24 w-24 ring-2 ring-white/[0.08]">
+              <Avatar className="h-24 w-24 ring-2 ring-white/[0.06]">
                 <AvatarImage src={profileData.profile.avatarUrl ?? undefined} alt={displayName} />
-                <AvatarFallback className="text-2xl bg-white/[0.04] text-white">{initials}</AvatarFallback>
+                <AvatarFallback className="text-2xl bg-white/[0.06] text-white">{initials}</AvatarFallback>
               </Avatar>
               <label className="absolute -bottom-1 -right-1 p-2 rounded-full bg-[var(--life-gold)] text-[var(--bg-ground)] cursor-pointer hover:opacity-90 transition-opacity">
                 {isUploadingAvatar ? (
-                  <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                  <ArrowPathIcon className="w-4 h-4 " />
                 ) : (
                   <CameraIcon className="w-4 h-4" />
                 )}
@@ -215,7 +215,7 @@ export default function EditProfilePage() {
             </div>
             <div>
               <p className="text-sm font-medium text-white">Profile Photo</p>
-              <p className="text-xs text-white/40">Click the camera to upload. Max 5MB.</p>
+              <p className="text-xs text-white/50">Click the camera to upload. Max 5MB.</p>
             </div>
           </div>
 
@@ -233,14 +233,14 @@ export default function EditProfilePage() {
           <div>
             <label className="block text-sm font-medium text-white/50 mb-2">Handle</label>
             <div className="flex items-center gap-2">
-              <div className="flex-1 px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white/40">
+              <div className="flex-1 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50">
                 @{profileData.profile.handle}
               </div>
               <Button variant="ghost" size="sm" onClick={() => router.push('/me/settings')}>
                 <Cog6ToothIcon className="w-4 h-4" />
               </Button>
             </div>
-            <p className="text-xs text-white/30 mt-1">Change handle in settings</p>
+            <p className="text-xs text-white/50 mt-1">Change handle in settings</p>
           </div>
 
           {/* Bio */}
@@ -253,7 +253,7 @@ export default function EditProfilePage() {
               rows={3}
               maxLength={200}
             />
-            <p className="text-xs text-white/30 mt-1">{bio.length}/200 characters</p>
+            <p className="text-xs text-white/50 mt-1">{bio.length}/200 characters</p>
           </div>
 
           {/* Major */}
@@ -271,9 +271,9 @@ export default function EditProfilePage() {
             <label className="block text-sm font-medium text-white/50 mb-2">Interests ({interests.length}/10)</label>
             <div className="flex flex-wrap gap-2 mb-3">
               {interests.map((interest) => (
-                <span key={interest} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-white/[0.04] text-white/70 border border-white/[0.06]">
+                <span key={interest} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-white/[0.06] text-white/50border-white/[0.06]">
                   {interest}
-                  <button onClick={() => handleRemoveInterest(interest)} className="p-0.5 rounded-full hover:bg-white/[0.08] transition-colors">
+                  <button onClick={() => handleRemoveInterest(interest)} className="p-0.5 rounded-full hover:bg-white/[0.06] transition-colors">
                     <XMarkIcon className="w-3 h-3" />
                   </button>
                 </span>
@@ -303,10 +303,10 @@ export default function EditProfilePage() {
         className="mx-auto max-w-6xl px-4 sm:px-6 py-8 border-b border-white/[0.06]"
       >
         <h2 className="text-lg font-medium text-white mb-6">Privacy & Visibility</h2>
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
+        <div className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-6">
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center">
-              <EyeSlashIcon className="w-6 h-6 text-white/40" />
+            <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-white/[0.06] flex items-center justify-center">
+              <EyeSlashIcon className="w-6 h-6 text-white/50" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -330,16 +330,16 @@ export default function EditProfilePage() {
       {/* Layout Customization Banner */}
       <motion.div
         {...fadeIn(0.15)}
-        className="bg-white/[0.02] border-b border-white/[0.06]"
+        className="bg-white/[0.06] border-b border-white/[0.06]"
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center">
               <Bars3Icon className="w-5 h-5 text-white/50" />
             </div>
             <div>
               <h2 className="text-sm font-medium text-white">Customize your layout</h2>
-              <p className="text-xs text-white/40">Drag and resize tiles to personalize your profile grid.</p>
+              <p className="text-xs text-white/50">Drag and resize tiles to personalize your profile grid.</p>
             </div>
           </div>
         </div>
@@ -369,15 +369,15 @@ export default function EditProfilePage() {
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
         >
           <div
-            className="flex items-center gap-3 px-4 py-3 rounded-full border shadow-xl backdrop-blur-xl"
+            className="flex items-center gap-3 px-4 py-3 rounded-full border"
             style={{
               backgroundColor: 'rgba(20, 19, 18, 0.95)',
               borderColor: 'rgba(255, 255, 255, 0.08)',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
             }}
           >
-            <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-            <span className="text-sm text-white/70">Unsaved changes</span>
+            <div className="w-2 h-2 rounded-full bg-white" />
+            <span className="text-sm text-white/50">Unsaved changes</span>
             <Button
               onClick={handleSaveLayout}
               disabled={isSaving}

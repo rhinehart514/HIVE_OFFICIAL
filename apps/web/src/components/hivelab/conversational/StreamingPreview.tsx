@@ -240,7 +240,7 @@ export function StreamingPreview({
         transition={{ duration: durationSeconds.standard, ease: EASE }}
         className="mb-6"
       >
-        <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Your prompt</p>
+        <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Your prompt</p>
         <p className="text-white text-base">
           &ldquo;{prompt}&rdquo;
         </p>
@@ -251,7 +251,7 @@ export function StreamingPreview({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: durationSeconds.quick, delay: 0.1 }}
-        className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+        className="flex items-center gap-3 mb-6 px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.06]"
       >
         {phaseIcon}
         <AnimatePresence mode="wait">
@@ -261,14 +261,14 @@ export function StreamingPreview({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -8 }}
             transition={{ duration: 0.15 }}
-            className={`text-sm ${phase === 'complete' ? 'text-green-400' : phase === 'error' ? 'text-red-400' : 'text-white/60'}`}
+            className={`text-sm ${phase === 'complete' ? 'text-green-400' : phase === 'error' ? 'text-red-400' : 'text-white/50'}`}
           >
             {statusMessage}
           </motion.span>
         </AnimatePresence>
 
         {toolName && phase === 'complete' && (
-          <span className="ml-auto text-xs text-white/30">{toolName}</span>
+          <span className="ml-auto text-xs text-white/50">{toolName}</span>
         )}
       </motion.div>
 
@@ -277,7 +277,7 @@ export function StreamingPreview({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: durationSeconds.smooth, delay: 0.2, ease: EASE }}
-        className="flex-1 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-6 overflow-y-auto"
+        className="flex-1 rounded-lg border border-white/[0.06] bg-white/[0.06] p-4 sm:p-6 overflow-y-auto"
       >
         {elements.length === 0 && phase !== 'error' && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -285,9 +285,9 @@ export function StreamingPreview({
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <Sparkles className="w-8 h-8 text-white/20 mb-4" />
+              <Sparkles className="w-8 h-8 text-white/50 mb-4" />
             </motion.div>
-            <p className="text-white/30 text-sm">Building your tool...</p>
+            <p className="text-white/50 text-sm">Building your tool...</p>
           </div>
         )}
 

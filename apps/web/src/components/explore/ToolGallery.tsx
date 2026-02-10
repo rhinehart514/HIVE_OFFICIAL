@@ -11,7 +11,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Wrench, Search, Sparkles, FlaskConical, Building2, TrendingUp } from 'lucide-react';
-import { Tilt, GlassSurface, Badge, Button } from '@hive/ui/design-system/primitives';
+import { Badge, Button } from '@hive/ui/design-system/primitives';
 import { MOTION } from '@hive/tokens';
 import { cn } from '@/lib/utils';
 
@@ -61,27 +61,27 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
         transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
         className="flex flex-col items-center justify-center py-16 px-4"
       >
-        <GlassSurface
-          intensity="subtle"
-          className="p-8 rounded-xl max-w-md w-full text-center"
+        <div
+         
+          className="p-8 rounded-lg max-w-md w-full text-center"
         >
           {/* Icon */}
           <motion.div
-            className="w-14 h-14 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-5"
+            className="w-14 h-14 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-5"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.1 }}
           >
             {searchQuery ? (
-              <Search className="w-6 h-6 text-white/30" />
+              <Search className="w-6 h-6 text-white/50" />
             ) : (
-              <Sparkles className="w-6 h-6 text-white/30" />
+              <Sparkles className="w-6 h-6 text-white/50" />
             )}
           </motion.div>
 
           {/* Title */}
           <motion.h3
-            className="text-body-lg font-medium text-white/80 mb-2"
+            className="text-body-lg font-medium text-white mb-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.15 }}
@@ -93,7 +93,7 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
 
           {/* Subtitle */}
           <motion.p
-            className="text-body-sm text-white/40 mb-6 max-w-xs mx-auto"
+            className="text-body-sm text-white/50 mb-6 max-w-xs mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.2 }}
@@ -118,7 +118,7 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
             </Button>
             {searchQuery && (
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/explore?tab=tools">Browse All</Link>
+                <Link href="/discover?tab=tools">Browse All</Link>
               </Button>
             )}
           </motion.div>
@@ -134,7 +134,7 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
               Tools you build can be deployed to any space
             </motion.p>
           )}
-        </GlassSurface>
+        </div>
       </motion.div>
     );
   }
@@ -168,24 +168,24 @@ function ToolCard({ tool }: ToolCardProps) {
       whileHover="hover"
       initial="initial"
     >
-      <Tilt intensity={4}>
+      <>
         <motion.div>
-          <GlassSurface
-            intensity="subtle"
+          <div
+           
             className={cn(
-              'p-5 rounded-xl transition-colors duration-200',
-              'border border-white/[0.06] hover:border-white/10'
+              'p-5 rounded-lg transition-colors duration-200',
+              'border border-white/[0.06] hover:border-white/[0.06]'
             )}
           >
             <div className="space-y-3">
               {/* Header */}
               <div className="flex items-start gap-3">
                 {/* Icon */}
-                <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center">
                   {tool.icon && !tool.icon.startsWith('http') ? (
                     <span className="text-xl">{tool.icon}</span>
                   ) : (
-                    <Wrench className="w-5 h-5 text-white/40" />
+                    <Wrench className="w-5 h-5 text-white/50" />
                   )}
                 </div>
 
@@ -202,7 +202,7 @@ function ToolCard({ tool }: ToolCardProps) {
                   </div>
 
                   {tool.category && (
-                    <p className="text-label text-white/40">{tool.category}</p>
+                    <p className="text-label text-white/50">{tool.category}</p>
                   )}
                 </div>
               </div>
@@ -217,7 +217,7 @@ function ToolCard({ tool }: ToolCardProps) {
               {/* Deployed Spaces */}
               {hasDeployments && (
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <Building2 className="w-3 h-3 text-white/30 flex-shrink-0" />
+                  <Building2 className="w-3 h-3 text-white/50 flex-shrink-0" />
                   {tool.deployedSpaces!.slice(0, 3).map((space) => (
                     <Link
                       key={space.id}
@@ -225,8 +225,8 @@ function ToolCard({ tool }: ToolCardProps) {
                       onClick={(e) => e.stopPropagation()}
                       className={cn(
                         'inline-flex items-center px-2 py-0.5 rounded-md',
-                        'text-label text-white/50 hover:text-white/80',
-                        'bg-white/[0.04] hover:bg-white/[0.08]',
+                        'text-label text-white/50 hover:text-white',
+                        'bg-white/[0.06] hover:bg-white/[0.06]',
                         'transition-colors duration-150'
                       )}
                     >
@@ -234,7 +234,7 @@ function ToolCard({ tool }: ToolCardProps) {
                     </Link>
                   ))}
                   {tool.deployedSpaces!.length > 3 && (
-                    <span className="text-label text-white/30">
+                    <span className="text-label text-white/50">
                       +{tool.deployedSpaces!.length - 3} more
                     </span>
                   )}
@@ -247,7 +247,7 @@ function ToolCard({ tool }: ToolCardProps) {
                   {/* Deploy count as popularity signal */}
                   <span className={cn(
                     'flex items-center gap-1 text-label',
-                    tool.deployCount > 0 ? 'text-white/40' : 'text-white/25'
+                    tool.deployCount > 0 ? 'text-white/50' : 'text-white/25'
                   )}>
                     {tool.deployCount > 0 && (
                       <TrendingUp className="w-3 h-3" />
@@ -278,9 +278,9 @@ function ToolCard({ tool }: ToolCardProps) {
                     'flex items-center gap-1.5 px-2.5 py-1 rounded-md',
                     'text-label font-medium',
                     'text-white/50 hover:text-white',
-                    'bg-white/[0.04] hover:bg-white/[0.08]',
+                    'bg-white/[0.06] hover:bg-white/[0.06]',
                     'transition-colors duration-150',
-                    'border border-white/[0.06] hover:border-white/[0.12]'
+                    'border border-white/[0.06] hover:border-white/[0.06]'
                   )}
                 >
                   <FlaskConical className="w-3 h-3" />
@@ -288,9 +288,9 @@ function ToolCard({ tool }: ToolCardProps) {
                 </Link>
               </div>
             </div>
-          </GlassSurface>
+          </div>
         </motion.div>
-      </Tilt>
+      </>
     </motion.div>
   );
 }
@@ -301,17 +301,17 @@ function ToolCard({ tool }: ToolCardProps) {
 
 function ToolCardSkeleton() {
   return (
-    <div className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse">
+    <div className="p-5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
       <div className="space-y-3">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-white/[0.06]" />
           <div className="flex-1 space-y-1">
             <div className="h-4 w-24 bg-white/[0.06] rounded" />
-            <div className="h-3 w-16 bg-white/[0.04] rounded" />
+            <div className="h-3 w-16 bg-white/[0.06] rounded" />
           </div>
         </div>
-        <div className="h-3 w-full bg-white/[0.04] rounded" />
-        <div className="h-3 w-2/3 bg-white/[0.04] rounded" />
+        <div className="h-3 w-full bg-white/[0.06] rounded" />
+        <div className="h-3 w-2/3 bg-white/[0.06] rounded" />
       </div>
     </div>
   );

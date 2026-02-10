@@ -16,7 +16,11 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { withAuth, type AuthContext } from '@/lib/api-auth-middleware';
-import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { isContentHidden } from '@/lib/content-moderation';
+import {
+  getEventEndDate,
+  getEventStartDate,
+} from '@/lib/events/event-time';
 
 // Request schema
 const PersonalizedEventsSchema = z.object({
@@ -62,6 +66,55 @@ interface PersonalizedEvent {
   friendsAttendingNames?: string[];
   isUserRsvped: boolean;
   interestMatch?: string[];
+}
+
+type TimeField = 'startDate' | 'startAt';
+const TIME_FIELDS: TimeField[] = ['startDate', 'startAt'];
+const RSVP_COLLECTIONS = ['rsvps', 'eventRsvps'] as const;
+
+function isEventDiscoverable(event: Record<string, unknown>): boolean {
+  if (isContentHidden(event)) {
+    return false;
+  }
+
+  const rawState = String(
+    event.state ??
+    event.status ??
+    (typeof event.source === 'object' && event.source ? (event.source as Record<string, unknown>).status : '') ??
+    ''
+  ).toLowerCase();
+
+  // Only block clearly non-discoverable statuses.
+  if (!rawState) return true;
+  return !['cancelled', 'canceled', 'archived', 'deleted', 'draft', 'hidden'].includes(rawState);
+}
+
+function normalizeRsvpStatus(status: unknown): 'going' | 'maybe' | 'not_going' | null {
+  if (typeof status !== 'string') return null;
+  const normalized = status.trim().toLowerCase();
+  if (normalized === 'going') return 'going';
+  if (normalized === 'maybe' || normalized === 'interested') return 'maybe';
+  if (normalized === 'not_going' || normalized === 'declined' || normalized === 'no') return 'not_going';
+  return null;
+}
+
+async function fetchEventsForTimeField(
+  campusId: string,
+  start: Date,
+  end: Date,
+  field: TimeField,
+  limit: number
+): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  const query = dbAdmin
+    .collection('events')
+    .where('campusId', '==', campusId)
+    .where(field, '>=', start)
+    .where(field, '<=', end)
+    .orderBy(field, 'asc')
+    .limit(limit);
+
+  const snapshot = await query.get();
+  return snapshot.docs;
 }
 
 // Get time range boundaries
@@ -175,58 +228,103 @@ async function handler(
     const friendIds = new Set(connectionsSnapshot.docs.map(doc => doc.id));
     const userSpaceIds = new Set(membershipsSnapshot.docs.map(doc => doc.data().spaceId));
 
-    // Step 2: Fetch events in time range
-    const eventsQuery = dbAdmin.collection('events')
-      .where('campusId', '==', campusId)
-      .where('state', '==', 'published')
-      .where('startDate', '>=', start.toISOString())
-      .where('startDate', '<=', end.toISOString())
-      .orderBy('startDate', 'asc')
-      .limit(100);
+    // Step 2: Fetch events in time range (supports both startDate + startAt schemas)
+    const rawEventDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+    const fetchLimit = Math.max(params.maxItems * 8, 120);
 
-    const eventsSnapshot = await eventsQuery.get();
-    const events = eventsSnapshot.docs.map((doc: QueryDocumentSnapshot) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Array<Record<string, unknown>>;
+    for (const field of TIME_FIELDS) {
+      try {
+        const docs = await fetchEventsForTimeField(campusId, start, end, field, fetchLimit);
+        for (const doc of docs) rawEventDocs.set(doc.id, doc);
+      } catch (error) {
+        logger.warn('Personalized events query failed for date field', {
+          field,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
 
-    // Step 3: Get RSVP data for all events (batch)
-    const eventIds = events.map(e => e.id as string);
+    // Fallback: pull recent campus events and filter in memory if both indexed queries failed.
+    if (rawEventDocs.size === 0) {
+      const fallbackSnapshot = await dbAdmin
+        .collection('events')
+        .where('campusId', '==', campusId)
+        .limit(fetchLimit)
+        .get();
+      for (const doc of fallbackSnapshot.docs) rawEventDocs.set(doc.id, doc);
+    }
+
+    const events = Array.from(rawEventDocs.values())
+      .map((doc) => ({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
+      .filter((event) => {
+        if (!isEventDiscoverable(event)) return false;
+
+        const eventStart = getEventStartDate(event);
+        if (!eventStart) return false;
+        if (eventStart < start || eventStart > end) return false;
+
+        if (params.eventTypes && params.eventTypes.length > 0) {
+          const type = String(event.eventType || event.type || '').toLowerCase();
+          const types = params.eventTypes.map((value) => value.toLowerCase());
+          if (!types.includes(type)) return false;
+        }
+
+        return true;
+      });
+
+    // Step 3: Get RSVP data for all events (batch, supports both collections)
+    const eventIds = events.map((event) => event.id as string);
     const rsvpData: Map<string, { count: number; userRsvped: boolean; friendsAttending: string[] }> = new Map();
 
     if (eventIds.length > 0) {
-      // Get all RSVPs for these events
-      const rsvpBatches = [];
-      for (let i = 0; i < eventIds.length; i += 10) {
-        const batch = eventIds.slice(i, i + 10);
-        rsvpBatches.push(
-          dbAdmin.collection('eventRsvps')
-            .where('eventId', 'in', batch)
-            .where('status', '==', 'going')
-            .get()
-        );
-      }
+      const seenRsvps = new Set<string>();
 
-      const rsvpSnapshots = await Promise.all(rsvpBatches);
-      for (const snapshot of rsvpSnapshots) {
-        for (const doc of snapshot.docs) {
-          const data = doc.data();
-          const eventId = data.eventId as string;
-          const rsvpUserId = data.userId as string;
+      for (let i = 0; i < eventIds.length; i += 30) {
+        const batch = eventIds.slice(i, i + 30);
 
-          if (!rsvpData.has(eventId)) {
-            rsvpData.set(eventId, { count: 0, userRsvped: false, friendsAttending: [] });
+        for (const collectionName of RSVP_COLLECTIONS) {
+          let snapshot: FirebaseFirestore.QuerySnapshot;
+          try {
+            snapshot = await dbAdmin
+              .collection(collectionName)
+              .where('eventId', 'in', batch)
+              .get();
+          } catch (error) {
+            logger.warn('Failed reading RSVP collection for personalized events', {
+              collectionName,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            continue;
           }
 
-          const eventRsvp = rsvpData.get(eventId)!;
-          eventRsvp.count++;
+          for (const doc of snapshot.docs) {
+            const data = doc.data();
+            const eventId = data.eventId as string;
+            const rsvpUserId = data.userId as string;
+            const status = normalizeRsvpStatus(data.status);
 
-          if (rsvpUserId === userId) {
-            eventRsvp.userRsvped = true;
-          }
+            if (!eventId || !rsvpUserId || !status) continue;
 
-          if (friendIds.has(rsvpUserId)) {
-            eventRsvp.friendsAttending.push(rsvpUserId);
+            const dedupeKey = `${eventId}:${rsvpUserId}`;
+            if (seenRsvps.has(dedupeKey)) continue;
+            seenRsvps.add(dedupeKey);
+
+            if (!rsvpData.has(eventId)) {
+              rsvpData.set(eventId, { count: 0, userRsvped: false, friendsAttending: [] });
+            }
+
+            const eventRsvp = rsvpData.get(eventId)!;
+
+            if (status !== 'not_going' && rsvpUserId === userId) {
+              eventRsvp.userRsvped = true;
+            }
+
+            if (status === 'going') {
+              eventRsvp.count++;
+              if (friendIds.has(rsvpUserId)) {
+                eventRsvp.friendsAttending.push(rsvpUserId);
+              }
+            }
           }
         }
       }
@@ -240,9 +338,9 @@ async function handler(
 
     const friendNames: Map<string, string> = new Map();
     if (allFriendsAttending.size > 0) {
-      const friendIds = Array.from(allFriendsAttending).slice(0, 30); // Limit
-      for (let i = 0; i < friendIds.length; i += 10) {
-        const batch = friendIds.slice(i, i + 10);
+      const friendIdsToLookup = Array.from(allFriendsAttending).slice(0, 30); // Limit
+      for (let i = 0; i < friendIdsToLookup.length; i += 10) {
+        const batch = friendIdsToLookup.slice(i, i + 10);
         const friendDocs = await dbAdmin.collection('users')
           .where('__name__', 'in', batch)
           .select('fullName', 'handle')
@@ -258,20 +356,30 @@ async function handler(
     const personalizedEvents: PersonalizedEvent[] = events.map(event => {
       const eventId = event.id as string;
       const rsvp = rsvpData.get(eventId) || { count: 0, userRsvped: false, friendsAttending: [] };
+      const eventStart = getEventStartDate(event);
 
       // Skip if user already RSVP'd and excludeRsvped is true
       if (params.excludeRsvped && rsvp.userRsvped) {
         return null;
       }
 
+      if (!eventStart) {
+        return null;
+      }
+
       const matchReasons: string[] = [];
       let relevanceScore = 0;
+      const eventType = (event.eventType || event.type) as string | undefined;
+      const eventTags = [
+        ...(Array.isArray(event.tags) ? event.tags : []),
+        ...(Array.isArray(event.categories) ? event.categories : []),
+      ] as string[];
 
       // Interest match (0-100 points)
       const { score: interestScore, matchedInterests } = calculateInterestMatch(
         userInterests,
-        event.eventType as string | undefined,
-        event.tags as string[] | undefined,
+        eventType,
+        eventTags,
         event.title as string | undefined,
         event.description as string | undefined
       );
@@ -302,7 +410,6 @@ async function handler(
       }
 
       // Time proximity bonus (0-30 points, closer = higher)
-      const eventStart = new Date(event.startDate as string);
       const hoursUntil = (eventStart.getTime() - Date.now()) / (1000 * 60 * 60);
       if (hoursUntil <= 3) {
         relevanceScore += 30;
@@ -325,10 +432,10 @@ async function handler(
         id: eventId,
         title: event.title as string || 'Untitled Event',
         description: event.description as string | undefined,
-        startDate: event.startDate as string,
-        endDate: event.endDate as string || event.startDate as string,
-        location: event.location as string | undefined,
-        eventType: event.eventType as string | undefined,
+        startDate: eventStart.toISOString(),
+        endDate: (getEventEndDate(event) || eventStart).toISOString(),
+        location: (event.locationName || event.location) as string | undefined,
+        eventType,
         spaceId: eventSpaceId,
         spaceName: event.spaceName as string | undefined,
         organizerName: event.organizerName as string | undefined,

@@ -108,7 +108,7 @@ export function ImageCropper({
           aria-label={isProcessing ? "Processing image" : "Confirm crop"}
         >
           {isProcessing ? (
-            <div className="w-5 h-5 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin" aria-hidden="true" />
+            <div className="w-5 h-5 border-2 border-gold-500/30 border-t-gold-500 rounded-full " aria-hidden="true" />
           ) : (
             <CheckIcon className="w-5 h-5" aria-hidden="true" />
           )}
@@ -194,7 +194,7 @@ export function ImageCropper({
           whileHover={{ opacity: 0.9 }}
           whileTap={{ opacity: 0.8 }}
           transition={transitionSpring}
-          className="w-full h-12 bg-white text-[var(--color-bg-void,#0A0A09)] font-semibold rounded-xl hover:bg-white/90 transition-colors disabled:opacity-50"
+          className="w-full h-12 bg-white text-[var(--color-bg-void,#0A0A09)] font-semibold rounded-lg hover:bg-white transition-colors disabled:opacity-50"
         >
           {isProcessing ? 'Processing...' : 'Use this photo'}
         </motion.button>

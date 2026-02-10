@@ -20,7 +20,7 @@ export default function ProfileError({
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center max-w-md"
       >
-        <div className="w-20 h-20 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-6">
           <span className="text-3xl">&#9888;&#65039;</span>
         </div>
         <h1 className="text-title-lg font-semibold text-white mb-3">
@@ -33,9 +33,9 @@ export default function ProfileError({
           <button
             onClick={reset}
             className={cn(
-              'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl',
+              'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg',
               'bg-white text-foundation-gray-1000 font-medium',
-              'hover:bg-white/90 transition-colors'
+              'hover:bg-white transition-colors'
             )}
           >
             Try Again
@@ -43,9 +43,9 @@ export default function ProfileError({
           <Link
             href="/discover"
             className={cn(
-              'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl',
-              'bg-white/[0.06] text-white/70 font-medium border border-white/[0.08]',
-              'hover:bg-white/[0.08] transition-colors'
+              'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg',
+              'bg-white/[0.06] text-white/50 font-mediumborder-white/[0.06]',
+              'hover:bg-white/[0.06] transition-colors'
             )}
           >
             Go Home

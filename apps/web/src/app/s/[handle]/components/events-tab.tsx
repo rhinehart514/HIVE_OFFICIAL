@@ -52,8 +52,8 @@ export function EventsTab({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
       >
-        <div className="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-6">
-          <Calendar className="w-8 h-8 text-white/30" />
+        <div className="w-16 h-16 rounded-lg bg-white/[0.06] flex items-center justify-center mb-6">
+          <Calendar className="w-8 h-8 text-white/50" />
         </div>
         <h3 className="text-xl font-semibold text-white mb-2">
           No upcoming events
@@ -100,7 +100,7 @@ export function EventsTab({
             variant="cta"
             size="lg"
             onClick={onCreateEvent}
-            className="rounded-full shadow-lg"
+            className="rounded-full"
           >
             <Plus className="w-5 h-5 mr-2" />
             Create Event
@@ -118,11 +118,11 @@ function EventCard({ event }: { event: Event }) {
 
   return (
     <motion.div
-      className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/10 transition-colors"
+      className="p-5 rounded-lg bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.06] transition-colors"
     >
       <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-lg bg-white/[0.04] flex flex-col items-center justify-center shrink-0">
-          <span className="text-[10px] font-medium text-white/40 uppercase leading-none">
+        <div className="w-12 h-12 rounded-lg bg-white/[0.06] flex flex-col items-center justify-center shrink-0">
+          <span className="text-[10px] font-medium text-white/50 uppercase leading-none">
             {dateStr.split(' ')[0]}
           </span>
           <span className="text-body font-semibold text-white leading-none mt-0.5">
@@ -139,7 +139,7 @@ function EventCard({ event }: { event: Event }) {
               {event.description}
             </p>
           )}
-          <div className="flex items-center gap-2 text-label text-white/40">
+          <div className="flex items-center gap-2 text-label text-white/50">
             <span>{timeStr}</span>
             {event.location && (
               <>
@@ -162,13 +162,13 @@ function EventCard({ event }: { event: Event }) {
 
 function EventSkeleton() {
   return (
-    <div className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse">
+    <div className="p-5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 rounded-lg bg-white/[0.06] shrink-0" />
         <div className="flex-1 space-y-2">
           <div className="h-4 w-48 bg-white/[0.06] rounded" />
-          <div className="h-3 w-full bg-white/[0.04] rounded" />
-          <div className="h-3 w-32 bg-white/[0.04] rounded" />
+          <div className="h-3 w-full bg-white/[0.06] rounded" />
+          <div className="h-3 w-32 bg-white/[0.06] rounded" />
         </div>
       </div>
     </div>

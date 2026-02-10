@@ -48,7 +48,7 @@ export function MembersPreview({
       className={cn(
         'w-full px-2 py-2 rounded-lg',
         'flex items-center gap-3',
-        'hover:bg-white/[0.04]',
+        'hover:bg-white/[0.06]',
         'transition-colors',
         'text-left group'
       )}
@@ -85,14 +85,14 @@ export function MembersPreview({
           ))
         ) : (
           <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center">
-            <Users className="w-3 h-3 text-white/30" />
+            <Users className="w-3 h-3 text-white/50" />
           </div>
         )}
 
         {/* Overflow count */}
         {remainingCount > 0 && (
-          <div className="w-6 h-6 rounded-full bg-white/[0.08] flex items-center justify-center ring-2 ring-[#0A0A09]">
-            <span className="text-[10px] font-medium text-white/60">
+          <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center ring-2 ring-[#0A0A09]">
+            <span className="text-[10px] font-medium text-white/50">
               +{remainingCount}
             </span>
           </div>

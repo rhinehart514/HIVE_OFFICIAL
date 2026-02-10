@@ -63,7 +63,7 @@ export function OfflineStatusBar({
     if (showSyncing) {
       return {
         icon: ArrowPathIcon,
-        iconColor: 'text-blue-400 animate-spin',
+        iconColor: 'text-blue-400 ',
         bgColor: 'bg-blue-500/10 border-blue-500/30',
         title: 'Syncing...',
         description: `${syncProgress}% complete`,
@@ -106,7 +106,7 @@ export function OfflineStatusBar({
           className={cn(
             'fixed left-1/2 -translate-x-1/2 z-50',
             position === 'top' ? 'top-4' : 'bottom-20',
-            'px-4 py-2.5 rounded-full border shadow-lg backdrop-blur-sm',
+            'px-4 py-2.5 rounded-full border',
             config.bgColor,
             className
           )}
@@ -124,8 +124,8 @@ export function OfflineStatusBar({
               </span>
               {config.description && (
                 <>
-                  <span className="text-white/30">|</span>
-                  <span className="text-sm text-white/70">
+                  <span className="text-white/50">|</span>
+                  <span className="text-sm text-white/50">
                     {config.description}
                   </span>
                 </>
@@ -134,7 +134,7 @@ export function OfflineStatusBar({
 
             {/* Progress bar for syncing */}
             {showSyncing && (
-              <div className="w-20 h-1.5 bg-white/10 rounded-full overflow-hidden ml-2">
+              <div className="w-20 h-1.5 bg-white/[0.06] rounded-full overflow-hidden ml-2">
                 <motion.div
                   className="h-full bg-blue-400 rounded-full"
                   initial={{ width: 0 }}

@@ -110,7 +110,7 @@ export function BentoWidget({
       <AnimatePresence>
         {isEditMode && (
           <motion.div
-            className="absolute inset-0 z-10 pointer-events-none rounded-3xl"
+            className="absolute inset-0 z-10 pointer-events-none rounded-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -253,8 +253,8 @@ export function BentoWidget({
                           className={cn(
                             'block w-full px-3 py-1.5 text-xs font-medium rounded text-left whitespace-nowrap transition-colors',
                             size === widget.size
-                              ? 'bg-white/10 text-white'
-                              : 'text-white/60 hover:bg-white/5 hover:text-white/80'
+                              ? 'bg-white/[0.06] text-white'
+                              : 'text-white/50 hover:bg-white/[0.06] hover:text-white'
                           )}
                         >
                           {size}

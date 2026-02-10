@@ -6,5 +6,4 @@
 
 export { EventsPanel, type EventsPanelProps, type SpaceEvent } from './events-panel';
 export { MembersPanel, type MembersPanelProps, type SpaceMember } from './members-panel';
-export { ResourcesPanel, type ResourcesPanelProps, type Resource } from './resources-panel';
 export { LeaderOnboardingPanel, type LeaderOnboardingPanelProps, type OnboardingTask } from './leader-onboarding-panel';

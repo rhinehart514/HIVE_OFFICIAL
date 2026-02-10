@@ -93,10 +93,10 @@ function TaskItem({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3, ease: EASE_OUT }}
       className={cn(
-        'flex items-start gap-3 p-3 rounded-xl transition-all',
+        'flex items-start gap-3 p-3 rounded-lg transition-all',
         task.isComplete
-          ? 'bg-white/[0.02] opacity-60'
-          : 'bg-white/[0.03] hover:bg-white/[0.05]'
+          ? 'bg-white/[0.06] opacity-60'
+          : 'bg-white/[0.06] hover:bg-white/[0.06]'
       )}
     >
       {/* Status indicator */}
@@ -123,7 +123,7 @@ function TaskItem({
             {task.label}
           </span>
         </div>
-        <p className="text-xs text-white/40 mt-0.5">
+        <p className="text-xs text-white/50 mt-0.5">
           {task.description}
         </p>
       </div>
@@ -146,7 +146,7 @@ function TaskItem({
 function ProgressBar({ progress }: { progress: number }) {
   return (
     <div className="relative">
-      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
         <motion.div
           className="h-full bg-[var(--life-gold)]"
           initial={{ width: 0 }}
@@ -154,7 +154,7 @@ function ProgressBar({ progress }: { progress: number }) {
           transition={{ duration: 0.5, ease: EASE_OUT }}
         />
       </div>
-      <p className="text-xs text-white/40 mt-2">
+      <p className="text-xs text-white/50 mt-2">
         {progress === 100 ? (
           <span className="text-[var(--status-success)]">All set! You're ready to go.</span>
         ) : (
@@ -240,8 +240,8 @@ export function LeaderOnboardingPanel({
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.4, ease: EASE_OUT }}
         className={cn(
-          'relative rounded-2xl overflow-hidden',
-          'bg-gradient-to-br from-[var(--life-gold)]/5 via-transparent to-transparent',
+          'relative rounded-lg overflow-hidden',
+          'bg-white/[0.06]',
           'border border-[var(--life-gold)]/10',
           'p-5',
           className
@@ -251,7 +251,7 @@ export function LeaderOnboardingPanel({
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="absolute top-4 right-4 p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-white/50 hover:text-white/50 hover:bg-white/[0.06] transition-all"
             aria-label="Dismiss"
           >
             <XMarkIcon className="w-4 h-4" />
@@ -260,7 +260,7 @@ export function LeaderOnboardingPanel({
 
         {/* Header */}
         <div className="flex items-start gap-3 mb-5 pr-8">
-          <div className="w-10 h-10 rounded-xl bg-[var(--life-gold)]/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-[var(--life-gold)]/10 flex items-center justify-center">
             <SparklesIcon className="w-5 h-5 text-[var(--life-gold)]" />
           </div>
           <div>
@@ -300,7 +300,7 @@ export function LeaderOnboardingPanel({
             {onDismiss && (
               <button
                 onClick={onDismiss}
-                className="block mx-auto mt-3 text-xs text-white/40 hover:text-white/60"
+                className="block mx-auto mt-3 text-xs text-white/50 hover:text-white/50"
               >
                 Dismiss this panel
               </button>

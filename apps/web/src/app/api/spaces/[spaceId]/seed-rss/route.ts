@@ -172,45 +172,152 @@ export const POST = withAuthAndErrors(async (
 });
 
 /**
- * Simplified RSS feed fetcher
- * In production, would use a proper RSS parsing library
+ * Fetch and parse RSS/Atom feeds.
+ * Keeps parsing lightweight to avoid adding a new runtime dependency.
  */
 async function fetchRSSFeed(feedUrl: string): Promise<RSSFeedItem[]> {
-  // Mock RSS data for demo purposes
-  // In production, would use a library like 'rss-parser' or similar
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
 
-  const mockFeedItems: RSSFeedItem[] = [
-    {
-      title: "Welcome to the Space!",
-      description: "This is sample content to get the conversation started. Share your thoughts and connect with fellow members.",
-      link: "https://example.com/welcome",
-      pubDate: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-      categories: ["welcome", "community"]
-    },
-    {
-      title: "Getting Started Guide",
-      description: "New to this space? Here's everything you need to know to get the most out of your membership.",
-      link: "https://example.com/guide",
-      pubDate: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), // 4 hours ago
-      categories: ["guide", "tips"]
-    },
-    {
-      title: "Community Guidelines",
-      description: "Let's keep this space welcoming and productive for everyone. Here are our community standards.",
-      link: "https://example.com/guidelines",
-      pubDate: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(), // 6 hours ago
-      categories: ["guidelines", "community"]
+  try {
+    const response = await fetch(feedUrl, {
+      signal: controller.signal,
+      cache: 'no-store',
+      headers: {
+        'User-Agent': 'HIVE RSS Importer/1.0',
+        Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`RSS fetch failed (${response.status})`);
     }
-  ];
 
-  // Add some randomization based on feed URL
-  if (feedUrl.includes('techcrunch')) {
-    mockFeedItems[0].title = "Latest Tech News Discussion";
-    mockFeedItems[0].description = "What's everyone thinking about the latest developments in technology?";
-  } else if (feedUrl.includes('buffalo.edu')) {
-    mockFeedItems[0].title = "Campus Update";
-    mockFeedItems[0].description = "Stay connected with what's happening around campus.";
+    const xml = await response.text();
+    const rssItems = parseRssItems(xml);
+    if (rssItems.length > 0) {
+      return rssItems;
+    }
+
+    const atomItems = parseAtomItems(xml);
+    return atomItems;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function parseRssItems(xml: string): RSSFeedItem[] {
+  const items: RSSFeedItem[] = [];
+  const itemBlocks = xml.match(/<item\b[\s\S]*?<\/item>/gi) || [];
+
+  for (const block of itemBlocks) {
+    const title = decodeXmlEntities(extractTag(block, 'title'));
+    const descriptionRaw = decodeXmlEntities(extractTag(block, 'description'));
+    const link = decodeXmlEntities(extractTag(block, 'link'));
+    const pubDateRaw = decodeXmlEntities(extractTag(block, 'pubDate'));
+    const categories = extractTags(block, 'category').map((value) => decodeXmlEntities(value));
+
+    if (!title || !link) continue;
+
+    const pubDate = normalizeDate(pubDateRaw);
+    const description = cleanDescription(descriptionRaw);
+
+    items.push({
+      title,
+      description,
+      link,
+      pubDate,
+      categories: categories.length > 0 ? categories : undefined,
+    });
   }
 
-  return mockFeedItems;
+  return items;
+}
+
+function parseAtomItems(xml: string): RSSFeedItem[] {
+  const items: RSSFeedItem[] = [];
+  const entryBlocks = xml.match(/<entry\b[\s\S]*?<\/entry>/gi) || [];
+
+  for (const block of entryBlocks) {
+    const title = decodeXmlEntities(extractTag(block, 'title'));
+    const summary = decodeXmlEntities(extractTag(block, 'summary'));
+    const content = decodeXmlEntities(extractTag(block, 'content'));
+    const link = extractAtomLink(block);
+    const pubDateRaw = decodeXmlEntities(extractTag(block, 'published') || extractTag(block, 'updated'));
+
+    if (!title || !link) continue;
+
+    items.push({
+      title,
+      description: cleanDescription(summary || content),
+      link,
+      pubDate: normalizeDate(pubDateRaw),
+    });
+  }
+
+  return items;
+}
+
+function extractTag(source: string, tag: string): string {
+  const regex = new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i');
+  const match = source.match(regex);
+  if (!match?.[1]) return '';
+
+  return match[1]
+    .replace(/^<!\[CDATA\[/, '')
+    .replace(/\]\]>$/, '')
+    .trim();
+}
+
+function extractTags(source: string, tag: string): string[] {
+  const regex = new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'gi');
+  const values: string[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(source)) !== null) {
+    if (match[1]) {
+      values.push(
+        match[1]
+          .replace(/^<!\[CDATA\[/, '')
+          .replace(/\]\]>$/, '')
+          .trim()
+      );
+    }
+  }
+
+  return values;
+}
+
+function extractAtomLink(entryBlock: string): string {
+  const hrefMatch = entryBlock.match(/<link\b[^>]*href="([^"]+)"[^>]*\/?>/i);
+  if (hrefMatch?.[1]) return decodeXmlEntities(hrefMatch[1]);
+
+  const textLink = decodeXmlEntities(extractTag(entryBlock, 'link'));
+  return textLink;
+}
+
+function decodeXmlEntities(value: string): string {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+}
+
+function cleanDescription(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 700);
+}
+
+function normalizeDate(value: string): string {
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString();
+  }
+  return new Date().toISOString();
 }

@@ -47,8 +47,8 @@ export function ToolCard({
       whileHover={{ opacity: 0.96 }}
       transition={{ duration: 0.15 }}
       className={cn(
-        'rounded-xl',
-        'bg-white/[0.02] hover:bg-white/[0.04]',
+        'rounded-lg',
+        'bg-white/[0.06] hover:bg-white/[0.06]',
         'border border-white/[0.06] hover:border-white/[0.10]',
         'transition-all duration-150',
         className
@@ -61,11 +61,11 @@ export function ToolCard({
     >
       {/* Header: Icon + Name */}
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-white/[0.04] border border-white/[0.06] flex-shrink-0">
+        <div className="p-2 rounded-lg bg-white/[0.06] border border-white/[0.06] flex-shrink-0">
           {tool.icon ? (
             <span className="text-lg">{tool.icon}</span>
           ) : (
-            <Wrench className="w-4 h-4 text-white/60" />
+            <Wrench className="w-4 h-4 text-white/50" />
           )}
         </div>
 
@@ -74,7 +74,7 @@ export function ToolCard({
             {tool.name}
           </h3>
           {tool.description && (
-            <p className="text-xs text-white/40 mt-0.5 line-clamp-2">
+            <p className="text-xs text-white/50 mt-0.5 line-clamp-2">
               {tool.description}
             </p>
           )}
@@ -86,7 +86,7 @@ export function ToolCard({
         {/* Usage count */}
         {tool.usageCount !== undefined && tool.usageCount > 0 && (
           <div className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-white/40" />
+            <Users className="w-3.5 h-3.5 text-white/50" />
             <span className="text-xs text-white/50">
               {tool.usageCount} {tool.usageCount === 1 ? 'use' : 'uses'}
             </span>
@@ -102,7 +102,7 @@ export function ToolCard({
             <Button
               variant="ghost"
               size="sm"
-              className="text-white/50 hover:text-white/70"
+              className="text-white/50 hover:text-white/50"
               onClick={onViewFull}
             >
               <ExternalLink className="w-3.5 h-3.5" />

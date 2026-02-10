@@ -37,7 +37,7 @@ export function TemplateSuggestion({
         transition={{ duration: durationSeconds.standard, ease: EASE }}
         className="mb-8 text-center"
       >
-        <p className="text-white/40 text-sm mb-1">You asked for</p>
+        <p className="text-white/50 text-sm mb-1">You asked for</p>
         <p className="text-white text-lg font-medium">
           &ldquo;{prompt}&rdquo;
         </p>
@@ -50,7 +50,7 @@ export function TemplateSuggestion({
         transition={{ duration: durationSeconds.smooth, delay: 0.15, ease: EASE }}
         className="w-full max-w-md"
       >
-        <div className="rounded-2xl border border-[var(--life-gold)]/20 bg-[var(--life-gold)]/[0.04] p-6">
+        <div className="rounded-lg border border-[var(--life-gold)]/20 bg-[var(--life-gold)]/[0.04] p-6">
           <div className="flex items-center gap-2 mb-3">
             <Zap className="w-4 h-4 text-[var(--life-gold)]" />
             <span className="text-[var(--life-gold)] text-sm font-medium">
@@ -70,7 +70,7 @@ export function TemplateSuggestion({
               onClick={() => onUseTemplate(template)}
               disabled={disabled}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5
-                rounded-xl bg-[var(--life-gold)] text-black font-medium text-sm
+                rounded-lg bg-[var(--life-gold)] text-black font-medium text-sm
                 hover:brightness-110 transition-all duration-150
                 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -81,7 +81,7 @@ export function TemplateSuggestion({
               onClick={onBuildWithAI}
               disabled={disabled}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5
-                rounded-xl bg-white/[0.06] text-white/70 text-sm border border-white/[0.08]
+                rounded-lg bg-white/[0.06] text-white/50 text-smborder-white/[0.06]
                 hover:bg-white/[0.10] hover:text-white transition-all duration-150
                 disabled:opacity-50 disabled:cursor-not-allowed"
             >

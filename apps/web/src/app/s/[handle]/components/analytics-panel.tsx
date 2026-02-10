@@ -159,13 +159,13 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
         animate={{ scale: 1 }}
         className={cn(
           'w-full max-w-4xl max-h-[90vh] overflow-y-auto',
-          'bg-[var(--bg-ground)] border border-white/[0.08] rounded-xl',
-          'shadow-2xl'
+          'bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg',
+          ''
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[var(--bg-ground)]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[var(--bg-ground)]">
           <div>
             <h2 className="text-lg font-semibold text-white">Space Analytics</h2>
             <p className="text-sm text-white/50">
@@ -182,9 +182,9 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                 onChange={(e) => setPeriod(e.target.value as Period)}
                 className={cn(
                   'appearance-none px-3 py-1.5 pr-8 rounded-lg',
-                  'bg-white/[0.04] border border-white/[0.08]',
+                  'bg-white/[0.06] border border-white/[0.06]',
                   'text-white text-sm',
-                  'focus:outline-none focus:ring-2 focus:ring-white/20'
+                  'focus:outline-none focus:ring-2 focus:ring-white/50'
                 )}
               >
                 <option value="7d">Last 7 days</option>
@@ -205,7 +205,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                 'disabled:opacity-50'
               )}
             >
-              <RefreshCw className={cn('w-4 h-4', isLoading && 'animate-spin')} />
+              <RefreshCw className={cn('w-4 h-4', isLoading && '')} />
             </button>
 
             {/* Close */}
@@ -226,14 +226,14 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
         <div className="p-6">
           {isLoading && !data ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 text-white/30 animate-spin" />
+              <Loader2 className="w-8 h-8 text-white/50 " />
             </div>
           ) : error ? (
             <div className="text-center py-16">
               <p className="text-red-400">{error}</p>
               <button
                 onClick={fetchAnalytics}
-                className="mt-4 text-sm text-white/60 hover:text-white underline"
+                className="mt-4 text-sm text-white/50 hover:text-white underline"
               >
                 Try again
               </button>
@@ -242,30 +242,30 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
             <div className="space-y-6">
               {/* Health Score + Insights */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                   <div className="flex items-center gap-3 mb-3">
                     <Activity className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Health Score</span>
                   </div>
                   <div className={cn('text-4xl font-bold', healthColor)}>
                     {healthScore}
-                    <span className="text-lg text-white/30">/100</span>
+                    <span className="text-lg text-white/50">/100</span>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                   <div className="flex items-center gap-3 mb-3">
                     <TrendingUp className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Insights</span>
                   </div>
                   <ul className="space-y-1">
                     {data.summary?.topInsights?.slice(0, 3).map((insight, i) => (
-                      <li key={i} className="text-sm text-white/60">
+                      <li key={i} className="text-sm text-white/50">
                         {insight}
                       </li>
                     ))}
                     {(!data.summary?.topInsights || data.summary.topInsights.length === 0) && (
-                      <li className="text-sm text-white/40">No insights available</li>
+                      <li className="text-sm text-white/50">No insights available</li>
                     )}
                   </ul>
                 </div>
@@ -302,20 +302,20 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
 
               {/* Peak Activity Times */}
               {data.engagement?.peakActivityTimes && (
-                <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                   <div className="flex items-center gap-3 mb-4">
                     <Clock className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Peak Activity</span>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-white/40 mb-1">Best Day</p>
+                      <p className="text-xs text-white/50 mb-1">Best Day</p>
                       <p className="text-lg font-medium text-white">
                         {data.engagement.peakActivityTimes.day?.day || 'N/A'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40 mb-1">Best Hour</p>
+                      <p className="text-xs text-white/50 mb-1">Best Hour</p>
                       <p className="text-lg font-medium text-white">
                         {data.engagement.peakActivityTimes.hour
                           ? `${data.engagement.peakActivityTimes.hour.hour}:00`
@@ -328,7 +328,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
 
               {/* Top Contributors */}
               {data.topContributors && data.topContributors.length > 0 && (
-                <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                   <div className="flex items-center gap-3 mb-4">
                     <Award className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Top Contributors</span>
@@ -340,9 +340,9 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                         className="flex items-center justify-between py-2"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-sm text-white/40 w-4">{i + 1}</span>
+                          <span className="text-sm text-white/50 w-4">{i + 1}</span>
                           <div
-                            className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-xs text-white/60"
+                            className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-xs text-white/50"
                             style={{
                               backgroundImage: contributor.photoURL
                                 ? `url(${contributor.photoURL})`
@@ -365,7 +365,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
 
               {/* Top Content */}
               {data.topContent && data.topContent.length > 0 && (
-                <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                   <div className="flex items-center gap-3 mb-4">
                     <TrendingUp className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Top Performing Content</span>
@@ -374,10 +374,10 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                     {data.topContent.slice(0, 3).map((post) => (
                       <div
                         key={post.id}
-                        className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+                        className="p-3 rounded-lg bg-white/[0.06] border border-white/[0.06]"
                       >
-                        <p className="text-sm text-white/80 mb-2">{post.content}</p>
-                        <div className="flex items-center gap-4 text-xs text-white/40">
+                        <p className="text-sm text-white mb-2">{post.content}</p>
+                        <div className="flex items-center gap-4 text-xs text-white/50">
                           <span>{post.likes} likes</span>
                           <span>{post.comments} comments</span>
                           <span>by {post.authorName}</span>
@@ -406,9 +406,9 @@ interface MetricCardProps {
 
 function MetricCard({ icon: Icon, label, value, change, changeLabel, subValue }: MetricCardProps) {
   return (
-    <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+    <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
       <div className="flex items-center gap-2 mb-2">
-        <Icon className="w-4 h-4 text-white/40" />
+        <Icon className="w-4 h-4 text-white/50" />
         <span className="text-xs text-white/50">{label}</span>
       </div>
       <div className="text-2xl font-semibold text-white">{value.toLocaleString()}</div>
@@ -417,7 +417,7 @@ function MetricCard({ icon: Icon, label, value, change, changeLabel, subValue }:
           +{change} {changeLabel}
         </div>
       )}
-      {subValue && <div className="text-xs text-white/40 mt-1">{subValue}</div>}
+      {subValue && <div className="text-xs text-white/50 mt-1">{subValue}</div>}
     </div>
   );
 }

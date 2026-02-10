@@ -68,12 +68,12 @@ export function ErrorWithRetry({
           disabled={isRetrying}
           className={cn(
             'inline-flex items-center gap-1 px-2 py-0.5 rounded text-body-sm',
-            'text-white/60 hover:text-white transition-colors',
+            'text-white/50 hover:text-white transition-colors',
             'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
         >
           <RefreshCw
-            className={cn('w-3 h-3', isRetrying && 'animate-spin')}
+            className="w-3 h-3"
           />
           <span>{isRetrying ? 'Retrying...' : 'Try again'}</span>
         </button>

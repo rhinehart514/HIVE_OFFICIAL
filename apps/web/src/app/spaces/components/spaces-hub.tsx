@@ -15,12 +15,12 @@ interface SpacesHubProps {
 function Header({ onCreateSpace }: { onCreateSpace: () => void }) {
   return (
     <header className="flex items-center justify-between px-6 py-5">
-      <h1 className="text-xl font-medium tracking-tight text-white/90">Spaces</h1>
+      <h1 className="text-xl font-medium tracking-tight text-white">Spaces</h1>
       <Button
         variant="ghost"
         size="sm"
         onClick={onCreateSpace}
-        className="text-white/60 hover:bg-white/[0.06] hover:text-white/90"
+        className="text-white/50 hover:bg-white/[0.06] hover:text-white"
       >
         <Plus size={18} className="mr-2" />
         New
@@ -33,9 +33,9 @@ function LoadingState() {
   return (
     <div className="flex flex-1 items-center justify-center">
       <div className="flex gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-white/30" />
-        <span className="h-2 w-2 rounded-full bg-white/30" />
-        <span className="h-2 w-2 rounded-full bg-white/30" />
+        <span className="h-2 w-2 rounded-full bg-white/50" />
+        <span className="h-2 w-2 rounded-full bg-white/50" />
+        <span className="h-2 w-2 rounded-full bg-white/50" />
       </div>
     </div>
   );
@@ -48,11 +48,11 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
           <AlertCircle size={24} className="text-red-400" />
         </div>
-        <h2 className="mb-2 text-lg font-medium text-white/90">Something went wrong</h2>
+        <h2 className="mb-2 text-lg font-medium text-white">Something went wrong</h2>
         <p className="mb-6 text-sm leading-relaxed text-white/50">
           {error || 'Failed to load your spaces. Please try again.'}
         </p>
-        <Button onClick={onRetry} className="bg-white/[0.08] text-white/90 hover:bg-white/[0.12]">
+        <Button onClick={onRetry} className="bg-white/[0.06] text-white hover:bg-white/[0.06]">
           <RefreshCw size={16} className="mr-2" />
           Try again
         </Button>
@@ -70,13 +70,13 @@ function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
           Claim your identity and join existing communities, or create a new space.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <Button onClick={onCreateSpace} className="bg-white text-black hover:bg-white/90">
+          <Button onClick={onCreateSpace} className="bg-white text-black hover:bg-white">
             Create space
           </Button>
           <Button
             variant="ghost"
-            onClick={() => (window.location.href = '/spaces/browse')}
-            className="text-white/80 hover:bg-white/[0.06]"
+            onClick={() => (window.location.href = '/discover')}
+            className="text-white hover:bg-white/[0.06]"
           >
             Browse spaces
           </Button>
@@ -93,6 +93,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
   const [showClaimModal, setShowClaimModal] = React.useState(false);
   const [showJoinModal, setShowJoinModal] = React.useState(false);
   const [joinCode, setJoinCode] = React.useState<string | null>(null);
+  const [claimDefaultQuery, setClaimDefaultQuery] = React.useState('');
 
   React.useEffect(() => {
     const create = searchParams.get('create');
@@ -103,6 +104,8 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
       setShowCreateModal(true);
       router.replace('/spaces', { scroll: false });
     } else if (claim === 'true') {
+      const handle = searchParams.get('handle');
+      if (handle) setClaimDefaultQuery(handle);
       setShowClaimModal(true);
       router.replace('/spaces', { scroll: false });
     } else if (join) {
@@ -172,8 +175,10 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
         isOpen={showClaimModal}
         onClose={() => {
           setShowClaimModal(false);
+          setClaimDefaultQuery('');
           refresh();
         }}
+        defaultQuery={claimDefaultQuery}
       />
 
       <SpaceJoinModal

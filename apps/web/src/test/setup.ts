@@ -18,43 +18,47 @@ vi.mock('nanoid', () => ({
   nanoid: () => 'test-id-123',
 }));
 
-// Mock window.matchMedia (required for many UI components)
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+const hasWindow = typeof window !== 'undefined';
 
-// Mock IntersectionObserver (required for virtualized lists, lazy loading)
-const mockIntersectionObserver = vi.fn();
-mockIntersectionObserver.mockReturnValue({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-});
-window.IntersectionObserver = mockIntersectionObserver;
+if (hasWindow) {
+  // Mock window.matchMedia (required for many UI components)
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
 
-// Mock ResizeObserver
-const mockResizeObserver = vi.fn();
-mockResizeObserver.mockReturnValue({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-});
-window.ResizeObserver = mockResizeObserver;
+  // Mock IntersectionObserver (required for virtualized lists, lazy loading)
+  const mockIntersectionObserver = vi.fn();
+  mockIntersectionObserver.mockReturnValue({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  });
+  window.IntersectionObserver = mockIntersectionObserver;
 
-// Mock scrollTo
-Element.prototype.scrollTo = vi.fn();
-Element.prototype.scrollIntoView = vi.fn();
-window.scrollTo = vi.fn();
+  // Mock ResizeObserver
+  const mockResizeObserver = vi.fn();
+  mockResizeObserver.mockReturnValue({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  });
+  window.ResizeObserver = mockResizeObserver;
+
+  // Mock scroll APIs
+  Element.prototype.scrollTo = vi.fn();
+  Element.prototype.scrollIntoView = vi.fn();
+  window.scrollTo = vi.fn();
+}
 
 // Mock EventSource for SSE tests
 class MockEventSource {
@@ -119,8 +123,10 @@ const createStorageMock = () => {
   };
 };
 
-Object.defineProperty(window, 'localStorage', { value: createStorageMock() });
-Object.defineProperty(window, 'sessionStorage', { value: createStorageMock() });
+if (hasWindow) {
+  Object.defineProperty(window, 'localStorage', { value: createStorageMock() });
+  Object.defineProperty(window, 'sessionStorage', { value: createStorageMock() });
+}
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -129,8 +135,10 @@ global.fetch = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks();
   MockEventSource.instances = [];
-  (window.localStorage as ReturnType<typeof createStorageMock>).clear();
-  (window.sessionStorage as ReturnType<typeof createStorageMock>).clear();
+  if (hasWindow) {
+    (window.localStorage as ReturnType<typeof createStorageMock>).clear();
+    (window.sessionStorage as ReturnType<typeof createStorageMock>).clear();
+  }
 });
 
 afterEach(() => {

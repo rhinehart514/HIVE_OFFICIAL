@@ -13,7 +13,7 @@ export function FlagOverrides() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8 text-white/30 text-sm">
+      <div className="flex items-center justify-center py-8 text-white/50 text-sm">
         Loading flags...
       </div>
     );
@@ -36,7 +36,7 @@ export function FlagOverrides() {
         {hasOverrides && (
           <button
             onClick={clearAllOverrides}
-            className="flex items-center gap-1 px-2 py-1 text-[11px] text-white/40 hover:text-white/70 hover:bg-white/5 rounded transition-colors"
+            className="flex items-center gap-1 px-2 py-1 text-[11px] text-white/50 hover:text-white/50 hover:bg-white/[0.06] rounded transition-colors"
           >
             <RotateCcw size={10} />
             Reset All
@@ -54,11 +54,11 @@ export function FlagOverrides() {
           return (
             <div
               key={flagId}
-              className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.03] transition-colors"
+              className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               <div className="min-w-0">
-                <p className="text-[12px] text-white/70 font-mono truncate">{flagId}</p>
-                <p className="text-[10px] text-white/30">
+                <p className="text-[12px] text-white/50 font-mono truncate">{flagId}</p>
+                <p className="text-[10px] text-white/50">
                   Server: {serverValue ? 'ON' : 'OFF'}
                   {hasOverride && ' → Overridden'}
                 </p>
@@ -84,7 +84,7 @@ export function FlagOverrides() {
                   relative w-9 h-5 rounded-full transition-colors flex-shrink-0
                   ${effectiveValue
                     ? 'bg-emerald-500/40'
-                    : 'bg-white/10'
+                    : 'bg-white/[0.06]'
                   }
                   ${hasOverride ? 'ring-2 ring-blue-500/50' : ''}
                 `}
@@ -94,7 +94,7 @@ export function FlagOverrides() {
                     absolute top-0.5 w-4 h-4 rounded-full transition-all duration-200
                     ${effectiveValue
                       ? 'left-[18px] bg-emerald-400'
-                      : 'left-0.5 bg-white/40'
+                      : 'left-0.5 bg-white/50'
                     }
                   `}
                 />
@@ -105,7 +105,7 @@ export function FlagOverrides() {
       </div>
 
       {/* Footer */}
-      <p className="text-[10px] text-white/20 text-center pt-1">
+      <p className="text-[10px] text-white/50 text-center pt-1">
         Overrides are session-scoped. Close tab to reset.
       </p>
     </div>

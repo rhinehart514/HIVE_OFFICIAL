@@ -88,11 +88,11 @@ export function InlineCreate({
           placeholder={placeholder}
           disabled={isGenerating}
           rows={3}
-          className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-[var(--life-gold)] transition-colors resize-none disabled:opacity-50"
+          className="w-full px-4 py-3 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:outline-none focus:border-[var(--life-gold)] transition-colors resize-none disabled:opacity-50"
         />
 
         <div className="mt-3 flex items-center justify-between">
-          <div className="text-xs text-white/40">
+          <div className="text-xs text-white/50">
             {isGenerating ? (
               <span>Generating...</span>
             ) : (
@@ -108,7 +108,7 @@ export function InlineCreate({
                 type="button"
                 onClick={onCancel}
                 disabled={isGenerating}
-                className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm text-white/50 hover:text-white transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -120,7 +120,7 @@ export function InlineCreate({
             >
               {isGenerating ? (
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full " />
                   Creating...
                 </span>
               ) : (
@@ -148,7 +148,7 @@ export function InlineCreate({
       {/* Examples (show when empty) */}
       {!prompt && !isGenerating && (
         <div className="mt-4 space-y-2">
-          <p className="text-xs text-white/40 mb-2">Try:</p>
+          <p className="text-xs text-white/50 mb-2">Try:</p>
           {[
             'Poll about best study spots on campus',
             'Event RSVP for spring formal on March 15',
@@ -158,7 +158,7 @@ export function InlineCreate({
             <button
               key={example}
               onClick={() => setPrompt(example)}
-              className="block w-full text-left px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors"
+              className="block w-full text-left px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors"
             >
               "{example}"
             </button>
@@ -192,7 +192,7 @@ export function InlineCreateModal({ isOpen, spaceId, onComplete, onClose }: Inli
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 " />
 
       {/* Modal */}
       <motion.div
@@ -201,7 +201,7 @@ export function InlineCreateModal({ isOpen, spaceId, onComplete, onClose }: Inli
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-[var(--bg-surface)] border border-white/[0.06] rounded-2xl p-6 shadow-xl"
+        className="relative w-full max-w-2xl bg-[var(--bg-surface)] border border-white/[0.06] rounded-lg p-6"
       >
         <h2 className="text-xl font-semibold text-white mb-4">Create a Tool</h2>
         <InlineCreate

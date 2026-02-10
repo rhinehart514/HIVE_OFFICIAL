@@ -124,7 +124,7 @@ function DiscoverMoreSection({
       {/* Section divider */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-px bg-white/[0.06]" />
-        <Text weight="medium" className="text-label-sm uppercase tracking-wider text-white/40">
+        <Text weight="medium" className="text-label-sm uppercase tracking-wider text-white/50">
           Discover More
         </Text>
         <div className="flex-1 h-px bg-white/[0.06]" />

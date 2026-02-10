@@ -7,7 +7,7 @@
  * - Zone 3: Campus Presence (Spaces)
  *
  * Uses staggered wave animation (0.15s delay between elements)
- * Base color: white/[0.08] per design tokens
+ * Base color: white/[0.06] per design tokens
  */
 
 'use client';
@@ -26,7 +26,7 @@ function Skeleton({
 }) {
   return (
     <motion.div
-      className={`bg-white/[0.08] rounded ${className || ''}`}
+      className={`bg-white/[0.06] rounded ${className || ''}`}
       animate={{ opacity: [0.5, 1, 0.5] }}
       transition={{
         duration: 1.5,
@@ -116,7 +116,7 @@ export function ProfileLoadingState() {
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="p-4 rounded-xl"
+                      className="p-4 rounded-lg"
                       style={{ backgroundColor: 'var(--bg-elevated)' }}
                     >
                       <div className="flex items-center gap-3 mb-3">
@@ -139,7 +139,7 @@ export function ProfileLoadingState() {
                   {[0, 1].map((i) => (
                     <div
                       key={i}
-                      className="p-4 rounded-xl"
+                      className="p-4 rounded-lg"
                       style={{ backgroundColor: 'var(--bg-elevated)' }}
                     >
                       <div className="flex items-center gap-3">

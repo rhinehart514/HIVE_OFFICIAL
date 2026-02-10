@@ -32,7 +32,7 @@ const CURRENT_GUIDELINES: LegalDocument = {
         <h2 className="mt-0 text-xl font-semibold text-[var(--hive-brand-primary)]">
           TL;DR - Be Human, Be Kind
         </h2>
-        <p className="mb-0 text-white/70">
+        <p className="mb-0 text-white/50">
           HIVE is built on respect, authenticity, and collaboration. Treat
           others as you'd want to be treated, contribute meaningfully to your
           communities, and help us create a space where everyone can thrive.
@@ -147,7 +147,7 @@ const CURRENT_GUIDELINES: LegalDocument = {
           questions that spark discussion
         </li>
         <li>
-          <strong>Creative Tools:</strong> Build interactive elements that
+          <strong>Creative Tools:</strong> Build elements that
           enhance community experiences
         </li>
         <li>
@@ -449,13 +449,13 @@ export default function CommunityGuidelinesPage() {
                 <ArrowLeft className="h-4 w-4" />
                 Back to HIVE
               </Link>
-              <div className="h-6 w-px bg-white/[0.08]" />
+              <div className="h-6 w-px bg-white/[0.06]" />
               <div className="flex items-center gap-2 text-white/50">
                 <Heart className="h-4 w-4" />
                 <span className="text-sm">Community Standards</span>
               </div>
             </div>
-            <div className="text-sm text-white/40">
+            <div className="text-sm text-white/50">
               Effective: {CURRENT_GUIDELINES.effectiveDate}
             </div>
           </div>
@@ -474,7 +474,7 @@ export default function CommunityGuidelinesPage() {
           </p>
         </div>
 
-        <div className="text-white/70">{CURRENT_GUIDELINES.content}</div>
+        <div className="text-white/50">{CURRENT_GUIDELINES.content}</div>
       </div>
       </div>
     </Suspense>

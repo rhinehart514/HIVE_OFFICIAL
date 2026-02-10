@@ -265,7 +265,7 @@ function RunDetailDrawer({
         onClick={onClose}
       >
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-black/50 " />
 
         {/* Drawer */}
         <motion.div
@@ -598,7 +598,7 @@ export default function ToolRunsPage({ params }: Props) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="grid grid-cols-3 gap-4 p-4 rounded-xl mb-8"
+            className="grid grid-cols-3 gap-4 p-4 rounded-lg mb-8"
             style={{
               backgroundColor: COLORS.surface,
               border: `1px solid ${COLORS.border}`,
@@ -619,7 +619,7 @@ export default function ToolRunsPage({ params }: Props) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: i * 0.1 }}
-                className="h-16 rounded-lg animate-pulse"
+                className="h-16 rounded-lg"
                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
               />
             ))}

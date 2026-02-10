@@ -387,7 +387,7 @@ function EmptyState({ onShare }: { onShare: () => void }) {
           damping: 20,
           delay: shouldReduceMotion ? 0 : 0.2,
         }}
-        className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center text-[var(--hive-brand-primary)]"
+        className="w-16 h-16 mx-auto mb-6 rounded-lg flex items-center justify-center text-[var(--hive-brand-primary)]"
         style={{ backgroundColor: `${COLORS.gold}20` }}
       >
         <Chart className="w-8 h-8" />
@@ -418,7 +418,7 @@ function DownloadToast({ isVisible }: { isVisible: boolean }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg"
+          className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-3 rounded-lg"
           style={{
             backgroundColor: COLORS.bgSecondary,
             border: `1px solid ${COLORS.gold}40`,
@@ -567,11 +567,11 @@ export default function ToolAnalyticsPage({ params }: Props) {
           </div>
           <div className="grid grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-28 w-full rounded-xl" />
+              <Skeleton key={i} className="h-28 w-full rounded-lg" />
             ))}
           </div>
-          <Skeleton className="h-72 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-72 w-full rounded-lg" />
+          <Skeleton className="h-48 w-full rounded-lg" />
         </div>
       </div>
     );

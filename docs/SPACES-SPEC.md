@@ -1,7 +1,7 @@
-# SPACES — System Spec
+# HIVE — IA + System Spec
 
-> The home base. Where orgs live, leaders operate, members engage.
-> Pre-populated from UB data. Claimed by students. Infrastructure compounds.
+> Campus operating system. Discord-style sidebar IA.
+> Pre-populated from UB RSS data. No cold start. Launching to all of UB.
 
 ---
 

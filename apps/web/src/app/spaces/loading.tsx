@@ -28,7 +28,7 @@ function HeroSectionSkeleton() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* Large hero card skeleton */}
       <motion.div
-        className="md:col-span-2 md:row-span-2 h-[240px] md:h-80 rounded-2xl bg-[var(--bg-void)]/50 border border-white/[0.06]/50"
+        className="md:col-span-2 md:row-span-2 h-[240px] md:h-80 rounded-lg bg-[var(--bg-void)]/50 border border-white/[0.06]"
         animate={{ opacity: [0.3, 0.6, 0.3] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.smooth }}
       >
@@ -49,7 +49,7 @@ function HeroSectionSkeleton() {
       {/* Secondary card skeletons */}
       <div className="grid grid-cols-2 md:grid-cols-1 md:flex md:flex-col gap-4">
         <motion.div
-          className="h-[140px] md:flex-1 rounded-2xl bg-[var(--bg-void)]/50 border border-white/[0.06]/50 p-4"
+          className="h-[140px] md:flex-1 rounded-lg bg-[var(--bg-void)]/50 border border-white/[0.06] p-4"
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.smooth }}
         >
@@ -65,7 +65,7 @@ function HeroSectionSkeleton() {
           />
         </motion.div>
         <motion.div
-          className="h-[140px] md:flex-1 rounded-2xl bg-[var(--bg-void)]/50 border border-white/[0.06]/50 p-4"
+          className="h-[140px] md:flex-1 rounded-lg bg-[var(--bg-void)]/50 border border-white/[0.06] p-4"
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
         >
@@ -90,7 +90,7 @@ function SectionHeaderSkeleton({ delay = 0 }: { delay?: number }) {
     <div className="flex items-center justify-between mb-5">
       <div className="flex items-center gap-3">
         <motion.div
-          className="w-10 h-10 rounded-xl bg-[var(--bg-ground)]/50"
+          className="w-10 h-10 rounded-lg bg-[var(--bg-ground)]/50"
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, delay, ease: MOTION.ease.smooth }}
         />
@@ -119,13 +119,13 @@ function SectionHeaderSkeleton({ delay = 0 }: { delay?: number }) {
 function DiscoveryCardSkeletonStaggered({ delay }: { delay: number }) {
   return (
     <motion.div
-      className="bg-[var(--bg-void)]/50 border border-white/[0.06]/50 rounded-xl p-4"
+      className="bg-[var(--bg-void)]/50 border border-white/[0.06] rounded-lg p-4"
       animate={{ opacity: [0.3, 0.6, 0.3] }}
       transition={{ duration: 1.5, repeat: Infinity, delay, ease: MOTION.ease.smooth }}
     >
       <div className="flex items-start gap-3.5">
         <motion.div
-          className="w-12 h-12 rounded-xl bg-[var(--bg-ground)]"
+          className="w-12 h-12 rounded-lg bg-[var(--bg-ground)]"
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, delay: delay + 0.05, ease: MOTION.ease.smooth }}
         />
@@ -147,7 +147,7 @@ function DiscoveryCardSkeletonStaggered({ delay }: { delay: number }) {
           transition={{ duration: 1.5, repeat: Infinity, delay: delay + 0.2, ease: MOTION.ease.smooth }}
         />
       </div>
-      <div className="mt-3 pt-3 border-t border-white/[0.06]/50">
+      <div className="mt-3 pt-3 border-t border-white/[0.06]">
         <motion.div
           className="h-4 w-20 bg-[var(--bg-ground)]/40 rounded"
           animate={{ opacity: [0.3, 0.6, 0.3] }}
@@ -172,7 +172,7 @@ export default function SpacesLoading() {
   return (
     <div className="min-h-screen bg-black">
       {/* Sticky Header Skeleton */}
-      <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]/50">
+      <header className="sticky top-0 z-30 bg-black/80  border-b border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-6 pt-6 pb-4">
           {/* Title Row */}
           <div className="flex items-start justify-between mb-6">

@@ -5,7 +5,7 @@ export default function ToolDeploymentLoading() {
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       {/* Header */}
       <div className="flex items-start gap-4 mb-8">
-        <Skeleton className="h-14 w-14 rounded-xl" />
+        <Skeleton className="h-14 w-14 rounded-lg" />
         <div className="flex-1">
           <Skeleton className="h-6 w-48 mb-2" />
           <Skeleton className="h-4 w-32" />
@@ -21,7 +21,7 @@ export default function ToolDeploymentLoading() {
 
       {/* Tool preview area */}
       <div
-        className="rounded-xl border p-8 min-h-[400px]"
+        className="rounded-lg p-8 min-h-[400px]"
         style={{
           backgroundColor: 'var(--bg-void, #0A0A09)',
           borderColor: 'rgba(255, 255, 255, 0.06)',

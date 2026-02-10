@@ -66,6 +66,9 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   // Alias routes
   '/browse': '/spaces',
   '/build': '/lab/create',
+  // Dead route consolidation
+  '/home': '/discover',
+  '/feed': '/discover',
   // Settings section shortcuts
   '/settings/privacy': '/settings?section=privacy',
   '/settings/security': '/settings?section=account',
@@ -77,11 +80,11 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/terms': '/legal/terms',
   // IA Consolidation: Convert pages to modals
   '/spaces/browse': '/discover',
-  '/spaces/claim': '/spaces?claim=true',
+  // '/spaces/claim' handled dynamically below to preserve query params
   '/spaces/new': '/spaces?create=true',
   '/spaces/create': '/spaces?create=true',
-  '/people': '/explore?tab=people',
-  '/events': '/explore?tab=events',
+  '/people': '/discover?tab=people',
+  '/events': '/discover?tab=events',
   '/leaders': '/spaces?claim=true',
   // Profile redirects
   '/you': '/me',
@@ -258,9 +261,24 @@ export async function middleware(request: NextRequest) {
 
   // Handle route redirects (from deleted client-side redirect pages)
   // These are PERMANENT (301) per IA_INVARIANTS.md - canonical route changes
+  if (pathname === '/explore') {
+    const target = new URL('/discover', request.url);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target, 301);
+  }
+
   const redirectTarget = ROUTE_REDIRECTS[pathname];
   if (redirectTarget) {
     return NextResponse.redirect(new URL(redirectTarget, request.url), 301);
+  }
+
+  // Handle /spaces/claim -> /spaces?claim=true (preserve handle param)
+  if (pathname === '/spaces/claim') {
+    const handle = request.nextUrl.searchParams.get('handle');
+    const target = handle
+      ? `/spaces?claim=true&handle=${encodeURIComponent(handle)}`
+      : '/spaces?claim=true';
+    return NextResponse.redirect(new URL(target, request.url), 301);
   }
 
   // Handle dynamic route redirects: /spaces/join/:code -> /spaces?join=:code
@@ -289,7 +307,7 @@ export async function middleware(request: NextRequest) {
         if (session?.onboardingCompleted) {
           // Completed user — send them to their intended destination or creator dashboard
           const redirectParam = request.nextUrl.searchParams.get('redirect');
-          const destination = redirectParam || '/lab';
+          const destination = redirectParam || '/discover';
           return NextResponse.redirect(new URL(destination, request.url));
         }
       } else if (refreshCookie) {
@@ -298,7 +316,7 @@ export async function middleware(request: NextRequest) {
         const refreshSession = await verifySessionAtEdge(refreshCookie);
         if (refreshSession?.onboardingCompleted) {
           const redirectParam = request.nextUrl.searchParams.get('redirect');
-          const destination = redirectParam || '/lab';
+          const destination = redirectParam || '/discover';
           return NextResponse.redirect(new URL(destination, request.url));
         }
       }
@@ -353,7 +371,7 @@ export async function middleware(request: NextRequest) {
     if (session.onboardingCompleted && pathname === '/enter') {
       const stateParam = request.nextUrl.searchParams.get('state');
       if (stateParam === 'identity') {
-        return NextResponse.redirect(new URL('/lab', request.url));
+        return NextResponse.redirect(new URL('/discover', request.url));
       }
     }
     return NextResponse.next();
@@ -369,7 +387,7 @@ export async function middleware(request: NextRequest) {
 
   // Legacy /onboarding redirect - PERMANENT (301) canonical route change
   if (pathname === '/onboarding') {
-    return NextResponse.redirect(new URL('/lab', request.url), 301);
+    return NextResponse.redirect(new URL('/discover', request.url), 301);
   }
 
   return NextResponse.next();

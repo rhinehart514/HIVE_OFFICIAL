@@ -133,7 +133,7 @@ function ToolSectionSkeleton() {
       {[1, 2].map((i) => (
         <div
           key={i}
-          className="h-9 rounded-lg bg-white/[0.04] animate-pulse"
+          className="h-9 rounded-lg bg-white/[0.06]"
           style={{ animationDelay: `${i * 100}ms` }}
         />
       ))}
@@ -154,15 +154,15 @@ function EmptyState({
 }) {
   return (
     <div className="py-4 px-2 text-center">
-      <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mx-auto mb-3">
-        <WrenchScrewdriverIcon className="w-5 h-5 text-white/30" />
+      <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-3">
+        <WrenchScrewdriverIcon className="w-5 h-5 text-white/50" />
       </div>
       {isLeader ? (
         <>
           <Text size="sm" className="text-white/50 mb-1">
             Add tools for your space
           </Text>
-          <Text size="xs" className="text-white/30 mb-3">
+          <Text size="xs" className="text-white/50 mb-3">
             Polls, RSVPs, countdowns, and more
           </Text>
           {onAddTool && (
@@ -183,7 +183,7 @@ function EmptyState({
           )}
         </>
       ) : (
-        <Text size="sm" className="text-white/40">
+        <Text size="sm" className="text-white/50">
           No tools yet
         </Text>
       )}
@@ -216,12 +216,12 @@ function SectionHeader({
         <Text
           size="xs"
           weight="medium"
-          className="uppercase tracking-wider text-white/40 group-hover:text-white/60 transition-colors"
+          className="uppercase tracking-wider text-white/50 group-hover:text-white/50 transition-colors"
         >
           Pinned Tools
         </Text>
         {toolCount > 0 && (
-          <span className="px-1.5 py-0.5 text-label-xs font-medium rounded bg-white/[0.06] text-white/40">
+          <span className="px-1.5 py-0.5 text-label-xs font-medium rounded bg-white/[0.06] text-white/50">
             {toolCount}
           </span>
         )}
@@ -230,7 +230,7 @@ function SectionHeader({
         animate={{ rotate: isCollapsed ? -90 : 0 }}
         transition={{ duration: 0.15 }}
       >
-        <ChevronDownIcon className="w-3.5 h-3.5 text-white/30 group-hover:text-white/50 transition-colors" />
+        <ChevronDownIcon className="w-3.5 h-3.5 text-white/50 group-hover:text-white/50 transition-colors" />
       </motion.div>
     </button>
   );
@@ -379,10 +379,10 @@ export function SidebarToolSection({
                 className={cn(
                   'mt-2 w-full px-2 py-2 rounded-lg',
                   'flex items-center gap-2',
-                  'text-white/40 hover:text-white/60',
-                  'hover:bg-white/[0.04]',
+                  'text-white/50 hover:text-white/50',
+                  'hover:bg-white/[0.06]',
                   'transition-all duration-150',
-                  'border border-dashed border-white/[0.06] hover:border-white/[0.12]'
+                  'border border-dashed border-white/[0.06] hover:border-white/[0.06]'
                 )}
                 whileHover={{ opacity: 0.96 }}
                 whileTap={{ scale: 0.98 }}

@@ -54,23 +54,23 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: MOTION.duration.gentle / 1000, ease: MOTION.ease.premium }}
-      className="relative mb-10 p-10 rounded-2xl bg-gradient-to-br from-white/[0.02] to-transparent border border-white/[0.06] overflow-hidden"
+      className="relative mb-10 overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.06] p-10"
     >
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[var(--color-gold)]/8 to-transparent rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-[var(--color-gold)]/8 blur-3xl transform translate-x-1/2 -translate-y-1/2" />
       </div>
 
       <div className="relative z-10">
         {/* Badge */}
         <motion.div
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] mb-6"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.06] mb-6"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.1, ease: MOTION.ease.premium }}
         >
           <SparklesIcon className="w-3.5 h-3.5 text-[var(--color-gold)]/60" />
-          <Text size="xs" className="text-white/60">
+          <Text size="xs" className="text-white/50">
             400+ communities
           </Text>
         </motion.div>
@@ -98,7 +98,7 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
         {/* CTA */}
         <motion.button
           onClick={onScrollToDiscover}
-          className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[var(--color-bg-void,#0A0A09)] font-medium text-sm hover:bg-white/90 transition-all duration-200"
+          className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-[var(--color-bg-void,#0A0A09)] font-medium text-sm hover:bg-white transition-all duration-200"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.7, ease: MOTION.ease.premium }}
@@ -136,7 +136,7 @@ function CompactIdentitySection({
       {/* Section header with "also try" language */}
       <div className="flex items-center gap-2 mb-4">
         <div className="flex-1 h-px bg-white/[0.06]" />
-        <Text size="xs" className="text-white/30 px-2">
+        <Text size="xs" className="text-white/50 px-2">
           or claim your identity
         </Text>
         <div className="flex-1 h-px bg-white/[0.06]" />

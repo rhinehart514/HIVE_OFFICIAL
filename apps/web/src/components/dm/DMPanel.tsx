@@ -162,7 +162,7 @@ export function DMPanel() {
                 >
                   {isLoadingMessages ? (
                     <div className="flex items-center justify-center py-16">
-                      <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--text-tertiary)' }} />
+                      <Loader2 className="w-6 h-6 " style={{ color: 'var(--text-tertiary)' }} />
                     </div>
                   ) : messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -187,7 +187,7 @@ export function DMPanel() {
                             key={message.id}
                             className={cn(
                               'group flex gap-3',
-                              'hover:bg-white/[0.02] -mx-2 px-2 py-1 rounded-lg',
+                              'hover:bg-white/[0.06] -mx-2 px-2 py-1 rounded-lg',
                               'transition-colors'
                             )}
                           >

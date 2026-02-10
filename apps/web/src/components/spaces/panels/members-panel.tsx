@@ -55,7 +55,7 @@ const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
   owner: { label: 'Owner', color: 'text-[var(--life-gold)] bg-[var(--life-gold)]/10' },
   admin: { label: 'Admin', color: 'text-purple-400 bg-purple-500/10' },
   moderator: { label: 'Mod', color: 'text-blue-400 bg-blue-500/10' },
-  member: { label: 'Member', color: 'text-white/50 bg-white/5' },
+  member: { label: 'Member', color: 'text-white/50 bg-white/[0.06]' },
 };
 
 // ============================================================
@@ -88,7 +88,7 @@ function MemberRow({
       onClick={onClick}
       className={cn(
         'w-full flex items-center gap-3 p-2 rounded-lg transition-all',
-        'hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+        'hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
         onClick && 'cursor-pointer'
       )}
     >
@@ -110,11 +110,11 @@ function MemberRow({
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-white truncate">
             {member.name}
-            {isCurrentUser && <span className="text-white/40 ml-1">(you)</span>}
+            {isCurrentUser && <span className="text-white/50 ml-1">(you)</span>}
           </span>
         </div>
         {member.handle && (
-          <span className="text-xs text-white/40">@{member.handle}</span>
+          <span className="text-xs text-white/50">@{member.handle}</span>
         )}
       </div>
 
@@ -130,8 +130,8 @@ function OnlineIndicator({ count }: { count: number }) {
   return (
     <div className="flex items-center gap-2 text-sm">
       <div className="flex items-center gap-1.5">
-        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-        <span className="text-white/70">{count} online</span>
+        <div className="w-2 h-2 rounded-full bg-emerald-400" />
+        <span className="text-white/50">{count} online</span>
       </div>
     </div>
   );
@@ -140,8 +140,8 @@ function OnlineIndicator({ count }: { count: number }) {
 function EmptyState({ isLeader, onInvite }: { isLeader?: boolean; onInvite?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4">
-      <div className="w-14 h-14 rounded-full bg-white/[0.03] flex items-center justify-center mb-4">
-        <UsersIcon className="w-7 h-7 text-white/40" />
+      <div className="w-14 h-14 rounded-full bg-white/[0.06] flex items-center justify-center mb-4">
+        <UsersIcon className="w-7 h-7 text-white/50" />
       </div>
       <h3 className="text-base font-medium text-white mb-1">No members yet</h3>
       <p className="text-sm text-white/50 text-center max-w-[200px] mb-4">
@@ -193,7 +193,7 @@ export function MembersPanel({
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-semibold text-white">Members</h2>
             {displayCount > 0 && (
-              <span className="text-sm text-white/40">
+              <span className="text-sm text-white/50">
                 {displayCount.toLocaleString()}
               </span>
             )}
@@ -223,7 +223,7 @@ export function MembersPanel({
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="h-14 rounded-lg bg-white/[0.02] animate-pulse"
+                className="h-14 rounded-lg bg-white/[0.06]"
               />
             ))}
           </div>
@@ -234,7 +234,7 @@ export function MembersPanel({
             {/* Leaders Section */}
             {leaders.length > 0 && (
               <div className="mb-4">
-                <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-2 px-2">
+                <h3 className="text-xs font-medium text-white/50 uppercase tracking-wide mb-2 px-2">
                   Leadership
                 </h3>
                 {leaders.map((member) => (
@@ -257,7 +257,7 @@ export function MembersPanel({
             {/* Regular Members Section */}
             {regularMembers.length > 0 && (
               <div>
-                <h3 className="text-xs font-medium text-white/40 uppercase tracking-wide mb-2 px-2">
+                <h3 className="text-xs font-medium text-white/50 uppercase tracking-wide mb-2 px-2">
                   Members
                 </h3>
                 {regularMembers.slice(0, 6 - leaders.length).map((member) => (
@@ -285,7 +285,7 @@ export function MembersPanel({
         <div className="px-4 py-3 border-t border-white/[0.06]">
           <button
             onClick={onViewAll}
-            className="w-full flex items-center justify-center gap-2 py-2 text-sm text-white/60 hover:text-white transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2 text-sm text-white/50 hover:text-white transition-colors"
           >
             View all {displayCount.toLocaleString()} members
             <ChevronRightIcon className="w-4 h-4" />

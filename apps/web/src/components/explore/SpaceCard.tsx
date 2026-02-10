@@ -15,7 +15,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Tilt, GlassSurface, Badge } from '@hive/ui/design-system/primitives';
+import { Badge } from '@hive/ui/design-system/primitives';
 import { } from '@hive/tokens';
 import { CATEGORY_LABELS, SpaceCategoryEnum } from '@hive/core';
 import { cn } from '@/lib/utils';
@@ -46,14 +46,14 @@ export function SpaceCard({ space }: SpaceCardProps) {
       whileHover="hover"
       initial="initial"
     >
-      <Tilt intensity={4}>
+      <>
         <Link href={`/s/${space.handle}`}>
           <motion.div>
-            <GlassSurface
-              intensity="subtle"
+            <div
+             
               className={cn(
-                'p-5 rounded-xl transition-colors duration-200',
-                'border border-white/[0.06] hover:border-white/10'
+                'p-5 rounded-lg transition-colors duration-200',
+                'border border-white/[0.06] hover:border-white/[0.06]'
               )}
             >
             <div className="space-y-3">
@@ -63,13 +63,13 @@ export function SpaceCard({ space }: SpaceCardProps) {
                   <h3 className="text-body font-medium text-white truncate">
                     {space.name}
                   </h3>
-                  <p className="text-body-sm text-white/40">@{space.handle}</p>
+                  <p className="text-body-sm text-white/50">@{space.handle}</p>
                 </div>
 
                 {/* Online indicator */}
                 {space.onlineCount > 0 && (
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[var(--life-gold)] animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-[var(--life-gold)]" />
                     <span className="text-label text-white/50">
                       {space.onlineCount}
                     </span>
@@ -86,7 +86,7 @@ export function SpaceCard({ space }: SpaceCardProps) {
 
               {/* Footer */}
               <div className="flex items-center justify-between pt-1">
-                <div className="flex items-center gap-3 text-label text-white/30">
+                <div className="flex items-center gap-3 text-label text-white/50">
                   <span>{space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}</span>
                   {lastActiveText && (
                     <>
@@ -103,10 +103,10 @@ export function SpaceCard({ space }: SpaceCardProps) {
                 )}
               </div>
             </div>
-            </GlassSurface>
+            </div>
           </motion.div>
         </Link>
-      </Tilt>
+      </>
     </motion.div>
   );
 }

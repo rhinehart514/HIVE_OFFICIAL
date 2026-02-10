@@ -151,7 +151,7 @@ export function MessageFeed({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
+        <Loader2 className="w-6 h-6 text-white/50 " />
       </div>
     );
   }
@@ -160,8 +160,8 @@ export function MessageFeed({
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-white/40 text-sm">No messages yet</p>
-          <p className="text-white/20 text-xs mt-1">Be the first to say something</p>
+          <p className="text-white/50 text-sm">No messages yet</p>
+          <p className="text-white/50 text-xs mt-1">Be the first to say something</p>
         </div>
       </div>
     );
@@ -179,7 +179,7 @@ export function MessageFeed({
       {/* Load more spinner */}
       {isLoadingMore && (
         <div className="flex justify-center py-4">
-          <Loader2 className="w-5 h-5 text-white/30 animate-spin" />
+          <Loader2 className="w-5 h-5 text-white/50 " />
         </div>
       )}
 
@@ -187,7 +187,7 @@ export function MessageFeed({
       {hasMore && !isLoadingMore && (
         <button
           onClick={onLoadMore}
-          className="text-xs text-white/40 hover:text-white/60 py-2 transition-colors"
+          className="text-xs text-white/50 hover:text-white/50 py-2 transition-colors"
         >
           Load earlier messages
         </button>
@@ -280,10 +280,10 @@ export function MessageFeed({
               'sticky bottom-4 left-1/2 -translate-x-1/2 z-10',
               'flex items-center gap-1.5',
               'px-3 py-1.5 rounded-full',
-              'bg-white/[0.1] backdrop-blur-md',
-              'border border-white/[0.08]',
-              'text-xs font-medium text-white/70',
-              'hover:bg-white/[0.14] hover:text-white/90',
+              'bg-[var(--bg-surface)]',
+              'border border-white/[0.06]',
+              'text-xs font-medium text-white/50',
+              'hover:bg-white/[0.06] hover:text-white',
               'transition-colors duration-150',
               'mx-auto w-fit'
             )}

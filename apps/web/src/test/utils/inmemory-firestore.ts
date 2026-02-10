@@ -19,6 +19,31 @@ function setNested(obj: any, path: string, value: any) {
   obj[keys[keys.length - 1]] = value;
 }
 
+function normalizeComparable(value: any): any {
+  if (value == null) return value;
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === 'object' && typeof value.toDate === 'function') {
+    const date = value.toDate();
+    return date instanceof Date ? date.getTime() : date;
+  }
+
+  return value;
+}
+
+function compareValues(a: any, b: any): number {
+  const av = normalizeComparable(a);
+  const bv = normalizeComparable(b);
+
+  if (av === bv) return 0;
+  if (av == null && bv != null) return -1;
+  if (av != null && bv == null) return 1;
+  return av > bv ? 1 : -1;
+}
+
 function applyUpdate(target: any, updates: DocData) {
   for (const [k, v] of Object.entries(updates)) {
     if (k.includes('.')) {
@@ -69,9 +94,15 @@ class InMemoryQuery {
     // apply filters
     for (const f of this.filters) {
       if (f.op === '==') {
-        items = items.filter(d => getNested(d.data, f.field) === f.value);
+        items = items.filter(d => compareValues(getNested(d.data, f.field), f.value) === 0);
       } else if (f.op === '>=') {
-        items = items.filter(d => getNested(d.data, f.field) >= f.value);
+        items = items.filter(d => compareValues(getNested(d.data, f.field), f.value) >= 0);
+      } else if (f.op === '>') {
+        items = items.filter(d => compareValues(getNested(d.data, f.field), f.value) > 0);
+      } else if (f.op === '<=') {
+        items = items.filter(d => compareValues(getNested(d.data, f.field), f.value) <= 0);
+      } else if (f.op === '<') {
+        items = items.filter(d => compareValues(getNested(d.data, f.field), f.value) < 0);
       } else if (f.op === 'in') {
         items = items.filter(d => (f.value || []).includes(getNested(d.data, f.field)));
       }
@@ -81,8 +112,7 @@ class InMemoryQuery {
       items = items.sort((a, b) => {
         const av = getNested(a.data, field);
         const bv = getNested(b.data, field);
-        if (av === bv) return 0;
-        return (av > bv ? 1 : -1) * (dir === 'asc' ? 1 : -1);
+        return compareValues(av, bv) * (dir === 'asc' ? 1 : -1);
       });
     }
     if (this._offset) items = items.slice(this._offset);
@@ -119,6 +149,7 @@ export const resetCollections = () => { for (const k of Object.keys(collections)
 
 export const dbAdminMock = {
   collection: (name: string) => getCollection(name),
+  getAll: async (...refs: Array<{ get: () => Promise<any> }>) => Promise.all(refs.map(ref => ref.get())),
   batch: () => {
     return {
       set: (ref: any, data: DocData) => ref.set(data),

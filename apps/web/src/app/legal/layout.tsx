@@ -25,23 +25,23 @@ export default function LegalLayout({
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[var(--color-bg-void)]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[var(--color-bg-void)]/80">
         <div className="mx-auto max-w-3xl px-6">
           <div className="flex h-14 items-center justify-between">
             <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
               <Logo variant="mark" size="sm" color="gold" />
-              <span className="text-body-sm font-medium text-white/40">Legal</span>
+              <span className="text-body-sm font-medium text-white/50">Legal</span>
             </Link>
             <nav className="flex items-center gap-6">
               <Link
                 href="/legal/terms"
-                className="text-body-sm text-white/50 transition-colors hover:text-white/80"
+                className="text-body-sm text-white/50 transition-colors hover:text-white"
               >
                 Terms
               </Link>
               <Link
                 href="/legal/privacy"
-                className="text-body-sm text-white/50 transition-colors hover:text-white/80"
+                className="text-body-sm text-white/50 transition-colors hover:text-white"
               >
                 Privacy
               </Link>
@@ -54,9 +54,9 @@ export default function LegalLayout({
       <main className="relative">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.04] py-8">
+      <footer className="border-t border-white/[0.06] py-8">
         <div className="mx-auto max-w-3xl px-6">
-          <div className="flex items-center justify-between text-label text-white/30">
+          <div className="flex items-center justify-between text-label text-white/50">
             <span>&copy; {new Date().getFullYear()} HIVE</span>
             <Link href="/" className="transition-colors hover:text-white/50">
               Back to HIVE

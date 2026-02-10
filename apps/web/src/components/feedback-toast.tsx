@@ -98,7 +98,7 @@ export function FeedbackToast() {
             transition={{ duration: 0.2 }}
             onClick={() => setIsOpen(true)}
             className="group bg-background-tertiary hover:bg-background-secondary
-                     border border-white/6 rounded-xl p-4
+                    border-white/6 rounded-lg p-4
                      flex items-center gap-3 max-w-xs"
           >
             <div className="flex-shrink-0">
@@ -127,7 +127,7 @@ export function FeedbackToast() {
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
             className="bg-background-primary border border-white/6
-                     rounded-xl overflow-hidden w-80"
+                     rounded-lg overflow-hidden w-80"
           >
             {/* Header */}
             <div className="p-4 border-b border-[var(--hive-border-subtle)] bg-[var(--hive-background-tertiary)]">
@@ -166,7 +166,7 @@ export function FeedbackToast() {
                   className="text-center py-6"
                 >
                   <div className="w-12 h-12 bg-[var(--hive-background-tertiary)] rounded-full
-                                flex items-center justify-center mx-auto mb-4 border border-[var(--hive-status-success)]">
+                                flex items-center justify-center mx-auto mb-4border-[var(--hive-status-success)]">
                     <MessageCircle className="w-6 h-6 text-[var(--hive-status-success)]" />
                   </div>
                   <div className="text-sm font-medium text-[var(--hive-text-primary)] mb-2">
@@ -183,7 +183,7 @@ export function FeedbackToast() {
                   className="text-center py-4"
                 >
                   <div className="w-12 h-12 bg-red-500/10 rounded-full
-                                flex items-center justify-center mx-auto mb-4 border border-red-500/30">
+                                flex items-center justify-center mx-auto mb-4border-red-500/30">
                     <X className="w-6 h-6 text-red-400" />
                   </div>
                   <div className="text-sm font-medium text-[var(--hive-text-primary)] mb-2">
@@ -216,11 +216,11 @@ export function FeedbackToast() {
                       maxLength={500}
                       aria-label="Your feedback"
                       className="w-full px-4 py-3 bg-[var(--hive-background-secondary)] 
-                               border border-[var(--hive-border-subtle)] rounded-xl
+                              border-[var(--hive-border-subtle)] rounded-lg
                                text-sm text-[var(--hive-text-primary)]
                                placeholder:text-[var(--hive-text-muted)]
                                focus:outline-none focus:ring-2 focus:ring-white/50
-                               focus:border-white/30
+                               focus:border-white/50
                                resize-none transition-all duration-200"
                     />
                     <div className="absolute bottom-3 right-3 text-xs text-[var(--hive-text-muted)] bg-[var(--hive-background-primary)] px-2 py-1 rounded">
@@ -244,7 +244,7 @@ export function FeedbackToast() {
                       size="default"
                     >
                       {isSubmitting ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        <Loader2 className="w-4 h-4  mr-2" />
                       ) : (
                         <Send className="w-4 h-4 mr-2" />
                       )}

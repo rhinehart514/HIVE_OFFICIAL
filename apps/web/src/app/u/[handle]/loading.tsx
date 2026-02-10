@@ -12,7 +12,7 @@ export default function ProfileLoading() {
         transition={{ duration: MOTION.duration.fast }}
         className="text-center"
       >
-        <div className="w-12 h-12 rounded-full bg-white/[0.04] animate-pulse mx-auto mb-4" />
+        <div className="w-12 h-12 rounded-full bg-white/[0.06]  mx-auto mb-4" />
         <p className="text-white/30 text-body">Loading profile...</p>
       </motion.div>
     </div>

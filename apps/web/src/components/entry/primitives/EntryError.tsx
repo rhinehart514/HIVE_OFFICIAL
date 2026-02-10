@@ -343,11 +343,11 @@ export function EntryError({
                 disabled={isRetrying}
                 className={cn(
                   'inline-flex items-center gap-1.5 text-body-sm',
-                  'text-white/60 hover:text-white transition-colors',
+                  'text-white/50 hover:text-white transition-colors',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >
-                <RefreshCw className={cn('w-3 h-3', isRetrying && 'animate-spin')} />
+                <RefreshCw className="w-3 h-3" />
                 <span>{isRetrying ? 'Retrying...' : 'Try again'}</span>
               </button>
             )}
@@ -360,11 +360,11 @@ export function EntryError({
                 disabled={isRetrying}
                 className={cn(
                   'inline-flex items-center gap-1.5 text-body-sm',
-                  'text-white/60 hover:text-white transition-colors',
+                  'text-white/50 hover:text-white transition-colors',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >
-                <RefreshCw className={cn('w-3 h-3', isRetrying && 'animate-spin')} />
+                <RefreshCw className="w-3 h-3" />
                 <span>Request new code</span>
               </button>
             )}

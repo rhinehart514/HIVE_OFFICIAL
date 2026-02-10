@@ -36,7 +36,7 @@ export default function SetupBuilderLoading() {
         <div className="flex-1 p-8">
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
-              <Skeleton className="h-16 w-16 mx-auto rounded-xl mb-4" />
+              <Skeleton className="h-16 w-16 mx-auto rounded-lg mb-4" />
               <Skeleton className="h-5 w-48 mx-auto mb-2" />
               <Skeleton className="h-4 w-64 mx-auto" />
             </div>

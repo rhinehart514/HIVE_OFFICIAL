@@ -141,6 +141,8 @@ export type {
   PollConfig,
   CountdownConfig,
   RsvpConfig,
+  SignupConfig,
+  EventConfig,
   CustomConfig,
   ComponentConfig,
   SharedState,
@@ -943,6 +945,19 @@ export * from "./application/shared/temporary-types";
 
 // Schemas
 export * from "./schemas/admin/dashboard";
+
+// Leadership Domain (Badges & Verification)
+export {
+  BADGES,
+  evaluateBadges,
+  getEarnedBadges,
+  getNextBadge,
+} from "./domain/leadership/badges";
+export type {
+  LeadershipBadge,
+  BadgeEvaluation,
+  LeaderMetrics,
+} from "./domain/leadership/badges";
 
 // HiveLab Intelligence Module (Rules-Based, Free)
 export * from "./hivelab/intelligence";

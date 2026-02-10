@@ -55,26 +55,23 @@ const IDENTITY_CONFIG = {
   major: {
     label: 'Major',
     emptyText: 'Choose your major',
-    gradient: 'from-blue-500/10 via-blue-500/5 to-transparent',
     accent: 'text-blue-400',
     ring: 'ring-blue-500/30',
-    browseUrl: '/spaces/browse?category=major',
+    browseUrl: '/discover?category=major',
   },
   home: {
     label: 'Home',
     emptyText: 'Find your residence',
-    gradient: 'from-emerald-500/10 via-emerald-500/5 to-transparent',
     accent: 'text-emerald-400',
     ring: 'ring-emerald-500/30',
-    browseUrl: '/spaces/browse?category=residential',
+    browseUrl: '/discover?category=residential',
   },
   greek: {
     label: 'Greek',
     emptyText: 'Join your letters',
-    gradient: 'from-rose-500/10 via-rose-500/5 to-transparent',
     accent: 'text-rose-400',
     ring: 'ring-rose-500/30',
-    browseUrl: '/spaces/browse?category=greek',
+    browseUrl: '/discover?category=greek',
   },
 };
 
@@ -127,16 +124,14 @@ function IdentityCard({ type, claim, index, isOnboarding = false }: IdentityCard
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'group relative flex-1 rounded-2xl p-5 text-left overflow-hidden',
+        'group relative flex-1 rounded-lg p-5 text-left overflow-hidden',
         'transition-all duration-300',
-        'bg-gradient-to-br',
-        config.gradient,
-        'hover:scale-[1.01]'
+        'bg-white/[0.06] border border-white/[0.06]'
       )}
       style={{
         background: showOnboardingHint
-          ? 'linear-gradient(180deg, rgba(255,215,0,0.04) 0%, rgba(255,215,0,0.01) 100%)'
-          : 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+          ? 'rgba(255,215,0,0.06)'
+          : 'rgba(255,255,255,0.06)',
         boxShadow: showOnboardingHint
           ? 'inset 0 1px 0 rgba(255,215,0,0.08), 0 0 0 1px rgba(255,215,0,0.08)'
           : 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
@@ -149,15 +144,6 @@ function IdentityCard({ type, claim, index, isOnboarding = false }: IdentityCard
         ease: MOTION.ease.premium,
       }}
     >
-      {/* Gradient overlay */}
-      <div
-        className={cn(
-          'absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-500',
-          config.gradient,
-          isHovered && 'opacity-100'
-        )}
-      />
-
       {/* Energy dots - top right corner */}
       {claim && energyDotCount > 0 && (
         <div className="absolute top-4 right-4 z-20">
@@ -183,7 +169,7 @@ function IdentityCard({ type, claim, index, isOnboarding = false }: IdentityCard
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-body font-medium text-white/90 truncate">
+                <p className="text-body font-medium text-white truncate">
                   {claim.spaceName}
                 </p>
               </div>
@@ -191,7 +177,7 @@ function IdentityCard({ type, claim, index, isOnboarding = false }: IdentityCard
           ) : (
             <p className={cn(
               'text-body italic',
-              showOnboardingHint ? 'text-[#FFD700]/50' : 'text-white/40'
+              showOnboardingHint ? 'text-[#FFD700]/50' : 'text-white/50'
             )}>
               {config.emptyText}
             </p>
@@ -201,13 +187,13 @@ function IdentityCard({ type, claim, index, isOnboarding = false }: IdentityCard
         {/* Bottom: Member count + presence */}
         {claim && (
           <div className="flex items-center gap-3 mt-3">
-            <span className="text-label text-white/30">
+            <span className="text-label text-white/50">
               {claim.memberCount} {claim.memberCount === 1 ? 'member' : 'members'}
             </span>
             {/* Show "here now" if online count > 0 */}
             {(claim.onlineCount ?? 0) > 0 && (
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)] animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)]" />
                 <span className="text-label text-[var(--color-gold)]/60">
                   {claim.onlineCount} here
                 </span>
@@ -223,7 +209,7 @@ function IdentityCard({ type, claim, index, isOnboarding = false }: IdentityCard
           animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : -5 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronRight size={18} className="text-white/40" />
+          <ChevronRight size={18} className="text-white/50" />
         </motion.div>
       </div>
     </motion.button>

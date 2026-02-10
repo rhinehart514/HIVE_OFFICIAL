@@ -16,7 +16,7 @@
 import { Entity } from '../../shared/base/Entity.base';
 import { Result } from '../../shared/base/Result';
 
-export type InlineComponentType = 'poll' | 'countdown' | 'rsvp' | 'custom';
+export type InlineComponentType = 'poll' | 'countdown' | 'rsvp' | 'signup' | 'event' | 'custom';
 
 export interface PollConfig {
   question: string;
@@ -43,13 +43,28 @@ export interface RsvpConfig {
   allowMaybe: boolean;
 }
 
+export interface SignupConfig {
+  title: string;
+  slots: string[];
+  limitPerSlot?: number;
+  deadline?: Date;
+}
+
+export interface EventConfig {
+  title: string;
+  date: Date;
+  location?: string;
+  description?: string;
+  eventId?: string;
+}
+
 export interface CustomConfig {
   elementType: string;
   toolId: string;
   settings: Record<string, unknown>;
 }
 
-export type ComponentConfig = PollConfig | CountdownConfig | RsvpConfig | CustomConfig;
+export type ComponentConfig = PollConfig | CountdownConfig | RsvpConfig | SignupConfig | EventConfig | CustomConfig;
 
 export interface SharedState {
   /** For polls: count per option */
@@ -60,6 +75,10 @@ export interface SharedState {
     no: number;
     maybe: number;
   };
+  /** For signups: count per slot */
+  slotCounts?: Record<string, number>;
+  /** For signups: names per slot */
+  slotMembers?: Record<string, string[]>;
   /** Total unique participants */
   totalResponses: number;
   /** For countdowns: time remaining (computed on read) */
@@ -78,6 +97,9 @@ export interface ParticipantRecord {
   selectedOptions?: string[];
   /** For RSVP */
   response?: 'yes' | 'no' | 'maybe';
+  /** For signups */
+  selectedSlot?: string;
+  displayName?: string;
   /** Custom data */
   data?: Record<string, unknown>;
   participatedAt: Date;
@@ -353,6 +375,125 @@ export class InlineComponent extends Entity<InlineComponentProps> {
         componentType: 'rsvp',
         elementType: 'rsvp-button',
         toolId: 'quick-rsvp',
+        config,
+        sharedState: {
+          rsvpCounts: { yes: 0, no: 0, maybe: 0 },
+          totalResponses: 0,
+        },
+        isActive: true,
+        createdBy: props.createdBy,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        version: 1,
+      })
+    );
+  }
+
+  /**
+   * Create a signup (slot-based) component
+   */
+  public static createSignup(props: {
+    spaceId: string;
+    boardId: string;
+    messageId: string;
+    createdBy: string;
+    title: string;
+    slots: string[];
+    limitPerSlot?: number;
+    deadline?: Date;
+  }): Result<InlineComponent> {
+    if (!props.title || props.title.trim().length === 0) {
+      return Result.fail<InlineComponent>('Signup title is required');
+    }
+
+    if (!props.slots || props.slots.length < 1) {
+      return Result.fail<InlineComponent>('At least one slot is required');
+    }
+
+    if (props.slots.length > 20) {
+      return Result.fail<InlineComponent>('Signup cannot have more than 20 slots');
+    }
+
+    const cleanedSlots = [...new Set(props.slots.map(s => s.trim()).filter(s => s.length > 0))];
+    if (cleanedSlots.length < 1) {
+      return Result.fail<InlineComponent>('At least one unique slot is required');
+    }
+
+    const config: SignupConfig = {
+      title: props.title.trim(),
+      slots: cleanedSlots,
+      limitPerSlot: props.limitPerSlot,
+      deadline: props.deadline,
+    };
+
+    const slotCounts: Record<string, number> = {};
+    const slotMembers: Record<string, string[]> = {};
+    cleanedSlots.forEach(slot => {
+      slotCounts[slot] = 0;
+      slotMembers[slot] = [];
+    });
+
+    return Result.ok<InlineComponent>(
+      new InlineComponent({
+        spaceId: props.spaceId,
+        boardId: props.boardId,
+        messageId: props.messageId,
+        componentType: 'signup',
+        elementType: 'signup-sheet',
+        toolId: 'quick-signup',
+        config,
+        sharedState: {
+          slotCounts,
+          slotMembers,
+          totalResponses: 0,
+        },
+        isActive: true,
+        createdBy: props.createdBy,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        version: 1,
+      })
+    );
+  }
+
+  /**
+   * Create an event component (inline event card)
+   */
+  public static createEvent(props: {
+    spaceId: string;
+    boardId: string;
+    messageId: string;
+    createdBy: string;
+    title: string;
+    date: Date;
+    location?: string;
+    description?: string;
+    eventId?: string;
+  }): Result<InlineComponent> {
+    if (!props.title || props.title.trim().length === 0) {
+      return Result.fail<InlineComponent>('Event title is required');
+    }
+
+    if (!props.date) {
+      return Result.fail<InlineComponent>('Event date is required');
+    }
+
+    const config: EventConfig = {
+      title: props.title.trim(),
+      date: props.date,
+      location: props.location,
+      description: props.description,
+      eventId: props.eventId,
+    };
+
+    return Result.ok<InlineComponent>(
+      new InlineComponent({
+        spaceId: props.spaceId,
+        boardId: props.boardId,
+        messageId: props.messageId,
+        componentType: 'event',
+        elementType: 'event-card',
+        toolId: 'quick-event',
         config,
         sharedState: {
           rsvpCounts: { yes: 0, no: 0, maybe: 0 },
@@ -708,6 +849,12 @@ export class InlineComponent extends Entity<InlineComponentProps> {
     if ('closesAt' in config && config.closesAt instanceof Date) {
       serialized.closesAt = config.closesAt.toISOString();
     }
+    if ('deadline' in config && config.deadline instanceof Date) {
+      serialized.deadline = config.deadline.toISOString();
+    }
+    if ('date' in config && config.date instanceof Date) {
+      serialized.date = config.date.toISOString();
+    }
 
     return serialized;
   }
@@ -778,6 +925,23 @@ export class InlineComponent extends Entity<InlineComponentProps> {
           eventDate: new Date(data.eventDate as string),
           maxCapacity: data.maxCapacity as number | undefined,
           allowMaybe: Boolean(data.allowMaybe ?? true),
+        };
+
+      case 'signup':
+        return {
+          title: data.title as string,
+          slots: data.slots as string[],
+          limitPerSlot: data.limitPerSlot as number | undefined,
+          deadline: data.deadline ? new Date(data.deadline as string) : undefined,
+        };
+
+      case 'event':
+        return {
+          title: data.title as string,
+          date: new Date(data.date as string),
+          location: data.location as string | undefined,
+          description: data.description as string | undefined,
+          eventId: data.eventId as string | undefined,
         };
 
       case 'custom':

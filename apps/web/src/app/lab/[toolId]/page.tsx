@@ -499,7 +499,7 @@ export default function ToolStudioPage({ params }: Props) {
           {/* Canvas */}
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-4">
-              <Skeleton className="h-16 w-16 mx-auto rounded-2xl" />
+              <Skeleton className="h-16 w-16 mx-auto rounded-lg" />
               <Skeleton className="h-6 w-32 mx-auto" />
               <Skeleton className="h-4 w-48 mx-auto" />
             </div>
@@ -513,8 +513,8 @@ export default function ToolStudioPage({ params }: Props) {
   if (toolError && !isNewTool) {
     return (
       <div className="h-screen bg-[var(--hivelab-bg)] flex items-center justify-center">
-        <div className="bg-[var(--hivelab-panel)] rounded-2xl p-8 shadow-lg max-w-md text-center border border-[var(--hivelab-border)]">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-500/10 flex items-center justify-center">
+        <div className="bg-[var(--hivelab-panel)] rounded-lg p-8 max-w-md text-centerborder-[var(--hivelab-border)]">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-red-500/10 flex items-center justify-center">
             <svg
               className="w-8 h-8 text-red-400"
               fill="none"
@@ -551,7 +551,7 @@ export default function ToolStudioPage({ params }: Props) {
     return (
       <div className="h-screen bg-[var(--hivelab-bg)] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[var(--life-gold)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-8 h-8 border-2 border-[var(--life-gold)] border-t-transparent rounded-full  mx-auto mb-4" />
           <p className="text-[var(--hivelab-text-secondary)]">Preparing canvas...</p>
         </div>
       </div>
@@ -650,13 +650,13 @@ export default function ToolStudioPage({ params }: Props) {
 
               {/* Runtime status indicator */}
               <div className="mb-4 flex items-center gap-2 text-xs text-[var(--hivelab-text-tertiary)]">
-                <div className="w-2 h-2 rounded-full bg-[var(--life-gold)] animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-[var(--life-gold)]" />
                 <span>Live Preview</span>
                 {runtime.isSaving && <span className="text-[var(--life-gold)]">Saving...</span>}
               </div>
 
               {/* Tool Canvas with runtime */}
-              <div className="bg-[var(--hivelab-panel)] rounded-2xl p-6 border border-[var(--hivelab-border)]">
+              <div className="bg-[var(--hivelab-panel)] rounded-lg p-6border-[var(--hivelab-border)]">
                 {composition.elements.length > 0 ? (
                   <ToolCanvas
                     elements={composition.elements.map(el => ({
@@ -686,7 +686,7 @@ export default function ToolStudioPage({ params }: Props) {
                 ) : (
                   /* Empty state */
                   <div className="text-center py-16">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--life-gold)]/10 flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-[var(--life-gold)]/10 flex items-center justify-center">
                       <svg className="w-8 h-8 text-[var(--life-gold)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>

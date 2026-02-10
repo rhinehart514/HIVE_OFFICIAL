@@ -85,23 +85,23 @@ function sortSpaces(spaces: YourSpace[]): YourSpace[] {
 function EmptyState({ onBrowse }: { onBrowse?: () => void }) {
   return (
     <div className="py-12 text-center">
-      <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center">
-        <HomeIcon className="w-6 h-6 text-white/40" />
+      <div className="w-14 h-14 mx-auto mb-4 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center">
+        <HomeIcon className="w-6 h-6 text-white/50" />
       </div>
-      <Text weight="medium" className="text-white/70 mb-2">
+      <Text weight="medium" className="text-white/50 mb-2">
         Ready to explore?
       </Text>
-      <Text size="sm" className="text-white/40 mb-4 max-w-xs mx-auto">
+      <Text size="sm" className="text-white/50 mb-4 max-w-xs mx-auto">
         Browse spaces below to find your communities and connect with your campus.
       </Text>
       {onBrowse && (
         <button
           onClick={onBrowse}
           className={cn(
-            'px-5 py-2.5 rounded-xl',
+            'px-5 py-2.5 rounded-lg',
             'text-sm font-medium',
             'bg-white text-[var(--color-bg-void,#0A0A09)]',
-            'hover:bg-white/90',
+            'hover:bg-white',
             'transition-colors duration-150',
             'shadow-sm'
           )}
@@ -135,12 +135,12 @@ export function YourSpacesList({
           </div>
           <Skeleton className="h-4 w-20" />
         </div>
-        <div className="rounded-xl border border-white/[0.06] overflow-hidden">
+        <div className="rounded-lg border border-white/[0.06] overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
               className={cn(
-                i !== 4 && 'border-b border-white/[0.04]'
+                i !== 4 && 'border-b border-white/[0.06]'
               )}
             >
               <SpaceListRowSkeleton />
@@ -156,7 +156,7 @@ export function YourSpacesList({
       <section className="mb-8">
         <Text
           weight="medium"
-          className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
+          className="text-label-sm uppercase tracking-wider text-white/50 mb-4"
         >
           Your Spaces
         </Text>
@@ -172,11 +172,11 @@ export function YourSpacesList({
         <div className="flex items-center gap-2">
           <Text
             weight="medium"
-            className="text-label-sm uppercase tracking-wider text-white/40"
+            className="text-label-sm uppercase tracking-wider text-white/50"
           >
             Your Spaces
           </Text>
-          <span className="px-1.5 py-0.5 text-label-xs font-medium text-white/30 bg-white/[0.04] rounded">
+          <span className="px-1.5 py-0.5 text-label-xs font-medium text-white/50 bg-white/[0.06] rounded">
             {spaces.length}
           </span>
         </div>
@@ -184,7 +184,7 @@ export function YourSpacesList({
         {onBrowseAll && (
           <button
             onClick={onBrowseAll}
-            className="flex items-center gap-1 text-xs text-white/40 hover:text-white/60 transition-colors"
+            className="flex items-center gap-1 text-xs text-white/50 hover:text-white/50 transition-colors"
           >
             Browse All
             <ChevronRightIcon className="w-3.5 h-3.5" />
@@ -197,7 +197,7 @@ export function YourSpacesList({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="rounded-xl border border-white/[0.06] overflow-hidden"
+        className="rounded-lg border border-white/[0.06] overflow-hidden"
       >
         {sortedSpaces.map((space, index) => (
           <motion.div
@@ -207,7 +207,7 @@ export function YourSpacesList({
             transition={{ delay: index * 0.03, duration: 0.2 }}
             className={cn(
               'relative',
-              index !== sortedSpaces.length - 1 && 'border-b border-white/[0.04]'
+              index !== sortedSpaces.length - 1 && 'border-b border-white/[0.06]'
             )}
           >
             <SpaceListRow

@@ -112,7 +112,7 @@ export function GhostModeModal({
               <ul className="space-y-1">
                 {selectedLevelConfig.hides.map((item) => (
                   <li key={item} className="text-sm text-[var(--text-tertiary)] flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(-- text-muted)]" />
                     {formatHiddenItem(item)}
                   </li>
                 ))}
@@ -134,7 +134,7 @@ export function GhostModeModal({
                       'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
                       selectedDuration === duration.value
-                        ? 'bg-[var(--text-primary)] text-[var(--text-inverse)]'
+                        ? 'bg-[var(-- text-primary)] text-[var(--text-inverse)]'
                         : 'bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:bg-[var(--bg-emphasis)] hover:text-[var(--text-primary)]'
                     )}
                   >
@@ -165,7 +165,7 @@ export function GhostModeModal({
               className="flex-1 border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-emphasis)]"
             >
               {isSubmitting ? (
-                <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                <ArrowPathIcon className="h-4 w-4 " />
               ) : (
                 'Turn Off Ghost Mode'
               )}
@@ -177,7 +177,7 @@ export function GhostModeModal({
               className="flex-1 bg-[var(--life-gold)] text-[var(--text-inverse)] hover:bg-[var(--life-gold-hover)] disabled:opacity-50"
             >
               {isSubmitting ? (
-                <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                <ArrowPathIcon className="h-4 w-4 " />
               ) : (
                 'Activate Ghost Mode'
               )}
@@ -203,7 +203,7 @@ function LevelOption({ config, isSelected, onSelect }: LevelOptionProps) {
       type="button"
       onClick={onSelect}
       className={cn(
-        'w-full flex items-start gap-4 p-4 rounded-lg border transition-all duration-200 text-left',
+        'w-full flex items-start gap-4 p-4 rounded-lg transition-all duration-200 text-left',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
         isSelected
           ? 'border-[var(--border-emphasis)] bg-[var(--bg-muted)]'

@@ -160,7 +160,7 @@ function RuleEditor({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="rounded-lg border overflow-hidden"
+      className="rounded-lg overflow-hidden"
       style={{
         backgroundColor: COLORS.surface,
         borderColor: rule.enabled ? COLORS.border : 'rgba(255, 255, 255, 0.04)',
@@ -204,7 +204,7 @@ function RuleEditor({
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1 hover:bg-white/5 rounded"
+          className="p-1 hover:bg-white/[0.06] rounded"
         >
           <Trash2 className="h-4 w-4" style={{ color: COLORS.textTertiary }} />
         </button>
@@ -231,7 +231,7 @@ function RuleEditor({
                   type="text"
                   value={rule.description || ''}
                   onChange={(e) => onChange({ ...rule, description: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                   style={{ borderColor: COLORS.border, color: COLORS.text }}
                   placeholder="Optional description"
                 />
@@ -271,7 +271,7 @@ function RuleEditor({
                     <select
                       value={rule.trigger.sourceSlotId || ''}
                       onChange={(e) => updateTrigger({ sourceSlotId: e.target.value })}
-                      className="flex-1 px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                      className="flex-1 px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                       style={{ borderColor: COLORS.border, color: COLORS.text }}
                     >
                       <option value="">Select tool</option>
@@ -285,7 +285,7 @@ function RuleEditor({
                       type="text"
                       value={rule.trigger.eventType || ''}
                       onChange={(e) => updateTrigger({ eventType: e.target.value })}
-                      className="flex-1 px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                      className="flex-1 px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                       style={{ borderColor: COLORS.border, color: COLORS.text }}
                       placeholder="Event type (e.g., complete)"
                     />
@@ -297,7 +297,7 @@ function RuleEditor({
                     type="text"
                     value={rule.trigger.buttonLabel || ''}
                     onChange={(e) => updateTrigger({ buttonLabel: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                     style={{ borderColor: COLORS.border, color: COLORS.text }}
                     placeholder="Button label"
                   />
@@ -309,7 +309,7 @@ function RuleEditor({
                       type="number"
                       value={rule.trigger.offsetMinutes || 0}
                       onChange={(e) => updateTrigger({ offsetMinutes: parseInt(e.target.value) })}
-                      className="w-24 px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                      className="w-24 px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                       style={{ borderColor: COLORS.border, color: COLORS.text }}
                     />
                     <span className="text-sm" style={{ color: COLORS.textSecondary }}>
@@ -319,7 +319,7 @@ function RuleEditor({
                       type="text"
                       value={rule.trigger.referenceField || ''}
                       onChange={(e) => updateTrigger({ referenceField: e.target.value })}
-                      className="flex-1 px-3 py-2 rounded-lg bg-white/[0.03] border text-sm outline-none"
+                      className="flex-1 px-3 py-2 rounded-lg bg-white/[0.06] text-sm outline-none"
                       style={{ borderColor: COLORS.border, color: COLORS.text }}
                       placeholder="Reference field (e.g., eventDate)"
                     />
@@ -335,7 +335,7 @@ function RuleEditor({
                   </label>
                   <button
                     onClick={addAction}
-                    className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-white/5"
+                    className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:bg-white/[0.06]"
                     style={{ color: COLORS.gold }}
                   >
                     <Plus className="h-3 w-3" />
@@ -353,7 +353,7 @@ function RuleEditor({
                       <select
                         value={action.type}
                         onChange={(e) => updateAction(actionIndex, { type: e.target.value })}
-                        className="px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                        className="px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none"
                         style={{ borderColor: COLORS.border, color: COLORS.text }}
                       >
                         {ACTION_TYPES.map((type) => (
@@ -369,7 +369,7 @@ function RuleEditor({
                           <select
                             value={action.targetSlotId || ''}
                             onChange={(e) => updateAction(actionIndex, { targetSlotId: e.target.value })}
-                            className="flex-1 px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                            className="flex-1 px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none"
                             style={{ borderColor: COLORS.border, color: COLORS.text }}
                           >
                             <option value="">Select tool</option>
@@ -401,7 +401,7 @@ function RuleEditor({
                             type="text"
                             value={action.title || ''}
                             onChange={(e) => updateAction(actionIndex, { title: e.target.value })}
-                            className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                            className="w-full px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none"
                             style={{ borderColor: COLORS.border, color: COLORS.text }}
                             placeholder="Notification title"
                           />
@@ -409,7 +409,7 @@ function RuleEditor({
                             type="text"
                             value={action.body || ''}
                             onChange={(e) => updateAction(actionIndex, { body: e.target.value })}
-                            className="w-full px-2 py-1.5 rounded bg-white/[0.03] border text-xs outline-none"
+                            className="w-full px-2 py-1.5 rounded bg-white/[0.06] text-xs outline-none"
                             style={{ borderColor: COLORS.border, color: COLORS.text }}
                             placeholder="Notification body"
                           />
@@ -418,7 +418,7 @@ function RuleEditor({
 
                       <button
                         onClick={() => removeAction(actionIndex)}
-                        className="p-1 hover:bg-white/5 rounded"
+                        className="p-1 hover:bg-white/[0.06] rounded"
                       >
                         <Trash2 className="h-3.5 w-3.5" style={{ color: COLORS.textTertiary }} />
                       </button>
@@ -576,7 +576,7 @@ export default function EditSetupPage() {
           <div className="flex items-center gap-4">
             <Link
               href={`/lab/setups/${setupId}`}
-              className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               <ArrowLeft className="h-5 w-5" style={{ color: COLORS.textSecondary }} />
             </Link>
@@ -646,7 +646,7 @@ export default function EditSetupPage() {
         {/* Add rule */}
         <button
           onClick={addRule}
-          className="w-full mt-4 p-4 rounded-lg border-dashed flex items-center justify-center gap-2 transition-colors"
+          className="w-full mt-4 p-4 rounded-lg border border-dashed flex items-center justify-center gap-2 transition-colors"
           style={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = COLORS.gold;

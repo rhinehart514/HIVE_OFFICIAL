@@ -59,7 +59,7 @@ function BeforeAfterSplit() {
   return (
     <motion.div
       ref={ref}
-      className="relative overflow-hidden rounded-xl border border-white/10"
+      className="relative overflow-hidden rounded-lg border border-white/[0.06]"
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.8, ease: MOTION.ease.premium }}
@@ -67,7 +67,7 @@ function BeforeAfterSplit() {
       <div className="grid grid-cols-2 min-h-[320px]">
         {/* BEFORE side */}
         <motion.div
-          className="relative p-8 bg-red-500/[0.02] border-r border-white/5 cursor-pointer"
+          className="relative p-8 bg-red-500/[0.02] border-r border-white/[0.06] cursor-pointer"
           onMouseEnter={() => setHoveredSide('before')}
           onMouseLeave={() => setHoveredSide(null)}
           animate={{
@@ -81,7 +81,7 @@ function BeforeAfterSplit() {
             {fragmentedTools.map((tool, i) => (
               <motion.div
                 key={tool.name}
-                className="px-3 py-2 rounded-lg bg-black/40 border border-white/10"
+                className="px-3 py-2 rounded-lg bg-black/40 border border-white/[0.06]"
                 initial={{ opacity: 0, scale: 0.8, rotate: Math.random() * 10 - 5 }}
                 animate={isInView ? { opacity: 1, scale: 1, rotate: Math.random() * 6 - 3 } : {}}
                 transition={{ delay: 0.1 * i, duration: 0.5, ease: MOTION.ease.premium }}
@@ -91,7 +91,7 @@ function BeforeAfterSplit() {
             ))}
           </div>
           <motion.p
-            className="absolute bottom-8 left-8 right-8 text-white/30 text-body-sm"
+            className="absolute bottom-8 left-8 right-8 text-white/50 text-body-sm"
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ delay: 0.8, duration: 0.6 }}
@@ -118,23 +118,23 @@ function BeforeAfterSplit() {
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ delay: 0.5, duration: 0.8, ease: MOTION.ease.premium }}
           >
-            <div className="px-6 py-8 rounded-xl bg-black/40 border border-[var(--color-gold)]/20">
+            <div className="px-6 py-8 rounded-lg bg-black/40 border border-[var(--color-gold)]/20">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-[var(--color-gold)]/20 flex items-center justify-center">
                   <Logo variant="mark" size="xs" color="gold" />
                 </div>
-                <span className="text-body text-white/70 font-medium">Your Space</span>
+                <span className="text-body text-white/50 font-medium">Your Space</span>
               </div>
-              <div className="flex gap-2 text-label-sm text-white/30">
-                <span className="px-2 py-1 rounded bg-white/5">Posts</span>
-                <span className="px-2 py-1 rounded bg-white/5">Events</span>
-                <span className="px-2 py-1 rounded bg-white/5">Files</span>
-                <span className="px-2 py-1 rounded bg-white/5">Members</span>
+              <div className="flex gap-2 text-label-sm text-white/50">
+                <span className="px-2 py-1 rounded bg-white/[0.06]">Posts</span>
+                <span className="px-2 py-1 rounded bg-white/[0.06]">Events</span>
+                <span className="px-2 py-1 rounded bg-white/[0.06]">Files</span>
+                <span className="px-2 py-1 rounded bg-white/[0.06]">Members</span>
               </div>
             </div>
           </motion.div>
           <motion.p
-            className="absolute bottom-8 left-8 right-8 text-white/40 text-body-sm"
+            className="absolute bottom-8 left-8 right-8 text-white/50 text-body-sm"
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ delay: 1, duration: 0.6 }}
@@ -158,12 +158,12 @@ function TimeCollapseBar() {
   return (
     <motion.div
       ref={ref}
-      className="bg-black/20 border border-white/5 rounded-lg p-6"
+      className="bg-black/20 border border-white/[0.06] rounded-lg p-6"
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, ease: MOTION.ease.premium }}
     >
-      <p className="text-white/40 text-body-sm mb-6">Time to rebuild momentum each year</p>
+      <p className="text-white/50 text-body-sm mb-6">Time to rebuild momentum each year</p>
 
       {/* Traditional approach */}
       <div className="mb-6">
@@ -171,9 +171,9 @@ function TimeCollapseBar() {
           <span className="text-white/50 text-body-sm">Without HIVE</span>
           <span className="text-red-400/60 text-body-sm font-mono">8-10 weeks</span>
         </div>
-        <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+        <div className="h-3 bg-white/[0.06] rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-red-500/40 to-red-500/20 rounded-full"
+            className="h-full rounded-full bg-red-500/30"
             initial={{ width: 0 }}
             animate={isInView ? { width: '100%' } : {}}
             transition={{ delay: 0.2, duration: 1.2, ease: MOTION.ease.premium }}
@@ -187,9 +187,9 @@ function TimeCollapseBar() {
           <span className="text-white/50 text-body-sm">With HIVE</span>
           <span className="text-[var(--color-gold)]/80 text-body-sm font-mono">Day 1</span>
         </div>
-        <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+        <div className="h-3 bg-white/[0.06] rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-[var(--color-gold)]/60 to-[var(--color-gold)]/30 rounded-full"
+            className="h-full rounded-full bg-[var(--color-gold)]/40"
             initial={{ width: 0 }}
             animate={isInView ? { width: '12%' } : {}}
             transition={{ delay: 0.6, duration: 0.8, ease: MOTION.ease.premium }}
@@ -227,12 +227,12 @@ function NetworkRipple() {
   return (
     <motion.div
       ref={ref}
-      className="relative bg-black/20 border border-white/5 rounded-xl p-8 overflow-hidden"
+      className="relative bg-black/20 border border-white/[0.06] rounded-lg p-8 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : {}}
       transition={{ duration: 0.6 }}
     >
-      <p className="text-white/40 text-body-sm mb-8 text-center">Network effects</p>
+      <p className="text-white/50 text-body-sm mb-8 text-center">Network effects</p>
 
       <div className="relative h-[280px] flex items-center justify-center">
         {/* Ripple rings */}
@@ -277,13 +277,13 @@ function NetworkRipple() {
             transition={{ delay: ring.delay + 0.3, duration: 0.5 }}
           >
             <span className="text-[var(--color-gold)] text-title-sm font-semibold">{ring.value}</span>
-            <p className="text-white/30 text-label-sm">{ring.label}</p>
+            <p className="text-white/50 text-label-sm">{ring.label}</p>
           </motion.div>
         ))}
       </div>
 
       <motion.p
-        className="text-white/30 text-body-sm text-center mt-4"
+        className="text-white/50 text-body-sm text-center mt-4"
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ delay: 1.2, duration: 0.6 }}
@@ -308,22 +308,22 @@ export default function AboutPage() {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-[var(--color-bg-void)] text-white">
-      <NoiseOverlay />
+      
 
       {/* Header with tabs */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6 backdrop-blur-xl bg-[var(--color-bg-void)]/80 border-b border-white/[0.04]">
+      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6 bg-[var(--color-bg-void)]/80 border-b border-white/[0.06]">
         <div className="mx-auto max-w-3xl flex items-center justify-between">
           <Link href="/" className="transition-opacity hover:opacity-70">
             <Logo variant="mark" size="sm" color="gold" />
           </Link>
 
-          <div className="flex items-center gap-2 p-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center gap-2 p-1 rounded-lg bg-white/[0.06] border border-white/[0.06]">
             <button
               onClick={() => setActiveTab('story')}
               className={`px-4 py-2 text-label-sm font-medium uppercase tracking-wider rounded-md transition-all ${
                 activeTab === 'story'
                   ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
-                  : 'text-white/40 hover:text-white/60'
+                  : 'text-white/50 hover:text-white/50'
               }`}
             >
               Our Story
@@ -333,7 +333,7 @@ export default function AboutPage() {
               className={`px-4 py-2 text-label-sm font-medium uppercase tracking-wider rounded-md transition-all ${
                 activeTab === 'app'
                   ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
-                  : 'text-white/40 hover:text-white/60'
+                  : 'text-white/50 hover:text-white/50'
               }`}
             >
               What&apos;s in the App
@@ -342,7 +342,7 @@ export default function AboutPage() {
 
           <Link
             href="/"
-            className="text-body-sm text-white/40 hover:text-white/60 transition-colors"
+            className="text-body-sm text-white/50 hover:text-white/50 transition-colors"
           >
             Back
           </Link>
@@ -375,11 +375,11 @@ export default function AboutPage() {
             >
               <span className="text-white">We stopped waiting</span>
               <br />
-              <span className="text-white/30">for institutions.</span>
+              <span className="text-white/50">for institutions.</span>
             </motion.h1>
 
             <motion.p
-              className="text-title md:text-title-lg leading-relaxed text-white/40 max-w-[500px]"
+              className="text-title md:text-title-lg leading-relaxed text-white/50 max-w-[500px]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.3, ease: MOTION.ease.premium }}
@@ -394,11 +394,11 @@ export default function AboutPage() {
               transition={{ duration: 1, delay: 1, ease: MOTION.ease.premium }}
             >
               <motion.div
-                className="w-px h-8 bg-white/20"
+                className="w-px h-8 bg-white/[0.06]"
                 animate={{ scaleY: [1, 0.5, 1] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               />
-              <span className="text-label-sm uppercase tracking-wider text-white/20">
+              <span className="text-label-sm uppercase tracking-wider text-white/50">
                 Scroll
               </span>
             </motion.div>
@@ -458,7 +458,7 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.07}>
-                    <p className="text-white/60">
+                    <p className="text-white/50">
                       <NarrativeReveal stagger={0.03}>
                         HIVE was built to fix that. Each organization gets a Space: a durable environment that doesn&apos;t vanish when officers graduate.
                       </NarrativeReveal>
@@ -471,7 +471,7 @@ export default function AboutPage() {
             {/* The Belief */}
             <RevealSection className="px-6 py-32">
               <div className="mx-auto max-w-3xl">
-                <AnimatedBorder variant="container" className="rounded-2xl bg-[var(--color-gold)]/[0.02] p-12 md:p-16">
+                <AnimatedBorder variant="container" className="rounded-lg bg-[var(--color-gold)]/[0.02] p-12 md:p-16">
                   <ParallaxText speed={0.1}>
                     <p
                       className="text-heading-sm md:text-heading-lg font-medium leading-[1.2] text-white"
@@ -482,7 +482,7 @@ export default function AboutPage() {
                       The Space is.
                     </p>
                     <p
-                      className="mt-4 text-heading-sm md:text-heading-lg font-medium leading-[1.2] text-white/30"
+                      className="mt-4 text-heading-sm md:text-heading-lg font-medium leading-[1.2] text-white/50"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
                       Legibility, memory, and ownership are.&rdquo;
@@ -548,7 +548,7 @@ export default function AboutPage() {
 
                   <ParallaxText speed={0.06}>
                     <motion.p
-                      className="text-white/60"
+                      className="text-white/50"
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
@@ -580,7 +580,7 @@ export default function AboutPage() {
                 <div className="mx-auto max-w-3xl">
                   <ParallaxText speed={0.05}>
                     <motion.p
-                      className="mb-10 text-label-sm uppercase tracking-[0.2em] text-white/20"
+                      className="mb-10 text-label-sm uppercase tracking-[0.2em] text-white/50"
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
@@ -604,7 +604,7 @@ export default function AboutPage() {
                               rel="noopener noreferrer"
                               className="group flex items-baseline gap-2"
                             >
-                              <span className="text-body text-white/30 group-hover:text-white/50 transition-colors duration-300">
+                              <span className="text-body text-white/50 group-hover:text-white/50 transition-colors duration-300">
                                 {contributor.name}
                               </span>
                               <span className="text-label text-white/15 group-hover:text-white/25 transition-colors duration-300">
@@ -613,7 +613,7 @@ export default function AboutPage() {
                             </a>
                           ) : (
                             <div className="flex items-baseline gap-2">
-                              <span className="text-body text-white/30">{contributor.name}</span>
+                              <span className="text-body text-white/50">{contributor.name}</span>
                               <span className="text-label text-white/15">{contributor.role}</span>
                             </div>
                           )}
@@ -657,13 +657,13 @@ export default function AboutPage() {
 
                 <div className="space-y-8 text-title-sm md:text-title leading-relaxed">
                   <ParallaxText speed={0.1}>
-                    <p className="text-white/60">
+                    <p className="text-white/50">
                       Every org gets a Space. Posts, events, files, membership—one place that outlasts any president.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
+                    <p className="text-white/50">
                       When leadership graduates, the Space stays. All the history, decisions, resources—there for the next cohort. Knowledge compounds instead of resets.
                     </p>
                   </ParallaxText>
@@ -675,21 +675,21 @@ export default function AboutPage() {
 
                   <ParallaxText speed={0.07}>
                     <div className="grid grid-cols-2 gap-4 text-body">
-                      <div className="p-4 rounded-lg bg-black/20 border border-white/5">
+                      <div className="p-4 rounded-lg bg-black/20 border border-white/[0.06]">
                         <p className="text-white/50 font-medium mb-2">Feed & Events</p>
-                        <p className="text-white/30 text-body">Announcements, discussions, calendar. Everything archived and searchable.</p>
+                        <p className="text-white/50 text-body">Announcements, discussions, calendar. Everything archived and searchable.</p>
                       </div>
-                      <div className="p-4 rounded-lg bg-black/20 border border-white/5">
+                      <div className="p-4 rounded-lg bg-black/20 border border-white/[0.06]">
                         <p className="text-white/50 font-medium mb-2">Resources</p>
-                        <p className="text-white/30 text-body">Docs, files, wikis. Version history tracked. Knowledge becomes institutional.</p>
+                        <p className="text-white/50 text-body">Docs, files, wikis. Version history tracked. Knowledge becomes institutional.</p>
                       </div>
-                      <div className="p-4 rounded-lg bg-black/20 border border-white/5">
+                      <div className="p-4 rounded-lg bg-black/20 border border-white/[0.06]">
                         <p className="text-white/50 font-medium mb-2">Members & Roles</p>
-                        <p className="text-white/30 text-body">Directory with granular permissions. Handoffs = role reassignment. Day 1 productivity.</p>
+                        <p className="text-white/50 text-body">Directory with granular permissions. Handoffs = role reassignment. Day 1 productivity.</p>
                       </div>
-                      <div className="p-4 rounded-lg bg-black/20 border border-white/5">
+                      <div className="p-4 rounded-lg bg-black/20 border border-white/[0.06]">
                         <p className="text-white/50 font-medium mb-2">Analytics</p>
-                        <p className="text-white/30 text-body">Engagement, attendance, activity. Data that helps you lead, not just compliance numbers.</p>
+                        <p className="text-white/50 text-body">Engagement, attendance, activity. Data that helps you lead, not just compliance numbers.</p>
                       </div>
                     </div>
                   </ParallaxText>
@@ -707,7 +707,7 @@ export default function AboutPage() {
               <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
                 {/* Large emphasis */}
-                <AnimatedBorder variant="container" className="rounded-2xl bg-gradient-to-br from-[var(--color-gold)]/[0.08] to-[var(--color-gold)]/[0.02] p-12 md:p-16 mb-12">
+                <AnimatedBorder variant="container" className="mb-12 rounded-lg bg-[var(--color-gold)]/[0.06] p-12 md:p-16">
                   <ParallaxText speed={0.15}>
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -724,7 +724,7 @@ export default function AboutPage() {
                       >
                         HiveLab
                       </h2>
-                      <p className="text-title-sm md:text-title-lg text-white/40">
+                      <p className="text-title-sm md:text-title-lg text-white/50">
                         Ship custom tools in hours, not weeks.
                       </p>
                     </motion.div>
@@ -733,13 +733,13 @@ export default function AboutPage() {
 
                 <div className="space-y-8 text-title-sm md:text-title leading-relaxed">
                   <ParallaxText speed={0.1}>
-                    <p className="text-white/60">
+                    <p className="text-white/50">
                       Describe what you need in plain language. The AI scaffolds an application. You customize it. Deploy directly to your Space.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
+                    <p className="text-white/50">
                       You&apos;re not configuring a form builder. You&apos;re authoring software. The tools you create become part of your org&apos;s infrastructure—URLs, permissions, databases, the whole thing.
                     </p>
                   </ParallaxText>
@@ -762,8 +762,8 @@ export default function AboutPage() {
                         >
                           <span className="text-[var(--color-gold)]/40 mt-1">→</span>
                           <div>
-                            <p className="text-white/60 font-medium">{tool.name}</p>
-                            <p className="text-white/30 text-body">{tool.desc}</p>
+                            <p className="text-white/50 font-medium">{tool.name}</p>
+                            <p className="text-white/50 text-body">{tool.desc}</p>
                           </div>
                         </motion.div>
                       ))}
@@ -806,20 +806,20 @@ export default function AboutPage() {
 
                 <div className="space-y-8 text-title-sm md:text-title leading-relaxed">
                   <ParallaxText speed={0.1}>
-                    <p className="text-white/60">
+                    <p className="text-white/50">
                       Your profile isn&apos;t a resume. It&apos;s a verifiable record of actual work. Events you organized. Tools you shipped. Communities you built.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
+                    <p className="text-white/50">
                       When you graduate, you take it with you. Proof of work, not self-reported bullet points. Portable, verifiable, yours.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.08}>
                     <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6">
-                      <p className="text-white/40 text-body mb-4">What your profile tracks</p>
+                      <p className="text-white/50 text-body mb-4">What your profile tracks</p>
                       <div className="grid grid-cols-2 gap-4 text-body">
                         <div className="flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)]/40" />
@@ -842,7 +842,7 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.07}>
-                    <p className="text-white/40">
+                    <p className="text-white/50">
                       The university doesn&apos;t get to decide what you can prove about yourself. You own your trajectory.
                     </p>
                   </ParallaxText>
@@ -866,27 +866,27 @@ export default function AboutPage() {
                     Feed
                   </motion.h2>
                   <p className="text-body-lg text-[var(--color-gold)]/60 mb-10">
-                    Campus pulse <span className="text-white/30">(more coming soon)</span>
+                    Campus pulse <span className="text-white/50">(more coming soon)</span>
                   </p>
                 </ParallaxText>
 
                 <div className="space-y-8 text-title-sm md:text-title leading-relaxed">
                   <ParallaxText speed={0.1}>
-                    <p className="text-white/60">
+                    <p className="text-white/50">
                       See what&apos;s happening across campus. Posts from orgs you follow. Events coming up. Opportunities to join.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
+                    <p className="text-white/50">
                       The feed surfaces signal, not noise. Designed for coordination, not infinite scroll. Filter by org, event type, or date. A utility, not a dopamine slot machine.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.08}>
-                    <div className="bg-black/20 border border-white/5 rounded-lg p-6">
-                      <p className="text-white/30 text-body mb-4">Coming in future updates</p>
-                      <div className="space-y-2 text-body text-white/40">
+                    <div className="bg-black/20 border border-white/[0.06] rounded-lg p-6">
+                      <p className="text-white/50 text-body mb-4">Coming in future updates</p>
+                      <div className="space-y-2 text-body text-white/50">
                         <p>→ Ritualized coordination patterns (weekly check-ins, semester handoffs)</p>
                         <p>→ Cross-campus discovery</p>
                         <p>→ Smart recommendations based on interests</p>
@@ -911,7 +911,7 @@ export default function AboutPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, ease: MOTION.ease.premium }}
               >
-                <p className="text-white/40 text-body-lg mb-8 max-w-[600px] mx-auto">
+                <p className="text-white/50 text-body-lg mb-8 max-w-[600px] mx-auto">
                   Spaces are being claimed. Tools are being built. What happens next is up to the students who show up.
                 </p>
               </motion.div>
@@ -929,7 +929,7 @@ export default function AboutPage() {
                 >
                   <span className="text-white">The builders inherit</span>
                   <br />
-                  <span className="text-white/30">what comes next.</span>
+                  <span className="text-white/50">what comes next.</span>
                 </motion.p>
               </ParallaxText>
 
@@ -948,14 +948,14 @@ export default function AboutPage() {
       </main>
 
       {/* Footer */}
-      <footer className="px-6 py-12 border-t border-white/[0.04]">
-        <div className="mx-auto max-w-3xl flex items-center justify-between text-label text-white/20">
+      <footer className="px-6 py-12 border-t border-white/[0.06]">
+        <div className="mx-auto max-w-3xl flex items-center justify-between text-label text-white/50">
           <span>&copy; {new Date().getFullYear()} HIVE</span>
           <div className="flex gap-6">
-            <Link href="/legal/terms" className="hover:text-white/40 transition-colors">
+            <Link href="/legal/terms" className="hover:text-white/50 transition-colors">
               Terms
             </Link>
-            <Link href="/legal/privacy" className="hover:text-white/40 transition-colors">
+            <Link href="/legal/privacy" className="hover:text-white/50 transition-colors">
               Privacy
             </Link>
           </div>

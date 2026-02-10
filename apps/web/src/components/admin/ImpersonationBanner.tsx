@@ -25,7 +25,7 @@ export function ImpersonationBanner() {
   };
 
   return (
-    <div className="sticky top-0 z-40 h-10 bg-red-500/90 backdrop-blur-sm flex items-center justify-center gap-3 px-4 text-white text-sm font-medium">
+    <div className="sticky top-0 z-40 h-10 bg-red-500/90 flex items-center justify-center gap-3 px-4 text-white text-sm font-medium">
       <Eye size={14} />
       <span>
         Viewing as {impersonation.profile.displayName || 'Unknown'}
@@ -34,7 +34,7 @@ export function ImpersonationBanner() {
       </span>
       <button
         onClick={handleEnd}
-        className="ml-2 px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded text-xs font-semibold transition-colors flex items-center gap-1"
+        className="ml-2 px-2 py-0.5 bg-white/[0.06] hover:bg-white/50 rounded text-xs font-semibold transition-colors flex items-center gap-1"
       >
         <X size={12} />
         Exit

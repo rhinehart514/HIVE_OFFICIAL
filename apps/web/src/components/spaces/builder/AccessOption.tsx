@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { GlassSurface } from '@hive/ui/design-system/primitives';
+import {  } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import { Globe, Hand, Lock, type LucideIcon } from 'lucide-react';
 
@@ -38,23 +38,23 @@ export function AccessOption({ option, selected, onSelect }: AccessOptionProps) 
       className="w-full text-left"
       whileTap={{ scale: 0.99 }}
     >
-      <GlassSurface
-        intensity="subtle"
+      <div
+       
         className={cn(
-          'p-4 rounded-xl transition-all duration-200',
+          'p-4 rounded-lg transition-all duration-200',
           selected
             ? 'border-2 border-[var(--life-gold)]/40 bg-[var(--life-gold)]/5'
-            : 'border border-white/[0.06] hover:border-white/10 hover:bg-white/[0.02]'
+            : 'border border-white/[0.06] hover:border-white/[0.06] hover:bg-white/[0.06]'
         )}
       >
         <div className="flex items-center gap-4">
           {/* Radio Circle */}
           <div
             className={cn(
-              'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors',
+              'w-5 h-5 rounded-full border border-2 flex items-center justify-center transition-colors',
               selected
                 ? 'border-[var(--life-gold)] bg-[var(--life-gold)]'
-                : 'border-white/20'
+                : 'border-white/[0.06]'
             )}
           >
             {selected && (
@@ -69,7 +69,7 @@ export function AccessOption({ option, selected, onSelect }: AccessOptionProps) 
           {/* Icon */}
           <option.icon className={cn(
             'w-5 h-5',
-            selected ? 'text-[var(--life-gold)]' : 'text-white/60'
+            selected ? 'text-[var(--life-gold)]' : 'text-white/50'
           )} />
 
           {/* Content */}
@@ -82,12 +82,12 @@ export function AccessOption({ option, selected, onSelect }: AccessOptionProps) 
             >
               {option.name}
             </h3>
-            <p className="text-label text-white/40 mt-0.5">
+            <p className="text-label text-white/50 mt-0.5">
               {option.description}
             </p>
           </div>
         </div>
-      </GlassSurface>
+      </div>
     </motion.button>
   );
 }

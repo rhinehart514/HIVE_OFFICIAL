@@ -79,14 +79,14 @@ const CATEGORIES: {
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  engagement: 'from-amber-500/20 to-amber-500/5 border-amber-500/30',
-  events: 'from-purple-500/20 to-purple-500/5 border-purple-500/30',
-  organization: 'from-blue-500/20 to-blue-500/5 border-blue-500/30',
-  analytics: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/30',
-  communication: 'from-red-500/20 to-red-500/5 border-red-500/30',
-  academic: 'from-indigo-500/20 to-indigo-500/5 border-indigo-500/30',
-  social: 'from-pink-500/20 to-pink-500/5 border-pink-500/30',
-  productivity: 'from-cyan-500/20 to-cyan-500/5 border-cyan-500/30',
+  engagement: 'bg-amber-500/10 border-amber-500/30',
+  events: 'bg-purple-500/10 border-purple-500/30',
+  organization: 'bg-blue-500/10 border-blue-500/30',
+  analytics: 'bg-emerald-500/10 border-emerald-500/30',
+  communication: 'bg-red-500/10 border-red-500/30',
+  academic: 'bg-indigo-500/10 border-indigo-500/30',
+  social: 'bg-pink-500/10 border-pink-500/30',
+  productivity: 'bg-cyan-500/10 border-cyan-500/30',
 };
 
 const CATEGORY_ICONS: Record<string, LucideIconComponent> = {
@@ -196,7 +196,7 @@ export default function TemplateGalleryPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="border-b border-white/[0.08] sticky top-0 bg-black/90 backdrop-blur-xl z-50">
+      <header className="border-b border-white/[0.06] sticky top-0 bg-black/90 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
@@ -208,13 +208,13 @@ export default function TemplateGalleryPage() {
 
             <div className="flex items-center gap-3">
               <Link href="/elements">
-                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
+                <Button variant="ghost" size="sm" className="text-white/50 hover:text-white">
                   <Grid3X3 className="w-4 h-4 mr-2" />
                   Elements
                 </Button>
               </Link>
               <Link href="/lab">
-                <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
+                <Button variant="ghost" size="sm" className="text-white/50 hover:text-white">
                   <WrenchIcon className="w-4 h-4 mr-2" />
                   My Tools
                 </Button>
@@ -231,7 +231,7 @@ export default function TemplateGalleryPage() {
       </header>
 
       {/* Hero */}
-      <section className="py-12 sm:py-16 border-b border-white/[0.08]">
+      <section className="py-12 sm:py-16 border-b border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -241,7 +241,7 @@ export default function TemplateGalleryPage() {
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
               Tool <span className="text-[var(--hive-gold-cta)]">Templates</span>
             </h1>
-            <p className="mt-4 text-lg text-white/60 max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-white/50 max-w-2xl mx-auto">
               Start with a pre-built template and customize it for your space.
               One click to get started.
             </p>
@@ -255,17 +255,17 @@ export default function TemplateGalleryPage() {
             className="mt-8 max-w-md mx-auto"
           >
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="MagnifyingGlassIcon templates..."
                 className={cn(
-                  'w-full pl-12 pr-4 py-3 rounded-xl',
-                  'bg-white/[0.04] border border-white/[0.08]',
-                  'text-white placeholder:text-white/40',
-                  'focus:outline-none focus:border-white/20',
+                  'w-full pl-12 pr-4 py-3 rounded-lg',
+                  'bg-white/[0.06] border border-white/[0.06]',
+                  'text-white placeholder:text-white/50',
+                  'focus:outline-none focus:border-white/[0.06]',
                   'transition-colors'
                 )}
               />
@@ -286,8 +286,8 @@ export default function TemplateGalleryPage() {
                 className={cn(
                   'px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
                   selectedCategory === cat.value
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                    ? 'bg-white/[0.06] text-white'
+                    : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
                 )}
               >
                 <cat.icon className="w-4 h-4" />
@@ -303,7 +303,7 @@ export default function TemplateGalleryPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <ArrowPathIcon className="w-8 h-8 animate-spin text-white/40" />
+              <ArrowPathIcon className="w-8 h-8  text-white/50" />
             </div>
           ) : error ? (
             <div className="text-center py-20">
@@ -311,16 +311,16 @@ export default function TemplateGalleryPage() {
               <Button
                 variant="ghost"
                 onClick={() => window.location.reload()}
-                className="mt-4 text-white/60"
+                className="mt-4 text-white/50"
               >
                 Try Again
               </Button>
             </div>
           ) : filteredTemplates.length === 0 ? (
             <div className="text-center py-20">
-              <MagnifyingGlassIcon className="w-12 h-12 text-white/20 mx-auto mb-4" />
+              <MagnifyingGlassIcon className="w-12 h-12 text-white/50 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">No templates found</h3>
-              <p className="text-white/60 mb-6 max-w-md mx-auto">
+              <p className="text-white/50 mb-6 max-w-md mx-auto">
                 {searchQuery
                   ? "Try a different search term or browse by category"
                   : "Templates help you get started quickly. Can't find what you need? Build from scratch."}
@@ -330,19 +330,19 @@ export default function TemplateGalleryPage() {
                   <Button
                     onClick={() => setSearchQuery('')}
                     variant="ghost"
-                    className="text-white/70 hover:text-white"
+                    className="text-white/50 hover:text-white"
                   >
                     Clear search
                   </Button>
                 ) : null}
                 <Link href="/lab/new">
-                  <Button className="bg-white/10 hover:bg-white/20 text-white">
+                  <Button className="bg-white/[0.06] hover:bg-white/[0.06] text-white">
                     <PlusIcon className="w-4 h-4 mr-1" />
                     Build from Scratch
                   </Button>
                 </Link>
                 <Link href="/elements">
-                  <Button variant="ghost" className="text-white/60 hover:text-white">
+                  <Button variant="ghost" className="text-white/50 hover:text-white">
                     Browse Elements
                     <ChevronRightIcon className="w-4 h-4 ml-1" />
                   </Button>
@@ -408,12 +408,12 @@ export default function TemplateGalleryPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 border-t border-white/[0.08]">
+      <section className="py-16 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-4">
             Can't find what you need?
           </h2>
-          <p className="text-white/60 mb-8 max-w-lg mx-auto">
+          <p className="text-white/50 mb-8 max-w-lg mx-auto">
             Build your own tool from scratch using our visual builder and 27 building blocks.
           </p>
           <div className="flex items-center justify-center gap-4">
@@ -424,7 +424,7 @@ export default function TemplateGalleryPage() {
               </Button>
             </Link>
             <Link href="/elements">
-              <Button size="lg" variant="ghost" className="text-white/60 hover:text-white">
+              <Button size="lg" variant="ghost" className="text-white/50 hover:text-white">
                 Browse Elements
                 <ChevronRightIcon className="w-4 h-4 ml-1" />
               </Button>
@@ -434,10 +434,10 @@ export default function TemplateGalleryPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.08] py-8">
+      <footer className="border-t border-white/[0.06] py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-white/40">
-            Part of <Link href="/" className="text-white/60 hover:text-white">HIVE</Link> — The operating system for campus communities
+          <p className="text-center text-sm text-white/50">
+            Part of <Link href="/" className="text-white/50 hover:text-white">HIVE</Link> — The operating system for campus communities
           </p>
         </div>
       </footer>
@@ -458,7 +458,7 @@ interface TemplateCardProps {
 
 function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
   const Icon = CATEGORY_ICONS[template.category] || Grid3X3;
-  const colorClass = CATEGORY_COLORS[template.category] || 'from-neutral-500/20 to-neutral-600/10 border-white/[0.12]/30';
+  const colorClass = CATEGORY_COLORS[template.category] || 'bg-white/[0.06] border-white/[0.06]';
 
   return (
     <motion.div
@@ -466,9 +466,8 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2, delay: index * 0.03 }}
       className={cn(
-        'group relative rounded-xl border transition-all duration-200',
-        'bg-gradient-to-br',
-        'hover:shadow-lg hover:opacity-90',
+        'group relative rounded-lg transition-all duration-200',
+        'hover:hover:opacity-90',
         colorClass
       )}
     >
@@ -476,7 +475,7 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
         {/* Header */}
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-black/30 flex items-center justify-center shrink-0">
-            <Icon className="w-5 h-5 text-white/70" />
+            <Icon className="w-5 h-5 text-white/50" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -493,7 +492,7 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
         </div>
 
         {/* Stats */}
-        <div className="mt-4 flex items-center gap-4 text-xs text-white/40">
+        <div className="mt-4 flex items-center gap-4 text-xs text-white/50">
           <span>
             {template.elementCount} element{template.elementCount !== 1 ? 's' : ''}
           </span>
@@ -516,7 +515,7 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
             {template.tags.slice(0, 3).map(tag => (
               <span
                 key={tag}
-                className="px-2 py-0.5 text-label-xs rounded-full bg-white/[0.08] text-white/50"
+                className="px-2 py-0.5 text-label-xs rounded-full bg-white/[0.06] text-white/50"
               >
                 {tag}
               </span>
@@ -525,9 +524,9 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
         )}
 
         {/* Actions */}
-        <div className="mt-4 pt-4 border-t border-white/[0.08] flex items-center justify-between">
+        <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
           {template.creatorName && (
-            <span className="text-xs text-white/40">by {template.creatorName}</span>
+            <span className="text-xs text-white/50">by {template.creatorName}</span>
           )}
           <Button
             size="sm"
@@ -535,13 +534,13 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
             disabled={isUsing}
             className={cn(
               'ml-auto',
-              'bg-white/10 hover:bg-white/20 text-white',
+              'bg-white/[0.06] hover:bg-white/[0.06] text-white',
               'disabled:opacity-50'
             )}
           >
             {isUsing ? (
               <>
-                <ArrowPathIcon className="w-3 h-3 mr-1 animate-spin" />
+                <ArrowPathIcon className="w-3 h-3 mr-1 " />
                 Creating...
               </>
             ) : (

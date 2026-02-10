@@ -106,7 +106,7 @@ export function SpaceInfoDrawer({
         >
           {/* Backdrop */}
           <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 "
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -116,7 +116,7 @@ export function SpaceInfoDrawer({
           {/* Drawer Panel */}
           <motion.div
             className={cn(
-              'relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] shadow-2xl overflow-y-auto',
+              'relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] overflow-y-auto',
               className
             )}
             initial={{ x: '100%' }}
@@ -133,7 +133,7 @@ export function SpaceInfoDrawer({
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-white/40 hover:text-white/60"
+                className="text-white/50 hover:text-white/50"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -160,7 +160,7 @@ export function SpaceInfoDrawer({
                     @{space.handle}
                   </Text>
                   <div className="flex items-center gap-2 mt-2">
-                    <Users className="h-3.5 w-3.5 text-white/40" />
+                    <Users className="h-3.5 w-3.5 text-white/50" />
                     <Text size="xs" tone="muted">
                       {space.memberCount} members
                     </Text>
@@ -171,10 +171,10 @@ export function SpaceInfoDrawer({
               {/* Description */}
               {space.description && (
                 <div>
-                  <Text size="xs" weight="medium" className="text-white/40 uppercase tracking-wider mb-2">
+                  <Text size="xs" weight="medium" className="text-white/50 uppercase tracking-wider mb-2">
                     About
                   </Text>
-                  <Text size="sm" className="text-white/70 leading-relaxed">
+                  <Text size="sm" className="text-white/50 leading-relaxed">
                     {space.description}
                   </Text>
                 </div>
@@ -183,14 +183,14 @@ export function SpaceInfoDrawer({
               {/* Organization Metadata */}
               {hasMetadata && (
                 <div className="space-y-3">
-                  <Text size="xs" weight="medium" className="text-white/40 uppercase tracking-wider">
+                  <Text size="xs" weight="medium" className="text-white/50 uppercase tracking-wider">
                     Organization Info
                   </Text>
 
                   {space.orgTypeName && (
                     <div className="flex items-center gap-3">
-                      <Tag className="h-4 w-4 text-white/40" />
-                      <Text size="sm" className="text-white/70">
+                      <Tag className="h-4 w-4 text-white/50" />
+                      <Text size="sm" className="text-white/50">
                         {space.orgTypeName}
                       </Text>
                     </div>
@@ -198,8 +198,8 @@ export function SpaceInfoDrawer({
 
                   {formattedFoundingDate && (
                     <div className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4 text-white/40" />
-                      <Text size="sm" className="text-white/70">
+                      <Calendar className="h-4 w-4 text-white/50" />
+                      <Text size="sm" className="text-white/50">
                         Founded {formattedFoundingDate}
                       </Text>
                     </div>
@@ -207,9 +207,9 @@ export function SpaceInfoDrawer({
 
                   {space.source === 'ublinked' && (
                     <div className="flex items-center gap-3">
-                      <Building2 className="h-4 w-4 text-white/40" />
+                      <Building2 className="h-4 w-4 text-white/50" />
                       <div className="flex items-center gap-2">
-                        <Text size="sm" className="text-white/70">
+                        <Text size="sm" className="text-white/50">
                           Imported from CampusLabs
                         </Text>
                         {space.sourceUrl && (
@@ -231,14 +231,14 @@ export function SpaceInfoDrawer({
               {/* Contact Information */}
               {hasContactInfo && (
                 <div className="space-y-3">
-                  <Text size="xs" weight="medium" className="text-white/40 uppercase tracking-wider">
+                  <Text size="xs" weight="medium" className="text-white/50 uppercase tracking-wider">
                     Contact
                   </Text>
 
                   {space.contactName && (
                     <div className="flex items-center gap-3">
-                      <User className="h-4 w-4 text-white/40" />
-                      <Text size="sm" className="text-white/70">
+                      <User className="h-4 w-4 text-white/50" />
+                      <Text size="sm" className="text-white/50">
                         {space.contactName}
                       </Text>
                     </div>
@@ -246,7 +246,7 @@ export function SpaceInfoDrawer({
 
                   {space.email && (
                     <div className="flex items-center gap-3">
-                      <Mail className="h-4 w-4 text-white/40" />
+                      <Mail className="h-4 w-4 text-white/50" />
                       <a
                         href={`mailto:${space.email}`}
                         className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
@@ -261,7 +261,7 @@ export function SpaceInfoDrawer({
               {/* Social Links */}
               {hasSocialLinks && (
                 <div className="space-y-3">
-                  <Text size="xs" weight="medium" className="text-white/40 uppercase tracking-wider">
+                  <Text size="xs" weight="medium" className="text-white/50 uppercase tracking-wider">
                     Social Links
                   </Text>
 
@@ -271,7 +271,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/60 hover:text-white/80 hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
                       >
                         <Globe className="h-4 w-4" />
                         <Text size="xs">Website</Text>
@@ -282,7 +282,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.instagram}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/60 hover:text-white/80 hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
                       >
                         <Instagram className="h-4 w-4" />
                         <Text size="xs">Instagram</Text>
@@ -293,7 +293,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.twitter}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/60 hover:text-white/80 hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
                       >
                         <Twitter className="h-4 w-4" />
                         <Text size="xs">Twitter</Text>
@@ -304,7 +304,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.facebook}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/60 hover:text-white/80 hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
                       >
                         <Facebook className="h-4 w-4" />
                         <Text size="xs">Facebook</Text>
@@ -315,7 +315,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.linkedin}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/60 hover:text-white/80 hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
                       >
                         <Linkedin className="h-4 w-4" />
                         <Text size="xs">LinkedIn</Text>
@@ -326,7 +326,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.youtube}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/60 hover:text-white/80 hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
                       >
                         <Youtube className="h-4 w-4" />
                         <Text size="xs">YouTube</Text>

@@ -36,7 +36,8 @@ import { dbAdmin } from '@/lib/firebase-admin';
 
 const ParseIntentSchema = z.object({
   message: z.string().min(1).max(4000),
-  boardId: z.string().min(1),
+  // boardId is optional — defaults to "main" for single-feed spaces
+  boardId: z.string().min(1).default('main'),
   // If true, actually create the component (requires leader role)
   createIfDetected: z.boolean().default(false),
   // Optional message ID if creating inline with a message
@@ -263,7 +264,7 @@ async function handleSlashCommand(
       isCommand: true,
       isValid: false,
       error: command.error,
-      helpText: getCommandHelp(command.command as 'poll' | 'rsvp' | 'countdown' | 'announce' | 'help' | 'unknown'),
+      helpText: getCommandHelp(command.command as 'poll' | 'rsvp' | 'countdown' | 'announce' | 'signup' | 'event' | 'help' | 'unknown'),
     });
   }
 

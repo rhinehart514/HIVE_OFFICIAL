@@ -22,7 +22,7 @@ export const CAMPUS_NAV_ITEMS: NavItem[] = [
     label: 'Discover',
     href: '/discover',
     icon: CompassIcon,
-    matchPattern: /^\/discover(\/|$)|^\/explore(\/|$)/,
+    matchPattern: /^\/discover(\/|$)/,
   },
   {
     id: 'spaces',

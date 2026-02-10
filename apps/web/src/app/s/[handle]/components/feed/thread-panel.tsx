@@ -201,7 +201,7 @@ export function ThreadPanel({
             </div>
 
             {/* Parent message */}
-            <div className="px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
+            <div className="px-4 py-3 border-b border-white/[0.06] bg-white/[0.06]">
               <MessageItem
                 message={parentMessage}
                 showAuthor={true}
@@ -213,22 +213,22 @@ export function ThreadPanel({
             <div className="flex-1 overflow-y-auto px-4 py-2">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-white/50 " />
                 </div>
               ) : error ? (
                 <div className="text-center py-8">
                   <p className="text-sm text-red-400">{error}</p>
                   <button
                     onClick={fetchReplies}
-                    className="mt-2 text-sm text-white/60 hover:text-white underline"
+                    className="mt-2 text-sm text-white/50 hover:text-white underline"
                   >
                     Try again
                   </button>
                 </div>
               ) : replies.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-sm text-white/40">No replies yet</p>
-                  <p className="text-xs text-white/30 mt-1">
+                  <p className="text-sm text-white/50">No replies yet</p>
+                  <p className="text-xs text-white/50 mt-1">
                     Be the first to reply
                   </p>
                 </div>
@@ -259,9 +259,9 @@ export function ThreadPanel({
                   rows={1}
                   className={cn(
                     'flex-1 px-3 py-2 rounded-lg',
-                    'bg-white/[0.04] border border-white/[0.08]',
-                    'text-white text-sm placeholder:text-white/30',
-                    'focus:outline-none focus:ring-2 focus:ring-white/20',
+                    'bg-white/[0.06] border border-white/[0.06]',
+                    'text-white text-sm placeholder:text-white/50',
+                    'focus:outline-none focus:ring-2 focus:ring-white/50',
                     'resize-none min-h-[40px] max-h-[120px]'
                   )}
                   style={{
@@ -280,13 +280,13 @@ export function ThreadPanel({
                   )}
                 >
                   {isSending ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-5 h-5 " />
                   ) : (
                     <Send className="w-5 h-5" />
                   )}
                 </button>
               </div>
-              <p className="text-xs text-white/30 mt-2">
+              <p className="text-xs text-white/50 mt-2">
                 Press Enter to send, Shift+Enter for new line
               </p>
             </div>

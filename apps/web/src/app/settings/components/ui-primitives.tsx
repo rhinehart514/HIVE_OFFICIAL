@@ -69,7 +69,7 @@ export function ConfirmModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 "
         onClick={() => onOpenChange(false)}
       />
       <motion.div
@@ -77,8 +77,8 @@ export function ConfirmModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className={`relative w-full max-w-md mx-4 rounded-xl bg-[var(--bg-ground)] border p-6 shadow-2xl ${
-          variant === 'danger' ? 'border-red-500/30' : 'border-white/[0.08]'
+        className={`relative w-full max-w-md mx-4 rounded-lg bg-[var(--bg-ground)] p-6 ${
+          variant === 'danger' ? 'border-red-500/30' : 'border-white/[0.06]'
         }`}
       >
         <button
@@ -96,7 +96,7 @@ export function ConfirmModal({
         )}
 
         <h2 className="text-lg font-semibold text-white mb-2 text-center">{title}</h2>
-        <p className="text-sm text-white/60 mb-6 text-center">{description}</p>
+        <p className="text-sm text-white/50 mb-6 text-center">{description}</p>
 
         {requireTyping && (
           <div className="mb-6">
@@ -106,8 +106,8 @@ export function ConfirmModal({
               value={typedText}
               onChange={(e) => setTypedText(e.target.value)}
               placeholder={`Type ${typingWord}`}
-              className={`w-full p-3 bg-white/10 border rounded-lg text-white placeholder:text-white/30 focus:outline-none ${
-                variant === 'danger' ? 'border-red-500/30 focus:border-red-500' : 'border-white/20 focus:border-white/40'
+              className={`w-full p-3 bg-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:outline-none ${
+                variant === 'danger' ? 'border-red-500/30 focus:border-red-500' : 'border-white/[0.06] focus:border-white/50'
               }`}
             />
           </div>
@@ -134,7 +134,7 @@ export function ConfirmModal({
             disabled={isLoading || !canConfirm}
             className="flex-1"
           >
-            {isLoading && <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />}
+            {isLoading && <ArrowPathIcon className="h-4 w-4 mr-2 " />}
             {confirmText}
           </Button>
         </div>
@@ -164,7 +164,7 @@ export function CollapsibleSection({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${title} section`}
-        className="w-full flex items-center justify-between p-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+        className="w-full flex items-center justify-between p-4 bg-white/[0.06] hover:bg-white/[0.06] transition-colors"
       >
         <div className="flex items-center gap-3">
           <Icon className="h-5 w-5 text-[var(--hive-brand-primary)]" aria-hidden="true" />

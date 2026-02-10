@@ -400,7 +400,7 @@ export const PATCH = withAuthValidationAndErrors(
         category: 'spaces',
         title: `Your request to join ${spaceNameForReject} was declined`,
         body: body.rejectionReason || 'The space leader has declined your request.',
-        actionUrl: `/spaces/browse`,
+        actionUrl: `/discover`,
         metadata: {
           spaceId,
           spaceName: spaceNameForReject,

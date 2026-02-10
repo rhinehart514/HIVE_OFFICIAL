@@ -73,15 +73,9 @@ export const routeManifest: Record<string, RouteOwnership> = {
     ],
     frictionWeight: 'heavy',
   },
-  '/home': {
+  '/discover': {
     owns: ['aggregation', 'flow', 'attentionRouting'],
     neverContains: ['storage', 'config', 'identity'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  '/explore': {
-    owns: ['discoverySurfaces', 'search', 'browse'],
-    neverContains: ['participation', 'commitment', 'creation'],
     allowedMutations: [],
     frictionWeight: 'light',
   },
@@ -404,6 +398,10 @@ export const canonicalRedirects: Record<string, string> = {
   // Alias routes
   '/browse': '/spaces',
   '/build': '/lab/create',
+  '/explore': '/discover',
+  // Dead route consolidation
+  '/home': '/discover',
+  '/feed': '/discover',
   // Settings section shortcuts
   '/settings/privacy': '/settings?section=privacy',
   '/settings/security': '/settings?section=account',
@@ -414,12 +412,12 @@ export const canonicalRedirects: Record<string, string> = {
   '/privacy': '/legal/privacy',
   '/terms': '/legal/terms',
   // IA Consolidation: pages -> modals
-  '/spaces/browse': '/explore?tab=spaces',
+  '/spaces/browse': '/discover',
   '/spaces/claim': '/spaces?claim=true',
   '/spaces/new': '/spaces?create=true',
   '/spaces/create': '/spaces?create=true',
-  '/people': '/explore?tab=people',
-  '/events': '/explore?tab=events',
+  '/people': '/discover?tab=people',
+  '/events': '/discover?tab=events',
   '/leaders': '/spaces?claim=true',
 };
 
@@ -427,7 +425,7 @@ export const canonicalRedirects: Record<string, string> = {
  * Critical paths that must be declared in manifest.
  * Any route starting with these prefixes must have a manifest entry.
  */
-export const criticalPaths = ['/u', '/me', '/home', '/explore', '/s', '/lab'];
+export const criticalPaths = ['/u', '/me', '/discover', '/s', '/lab'];
 
 /**
  * Helper: Convert route pattern to glob pattern

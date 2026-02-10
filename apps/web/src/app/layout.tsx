@@ -3,14 +3,14 @@ import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Providers } from './providers';
-import { AppShell } from '@/components/layout';
+import { AppShell } from '@/components/shell';
 
 export const metadata: Metadata = {
   title: {
     template: '%s | HIVE',
-    default: 'HIVE - Campus Social Platform',
+    default: 'HIVE - Your Campus. Your Spaces. Your Tools.',
   },
-  description: 'Connect, collaborate, and build community on your campus with HIVE.',
+  description: 'Run your campus communities with shared spaces and live tools. Build in seconds, share anywhere.',
   keywords: ['campus', 'social', 'university', 'community', 'collaboration'],
   authors: [{ name: 'HIVE Team' }],
   creator: 'HIVE',
@@ -27,20 +27,20 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'HIVE',
   },
-  applicationName: 'HIVE Campus',
+  applicationName: 'HIVE',
   // Icons are auto-detected from app/icon.svg and app/apple-icon.svg
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: '/',
     siteName: 'HIVE',
-    title: 'HIVE - Campus Social Platform',
-    description: 'Connect, collaborate, and build community on your campus with HIVE.',
+    title: 'HIVE - Your Campus. Your Spaces. Your Tools.',
+    description: 'Run your campus communities with shared spaces and live tools. Build in seconds, share anywhere.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HIVE - Campus Social Platform',
-    description: 'Connect, collaborate, and build community on your campus with HIVE.',
+    title: 'HIVE - Your Campus. Your Spaces. Your Tools.',
+    description: 'Run your campus communities with shared spaces and live tools. Build in seconds, share anywhere.',
   },
   robots: {
     index: true,

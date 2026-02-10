@@ -148,7 +148,7 @@ export function ChatMessages({
           onClick={() => setLightboxImage(null)}
         >
           <button
-            className="absolute top-4 right-4 p-2 text-white/60 hover:text-white transition-colors"
+            className="absolute top-4 right-4 p-2 text-white/50 hover:text-white transition-colors"
             onClick={() => setLightboxImage(null)}
           >
             <X className="h-6 w-6" />
@@ -196,7 +196,7 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete, on
     <div
       className={cn(
         'group flex gap-3 relative',
-        'hover:bg-white/[0.02] -mx-2 px-2 py-1 rounded-lg',
+        'hover:bg-white/[0.06] -mx-2 px-2 py-1 rounded-lg',
         'transition-colors'
       )}
       data-testid="message-row"
@@ -242,8 +242,8 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete, on
                 onClick={() => onImageClick?.(attachment.url)}
                 className={cn(
                   'relative rounded-lg overflow-hidden',
-                  'border border-white/[0.08]',
-                  'hover:border-white/20 transition-colors',
+                  'border border-white/[0.06]',
+                  'hover:border-white/[0.06] transition-colors',
                   'cursor-pointer'
                 )}
               >
@@ -270,7 +270,7 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete, on
                   'transition-colors',
                   reaction.hasReacted
                     ? 'bg-[var(--color-accent-gold)]/10 text-[var(--color-accent-gold)]'
-                    : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.1]'
+                    : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1]'
                 )}
               >
                 <span>{reaction.emoji}</span>
@@ -288,8 +288,8 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete, on
             <button
               onClick={() => setShowActions(!showActions)}
               className={cn(
-                'p-1 rounded hover:bg-white/[0.08] transition-colors',
-                'text-white/40 hover:text-white/60'
+                'p-1 rounded hover:bg-white/[0.06] transition-colors',
+                'text-white/50 hover:text-white/50'
               )}
               data-testid="message-actions-button"
             >
@@ -305,7 +305,7 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete, on
                 />
                 <div className={cn(
                   'absolute right-0 top-full mt-1 z-20',
-                  'bg-[var(--bg-elevated)] border border-white/[0.08] rounded-xl shadow-lg',
+                  'bg-[var(--bg-elevated)] border border-white/[0.06] rounded-lg',
                   'py-1 min-w-[120px]'
                 )}>
                   {/* Report action - available for all users */}
@@ -317,7 +317,7 @@ function MessageRow({ message, showAuthor, onImageClick, canDelete, onDelete, on
                       }}
                       className={cn(
                         'w-full px-3 py-1.5 text-left text-sm',
-                        'text-white/60 hover:text-white hover:bg-white/[0.06]',
+                        'text-white/50 hover:text-white hover:bg-white/[0.06]',
                         'flex items-center gap-2'
                       )}
                       data-testid="report-button"
@@ -369,14 +369,14 @@ function ChatMessagesSkeleton() {
     <div className="flex-1 px-4 py-4 space-y-4">
       {[1, 2, 3, 4, 5].map((i) => (
         <div key={i} className="flex gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white/[0.06] animate-pulse" />
+          <div className="w-8 h-8 rounded-lg bg-white/[0.06]" />
           <div className="flex-1 space-y-2">
             <div className="flex gap-2">
-              <div className="h-4 w-24 rounded bg-white/[0.06] animate-pulse" />
-              <div className="h-4 w-16 rounded bg-white/[0.04] animate-pulse" />
+              <div className="h-4 w-24 rounded bg-white/[0.06]" />
+              <div className="h-4 w-16 rounded bg-white/[0.06]" />
             </div>
-            <div className="h-4 w-full rounded bg-white/[0.04] animate-pulse" />
-            <div className="h-4 w-3/4 rounded bg-white/[0.04] animate-pulse" />
+            <div className="h-4 w-full rounded bg-white/[0.06]" />
+            <div className="h-4 w-3/4 rounded bg-white/[0.06]" />
           </div>
         </div>
       ))}

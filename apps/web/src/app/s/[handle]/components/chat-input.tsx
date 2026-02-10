@@ -32,6 +32,10 @@ interface ChatInputProps {
   className?: string;
   /** Callback when typing state changes */
   onTypingChange?: (isTyping: boolean) => void;
+  /** Pre-fill value (consumed once, then cleared) */
+  prefill?: string | null;
+  /** Callback to clear prefill after consuming */
+  onPrefillConsumed?: () => void;
 }
 
 export function ChatInput({
@@ -41,6 +45,8 @@ export function ChatInput({
   disabled,
   className,
   onTypingChange,
+  prefill,
+  onPrefillConsumed,
 }: ChatInputProps) {
   const [value, setValue] = React.useState('');
   const [isSending, setIsSending] = React.useState(false);
@@ -53,6 +59,22 @@ export function ChatInput({
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Consume prefill value
+  React.useEffect(() => {
+    if (prefill) {
+      setValue(prefill);
+      onPrefillConsumed?.();
+      // Focus and place cursor at end
+      requestAnimationFrame(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.selectionStart = prefill.length;
+          textareaRef.current.selectionEnd = prefill.length;
+        }
+      });
+    }
+  }, [prefill, onPrefillConsumed]);
 
   const handleFileSelect = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -227,7 +249,7 @@ export function ChatInput({
         <div
           className={cn(
             'absolute bottom-full left-3 right-3 mb-2',
-            'bg-[var(--bg-elevated)] border border-white/[0.06] rounded-xl',
+            'bg-[var(--bg-elevated)] border border-white/[0.06] rounded-lg',
             'py-2 max-h-[200px] overflow-y-auto'
           )}
         >
@@ -246,8 +268,8 @@ export function ChatInput({
               className={cn(
                 'w-full px-3 py-2 text-left text-sm transition-colors',
                 index === selectedSuggestionIndex
-                  ? 'bg-white/[0.04] text-white'
-                  : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-white/[0.06] text-white'
+                  : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
               )}
             >
               {suggestion}
@@ -265,7 +287,7 @@ export function ChatInput({
           {attachments.map((attachment, index) => (
             <div
               key={index}
-              className="relative group rounded-lg overflow-hidden bg-white/[0.04] border border-white/[0.08]"
+              className="relative group rounded-lg overflow-hidden bg-white/[0.06] border border-white/[0.06]"
             >
               <img
                 src={attachment.url}
@@ -316,7 +338,7 @@ export function ChatInput({
           onClick={() => fileInputRef.current?.click()}
         >
           {isUploading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Loader2 className="h-5 w-5 " />
           ) : (
             <ImageIcon className="h-5 w-5" />
           )}
@@ -336,11 +358,11 @@ export function ChatInput({
             className={cn(
               'w-full px-4 py-2.5',
               'rounded-full text-sm',
-              'bg-white/[0.04] hover:bg-white/[0.06]',
+              'bg-white/[0.06] hover:bg-white/[0.06]',
               'border border-white/[0.06]',
               'text-white placeholder:text-white/50',
               'resize-none',
-              'focus:outline-none focus:ring-1 focus:ring-white/20',
+              'focus:outline-none focus:ring-1 focus:ring-white/50',
               'disabled:opacity-50',
               'transition-colors'
             )}

@@ -65,7 +65,7 @@ export function BuilderShell({
             <motion.button
               type="button"
               onClick={handleBack}
-              className="flex items-center gap-2 text-white/40 hover:text-white/60 transition-colors"
+              className="flex items-center gap-2 text-white/50 hover:text-white/50 transition-colors"
               whileHover={{ x: -2 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -85,13 +85,13 @@ export function BuilderShell({
               <span className="text-body-sm">Back</span>
             </motion.button>
           ) : (
-            <LogoMark className="w-8 h-8 text-white/80" />
+            <LogoMark className="w-8 h-8 text-white" />
           )}
         </div>
 
         {/* Step Title */}
         {stepTitle && (
-          <span className="text-label text-white/30 uppercase tracking-wider">
+          <span className="text-label text-white/50 uppercase tracking-wider">
             {stepTitle}
           </span>
         )}
@@ -143,8 +143,8 @@ function ProgressIndicator({ currentStep, totalSteps }: ProgressIndicatorProps) 
             i === currentStep
               ? 'w-6 bg-[var(--life-gold)]'
               : i < currentStep
-                ? 'w-3 bg-white/40'
-                : 'w-3 bg-white/10'
+                ? 'w-3 bg-white/50'
+                : 'w-3 bg-white/[0.06]'
           )}
           initial={false}
           layout
@@ -183,12 +183,12 @@ export function BuilderAction({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        'w-full h-12 rounded-xl font-medium text-body transition-all',
+        'w-full h-12 rounded-lg font-medium text-body transition-all',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         variant === 'primary' &&
           'bg-[var(--life-gold)] text-[var(--bg-ground)] hover:bg-[var(--life-gold-hover)]',
         variant === 'secondary' &&
-          'bg-white/5 text-white/80 hover:bg-white/10 border border-white/10',
+          'bg-white/[0.06] text-white hover:bg-white/[0.06] border border-white/[0.06]',
         className
       )}
       whileHover={{ opacity: disabled ? 1 : 0.97 }}
@@ -196,7 +196,7 @@ export function BuilderAction({
     >
       {loading ? (
         <span className="flex items-center justify-center gap-2">
-          <span className="w-4 h-4 animate-spin rounded-full border-2 border-current/20 border-t-current" />
+          <span className="w-4 h-4  rounded-full border border-2 border-current/20 border-t-current" />
           <span>Creating...</span>
         </span>
       ) : (

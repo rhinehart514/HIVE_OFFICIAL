@@ -100,8 +100,8 @@ export function EventCard({
       whileHover={{ opacity: 0.96 }}
       transition={{ duration: 0.15 }}
       className={cn(
-        'rounded-xl',
-        'bg-white/[0.02] hover:bg-white/[0.04]',
+        'rounded-lg',
+        'bg-white/[0.06] hover:bg-white/[0.06]',
         'transition-all duration-150',
         'cursor-pointer',
         isStartingSoon
@@ -124,7 +124,7 @@ export function EventCard({
           </span>
           {event.isLive && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/10 text-red-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
               Live
             </span>
           )}
@@ -172,7 +172,7 @@ export function EventCard({
 
           {/* Date/time */}
           <div className="flex items-center gap-1.5 mt-1">
-            <Clock className="w-3 h-3 text-white/40" />
+            <Clock className="w-3 h-3 text-white/50" />
             <span className="text-xs text-white/50">{formattedDateTime}</span>
           </div>
 
@@ -180,9 +180,9 @@ export function EventCard({
           {(event.location || event.isOnline) && (
             <div className="flex items-center gap-1.5 mt-1">
               {event.isOnline ? (
-                <Video className="w-3 h-3 text-white/40" />
+                <Video className="w-3 h-3 text-white/50" />
               ) : (
-                <MapPin className="w-3 h-3 text-white/40" />
+                <MapPin className="w-3 h-3 text-white/50" />
               )}
               <span className="text-xs text-white/50 truncate">
                 {event.isOnline ? 'Online event' : event.location}
@@ -194,7 +194,7 @@ export function EventCard({
 
       {/* Description (truncated) */}
       {event.description && (
-        <p className="mt-3 text-xs text-white/40 line-clamp-2">
+        <p className="mt-3 text-xs text-white/50 line-clamp-2">
           {event.description}
         </p>
       )}
@@ -203,7 +203,7 @@ export function EventCard({
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/[0.06]">
         {/* RSVP count */}
         <div className="flex items-center gap-1.5">
-          <Users className="w-3.5 h-3.5 text-white/40" />
+          <Users className="w-3.5 h-3.5 text-white/50" />
           <span className="text-xs text-white/50">
             {event.rsvpCount} going
           </span>
@@ -229,7 +229,7 @@ export function EventCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-white/60 hover:text-white"
+                className="text-white/50 hover:text-white"
                 onClick={(e) => {
                   e.stopPropagation();
                   onRsvp('going');

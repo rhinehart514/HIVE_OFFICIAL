@@ -36,7 +36,7 @@ export function PrivacySection({
 
   return (
     <div className="space-y-6">
-      <Card className="p-6 bg-white/5 border-white/[0.08]">
+      <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
         <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
           <EyeIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Profile Visibility
@@ -80,18 +80,18 @@ export function PrivacySection({
             aria-label={isUpdating ? 'Saving privacy settings' : 'Save privacy settings'}
             className="bg-[var(--hive-brand-primary)] text-black hover:bg-[var(--hive-brand-primary)]/90"
           >
-            {isUpdating ? <ArrowPathIcon className="h-4 w-4 animate-spin mr-2" aria-hidden="true" /> : <BookmarkIcon className="h-4 w-4 mr-2" aria-hidden="true" />}
+            {isUpdating ? <ArrowPathIcon className="h-4 w-4  mr-2" aria-hidden="true" /> : <BookmarkIcon className="h-4 w-4 mr-2" aria-hidden="true" />}
             Save Privacy Settings
           </Button>
         </div>
       </Card>
 
       {ghostModeEnabled && (
-        <Card className="p-6 border-white/[0.08] bg-white/[0.02]">
+        <Card className="p-6 border-white/[0.06] bg-white/[0.06]">
           <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
-            <Moon className="h-5 w-5 text-white/60" />
+            <Moon className="h-5 w-5 text-white/50" />
             Ghost Mode
-            <Badge variant="default" className="text-xs bg-white/10 text-white/60 border-0">
+            <Badge variant="default" className="text-xs bg-white/[0.06] text-white/50 border-0">
               Privacy
             </Badge>
           </h3>
@@ -101,14 +101,14 @@ export function PrivacySection({
 
           {ghostMode.isEnabled ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-white/[0.04] border border-white/10">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                 <div className="flex items-center gap-3">
                   {(() => {
                     const levelConfig = getGhostModeLevelConfig(ghostMode.state.level);
                     const LevelIcon = levelConfig.icon;
                     return (
                       <>
-                        <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center">
                           <LevelIcon className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -121,8 +121,8 @@ export function PrivacySection({
                 </div>
                 {ghostMode.expiresAt && (
                   <div className="text-right">
-                    <p className="text-xs text-white/40">Expires in</p>
-                    <p className="text-sm font-mono text-white/70">
+                    <p className="text-xs text-white/50">Expires in</p>
+                    <p className="text-sm font-mono text-white/50">
                       {ghostMode.timeRemaining
                         ? `${Math.floor(ghostMode.timeRemaining / (1000 * 60 * 60))}h ${Math.floor((ghostMode.timeRemaining % (1000 * 60 * 60)) / (1000 * 60))}m`
                         : 'Soon'}
@@ -134,14 +134,14 @@ export function PrivacySection({
                 <Button
                   variant="secondary"
                   onClick={() => setShowGhostModeModal(true)}
-                  className="flex-1 border-white/20 text-white hover:bg-white/10"
+                  className="flex-1 border-white/[0.06] text-white hover:bg-white/[0.06]"
                 >
                   Change Settings
                 </Button>
                 <Button
                   variant="ghost"
                   onClick={() => ghostMode.disable()}
-                  className="text-white/60 hover:text-white hover:bg-white/[0.06]"
+                  className="text-white/50 hover:text-white hover:bg-white/[0.06]"
                 >
                   Turn Off
                 </Button>
@@ -151,7 +151,7 @@ export function PrivacySection({
             <Button
               variant="secondary"
               onClick={() => setShowGhostModeModal(true)}
-              className="w-full border-white/20 text-white hover:bg-white/10"
+              className="w-full border-white/[0.06] text-white hover:bg-white/[0.06]"
             >
               <Moon className="h-4 w-4 mr-2" />
               Enable Ghost Mode

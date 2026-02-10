@@ -15,7 +15,7 @@ export default function NewSetupLoading() {
 
         {/* Form */}
         <div
-          className="p-6 rounded-xl border space-y-6"
+          className="p-6 rounded-lg space-y-6"
           style={{
             backgroundColor: 'var(--hivelab-surface, #141414)',
             borderColor: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',

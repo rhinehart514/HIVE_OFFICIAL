@@ -87,7 +87,7 @@ export function WelcomeCard({
         >
           {/* Card */}
           <motion.div
-            className="relative px-12 py-10 rounded-2xl overflow-hidden"
+            className="relative px-12 py-10 rounded-lg overflow-hidden"
             style={{
               background: 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
               boxShadow: `0 0 60px ${SPACES_GOLD.glowSubtle}, inset 0 1px 0 rgba(255,255,255,0.08)`,
@@ -99,10 +99,10 @@ export function WelcomeCard({
               ease: MOTION.ease.premium,
             }}
           >
-            {/* Animated border */}
+            {/* Animated*/}
             {!shouldReduceMotion && (
               <motion.div
-                className="absolute inset-0 pointer-events-none rounded-2xl"
+                className="absolute inset-0 pointer-events-none rounded-lg"
                 style={{
                   boxShadow: `inset 0 0 0 1px ${SPACES_GOLD.glowSubtle}`,
                 }}
@@ -140,7 +140,7 @@ export function WelcomeCard({
               >
                 <Avatar size="lg" className="ring-2 ring-[#FFD700]/30 mb-5">
                   {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-                  <AvatarFallback className="text-xl bg-white/[0.08]">
+                  <AvatarFallback className="text-xl bg-white/[0.06]">
                     {getInitials(space.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -148,7 +148,7 @@ export function WelcomeCard({
 
               {/* Welcome text */}
               <motion.p
-                className="text-sm uppercase tracking-wider text-white/40 mb-2"
+                className="text-sm uppercase tracking-wider text-white/50 mb-2"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{

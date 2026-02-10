@@ -110,7 +110,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           {/* Event Type Badge */}
           <div className="flex items-center gap-2 mb-3">
             <div
-              className={`w-10 h-10 ${getEventTypeColor(event.type)} rounded-xl flex items-center justify-center text-lg`}
+              className={`w-10 h-10 ${getEventTypeColor(event.type)} rounded-lg flex items-center justify-center text-lg`}
             >
               {getEventTypeIcon(event.type)}
             </div>
@@ -125,7 +125,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           </div>
 
           <ModalTitle className="text-2xl">{event.title}</ModalTitle>
-          <ModalDescription className="text-white/60 mt-1">
+          <ModalDescription className="text-white/50 mt-1">
             Hosted by {event.organizer.name}
             {event.organizer.verified && (
               <CheckCircleIcon className="inline-block w-4 h-4 ml-1 text-[var(--hive-brand-primary)]" />
@@ -135,7 +135,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
         <ModalBody className="space-y-6">
           {/* Date & Time */}
-          <div className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.03]">
+          <div className="flex items-start gap-4 p-4 rounded-lg bg-white/[0.06]">
             <div className="w-10 h-10 rounded-lg bg-[var(--hive-brand-primary)]/10 flex items-center justify-center flex-shrink-0">
               <CalendarIcon className="w-5 h-5 text-[var(--hive-brand-primary)]" />
             </div>
@@ -143,24 +143,24 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               <p className="font-medium text-white">
                 {formatDate(event.datetime.start)}
               </p>
-              <p className="text-white/60 text-sm">
+              <p className="text-white/50 text-sm">
                 {formatTime(event.datetime.start)} - {formatTime(event.datetime.end)}
               </p>
-              <p className="text-white/40 text-xs mt-1">
+              <p className="text-white/50 text-xs mt-1">
                 {event.datetime.timezone}
               </p>
             </div>
           </div>
 
           {/* Location */}
-          <div className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.03]">
+          <div className="flex items-start gap-4 p-4 rounded-lg bg-white/[0.06]">
             <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
               <MapPinIcon className="w-5 h-5 text-blue-400" />
             </div>
             <div>
               <p className="font-medium text-white">{event.location.name}</p>
               {event.location.address && (
-                <p className="text-white/60 text-sm">{event.location.address}</p>
+                <p className="text-white/50 text-sm">{event.location.address}</p>
               )}
               <Badge
                 variant="secondary"
@@ -192,7 +192,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           </div>
 
           {/* Capacity */}
-          <div className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.03]">
+          <div className="flex items-start gap-4 p-4 rounded-lg bg-white/[0.06]">
             <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
               <UserGroupIcon className="w-5 h-5 text-green-400" />
             </div>
@@ -201,12 +201,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 <p className="font-medium text-white">
                   {event.engagement.going} going
                 </p>
-                <p className="text-white/40 text-sm">
+                <p className="text-white/50 text-sm">
                   {spotsLeft > 0 ? `${spotsLeft} spots left` : "Event is full"}
                 </p>
               </div>
               {/* Capacity bar */}
-              <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
+              <div className="mt-2 h-2 bg-white/[0.06] rounded-full overflow-hidden">
                 <div
                   className={`h-full transition-all ${isFull ? "bg-red-500" : "bg-green-500"}`}
                   style={{
@@ -215,7 +215,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 />
               </div>
               {event.capacity.waitlist > 0 && (
-                <p className="text-white/40 text-xs mt-1">
+                <p className="text-white/50 text-xs mt-1">
                   {event.capacity.waitlist} on waitlist
                 </p>
               )}
@@ -225,17 +225,17 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           {/* Description */}
           {event.description && (
             <div>
-              <h3 className="text-sm font-medium text-white/40 uppercase tracking-wide mb-2">
+              <h3 className="text-sm font-medium text-white/50 uppercase tracking-wide mb-2">
                 About
               </h3>
-              <p className="text-white/80 leading-relaxed">{event.description}</p>
+              <p className="text-white leading-relaxed">{event.description}</p>
             </div>
           )}
 
           {/* Tags */}
           {event.tags.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-white/40 uppercase tracking-wide mb-2">
+              <h3 className="text-sm font-medium text-white/50 uppercase tracking-wide mb-2">
                 Tags
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -249,12 +249,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           )}
 
           {/* Engagement Stats */}
-          <div className="flex items-center gap-6 pt-4 border-t border-white/10">
-            <div className="flex items-center gap-2 text-white/60">
+          <div className="flex items-center gap-6 pt-4 border-t border-white/[0.06]">
+            <div className="flex items-center gap-2 text-white/50">
               <CheckCircleIcon className="w-4 h-4" />
               <span className="text-sm">{event.engagement.going} going</span>
             </div>
-            <div className="flex items-center gap-2 text-white/60">
+            <div className="flex items-center gap-2 text-white/50">
               <StarIcon className="w-4 h-4" />
               <span className="text-sm">{event.engagement.interested} interested</span>
             </div>

@@ -114,20 +114,20 @@ function LeaderCreateMenu({
   }, [isOpen]);
 
   const menuItems = [
-    { icon: BarChart3, label: 'Poll', onClick: onCreatePoll, color: 'text-blue-400' },
-    { icon: UserCheck, label: 'RSVP', onClick: onCreateRsvp, color: 'text-green-400' },
-    { icon: ClipboardList, label: 'Signup', onClick: onCreateSignup, color: 'text-purple-400' },
-    { icon: Timer, label: 'Countdown', onClick: onCreateCountdown, color: 'text-orange-400' },
-    { icon: Calendar, label: 'Event', onClick: onCreateEvent, color: 'text-pink-400' },
-    { icon: Sparkles, label: 'AI Generate', onClick: onCreateWithAI, color: 'text-amber-400' },
-    { icon: Wrench, label: 'Builder', onClick: onBuildTool, color: 'text-white/50' },
-  ].filter(item => item.onClick); // Only show items with handlers
+    { icon: BarChart3, label: 'Poll', onClick: onCreatePoll },
+    { icon: UserCheck, label: 'RSVP', onClick: onCreateRsvp },
+    { icon: ClipboardList, label: 'Signup', onClick: onCreateSignup },
+    { icon: Timer, label: 'Countdown', onClick: onCreateCountdown },
+    { icon: Calendar, label: 'Event', onClick: onCreateEvent },
+    { icon: Sparkles, label: 'AI Generate', onClick: onCreateWithAI },
+    { icon: Wrench, label: 'Builder', onClick: onBuildTool },
+  ].filter(item => item.onClick);
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="rounded-full p-1.5 text-white/50 hover:text-white hover:bg-white/[0.04] transition-colors"
+        className="rounded-full p-1.5 text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
         title="Create content"
       >
         <Plus className="h-4 w-4" />
@@ -146,8 +146,8 @@ function LeaderCreateMenu({
             className={cn(
               'absolute right-0 top-full mt-1 z-50',
               'w-48 py-1',
-              'rounded-xl',
-              'bg-[var(--bg-surface-hover)] border border-white/[0.08]',
+              'rounded-lg',
+              'bg-[var(--bg-surface-hover)] border border-white/[0.06]',
             )}
           >
             <div className="px-3 py-1.5">
@@ -164,11 +164,11 @@ function LeaderCreateMenu({
                 }}
                 className={cn(
                   'w-full flex items-center gap-2 px-3 py-2 text-left',
-                  'text-xs text-white/50 hover:text-white hover:bg-white/[0.04]',
+                  'text-xs text-white/50 hover:text-white hover:bg-white/[0.06]',
                   'transition-colors'
                 )}
               >
-                <item.icon className={cn('w-3.5 h-3.5', item.color)} />
+                <item.icon className="w-3.5 h-3.5" />
                 {item.label}
               </button>
             ))}
@@ -225,7 +225,7 @@ function MuteDropdown({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="rounded-full p-1.5 text-white/50 hover:text-white hover:bg-white/[0.04] transition-colors"
+        className="rounded-full p-1.5 text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
         title={isMuted ? 'Notifications muted' : 'Mute notifications'}
       >
         {isMuted ? (
@@ -248,8 +248,8 @@ function MuteDropdown({
             className={cn(
               'absolute right-0 top-full mt-1 z-50',
               'w-48 py-1',
-              'rounded-xl',
-              'bg-[var(--bg-surface-hover)] border border-white/[0.08]',
+              'rounded-lg',
+              'bg-[var(--bg-surface-hover)] border border-white/[0.06]',
             )}
           >
             {isMuted ? (
@@ -257,7 +257,7 @@ function MuteDropdown({
                 onClick={handleUnmute}
                 className={cn(
                   'w-full flex items-center gap-2 px-3 py-2 text-left',
-                  'text-xs text-white/50 hover:text-white hover:bg-white/[0.04]',
+                  'text-xs text-white/50 hover:text-white hover:bg-white/[0.06]',
                   'transition-colors'
                 )}
               >
@@ -277,7 +277,7 @@ function MuteDropdown({
                     onClick={() => handleMute(option.hours)}
                     className={cn(
                       'w-full flex items-center gap-2 px-3 py-2 text-left',
-                      'text-xs text-white/50 hover:text-white hover:bg-white/[0.04]',
+                      'text-xs text-white/50 hover:text-white hover:bg-white/[0.06]',
                       'transition-colors'
                     )}
                   >
@@ -332,7 +332,7 @@ export function SpaceHeader({
         className="flex items-center gap-3 group min-w-0"
       >
         {/* Smaller avatar (40px = size="default") */}
-        <Avatar size="default" className="flex-shrink-0 group-hover:ring-2 ring-white/10 transition-all">
+        <Avatar size="default" className="flex-shrink-0 group-hover:ring-2 ring-white/[0.06] transition-all">
           {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
           <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
         </Avatar>
@@ -426,7 +426,7 @@ export function SpaceHeader({
         {onMembersClick && (
           <button
             onClick={onMembersClick}
-            className="rounded-full px-3 py-1.5 text-xs text-white/50 hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="rounded-full px-3 py-1.5 text-xs text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
           >
             <span className="hidden sm:inline">Members</span>
             <span className="sm:ml-1">
@@ -452,7 +452,7 @@ export function SpaceHeader({
         {canModerate && onModerationClick && (
           <button
             onClick={onModerationClick}
-            className="rounded-full p-1.5 text-white/50 hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="rounded-full p-1.5 text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
             title="Moderation queue"
           >
             <Shield className="h-4 w-4" />
@@ -472,7 +472,7 @@ export function SpaceHeader({
         {isMember && onSettingsClick && (
           <button
             onClick={onSettingsClick}
-            className="rounded-full p-1.5 text-white/50 hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="rounded-full p-1.5 text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
             title={isLeader ? "Space settings" : "Leave space"}
           >
             <Settings className="h-4 w-4" />

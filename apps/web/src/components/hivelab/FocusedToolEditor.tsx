@@ -146,25 +146,25 @@ export function FocusedToolEditor({ spaceId, onComplete, onCancel }: FocusedTool
           transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         >
           <h2 className="text-2xl font-semibold text-white mb-2">Pick a Template</h2>
-          <p className="text-white/60 mb-8">Start with a pre-built pattern, customize the details</p>
+          <p className="text-white/50 mb-8">Start with a pre-built pattern, customize the details</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {TEMPLATES.map((template) => (
               <button
                 key={template.id}
                 onClick={() => handleTemplateSelect(template)}
-                className="p-6 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] rounded-xl text-left transition-colors"
+                className="p-6 bg-white/[0.06] hover:bg-white/[0.06] border border-white/[0.06] rounded-lg text-left transition-colors"
               >
                 <div className="text-4xl mb-3">{template.icon}</div>
                 <h3 className="text-lg font-medium text-white mb-1">{template.name}</h3>
-                <p className="text-sm text-white/60">{template.description}</p>
+                <p className="text-sm text-white/50">{template.description}</p>
               </button>
             ))}
           </div>
 
           <button
             onClick={onCancel}
-            className="mt-8 text-white/60 hover:text-white transition-colors"
+            className="mt-8 text-white/50 hover:text-white transition-colors"
           >
             ← Back
           </button>
@@ -180,7 +180,7 @@ export function FocusedToolEditor({ spaceId, onComplete, onCancel }: FocusedTool
         >
           <button
             onClick={() => setStep('template')}
-            className="mb-6 text-white/60 hover:text-white transition-colors"
+            className="mb-6 text-white/50 hover:text-white transition-colors"
           >
             ← Change Template
           </button>
@@ -188,7 +188,7 @@ export function FocusedToolEditor({ spaceId, onComplete, onCancel }: FocusedTool
           <div className="mb-8">
             <div className="text-4xl mb-3">{selectedTemplate.icon}</div>
             <h2 className="text-2xl font-semibold text-white mb-2">{selectedTemplate.name}</h2>
-            <p className="text-white/60">{selectedTemplate.description}</p>
+            <p className="text-white/50">{selectedTemplate.description}</p>
           </div>
 
           <div className="space-y-6 mb-8">
@@ -204,7 +204,7 @@ export function FocusedToolEditor({ spaceId, onComplete, onCancel }: FocusedTool
                     onChange={(e) => handleFieldChange(field.name, e.target.value)}
                     placeholder={field.placeholder}
                     rows={4}
-                    className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-[var(--life-gold)] transition-colors"
+                    className="w-full px-4 py-3 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:outline-none focus:border-[var(--life-gold)] transition-colors"
                   />
                 ) : (
                   <input
@@ -212,7 +212,7 @@ export function FocusedToolEditor({ spaceId, onComplete, onCancel }: FocusedTool
                     value={fieldValues[field.name] || ''}
                     onChange={(e) => handleFieldChange(field.name, e.target.value)}
                     placeholder={field.placeholder}
-                    className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:border-[var(--life-gold)] transition-colors"
+                    className="w-full px-4 py-3 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:outline-none focus:border-[var(--life-gold)] transition-colors"
                   />
                 )}
               </div>
@@ -242,10 +242,10 @@ export function FocusedToolEditor({ spaceId, onComplete, onCancel }: FocusedTool
           className="text-center py-16"
         >
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--life-gold)]/10 flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-[var(--life-gold)] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[var(--life-gold)] border-t-transparent rounded-full " />
           </div>
           <h3 className="text-xl font-medium text-white mb-2">Generating your tool...</h3>
-          <p className="text-white/60">This takes a few seconds</p>
+          <p className="text-white/50">This takes a few seconds</p>
         </motion.div>
       )}
     </div>

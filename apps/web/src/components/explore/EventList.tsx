@@ -11,7 +11,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Calendar, Users, Search } from 'lucide-react';
-import { GlassSurface, Badge, Button } from '@hive/ui/design-system/primitives';
+import { Badge, Button } from '@hive/ui/design-system/primitives';
 import { MOTION } from '@hive/tokens';
 import { toast } from '@hive/ui';
 import { cn } from '@/lib/utils';
@@ -59,27 +59,27 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
         transition={{ duration: MOTION.duration.standard, ease: MOTION.ease.premium }}
         className="flex flex-col items-center justify-center py-16 px-4"
       >
-        <GlassSurface
-          intensity="subtle"
-          className="p-8 rounded-xl max-w-md w-full text-center"
+        <div
+         
+          className="p-8 rounded-lg max-w-md w-full text-center"
         >
           {/* Icon */}
           <motion.div
-            className="w-14 h-14 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-5"
+            className="w-14 h-14 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-5"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.1 }}
           >
             {searchQuery ? (
-              <Search className="w-6 h-6 text-white/30" />
+              <Search className="w-6 h-6 text-white/50" />
             ) : (
-              <Calendar className="w-6 h-6 text-white/30" />
+              <Calendar className="w-6 h-6 text-white/50" />
             )}
           </motion.div>
 
           {/* Title */}
           <motion.h3
-            className="text-body-lg font-medium text-white/80 mb-2"
+            className="text-body-lg font-medium text-white mb-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.15 }}
@@ -91,7 +91,7 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
 
           {/* Subtitle */}
           <motion.p
-            className="text-body-sm text-white/40 mb-6 max-w-xs mx-auto"
+            className="text-body-sm text-white/50 mb-6 max-w-xs mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.2 }}
@@ -109,14 +109,14 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
             transition={{ duration: 0.2, delay: 0.25 }}
           >
             <Button variant="default" size="sm" asChild>
-              <Link href="/explore?tab=spaces">
+              <Link href="/discover?tab=spaces">
                 <Users className="w-4 h-4 mr-1.5" />
                 Find Spaces
               </Link>
             </Button>
             {searchQuery && (
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/explore?tab=events">See All Events</Link>
+                <Link href="/discover?tab=events">See All Events</Link>
               </Button>
             )}
           </motion.div>
@@ -132,7 +132,7 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
               Meetings, workshops, and hangouts all show up here
             </motion.p>
           )}
-        </GlassSurface>
+        </div>
       </motion.div>
     );
   }
@@ -148,7 +148,7 @@ export function EventList({ events, loading, searchQuery, onRSVP }: EventListPro
     >
       {Object.entries(groupedEvents).map(([dateKey, dateEvents]) => (
         <motion.div key={dateKey} className="space-y-3">
-          <h3 className="text-label text-white/40 uppercase tracking-wider">
+          <h3 className="text-label text-white/50 uppercase tracking-wider">
             {dateKey}
           </h3>
           <motion.div
@@ -207,18 +207,18 @@ function EventCard({ event, onRSVP }: EventCardProps) {
     >
       <Link href={event.spaceHandle ? `/s/${event.spaceHandle}/events/${event.id}` : '#'}>
         <motion.div>
-          <GlassSurface
-            intensity="subtle"
+          <div
+           
             className={cn(
-              'group p-4 rounded-xl transition-colors duration-200',
-              'border border-white/[0.06] hover:border-white/10',
+              'group p-4 rounded-lg transition-colors duration-200',
+              'border border-white/[0.06] hover:border-white/[0.06]',
               event.isLive && 'border-[var(--life-gold)]/30'
             )}
           >
             <div className="flex items-start gap-4">
               {/* Time column */}
               <div className="w-16 shrink-0 text-center">
-                <p className="text-label text-white/40 group-hover:text-white/60 transition-colors">
+                <p className="text-label text-white/50 group-hover:text-white/50 transition-colors">
                   {timeString.time}
                 </p>
                 {event.isLive && (
@@ -232,12 +232,12 @@ function EventCard({ event, onRSVP }: EventCardProps) {
               <div className="flex-1 min-w-0">
                 {/* Space context - now more prominent */}
                 {event.spaceName && (
-                  <p className="text-label-sm text-white/30 mb-1">
+                  <p className="text-label-sm text-white/50 mb-1">
                     {event.spaceName}
                   </p>
                 )}
 
-                <h3 className="text-body font-medium text-white truncate group-hover:text-white/90">
+                <h3 className="text-body font-medium text-white truncate group-hover:text-white">
                   {event.title}
                 </h3>
 
@@ -248,7 +248,7 @@ function EventCard({ event, onRSVP }: EventCardProps) {
                 )}
 
                 {/* Location and attendees */}
-                <div className="flex items-center gap-3 mt-2 text-label text-white/30">
+                <div className="flex items-center gap-3 mt-2 text-label text-white/50">
                   {event.location && <span>{event.location}</span>}
                   {event.rsvpCount > 0 && (
                     <>
@@ -278,7 +278,7 @@ function EventCard({ event, onRSVP }: EventCardProps) {
                 </Button>
               </div>
             </div>
-          </GlassSurface>
+          </div>
         </motion.div>
       </Link>
     </motion.div>
@@ -291,18 +291,18 @@ function EventCard({ event, onRSVP }: EventCardProps) {
 
 function EventCardSkeleton() {
   return (
-    <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse">
+    <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
       <div className="flex items-start gap-4">
         <div className="w-16 space-y-1">
           <div className="h-3 w-12 bg-white/[0.06] rounded mx-auto" />
         </div>
         <div className="flex-1 space-y-2">
           <div className="h-4 w-3/4 bg-white/[0.06] rounded" />
-          <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
+          <div className="h-3 w-1/2 bg-white/[0.06] rounded" />
         </div>
         <div className="w-16 space-y-1">
-          <div className="h-3 w-12 bg-white/[0.04] rounded ml-auto" />
-          <div className="h-7 w-14 bg-white/[0.04] rounded ml-auto" />
+          <div className="h-3 w-12 bg-white/[0.06] rounded ml-auto" />
+          <div className="h-7 w-14 bg-white/[0.06] rounded ml-auto" />
         </div>
       </div>
     </div>

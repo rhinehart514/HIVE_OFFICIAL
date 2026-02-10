@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * ResidenceHeader - Animated header with border draw
+ * ResidenceHeader - Animated header withdraw
  *
  * Features:
- * - Animated border on first visit (draws after ceremony)
+ * - Animatedon first visit (draws after ceremony)
  * - Compact identity: avatar + name + stats inline
  * - Actions: members, settings, create event
  *
@@ -44,7 +44,7 @@ interface ResidenceHeaderProps {
   };
   /** Whether user is a leader */
   isLeader?: boolean;
-  /** Whether to animate the border (first visit) */
+  /** Whether to animate the(first visit) */
   animateBorder?: boolean;
   /** Callback for members button */
   onMembersClick?: () => void;
@@ -106,7 +106,7 @@ export function ResidenceHeader({
         ease: MOTION.ease.premium,
       }}
     >
-      {/* Animated border on first visit */}
+      {/* Animatedon first visit */}
       {animateBorder && isInView && !shouldReduceMotion && (
         <div className="absolute inset-x-6 bottom-0 h-px">
           <motion.div
@@ -123,7 +123,7 @@ export function ResidenceHeader({
         </div>
       )}
 
-      {/* Static border if not animating */}
+      {/* Staticif not animating */}
       {!animateBorder && (
         <div className="absolute inset-x-6 bottom-0 h-px bg-white/[0.06]" />
       )}
@@ -136,7 +136,7 @@ export function ResidenceHeader({
             onClick={onSpaceInfoClick}
             className="relative group"
           >
-            <Avatar size="default" className="ring-2 ring-white/10 group-hover:ring-white/20 transition-all">
+            <Avatar size="default" className="ring-2 ring-white/[0.06] group-hover:ring-white/20 transition-all">
               {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
               <AvatarFallback className="text-sm bg-white/[0.06]">
                 {getInitials(space.name)}
@@ -169,7 +169,7 @@ export function ResidenceHeader({
             <div className="flex items-center gap-2">
               <button
                 onClick={onSpaceInfoClick}
-                className="text-base font-medium text-white/90 hover:text-white transition-colors"
+                className="text-base font-medium text-white hover:text-white transition-colors"
               >
                 {space.name}
               </button>
@@ -180,16 +180,16 @@ export function ResidenceHeader({
 
             {/* Stats row */}
             <div className="flex items-center gap-3 mt-0.5">
-              <span className="text-xs text-white/40">
+              <span className="text-xs text-white/50">
                 @{space.handle}
               </span>
-              <span className="text-white/20">·</span>
-              <span className="text-xs text-white/40">
+              <span className="text-white/50">·</span>
+              <span className="text-xs text-white/50">
                 {space.memberCount} members
               </span>
               {(space.activeTodayCount != null && space.activeTodayCount > 0) && (
                 <>
-                  <span className="text-white/20">·</span>
+                  <span className="text-white/50">·</span>
                   <span className="text-xs text-white/50">
                     {space.activeTodayCount} active today
                   </span>
@@ -197,10 +197,10 @@ export function ResidenceHeader({
               )}
               {space.onlineCount > 0 && (
                 <>
-                  <span className="text-white/20">·</span>
+                  <span className="text-white/50">·</span>
                   <div className="flex items-center gap-1">
                     <span
-                      className="w-1.5 h-1.5 rounded-full animate-pulse"
+                      className="w-1.5 h-1.5 rounded-full"
                       style={{ backgroundColor: SPACES_GOLD.primary }}
                     />
                     <span className="text-xs" style={{ color: `${SPACES_GOLD.primary}99` }}>
@@ -220,7 +220,7 @@ export function ResidenceHeader({
             variant="ghost"
             size="sm"
             onClick={onMembersClick}
-            className="text-white/50 hover:text-white/70 hover:bg-white/[0.04]"
+            className="text-white/50 hover:text-white/50 hover:bg-white/[0.06]"
           >
             <Users size={16} />
           </Button>
@@ -231,7 +231,7 @@ export function ResidenceHeader({
               variant="ghost"
               size="sm"
               onClick={onCreateEventClick}
-              className="text-white/50 hover:text-white/70 hover:bg-white/[0.04]"
+              className="text-white/50 hover:text-white/50 hover:bg-white/[0.06]"
             >
               <Calendar size={16} />
               <Plus size={12} className="ml-0.5 -mr-1" />
@@ -243,7 +243,7 @@ export function ResidenceHeader({
             variant="ghost"
             size="sm"
             onClick={onSettingsClick}
-            className="text-white/50 hover:text-white/70 hover:bg-white/[0.04]"
+            className="text-white/50 hover:text-white/50 hover:bg-white/[0.06]"
           >
             <Settings size={16} />
           </Button>

@@ -39,18 +39,18 @@ export default function TermsPage() {
         </header>
 
         {/* Summary card */}
-        <div className="mb-16 rounded-2xl border border-[var(--color-gold)]/10 bg-[var(--color-gold)]/[0.03] p-6">
+        <div className="mb-16 rounded-lg border border-[var(--color-gold)]/10 bg-[var(--color-gold)]/[0.03] p-6">
           <p className="mb-2 text-label-sm font-semibold uppercase tracking-wider text-[var(--color-gold)]/60">
             The short version
           </p>
-          <p className="text-body leading-relaxed text-white/70">
+          <p className="text-body leading-relaxed text-white/50">
             Be a decent human. Don't break things on purpose. Your stuff is yours. I'm building this for students, not lawyers. But lawyers exist, so here's the real terms below.
           </p>
         </div>
 
         {/* Table of Contents */}
-        <nav className="mb-16 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
-          <p className="mb-4 text-label-sm font-semibold uppercase tracking-wider text-white/30">
+        <nav className="mb-16 rounded-lg border border-white/[0.06] bg-white/[0.06] p-6">
+          <p className="mb-4 text-label-sm font-semibold uppercase tracking-wider text-white/50">
             Contents
           </p>
           <ol className="grid gap-2 text-body md:grid-cols-2">
@@ -60,7 +60,7 @@ export default function TermsPage() {
                   href={`#${section.id}`}
                   className="flex items-baseline gap-3 text-white/50 transition-colors hover:text-white"
                 >
-                  <span className="text-label text-white/20">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="text-label text-white/50">{String(i + 1).padStart(2, '0')}</span>
                   {section.title}
                 </a>
               </li>
@@ -152,7 +152,7 @@ export default function TermsPage() {
 
           <Section id="tools" number="06" title="HiveLab Tools">
             <p>
-              You can build Tools on HIVE — interactive things for your campus. Cool.
+              You can build Tools on HIVE — things for your campus. Cool.
               But don't:
             </p>
             <ul>
@@ -230,7 +230,7 @@ export default function TermsPage() {
                 hiveconnects@gmail.com
               </a>
             </p>
-            <p className="text-body text-white/40">
+            <p className="text-body text-white/50">
               HIVE<br />
               Built in Buffalo, NY
             </p>
@@ -239,7 +239,7 @@ export default function TermsPage() {
 
         {/* Version footer */}
         <footer className="mt-20 border-t border-white/[0.06] pt-8">
-          <p className="text-label text-white/30">
+          <p className="text-label text-white/50">
             Version 1.0 · Effective January 15, 2025
           </p>
         </footer>
@@ -265,7 +265,7 @@ function Section({
         <span className="text-body-sm font-medium text-[var(--color-gold)]/50">{number}</span>
         <h2 className="text-title font-semibold text-white">{title}</h2>
       </div>
-      <div className="space-y-4 text-body leading-relaxed text-white/60 [&_a]:underline [&_a]:underline-offset-2 [&_li]:pl-1 [&_strong]:font-medium [&_strong]:text-white/80 [&_ul]:ml-4 [&_ul]:list-disc [&_ul]:space-y-2">
+      <div className="space-y-4 text-body leading-relaxed text-white/50 [&_a]:underline [&_a]:underline-offset-2 [&_li]:pl-1 [&_strong]:font-medium [&_strong]:text-white [&_ul]:ml-4 [&_ul]:list-disc [&_ul]:space-y-2">
         {children}
       </div>
     </section>

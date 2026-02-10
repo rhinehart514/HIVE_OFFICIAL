@@ -90,12 +90,12 @@ function ToolIcon({
     social: 'text-pink-400',
     utility: 'text-amber-400',
     entertainment: 'text-purple-400',
-    other: 'text-white/60',
+    other: 'text-white/50',
   };
 
   const colorClass = isActive
     ? 'text-white'
-    : categoryColors[category] || 'text-white/40';
+    : categoryColors[category] || 'text-white/50';
 
   return (
     <div
@@ -162,8 +162,8 @@ function HoverActions({
           }}
           className={cn(
             'p-1 rounded transition-colors',
-            'hover:bg-white/[0.08]',
-            'text-white/40 hover:text-white/60'
+            'hover:bg-white/[0.06]',
+            'text-white/50 hover:text-white/50'
           )}
           title="View in Lab"
         >
@@ -181,7 +181,7 @@ function HoverActions({
           className={cn(
             'p-1 rounded transition-colors',
             'hover:bg-red-500/20',
-            'text-white/40 hover:text-red-400'
+            'text-white/50 hover:text-red-400'
           )}
           title="Unpin from sidebar"
         >
@@ -236,15 +236,15 @@ export function SidebarToolCard({
         'text-left',
         // Active state
         isActive && [
-          'bg-white/[0.08]',
+          'bg-white/[0.06]',
           'text-white',
           'border-l-2 border-[var(--color-accent-gold,#FFD700)]',
           'ml-[-2px]',
         ],
         // Inactive state
         !isActive && [
-          'hover:bg-white/[0.04]',
-          'text-white/60 hover:text-white/80',
+          'hover:bg-white/[0.06]',
+          'text-white/50 hover:text-white',
         ]
       )}
       whileHover={{ x: 2 }}

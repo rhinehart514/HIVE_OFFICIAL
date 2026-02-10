@@ -54,15 +54,15 @@ function OrgCarousel() {
           className="absolute inset-0 flex flex-col items-center justify-center"
         >
           <div className="flex items-center gap-2 mb-2">
-            <span className="w-2 h-2 rounded-full bg-gold-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-gold-500" />
             <span className="text-label-sm font-mono text-gold-500/70 uppercase tracking-wider">
               Unclaimed
             </span>
           </div>
-          <p className="text-2xl md:text-3xl font-semibold text-white/90 text-center">
+          <p className="text-2xl md:text-3xl font-semibold text-white text-center">
             {org.name}
           </p>
-          <p className="text-sm text-white/40 mt-1">
+          <p className="text-sm text-white/50 mt-1">
             {org.members} potential members · {org.category}
           </p>
         </motion.div>
@@ -110,15 +110,15 @@ function LeaderBenefits() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 + i * 0.1, duration: 0.5, ease: EASE_PREMIUM }}
-          className="relative p-4 rounded-xl border border-white/[0.06] bg-white/[0.02]"
+          className="relative p-4 rounded-lg border border-white/[0.06] bg-white/[0.06]"
         >
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-white/50">
+            <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50">
               {benefit.icon}
             </div>
             <div>
-              <h3 className="text-sm font-medium text-white/80">{benefit.title}</h3>
-              <p className="text-xs text-white/40 mt-0.5">{benefit.desc}</p>
+              <h3 className="text-sm font-medium text-white">{benefit.title}</h3>
+              <p className="text-xs text-white/50 mt-0.5">{benefit.desc}</p>
             </div>
           </div>
         </motion.div>
@@ -137,17 +137,17 @@ function Stats() {
     >
       <div>
         <div className="text-3xl font-semibold text-white">400+</div>
-        <div className="text-xs text-white/30 mt-1">Orgs Pre-Loaded</div>
+        <div className="text-xs text-white/50 mt-1">Orgs Pre-Loaded</div>
       </div>
-      <div className="w-px h-10 bg-white/10" />
+      <div className="w-px h-10 bg-white/[0.06]" />
       <div>
         <div className="text-3xl font-semibold text-gold-500">47</div>
-        <div className="text-xs text-white/30 mt-1">Founding Spots</div>
+        <div className="text-xs text-white/50 mt-1">Founding Spots</div>
       </div>
-      <div className="w-px h-10 bg-white/10" />
+      <div className="w-px h-10 bg-white/[0.06]" />
       <div>
         <div className="text-3xl font-semibold text-white">&lt;24h</div>
-        <div className="text-xs text-white/30 mt-1">Verification</div>
+        <div className="text-xs text-white/50 mt-1">Verification</div>
       </div>
     </motion.div>
   );
@@ -192,7 +192,7 @@ export default function LeadersPage() {
             </Link>
             <Link
               href="/enter"
-              className="text-sm text-white/40 hover:text-white/70 transition-colors"
+              className="text-sm text-white/50 hover:text-white/50 transition-colors"
             >
               Sign in
             </Link>
@@ -210,7 +210,7 @@ export default function LeadersPage() {
             transition={{ delay: 0.1, duration: 0.5, ease: EASE_PREMIUM }}
             className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full border border-gold-500/20 bg-gold-500/[0.03]"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-gold-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-gold-500" />
             <span className="text-label-sm font-medium text-gold-500/80 tracking-wide uppercase">
               For Club Leaders
             </span>
@@ -225,7 +225,7 @@ export default function LeadersPage() {
           >
             Your org is already here.
             <br />
-            <span className="text-white/40">Claim it.</span>
+            <span className="text-white/50">Claim it.</span>
           </motion.h1>
 
           {/* Subhead */}
@@ -233,10 +233,10 @@ export default function LeadersPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={isVisible ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.35, duration: 0.6, ease: EASE_PREMIUM }}
-            className="text-base md:text-lg text-white/40 max-w-xl mx-auto mb-8"
+            className="text-base md:text-lg text-white/50 max-w-xl mx-auto mb-8"
           >
             We pre-loaded{" "}
-            <span className="text-white/60">every registered UB organization</span>.
+            <span className="text-white/50">every registered UB organization</span>.
             Find yours, claim leadership, and start building your community.
           </motion.p>
 
@@ -275,7 +275,7 @@ export default function LeadersPage() {
                 />
               </svg>
             </button>
-            <p className="mt-4 text-label-sm font-mono text-white/20">
+            <p className="mt-4 text-label-sm font-mono text-white/50">
               You&apos;ll get access immediately while we verify · @buffalo.edu required
             </p>
           </motion.div>
@@ -293,7 +293,7 @@ export default function LeadersPage() {
             transition={{ delay: 0.9, duration: 0.5, ease: EASE_PREMIUM }}
             className="mt-16"
           >
-            <h2 className="text-sm font-medium text-white/30 uppercase tracking-wider mb-6">
+            <h2 className="text-sm font-medium text-white/50 uppercase tracking-wider mb-6">
               How It Works
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
@@ -315,12 +315,12 @@ export default function LeadersPage() {
                 },
               ].map((item, i) => (
                 <div key={i} className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/[0.04] flex items-center justify-center text-sm font-medium text-white/40">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-sm font-medium text-white/50">
                     {item.step}
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-white/70">{item.title}</h3>
-                    <p className="text-xs text-white/30 mt-1">{item.desc}</p>
+                    <h3 className="text-sm font-medium text-white/50">{item.title}</h3>
+                    <p className="text-xs text-white/50 mt-1">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -332,7 +332,7 @@ export default function LeadersPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={isVisible ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 1.0, duration: 0.5, ease: EASE_PREMIUM }}
-            className="mt-16 p-6 rounded-2xl border border-gold-500/10 bg-gold-500/[0.02]"
+            className="mt-16 p-6 rounded-lg border border-gold-500/10 bg-gold-500/[0.02]"
           >
             <div className="flex items-center justify-center gap-2 mb-3">
               <span className="text-gold-500">
@@ -342,7 +342,7 @@ export default function LeadersPage() {
               </span>
               <span className="text-sm font-medium text-gold-500/90">Founding Leader Class of 2026</span>
             </div>
-            <p className="text-xs text-white/40 max-w-md mx-auto">
+            <p className="text-xs text-white/50 max-w-md mx-auto">
               The first 50 leaders to fully activate their spaces earn the permanent{" "}
               <span className="text-gold-500/70">Founding Leader</span> badge.{" "}
               <span className="text-white/50">47 spots remaining.</span>
@@ -354,18 +354,18 @@ export default function LeadersPage() {
             initial={{ opacity: 0 }}
             animate={isVisible ? { opacity: 1 } : {}}
             transition={{ delay: 1.1, duration: 0.5 }}
-            className="mt-16 pt-8 border-t border-white/[0.04]"
+            className="mt-16 pt-8 border-t border-white/[0.06]"
           >
-            <div className="flex items-center justify-center gap-6 text-label-sm text-white/20">
-              <Link href="/" className="hover:text-white/40 transition-colors">
+            <div className="flex items-center justify-center gap-6 text-label-sm text-white/50">
+              <Link href="/" className="hover:text-white/50 transition-colors">
                 Main Site
               </Link>
               <span>·</span>
-              <Link href="/legal/privacy" className="hover:text-white/40 transition-colors">
+              <Link href="/legal/privacy" className="hover:text-white/50 transition-colors">
                 Privacy
               </Link>
               <span>·</span>
-              <Link href="/legal/terms" className="hover:text-white/40 transition-colors">
+              <Link href="/legal/terms" className="hover:text-white/50 transition-colors">
                 Terms
               </Link>
             </div>

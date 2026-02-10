@@ -44,9 +44,9 @@ export default function OfflinePage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-6">
       <div className="max-w-md w-full text-center space-y-6">
         {/* Offline Icon */}
-        <div className="mx-auto w-24 h-24 rounded-full bg-zinc-900 flex items-center justify-center">
+        <div className="mx-auto w-24 h-24 rounded-full bg-[#0A0A0A] flex items-center justify-center">
           <svg
-            className="w-12 h-12 text-zinc-600"
+            className="w-12 h-12 text-white/50"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -72,7 +72,7 @@ export default function OfflinePage() {
         <h1 className="text-2xl font-bold">You&apos;re Offline</h1>
 
         {/* Description */}
-        <p className="text-zinc-400">
+        <p className="text-white/50">
           It looks like you&apos;ve lost your internet connection. Don&apos;t worry - some
           features are still available offline.
         </p>
@@ -90,9 +90,9 @@ export default function OfflinePage() {
         </div>
 
         {/* Offline Features */}
-        <div className="bg-zinc-900 rounded-lg p-4 text-left">
+        <div className="bg-[#0A0A0A] rounded-lg p-4 text-left">
           <h3 className="font-semibold mb-3">Available Offline:</h3>
-          <ul className="space-y-2 text-sm text-zinc-400">
+          <ul className="space-y-2 text-sm text-white/50">
             <li className="flex items-center gap-2">
               <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -125,14 +125,14 @@ export default function OfflinePage() {
 
           <button
             onClick={() => window.history.back()}
-            className="w-full py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-lg transition-colors"
+            className="w-full py-3 px-4 bg-[#0A0A0A] hover:bg-white/[0.06] text-white font-semibold rounded-lg transition-colors"
           >
             Go Back
           </button>
         </div>
 
         {/* Help Text */}
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-white/50">
           Your actions will be saved and synced automatically when you&apos;re back online.
         </p>
       </div>

@@ -9,7 +9,7 @@ export default function SetupDetailLoading() {
 
         {/* Header */}
         <div className="flex items-start gap-4 mb-8">
-          <Skeleton className="h-16 w-16 rounded-xl" />
+          <Skeleton className="h-16 w-16 rounded-lg" />
           <div className="flex-1">
             <Skeleton className="h-7 w-48 mb-2" />
             <Skeleton className="h-4 w-32 mb-3" />
@@ -24,7 +24,7 @@ export default function SetupDetailLoading() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="p-4 rounded-xl border"
+              className="p-4 rounded-lg border"
               style={{
                 backgroundColor: 'var(--hivelab-surface, #141414)',
                 borderColor: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
@@ -43,7 +43,7 @@ export default function SetupDetailLoading() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="p-4 rounded-xl border"
+                className="p-4 rounded-lg border"
                 style={{
                   backgroundColor: 'var(--hivelab-surface, #141414)',
                   borderColor: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',

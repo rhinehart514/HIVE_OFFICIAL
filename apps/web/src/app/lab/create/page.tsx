@@ -37,7 +37,7 @@ export default function CreateToolRedirect() {
       className="min-h-screen flex items-center justify-center"
       style={{ backgroundColor: 'var(--bg-void, #050504)' }}
     >
-      <div className="w-5 h-5 border-2 border-white/10 border-t-white/50 rounded-full animate-spin" />
+      <div className="w-5 h-5 border-2 border-white/[0.06] border-t-white/50 rounded-full " />
     </div>
   );
 }

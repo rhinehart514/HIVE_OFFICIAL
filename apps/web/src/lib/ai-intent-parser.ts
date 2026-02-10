@@ -14,7 +14,7 @@ import { logger } from './logger';
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type IntentType = 'poll' | 'rsvp' | 'countdown' | 'announcement' | 'none';
+export type IntentType = 'poll' | 'rsvp' | 'countdown' | 'announcement' | 'signup' | 'event' | 'none';
 
 export interface ParsedIntent {
   type: IntentType;
@@ -37,6 +37,15 @@ export interface IntentParams {
   // Countdown params
   title?: string;
   targetDate?: Date;
+
+  // Signup params
+  signupTitle?: string;
+  slots?: string[];
+  limitPerSlot?: number;
+
+  // Event params
+  location?: string;
+  description?: string;
 
   // Announcement params
   content?: string;
@@ -61,6 +70,11 @@ const intentSchema = Schema.object({
         title: Schema.string(),
         targetDate: Schema.string(),
         content: Schema.string(),
+        signupTitle: Schema.string(),
+        slots: Schema.array({ items: Schema.string() }),
+        limitPerSlot: Schema.number(),
+        location: Schema.string(),
+        description: Schema.string(),
       },
     }),
   },
@@ -95,6 +109,18 @@ ANNOUNCEMENT (type: "announcement")
 - Extract: content (the announcement text)
 - Example: "📢 Meeting moved to Room 201" → announcement
 
+SIGNUP (type: "signup")
+- Triggers: "signup sheet", "sign up sheet", "volunteer for", "who can bring", "slot signup", "need volunteers"
+- Extract: signupTitle, slots (array of slot names), limitPerSlot (if capacity mentioned)
+- Example: "Who can bring stuff to the potluck? Drinks, Snacks, Plates, Cups" → signup with 4 slots
+- Example: "Need 3 volunteers for each: Setup, Cleanup, Registration" → signup with limit 3
+
+EVENT (type: "event")
+- Triggers: "create an event", "schedule event", "new event", "event for", "let's plan"
+- Extract: eventTitle, eventDate (ISO string), location, description
+- Example: "Let's plan a study session Wednesday at the library" → event with date and location
+- Example: "Create an event for the end-of-year party on May 1st in the student union" → event
+
 NONE (type: "none")
 - Regular conversation, questions, statements that aren't component requests
 - Example: "How's everyone doing?" → none
@@ -115,7 +141,7 @@ NONE (type: "none")
 ## Output Format
 
 Return a JSON object with:
-- type: "poll" | "rsvp" | "countdown" | "announcement" | "none"
+- type: "poll" | "rsvp" | "countdown" | "announcement" | "signup" | "event" | "none"
 - confidence: 0.0 to 1.0
 - params: extracted parameters (only include relevant ones)
 
@@ -406,7 +432,7 @@ function transformAIResponse(
   const paramsRaw = (response.params as Record<string, unknown>) ?? {};
 
   // Validate type
-  const validTypes: IntentType[] = ['poll', 'rsvp', 'countdown', 'announcement', 'none'];
+  const validTypes: IntentType[] = ['poll', 'rsvp', 'countdown', 'announcement', 'signup', 'event', 'none'];
   if (!validTypes.includes(type)) {
     return createNoneIntent(rawInput);
   }

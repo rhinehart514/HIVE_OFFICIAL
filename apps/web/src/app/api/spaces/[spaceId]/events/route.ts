@@ -13,6 +13,7 @@ import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
 import { SecurityScanner } from "@/lib/secure-input-validation";
+import { getEventStartDate, toEventDate } from "@/lib/events/event-time";
 // Ghost Mode for privacy filtering
 import { GhostModeService, type GhostModeUser } from '@hive/core/domain/profile/services/ghost-mode.service';
 import { ViewerContext } from '@hive/core/domain/shared/value-objects/viewer-context.value';
@@ -29,6 +30,56 @@ const GetEventsSchema = z.object({
     .optional(),
   upcoming: z.coerce.boolean().default(true),
 });
+
+type GetEventsQuery = z.infer<typeof GetEventsSchema>;
+type TimeField = "startDate" | "startAt";
+
+const TIME_FIELDS: TimeField[] = ["startDate", "startAt"];
+const MAX_FETCH_WINDOW = 300;
+
+function matchesUpcomingFilter(eventStart: Date, now: Date, upcoming: boolean) {
+  return upcoming ? eventStart >= now : eventStart < now;
+}
+
+async function fetchSpaceEventDocsForTimeField({
+  spaceId,
+  campusId,
+  queryParams,
+  now,
+  dateField,
+  fetchWindow,
+  includeCampusFilter,
+}: {
+  spaceId: string;
+  campusId: string;
+  queryParams: GetEventsQuery;
+  now: Date;
+  dateField: TimeField;
+  fetchWindow: number;
+  includeCampusFilter: boolean;
+}): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  let query: FirebaseFirestore.Query = dbAdmin
+    .collection("events")
+    .where("spaceId", "==", spaceId);
+
+  if (includeCampusFilter) {
+    query = query.where("campusId", "==", campusId);
+  }
+
+  if (queryParams.type) {
+    query = query.where("type", "==", queryParams.type);
+  }
+
+  if (queryParams.upcoming) {
+    query = query.where(dateField, ">=", now).orderBy(dateField, "asc");
+  } else {
+    query = query.where(dateField, "<", now).orderBy(dateField, "desc");
+  }
+
+  query = query.limit(fetchWindow);
+  const snapshot = await query.get();
+  return snapshot.docs;
+}
 
 const CreateEventSchema = z.object({
   title: z.string().min(1).max(200),
@@ -84,53 +135,67 @@ export const GET = withAuthAndErrors(async (
       Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
 
-    // Use flat /events collection with spaceId filter (for cross-space calendar queries)
-    // First, try with campusId for performance. If empty, fall back to spaceId-only query
-    // to handle imported/legacy events that may have different campusId values.
-    let query: FirebaseFirestore.Query = dbAdmin
-      .collection("events")
-      .where("spaceId", "==", spaceId)
-      .where("campusId", "==", campusId);
-
     const now = new Date();
-    if (queryParams.upcoming) {
-      query = query.where("startDate", ">=", now).orderBy("startDate", "asc");
-    } else {
-      query = query.where("startDate", "<", now).orderBy("startDate", "desc");
-    }
+    const fetchWindow = Math.min(
+      Math.max((queryParams.offset + queryParams.limit) * 2, queryParams.limit),
+      MAX_FETCH_WINDOW
+    );
 
-    if (queryParams.type) {
-      query = query.where("type", "==", queryParams.type);
-    }
+    // Query both startDate and startAt fields, then merge.
+    const docsById = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+    let foundWithCampusFilter = false;
 
-    query = query.offset(queryParams.offset).limit(queryParams.limit);
-
-    let eventsSnapshot = await query.get();
-
-    // Fallback: If no events found, try without campusId filter for imported/legacy events
-    // CampusLabs imported events may have different or missing campusId
-    if (eventsSnapshot.empty) {
-      logger.info('No events found with campusId, trying fallback query', { spaceId, campusId });
-      let fallbackQuery: FirebaseFirestore.Query = dbAdmin
-        .collection("events")
-        .where("spaceId", "==", spaceId);
-
-      if (queryParams.upcoming) {
-        fallbackQuery = fallbackQuery.where("startDate", ">=", now).orderBy("startDate", "asc");
-      } else {
-        fallbackQuery = fallbackQuery.where("startDate", "<", now).orderBy("startDate", "desc");
+    for (const dateField of TIME_FIELDS) {
+      try {
+        const docs = await fetchSpaceEventDocsForTimeField({
+          spaceId,
+          campusId,
+          queryParams,
+          now,
+          dateField,
+          fetchWindow,
+          includeCampusFilter: true,
+        });
+        if (docs.length > 0) {
+          foundWithCampusFilter = true;
+        }
+        for (const doc of docs) docsById.set(doc.id, doc);
+      } catch (error) {
+        logger.warn("Space events query failed for date field", {
+          spaceId,
+          dateField,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
-
-      if (queryParams.type) {
-        fallbackQuery = fallbackQuery.where("type", "==", queryParams.type);
-      }
-
-      fallbackQuery = fallbackQuery.offset(queryParams.offset).limit(queryParams.limit);
-      eventsSnapshot = await fallbackQuery.get();
     }
 
-    // Early return if no events - avoid unnecessary processing
-    if (eventsSnapshot.empty) {
+    // Fallback: If no events found with campus filter, try space-only for imported legacy docs.
+    if (!foundWithCampusFilter) {
+      logger.info("No events found with campusId, trying fallback query", { spaceId, campusId });
+      for (const dateField of TIME_FIELDS) {
+        try {
+          const docs = await fetchSpaceEventDocsForTimeField({
+            spaceId,
+            campusId,
+            queryParams,
+            now,
+            dateField,
+            fetchWindow,
+            includeCampusFilter: false,
+          });
+          for (const doc of docs) docsById.set(doc.id, doc);
+        } catch (error) {
+          logger.warn("Fallback space events query failed for date field", {
+            spaceId,
+            dateField,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    }
+
+    const candidateDocs = Array.from(docsById.values());
+    if (candidateDocs.length === 0) {
       return respond.success({
         events: [],
         hasMore: false,
@@ -142,13 +207,19 @@ export const GET = withAuthAndErrors(async (
       });
     }
 
-    // COST OPTIMIZATION: Collect all unique IDs for batch fetching
-    const organizerIds = new Set<string>();
-    const eventIds: string[] = [];
-    const validDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+    const validDocs: Array<{
+      doc: FirebaseFirestore.QueryDocumentSnapshot;
+      eventData: Record<string, unknown>;
+      eventStart: Date;
+    }> = [];
 
-    for (const doc of eventsSnapshot.docs) {
+    for (const doc of candidateDocs) {
       const eventData = doc.data();
+
+      const eventStart = getEventStartDate(eventData);
+      if (!eventStart) continue;
+      if (!matchesUpcomingFilter(eventStart, now, queryParams.upcoming)) continue;
+
       // SECURITY: Skip events from other campuses
       if (eventData.campusId && eventData.campusId !== campusId) {
         continue;
@@ -157,14 +228,33 @@ export const GET = withAuthAndErrors(async (
       if (isContentHidden(eventData)) {
         continue;
       }
-      validDocs.push(doc);
-      eventIds.push(doc.id);
-      if (eventData.organizerId) {
-        organizerIds.add(eventData.organizerId);
-      }
+      validDocs.push({ doc, eventData, eventStart });
     }
 
-    // COST OPTIMIZATION: Batch fetch all organizers in ONE query (N+1 → 1)
+    validDocs.sort((a, b) =>
+      queryParams.upcoming
+        ? a.eventStart.getTime() - b.eventStart.getTime()
+        : b.eventStart.getTime() - a.eventStart.getTime()
+    );
+
+    const pagedDocs = validDocs.slice(
+      queryParams.offset,
+      queryParams.offset + queryParams.limit
+    );
+    const hasMore = validDocs.length > queryParams.offset + queryParams.limit;
+
+    // COST OPTIMIZATION: Collect IDs for batch fetching
+    const organizerIds = new Set<string>();
+    const eventIds: string[] = [];
+
+    for (const { doc, eventData } of pagedDocs) {
+      eventIds.push(doc.id);
+      const organizerId =
+        typeof eventData.organizerId === "string" ? eventData.organizerId : null;
+      if (organizerId) organizerIds.add(organizerId);
+    }
+
+    // Batch fetch all organizers
     const organizerMap = new Map<string, { id: string; data: Record<string, unknown> } | null>();
     if (organizerIds.size > 0) {
       const organizerRefs = Array.from(organizerIds).map(id => dbAdmin.collection("users").doc(id));
@@ -178,8 +268,7 @@ export const GET = withAuthAndErrors(async (
       }
     }
 
-    // COST OPTIMIZATION: Batch fetch user's RSVPs for all events (N+1 → 1)
-    // Note: Firestore 'in' queries support up to 30 values
+    // Batch fetch user's RSVPs
     const userRsvpMap = new Map<string, string>();
     if (eventIds.length > 0) {
       const chunks = [];
@@ -198,25 +287,28 @@ export const GET = withAuthAndErrors(async (
       }
     }
 
-    // COST OPTIMIZATION: Batch fetch RSVP counts using aggregation or cached counts
-    // For now, use the event's cached attendeeCount if available, otherwise skip live count
-    // This avoids N queries for RSVP counts
-
-    // COST OPTIMIZATION: Batch fetch linked boards (N+1 → 1)
+    // Batch fetch linked boards (chunked for Firestore 'in' query limit)
     const linkedBoardMap = new Map<string, { boardId: string; boardName: string } | null>();
     if (eventIds.length > 0) {
-      const boardsSnapshot = await dbAdmin
-        .collection("spaces")
-        .doc(spaceId)
-        .collection("boards")
-        .where("linkedEventId", "in", eventIds.slice(0, 30)) // Firestore 'in' limit
-        .get();
-      for (const boardDoc of boardsSnapshot.docs) {
-        const boardData = boardDoc.data();
-        linkedBoardMap.set(boardData.linkedEventId, {
-          boardId: boardDoc.id,
-          boardName: boardData.name,
-        });
+      const chunks = [];
+      for (let i = 0; i < eventIds.length; i += 30) {
+        chunks.push(eventIds.slice(i, i + 30));
+      }
+
+      for (const chunk of chunks) {
+        const boardsSnapshot = await dbAdmin
+          .collection("spaces")
+          .doc(spaceId)
+          .collection("boards")
+          .where("linkedEventId", "in", chunk)
+          .get();
+        for (const boardDoc of boardsSnapshot.docs) {
+          const boardData = boardDoc.data();
+          linkedBoardMap.set(boardData.linkedEventId, {
+            boardId: boardDoc.id,
+            boardName: boardData.name,
+          });
+        }
       }
     }
 
@@ -229,9 +321,10 @@ export const GET = withAuthAndErrors(async (
 
     const events: Array<Record<string, unknown>> = [];
 
-    for (const doc of validDocs) {
-      const eventData = doc.data();
-      const organizerEntry = eventData.organizerId ? organizerMap.get(eventData.organizerId) : null;
+    for (const { doc, eventData, eventStart } of pagedDocs) {
+      const organizerId =
+        typeof eventData.organizerId === "string" ? eventData.organizerId : null;
+      const organizerEntry = organizerId ? organizerMap.get(organizerId) : null;
       const organizer = organizerEntry?.data || null;
 
       // GHOST MODE: Check if organizer's activity should be hidden
@@ -252,6 +345,7 @@ export const GET = withAuthAndErrors(async (
       events.push({
         id: doc.id,
         ...eventData,
+        startDate: toEventDate(eventData.startDate) || toEventDate(eventData.startAt) || eventStart,
         organizer: shouldHideOrganizer
           ? null
           : organizer
@@ -271,14 +365,11 @@ export const GET = withAuthAndErrors(async (
 
     return respond.success({
       events,
-      hasMore: eventsSnapshot.size === queryParams.limit,
+      hasMore,
       pagination: {
         limit: queryParams.limit,
         offset: queryParams.offset,
-        nextOffset:
-          eventsSnapshot.size === queryParams.limit
-            ? queryParams.offset + queryParams.limit
-            : null,
+        nextOffset: hasMore ? queryParams.offset + queryParams.limit : null,
       },
     });
   } catch (error) {

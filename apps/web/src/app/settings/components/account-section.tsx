@@ -58,14 +58,14 @@ export function AccountSection({
 }: AccountSectionProps) {
   return (
     <div className="space-y-6">
-      <Card className="p-6 bg-white/5 border-white/[0.08]">
+      <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
         <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
           <CalendarClock className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Connected Calendars
         </h3>
         {isCalendarLoading ? (
           <div className="flex items-center justify-center py-8">
-            <ArrowPathIcon className="h-6 w-6 animate-spin text-white/40" />
+            <ArrowPathIcon className="h-6 w-6  text-white/50" />
           </div>
         ) : !calendarStatus?.available ? (
           <div className="py-4 text-center">
@@ -100,7 +100,7 @@ export function AccountSection({
                     className="border-red-500/20 text-red-400 hover:bg-red-500/10"
                   >
                     {isDisconnecting ? (
-                      <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      <ArrowPathIcon className="h-4 w-4 " aria-hidden="true" />
                     ) : (
                       <>
                         <Unlink className="h-4 w-4 mr-2" aria-hidden="true" />
@@ -134,7 +134,7 @@ export function AccountSection({
               <Button
                 onClick={onCalendarConnect}
                 aria-label="Connect your Google Calendar account"
-                className="bg-white/10 text-white hover:bg-white/20 border border-white/20"
+                className="bg-white/[0.06] text-white hover:bg-white/[0.06] border border-white/[0.06]"
               >
                 <LinkIcon className="h-4 w-4 mr-2" aria-hidden="true" />
                 Connect Google Calendar
@@ -144,7 +144,7 @@ export function AccountSection({
         )}
       </Card>
 
-      <Card className="p-6 bg-white/5 border-white/[0.08]">
+      <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
         <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
           <SettingsIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Preferences
@@ -156,7 +156,7 @@ export function AccountSection({
               <Badge variant="default" className="bg-[var(--hive-brand-primary)]/20 text-[var(--hive-brand-primary)] border-0">
                 Dark
               </Badge>
-              <span className="text-xs text-white/40">(Locked to dark for vBETA)</span>
+              <span className="text-xs text-white/50">(Locked to dark for vBETA)</span>
             </div>
           </div>
           <div>
@@ -169,7 +169,7 @@ export function AccountSection({
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition ${
                     accountSettings.emailFrequency === freq
                       ? 'bg-[var(--hive-brand-primary)] text-black'
-                      : 'bg-white/10 text-white/50 hover:bg-white/20'
+                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.06]'
                   }`}
                 >
                   {freq}
@@ -180,7 +180,7 @@ export function AccountSection({
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/5 border-white/[0.08]">
+      <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
         <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
           <ShieldCheckIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Data Management
@@ -206,7 +206,7 @@ export function AccountSection({
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                     accountSettings.dataRetention.retentionDays === days
                       ? 'bg-[var(--hive-brand-primary)] text-black'
-                      : 'bg-white/10 text-white/50 hover:bg-white/20'
+                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.06]'
                   }`}
                 >
                   {days === 365 ? '1 year' : `${days} days`}
@@ -221,11 +221,11 @@ export function AccountSection({
             onClick={onDownloadData}
             disabled={isDownloading}
             aria-label={isDownloading ? 'Downloading your data' : 'Download a complete copy of all your data'}
-            className="border-white/20 text-white hover:bg-white/10"
+            className="border-white/[0.06] text-white hover:bg-white/[0.06]"
           >
             {isDownloading ? (
               <>
-                <ArrowPathIcon className="h-4 w-4 animate-spin mr-2" aria-hidden="true" />
+                <ArrowPathIcon className="h-4 w-4  mr-2" aria-hidden="true" />
                 {exportProgress
                   ? `${exportProgress.currentItem} (${exportProgress.current}/${exportProgress.total})`
                   : 'Preparing...'}
@@ -237,7 +237,7 @@ export function AccountSection({
               </>
             )}
           </Button>
-          <p className="text-xs text-white/40 mt-2">
+          <p className="text-xs text-white/50 mt-2">
             {isDownloading
               ? 'Gathering your profile, spaces, connections, tools, and calendar...'
               : 'Get a complete copy of all your data including spaces, connections, tools, and events'}
@@ -245,7 +245,7 @@ export function AccountSection({
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/5 border-white/[0.08] space-y-4">
+      <Card className="p-6 bg-white/[0.06] border-white/[0.06] space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-white font-medium mb-1">Sign Out</h3>
@@ -253,7 +253,7 @@ export function AccountSection({
           </div>
           <Button
             variant="secondary"
-            className="border-white/20 text-white hover:bg-white/10"
+            className="border-white/[0.06] text-white hover:bg-white/[0.06]"
             onClick={onLogout}
             aria-label="Sign out of your HIVE account"
           >
@@ -268,7 +268,7 @@ export function AccountSection({
           </div>
           <Button
             variant="secondary"
-            className="border-white/20 text-white hover:bg-white/10"
+            className="border-white/[0.06] text-white hover:bg-white/[0.06]"
             onClick={onLogoutAll}
             aria-label="Sign out of all sessions"
           >
@@ -283,7 +283,7 @@ export function AccountSection({
           <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
           Danger Zone
         </h3>
-        <div className="p-4 border border-red-500/20 rounded-lg">
+        <div className="p-4border-red-500/20 rounded-lg">
           <h4 className="text-sm font-medium text-red-400 mb-2">Delete Account</h4>
           <p className="text-xs text-white/50 mb-3">
             Permanently delete your HIVE account and all associated data. This cannot be undone.

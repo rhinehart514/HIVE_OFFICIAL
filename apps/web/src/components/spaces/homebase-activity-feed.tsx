@@ -71,7 +71,7 @@ function ActivityIcon({ type }: { type: ActivityType }) {
 
   switch (type) {
     case 'message':
-      return <ChatBubbleLeftIcon className={cn(iconClass, 'text-white/40')} />;
+      return <ChatBubbleLeftIcon className={cn(iconClass, 'text-white/50')} />;
     case 'event':
       return <CalendarIcon className={cn(iconClass, 'text-[var(--color-gold)]/60')} />;
     case 'announcement':
@@ -79,7 +79,7 @@ function ActivityIcon({ type }: { type: ActivityType }) {
     case 'tool_deployed':
       return <SparklesIcon className={cn(iconClass, 'text-purple-400/60')} />;
     default:
-      return <ChatBubbleLeftIcon className={cn(iconClass, 'text-white/40')} />;
+      return <ChatBubbleLeftIcon className={cn(iconClass, 'text-white/50')} />;
   }
 }
 
@@ -142,8 +142,8 @@ function ActivityRow({
       onClick={onClick}
       className={cn(
         'w-full px-4 py-3 flex items-start gap-3 text-left',
-        'hover:bg-white/[0.02] transition-colors duration-150',
-        'border-b border-white/[0.04] last:border-b-0'
+        'hover:bg-white/[0.06] transition-colors duration-150',
+        'border-b border-white/[0.06] last:border-b-0'
       )}
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
@@ -159,10 +159,10 @@ function ActivityRow({
       <div className="flex-1 min-w-0">
         {/* Header: Author + Space + Time */}
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <Text size="sm" weight="medium" className="text-white/90">
+          <Text size="sm" weight="medium" className="text-white">
             {activity.authorName}
           </Text>
-          <Text size="xs" className="text-white/30">
+          <Text size="xs" className="text-white/50">
             in
           </Text>
           <div className="flex items-center gap-1.5">
@@ -177,10 +177,10 @@ function ActivityRow({
               {activity.spaceName}
             </Text>
           </div>
-          <Text size="xs" className="text-white/30">
+          <Text size="xs" className="text-white/50">
             •
           </Text>
-          <Text size="xs" className="text-white/30">
+          <Text size="xs" className="text-white/50">
             {timeAgo}
           </Text>
         </div>
@@ -188,14 +188,14 @@ function ActivityRow({
         {/* Activity Content */}
         <div className="flex items-start gap-2">
           <ActivityIcon type={activity.type} />
-          <Text size="sm" className="text-white/60 line-clamp-2 flex-1">
+          <Text size="sm" className="text-white/50 line-clamp-2 flex-1">
             {displayContent}
           </Text>
         </div>
       </div>
 
       {/* Arrow indicator */}
-      <ArrowRightIcon className="w-4 h-4 text-white/20 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <ArrowRightIcon className="w-4 h-4 text-white/50 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
     </motion.button>
   );
 }
@@ -207,14 +207,14 @@ function ActivityRow({
 function ActivitySkeleton() {
   return (
     <div className="px-4 py-3 flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-white/[0.06] animate-pulse flex-shrink-0" />
+      <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="flex items-center gap-2">
-          <div className="h-3 w-20 rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-3 w-12 rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-3 w-16 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-3 w-20 rounded bg-white/[0.06]" />
+          <div className="h-3 w-12 rounded bg-white/[0.06]" />
+          <div className="h-3 w-16 rounded bg-white/[0.06]" />
         </div>
-        <div className="h-4 w-3/4 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-4 w-3/4 rounded bg-white/[0.06]" />
       </div>
     </div>
   );
@@ -233,12 +233,12 @@ function EmptyState({ message }: { message?: string }) {
       transition={{ duration: 0.6, ease: MOTION.ease.premium }}
     >
       <motion.div
-        className="w-14 h-14 mx-auto mb-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center"
+        className="w-14 h-14 mx-auto mb-4 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.1, ease: MOTION.ease.premium }}
       >
-        <ChatBubbleLeftIcon className="w-6 h-6 text-white/20" />
+        <ChatBubbleLeftIcon className="w-6 h-6 text-white/50" />
       </motion.div>
 
       <motion.div
@@ -252,7 +252,7 @@ function EmptyState({ message }: { message?: string }) {
         >
           No activity yet
         </h3>
-        <p className="text-body text-white/40 max-w-xs mx-auto">
+        <p className="text-body text-white/50 max-w-xs mx-auto">
           {message ||
             'Join spaces and start conversations. Your activity feed will show up here.'}
         </p>
@@ -283,11 +283,11 @@ export function HomebaseActivityFeed({
       <section className="mb-8">
         <Text
           weight="medium"
-          className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
+          className="text-label-sm uppercase tracking-wider text-white/50 mb-4"
         >
           Activity
         </Text>
-        <div className="rounded-xl border border-white/[0.06] overflow-hidden divide-y divide-white/[0.04]">
+        <div className="rounded-lg border border-white/[0.06] overflow-hidden divide-y divide-white/[0.06]">
           {Array.from({ length: 5 }).map((_, i) => (
             <ActivitySkeleton key={i} />
           ))}
@@ -301,11 +301,11 @@ export function HomebaseActivityFeed({
       <section className="mb-8">
         <Text
           weight="medium"
-          className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
+          className="text-label-sm uppercase tracking-wider text-white/50 mb-4"
         >
           Activity
         </Text>
-        <div className="rounded-xl border border-white/[0.06] overflow-hidden">
+        <div className="rounded-lg border border-white/[0.06] overflow-hidden">
           <EmptyState message={emptyMessage} />
         </div>
       </section>
@@ -317,7 +317,7 @@ export function HomebaseActivityFeed({
       {/* Header */}
       <Text
         weight="medium"
-        className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
+        className="text-label-sm uppercase tracking-wider text-white/50 mb-4"
       >
         Activity
       </Text>
@@ -327,7 +327,7 @@ export function HomebaseActivityFeed({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="rounded-xl border border-white/[0.06] overflow-hidden"
+        className="rounded-lg border border-white/[0.06] overflow-hidden"
       >
         {sortedActivities.slice(0, 10).map((activity, index) => (
           <ActivityRow
@@ -340,8 +340,8 @@ export function HomebaseActivityFeed({
 
         {/* Show more hint if there are more than 10 items */}
         {sortedActivities.length > 10 && (
-          <div className="px-4 py-3 text-center border-t border-white/[0.04]">
-            <Text size="xs" className="text-white/30">
+          <div className="px-4 py-3 text-center border-t border-white/[0.06]">
+            <Text size="xs" className="text-white/50">
               Showing latest 10 of {sortedActivities.length} activities
             </Text>
           </div>

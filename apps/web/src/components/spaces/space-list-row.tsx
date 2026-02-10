@@ -135,8 +135,8 @@ function JoinButton({
         className={cn(
           'flex items-center gap-1.5 px-3 py-1.5 rounded-md',
           'text-xs font-medium',
-          'bg-white/[0.06] text-white/60',
-          'hover:bg-white/[0.08] hover:text-white/80',
+          'bg-white/[0.06] text-white/50',
+          'hover:bg-white/[0.06] hover:text-white',
           'transition-all duration-150',
           'disabled:opacity-50'
         )}
@@ -155,7 +155,7 @@ function JoinButton({
         'px-3 py-1.5 rounded-lg',
         'text-xs font-medium',
         'bg-white text-[var(--color-bg-void,#0A0A09)]',
-        'hover:bg-white/90',
+        'hover:bg-white',
         'transition-all duration-150',
         'disabled:opacity-50'
       )}
@@ -205,7 +205,7 @@ export function SpaceListRow({
       className={cn(
         'group relative flex items-center gap-4',
         variant === 'compact' ? 'px-3 py-2.5' : 'px-4 py-3',
-        'hover:bg-white/[0.02]',
+        'hover:bg-white/[0.06]',
         'transition-colors duration-150',
         'cursor-pointer',
         className
@@ -236,7 +236,7 @@ export function SpaceListRow({
           <Text
             weight="medium"
             size={variant === 'compact' ? 'sm' : 'default'}
-            className="text-white/90 truncate"
+            className="text-white truncate"
           >
             {space.name}
           </Text>
@@ -249,15 +249,15 @@ export function SpaceListRow({
 
         {/* Secondary info */}
         <div className="flex items-center gap-2 mt-0.5">
-          <Text size="xs" className="text-white/40">
+          <Text size="xs" className="text-white/50">
             {space.memberCount.toLocaleString()} {space.memberCount === 1 ? 'member' : 'members'}
           </Text>
 
           {/* Org type (for imported spaces) */}
           {space.orgTypeName && space.source === 'ublinked' && (
             <>
-              <span className="w-1 h-1 rounded-full bg-white/20" />
-              <Text size="xs" className="text-white/30 truncate max-w-[100px]">
+              <span className="w-1 h-1 rounded-full bg-white/[0.06]" />
+              <Text size="xs" className="text-white/50 truncate max-w-[100px]">
                 {space.orgTypeName}
               </Text>
             </>
@@ -266,7 +266,7 @@ export function SpaceListRow({
           {/* Mutual friends */}
           {space.mutualCount != null && space.mutualCount > 0 && (
             <>
-              <span className="w-1 h-1 rounded-full bg-white/20" />
+              <span className="w-1 h-1 rounded-full bg-white/[0.06]" />
               <div className="flex items-center gap-1.5">
                 {space.mutualAvatars && space.mutualAvatars.length > 0 && (
                   <AvatarGroup
@@ -288,7 +288,7 @@ export function SpaceListRow({
           {/* Upcoming events */}
           {space.upcomingEventCount != null && space.upcomingEventCount > 0 && !(space.mutualCount && space.mutualCount > 0) && (
             <>
-              <span className="w-1 h-1 rounded-full bg-white/20" />
+              <span className="w-1 h-1 rounded-full bg-white/[0.06]" />
               <Text size="xs" className="text-white/50">
                 {space.upcomingEventCount} event{space.upcomingEventCount !== 1 ? 's' : ''} soon
               </Text>
@@ -340,7 +340,7 @@ export function SpaceListRowSkeleton({
   return (
     <div
       className={cn(
-        'flex items-center gap-4 animate-pulse',
+        'flex items-center gap-4',
         variant === 'compact' ? 'px-3 py-2.5' : 'px-4 py-3'
       )}
     >
@@ -355,7 +355,7 @@ export function SpaceListRowSkeleton({
       {/* Content skeleton */}
       <div className="flex-1 space-y-2">
         <div className="h-4 w-32 bg-white/[0.06] rounded" />
-        <div className="h-3 w-20 bg-white/[0.04] rounded" />
+        <div className="h-3 w-20 bg-white/[0.06] rounded" />
       </div>
 
       {/* Button skeleton */}

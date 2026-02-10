@@ -11,13 +11,10 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
-  Tilt,
-  GlassSurface,
   Badge,
   Button,
   GradientText,
 } from '@hive/ui/design-system/primitives';
-import { } from '@hive/tokens';
 import { toast } from '@hive/ui';
 import { cn } from '@/lib/utils';
 import { BellIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -70,12 +67,12 @@ export function GhostSpaceCard({ space, index: _index = 0 }: GhostSpaceCardProps
       whileHover={{ opacity: 0.96 }}
       whileTap={{ scale: 0.98 }}
     >
-      <Tilt intensity={4}>
-        <GlassSurface
-          intensity="subtle"
+      <>
+        <div
+         
           className={cn(
-            'p-5 rounded-xl transition-all duration-200',
-            'border border-dashed border-white/10 hover:border-[var(--life-gold)]/30',
+            'p-5 rounded-lg transition-all duration-200',
+            'border border-dashed border-white/[0.06] hover:border-[var(--life-gold)]/30',
             'bg-white/[0.01]'
           )}
         >
@@ -84,14 +81,14 @@ export function GhostSpaceCard({ space, index: _index = 0 }: GhostSpaceCardProps
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-body font-medium text-white/70 truncate">
+                  <h3 className="text-body font-medium text-white/50 truncate">
                     {space.name}
                   </h3>
-                  <Badge variant="neutral" size="sm" className="bg-white/[0.04] text-white/40">
+                  <Badge variant="neutral" size="sm" className="bg-white/[0.06] text-white/50">
                     Unclaimed
                   </Badge>
                 </div>
-                <p className="text-body-sm text-white/30">@{space.handle}</p>
+                <p className="text-body-sm text-white/50">@{space.handle}</p>
               </div>
             </div>
 
@@ -119,7 +116,7 @@ export function GhostSpaceCard({ space, index: _index = 0 }: GhostSpaceCardProps
                   size="sm"
                   onClick={handleJoinWaitlist}
                   disabled={isJoining || isOnWaitlist}
-                  className={isOnWaitlist ? 'text-green-400' : 'text-white/50 hover:text-white/70'}
+                  className={isOnWaitlist ? 'text-green-400' : 'text-white/50 hover:text-white/50'}
                 >
                   {isOnWaitlist ? (
                     <>
@@ -141,8 +138,8 @@ export function GhostSpaceCard({ space, index: _index = 0 }: GhostSpaceCardProps
               </div>
             </div>
           </div>
-        </GlassSurface>
-      </Tilt>
+        </div>
+      </>
     </motion.div>
   );
 }

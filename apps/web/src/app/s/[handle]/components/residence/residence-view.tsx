@@ -6,7 +6,7 @@
  * Layout: 60/40 split (feed left, boards right)
  *
  * Features:
- * - Header with animated border on first visit
+ * - Header with animatedon first visit
  * - Unified feed with scroll-triggered reveals
  * - Boards sidebar with room transitions
  * - Chat composer at bottom

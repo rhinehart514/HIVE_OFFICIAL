@@ -128,13 +128,13 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
       >
         {/* Backdrop */}
         <div
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/70 "
           onClick={handleClose}
         />
 
         {/* Modal */}
         <motion.div
-          className="relative w-full max-w-lg bg-[var(--bg-ground)] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden"
+          className="relative w-full max-w-lg bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg overflow-hidden"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -145,14 +145,14 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
               <button
                 onClick={step === 'template' ? handleClose : () => setStep(step === 'access' ? 'identity' : 'template')}
-                className="text-white/40 hover:text-white/60 text-sm transition-colors"
+                className="text-white/50 hover:text-white/50 text-sm transition-colors"
               >
                 {step === 'template' ? 'Cancel' : 'Back'}
               </button>
-              <span className="text-white/30 text-sm">
+              <span className="text-white/50 text-sm">
                 {step === 'template' ? '1' : step === 'identity' ? '2' : '3'} of 3
               </span>
-              <button onClick={handleClose} className="text-white/40 hover:text-white/60 transition-colors">
+              <button onClick={handleClose} className="text-white/50 hover:text-white/50 transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -186,19 +186,19 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                           setStep('identity');
                         }}
                         className={cn(
-                          'w-full flex items-center gap-4 p-4 rounded-xl border transition-all',
-                          'hover:bg-white/[0.04] hover:border-white/20',
+                          'w-full flex items-center gap-4 p-4 rounded-lg transition-all',
+                          'hover:bg-white/[0.06] hover:border-white/[0.06]',
                           template === t.id
-                            ? 'border-white/20 bg-white/[0.04]'
-                            : 'border-white/[0.08]'
+                            ? 'border-white/[0.06] bg-white/[0.06]'
+                            : 'border-white/[0.06]'
                         )}
                       >
                         <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center">
-                          <t.icon size={20} className="text-white/60" />
+                          <t.icon size={20} className="text-white/50" />
                         </div>
                         <div className="text-left">
                           <p className="text-white font-medium">{t.label}</p>
-                          <p className="text-white/40 text-sm">{t.desc}</p>
+                          <p className="text-white/50 text-sm">{t.desc}</p>
                         </div>
                       </button>
                     ))}
@@ -280,21 +280,21 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                         key={opt.id}
                         onClick={() => setAccess(opt.id)}
                         className={cn(
-                          'w-full flex items-center gap-4 p-4 rounded-xl border transition-all',
+                          'w-full flex items-center gap-4 p-4 rounded-lg transition-all',
                           access === opt.id
-                            ? 'border-white/30 bg-white/[0.06]'
-                            : 'border-white/[0.08] hover:border-white/15'
+                            ? 'border-white/50 bg-white/[0.06]'
+                            : 'border-white/[0.06] hover:border-white/15'
                         )}
                       >
                         <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center">
-                          <opt.icon size={20} className="text-white/60" />
+                          <opt.icon size={20} className="text-white/50" />
                         </div>
                         <div className="text-left flex-1">
                           <p className="text-white font-medium">{opt.label}</p>
-                          <p className="text-white/40 text-sm">{opt.desc}</p>
+                          <p className="text-white/50 text-sm">{opt.desc}</p>
                         </div>
                         {access === opt.id && (
-                          <Check size={20} className="text-white/60" />
+                          <Check size={20} className="text-white/50" />
                         )}
                       </button>
                     ))}

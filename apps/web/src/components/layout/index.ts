@@ -1,2 +1,2 @@
-export { AppShell } from './AppShell';
+export { AppShell } from '../shell';
 export { PageTransitionWrapper } from './page-transition-wrapper';

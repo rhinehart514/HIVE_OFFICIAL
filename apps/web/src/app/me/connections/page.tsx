@@ -376,7 +376,7 @@ export default function ConnectionsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
-        <div className="text-white/60">Loading connections...</div>
+        <div className="text-white/50">Loading connections...</div>
       </div>
     );
   }
@@ -384,7 +384,7 @@ export default function ConnectionsPage() {
   if (error) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4">
-        <Text className="text-white/60">Failed to load connections</Text>
+        <Text className="text-white/50">Failed to load connections</Text>
         <Button onClick={fetchConnections}>Try Again</Button>
       </div>
     );
@@ -428,7 +428,7 @@ export default function ConnectionsPage() {
             <div className="text-2xl font-semibold text-white">
               {stats.totalConnections}
             </div>
-            <div className="text-xs text-white/40 uppercase tracking-wider">
+            <div className="text-xs text-white/50 uppercase tracking-wider">
               Connections
             </div>
           </Card>
@@ -436,7 +436,7 @@ export default function ConnectionsPage() {
             <div className="text-2xl font-semibold text-white">
               {stats.friends}
             </div>
-            <div className="text-xs text-white/40 uppercase tracking-wider">
+            <div className="text-xs text-white/50 uppercase tracking-wider">
               Friends
             </div>
           </Card>
@@ -444,7 +444,7 @@ export default function ConnectionsPage() {
             <div className="text-2xl font-semibold text-white">
               {stats.following}
             </div>
-            <div className="text-xs text-white/40 uppercase tracking-wider">
+            <div className="text-xs text-white/50 uppercase tracking-wider">
               Following
             </div>
           </Card>
@@ -452,7 +452,7 @@ export default function ConnectionsPage() {
             <div className="text-2xl font-semibold text-white">
               {stats.followers}
             </div>
-            <div className="text-xs text-white/40 uppercase tracking-wider">
+            <div className="text-xs text-white/50 uppercase tracking-wider">
               Followers
             </div>
           </Card>
@@ -475,7 +475,7 @@ export default function ConnectionsPage() {
                   px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap
                   ${activeTab === tab.id
                     ? 'bg-white text-[var(--color-bg-void,#0A0A09)]'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10'
+                    : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.06]'
                   }
                 `}
               >
@@ -503,7 +503,7 @@ export default function ConnectionsPage() {
         <motion.div>
           {activeTab === 'requests' && receivedRequests.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">
+              <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider mb-4">
                 Pending Requests
               </h3>
               <div className="space-y-3">
@@ -521,14 +521,14 @@ export default function ConnectionsPage() {
 
           {activeTab === 'requests' && sentRequests.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">
+              <h3 className="text-sm font-medium text-white/50 uppercase tracking-wider mb-4">
                 Sent Requests
               </h3>
               <div className="space-y-3">
                 {sentRequests.map((request) => (
                   <Card key={request.requestId} elevation="resting" className="p-4">
                     <div className="flex items-center justify-between">
-                      <Text className="text-white/60">
+                      <Text className="text-white/50">
                         Request sent to user
                       </Text>
                       <Badge variant="neutral" size="sm">
@@ -623,7 +623,7 @@ function ConnectionCard({
     >
       <Card
         elevation="resting"
-        interactive
+       
         onClick={onViewProfile}
         className="p-4"
       >
@@ -641,8 +641,8 @@ function ConnectionCard({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-white/5 flex items-center justify-center">
-              <span className="text-lg text-white/30">{initials}</span>
+            <div className="w-full h-full bg-white/[0.06] flex items-center justify-center">
+              <span className="text-lg text-white/50">{initials}</span>
             </div>
           )}
         </div>
@@ -655,12 +655,12 @@ function ConnectionCard({
             )}
           </div>
           {profile.handle && (
-            <Text size="sm" className="text-white/40">
+            <Text size="sm" className="text-white/50">
               @{profile.handle}
             </Text>
           )}
           {(mutualSpaces?.length || 0) > 0 && (
-            <Text size="sm" className="text-white/30 mt-0.5">
+            <Text size="sm" className="text-white/50 mt-0.5">
               {mutualSpaces!.length} shared space{mutualSpaces!.length !== 1 ? 's' : ''}
             </Text>
           )}
@@ -784,18 +784,18 @@ function EmptyState({
       transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
     >
       <motion.div
-        className="w-16 h-16 rounded-xl bg-white/[0.04] flex items-center justify-center mb-5"
+        className="w-16 h-16 rounded-lg bg-white/[0.06] flex items-center justify-center mb-5"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.1 }}
       >
-        <svg className="w-7 h-7 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-7 h-7 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       </motion.div>
 
       <motion.h3
-        className="text-body-lg font-medium text-white/80 mb-2"
+        className="text-body-lg font-medium text-white mb-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.15 }}
@@ -804,7 +804,7 @@ function EmptyState({
       </motion.h3>
 
       <motion.p
-        className="text-body-sm text-white/40 max-w-sm mb-4"
+        className="text-body-sm text-white/50 max-w-sm mb-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2, delay: 0.2 }}
