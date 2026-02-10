@@ -28,11 +28,7 @@ export async function GET(
 ) {
   const { spaceId } = await params;
   const url = new URL(request.url);
-  const boardId = url.searchParams.get('boardId');
-
-  if (!boardId) {
-    return new Response('boardId is required', { status: 400 });
-  }
+  const boardId = url.searchParams.get('boardId') || 'main';
 
   // Verify authentication via session cookie
   // NOTE: EventSource doesn't support custom headers, so we MUST use cookies

@@ -19,6 +19,7 @@ import type { Board, SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 import { logger } from '@/lib/logger';
 import { isSlashCommand } from '@/lib/slash-command-parser';
+import { useChatStream } from '@/hooks/use-chat-stream';
 import type { InlineComponentData } from '@/components/spaces/chat/inline-components';
 
 // Re-export types locally for convenience
@@ -412,6 +413,59 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
 
     loadMessages();
   }, [space?.id]);
+
+  // ============================================
+  // REAL-TIME: SSE chat stream
+  // ============================================
+
+  const handleNewMessage = React.useCallback((message: ChatMessage) => {
+    setMessages((prev) => {
+      // Deduplicate: don't add if already exists (from optimistic send)
+      if (prev.some((m) => m.id === message.id)) return prev;
+      // Also skip if this is the current user's message (we already have it optimistically)
+      // But only skip temp messages — real IDs from server should be accepted
+      const hasTempVersion = prev.some(
+        (m) => m.id.startsWith('temp-') && m.authorId === message.authorId && m.content === message.content
+      );
+      if (hasTempVersion) {
+        // Replace the temp message with the real one
+        return prev.map((m) =>
+          m.id.startsWith('temp-') && m.authorId === message.authorId && m.content === message.content
+            ? { ...message }
+            : m
+        );
+      }
+      return [...prev, message];
+    });
+  }, []);
+
+  const handleMessageUpdate = React.useCallback((id: string, updates: Partial<ChatMessage>) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, ...updates } : m))
+    );
+  }, []);
+
+  const handleMessageDelete = React.useCallback((id: string) => {
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
+  const handleComponentUpdate = React.useCallback((componentId: string, sharedState: Record<string, unknown>) => {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.inlineComponent?.id === componentId
+          ? { ...m, inlineComponent: { ...m.inlineComponent, sharedState: sharedState as unknown as InlineComponentData['sharedState'] } }
+          : m
+      )
+    );
+  }, []);
+
+  useChatStream(
+    space?.id || null,
+    handleNewMessage,
+    handleMessageUpdate,
+    handleMessageDelete,
+    handleComponentUpdate,
+  );
 
   // Load more messages (cursor-based pagination - loads older messages)
   const loadMoreMessages = React.useCallback(async () => {

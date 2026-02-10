@@ -1,5 +1,6 @@
 import { withOptionalAuth, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { getServerProfileRepository } from '@hive/core/server';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { NextResponse } from 'next/server';
 
 /**
@@ -109,7 +110,7 @@ export const GET = withOptionalAuth(
           stats: {
             spacesCount: profile.spaces.length,
             connectionsCount: profile.connectionCount,
-            toolsCreated: 0, // TODO: Track tools created per user
+            toolsCreated: await dbAdmin.collection('tools').where('creatorId', '==', profile.id).count().get().then(s => s.data().count).catch(() => 0),
           },
           createdAt: profile.createdAt?.toISOString(),
         },
