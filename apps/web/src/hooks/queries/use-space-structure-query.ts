@@ -21,7 +21,6 @@ interface UseSpaceStructureQueryOptions
  *
  * @example
  * const { data: structure, isLoading } = useSpaceStructureQuery('space-123');
- * console.log(structure?.tabs, structure?.widgets);
  */
 export function useSpaceStructureQuery(
   spaceId: string,

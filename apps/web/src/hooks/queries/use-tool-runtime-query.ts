@@ -34,7 +34,6 @@ function generateDeploymentId(spaceId: string, placementId: string): string {
  *   toolId: 'tool-123',
  *   deploymentId: 'deployment-456'
  * });
- * console.log(data?.tool, data?.state);
  */
 export function useToolRuntimeQuery(
   {

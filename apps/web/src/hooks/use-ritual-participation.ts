@@ -62,7 +62,6 @@ export interface UseRitualParticipationResult {
  *
  * // Check in for the day
  * const result = await participate('daily_check_in', 10);
- * console.log(`New streak: ${result.streak}`);
  * ```
  */
 export function useRitualParticipation(

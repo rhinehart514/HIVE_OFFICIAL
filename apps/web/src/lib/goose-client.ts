@@ -7,7 +7,6 @@
  * Usage:
  *   const client = new GooseClient();
  *   for await (const message of client.generate("create a poll")) {
- *     console.log(message);
  *   }
  */
 

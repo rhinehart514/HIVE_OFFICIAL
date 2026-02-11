@@ -59,7 +59,6 @@ interface UseToolWithStateOptions
  *
  * @example
  * const { data } = useToolWithState(toolId, deploymentId);
- * console.log(data?.tool, data?.state);
  */
 export function useToolWithState(
   toolId: string,
