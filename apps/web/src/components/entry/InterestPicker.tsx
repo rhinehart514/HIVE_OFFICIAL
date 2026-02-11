@@ -11,8 +11,13 @@ interface InterestCategory {
   items: string[];
 }
 
+interface ResidentialSpace {
+  id: string;
+  name: string;
+}
+
 interface InterestPickerProps {
-  onComplete: (data: { interests: string[]; major?: string }) => void;
+  onComplete: (data: { interests: string[]; major?: string; residentialSpaceId?: string; residenceType?: string }) => void;
   isSubmitting: boolean;
   campusId?: string;
 }
@@ -27,8 +32,12 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [major, setMajor] = React.useState('');
   const [programType, setProgramType] = React.useState<'undergrad' | 'grad'>('undergrad');
+  const [residentialSpaces, setResidentialSpaces] = React.useState<ResidentialSpace[]>([]);
+  const [residentialSpaceId, setResidentialSpaceId] = React.useState('');
+  const [residenceType, setResidenceType] = React.useState<'on-campus' | 'off-campus' | ''>('');
   const [loading, setLoading] = React.useState(true);
   const [showMajor, setShowMajor] = React.useState(false);
+  const [showHousing, setShowHousing] = React.useState(false);
 
   const activeMajors = programType === 'grad' ? gradPrograms : undergradMajors;
 
@@ -42,6 +51,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
           setCategories(data.interests || []);
           setUndergradMajors((data.majors || []).map((m: any) => m.name || m));
           setGradPrograms((data.graduatePrograms || []).map((m: any) => m.name || m));
+          setResidentialSpaces(data.residentialSpaces || []);
         }
       } catch {
         // Fallback: still let them through
@@ -68,8 +78,10 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
     onComplete({
       interests: Array.from(selected),
       major: major || undefined,
+      residentialSpaceId: residentialSpaceId || undefined,
+      residenceType: residenceType || undefined,
     });
-  }, [selected, major, onComplete]);
+  }, [selected, major, residentialSpaceId, residenceType, onComplete]);
 
   const canSubmit = selected.size >= MIN_INTERESTS && !isSubmitting;
 
@@ -133,15 +145,26 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
           )}
         </p>
 
-        {!showMajor && (
-          <button
-            type="button"
-            onClick={() => setShowMajor(true)}
-            className="font-sans text-[12px] text-white/30 hover:text-white/50 transition-colors"
-          >
-            + Add major
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {!showMajor && (
+            <button
+              type="button"
+              onClick={() => setShowMajor(true)}
+              className="font-sans text-[12px] text-white/30 hover:text-white/50 transition-colors"
+            >
+              + Add major
+            </button>
+          )}
+          {!showHousing && (
+            <button
+              type="button"
+              onClick={() => setShowHousing(true)}
+              className="font-sans text-[12px] text-white/30 hover:text-white/50 transition-colors"
+            >
+              + Add housing
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Major picker (optional, collapsible) */}
@@ -197,6 +220,63 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
+        </motion.div>
+      )}
+
+      {/* Housing picker (optional, collapsible) */}
+      {showHousing && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          transition={{ duration: 0.15 }}
+          className="space-y-3"
+        >
+          <label className="font-sans text-[13px] text-white/50">Where do you live?</label>
+
+          <div className="flex items-center gap-1 p-0.5 rounded-[8px] bg-[#0A0A0A] border border-white/[0.06]">
+            <button
+              type="button"
+              onClick={() => { setResidenceType('on-campus'); setResidentialSpaceId(''); }}
+              className={[
+                'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-all duration-150',
+                residenceType === 'on-campus'
+                  ? 'bg-white/[0.1] text-white'
+                  : 'text-white/30 hover:text-white/50',
+              ].join(' ')}
+            >
+              On campus
+            </button>
+            <button
+              type="button"
+              onClick={() => { setResidenceType('off-campus'); setResidentialSpaceId(''); }}
+              className={[
+                'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-all duration-150',
+                residenceType === 'off-campus'
+                  ? 'bg-white/[0.1] text-white'
+                  : 'text-white/30 hover:text-white/50',
+              ].join(' ')}
+            >
+              Off campus
+            </button>
+          </div>
+
+          {residenceType === 'on-campus' && residentialSpaces.length > 0 && (
+            <select
+              value={residentialSpaceId}
+              onChange={(e) => setResidentialSpaceId(e.target.value)}
+              className={[
+                'w-full h-11 px-3 rounded-[10px] bg-[#0A0A0A] border border-white/[0.06]',
+                'font-sans text-[14px] text-white outline-none',
+                'focus:border-white/[0.2] transition-colors',
+                'appearance-none',
+              ].join(' ')}
+            >
+              <option value="">Select your dorm</option>
+              {residentialSpaces.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          )}
         </motion.div>
       )}
 

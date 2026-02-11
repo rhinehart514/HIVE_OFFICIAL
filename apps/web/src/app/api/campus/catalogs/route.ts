@@ -30,10 +30,23 @@ export const GET = withCache(async (request: NextRequest) => {
     }
 
     const data = doc.data()!;
+
+    // Also fetch residential spaces for housing picker
+    const residentialSnapshot = await dbAdmin.collection('spaces')
+      .where('campusId', '==', campusId)
+      .where('identityType', '==', 'residential')
+      .get();
+
+    const residentialSpaces = residentialSnapshot.docs.map(d => ({
+      id: d.id,
+      name: d.data().name,
+    })).sort((a, b) => a.name.localeCompare(b.name));
+
     return NextResponse.json({
       interests: data.interests || [],
       majors: data.majors || [],
       graduatePrograms: data.graduatePrograms || [],
+      residentialSpaces,
     });
   } catch {
     return NextResponse.json({ interests: [], majors: [], gradPrograms: [] });

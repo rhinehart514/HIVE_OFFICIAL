@@ -215,7 +215,7 @@ export function EntryFlowV2() {
     setStep('interests');
   }, [firstName, lastName]);
 
-  const submitProfile = React.useCallback(async (interestData: { interests: string[]; major?: string }) => {
+  const submitProfile = React.useCallback(async (interestData: { interests: string[]; major?: string; residentialSpaceId?: string; residenceType?: string }) => {
     setIsSubmittingName(true);
     setNameError(null);
 
@@ -230,6 +230,8 @@ export function EntryFlowV2() {
           role: 'student',
           interests: interestData.interests,
           major: interestData.major,
+          residentialSpaceId: interestData.residentialSpaceId,
+          residenceType: interestData.residenceType,
         }),
       });
 
