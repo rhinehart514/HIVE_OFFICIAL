@@ -95,18 +95,13 @@ export async function POST(
     }
 
     // Verify user has permission (must be leader)
-    const memberDoc = await dbAdmin
-      .collection('spaces')
-      .doc(deployment.spaceId)
-      .collection('members')
-      .doc(userId)
-      .get();
+    const { getSpaceMember } = await import('@/lib/space-members');
+    const memberData = await getSpaceMember(deployment.spaceId, userId);
 
-    if (!memberDoc.exists) {
+    if (!memberData) {
       return errorResponse('Not a member of this space', 403);
     }
 
-    const memberData = memberDoc.data();
     const role = memberData?.role || 'member';
 
     if (!['owner', 'admin', 'moderator'].includes(role)) {

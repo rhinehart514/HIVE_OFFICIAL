@@ -63,14 +63,9 @@ const _GET = withAuthAndErrors(async (
     );
   }
 
-  // Get space members
-  const membersSnapshot = await dbAdmin
-    .collection('spaces')
-    .doc(spaceId)
-    .collection('members')
-    .get();
-
-  const memberIds = membersSnapshot.docs.map((doc) => doc.id);
+  // Get space members from top-level spaceMembers collection
+  const { getSpaceMemberIds } = await import('@/lib/space-members');
+  const memberIds = await getSpaceMemberIds(spaceId);
 
   if (memberIds.length === 0) {
     return respond.success({

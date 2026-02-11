@@ -36,15 +36,10 @@ async function verifyAccess(
   const toolOwnerId = deploymentData?.createdBy || deploymentData?.ownerId;
 
   if (deploymentData?.deployedTo === 'space' && deploymentData?.targetId) {
-    const memberRef = dbAdmin
-      .collection('spaces')
-      .doc(deploymentData.targetId)
-      .collection('members')
-      .doc(userId);
-    const memberDoc = await memberRef.get();
-    const memberData = memberDoc.data();
+    const { getSpaceMember } = await import('@/lib/space-members');
+    const memberData = await getSpaceMember(deploymentData.targetId, userId);
 
-    if (!memberDoc.exists && toolOwnerId !== userId) {
+    if (!memberData && toolOwnerId !== userId) {
       return { allowed: false, error: 'Access denied' };
     }
 
@@ -83,21 +78,11 @@ async function executeAction(
           let userIds: string[] = [];
 
           if (to === 'all_members' || to === 'participants') {
-            const membersSnapshot = await dbAdmin
-              .collection('spaces')
-              .doc(deployment.targetId)
-              .collection('members')
-              .where('status', '==', 'active')
-              .get();
-            userIds = membersSnapshot.docs.map(d => d.id);
+            const { getSpaceMemberIds } = await import('@/lib/space-members');
+            userIds = await getSpaceMemberIds(deployment.targetId, { isActive: true });
           } else if (to === 'officers') {
-            const membersSnapshot = await dbAdmin
-              .collection('spaces')
-              .doc(deployment.targetId)
-              .collection('members')
-              .where('role', 'in', ['officer', 'leader'])
-              .get();
-            userIds = membersSnapshot.docs.map(d => d.id);
+            const { getSpaceMemberIds } = await import('@/lib/space-members');
+            userIds = await getSpaceMemberIds(deployment.targetId, { role: ['officer', 'leader'] });
           }
 
           if (userIds.length > 0 && title && body) {

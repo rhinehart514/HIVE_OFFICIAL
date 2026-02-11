@@ -867,7 +867,8 @@ async function broadcastToolUpdate(updateEvent: ToolUpdateEvent): Promise<void> 
         }
       };
 
-      await dbAdmin.collection('realtimeMessages').add(realtimeMessage);
+      // realtimeMessages collection removed — was only health_check spam.
+      // Tool update broadcasts handled via SSE/polling instead.
     }
   } catch (error) {
     logger.error(

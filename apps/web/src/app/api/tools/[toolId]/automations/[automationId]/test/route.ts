@@ -89,14 +89,10 @@ async function verifyAccess(
   const toolOwnerId = deploymentData?.createdBy || deploymentData?.ownerId;
 
   if (deploymentData?.deployedTo === 'space' && deploymentData?.targetId) {
-    const memberRef = dbAdmin
-      .collection('spaces')
-      .doc(deploymentData.targetId)
-      .collection('members')
-      .doc(userId);
-    const memberDoc = await memberRef.get();
+    const { isSpaceMember } = await import('@/lib/space-members');
+    const isMember = await isSpaceMember(deploymentData.targetId, userId);
 
-    if (!memberDoc.exists && toolOwnerId !== userId) {
+    if (!isMember && toolOwnerId !== userId) {
       return { allowed: false, error: 'Access denied' };
     }
   }

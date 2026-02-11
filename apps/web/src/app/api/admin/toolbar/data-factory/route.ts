@@ -51,14 +51,13 @@ export const POST = withAdminAuthAndErrors(async (request, context, respond) => 
     });
 
     // Add the admin as owner member
-    await dbAdmin.collection('spaces').doc(spaceRef.id).collection('members').doc(adminId).set({
-      userId: adminId,
+    const { setSpaceMember } = await import('@/lib/space-members');
+    await setSpaceMember(spaceRef.id, adminId, {
       role: 'owner',
-      joinedAt: new Date(),
+      isActive: true,
+      joinedAt: new Date() as any,
+      joinMethod: 'created',
       campusId,
-      _test: true,
-      _testCreatedBy: adminId,
-      _testBatchId: batchId,
     });
 
     // Create test posts if requested
@@ -128,11 +127,9 @@ export const DELETE = withAdminAuthAndErrors(async (request, context, respond) =
       deletedPosts += posts.docs.length;
     }
 
-    // Delete members subcollection
-    const members = await spaceDoc.ref.collection('members').get();
-    const memberBatch = dbAdmin.batch();
-    members.docs.forEach(doc => memberBatch.delete(doc.ref));
-    if (members.docs.length > 0) await memberBatch.commit();
+    // Delete members from top-level spaceMembers collection
+    const { deleteSpaceMembers } = await import('@/lib/space-members');
+    await deleteSpaceMembers(spaceDoc.id);
 
     // Delete the space itself
     await spaceDoc.ref.delete();

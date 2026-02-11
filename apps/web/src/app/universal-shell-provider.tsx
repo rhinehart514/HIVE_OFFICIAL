@@ -58,7 +58,6 @@ const NO_SHELL_ROUTES = [
   '/enter',              // Entry flow (signup)
   '/login',              // Login flow (returning users)
   '/landing',            // Pre-auth landing
-  '/waitlist',           // Waitlist signup
   '/schools',            // School selection
   '/legal',              // Legal pages (privacy, terms, guidelines)
   '/about',              // About page (standalone narrative)

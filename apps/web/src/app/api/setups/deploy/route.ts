@@ -90,18 +90,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is a leader (owner/admin/mod)
-    const memberDoc = await dbAdmin
-      .collection('spaces')
-      .doc(spaceId)
-      .collection('members')
-      .doc(userId)
-      .get();
+    const { getSpaceMember } = await import('@/lib/space-members');
+    const memberData = await getSpaceMember(spaceId, userId);
 
-    if (!memberDoc.exists) {
+    if (!memberData) {
       return errorResponse('Not a member of this space', 403);
     }
 
-    const memberData = memberDoc.data();
     const role = memberData?.role || 'member';
 
     if (!['owner', 'admin', 'moderator'].includes(role)) {

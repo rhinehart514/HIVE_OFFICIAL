@@ -157,14 +157,10 @@ async function handleGet(
 
     // For space deployments, check space membership
     if (deploymentData?.deployedTo === 'space' && deploymentData?.targetId) {
-      const memberRef = dbAdmin
-        .collection('spaces')
-        .doc(deploymentData.targetId)
-        .collection('members')
-        .doc(userId);
-      const memberDoc = await memberRef.get();
+      const { isSpaceMember } = await import('@/lib/space-members');
+      const isMember = await isSpaceMember(deploymentData.targetId, userId);
 
-      if (!memberDoc.exists && toolOwnerId !== userId) {
+      if (!isMember && toolOwnerId !== userId) {
         return NextResponse.json(
           { error: 'Access denied' },
           { status: 403 }
@@ -263,18 +259,13 @@ async function handlePost(
 
     // For space deployments, check if user is an officer
     if (deploymentData?.deployedTo === 'space' && deploymentData?.targetId) {
-      const memberRef = dbAdmin
-        .collection('spaces')
-        .doc(deploymentData.targetId)
-        .collection('members')
-        .doc(userId);
-      const memberDoc = await memberRef.get();
-      const memberData = memberDoc.data();
+      const { getSpaceMember } = await import('@/lib/space-members');
+      const memberData = await getSpaceMember(deploymentData.targetId, userId);
 
       const isOfficer = memberData?.role === 'officer' || memberData?.role === 'leader';
       const isOwner = toolOwnerId === userId;
 
-      if (!memberDoc.exists || (!isOfficer && !isOwner)) {
+      if (!memberData || (!isOfficer && !isOwner)) {
         return NextResponse.json(
           { error: 'Only officers can create automations' },
           { status: 403 }
