@@ -99,7 +99,7 @@ function transformSpacesToDockItems(
         slug: space.href.replace('/spaces/', '').replace('/spaces/s/', ''),
         avatar: undefined, // Will be loaded separately if needed
         onlineCount,
-        unreadCount: 0, // TODO: Implement unread tracking
+        unreadCount: 0, // Per-space unread requires Firestore query per space — global unread available via useRealtimeNotifications
         warmth: getWarmthFromOnlineCount(onlineCount),
       });
     }

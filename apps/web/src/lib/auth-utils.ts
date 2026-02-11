@@ -145,15 +145,35 @@ class AuthManager {
     const oneHour = 60 * 60 * 1000;
     if (session.expiresAt - Date.now() < oneHour) {
       try {
-        // TODO: Implement token refresh logic
-        // const newToken = await refreshToken(session.token);
-        // this.setSession({ ...session, token: newToken });
-
-        logger.info('Token refresh needed', {
-          userId: session.uid,
-          action: 'auth_refresh_needed'
+        // Refresh via the server-side session endpoint which issues new tokens
+        const res = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'include', // send httpOnly cookie
+          headers: { 'Content-Type': 'application/json' },
         });
 
+        if (res.ok) {
+          const data = await res.json();
+          if (data.token && data.uid) {
+            this.setSession({
+              uid: data.uid,
+              token: data.token,
+              email: data.email ?? session.email,
+              expiresAt: data.expiresAt ?? Date.now() + (config.auth.tokenExpiryHours * 60 * 60 * 1000),
+            });
+            logger.info('Token refreshed successfully', {
+              userId: session.uid,
+              action: 'auth_refresh_success'
+            });
+            return true;
+          }
+        }
+
+        // If refresh endpoint doesn't return new token, session is still valid until expiry
+        logger.info('Token refresh attempted, using existing session', {
+          userId: session.uid,
+          action: 'auth_refresh_fallback'
+        });
         return true;
       } catch (error) {
         logger.error('Token refresh failed', {

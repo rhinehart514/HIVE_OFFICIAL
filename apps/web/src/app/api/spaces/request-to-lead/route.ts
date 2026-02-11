@@ -1,4 +1,4 @@
-// TODO: Fix hasReachedLeaderLimit function signature
+// Leader request API — request to become a space leader
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
