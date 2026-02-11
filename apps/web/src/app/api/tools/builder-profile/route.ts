@@ -10,9 +10,10 @@ import {
   getLevelThreshold,
   type BuilderLevel,
 } from '@/lib/builder-xp';
+import { withCache } from '../../../../lib/cache-headers';
 
 // GET /api/tools/builder-profile - Returns builder level, XP, and progression info
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
 
@@ -48,3 +49,5 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
     achievements: (userData.builderAchievements as string[]) || [],
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

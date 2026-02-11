@@ -5,6 +5,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
 import { logger } from "@/lib/logger";
+import { withCache } from '../../../../../lib/cache-headers';
 
 // Schema for tool state update requests
 const ToolStateSchema = z.object({
@@ -13,7 +14,7 @@ const ToolStateSchema = z.object({
   state: z.record(z.any())
 });
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
@@ -496,3 +497,5 @@ async function executeAutomationAction(
   }
   // triggerTool action would call another tool's event endpoint
 }
+
+export const GET = withCache(_GET, 'SHORT');

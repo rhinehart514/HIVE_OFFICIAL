@@ -1,6 +1,7 @@
 import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from '@/lib/logger';
+import { withCache } from '../../../../lib/cache-headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export const dynamic = 'force-dynamic';
  * DRAMA.md: This endpoint supports the dramatic handle claim moment.
  * The frontend adds the 400ms anticipation pause.
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const req = request as AuthenticatedRequest;
   const campusId = getCampusId(req);
   const { searchParams } = new URL(request.url);
@@ -73,3 +74,5 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     return respond.error('Check failed', 'INTERNAL_ERROR', { status: 500 });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

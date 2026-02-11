@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { verifyAdminRequest } from "@/lib/admin-auth";
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/admin/feature-flags
  * Fetch all feature flags for admin management
  */
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   try {
     const adminResult = await verifyAdminRequest(request);
     if (!adminResult.success) {
@@ -96,3 +97,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

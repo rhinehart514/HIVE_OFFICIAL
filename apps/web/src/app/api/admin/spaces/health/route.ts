@@ -11,6 +11,7 @@ import { logger } from '@/lib/structured-logger';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const HealthQuerySchema = z.object({
   sortBy: z.enum(['readiness', 'activity', 'members', 'messages', 'name']).optional().default('readiness'),
@@ -159,7 +160,7 @@ function getAttentionReasons(metrics: {
  * GET /api/admin/spaces/health
  * Fetch all spaces with health metrics for launch readiness
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = HealthQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -410,3 +411,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

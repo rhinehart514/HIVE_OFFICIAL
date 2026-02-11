@@ -19,6 +19,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getAdminRecord, hasAdminRole } from '@/lib/admin-auth';
+import { withCache } from '../../../../lib/cache-headers';
 
 
 const InviteSchema = z.object({
@@ -45,7 +46,7 @@ interface SchoolAdmin {
  * GET /api/admin/school-admins
  * List all school admins - HIVE team only
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -295,3 +296,5 @@ export const POST = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -13,6 +13,7 @@ import { SecurityScanner } from '@/lib/secure-input-validation';
 import { HttpStatus } from '@/lib/api-response-types';
 import { isContentHidden } from '@/lib/content-moderation';
 import { getServerSpaceRepository } from '@hive/core/server';
+import { withCache } from '../../../../../../lib/cache-headers';
 
 const UpdateEventSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -150,7 +151,7 @@ async function serializeEvent(
   };
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string; eventId: string }> },
   respond,
@@ -374,3 +375,5 @@ export const DELETE = withAuthAndErrors(async (
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

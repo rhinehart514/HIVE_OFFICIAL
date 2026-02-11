@@ -4,6 +4,7 @@ import {
   getServerProfileRepository,
   PrivacyLevel
 } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/profile/[userId] - Public profile with 4-tier privacy enforcement
@@ -16,7 +17,7 @@ import {
  *
  * The endpoint determines viewer type and enforces field-level privacy.
  */
-export const GET = withOptionalAuth(
+const _GET = withOptionalAuth(
   async (request, context: { params: { userId: string } }, respond) => {
     const targetUserId = (context.params?.userId || '').toString();
     if (!targetUserId) {
@@ -278,3 +279,5 @@ function getPrivacyMessage(level: PrivacyLevel, viewerType: 'public' | 'campus' 
       return 'Unable to view this profile.';
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

@@ -20,13 +20,14 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
+import { withCache } from '../../../../lib/cache-headers';
 
 const ClaimIdentitySchema = z.object({
   type: z.enum(['residential', 'major', 'greek']),
   spaceId: z.string().min(1),
 });
 
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -279,3 +280,5 @@ export const POST = withAuthValidationAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'PRIVATE');

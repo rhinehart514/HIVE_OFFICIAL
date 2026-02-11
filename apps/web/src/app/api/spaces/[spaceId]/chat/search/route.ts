@@ -14,6 +14,7 @@ import {
 } from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import type { ChatMessageReaction } from "@hive/core";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Chat Search API - Search messages within a space
@@ -80,7 +81,7 @@ function createProfileGetter(): GetUserProfileFn {
  * - startDate: ISO date string for range start
  * - endDate: ISO date string for range end
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -201,3 +202,5 @@ export const GET = withAuthAndErrors(async (
     query: query.trim(),
   });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -5,6 +5,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { decodeJwt } from 'jose';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * Unified Session Endpoint
@@ -40,7 +41,7 @@ function getTokenExpirationInfo(token: string): { expiresAt: number; expiresIn: 
   }
 }
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   // Rate limit: 100 requests per minute for session checks
   const rateLimitResult = await enforceRateLimit('apiGeneral', request);
   if (!rateLimitResult.allowed) {
@@ -191,3 +192,5 @@ export async function POST(request: NextRequest) {
   // For now, just validate - could add token refresh logic here
   return GET(request);
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

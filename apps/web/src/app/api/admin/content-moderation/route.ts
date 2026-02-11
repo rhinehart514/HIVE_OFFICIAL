@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../lib/cache-headers';
 
 const QuerySchema = z.object({
   limit: z.string().optional().transform(v => v ? parseInt(v, 10) : 50),
@@ -37,7 +38,7 @@ interface FlaggedContent {
  * GET /api/admin/content-moderation
  * Fetch flagged content for the moderation queue
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = QuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -153,3 +154,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     throw error;
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

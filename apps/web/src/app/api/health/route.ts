@@ -16,6 +16,7 @@ import { currentEnvironment, isFirebaseAdminConfigured } from "@/lib/env";
 import { environmentInfo, dbAdmin, authAdmin } from "@/lib/firebase-admin";
 import { getRedisRateLimiterHealth } from "@/lib/rate-limiter-redis";
 import { redisCache } from "@/lib/cache/redis-client";
+import { withCache } from '../../../lib/cache-headers';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -46,7 +47,7 @@ interface CheckResult {
 // Track server start time for uptime calculation
 const startTime = Date.now();
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const verbose = searchParams.get('verbose') === 'true';
 
@@ -293,3 +294,5 @@ async function checkRedis(): Promise<CheckResult> {
     };
   }
 }
+
+export const GET = withCache(_GET, 'LONG');

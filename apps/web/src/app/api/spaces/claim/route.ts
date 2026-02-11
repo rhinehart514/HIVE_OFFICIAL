@@ -29,6 +29,7 @@ import {
 } from '@hive/core/server';
 import { ProfileId, type LeaderProofType, getSystemTemplateForCategory } from '@hive/core';
 import { createBulkNotifications } from '@/lib/notification-service';
+import { withCache } from '../../../../lib/cache-headers';
 
 const claimSpaceSchema = z.object({
   spaceId: z.string().min(1, "Space ID is required"),
@@ -252,7 +253,7 @@ export const POST = withAuthValidationAndErrors(
  * GET /api/spaces/claim
  * Get user's pending and past claims
  */
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -344,3 +345,5 @@ async function notifyWaitlistMembersOfClaim(
     notifiedCount,
   });
 }
+
+export const GET = withCache(_GET, 'SHORT');

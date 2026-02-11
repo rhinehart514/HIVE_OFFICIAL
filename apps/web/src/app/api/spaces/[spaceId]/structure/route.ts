@@ -14,6 +14,7 @@ import {
   getCampusId,
   type AuthenticatedRequest
 } from "@/lib/middleware";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Space Structure API - Phase 5: DDD Foundation (HiveLab-Ready)
@@ -225,7 +226,7 @@ function transformToStructure(
 /**
  * GET /api/spaces/[spaceId]/structure - Get complete space structure
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -524,3 +525,5 @@ export const PATCH = withAuthValidationAndErrors(
     }, { status: hasErrors ? 207 : 200 }); // 207 Multi-Status if partial success
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

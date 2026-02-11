@@ -12,6 +12,7 @@ import {
   type AuthenticatedRequest
 } from "@/lib/middleware";
 import { SecurityScanner } from "@/lib/secure-input-validation";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Individual Widget CRUD API - Phase 4: DDD Foundation
@@ -32,7 +33,7 @@ const UpdateWidgetSchema = z.object({
 /**
  * GET /api/spaces/[spaceId]/widgets/[widgetId] - Get a specific widget
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string; widgetId: string }> },
   respond
@@ -212,3 +213,5 @@ export const DELETE = withAuthAndErrors(async (
     message: "Widget deleted successfully"
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

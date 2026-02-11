@@ -9,6 +9,7 @@ import { checkSpacePermission } from "@/lib/space-permission-middleware";
 import { logger } from "@/lib/structured-logger";
 import { SecurityScanner } from "@/lib/secure-input-validation";
 import { dbAdmin } from "@/lib/firebase-admin";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Individual Automation API - Phase 3 HiveLab
@@ -119,7 +120,7 @@ type UpdateAutomationData = z.output<typeof UpdateAutomationSchema>;
 // GET - Get Single Automation
 // ============================================================================
 
-export const GET = withAuthAndErrors(
+const _GET = withAuthAndErrors(
   async (
     request: Request,
     { params }: { params: Promise<{ spaceId: string; automationId: string }> },
@@ -353,3 +354,5 @@ export const DELETE = withAuthAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

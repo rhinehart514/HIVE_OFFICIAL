@@ -13,6 +13,7 @@ import {
   toSetupDeploymentDetailDTO,
   type SetupDeploymentStatus,
 } from '@hive/core/server';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // ============================================================================
 // Request Validation
@@ -40,7 +41,7 @@ function errorResponse(message: string, status = 400) {
 // GET /api/setups/deployments/[id]
 // ============================================================================
 
-export async function GET(
+async function _GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -145,3 +146,5 @@ export async function PATCH(
     return errorResponse('Failed to update setup deployment', 500);
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

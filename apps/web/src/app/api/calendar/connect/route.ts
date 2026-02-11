@@ -14,8 +14,9 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { getAuthorizationUrl, isCalendarOAuthConfigured } from '@/lib/calendar/google-oauth';
 import { logger } from '@/lib/structured-logger';
+import { withCache } from '../../../../lib/cache-headers';
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Verify user is authenticated
     const session = await getSession(request);
@@ -59,3 +60,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

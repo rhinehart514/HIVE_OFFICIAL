@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
+import { withCache } from '../../../../../../lib/cache-headers';
 
 // ============================================================================
 // Response Helpers
@@ -62,7 +63,7 @@ interface VersionDetailDTO {
 // GET /api/tools/[toolId]/versions/[version]
 // ============================================================================
 
-export async function GET(
+async function _GET(
   request: NextRequest,
   context: { params: Promise<{ toolId: string; version: string }> },
 ) {
@@ -126,3 +127,5 @@ export async function GET(
     return errorResponse('Failed to get tool version', 500);
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

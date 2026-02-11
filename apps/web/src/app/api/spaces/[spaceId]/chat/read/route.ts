@@ -10,6 +10,7 @@ import {
 } from "@/lib/middleware";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
 import { FieldValue } from "firebase-admin/firestore";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Read Receipts API - Track message read status per user per board
@@ -39,7 +40,7 @@ interface ReadReceiptDoc {
 /**
  * GET /api/spaces/[spaceId]/chat/read - Get read receipts for current user
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -203,3 +204,5 @@ export const POST = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'PRIVATE');

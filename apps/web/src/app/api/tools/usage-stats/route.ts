@@ -3,6 +3,7 @@ import { logger } from "@/lib/structured-logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { withAuth, ApiResponse as _ApiResponse } from '@/lib/api-auth-middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Usage statistics interface matching the component expectations
 interface ToolUsageStats {
@@ -178,7 +179,7 @@ const fetchUsageStats = async (userId: string, campusId: string): Promise<ToolUs
  * Get tool usage statistics for the authenticated user
  * GET /api/tools/usage-stats
  */
-export const GET = withAuth(async (request, authContext) => {
+const _GET = withAuth(async (request, authContext) => {
   try {
     const stats = await fetchUsageStats(authContext.userId, authContext.campusId);
     
@@ -254,3 +255,5 @@ export const POST = withAuth(async (request, authContext) => {
 }, {
   operation: 'record_usage_event'
 });
+
+export const GET = withCache(_GET, 'SHORT');

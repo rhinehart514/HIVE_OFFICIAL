@@ -19,6 +19,7 @@ import {
 import { dbAdmin } from '@/lib/firebase-admin';
 import { deriveCampusFromEmail } from '@/lib/middleware';
 import { logger } from '@/lib/logger';
+import { withCache } from '../../../../lib/cache-headers';
 
 // ============================================================================
 // Response Helpers
@@ -36,7 +37,7 @@ function errorResponse(message: string, status = 400) {
 // GET /api/setups/templates
 // ============================================================================
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
@@ -310,3 +311,5 @@ export async function POST(request: NextRequest) {
     return errorResponse('Failed to create setup template', 500);
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

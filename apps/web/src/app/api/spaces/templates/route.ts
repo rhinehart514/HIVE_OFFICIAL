@@ -11,6 +11,7 @@ import {
 } from "@hive/core";
 import { logger } from "@/lib/structured-logger";
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/spaces/templates
@@ -23,7 +24,7 @@ import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/m
  *   search: Search templates by name, description, or tags
  *   id: Get a specific template by ID
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
 
@@ -92,3 +93,5 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     categories: ["academic", "social", "professional", "community", "events"] as SpaceTemplateCategory[],
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

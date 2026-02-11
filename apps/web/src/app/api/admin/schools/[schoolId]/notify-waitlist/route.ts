@@ -13,6 +13,7 @@ import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { logger } from '@/lib/logger';
 import { generateSchoolLaunchEmail } from '@/lib/waitlist-email-templates';
 import { Resend } from 'resend';
+import { withCache } from '../../../../../../lib/cache-headers';
 
 interface RouteContext {
   params: Promise<{ schoolId: string }>;
@@ -24,7 +25,7 @@ const BATCH_SIZE = 50; // Resend batch limit
  * GET /api/admin/schools/[schoolId]/notify-waitlist
  * Preview waitlist entries for this school
  */
-export async function GET(
+async function _GET(
   request: NextRequest,
   context: RouteContext
 ) {
@@ -283,3 +284,5 @@ export async function POST(
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

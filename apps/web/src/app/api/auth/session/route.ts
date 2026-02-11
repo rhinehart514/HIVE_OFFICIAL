@@ -18,13 +18,14 @@ import {
   RATE_LIMIT_PRESETS,
   type ResponseFormatter,
 } from '@/lib/middleware';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/auth/session - Validate session (with rate limiting)
  *
  * @deprecated Use /api/auth/me instead.
  */
-export const GET = withErrors(
+const _GET = withErrors(
   async (request: Request, _context: unknown, respond: typeof ResponseFormatter) => {
     // DEPRECATION WARNING
     logger.warn('Deprecated endpoint called: GET /api/auth/session - use /api/auth/me instead', {
@@ -246,3 +247,5 @@ export const POST = withErrors(
   },
   { rateLimit: RATE_LIMIT_PRESETS.auth }
 );
+
+export const GET = withCache(_GET, 'LONG');

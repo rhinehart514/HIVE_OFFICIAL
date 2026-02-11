@@ -6,6 +6,7 @@ import {
   type AuthenticatedRequest
 } from "@/lib/middleware";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Space Data API - Unified data endpoint for HiveLab space-tier elements
@@ -65,7 +66,7 @@ interface StatsData {
 /**
  * GET /api/spaces/[spaceId]/data - Fetch space data for elements
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -256,3 +257,5 @@ export const GET = withAuthAndErrors(async (
     return respond.error("Failed to fetch space data", "FETCH_FAILED", { status: 500 });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

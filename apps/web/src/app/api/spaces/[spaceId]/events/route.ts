@@ -21,6 +21,7 @@ import { ViewerContext } from '@hive/core/domain/shared/value-objects/viewer-con
 import { autoLinkEventToBoard } from "@/lib/event-board-auto-link";
 import { isContentHidden } from "@/lib/content-moderation";
 import { notifySpaceEventCreated } from "@/lib/notification-service";
+import { withCache } from '../../../../../lib/cache-headers';
 
 const GetEventsSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
@@ -102,7 +103,7 @@ const CreateEventSchema = z.object({
   currency: z.string().length(3).optional(),
 });
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
@@ -538,3 +539,5 @@ export const POST = withAuthValidationAndErrors(
     }
   },
 );
+
+export const GET = withCache(_GET, 'SHORT');

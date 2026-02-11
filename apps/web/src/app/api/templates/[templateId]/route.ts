@@ -19,6 +19,7 @@ import {
   type TemplateCategory,
   type TemplateVisibility,
 } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 interface RouteParams {
   params: Promise<{ templateId: string }>;
@@ -28,7 +29,7 @@ interface RouteParams {
 // GET /api/templates/[templateId]
 // ============================================================================
 
-export const GET = withErrors(
+const _GET = withErrors(
   async (request, { params }: RouteParams, respond) => {
     const { templateId } = await params;
 
@@ -174,3 +175,5 @@ export const DELETE = withAuthAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

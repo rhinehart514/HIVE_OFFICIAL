@@ -11,6 +11,7 @@ import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getServerSpaceRepository, type EnhancedSpace } from '@hive/core/server';
 import { checkSpacePermission, getSpaceMembership } from '@/lib/space-permission-middleware';
+import { withCache } from '../../../../lib/cache-headers';
 
 interface MovementRestriction {
   spaceType: 'campus_living' | 'cohort' | 'fraternity_and_sorority';
@@ -310,7 +311,7 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
   });
 });
 
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
@@ -525,3 +526,5 @@ async function validateMovementRestrictions(
 
   return { canMove: true };
 }
+
+export const GET = withCache(_GET, 'SHORT');

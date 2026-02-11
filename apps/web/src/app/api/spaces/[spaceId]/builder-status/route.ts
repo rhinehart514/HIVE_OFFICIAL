@@ -3,13 +3,14 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { getServerSpaceRepository } from "@hive/core/server";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/spaces/[spaceId]/builder-status
  * Returns caller's role and abilities within a space.
  * Uses flat spaceMembers collection, with fallback to nested membership for legacy roles.
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -81,3 +82,5 @@ export const GET = withAuthAndErrors(async (
     return respond.error('Failed to fetch builder status', 'INTERNAL_ERROR', { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

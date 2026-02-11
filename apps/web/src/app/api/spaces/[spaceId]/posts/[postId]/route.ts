@@ -12,6 +12,7 @@ import {
 } from "@/lib/middleware";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 const EditPostSchema = z.object({
   content: z.string().min(1).max(2000),
@@ -67,7 +68,7 @@ async function loadPost(spaceId: string, postId: string, campusId: string) {
   return { ok: true as const, postDoc, postData };
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request: AuthenticatedRequest,
   { params }: { params: Promise<{ spaceId: string; postId: string }> },
   respond,
@@ -320,3 +321,5 @@ export const POST = withAuthValidationAndErrors(
     }
   },
 );
+
+export const GET = withCache(_GET, 'SHORT');

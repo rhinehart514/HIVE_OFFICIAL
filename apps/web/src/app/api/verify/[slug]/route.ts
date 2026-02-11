@@ -2,6 +2,7 @@ import { withErrors } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { getEarnedBadges, getNextBadge } from '@hive/core';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/verify/[slug] — Public verified leadership record
@@ -9,7 +10,7 @@ import { getEarnedBadges, getNextBadge } from '@hive/core';
  * Slug format: {handle}-{spaceHandle}
  * Returns aggregated leadership metrics for public display.
  */
-export const GET = withErrors(async (
+const _GET = withErrors(async (
   _request,
   { params }: { params: Promise<{ slug: string }> },
   respond,
@@ -198,3 +199,5 @@ export const GET = withErrors(async (
     return respond.error('Failed to generate record', 'INTERNAL_ERROR', { status: 500 });
   }
 });
+
+export const GET = withCache(_GET, 'LONG');

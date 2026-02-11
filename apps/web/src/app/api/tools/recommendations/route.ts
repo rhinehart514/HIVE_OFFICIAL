@@ -7,6 +7,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { withCache } from '../../../../lib/cache-headers';
 
 // Type definition for tool data from Firestore
 interface ToolData {
@@ -106,7 +107,7 @@ interface RecommendationResponse {
 }
 
 // GET - Get personalized tool recommendations
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   _context,
   respond
@@ -573,3 +574,5 @@ function groupByCategories(recommendations: ToolRecommendation[]) {
     tools: tools.slice(0, 6) // Limit to 6 tools per category
   }));
 }
+
+export const GET = withCache(_GET, 'SHORT');

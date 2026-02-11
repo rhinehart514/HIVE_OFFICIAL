@@ -11,6 +11,7 @@ import {
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { getServerSpaceRepository } from "@hive/core/server";
+import { withCache } from '../../../../../lib/cache-headers';
 
 const MembershipQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
@@ -54,7 +55,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string, campu
   return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
@@ -211,3 +212,5 @@ export const GET = withAuthAndErrors(async (
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

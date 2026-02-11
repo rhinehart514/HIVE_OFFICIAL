@@ -12,6 +12,7 @@ import {
   type AuthenticatedRequest
 } from "@/lib/middleware";
 import { SecurityScanner } from "@/lib/secure-input-validation";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Individual Tab CRUD API - Phase 4: DDD Foundation
@@ -31,7 +32,7 @@ const UpdateTabSchema = z.object({
 /**
  * GET /api/spaces/[spaceId]/tabs/[tabId] - Get a specific tab
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string; tabId: string }> },
   respond
@@ -231,3 +232,5 @@ export const DELETE = withAuthAndErrors(async (
     message: "Tab deleted successfully"
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

@@ -8,6 +8,7 @@ import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { logger } from '@/lib/logger';
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 import { validateToolForPublish } from "@/lib/tool-validation";
+import { withCache } from '../../../../../lib/cache-headers';
 
 // Schema for tool deployment requests
 // Accepts either spaceId (legacy) or targetId/targetType (new modal format)
@@ -448,7 +449,7 @@ export const DELETE = withAuthAndErrors(async (
     });
 });
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
@@ -514,3 +515,5 @@ export const GET = withAuthAndErrors(async (
       analytics
     });
 });
+
+export const GET = withCache(_GET, 'SHORT');

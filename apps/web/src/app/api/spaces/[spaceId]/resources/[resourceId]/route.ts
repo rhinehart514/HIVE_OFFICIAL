@@ -10,6 +10,7 @@ import { withSecureAuth } from '@/lib/api-auth-secure';
 import { logger } from '@/lib/logger';
 import { getDefaultCampusId } from '@/lib/campus-context';
 import { z } from 'zod';
+import { withCache } from '../../../../../../lib/cache-headers';
 
 // Update schema
 const UpdateResourceSchema = z.object({
@@ -27,7 +28,7 @@ type RouteContext = {
 };
 
 // GET - Fetch single resource
-export const GET = withSecureAuth(
+const _GET = withSecureAuth(
   async (request: Request, token: { uid: string }, context: RouteContext) => {
     try {
       const { spaceId, resourceId } = await context.params;
@@ -306,3 +307,5 @@ export const DELETE = withSecureAuth(
     rateLimit: { type: 'api' },
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

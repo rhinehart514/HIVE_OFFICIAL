@@ -15,6 +15,7 @@ import {
   type CheckPermissionFn,
   type GetUserProfileFn,
 } from "@hive/core/server";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Board CRUD API - Chat channels within a space
@@ -89,7 +90,7 @@ function createProfileGetter(): GetUserProfileFn {
 /**
  * GET /api/spaces/[spaceId]/boards - List all boards for a space
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -275,3 +276,5 @@ export const POST = withAuthValidationAndErrors(
     }, { status: 201 });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { withCache } from '@/lib/cache-headers';
 import { checkHandleAvailability } from "@/lib/handle-service";
 import { createCrudHandler, type ApiContext } from "@/lib/api-wrapper";
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
@@ -62,5 +63,5 @@ const handler = createCrudHandler({
   }
 });
 
-export const GET = handler;
+export const GET = withCache(handler, 'LONG');
 export const POST = handler;

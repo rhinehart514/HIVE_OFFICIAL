@@ -24,6 +24,7 @@ import type { GhostModeUser } from '@hive/core';
 import { getCurrentUser } from '@/lib/server-auth';
 import { searchRateLimit } from '@/lib/rate-limit-simple';
 import { getCampusFromEmail, getDefaultCampusId } from '@/lib/campus-context';
+import { withCache } from '../../../lib/cache-headers';
 
 interface SearchResult {
   id: string;
@@ -906,7 +907,7 @@ async function searchTools(
   return results.slice(0, limit);
 }
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Rate limit check - use IP for client identification
     const forwarded = request.headers.get('x-forwarded-for');
@@ -1057,3 +1058,5 @@ function generateSuggestions(query: string, results: SearchResult[]): string[] {
 
   return suggestions.slice(0, 3);
 }
+
+export const GET = withCache(_GET, 'SHORT');

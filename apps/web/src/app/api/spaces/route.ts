@@ -17,6 +17,7 @@ import { getCampusId } from "@/lib/middleware";
 import { isAdmin as checkIsAdmin } from "@/lib/admin-auth";
 // SECURITY: Import SecurityScanner for XSS protection
 import { SecurityScanner } from "@/lib/secure-input-validation";
+import { withCache } from '../../../lib/cache-headers';
 
 /**
  * SECURITY: Enhanced space creation schema with XSS protection
@@ -55,7 +56,7 @@ const createSpaceSchema = z.object({
  * Supports filtering by type, search, and cursor-based pagination.
  * Uses unstable_cache for 5-minute caching.
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
   const campusId = getCampusId(req);
@@ -579,3 +580,5 @@ async function autoDeployTemplate(
     endpoint: '/api/spaces'
   });
 }
+
+export const GET = withCache(_GET, 'SHORT');

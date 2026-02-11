@@ -12,6 +12,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { logger } from '@/lib/logger';
 import { getEditTrackerService } from '@hive/core';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/admin/ai-quality/edits
@@ -20,7 +21,7 @@ import { getEditTrackerService } from '@hive/core';
  * - generationId: optional filter by generation
  * - limit: number of records (default: 50, max: 200)
  */
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Require admin auth
     const auth = await validateApiAuth(request, { operation: 'admin-ai-edits' });
@@ -98,3 +99,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -4,6 +4,7 @@ import { logger } from "@/lib/structured-logger";
 import { z } from 'zod';
 import { getServerProfileRepository } from '@hive/core/server';
 import { isTestUserId } from "@/lib/security-service";
+import { withCache } from '../../../../../lib/cache-headers';
 
 // Validation schema for conflict resolution
 const resolveConflictSchema = z.object({
@@ -45,7 +46,7 @@ interface CalendarConflict {
  * - includeNewEvent: JSON string of new event to check for conflicts
  * - suggestTimes: boolean - whether to suggest alternative times
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
@@ -347,3 +348,5 @@ export const POST = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

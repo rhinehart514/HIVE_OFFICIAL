@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { getCampusId } from '@/lib/campus-context';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Zod schema for visibility check
 const VisibilityCheckSchema = z.object({
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Batch visibility check for multiple users
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) {
@@ -337,3 +338,5 @@ function calculateVisibility(
       return baseVisibility;
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -14,6 +14,7 @@
 import { NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
+import { withCache } from '../../../../lib/cache-headers';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -240,6 +241,8 @@ function evaluateTransition(
 }
 
 // Support GET for Vercel Cron
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   return POST(request);
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -16,6 +16,7 @@ import {
   GraduationYear,
   InterestCollection
 } from '@hive/core/server';
+import { withCache } from '../../../lib/cache-headers';
 
 // Constants from value objects for schema validation
 const MAX_INTERESTS = InterestCollection.MAX_INTERESTS; // 10
@@ -95,7 +96,7 @@ const DEFAULT_GRID = {
  * - id: Optional user ID to view another profile
  * - handle: Optional handle to look up a profile by handle
  */
-export const GET = withAuthAndErrors(
+const _GET = withAuthAndErrors(
   async (request, _context, _respond) => {
     try {
       const userId = getUserId(request as AuthenticatedRequest);
@@ -650,3 +651,5 @@ export const PATCH = PUT;
  * Alias for updating current user's profile to match API reference
  */
 export const POST = PUT;
+
+export const GET = withCache(_GET, 'PRIVATE');

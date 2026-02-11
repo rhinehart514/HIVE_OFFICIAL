@@ -14,8 +14,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { verifySession } from '@/lib/session';
+import { withCache } from '../../../../../../lib/cache-headers';
 
-export async function GET(
+async function _GET(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ) {
@@ -138,3 +139,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

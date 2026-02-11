@@ -33,7 +33,8 @@ const UpdateUserSchema = z.object({
  * GET /api/admin/users/[userId]
  * Get detailed user information with activity
  */
-export const GET = withAdminAuthAndErrors<RouteContext>(async (request, context, respond) => {
+import { withCache } from '@/lib/cache-headers';
+const _GET = withAdminAuthAndErrors<RouteContext>(async (request, context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const { userId } = await context.params;
 
@@ -235,3 +236,5 @@ export const PATCH = withAdminAuthAndErrors<RouteContext>(async (request, contex
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

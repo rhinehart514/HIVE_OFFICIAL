@@ -16,6 +16,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logAdminActivity } from '@/lib/admin-activity';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const ListQuerySchema = z.object({
   status: z.enum(['all', 'pending', 'reviewed', 'resolved', 'dismissed']).optional().default('all'),
@@ -46,7 +47,7 @@ const CreateReportSchema = z.object({
  * GET /api/admin/moderation/reports
  * Fetch all reports with filtering
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = ListQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -252,3 +253,5 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

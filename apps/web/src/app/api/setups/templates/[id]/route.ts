@@ -16,6 +16,7 @@ import {
 } from '@hive/core/server';
 import type { OrchestrationRule } from '@hive/core';
 import { logger } from '@/lib/logger';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // ============================================================================
 // Response Helpers
@@ -33,7 +34,7 @@ function errorResponse(message: string, status = 400) {
 // GET /api/setups/templates/[id]
 // ============================================================================
 
-export async function GET(
+async function _GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -381,3 +382,5 @@ export async function DELETE(
     return errorResponse('Failed to delete setup template', 500);
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

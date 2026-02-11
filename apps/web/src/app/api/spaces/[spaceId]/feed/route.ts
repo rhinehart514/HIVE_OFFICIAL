@@ -7,6 +7,7 @@ import { getServerSpaceRepository } from "@hive/core/server";
 import { GhostModeService, type GhostModeUser } from '@hive/core/domain/profile/services/ghost-mode.service';
 import { ViewerContext } from '@hive/core/domain/shared/value-objects/viewer-context.value';
 import { isContentHidden } from '@/lib/content-moderation';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // COST OPTIMIZATION: Pre-fetched user data for ghost mode + display
 interface UserCacheEntry {
@@ -52,7 +53,7 @@ export interface ActivityItem {
   };
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -461,3 +462,5 @@ export const GET = withAuthAndErrors(async (
       }
     });
 });
+
+export const GET = withCache(_GET, 'SHORT');

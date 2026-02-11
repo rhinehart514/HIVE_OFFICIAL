@@ -13,6 +13,7 @@ import {
 } from "@/lib/middleware";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
+import { withCache } from '../../../../../../../lib/cache-headers';
 
 const CreateCommentSchema = z.object({
   content: z.string().min(1).max(1000),
@@ -63,7 +64,7 @@ async function ensurePostExists(spaceId: string, postId: string, campusId: strin
   return { ok: true as const, postDoc, postData };
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request: AuthenticatedRequest,
   { params }: { params: Promise<{ spaceId: string; postId: string }> },
   respond,
@@ -269,3 +270,5 @@ export const POST = withAuthValidationAndErrors(
     }
   },
 );
+
+export const GET = withCache(_GET, 'SHORT');

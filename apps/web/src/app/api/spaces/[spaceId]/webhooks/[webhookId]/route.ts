@@ -19,6 +19,7 @@ import {
   type WebhookEventType,
   type WebhookProps,
 } from "@hive/core/domain";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Schema for updating a webhook
@@ -67,7 +68,7 @@ function validateEvents(events: string[]): { valid: boolean; invalid: string[] }
  *
  * Get a specific webhook (leaders only)
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string; webhookId: string }> },
   respond
@@ -405,3 +406,5 @@ export const DELETE = withAuthAndErrors(async (
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

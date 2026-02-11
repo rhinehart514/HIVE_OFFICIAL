@@ -9,6 +9,7 @@ import {
   type AuthenticatedRequest
 } from "@/lib/middleware";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Typing Indicator API - Track who is typing in a board
@@ -26,7 +27,7 @@ const TypingSchema = z.object({
 /**
  * GET /api/spaces/[spaceId]/chat/typing - Get users currently typing
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -179,3 +180,5 @@ export const POST = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'PRIVATE');

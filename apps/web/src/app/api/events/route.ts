@@ -13,6 +13,7 @@ import {
   getEventStartDate,
   toEventIso,
 } from "@/lib/events/event-time";
+import { withCache } from '../../../lib/cache-headers';
 
 /**
  * Campus-wide Events API
@@ -162,7 +163,7 @@ async function fetchUserRsvpStatuses(eventIds: string[], userId: string) {
   return userRsvpMap;
 }
 
-export const GET = withOptionalAuth(async (
+const _GET = withOptionalAuth(async (
   request: Request,
   _context: unknown,
   respond: typeof ResponseFormatter
@@ -486,3 +487,5 @@ export const GET = withOptionalAuth(async (
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

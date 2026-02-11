@@ -13,6 +13,7 @@ import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { withAuth, type AuthContext } from '@/lib/api-auth-middleware';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { withCache } from '../../../lib/cache-headers';
 
 // 15-minute buffer for close proximity detection
 const CLOSE_BUFFER_MS = 15 * 60 * 1000;
@@ -119,7 +120,7 @@ interface CalendarEvent {
 }
 
 // GET - Fetch calendar events (space events only)
-export const GET = withAuth(async (request, authContext: AuthContext) => {
+const _GET = withAuth(async (request, authContext: AuthContext) => {
   try {
     const userId = authContext.userId;
     const campusId = authContext.campusId;
@@ -202,3 +203,5 @@ export const GET = withAuth(async (request, authContext: AuthContext) => {
 }, {
   operation: 'get_calendar_events'
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

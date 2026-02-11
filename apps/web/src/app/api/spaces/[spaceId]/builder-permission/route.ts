@@ -8,6 +8,7 @@
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/spaces/[spaceId]/builder-permission
@@ -19,7 +20,7 @@ import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } 
  * @returns {string|null} response.role - User's role in the space
  * @returns {object|null} response.space - Basic space info if user has permission
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const { spaceId } = await (context as unknown as { params: Promise<{ spaceId: string }> }).params;
 
@@ -106,3 +107,5 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     );
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

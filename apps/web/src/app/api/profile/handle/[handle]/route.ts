@@ -2,6 +2,7 @@ import { withOptionalAuth, getUserId, getCampusId, type AuthenticatedRequest } f
 import { getServerProfileRepository } from '@hive/core/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { NextResponse } from 'next/server';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/profile/handle/[handle] - Lookup profile by handle
@@ -22,7 +23,7 @@ function addDeprecationHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
-export const GET = withOptionalAuth(
+const _GET = withOptionalAuth(
   async (request, context: { params: Promise<{ handle: string }> }, respond) => {
     const { handle } = await context.params;
 
@@ -126,3 +127,5 @@ export const GET = withOptionalAuth(
     }
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

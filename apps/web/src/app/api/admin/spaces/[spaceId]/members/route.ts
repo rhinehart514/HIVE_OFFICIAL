@@ -19,6 +19,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getAdminRecord, hasAdminRole } from '@/lib/admin-auth';
+import { withCache } from '../../../../../../lib/cache-headers';
 
 type RouteContext = { params: Promise<{ spaceId: string }> };
 
@@ -54,7 +55,7 @@ interface SpaceMember {
  * GET /api/admin/spaces/[spaceId]/members
  * List all members of a space
  */
-export const GET = withAdminAuthAndErrors(async (request, context: RouteContext, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, context: RouteContext, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { spaceId } = await context.params;
   const { searchParams } = new URL(request.url);
@@ -303,3 +304,5 @@ export const PATCH = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'PRIVATE');

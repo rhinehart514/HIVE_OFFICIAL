@@ -13,6 +13,7 @@ import {
 } from "@/lib/middleware";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
 import { SecurityScanner } from "@/lib/secure-input-validation";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Widget CRUD API - Phase 4: DDD Foundation
@@ -38,7 +39,7 @@ const CreateWidgetSchema = z.object({
  * GET /api/spaces/[spaceId]/widgets - List all widgets for a space
  * Requires: guest access (public spaces) or member access (private spaces)
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -169,3 +170,5 @@ export const POST = withAuthValidationAndErrors(
     }, { status: 201 });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

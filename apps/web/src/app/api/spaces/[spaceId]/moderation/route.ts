@@ -21,6 +21,7 @@ import {
   type ModerationAction,
   type ModerableContentType,
 } from "@/lib/content-moderation";
+import { withCache } from '../../../../../lib/cache-headers';
 
 const GetModerationQueueSchema = z.object({
   contentType: z.enum(["post", "comment", "event", "all"]).default("all"),
@@ -112,7 +113,7 @@ function getContentRef(spaceId: string, contentType: ModerableContentType, conte
  *
  * Get moderation queue for the space - flagged and hidden content
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
@@ -525,3 +526,5 @@ export const PUT = withAuthValidationAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

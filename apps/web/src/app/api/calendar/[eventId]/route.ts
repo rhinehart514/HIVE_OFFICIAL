@@ -9,6 +9,7 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { z } from "zod";
+import { withCache } from '../../../../lib/cache-headers';
 
 const UpdateEventSchema = z.object({
   title: z.string().min(1),
@@ -54,7 +55,7 @@ function validateChronology(startDate: string, endDate: string) {
   return start < end;
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ eventId: string }> },
   respond,
@@ -206,3 +207,5 @@ export const DELETE = withAuthAndErrors(async (
   await loaded.eventDoc.ref.delete();
   return respond.success({ message: "Event deleted successfully" });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

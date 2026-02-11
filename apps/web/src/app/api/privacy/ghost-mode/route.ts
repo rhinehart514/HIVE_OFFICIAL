@@ -7,9 +7,10 @@ import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/
 import type * as admin from 'firebase-admin';
 import { getCampusId } from '@/lib/campus-context';
 import { isGhostModeEnabled } from '@/lib/feature-flags';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Ghost Mode quick toggle and status
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) {
@@ -317,3 +318,5 @@ function scheduleGhostModeDisable(userId: string, durationMinutes: number) {
   // - A cron job that checks for expired ghost modes
   // - Client-side timeout (less reliable)
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

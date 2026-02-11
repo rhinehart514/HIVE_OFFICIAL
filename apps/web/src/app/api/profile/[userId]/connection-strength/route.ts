@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin as db } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Weights for connection strength calculation
@@ -30,7 +31,7 @@ function getTier(score: number): string {
  * GET /api/profile/[userId]/connection-strength
  * Calculate connection strength between current user and target user
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ userId: string }> },
   respond
@@ -334,3 +335,5 @@ function getTierLabel(tier: string): string {
     default: return 'None';
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

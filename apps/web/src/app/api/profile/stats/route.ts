@@ -4,13 +4,14 @@ import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { getServerProfileRepository } from '@hive/core/server';
 import { isTestUserId } from "@/lib/security-service";
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/profile/stats
  * Returns lightweight profile stats used by charts and insights
  * Response shape: { success, data: { ... } }
  */
-export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
+const _GET = withAuthAndErrors(async (request, _ctx, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
@@ -168,3 +169,5 @@ function buildMockStats(range: string) {
     generatedAt: new Date().toISOString(),
   };
 }
+
+export const GET = withCache(_GET, 'SHORT');

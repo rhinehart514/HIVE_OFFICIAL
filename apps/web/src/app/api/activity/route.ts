@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { withCache } from '../../../lib/cache-headers';
 
 // Activity tracking types
 interface ActivityEvent {
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Fetch activity analytics
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) {
@@ -347,3 +348,4 @@ function generateInsights(data: {
 
   return insights;
 }
+export const GET = withCache(_GET, 'PRIVATE');

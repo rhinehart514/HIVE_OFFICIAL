@@ -1,6 +1,7 @@
 import { withAuthAndErrors, type AuthenticatedRequest, getUserId, getCampusId } from '@/lib/middleware';
 import { getServerSpaceRepository } from '@hive/core/server';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/spaces/mine - Get spaces where user has specific roles
@@ -11,7 +12,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
  * Uses DDD repository for space data, but still needs spaceMembers
  * for role filtering since roles aren't in the EnhancedSpace aggregate.
  */
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
   const campusId = getCampusId(req);
@@ -66,3 +67,5 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
 
   return respond.success({ spaces, count: spaces.length });
 });
+
+export const GET = withCache(_GET, 'SHORT');

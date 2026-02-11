@@ -13,6 +13,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { logger } from '@/lib/logger';
 import { clearDomainCache } from '@/lib/campus-context';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // Validation schema for updating a school
 const updateSchoolSchema = z.object({
@@ -54,7 +55,7 @@ interface RouteContext {
  * GET /api/admin/schools/[schoolId]
  * Get school details
  */
-export async function GET(
+async function _GET(
   request: NextRequest,
   context: RouteContext
 ) {
@@ -252,3 +253,5 @@ export async function DELETE(
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

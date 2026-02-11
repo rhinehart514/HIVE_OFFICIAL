@@ -6,6 +6,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * /api/spaces/attention
@@ -37,7 +38,7 @@ interface AttentionItem {
 }
 
 // GET - Fetch attention items for user
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest) => {
+const _GET = withAuthAndErrors(async (request: AuthenticatedRequest) => {
   const userId = getUserId(request);
   const campusId = getCampusId(request); // Guaranteed by auth middleware - no fallback needed
 
@@ -178,3 +179,5 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest) => {
     count: attentionItems.length,
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

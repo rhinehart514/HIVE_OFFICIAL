@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { withCache } from '../../../lib/cache-headers';
 
 // =============================================================================
 // Inlined Feature Flags (previously from @/lib/feature-flags)
@@ -180,7 +181,7 @@ function applySoftLaunchOverrides(results: Record<string, FlagResult>): Record<s
  */
 
 // GET - Get feature flags for the current user
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) {
@@ -448,3 +449,5 @@ export async function OPTIONS(_request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'LONG');

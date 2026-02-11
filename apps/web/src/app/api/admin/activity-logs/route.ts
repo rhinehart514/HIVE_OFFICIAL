@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../lib/cache-headers';
 
 const LogQuerySchema = z.object({
   limit: z.string().optional().transform(v => v ? parseInt(v, 10) : 50),
@@ -47,7 +48,7 @@ interface ActivityLogStats {
  * GET /api/admin/activity-logs
  * Fetch admin activity logs with filtering and stats
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = LogQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -218,3 +219,5 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
     logged: true,
   });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

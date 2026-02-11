@@ -4,6 +4,7 @@ import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { enforceRateLimit } from '@/lib/secure-rate-limiter';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/waitlist/check
@@ -17,7 +18,7 @@ const checkWaitlistSchema = z.object({
   schoolId: z.string().max(100).optional(),
 });
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Rate limiting - permissive since this is just a check
     const rateLimitResult = await enforceRateLimit('authLoose', request);
@@ -100,3 +101,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'LONG');

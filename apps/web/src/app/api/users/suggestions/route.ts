@@ -14,6 +14,7 @@
 
 import { dbAdmin as db } from '@/lib/firebase-admin';
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
+import { withCache } from '../../../../lib/cache-headers';
 
 interface SuggestionScore {
   userId: string;
@@ -48,7 +49,7 @@ interface SuggestionResult {
   };
 }
 
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 20);
@@ -324,3 +325,5 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
     total: suggestions.length,
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

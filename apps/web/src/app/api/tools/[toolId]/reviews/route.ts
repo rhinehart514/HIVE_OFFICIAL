@@ -9,6 +9,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { withCache } from '../../../../../lib/cache-headers';
 
 const ReviewSchema = z.object({
   rating: z.number().min(1).max(5),
@@ -166,7 +167,7 @@ export const POST = withAuthValidationAndErrors(
   },
 );
 
-export const GET = withAuthAndErrors(
+const _GET = withAuthAndErrors(
   async (
     request,
     { params }: { params: Promise<{ toolId: string }> },
@@ -234,3 +235,5 @@ export const GET = withAuthAndErrors(
     return respond.success({ reviews });
   },
 );
+
+export const GET = withCache(_GET, 'SHORT');

@@ -2,6 +2,7 @@ import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } 
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import { getServerProfileRepository } from '@hive/core/server';
+import { withCache } from '../../../../../lib/cache-headers';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Channel = 'in_app' | 'push' | 'email' | 'desktop';
@@ -32,7 +33,7 @@ const defaultPreferences: NotificationPreferences = {
 };
 
 // GET /api/profile/notifications/preferences?userId=... -> returns raw preferences object
-export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
+const _GET = withAuthAndErrors(async (request, _ctx, respond) => {
   const currentUserId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
@@ -136,3 +137,5 @@ export const PUT = withAuthAndErrors(async (request, _ctx, respond) => {
     return respond.error('Failed to update preferences', 'INTERNAL_ERROR', { status: 500 });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

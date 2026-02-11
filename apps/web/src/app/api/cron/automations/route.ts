@@ -15,6 +15,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
 import { createBulkNotifications } from '@/lib/notification-service';
+import { withCache } from '../../../../lib/cache-headers';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -705,6 +706,8 @@ function evaluateCondition(current: unknown, operator: string, threshold: unknow
 }
 
 // Also support GET for Vercel Cron
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   return POST(request);
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

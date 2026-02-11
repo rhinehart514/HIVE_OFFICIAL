@@ -8,6 +8,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { withCache } from '../../../../lib/cache-headers';
 
 const ReviewActionSchema = z.object({
   requestId: z.string(),
@@ -185,7 +186,7 @@ export const POST = withAuthValidationAndErrors(
 );
 
 // GET - Get pending review requests (Admin only)
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   _context,
   respond
@@ -261,3 +262,5 @@ export const GET = withAuthAndErrors(async (
     return respond.error("Failed to fetch review requests", "INTERNAL_ERROR", { status: 500 });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

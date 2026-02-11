@@ -11,6 +11,7 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { HttpStatus } from "@/lib/api-response-types";
+import { withCache } from '../../../../../lib/cache-headers';
 
 const GetActivityLogSchema = z.object({
   type: z.string().optional(), // Filter by activity type
@@ -127,7 +128,7 @@ async function validateSpaceAndLeaderPermission(spaceId: string, userId: string,
  * Get space activity audit log
  * Shows all actions performed in the space for accountability and debugging
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
@@ -323,3 +324,5 @@ export const GET = withAuthAndErrors(async (
     },
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

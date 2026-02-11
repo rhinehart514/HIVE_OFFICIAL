@@ -21,6 +21,7 @@ import {
 import { z } from 'zod';
 import type { ToolConnection, DataTransform } from '@hive/core';
 import { MAX_CONNECTIONS_PER_TOOL } from '@hive/core';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -414,5 +415,7 @@ async function handlePost(
 // EXPORTS
 // ============================================================================
 
-export const GET = withAuthAndErrors(handleGet);
+const _GET = withAuthAndErrors(handleGet);
 export const POST = withAuthAndErrors(handlePost);
+
+export const GET = withCache(_GET, 'SHORT');

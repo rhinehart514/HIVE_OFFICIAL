@@ -6,6 +6,7 @@ import * as admin from 'firebase-admin';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getServerProfileRepository } from '@hive/core/server';
 import { isTestUserId } from "@/lib/security-service";
+import { withCache } from '../../../../../lib/cache-headers';
 
 // Validation schemas
 const createEventSchema = z.object({
@@ -38,7 +39,7 @@ const updateEventSchema = z.object({
  * - startDate: ISO string
  * - endDate: ISO string
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
@@ -355,3 +356,5 @@ export const DELETE = withAuthAndErrors(async (request, context, respond) => {
     );
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

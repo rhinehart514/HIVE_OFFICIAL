@@ -12,6 +12,7 @@ import type { ToolSharedState, ToolSharedEntity, ToolTimelineEvent } from "@hive
 import { shardedCounterService } from "@/lib/services/sharded-counter.service";
 import { extractedCollectionService } from "@/lib/services/extracted-collection.service";
 import { extractedTimelineService } from "@/lib/services/extracted-timeline.service";
+import { withCache } from '../../../../../lib/cache-headers';
 
 // Feature flags for Phase 1 Scaling Architecture (matches execute/route.ts)
 const USE_SHARDED_COUNTERS = process.env.USE_SHARDED_COUNTERS === "true";
@@ -33,7 +34,7 @@ const USE_EXTRACTED_TIMELINE = process.env.USE_EXTRACTED_TIMELINE === "true";
  *   - state: The deployment state (only if deploymentId provided)
  *   - stateMetadata: State metadata (only if deploymentId provided)
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
@@ -344,3 +345,5 @@ export const GET = withAuthAndErrors(async (
     }),
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

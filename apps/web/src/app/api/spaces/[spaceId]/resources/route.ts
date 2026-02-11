@@ -10,6 +10,7 @@ import { withSecureAuth } from '@/lib/api-auth-secure';
 import { logger } from '@/lib/logger';
 import { getDefaultCampusId } from '@/lib/campus-context';
 import { z } from 'zod';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // Resource types
 export type ResourceType = 'link' | 'file' | 'document' | 'image' | 'video';
@@ -29,7 +30,7 @@ const CreateResourceSchema = z.object({
 });
 
 // GET - List resources for a space
-export const GET = withSecureAuth(
+const _GET = withSecureAuth(
   async (
     request: Request,
     token: { uid: string },
@@ -271,3 +272,5 @@ export const POST = withSecureAuth(
     rateLimit: { type: 'api' },
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

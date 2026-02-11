@@ -4,12 +4,13 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * GET /api/admin/toolbar/impersonate/search?q=...
  * Search users by email or name for impersonation
  */
-export const GET = withAdminAuthAndErrors(async (request, context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, context, respond) => {
   const req = request as AuthenticatedRequest;
   const campusId = getCampusId(req);
 
@@ -70,3 +71,5 @@ export const GET = withAdminAuthAndErrors(async (request, context, respond) => {
 
   return respond.success({ users: results });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

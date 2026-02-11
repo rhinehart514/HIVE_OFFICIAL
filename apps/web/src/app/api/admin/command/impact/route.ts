@@ -16,6 +16,7 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
+import { withCache } from '../../../../../lib/cache-headers';
 
 interface ImpactMetric {
   id: string;
@@ -61,7 +62,7 @@ interface ImpactSummary {
  * GET /api/admin/command/impact
  * Returns impact metrics and success stories for stakeholder view
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
@@ -294,3 +295,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

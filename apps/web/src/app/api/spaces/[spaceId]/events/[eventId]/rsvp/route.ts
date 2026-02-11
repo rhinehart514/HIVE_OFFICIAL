@@ -11,6 +11,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { notifyEventRsvp, notifyRsvpConfirmation } from '@/lib/notification-service';
 import { getServerSpaceRepository } from '@hive/core/server';
+import { withCache } from '../../../../../../../lib/cache-headers';
 
 const RSVPSchema = z.object({
   status: z.enum(['going', 'maybe', 'not_going']),
@@ -246,7 +247,7 @@ export const POST = withAuthValidationAndErrors(
   },
 );
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string; eventId: string }> },
   respond,
@@ -289,3 +290,5 @@ export const GET = withAuthAndErrors(async (
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

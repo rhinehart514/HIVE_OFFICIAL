@@ -10,6 +10,7 @@ import { logger } from '@/lib/structured-logger';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 interface ServiceHealth {
   name: string;
@@ -165,7 +166,7 @@ async function getSystemMetrics(): Promise<SystemMetrics> {
  * GET /api/admin/system/health
  * Fetch system health status
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
 
   try {
@@ -216,3 +217,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

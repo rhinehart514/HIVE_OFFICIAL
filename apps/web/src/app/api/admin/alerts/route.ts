@@ -14,6 +14,7 @@ import { withAdminAuthAndErrors, getUserId, getCampusId, type AuthenticatedReque
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { withCache } from '../../../../lib/cache-headers';
 
 const AlertRuleSchema = z.object({
   id: z.string().optional(),
@@ -71,7 +72,7 @@ interface TriggeredAlert {
  * GET /api/admin/alerts
  * List all alert configurations and triggered alerts
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
 
   try {
@@ -263,3 +264,5 @@ export const DELETE = withAdminAuthAndErrors(async (request, _context, respond) 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

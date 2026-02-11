@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from '@/lib/logger';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Schema for tool installation requests
 const ToolActionSchema = z.object({
@@ -63,7 +64,7 @@ async function fetchPersonalTools(userId: string, campusId: string | null): Prom
  * Get personal tools for the authenticated user
  * GET /api/tools/personal
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   context,
   respond
@@ -147,3 +148,5 @@ export const POST = withAuthValidationAndErrors(
 
   }
 );
+
+export const GET = withCache(_GET, 'PRIVATE');

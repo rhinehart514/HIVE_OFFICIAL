@@ -12,6 +12,7 @@ import {
   type GetUserProfileFn,
 } from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Inline Component State API
@@ -74,7 +75,7 @@ function createProfileGetter(): GetUserProfileFn {
 /**
  * GET /api/spaces/[spaceId]/components/[componentId] - Get component state
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string; componentId: string }> },
   respond
@@ -118,3 +119,5 @@ export const GET = withAuthAndErrors(async (
     component: displayState
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

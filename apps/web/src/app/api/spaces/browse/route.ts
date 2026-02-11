@@ -26,6 +26,7 @@ import { SPACE_TYPE } from '@hive/core/domain/spaces/constants/space-categories'
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { withOptionalAuth } from '@/lib/middleware';
+import { withCache } from '../../../../lib/cache-headers';
 
 // ============================================================
 // Types & Validation
@@ -209,7 +210,7 @@ async function fetchEventEnrichment(spaceIds: string[]): Promise<{
 // Route Handler
 // ============================================================
 
-export const GET = withOptionalAuth(async (request, _context, respond) => {
+const _GET = withOptionalAuth(async (request, _context, respond) => {
   const user = (request as { user?: { uid?: string; campusId?: string } }).user;
   const userId = user?.uid || null;
   const campusId = user?.campusId || 'ub-buffalo';
@@ -413,3 +414,5 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
 
   return response;
 });
+
+export const GET = withCache(_GET, 'SHORT');

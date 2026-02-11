@@ -9,6 +9,7 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { validateToolForPublish } from '@/lib/tool-validation';
+import { withCache } from '../../../../lib/cache-headers';
 
 const PublishRequestSchema = z.object({
   toolId: z.string(),
@@ -198,7 +199,7 @@ export const POST = withAuthValidationAndErrors(
 );
 
 // GET - Get publish request status
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   _context,
   respond
@@ -251,3 +252,5 @@ export const GET = withAuthAndErrors(async (
     return respond.error("Failed to fetch publish request", "INTERNAL_ERROR", { status: 500 });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

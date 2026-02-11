@@ -15,6 +15,7 @@ import {
   type GetUserProfileFn,
 } from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Single Message Operations API
@@ -79,7 +80,7 @@ function createProfileGetter(): GetUserProfileFn {
 /**
  * GET /api/spaces/[spaceId]/chat/[messageId] - Get message details
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string; messageId: string }> },
   respond
@@ -282,3 +283,5 @@ export const DELETE = withAuthAndErrors(async (
 
   return respond.success({ message: "Message deleted successfully" });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

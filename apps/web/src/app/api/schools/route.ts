@@ -1,6 +1,7 @@
 import { dbAdmin } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/structured-logger";
+import { withCache } from '../../../lib/cache-headers';
 
 // Local response type aligned with our Firestore shape
 type SchoolSummary = {
@@ -11,7 +12,7 @@ type SchoolSummary = {
   waitlistCount?: number;
 };
 
-export async function GET() {
+async function _GET() {
   try {
     // PRODUCTION: Always use Firebase database
     const schoolsSnapshot = await dbAdmin.collection("schools").get();
@@ -50,3 +51,5 @@ export async function GET() {
     return NextResponse.json(fallbackSchools);
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

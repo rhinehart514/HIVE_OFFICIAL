@@ -17,6 +17,7 @@ import {
   type GetUserProfileFn,
 } from "@hive/core/server";
 import type { ChatMessageReaction } from "@hive/core";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Chat Messages API - Real-time messaging for space boards
@@ -107,7 +108,7 @@ function createProfileGetter(): GetUserProfileFn {
 /**
  * GET /api/spaces/[spaceId]/chat - List messages for a board
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -642,3 +643,5 @@ async function triggerKeywordAutomations(
     }
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

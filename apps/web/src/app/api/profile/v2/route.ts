@@ -11,6 +11,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { getServerProfileRepository, PrivacyLevel, ProfilePrivacy } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 type ViewerRelationship = 'self' | 'friend' | 'connection' | 'campus';
 
@@ -220,7 +221,7 @@ const toDddPrivacyLevel = (level: string | undefined): PrivacyLevel => {
   }
 };
 
-export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
+const _GET = withAuthAndErrors(async (request, _ctx, respond) => {
   try {
     const viewerId = getUserId(request as AuthenticatedRequest);
     const campusId = getCampusId(request as AuthenticatedRequest);
@@ -716,3 +717,5 @@ export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
     return respond.error('Failed to update profile', 'INTERNAL_ERROR', { status: 500 });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

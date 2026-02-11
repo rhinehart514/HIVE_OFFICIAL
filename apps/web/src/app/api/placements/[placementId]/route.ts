@@ -20,6 +20,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
+import { withCache } from '../../../../lib/cache-headers';
 
 // ============================================================================
 // Schemas
@@ -126,7 +127,7 @@ async function findPlacementWithContext(
 // GET /api/placements/[placementId]
 // ============================================================================
 
-export const GET = withAuthAndErrors(async (request, context: RouteContext, respond) => {
+const _GET = withAuthAndErrors(async (request, context: RouteContext, respond) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
     const campusId = getCampusId(request as AuthenticatedRequest);
@@ -445,3 +446,5 @@ export const DELETE = withAuthAndErrors(async (request, context: RouteContext, r
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

@@ -20,6 +20,7 @@ import {
   type WebhookEventType,
   type WebhookProps,
 } from "@hive/core/domain";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Schema for creating a new webhook
@@ -67,7 +68,7 @@ function docToWebhook(doc: FirebaseFirestore.DocumentSnapshot): Webhook {
  *
  * List all webhooks for a space (leaders only)
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -270,3 +271,5 @@ export const POST = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

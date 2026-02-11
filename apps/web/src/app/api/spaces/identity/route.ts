@@ -19,6 +19,7 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { getServerSpaceRepository } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 // ============================================================
 // Types
@@ -51,7 +52,7 @@ const claimIdentitySchema = z.object({
 // GET /api/spaces/identity - Fetch user's identity claims
 // ============================================================
 
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -327,3 +328,5 @@ export const DELETE = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

@@ -6,6 +6,7 @@
 
 import { withAuthAndErrors, type AuthenticatedRequest, getUserId, getCampusId } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 interface RunEntry {
   id: string;
@@ -23,7 +24,7 @@ interface RunEntry {
 }
 
 // GET /api/tools/[toolId]/runs
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ toolId: string }> },
   respond,
@@ -184,3 +185,5 @@ export const GET = withAuthAndErrors(async (
     },
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

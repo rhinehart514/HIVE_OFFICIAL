@@ -12,6 +12,7 @@ import {
   DEFAULT_SURFACE_MODES,
   type ToolCapabilities,
 } from "@hive/core";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 interface RouteContext {
   params: Promise<{
@@ -30,7 +31,7 @@ interface RouteContext {
  * - Deployment has app surface enabled
  * - User has permission to view
  */
-export const GET = withAuthAndErrors(
+const _GET = withAuthAndErrors(
   async (request, context: RouteContext, respond) => {
     const userId = getUserId(request as AuthenticatedRequest);
     const { spaceId, deploymentId } = await context.params;
@@ -165,3 +166,5 @@ export const GET = withAuthAndErrors(
     return respond.success(response);
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

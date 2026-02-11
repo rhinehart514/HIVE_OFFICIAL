@@ -16,6 +16,7 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
+import { withCache } from '../../../../../lib/cache-headers';
 
 type HealthStatus = 'healthy' | 'warning' | 'critical';
 
@@ -69,7 +70,7 @@ function getStatusFromScore(score: number): HealthStatus {
  * GET /api/admin/command/health
  * Returns health indicators and risk dashboard data
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -284,3 +285,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

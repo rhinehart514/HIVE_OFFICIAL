@@ -3,6 +3,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * /api/spaces/live
@@ -34,7 +35,7 @@ interface LiveSpace {
 // Presence timeout - users are considered "online" if seen within this window
 const PRESENCE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) {
@@ -212,3 +213,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

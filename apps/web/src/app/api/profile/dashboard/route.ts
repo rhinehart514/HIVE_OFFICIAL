@@ -3,6 +3,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
 import { getServerProfileRepository } from '@hive/core/server';
 import { isTestUserId } from "@/lib/security-service";
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * Get profile dashboard data
@@ -12,7 +13,7 @@ import { isTestUserId } from "@/lib/security-service";
  * - timeRange: 'day' | 'week' | 'month' | 'all'
  * - includeRecommendations: boolean
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request: AuthenticatedRequest,
   _context: unknown,
   respond: typeof ResponseFormatter
@@ -469,3 +470,5 @@ export const GET = withAuthAndErrors(async (
     );
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

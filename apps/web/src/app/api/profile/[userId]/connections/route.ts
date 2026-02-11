@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { withOptionalAuth, getUser } from '@/lib/middleware';
 import { dbAdmin as db } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/profile/[userId]/connections
@@ -10,7 +11,7 @@ import { dbAdmin as db } from '@/lib/firebase-admin';
  * - type: 'all' | 'friends' | 'mutual' (default: 'all')
  * - limit: number (default 20)
  */
-export const GET = withOptionalAuth(async (
+const _GET = withOptionalAuth(async (
   request,
   { params }: { params: Promise<{ userId: string }> },
   respond
@@ -134,3 +135,5 @@ export const GET = withOptionalAuth(async (
     mutualConnectionIds: mutualIds.slice(0, 5), // First 5 for preview
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

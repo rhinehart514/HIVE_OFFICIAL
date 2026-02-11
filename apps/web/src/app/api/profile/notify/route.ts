@@ -11,6 +11,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { withSecureAuth } from '@/lib/api-auth-secure';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Valid feature keys that users can subscribe to
 const VALID_FEATURES = ['ai_insights', 'campus_graph'] as const;
@@ -117,7 +118,7 @@ export const POST = withSecureAuth(async (request: NextRequest, token) => {
  * GET /api/profile/notify
  * Get user's current feature notification preferences
  */
-export const GET = withSecureAuth(async (_request: NextRequest, token) => {
+const _GET = withSecureAuth(async (_request: NextRequest, token) => {
   const userId = token.uid;
 
   try {
@@ -150,3 +151,5 @@ export const GET = withSecureAuth(async (_request: NextRequest, token) => {
     );
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { validateAllConfig, getEmailServiceStatus } from '@/lib/config-validation';
 import { isFirebaseConfigured } from '@/lib/firebase-admin';
 import { SESSION_CONFIG } from '@/lib/session';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * Auth Health Check Endpoint
@@ -13,7 +14,7 @@ import { SESSION_CONFIG } from '@/lib/session';
  * In production, this endpoint only returns basic status.
  * In development, it returns detailed configuration info.
  */
-export async function GET(_request: NextRequest): Promise<NextResponse> {
+async function _GET(_request: NextRequest): Promise<NextResponse> {
   const configValidation = validateAllConfig();
   const emailStatus = getEmailServiceStatus();
 
@@ -66,3 +67,5 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
   // Production: minimal info
   return NextResponse.json(health);
 }
+
+export const GET = withCache(_GET, 'LONG');

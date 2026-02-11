@@ -16,8 +16,9 @@ import { parseState, exchangeCodeForTokens } from '@/lib/calendar/google-oauth';
 import { encryptTokens } from '@/lib/calendar/token-encryption';
 import { logger, logSecurityEvent } from '@/lib/structured-logger';
 import { FieldValue } from 'firebase-admin/firestore';
+import { withCache } from '../../../../lib/cache-headers';
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
@@ -110,3 +111,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

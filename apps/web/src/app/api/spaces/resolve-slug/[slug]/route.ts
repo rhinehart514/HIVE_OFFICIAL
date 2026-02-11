@@ -14,12 +14,13 @@ import { withErrors } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getDefaultCampusId } from '@/lib/campus-context';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // ============================================================
 // GET - Resolve slug to space ID (public with rate limiting)
 // ============================================================
 
-export const GET = withErrors(async (
+const _GET = withErrors(async (
   request,
   { params }: { params: Promise<{ slug: string }> },
   respond,
@@ -182,3 +183,5 @@ export const POST = withErrors(async (
     return respond.error('Failed to resolve slug', 'INTERNAL_ERROR', { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

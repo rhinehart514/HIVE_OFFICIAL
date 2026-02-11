@@ -15,6 +15,7 @@ import {
   type ToolConnection,
   type DataTransform,
 } from "@hive/core";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Tool Connections API - Sprint 3: Tool-to-Tool Connections
@@ -241,7 +242,7 @@ export const POST = withAuthValidationAndErrors(
 // GET - List Connections
 // ============================================================================
 
-export const GET = withAuthAndErrors(
+const _GET = withAuthAndErrors(
   async (
     request: Request,
     { params }: { params: Promise<{ spaceId: string }> },
@@ -313,3 +314,5 @@ export const GET = withAuthAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

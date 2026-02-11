@@ -6,6 +6,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { withCache } from '../../../../lib/cache-headers';
 
 // Free time slot interface
 interface FreeTimeSlot {
@@ -17,7 +18,7 @@ interface FreeTimeSlot {
 }
 
 // GET - Find free time slots
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   _context,
   respond
@@ -285,3 +286,5 @@ function generateSuggestions(slots: FreeTimeSlot[], _minDuration: number): strin
   
   return suggestions;
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

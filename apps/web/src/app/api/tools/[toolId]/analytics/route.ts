@@ -1,8 +1,9 @@
 import { withAuthAndErrors, type AuthenticatedRequest, getUserId, getCampusId } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // GET /api/tools/[toolId]/analytics
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ toolId: string }> },
   respond,
@@ -215,3 +216,5 @@ export const GET = withAuthAndErrors(async (
 
   return respond.success(payload);
 });
+
+export const GET = withCache(_GET, 'SHORT');

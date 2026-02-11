@@ -18,6 +18,7 @@ import {
   type AuthenticatedRequest,
   type ResponseFormatter,
 } from '@/lib/middleware';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/auth/sessions
@@ -26,7 +27,7 @@ import {
  * Returns:
  * - sessions: Array of active session info (id, createdAt, lastActiveAt, userAgent)
  */
-export const GET = withAuthAndErrors(
+const _GET = withAuthAndErrors(
   async (request: AuthenticatedRequest, _context: unknown, respond: typeof ResponseFormatter) => {
     const userId = getUserId(request);
     const session = await getSession(request as NextRequest);
@@ -91,3 +92,5 @@ export const DELETE = withAuthAndErrors(
   },
   { rateLimit: RATE_LIMIT_PRESETS.strict }
 );
+
+export const GET = withCache(_GET, 'LONG');

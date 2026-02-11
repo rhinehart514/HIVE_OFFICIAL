@@ -4,6 +4,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/auth-server';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { withCache } from '../../../lib/cache-headers';
 
 // Zod schemas for notification actions
 const NotificationActionSchema = z.discriminatedUnion('action', [
@@ -82,7 +83,7 @@ async function getUserNotifications(
   }
 }
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) {
@@ -258,3 +259,5 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(ApiResponseHelper.error("Failed to update notification", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

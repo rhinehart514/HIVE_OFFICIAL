@@ -5,6 +5,7 @@ import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } 
 import { logger } from "@/lib/logger";
 import { addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
 import { getServerProfileRepository } from '@hive/core/server';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // Space quick actions for profile
 interface SpaceQuickAction {
@@ -264,7 +265,7 @@ async function updateSpaceMemberCount(spaceId: string, change: number) {
 }
 
 // GET - Get space action status
-export const GET = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
+const _GET = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -354,3 +355,5 @@ export const GET = withAuthAndErrors(async (request: NextRequest, _context, resp
     profile: dddProfileData,
   });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

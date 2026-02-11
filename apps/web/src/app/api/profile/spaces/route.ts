@@ -4,6 +4,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from "@/lib/logger";
 import { getServerProfileRepository } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Internal membership data structure
 interface MembershipData {
@@ -68,7 +69,7 @@ interface SpaceActivitySummary {
 }
 
 // GET - Fetch user's space memberships for profile
-export const GET = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
+const _GET = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -322,3 +323,5 @@ function generateWeeklyTrend(memberships: ProfileSpaceMembership[], timeRange: s
 
   return weeks;
 }
+
+export const GET = withCache(_GET, 'SHORT');

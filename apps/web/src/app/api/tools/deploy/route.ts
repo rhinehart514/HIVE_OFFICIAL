@@ -29,6 +29,7 @@ import {
   type AppConfig,
 } from "@hive/core";
 import { validateToolElements } from "@hive/core/domain/creation/validate-tool-elements";
+import { withCache } from '../../../../lib/cache-headers';
 
 const SurfaceSchema = z.enum([
   "pinned",
@@ -830,7 +831,7 @@ export const POST = withAuthValidationAndErrors(
   },
 );
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   _context,
   respond,
@@ -906,3 +907,5 @@ export const GET = withAuthAndErrors(async (
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

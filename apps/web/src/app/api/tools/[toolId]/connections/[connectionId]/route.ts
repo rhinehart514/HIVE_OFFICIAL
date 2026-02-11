@@ -19,6 +19,7 @@ import {
 } from '@/lib/middleware';
 import { z } from 'zod';
 import type { ToolConnection } from '@hive/core';
+import { withCache } from '../../../../../../lib/cache-headers';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -375,6 +376,8 @@ async function handleDelete(
 // EXPORTS
 // ============================================================================
 
-export const GET = withAuthAndErrors(handleGet);
+const _GET = withAuthAndErrors(handleGet);
 export const PATCH = withAuthAndErrors(handlePatch);
 export const DELETE = withAuthAndErrors(handleDelete);
+
+export const GET = withCache(_GET, 'SHORT');

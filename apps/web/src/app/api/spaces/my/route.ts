@@ -8,6 +8,7 @@ import {
 } from '@hive/core/server';
 import { logger } from "@/lib/structured-logger";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withCache } from '../../../../lib/cache-headers';
 
 const updateSpacePreferencesSchema = z.object({
   spaceId: z.string().min(1, "Space ID is required"),
@@ -26,7 +27,7 @@ const updateSpacePreferencesSchema = z.object({
  * Returns spaces with membership info, activity, and widget-specific data.
  * Uses DDD repository for space data, spaceMembers collection for membership.
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -226,3 +227,5 @@ export const PATCH = withAuthValidationAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

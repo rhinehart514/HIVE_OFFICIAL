@@ -17,6 +17,7 @@ import {
 } from '@/lib/middleware';
 import type { ToolAutomationRun } from '@hive/core';
 import { MAX_AUTOMATION_RUNS_HISTORY } from '@hive/core';
+import { withCache } from '../../../../../../../lib/cache-headers';
 
 // ============================================================================
 // HELPERS
@@ -190,4 +191,6 @@ async function handleGet(
 // EXPORTS
 // ============================================================================
 
-export const GET = withAuthAndErrors(handleGet);
+const _GET = withAuthAndErrors(handleGet);
+
+export const GET = withCache(_GET, 'SHORT');

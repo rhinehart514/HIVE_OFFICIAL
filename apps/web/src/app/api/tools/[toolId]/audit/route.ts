@@ -25,12 +25,13 @@ import type {
 import {
   AUDIT_COLLECTION,
 } from '@hive/core';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // ============================================================================
 // GET - Fetch audit log
 // ============================================================================
 
-export async function GET(
+async function _GET(
   request: NextRequest,
   { params }: { params: Promise<{ toolId: string }> }
 ) {
@@ -245,3 +246,5 @@ export async function POST(
     );
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

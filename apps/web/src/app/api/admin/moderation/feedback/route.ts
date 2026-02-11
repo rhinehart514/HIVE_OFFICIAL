@@ -16,6 +16,7 @@ import {
 } from "@/lib/middleware";
 import { contentModerationService, type ContentType } from "@/lib/content-moderation-service";
 import { logger } from "@/lib/structured-logger";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * POST /api/admin/moderation/feedback - Record moderator feedback
@@ -95,7 +96,7 @@ export const POST = withAdminAuthAndErrors(async (
  * - contentType: Filter by content type (optional)
  * - includeErrors: Include high-confidence errors list (default: false)
  */
-export const GET = withAdminAuthAndErrors(async (
+const _GET = withAdminAuthAndErrors(async (
   request,
   _context,
   respond
@@ -133,3 +134,5 @@ export const GET = withAdminAuthAndErrors(async (
     generatedAt: new Date().toISOString(),
   });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -11,6 +11,7 @@ import { logger } from "@/lib/structured-logger";
 import { SecurityScanner } from "@/lib/secure-input-validation";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { v4 as uuidv4 } from "uuid";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Automations API - Phase 3 HiveLab
@@ -257,7 +258,7 @@ export const POST = withAuthValidationAndErrors(
 // GET - List Automations
 // ============================================================================
 
-export const GET = withAuthAndErrors(
+const _GET = withAuthAndErrors(
   async (
     request: Request,
     { params }: { params: Promise<{ spaceId: string }> },
@@ -316,3 +317,5 @@ export const GET = withAuthAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

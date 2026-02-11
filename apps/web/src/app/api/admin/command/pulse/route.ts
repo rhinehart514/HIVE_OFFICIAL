@@ -16,6 +16,7 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
+import { withCache } from '../../../../../lib/cache-headers';
 
 interface PulseMetrics {
   // Core numbers
@@ -57,7 +58,7 @@ interface RecentActivity {
  * GET /api/admin/command/pulse
  * Returns real-time pulse metrics for Command Center dashboard
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -223,3 +224,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

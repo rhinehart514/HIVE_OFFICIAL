@@ -13,6 +13,7 @@ import {
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const QueueQuerySchema = z.object({
   priority: z.enum(['all', 'high', 'medium', 'low']).optional().default('all'),
@@ -25,7 +26,7 @@ const QueueQuerySchema = z.object({
  * GET /api/admin/moderation/queue
  * Fetch pending reports requiring review
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = QueueQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -140,3 +141,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

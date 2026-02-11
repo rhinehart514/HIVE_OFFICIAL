@@ -7,6 +7,7 @@ import {
   withOptionalAuth,
   getUser,
 } from "@/lib/middleware";
+import { withCache } from '../../../../lib/cache-headers';
 
 const VALID_STATUSES = new Set(["draft", "published", "archived"]);
 
@@ -23,7 +24,7 @@ function normalizeText(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
-export const GET = withOptionalAuth(async (
+const _GET = withOptionalAuth(async (
   request,
   _context,
   respond,
@@ -302,3 +303,5 @@ export const GET = withOptionalAuth(async (
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

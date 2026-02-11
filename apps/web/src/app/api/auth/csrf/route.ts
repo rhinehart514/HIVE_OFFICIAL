@@ -13,12 +13,13 @@ import {
   type AuthenticatedRequest,
   type ResponseFormatter,
 } from '@/lib/middleware';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET handler - returns CSRF token for admin sessions
  * Uses auth middleware for session validation + stricter rate limiting
  */
-export const GET = withAuthAndErrors(
+const _GET = withAuthAndErrors(
   async (request: AuthenticatedRequest, _context: unknown, respond: typeof ResponseFormatter) => {
     // Get session data for CSRF token
     const session = await getSession(request as NextRequest);
@@ -40,3 +41,5 @@ export const GET = withAuthAndErrors(
   },
   { rateLimit: RATE_LIMIT_PRESETS.auth, skipCSRF: true }
 );
+
+export const GET = withCache(_GET, 'LONG');

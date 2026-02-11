@@ -14,6 +14,7 @@ import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-p
 import { rateLimit } from "@/lib/rate-limit";
 import { validateToolContext } from "@hive/core/infrastructure/api/validate-tool-context";
 import { getQuickTemplate } from "@hive/ui";
+import { withCache } from '../../../lib/cache-headers';
 
 // Define tool schemas locally (not in core package)
 const CreateToolSchema = z.object({
@@ -38,7 +39,7 @@ const createToolLimiter = rateLimit({
 });
 
 // GET /api/tools - List user's tools
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const req = request as AuthenticatedRequest;
   const campusId: string | undefined = req.user.campusId || undefined;
@@ -738,3 +739,5 @@ export const PUT = withAuthValidationAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

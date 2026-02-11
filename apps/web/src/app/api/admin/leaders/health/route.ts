@@ -15,6 +15,7 @@
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
+import { withCache } from '../../../../../lib/cache-headers';
 
 interface LeaderHealthMetrics {
   totalVerified: number;
@@ -42,7 +43,7 @@ interface AtRiskLeader {
   };
 }
 
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   if (!isFirebaseConfigured) {
     return respond.error('Database not configured', 'SERVICE_UNAVAILABLE', { status: 503 });
   }
@@ -246,3 +247,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     return respond.error('Failed to fetch leader health metrics', 'INTERNAL_ERROR');
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

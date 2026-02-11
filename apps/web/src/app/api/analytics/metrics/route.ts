@@ -7,6 +7,7 @@ import { getAuthTokenFromRequest } from '@/lib/auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Validation schema for metrics
 const MetricSchema = z.object({
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/analytics/metrics - Retrieve metrics with filters
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Require authentication for reading metrics
     const token = getAuthTokenFromRequest(request);
@@ -362,3 +363,5 @@ function percentile(values: number[], p: number): number {
   const index = Math.ceil(values.length * p) - 1;
   return values[Math.max(0, Math.min(index, values.length - 1))];
 }
+
+export const GET = withCache(_GET, 'SHORT');

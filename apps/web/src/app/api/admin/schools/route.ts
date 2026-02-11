@@ -12,6 +12,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { logger } from '@/lib/logger';
 import { clearDomainCache } from '@/lib/campus-context';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Validation schema for creating a school
 const createSchoolSchema = z.object({
@@ -50,7 +51,7 @@ const createSchoolSchema = z.object({
  * GET /api/admin/schools
  * List all schools with full configuration
  */
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Require admin authentication
     const auth = await validateApiAuth(request);
@@ -187,3 +188,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

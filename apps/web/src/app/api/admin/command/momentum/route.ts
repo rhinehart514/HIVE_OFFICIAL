@@ -17,6 +17,7 @@ import {
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { z } from 'zod';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const QuerySchema = z.object({
   range: z.enum(['7d', '14d', '30d', '90d']).default('30d'),
@@ -54,7 +55,7 @@ interface GrowthMetric {
  * GET /api/admin/command/momentum
  * Returns growth timeline data for momentum visualization
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
@@ -225,3 +226,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

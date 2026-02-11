@@ -20,6 +20,7 @@ import { HttpStatus } from '@/lib/api-response-types';
 import { getAdminRecord, hasAdminRole } from '@/lib/admin-auth';
 import { SpaceManagementService, toSpaceDetailDTO } from '@hive/core';
 import { getServerSpaceRepository } from '@hive/core/server';
+import { withCache } from '../../../../../lib/cache-headers';
 
 type RouteContext = { params: Promise<{ spaceId: string }> };
 
@@ -35,7 +36,7 @@ const AdminActionSchema = z.object({
  *
  * Uses withAdminAuthAndErrors for built-in admin auth + CSRF + rate limiting
  */
-export const GET = withAdminAuthAndErrors(async (
+const _GET = withAdminAuthAndErrors(async (
   request,
   context: RouteContext,
   respond
@@ -211,3 +212,5 @@ export const DELETE = withAdminAuthAndErrors(async (
     { status: HttpStatus.NOT_IMPLEMENTED }
   );
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

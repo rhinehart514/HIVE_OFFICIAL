@@ -3,6 +3,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { isTestUserId } from "@/lib/security-service";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/profile/[userId]/activity
@@ -15,7 +16,7 @@ import { isTestUserId } from "@/lib/security-service";
  *
  * Response: { success, data: { contributions: ActivityContribution[], totalCount, currentStreak } }
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ userId: string }> },
   respond
@@ -161,3 +162,5 @@ function generateMockContributions(days: number): Array<{ date: string; count: n
 
   return contributions;
 }
+
+export const GET = withCache(_GET, 'SHORT');

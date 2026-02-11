@@ -3,6 +3,7 @@ import { currentEnvironment } from '@/lib/env';
 import { logger } from '@/lib/logger';
 import { withAdminAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * Development-only endpoint to seed the ub-buffalo school
@@ -64,7 +65,7 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
  * GET endpoint to check if school exists
  * Also protected by admin auth
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
 
   try {
@@ -90,3 +91,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     );
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { withCache } from '../../../../lib/cache-headers';
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Get client IP and headers for campus detection
     const forwarded = request.headers.get('x-forwarded-for');
@@ -58,3 +59,4 @@ async function detectCampusFromRequest(_clientIP: string, _userAgent: string) {
   // For now, return null for unknown networks
   return null;
 }
+export const GET = withCache(_GET, 'LONG');

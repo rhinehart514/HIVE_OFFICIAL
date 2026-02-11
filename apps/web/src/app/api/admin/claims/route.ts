@@ -24,6 +24,7 @@ import { HttpStatus } from '@/lib/api-response-types';
 import { isAdmin } from '@/lib/admin-auth';
 import { getServerSpaceRepository } from '@hive/core/server';
 import { ProfileId } from '@hive/core';
+import { withCache } from '../../../../lib/cache-headers';
 
 const ReviewClaimSchema = z.object({
   claimId: z.string().min(1),
@@ -35,7 +36,7 @@ const ReviewClaimSchema = z.object({
 /**
  * GET: List pending claim requests
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
@@ -338,3 +339,5 @@ export const POST = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'PRIVATE');

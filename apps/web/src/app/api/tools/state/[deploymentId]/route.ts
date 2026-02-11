@@ -11,6 +11,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { withCache } from '../../../../../lib/cache-headers';
 
 const STATE_SIZE_LIMIT_BYTES = 1024 * 1024; // 1MB
 
@@ -302,7 +303,7 @@ function createStatePayload(
   };
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ deploymentId: string }> },
   respond,
@@ -598,3 +599,5 @@ export const DELETE = withAuthAndErrors(async (
     message: "Tool state cleared successfully",
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

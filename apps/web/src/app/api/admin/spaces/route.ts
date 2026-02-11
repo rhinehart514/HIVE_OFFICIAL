@@ -17,6 +17,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { SpaceManagementService, toSpaceBrowseDTO } from '@hive/core';
 import { getServerSpaceRepository } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Query params schema
 const ListQuerySchema = z.object({
@@ -36,7 +37,7 @@ const ListQuerySchema = z.object({
  * - CSRF protection (always enabled for admin routes)
  * - Strict rate limiting (50 req/min)
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
 
   const { searchParams } = new URL(request.url);
@@ -106,3 +107,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

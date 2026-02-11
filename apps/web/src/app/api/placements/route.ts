@@ -16,6 +16,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
+import { withCache } from '../../../lib/cache-headers';
 
 // ============================================================================
 // Response Helpers
@@ -66,7 +67,7 @@ async function canViewSpacePlacements(userId: string, spaceId: string, campusId:
 // GET /api/placements
 // ============================================================================
 
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAuthAndErrors(async (request, _context, respond) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
     const campusId = getCampusId(request as AuthenticatedRequest);
@@ -227,3 +228,5 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

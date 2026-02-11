@@ -22,13 +22,14 @@ import {
   type TemplateVisibility,
   type TemplateComposition,
 } from '@hive/core/server';
+import { withCache } from '../../../lib/cache-headers';
 
 // ============================================================================
 // GET /api/templates - Public route with optional auth
 // SECURITY: campusId is derived from authenticated user session, not query params
 // ============================================================================
 
-export const GET = withErrors(
+const _GET = withErrors(
   async (request, _context, respond) => {
     const searchParams = new URL(request.url).searchParams;
 
@@ -186,3 +187,5 @@ export const POST = withAuthAndErrors(
     );
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

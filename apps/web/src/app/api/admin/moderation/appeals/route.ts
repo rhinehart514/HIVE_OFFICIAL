@@ -16,6 +16,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logAdminActivity } from '@/lib/admin-activity';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const AppealsQuerySchema = z.object({
   status: z.enum(['all', 'pending', 'approved', 'denied']).optional().default('all'),
@@ -36,7 +37,7 @@ const AppealDecisionSchema = z.object({
  * GET /api/admin/moderation/appeals
  * Fetch user appeals
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = AppealsQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -258,3 +259,5 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

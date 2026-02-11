@@ -11,6 +11,7 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { HttpStatus } from "@/lib/api-response-types";
+import { withCache } from '../../../../../lib/cache-headers';
 
 const GetAnalyticsSchema = z.object({
   period: z.enum(["7d", "30d", "90d"]).default("30d"),
@@ -107,7 +108,7 @@ function groupByDay(items: Array<{ date: Date; value: number }>): Array<{ date: 
  * - Event participation
  * - Engagement metrics
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
@@ -518,3 +519,5 @@ function generateInsights(analytics: Record<string, unknown>): string[] {
 
   return insights.slice(0, 5); // Max 5 insights
 }
+
+export const GET = withCache(_GET, 'SHORT');

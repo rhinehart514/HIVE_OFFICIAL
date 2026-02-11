@@ -26,6 +26,7 @@ import {
   isShardedMemberCountEnabled
 } from "@/lib/services/sharded-member-counter.service";
 import { notifySpaceInvite } from "@/lib/notification-service";
+import { withCache } from '../../../../../lib/cache-headers';
 
 const GetMembersQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
@@ -224,7 +225,7 @@ function createSpaceCallbacks(campusId: string): SpaceServiceCallbacks {
   };
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
@@ -904,3 +905,5 @@ export const DELETE = withAuthAndErrors(async (
 
   return respond.success({ message: "Member removed successfully" });
 });
+
+export const GET = withCache(_GET, 'SHORT');

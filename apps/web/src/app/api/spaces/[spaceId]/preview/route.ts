@@ -2,6 +2,7 @@ import { getServerSpaceRepository } from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { withAuthAndErrors, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Space Preview API
@@ -34,7 +35,7 @@ interface SpacePreviewResponse {
   deployedToolsCount: number;
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -151,3 +152,5 @@ export const GET = withAuthAndErrors(async (
 
   return respond.success(preview);
 });
+
+export const GET = withCache(_GET, 'SHORT');

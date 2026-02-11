@@ -3,6 +3,7 @@ import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } 
 import { dbAdmin } from "@/lib/firebase-admin";
 import { getServerSpaceRepository, type EnhancedSpace } from "@hive/core/server";
 import { logger } from "@/lib/structured-logger";
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * Zod schema for recommended query params validation
@@ -50,7 +51,7 @@ interface BehavioralSpace {
  * - Social Proof: Spaces with friends/connections
  * - Insider Access: Exclusive/invite-only spaces
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
   const campusId = getCampusId(req);
@@ -479,3 +480,5 @@ function calculateJoinToActiveRate(totalMembers: number, activeMembers: number):
   const rate = activeMembers / Math.max(totalMembers, 1);
   return Math.max(0, Math.min(1, rate));
 }
+
+export const GET = withCache(_GET, 'SHORT');

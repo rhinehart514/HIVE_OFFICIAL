@@ -11,6 +11,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { logger } from '@/lib/logger';
 import { getFailureClassifierService, type FailureType } from '@hive/core';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/admin/ai-quality/failures
@@ -19,7 +20,7 @@ import { getFailureClassifierService, type FailureType } from '@hive/core';
  * - type: optional filter by failure type
  * - limit: number of records (default: 50, max: 200)
  */
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Require admin auth
     const auth = await validateApiAuth(request, { operation: 'admin-ai-failures' });
@@ -87,3 +88,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

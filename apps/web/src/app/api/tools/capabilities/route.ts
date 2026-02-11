@@ -13,6 +13,7 @@ import {
   type CapabilityLane,
   type TrustTier,
 } from '@hive/core';
+import { withCache } from '../../../../lib/cache-headers';
 
 // ============================================================================
 // Response Helpers
@@ -105,7 +106,7 @@ const TRUST_TIER_INFO: TrustTierInfo[] = [
 // GET /api/tools/capabilities
 // ============================================================================
 
-export async function GET() {
+async function _GET() {
   return jsonResponse({
     presets: {
       SAFE: CAPABILITY_PRESETS.SAFE,
@@ -126,3 +127,5 @@ export async function GET() {
     },
   });
 }
+
+export const GET = withCache(_GET, 'SHORT');

@@ -11,6 +11,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { withCache } from '../../../../../lib/cache-headers';
 
 async function loadDeployment(deploymentId: string, campusId: string) {
   const doc = await dbAdmin.collection("deployedTools").doc(deploymentId).get();
@@ -147,7 +148,7 @@ const UpdateDeploymentSchema = z.object({
 
 type UpdateDeploymentInput = z.infer<typeof UpdateDeploymentSchema>;
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ deploymentId: string }> },
   respond,
@@ -386,3 +387,5 @@ export const DELETE = withAuthAndErrors(async (
     message: "Deployment removed successfully",
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

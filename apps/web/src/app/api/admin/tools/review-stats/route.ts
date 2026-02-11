@@ -15,6 +15,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/admin/tools/review-stats
@@ -29,7 +30,7 @@ import {
  * - Top reviewers
  * - Most active tool creators
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -223,3 +224,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     },
   });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

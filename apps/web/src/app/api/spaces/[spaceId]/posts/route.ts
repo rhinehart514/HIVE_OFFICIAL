@@ -13,6 +13,7 @@ import { postCreationRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
+import { withCache } from '../../../../../lib/cache-headers';
 
 const profanityWords = ["spam", "scam"];
 const containsProfanity = (text: string) =>
@@ -59,7 +60,7 @@ async function ensureSpaceAndMembership(spaceId: string, userId: string, userCam
   };
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request: AuthenticatedRequest,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
@@ -289,3 +290,5 @@ export const POST = withAuthValidationAndErrors(
     }
   },
 );
+
+export const GET = withCache(_GET, 'SHORT');

@@ -26,6 +26,7 @@ import {
   isBuildingOpen,
   UB_BUILDINGS,
 } from '@hive/core';
+import { withCache } from '../../../../../lib/cache-headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +59,7 @@ interface StudySpotResult {
   busynessLabel?: string;
 }
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
@@ -229,3 +230,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'LONG');

@@ -5,6 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { z } from "zod";
+import { withCache } from '../../../../lib/cache-headers';
 
 // ============================================================================
 // Constants
@@ -70,7 +71,7 @@ async function handleGet(request: AuthenticatedRequest): Promise<NextResponse> {
   });
 }
 
-export const GET = withAuthAndErrors(handleGet);
+const _GET = withAuthAndErrors(handleGet);
 
 // ============================================================================
 // PATCH /api/profile/tools
@@ -202,3 +203,5 @@ async function handleDelete(request: AuthenticatedRequest): Promise<NextResponse
 }
 
 export const DELETE = withAuthAndErrors(handleDelete);
+
+export const GET = withCache(_GET, 'SHORT');

@@ -15,6 +15,7 @@ import {
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Query params schema
 const ListQuerySchema = z.object({
@@ -31,7 +32,7 @@ const ListQuerySchema = z.object({
  * GET /api/admin/users
  * List all users with admin-level filters
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -153,3 +154,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -19,6 +19,7 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const QuerySchema = z.object({
   timeRange: z.enum(['1h', '24h', '7d', '30d', '90d', 'all']).default('30d'),
@@ -167,7 +168,7 @@ function mapCategoryToDashboard(category: string): ValidSpaceCategory {
  * GET /api/admin/analytics/comprehensive
  * Returns comprehensive platform analytics
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
@@ -471,3 +472,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

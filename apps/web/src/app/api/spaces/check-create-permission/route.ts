@@ -3,12 +3,13 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 // SECURITY: Use centralized admin auth
 import { isAdmin as checkIsAdmin } from "@/lib/admin-auth";
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * Check if user has permission to create spaces
  * Implements multiple locks and restrictions
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
   const userEmail = getUserEmail(req);
@@ -109,3 +110,4 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     return respond.error("Failed to check permissions", "INTERNAL_ERROR", { status: 500 });
   }
 });
+export const GET = withCache(_GET, 'SHORT');

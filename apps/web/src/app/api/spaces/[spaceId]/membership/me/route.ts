@@ -10,6 +10,7 @@ import {
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import type { MemberRole } from "@hive/core";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * GET /api/spaces/[spaceId]/membership/me
@@ -30,7 +31,7 @@ import type { MemberRole } from "@hive/core";
 const LEADER_ROLES = ["owner", "admin", "moderator"];
 const NEW_MEMBER_THRESHOLD_DAYS = 7;
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
@@ -156,3 +157,5 @@ function buildPermissions(role: MemberRole): {
     canAccessAdmin: isAdmin,
   };
 }
+
+export const GET = withCache(_GET, 'SHORT');

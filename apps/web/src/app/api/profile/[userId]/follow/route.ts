@@ -1,6 +1,7 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin as db } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * POST /api/profile/[userId]/follow
@@ -186,7 +187,7 @@ export const DELETE = withAuthAndErrors(async (
  * GET /api/profile/[userId]/follow
  * Check follow status
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ userId: string }> },
   respond
@@ -233,3 +234,5 @@ export const GET = withAuthAndErrors(async (
     connectionType: data?.type,
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

@@ -12,6 +12,7 @@ import { logger } from '@/lib/structured-logger';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const RetentionQuerySchema = z.object({
   weeks: z.string().optional().transform(v => v ? parseInt(v, 10) : 8),
@@ -46,7 +47,7 @@ interface RetentionData {
  * GET /api/admin/analytics/retention
  * Fetch user retention cohort analysis
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = RetentionQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -211,3 +212,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

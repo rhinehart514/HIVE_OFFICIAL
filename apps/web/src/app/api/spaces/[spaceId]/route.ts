@@ -12,6 +12,7 @@ import { SecurityScanner } from "@/lib/secure-input-validation";
 import { checkSpacePermission, type SpaceRole } from "@/lib/space-permission-middleware";
 import { isAdmin } from "@/lib/admin-auth";
 import { dbAdmin } from "@/lib/firebase-admin";
+import { withCache } from '../../../../lib/cache-headers';
 
 const UpdateSpaceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -45,7 +46,7 @@ const UpdateSpaceSchema = z.object({
 
 // Using unified toSpaceDetailDTO from @hive/core/server
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -398,3 +399,5 @@ export const DELETE = withAuthAndErrors(async (
   logger.info("Space deleted", { spaceId, userId, deletedByAdmin: userIsAdmin && !isOwner });
   return respond.success({ message: "Space deleted successfully" });
 });
+
+export const GET = withCache(_GET, 'SHORT');

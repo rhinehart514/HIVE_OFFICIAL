@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { deriveCampusFromEmail } from '@/lib/middleware';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * /api/spaces/activity/recent
@@ -38,7 +39,7 @@ interface RecentActivityItem {
 }
 
 // GET - Fetch recent activity across user's spaces
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) {
@@ -257,3 +258,5 @@ function formatEventDate(date: Date): string {
 
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ` at ${time}`;
 }
+
+export const GET = withCache(_GET, 'SHORT');

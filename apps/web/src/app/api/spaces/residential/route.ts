@@ -4,6 +4,7 @@ import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { getCampusId as getCampusIdFromRequest, getDefaultCampusId, getCampusFromEmail } from '@/lib/campus-context';
 import { getCurrentUser } from '@/lib/server-auth';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/spaces/residential
@@ -15,7 +16,7 @@ import { getCurrentUser } from '@/lib/server-auth';
  * SECURITY: campusId is derived from authenticated user session when available,
  * falls back to default for unauthenticated onboarding users.
  */
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   // SECURITY: Get campusId from authenticated user session, not query params
   // Falls back to default for users in onboarding flow who may not be fully authenticated
   let campusId: string;
@@ -90,3 +91,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

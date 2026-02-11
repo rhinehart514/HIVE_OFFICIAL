@@ -16,6 +16,7 @@ import {
   type GetUserProfileFn,
 } from "@hive/core/server";
 import type { BoardPermission } from "@hive/core";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Board single-item CRUD API - DDD Compliant
@@ -85,7 +86,7 @@ function createProfileGetter(): GetUserProfileFn {
 /**
  * GET /api/spaces/[spaceId]/boards/[boardId] - Get board details
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string; boardId: string }> },
   respond
@@ -297,3 +298,5 @@ export const DELETE = withAuthAndErrors(async (
     boardId
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

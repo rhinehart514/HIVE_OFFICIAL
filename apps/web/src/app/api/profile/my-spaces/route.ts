@@ -6,6 +6,7 @@ import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { getCampusIdFromAuth } from "@/lib/campus-context";
 import { withAuth } from '@/lib/api-auth-middleware';
 import { getServerProfileRepository } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 const mySpacesQuerySchema = z.object({
   includeInactive: z.coerce.boolean().default(false),
@@ -16,7 +17,7 @@ const mySpacesQuerySchema = z.object({
  * Get current user's spaces - joined, owned, favorited
  * Updated to use flat collection structure
  */
-export const GET = withAuth(async (request, authContext) => {
+const _GET = withAuth(async (request, authContext) => {
   try {
     const url = new URL(request.url);
     const queryParams = Object.fromEntries(url.searchParams.entries());
@@ -306,3 +307,5 @@ export const GET = withAuth(async (request, authContext) => {
 }, {
   operation: 'get_my_spaces'
 });
+
+export const GET = withCache(_GET, 'SHORT');

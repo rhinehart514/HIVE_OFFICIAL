@@ -12,6 +12,7 @@ import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { getSession } from '@/lib/session';
 import { logger } from '@/lib/logger';
 import { enforceRateLimit } from '@/lib/secure-rate-limiter';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * Waitlist API
@@ -149,7 +150,7 @@ export const POST = withAuthValidationAndErrors(
  * GET - Check waitlist status for a space
  * Query params: spaceId (required)
  */
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const spaceId = searchParams.get('spaceId');
 
@@ -221,3 +222,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

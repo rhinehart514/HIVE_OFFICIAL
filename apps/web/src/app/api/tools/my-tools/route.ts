@@ -1,9 +1,10 @@
 import type * as admin from "firebase-admin";
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../lib/cache-headers';
 
 // GET /api/tools/my-tools — Creator dashboard: user's tools with aggregated stats
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+const _GET = withAuthAndErrors(async (request, context, respond) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
   const campusId: string | undefined = req.user.campusId || undefined;
@@ -155,3 +156,5 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     },
   });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

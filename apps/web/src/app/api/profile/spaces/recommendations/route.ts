@@ -9,6 +9,7 @@ import {
   ConnectionType
 } from '@/lib/profile-security';
 import { getServerProfileRepository } from '@hive/core/server';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // Space recommendation interface
 interface SpaceRecommendation {
@@ -37,7 +38,7 @@ function getSpaceMemberCount(space: Record<string, unknown>): number {
 }
 
 // GET - Get space recommendations for user
-export const GET = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
+const _GET = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -480,3 +481,5 @@ async function generateAcademicRecommendations(
     .sort((a, b) => b.matchScore - a.matchScore)
     .slice(0, 5);
 }
+
+export const GET = withCache(_GET, 'SHORT');

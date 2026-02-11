@@ -13,6 +13,7 @@ import {
 } from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import type { ChatMessageReaction } from "@hive/core";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Pinned Messages API - Get pinned messages in a space
@@ -73,7 +74,7 @@ function createProfileGetter(): GetUserProfileFn {
  * Query params:
  * - boardId: optional board filter (if omitted, gets all pinned across all boards)
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -141,3 +142,5 @@ export const GET = withAuthAndErrors(async (
     count: apiMessages.length,
   });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -7,11 +7,12 @@ import {
   getNextVersion,
   validateToolStructure,
 } from "@hive/core";
+import { withCache } from '../../../../lib/cache-headers';
 
 const db = getFirestore();
 
 // GET /api/tools/[toolId] - Get tool details (public access for published tools)
-export const GET = withErrors(async (
+const _GET = withErrors(async (
   request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
@@ -327,3 +328,5 @@ export const DELETE = withAuthAndErrors(async (
 
   return respond.success({ success: true });
 });
+
+export const GET = withCache(_GET, 'SHORT');

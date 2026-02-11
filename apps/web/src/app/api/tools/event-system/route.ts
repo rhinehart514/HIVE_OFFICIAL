@@ -10,6 +10,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { withCache } from '../../../../lib/cache-headers';
 
 const EventSystemInstallationSchema = z.object({
   spaceId: z.string().optional(),
@@ -162,7 +163,7 @@ async function loadInstallation(
   };
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   _context,
   respond,
@@ -613,3 +614,5 @@ export const DELETE = withAuthAndErrors(async (
     );
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

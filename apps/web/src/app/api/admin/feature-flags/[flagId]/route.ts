@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { verifyAdminRequest } from "@/lib/admin-auth";
+import { withCache } from '../../../../../lib/cache-headers';
 
 interface RouteContext {
   params: Promise<{ flagId: string }>;
@@ -11,7 +12,7 @@ interface RouteContext {
  * GET /api/admin/feature-flags/[flagId]
  * Get a specific feature flag
  */
-export async function GET(request: Request, context: RouteContext) {
+async function _GET(request: Request, context: RouteContext) {
   try {
     const adminResult = await verifyAdminRequest(request);
     if (!adminResult.success) {
@@ -165,3 +166,5 @@ export async function DELETE(request: Request, context: RouteContext) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

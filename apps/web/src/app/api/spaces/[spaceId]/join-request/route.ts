@@ -12,6 +12,7 @@ import {
 import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 import { createBulkNotifications } from '@/lib/notification-service';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Space Join Request API
@@ -194,7 +195,7 @@ export const POST = withAuthValidationAndErrors(
 // GET - Get user's join request for this space
 // ============================================
 
-export async function GET(
+async function _GET(
   request: Request,
   context: { params: Promise<{ spaceId: string }> }
 ) {
@@ -357,3 +358,5 @@ export async function DELETE(
     );
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

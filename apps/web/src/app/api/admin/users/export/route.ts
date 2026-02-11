@@ -15,6 +15,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logAdminActivity } from '@/lib/admin-activity';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const ExportQuerySchema = z.object({
   format: z.enum(['csv', 'json']).optional().default('csv'),
@@ -27,7 +28,7 @@ const ExportQuerySchema = z.object({
  * GET /api/admin/users/export
  * Export users data
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -149,3 +150,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

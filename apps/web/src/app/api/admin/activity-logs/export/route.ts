@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const ExportQuerySchema = z.object({
   action: z.string().optional(),
@@ -21,7 +22,7 @@ const ExportQuerySchema = z.object({
  * GET /api/admin/activity-logs/export
  * Export activity logs as CSV or JSON
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = ExportQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -125,3 +126,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     throw error;
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

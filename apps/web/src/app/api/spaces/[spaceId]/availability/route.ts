@@ -16,6 +16,7 @@ import { checkSpacePermission } from '@/lib/space-permission-middleware';
 import { getUserAvailability, ensureUserSynced, type UserAvailability } from '@/lib/calendar/calendar-sync';
 import { logger } from '@/lib/structured-logger';
 import { ResponseFormatter } from '@/lib/middleware/response';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Heatmap cell with aggregated availability
@@ -44,7 +45,7 @@ interface TimeSuggestion {
   label: string;
 }
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request: AuthenticatedRequest,
   context: { params: Promise<{ spaceId: string }> },
   respond: typeof ResponseFormatter
@@ -219,3 +220,5 @@ function generateTimeSuggestions(heatmap: HeatmapCell[]): TimeSuggestion[] {
 
   return suggestions;
 }
+
+export const GET = withCache(_GET, 'SHORT');

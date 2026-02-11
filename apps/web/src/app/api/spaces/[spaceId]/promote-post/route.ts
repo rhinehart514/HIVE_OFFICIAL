@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { FieldValue } from 'firebase-admin/firestore';
 import { requireSpaceAccess, requireSpaceMembership } from '@/lib/space-security';
 import { HttpStatus } from '@/lib/api-response-types';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * Type for post data used in scoring calculations
@@ -299,7 +300,7 @@ function calculateViralityScore(postData: PostData): number {
 /**
  * GET /api/spaces/[spaceId]/promote-post - Check promotion eligibility
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request: AuthenticatedRequest,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -404,3 +405,5 @@ function calculateVelocity(postData: PostData): number {
   const engagement = (postData.reactions?.heart || 0) + (postData.commentCount || 0);
   return engagement / Math.max(1, postAge); // Engagement per hour
 }
+
+export const GET = withCache(_GET, 'SHORT');

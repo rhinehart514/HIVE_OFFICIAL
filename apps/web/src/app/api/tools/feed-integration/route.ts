@@ -10,6 +10,7 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { z } from "zod";
+import { withCache } from '../../../../lib/cache-headers';
 
 // Feed content generation interface
 interface _FeedContentTemplate {
@@ -142,7 +143,7 @@ export const POST = withAuthValidationAndErrors(
 );
 
 // GET - Get feed content templates for a tool
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   _context,
   respond
@@ -465,3 +466,5 @@ async function createFeedPost(
 
   return postRef.id;
 }
+
+export const GET = withCache(_GET, 'SHORT');

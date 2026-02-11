@@ -13,6 +13,7 @@ import {
   type ToolConnection,
   type DataTransform,
 } from "@hive/core";
+import { withCache } from '../../../../../../lib/cache-headers';
 
 /**
  * Single Tool Connection API - Sprint 3: Tool-to-Tool Connections
@@ -87,7 +88,7 @@ async function getConnection(
 // GET - Get Connection Details
 // ============================================================================
 
-export const GET = withAuthAndErrors(
+const _GET = withAuthAndErrors(
   async (
     request: Request,
     { params }: { params: Promise<{ spaceId: string; connectionId: string }> },
@@ -272,3 +273,5 @@ export const DELETE = withAuthAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

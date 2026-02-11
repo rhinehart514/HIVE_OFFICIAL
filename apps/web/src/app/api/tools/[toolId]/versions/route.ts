@@ -6,6 +6,7 @@
 
 import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // ============================================================================
 // Version DTO
@@ -26,7 +27,7 @@ interface VersionDTO {
 // GET /api/tools/[toolId]/versions
 // ============================================================================
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
@@ -90,3 +91,5 @@ export const GET = withAuthAndErrors(async (
     total: versions.length,
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

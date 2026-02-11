@@ -21,6 +21,7 @@ import {
   getEventEndDate,
   getEventStartDate,
 } from '@/lib/events/event-time';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Request schema
 const PersonalizedEventsSchema = z.object({
@@ -493,4 +494,6 @@ async function handler(
   }
 }
 
-export const GET = withAuth(handler);
+const _GET = withAuth(handler);
+
+export const GET = withCache(_GET, 'SHORT');

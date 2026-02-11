@@ -18,6 +18,7 @@ import {
   getFailureClassifierService,
   getEditTrackerService,
 } from '@hive/core';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/admin/ai-quality/metrics
@@ -25,7 +26,7 @@ import {
  * Query params:
  * - period: 'hour' | 'day' | 'week' | 'month' (default: 'day')
  */
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Require admin auth
     const auth = await validateApiAuth(request, { operation: 'admin-ai-metrics' });
@@ -145,3 +146,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

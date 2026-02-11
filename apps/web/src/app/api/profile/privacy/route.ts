@@ -2,6 +2,7 @@ import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } 
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import { getServerProfileRepository, ProfilePrivacy, PrivacyLevel } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 // Shared privacy settings shape (kept compatible with /api/privacy)
 interface PrivacySettings {
@@ -87,7 +88,7 @@ const defaultPrivacy: Omit<PrivacySettings, 'userId' | 'createdAt' | 'updatedAt'
  * GET /api/profile/privacy
  * Returns privacy settings including DDD profile-level privacy
  */
-export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
+const _GET = withAuthAndErrors(async (request, _ctx, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
   try {
@@ -274,3 +275,5 @@ export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
     return respond.error('Failed to update privacy settings', 'INTERNAL_ERROR', { status: 500 });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

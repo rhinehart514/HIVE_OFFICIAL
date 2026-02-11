@@ -6,6 +6,7 @@ import {
   getAutomationTemplateCategories as getTemplateCategories,
   type AutomationTemplate,
 } from "@hive/core";
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/automations/templates
@@ -16,7 +17,7 @@ import {
  * - category: Filter by category (engagement, events, moderation, notifications)
  * - id: Get a single template by ID
  */
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   try {
     const url = new URL(request.url);
     const category = url.searchParams.get("category");
@@ -53,3 +54,5 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

@@ -22,6 +22,7 @@ import {
 import { HttpStatus } from '@/lib/api-response-types';
 import { checkSpacePermission } from '@/lib/space-permission-middleware';
 import { getSystemTemplateForCategory } from '@hive/core';
+import { withCache } from '../../../../../lib/cache-headers';
 
 // ============================================================
 // Types
@@ -46,7 +47,7 @@ const UpdateSidebarSchema = z.object({
 // GET - Retrieve sidebar layout (authenticated)
 // ============================================================
 
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
@@ -187,3 +188,5 @@ export const PUT = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'SHORT');

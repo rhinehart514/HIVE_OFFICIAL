@@ -11,6 +11,7 @@ import { logger } from '@/lib/structured-logger';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const PendingQuerySchema = z.object({
   sortBy: z.enum(['createdAt', 'toolName', 'creator']).optional().default('createdAt'),
@@ -44,7 +45,7 @@ interface PendingTool {
  * GET /api/admin/tools/pending
  * Fetch tools awaiting review
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = PendingQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -182,3 +183,5 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -10,6 +10,7 @@ import {
   getServerSetupDeploymentRepository,
   toSetupDeploymentListDTO,
 } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 // ============================================================================
 // Response Helpers
@@ -27,7 +28,7 @@ function errorResponse(message: string, status = 400) {
 // GET /api/setups/deployments
 // ============================================================================
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     // Get session
     const cookieStore = await cookies();
@@ -88,3 +89,5 @@ export async function GET(request: NextRequest) {
     return errorResponse('Failed to fetch deployments', 500);
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

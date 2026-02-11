@@ -17,6 +17,7 @@ import { logger } from '@/lib/structured-logger';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../lib/cache-headers';
 
 const AnalyticsQuerySchema = z.object({
   range: z.enum(['7d', '30d', '90d']).optional().default('30d'),
@@ -63,7 +64,7 @@ interface AnalyticsData {
  * GET /api/admin/spaces/analytics
  * Fetch space analytics
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = AnalyticsQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -362,3 +363,5 @@ function formatCategoryName(category: string): string {
     .replace(/_/g, ' ')
     .replace(/\b\w/g, l => l.toUpperCase());
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

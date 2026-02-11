@@ -4,6 +4,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 import { validateApiAuth } from "@/lib/api-auth-middleware";
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
+import { withCache } from '../../../../lib/cache-headers';
 
 const FEED_URL = "https://buffalo.campuslabs.com/engage/events.rss";
 const CAMPUS_ID = "ub-buffalo";
@@ -15,7 +16,7 @@ type SpaceIndex = {
   normalizedName: string;
 };
 
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   return runSync(request);
 }
 
@@ -270,3 +271,5 @@ function normalize(text: string) {
 function uniq(values: string[]) {
   return Array.from(new Set(values));
 }
+
+export const GET = withCache(_GET, 'PRIVATE');

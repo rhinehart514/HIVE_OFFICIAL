@@ -17,6 +17,7 @@ import {
 } from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import type { ChatMessageReaction } from "@hive/core";
+import { withCache } from '../../../../../../../lib/cache-headers';
 
 /**
  * Thread Replies API - Manage replies to a parent message
@@ -80,7 +81,7 @@ function createProfileGetter(): GetUserProfileFn {
 /**
  * GET /api/spaces/[spaceId]/chat/[messageId]/replies - List thread replies
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string; messageId: string }> },
   respond
@@ -305,3 +306,5 @@ export const POST = withAuthValidationAndErrors(
     });
   }
 );
+
+export const GET = withCache(_GET, 'PRIVATE');

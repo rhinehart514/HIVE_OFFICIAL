@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getCatalog } from '@/server/onboarding-catalog-store';
 import { getCampusId as getCampusIdFromRequest, getCampusFromEmail } from '@/lib/campus-context';
 import { getCurrentUser } from '@/lib/server-auth';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/onboarding/catalog
@@ -10,7 +11,7 @@ import { getCurrentUser } from '@/lib/server-auth';
  * SECURITY: campusId is derived from authenticated user session when available,
  * falls back to 'default' for users in early onboarding who may not be authenticated yet.
  */
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   // SECURITY: Get campusId from authenticated user session, not query params
   // Falls back to 'default' for users in early onboarding flow
   let campusId: string;
@@ -37,3 +38,5 @@ export async function GET(request: NextRequest) {
     data: catalog,
   });
 }
+
+export const GET = withCache(_GET, 'SHORT');

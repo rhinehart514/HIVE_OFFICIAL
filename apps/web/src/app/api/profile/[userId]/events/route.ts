@@ -6,6 +6,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
+import { withCache } from '../../../../../lib/cache-headers';
 
 /**
  * GET /api/profile/[userId]/events
@@ -13,7 +14,7 @@ import {
  *
  * Returns upcoming events where the user is the organizer.
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ userId: string }> },
   respond
@@ -140,3 +141,5 @@ function getEventTypeEmoji(type?: string): string {
       return '📆';
   }
 }
+
+export const GET = withCache(_GET, 'SHORT');

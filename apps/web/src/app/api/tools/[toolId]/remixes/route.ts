@@ -4,9 +4,10 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import { withCache } from '../../../../../lib/cache-headers';
 
 // GET /api/tools/[toolId]/remixes - List tools remixed from this tool
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ toolId: string }> },
   respond,
@@ -74,3 +75,5 @@ export const GET = withAuthAndErrors(async (
     sourceToolId: toolId,
   });
 });
+
+export const GET = withCache(_GET, 'SHORT');

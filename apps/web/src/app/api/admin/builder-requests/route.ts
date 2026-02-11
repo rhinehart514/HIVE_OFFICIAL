@@ -14,6 +14,7 @@ import { HttpStatus } from '@/lib/api-response-types';
 // SECURITY: Use centralized admin auth for POST (extra check needed for mutations)
 import { isAdmin } from '@/lib/admin-auth';
 import { notifyBuilderApproved, notifyBuilderRejected } from '@/lib/notification-service';
+import { withCache } from '../../../../lib/cache-headers';
 
 const ReviewRequestSchema = z.object({
   requestId: z.string().min(1),
@@ -25,7 +26,7 @@ const ReviewRequestSchema = z.object({
  * GET: List all pending builder requests
  * Uses withAdminAuthAndErrors for built-in admin auth + CSRF + rate limiting
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -255,3 +256,5 @@ export const POST = withAuthValidationAndErrors(
     }
   }
 );
+
+export const GET = withCache(_GET, 'PRIVATE');

@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { z } from 'zod';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * Content Reporting API
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Get user's submitted reports (optional feature)
-export async function GET(request: NextRequest) {
+async function _GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) {
@@ -201,3 +202,4 @@ async function getUserReports(userId: string, status: string, limit: number) {
     return [];
   }
 }
+export const GET = withCache(_GET, 'SHORT');

@@ -11,6 +11,7 @@ import { logger } from '@/lib/structured-logger';
 import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { withCache } from '../../../../../../lib/cache-headers';
 
 type RouteContext = { params: Promise<{ spaceId: string }> };
 
@@ -46,7 +47,7 @@ interface SpaceModerationItem {
  * GET /api/admin/spaces/[spaceId]/moderation
  * Fetch moderation queue for a specific space
  */
-export const GET = withAdminAuthAndErrors(async (request, context: RouteContext, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, context: RouteContext, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { spaceId } = await context.params;
   const { searchParams } = new URL(request.url);
@@ -163,3 +164,5 @@ export const GET = withAdminAuthAndErrors(async (request, context: RouteContext,
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

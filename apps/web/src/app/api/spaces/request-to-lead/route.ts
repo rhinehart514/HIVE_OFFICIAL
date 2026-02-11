@@ -20,6 +20,7 @@ import {
   normalizeCategory,
   type SpaceCategoryValue,
 } from '@hive/core/server';
+import { withCache } from '../../../../lib/cache-headers';
 
 const requestToLeadSchema = z.object({
   spaceId: z.string().min(1, 'Space ID is required'),
@@ -237,7 +238,7 @@ export const POST = withAuthValidationAndErrors(
   },
 );
 
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
 
@@ -275,3 +276,5 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
     });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');

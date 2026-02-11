@@ -11,6 +11,7 @@ import {
   getNextSteps,
   type ProfileUserData as UserData,
 } from '@hive/core';
+import { withCache } from '../../../../lib/cache-headers';
 
 interface ProfileCompletionCheck {
   isComplete: boolean;
@@ -33,7 +34,7 @@ interface ProfileCompletionCheck {
  *
  * Uses centralized COMPLETION_REQUIREMENTS from @hive/core
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   _context,
   respond
@@ -199,3 +200,5 @@ export const GET = withAuthAndErrors(async (
 
   return respond.success({ completion });
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

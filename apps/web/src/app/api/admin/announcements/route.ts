@@ -13,6 +13,7 @@ import { withAdminAuthAndErrors, getUserId, getCampusId, type AuthenticatedReque
 import { HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { withCache } from '../../../../lib/cache-headers';
 
 const AnnouncementSchema = z.object({
   title: z.string().min(1).max(200),
@@ -42,7 +43,7 @@ interface Announcement {
  * GET /api/admin/announcements
  * List all announcements
  */
-export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
@@ -261,3 +262,5 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
     });
   }
 });
+
+export const GET = withCache(_GET, 'PRIVATE');

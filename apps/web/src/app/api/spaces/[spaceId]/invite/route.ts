@@ -22,6 +22,7 @@ import {
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { checkSpacePermission } from '@/lib/space-permission-middleware';
+import { withCache } from '../../../../../lib/cache-headers';
 
 interface InviteLink {
   id: string;
@@ -39,7 +40,7 @@ interface InviteLink {
  * GET /api/spaces/[spaceId]/invite
  * List active invite links for the space (leaders only)
  */
-export const GET = withAuthAndErrors(async (
+const _GET = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
@@ -317,3 +318,5 @@ export const DELETE = withAuthAndErrors(async (
     return respond.error('Failed to revoke invite link', 'INTERNAL_ERROR', { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
 });
+
+export const GET = withCache(_GET, 'SHORT');
