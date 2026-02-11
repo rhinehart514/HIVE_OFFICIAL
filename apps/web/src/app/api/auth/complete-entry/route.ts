@@ -11,6 +11,7 @@ import { logger } from '@/lib/logger';
 import { SecureSchemas } from '@/lib/secure-input-validation';
 import { isDevAuthBypassAllowed } from '@/lib/dev-auth-bypass';
 import { enforceRateLimit } from '@/lib/secure-rate-limiter';
+import { matchSpacesForInterests } from '@/lib/interest-space-matcher';
 
 
 /**
@@ -84,7 +85,7 @@ const schema = z.object({
   residenceType: z.enum(['on-campus', 'off-campus', 'commuter']).optional().nullable(),
   residentialSpaceId: z.string().max(100).optional().nullable(),
   // Interests are optional during entry and can be completed later.
-  interests: z.array(z.string()).max(5).optional(),
+  interests: z.array(z.string()).max(6).optional(),
   // Community identities (all optional)
   communityIdentities: z.object({
     international: z.boolean().optional(),
@@ -349,6 +350,53 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         }
       }
 
+      // Pre-fetch org spaces and compute interest matches (read phase only)
+      const interestSpaceDataById = new Map<string, FirebaseFirestore.DocumentData>();
+      let interestMatchedSpaceIds: string[] = [];
+      let interestAutoJoinMatches: Array<{ spaceId: string; score: number; matchedInterests: string[] }> = [];
+      if (campusId && Array.isArray(body.interests) && body.interests.length > 0) {
+        const orgSpacesSnapshot = await transaction.get(
+          dbAdmin.collection('spaces')
+            .where('campusId', '==', campusId)
+            .where('category', 'in', ['student_org', 'university_org', 'greek_life'])
+        );
+
+        const orgSpaces = orgSpacesSnapshot.docs.map((spaceDoc) => {
+          const spaceData = spaceDoc.data();
+          interestSpaceDataById.set(spaceDoc.id, spaceData);
+          return {
+            spaceId: spaceDoc.id,
+            ...spaceData,
+          };
+        });
+
+        const scoredInterestMatches = matchSpacesForInterests(orgSpaces, body.interests, 10);
+
+        const alreadyJoinedSpaceIds = new Set<string>();
+        if (majorSpaceSnapshot && !majorSpaceSnapshot.empty) {
+          const majorSpaceDoc = majorSpaceSnapshot.docs[0];
+          const majorSpaceData = majorSpaceDoc.data();
+          if (majorSpaceData?.isUnlocked) {
+            alreadyJoinedSpaceIds.add(majorSpaceDoc.id);
+          }
+        }
+        for (const { snapshot } of communitySpaceReads) {
+          if (!snapshot.empty) {
+            const communitySpaceDoc = snapshot.docs[0];
+            if (communitySpaceDoc?.id) {
+              alreadyJoinedSpaceIds.add(communitySpaceDoc.id);
+            }
+          }
+        }
+        if (validatedResidentialSpaceId) {
+          alreadyJoinedSpaceIds.add(validatedResidentialSpaceId);
+        }
+
+        const filteredInterestMatches = scoredInterestMatches.filter((match) => !alreadyJoinedSpaceIds.has(match.spaceId));
+        interestMatchedSpaceIds = filteredInterestMatches.map((match) => match.spaceId);
+        interestAutoJoinMatches = filteredInterestMatches.slice(0, 8);
+      }
+
       // =========================================================================
       // PHASE 2: ALL WRITES (after all reads are complete)
       // =========================================================================
@@ -371,6 +419,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         graduationYear: body.graduationYear ?? null,
         interests: body.interests ?? [],
         communityIdentities: body.communityIdentities ?? {},
+        interestMatchedSpaceIds,
         // Entry completion - single source of truth
         // JWT still uses onboardingCompleted for backward compat (derived from entryCompletedAt)
         entryCompletedAt: now,
@@ -528,6 +577,37 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
             name: (residentialSpaceData.name as string) || '',
           });
         }
+      }
+
+      // Auto-join: 4. Interest-based recommended org spaces
+      for (const interestMatch of interestAutoJoinMatches) {
+        const interestSpaceId = interestMatch.spaceId;
+        const interestSpaceData = interestSpaceDataById.get(interestSpaceId);
+        if (!interestSpaceData) continue;
+
+        const memberRef = dbAdmin.collection('spaceMembers').doc(`${interestSpaceId}_${userId}`);
+        transaction.set(memberRef, {
+          spaceId: interestSpaceId,
+          userId: userId,
+          role: 'member',
+          joinedAt: new Date().toISOString(),
+          campusId: campusId,
+          isActive: true,
+          userName: fullName,
+          userHandle: finalHandle,
+        });
+
+        const spaceRef = dbAdmin.collection('spaces').doc(interestSpaceId);
+        transaction.update(spaceRef, {
+          memberCount: FieldValue.increment(1),
+          'metrics.memberCount': FieldValue.increment(1),
+        });
+
+        autoJoinedSpaces.push({
+          id: interestSpaceId,
+          handle: (interestSpaceData.slug as string) || (interestSpaceData.handle as string) || interestSpaceId,
+          name: (interestSpaceData.name as string) || '',
+        });
       }
     });
 

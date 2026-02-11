@@ -34,6 +34,7 @@ import {
   BrandSpinner,
   getQuickTemplate,
   getAvailableTemplates,
+  getTemplatesForInterests,
   type QuickTemplate,
 } from '@hive/ui';
 
@@ -42,6 +43,7 @@ import { StatsBar } from '@/components/hivelab/dashboard/StatsBar';
 import { BuilderLevel } from '@/components/hivelab/dashboard/BuilderLevel';
 import { QuickStartChips } from '@/components/hivelab/dashboard/QuickStartChips';
 import { useMyTools } from '@/hooks/use-my-tools';
+import { useCurrentProfile } from '@/hooks/queries';
 import {
   createToolFromTemplateApi,
 } from '@/lib/hivelab/create-tool';
@@ -312,6 +314,7 @@ export default function BuilderDashboard() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
+  const { data: currentProfile } = useCurrentProfile({ enabled: !!user });
   const [prompt, setPrompt] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [ceremonyPhase, setCeremonyPhase] = useState<CeremonyPhase>('idle');
@@ -335,6 +338,17 @@ export default function BuilderDashboard() {
 
   const hasTools = userTools.length > 0;
   const isNewUser = !toolsLoading && !hasTools;
+  const userInterestCategories = React.useMemo(() => {
+    if (Array.isArray(currentProfile?.interests) && currentProfile.interests.length > 0) {
+      return currentProfile.interests;
+    }
+    return Array.isArray((user as any)?.interests) ? (user as any).interests : [];
+  }, [currentProfile?.interests, user]);
+  const recommendedTemplates = React.useMemo(
+    () => getTemplatesForInterests(userInterestCategories).slice(0, 6),
+    [userInterestCategories]
+  );
+  const showRecommendedTemplates = userInterestCategories.length > 0 && recommendedTemplates.length > 0;
 
   // Focus input after title reveals (only for new users)
   useEffect(() => {
@@ -805,6 +819,35 @@ export default function BuilderDashboard() {
               </span>
               <div className="flex-1 h-px bg-white/[0.06]" />
             </motion.div>
+
+            {/* Recommended Templates */}
+            {showRecommendedTemplates && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : 0.32, ease: EASE }}
+                className="max-w-3xl mx-auto mb-8"
+              >
+                <div className="flex items-center gap-2.5 mb-3">
+                  <Sparkles className="w-4 h-4 text-white/40" />
+                  <h3 className="text-sm font-medium text-white">Recommended for you</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {recommendedTemplates.map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => handleTemplateClick(template)}
+                      disabled={isSubmitting}
+                      className="group text-left p-3 rounded-2xl border border-white/[0.08] bg-[#0A0A0A]
+                        hover:bg-white/[0.03] transition-all disabled:opacity-50"
+                    >
+                      <p className="text-sm font-medium text-white mb-0.5 truncate">{template.name}</p>
+                      <p className="text-xs text-white/40 line-clamp-1">{template.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Curated Library */}
             <motion.div

@@ -78,6 +78,8 @@ export interface QuickTemplate {
   quickDeployFields?: TemplateConfigField[];
   /** Space types this template is relevant for — used for curation */
   spaceTypes?: SpaceType[];
+  /** Interest category IDs this template is relevant for */
+  interestCategories?: string[];
 }
 
 // Generate unique IDs for elements
@@ -94,6 +96,7 @@ export const QUICK_POLL_TEMPLATE: QuickTemplate = {
   icon: 'bar-chart-2',
   category: 'engagement',
   complexity: 'simple',
+  interestCategories: ['social_energy', 'campus_events'],
   quickDeploy: true,
   spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
@@ -143,6 +146,7 @@ export const EVENT_COUNTDOWN_TEMPLATE: QuickTemplate = {
   icon: 'timer',
   category: 'events',
   complexity: 'simple',
+  interestCategories: ['campus_events'],
   quickDeploy: true,
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
@@ -194,6 +198,7 @@ export const QUICK_LINKS_TEMPLATE: QuickTemplate = {
   icon: 'link-2',
   category: 'resources',
   complexity: 'simple',
+  interestCategories: ['academic_identity', 'builders_and_hustle'],
   spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -237,6 +242,7 @@ export const STUDY_GROUP_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'teams',
   complexity: 'simple',
+  interestCategories: ['academic_identity', 'study_style'],
   spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'sidebar',
@@ -279,6 +285,7 @@ export const ANNOUNCEMENTS_TEMPLATE: QuickTemplate = {
   icon: 'message-square',
   category: 'teams',
   complexity: 'simple',
+  interestCategories: ['campus_events'],
   quickDeploy: true,
   spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   quickDeployFields: [
@@ -330,6 +337,7 @@ export const MEETING_NOTES_TEMPLATE: QuickTemplate = {
   icon: 'file-text',
   category: 'teams',
   complexity: 'simple',
+  interestCategories: ['builders_and_hustle', 'academic_identity'],
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -373,6 +381,7 @@ export const OFFICE_HOURS_TEMPLATE: QuickTemplate = {
   icon: 'calendar',
   category: 'resources',
   complexity: 'simple',
+  interestCategories: ['academic_identity', 'study_style'],
   spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'sidebar',
@@ -422,6 +431,7 @@ export const LEADERBOARD_TEMPLATE: QuickTemplate = {
   icon: 'sparkles',
   category: 'engagement',
   complexity: 'simple',
+  interestCategories: ['gaming_and_game_night', 'social_energy'],
   spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -463,6 +473,7 @@ export const EVENT_RSVP_TEMPLATE: QuickTemplate = {
   icon: 'calendar',
   category: 'events',
   complexity: 'simple',
+  interestCategories: ['campus_events', 'social_energy'],
   quickDeploy: true,
   spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   quickDeployFields: [
@@ -510,6 +521,7 @@ export const MEMBER_SPOTLIGHT_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'engagement',
   complexity: 'simple',
+  interestCategories: ['social_energy', 'identity_background'],
   spaceTypes: ['student_org', 'greek', 'residential'],
   defaultConfig: {
     placement: 'sidebar',
@@ -551,6 +563,7 @@ export const ANONYMOUS_QA_TEMPLATE: QuickTemplate = {
   icon: 'message-square',
   category: 'feedback',
   complexity: 'simple',
+  interestCategories: ['social_energy', 'campus_events'],
   spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -592,6 +605,7 @@ export const EVENT_CHECKIN_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'events',
   complexity: 'simple',
+  interestCategories: ['campus_events'],
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'inline',
@@ -634,6 +648,7 @@ export const SPACE_STATS_TEMPLATE: QuickTemplate = {
   icon: 'bar-chart-2',
   category: 'engagement',
   complexity: 'simple',
+  interestCategories: ['builders_and_hustle'],
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -674,6 +689,7 @@ export const UPCOMING_EVENTS_TEMPLATE: QuickTemplate = {
   icon: 'calendar',
   category: 'events',
   complexity: 'simple',
+  interestCategories: ['campus_events'],
   spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -713,6 +729,7 @@ export const FEEDBACK_FORM_TEMPLATE: QuickTemplate = {
   icon: 'clipboard-list',
   category: 'feedback',
   complexity: 'simple',
+  interestCategories: ['builders_and_hustle'],
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -756,6 +773,7 @@ export const DECISION_MAKER_TEMPLATE: QuickTemplate = {
   icon: 'target',
   category: 'engagement',
   complexity: 'simple',
+  interestCategories: ['social_energy', 'food_behaviors'],
   quickDeploy: true,
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
@@ -804,6 +822,7 @@ export const PROGRESS_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'trending-up',
   category: 'teams',
   complexity: 'simple',
+  interestCategories: ['builders_and_hustle', 'health_wellness'],
   spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'sidebar',
@@ -850,6 +869,7 @@ export const MEETING_AGENDA_TEMPLATE: QuickTemplate = {
   icon: 'clipboard-list',
   category: 'teams',
   complexity: 'simple',
+  interestCategories: ['builders_and_hustle'],
   quickDeploy: true,
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   quickDeployFields: [
@@ -897,6 +917,7 @@ export const BUDGET_OVERVIEW_TEMPLATE: QuickTemplate = {
   icon: 'wallet',
   category: 'resources',
   complexity: 'simple',
+  interestCategories: ['builders_and_hustle'],
   spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -943,6 +964,7 @@ export const WEEKLY_UPDATE_TEMPLATE: QuickTemplate = {
   icon: 'file-text',
   category: 'teams',
   complexity: 'simple',
+  interestCategories: ['builders_and_hustle', 'campus_events'],
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -1001,6 +1023,7 @@ export const WHAT_SHOULD_I_EAT_TEMPLATE: QuickTemplate = {
   icon: 'sparkles',
   category: 'resources',
   complexity: 'simple',
+  interestCategories: ['food_behaviors', 'social_energy'],
   spaceTypes: ['residential'],
   defaultConfig: {
     placement: 'sidebar',
@@ -1051,6 +1074,7 @@ export const TONIGHTS_EVENTS_TEMPLATE: QuickTemplate = {
   icon: 'sparkles',
   category: 'events',
   complexity: 'simple',
+  interestCategories: ['campus_events', 'social_energy'],
   spaceTypes: ['student_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'sidebar',
@@ -1124,6 +1148,7 @@ export const STUDY_SPOT_FINDER_TEMPLATE: QuickTemplate = {
   icon: 'sparkles',
   category: 'resources',
   complexity: 'simple',
+  interestCategories: ['study_style', 'academic_identity'],
   spaceTypes: ['student_org', 'residential'],
   defaultConfig: {
     placement: 'sidebar',
@@ -1187,6 +1212,7 @@ export const PHOTO_CHALLENGE_TEMPLATE: QuickTemplate = {
   icon: 'camera',
   category: 'apps',
   complexity: 'app',
+  interestCategories: ['creative_scene', 'social_energy'],
   spaceTypes: ['student_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'inline',
@@ -1265,6 +1291,7 @@ export const ATTENDANCE_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'apps',
   complexity: 'app',
+  interestCategories: ['campus_events', 'builders_and_hustle'],
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'inline',
@@ -1345,6 +1372,7 @@ export const RESOURCE_SIGNUP_TEMPLATE: QuickTemplate = {
   icon: 'clipboard-list',
   category: 'apps',
   complexity: 'app',
+  interestCategories: ['campus_events'],
   spaceTypes: ['student_org', 'uni_org', 'residential'],
   defaultConfig: {
     placement: 'inline',
@@ -1435,6 +1463,7 @@ export const MULTI_POLL_DASHBOARD_TEMPLATE: QuickTemplate = {
   icon: 'grid',
   category: 'apps',
   complexity: 'app',
+  interestCategories: ['social_energy', 'gaming_and_game_night'],
   spaceTypes: ['student_org', 'uni_org', 'greek'],
   defaultConfig: {
     placement: 'inline',
@@ -1529,6 +1558,7 @@ export const EVENT_SERIES_HUB_TEMPLATE: QuickTemplate = {
   icon: 'calendar',
   category: 'apps',
   complexity: 'app',
+  interestCategories: ['campus_events', 'creative_scene'],
   spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'inline',
@@ -1607,6 +1637,7 @@ export const SUGGESTION_BOX_TEMPLATE: QuickTemplate = {
   icon: 'inbox',
   category: 'apps',
   complexity: 'app',
+  interestCategories: ['social_energy'],
   spaceTypes: ['student_org', 'uni_org', 'residential', 'greek'],
   defaultConfig: {
     placement: 'inline',
@@ -1696,6 +1727,7 @@ export const STUDY_GROUP_MATCHER_TEMPLATE: QuickTemplate = {
   icon: 'users',
   category: 'apps',
   complexity: 'app',
+  interestCategories: ['academic_identity', 'study_style'],
   spaceTypes: ['student_org', 'uni_org'],
   defaultConfig: {
     placement: 'inline',
@@ -1781,6 +1813,7 @@ export const COMPETITION_TRACKER_TEMPLATE: QuickTemplate = {
   icon: 'trophy',
   category: 'apps',
   complexity: 'app',
+  interestCategories: ['gaming_and_game_night', 'builders_and_hustle'],
   spaceTypes: ['student_org', 'greek'],
   defaultConfig: {
     placement: 'inline',
@@ -1999,6 +2032,21 @@ export function createToolFromTemplate(
  */
 export function getQuickDeployTemplates(): QuickTemplate[] {
   return QUICK_TEMPLATES.filter(t => t.quickDeploy && t.status !== 'hidden');
+}
+
+/**
+ * Get templates that match a user's interests
+ */
+export function getTemplatesForInterests(interests: string[]): QuickTemplate[] {
+  if (!interests.length) return [];
+  const interestSet = new Set(interests);
+  return QUICK_TEMPLATES
+    .filter(t => t.status !== 'hidden' && t.interestCategories?.some(c => interestSet.has(c)))
+    .sort((a, b) => {
+      const aScore = a.interestCategories?.filter(c => interestSet.has(c)).length ?? 0;
+      const bScore = b.interestCategories?.filter(c => interestSet.has(c)).length ?? 0;
+      return bScore - aScore;
+    });
 }
 
 /**

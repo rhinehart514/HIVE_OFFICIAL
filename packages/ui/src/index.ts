@@ -324,6 +324,7 @@ export {
   getCategoriesWithCounts,
   createToolFromTemplate,
   getQuickDeployTemplates,
+  getTemplatesForInterests,
   getTemplatesForSpaceType,
   getTemplatesSortedByRelevance,
   SPACE_TYPE_LABELS,
