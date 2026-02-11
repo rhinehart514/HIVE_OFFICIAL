@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Button, Input } from '@hive/ui/design-system/primitives';
+import { InterestPicker } from './InterestPicker';
 
-type Step = 'email' | 'code';
+type Step = 'email' | 'code' | 'interests';
 
 const SCREEN_FADE = { duration: 0.15, ease: 'easeOut' } as const;
 const NAME_FADE = { duration: 0.2, ease: 'easeOut' } as const;
@@ -205,12 +206,16 @@ export function EntryFlowV2() {
     }
   }, [resendCountdown, isSendingCode, isCodeVerified, email, focusOtpIndex]);
 
-  const submitProfile = React.useCallback(async () => {
+  const goToInterests = React.useCallback(() => {
     if (!firstName.trim() || !lastName.trim()) {
       setNameError('Enter your first and last name');
       return;
     }
+    setNameError(null);
+    setStep('interests');
+  }, [firstName, lastName]);
 
+  const submitProfile = React.useCallback(async (interestData: { interests: string[]; major?: string }) => {
     setIsSubmittingName(true);
     setNameError(null);
 
@@ -223,7 +228,8 @@ export function EntryFlowV2() {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           role: 'student',
-          interests: [],
+          interests: interestData.interests,
+          major: interestData.major,
         }),
       });
 
@@ -235,6 +241,8 @@ export function EntryFlowV2() {
       goToApp(result.redirect || '/discover');
     } catch (error) {
       setNameError(error instanceof Error ? error.message : 'Failed to complete entry');
+      // Go back to name step if submission fails
+      setStep('code');
     } finally {
       setIsSubmittingName(false);
     }
@@ -293,10 +301,10 @@ export function EntryFlowV2() {
   }, [isSendingCode, sendCode]);
 
   const onEnterName = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !isSubmittingName) {
-      submitProfile();
+    if (event.key === 'Enter') {
+      goToInterests();
     }
-  }, [isSubmittingName, submitProfile]);
+  }, [goToInterests]);
 
   return (
     <div className="min-h-dvh bg-[#000000] flex items-center justify-center px-6">
@@ -305,12 +313,17 @@ export function EntryFlowV2() {
         <div className="flex items-center justify-center gap-2 mb-8">
           <span
             className={`h-1.5 w-1.5 rounded-full transition-colors ${
-              step === 'email' ? 'bg-white' : 'bg-white'
+              step === 'email' || step === 'code' || step === 'interests' ? 'bg-white' : 'bg-white/20'
             }`}
           />
           <span
             className={`h-1.5 w-1.5 rounded-full transition-colors ${
-              step === 'code' ? 'bg-white' : 'bg-white/20'
+              step === 'code' || step === 'interests' ? 'bg-white' : 'bg-white/20'
+            }`}
+          />
+          <span
+            className={`h-1.5 w-1.5 rounded-full transition-colors ${
+              step === 'interests' ? 'bg-white' : 'bg-white/20'
             }`}
           />
         </div>
@@ -361,7 +374,7 @@ export function EntryFlowV2() {
                 </Button>
               </div>
             </motion.div>
-          ) : (
+          ) : step === 'code' ? (
             <motion.div
               key="entry-code"
               initial={{ opacity: 0 }}
@@ -507,16 +520,40 @@ export function EntryFlowV2() {
                         variant="primary"
                         size="default"
                         className="w-full"
-                        onClick={submitProfile}
-                        loading={isSubmittingName}
-                        disabled={isSubmittingName}
+                        onClick={goToInterests}
                       >
-                        Get in
+                        Next
                       </Button>
                     </motion.div>
                   </motion.div>
                 )}
               </AnimatePresence>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="entry-interests"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={SCREEN_FADE}
+              className="space-y-5"
+            >
+              <button
+                type="button"
+                onClick={() => setStep('code')}
+                className="text-[13px] font-sans text-white/50 hover:text-white/50 transition-colors"
+              >
+                ← Back
+              </button>
+
+              <InterestPicker
+                onComplete={submitProfile}
+                isSubmitting={isSubmittingName}
+              />
+
+              {nameError && (
+                <p className="text-[13px] text-[#EF4444]">{nameError}</p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
