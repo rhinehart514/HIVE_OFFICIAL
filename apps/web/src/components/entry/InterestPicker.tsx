@@ -22,11 +22,15 @@ const MAX_INTERESTS = 6;
 
 export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestPickerProps) {
   const [categories, setCategories] = React.useState<InterestCategory[]>([]);
-  const [majors, setMajors] = React.useState<string[]>([]);
+  const [undergradMajors, setUndergradMajors] = React.useState<string[]>([]);
+  const [gradPrograms, setGradPrograms] = React.useState<string[]>([]);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [major, setMajor] = React.useState('');
+  const [programType, setProgramType] = React.useState<'undergrad' | 'grad'>('undergrad');
   const [loading, setLoading] = React.useState(true);
   const [showMajor, setShowMajor] = React.useState(false);
+
+  const activeMajors = programType === 'grad' ? gradPrograms : undergradMajors;
 
   // Fetch campus catalogs
   React.useEffect(() => {
@@ -36,7 +40,8 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
         if (res.ok) {
           const data = await res.json();
           setCategories(data.interests || []);
-          setMajors((data.majors || []).map((m: any) => m.name || m));
+          setUndergradMajors((data.majors || []).map((m: any) => m.name || m));
+          setGradPrograms((data.graduatePrograms || []).map((m: any) => m.name || m));
         }
       } catch {
         // Fallback: still let them through
@@ -145,9 +150,36 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           transition={{ duration: 0.15 }}
-          className="space-y-2"
+          className="space-y-3"
         >
-          <label className="font-sans text-[13px] text-white/50">Major (optional)</label>
+          {/* Undergrad / Grad toggle */}
+          <div className="flex items-center gap-1 p-0.5 rounded-[8px] bg-[#0A0A0A] border border-white/[0.06]">
+            <button
+              type="button"
+              onClick={() => { setProgramType('undergrad'); setMajor(''); }}
+              className={[
+                'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-all duration-150',
+                programType === 'undergrad'
+                  ? 'bg-white/[0.1] text-white'
+                  : 'text-white/30 hover:text-white/50',
+              ].join(' ')}
+            >
+              Undergrad
+            </button>
+            <button
+              type="button"
+              onClick={() => { setProgramType('grad'); setMajor(''); }}
+              className={[
+                'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-all duration-150',
+                programType === 'grad'
+                  ? 'bg-white/[0.1] text-white'
+                  : 'text-white/30 hover:text-white/50',
+              ].join(' ')}
+            >
+              Graduate
+            </button>
+          </div>
+
           <select
             value={major}
             onChange={(e) => setMajor(e.target.value)}
@@ -158,8 +190,10 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
               'appearance-none',
             ].join(' ')}
           >
-            <option value="">Select your major</option>
-            {majors.map((m) => (
+            <option value="">
+              {programType === 'grad' ? 'Select your program' : 'Select your major'}
+            </option>
+            {activeMajors.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>

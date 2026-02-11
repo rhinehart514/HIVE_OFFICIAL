@@ -33,7 +33,7 @@ export const GET = withCache(async (request: NextRequest) => {
     return NextResponse.json({
       interests: data.interests || [],
       majors: data.majors || [],
-      gradPrograms: data.gradPrograms || [],
+      graduatePrograms: data.graduatePrograms || [],
     });
   } catch {
     return NextResponse.json({ interests: [], majors: [], gradPrograms: [] });
