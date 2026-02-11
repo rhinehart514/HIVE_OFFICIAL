@@ -610,6 +610,7 @@ export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
     const parsed = UpdateSchema.parse(payload);
 
     const updates: Array<Promise<unknown>> = [];
+    const batchOps: Array<{ ref: FirebaseFirestore.DocumentReference; data: Record<string, unknown>; options: { merge: boolean } }> = [];
     let fieldsUpdated: string[] = [];
     let usedDddPath = false;
 
@@ -678,7 +679,7 @@ export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
         };
         if (!existing.exists) merged.createdAt = now;
 
-        updates.push(privacyRef.set(merged, { merge: true }));
+        batchOps.push({ ref: privacyRef, data: merged, options: { merge: true } });
         fieldsUpdated = fieldsUpdated.concat(Object.keys(parsed.privacy));
       }
     }
@@ -686,20 +687,28 @@ export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
     // Grid updates stay in Firestore (not in DDD domain model)
     if (parsed.grid) {
       const normalized = normalizeGrid(parsed.grid);
-      updates.push(
-        dbAdmin
-          .collection('users')
-          .doc(userId)
-          .set({ profileGrid: normalized }, { merge: true }),
-      );
+      batchOps.push({
+        ref: dbAdmin.collection('users').doc(userId),
+        data: { profileGrid: normalized },
+        options: { merge: true }
+      });
       fieldsUpdated.push('grid');
     }
 
-    if (updates.length === 0) {
+    if (batchOps.length === 0 && updates.length === 0) {
       return respond.success({ message: 'No changes applied', fieldsUpdated: [] });
     }
 
-    await Promise.all(updates);
+    // Execute batched Firestore writes atomically
+    if (batchOps.length > 0) {
+      const batch = dbAdmin.batch();
+      batchOps.forEach(op => batch.set(op.ref, op.data, op.options));
+      await batch.commit();
+    }
+    // Legacy updates array (DDD path may still add promises)
+    if (updates.length > 0) {
+      await Promise.all(updates);
+    }
 
     return respond.success({ fieldsUpdated, message: 'Profile updated' });
   } catch (error) {

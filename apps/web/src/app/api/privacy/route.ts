@@ -248,29 +248,29 @@ async function updateSpaceVisibility(userId: string, settings: PrivacySettings, 
       .where('campusId', '==', campusId)
       .get();
     
-    // Update visibility in each space membership
-    const updates = membershipsSnapshot.docs.map(async (memberDoc) => {
-      const memberData = memberDoc.data();
-      
-      const updatedMemberData = {
-        ...memberData,
-        visibility: {
-          showInDirectory: !settings.ghostMode.hideFromDirectory,
-          showActivity: !settings.ghostMode.hideActivity,
-          showOnlineStatus: !settings.ghostMode.hideOnlineStatus,
-          showLastSeen: !settings.ghostMode.hideLastSeen,
-        },
-        ghostMode: {
-          enabled: settings.ghostMode.enabled,
-          level: settings.ghostMode.level
-        },
-        updatedAt: new Date().toISOString()
-      };
-
-      return memberDoc.ref.update(updatedMemberData);
-    });
-
-    await Promise.all(updates);
+    // Update visibility in each space membership (batched for atomicity + cost)
+    const docs = membershipsSnapshot.docs;
+    for (let i = 0; i < docs.length; i += 500) {
+      const batch = dbAdmin.batch();
+      docs.slice(i, i + 500).forEach((memberDoc) => {
+        const memberData = memberDoc.data();
+        batch.update(memberDoc.ref, {
+          ...memberData,
+          visibility: {
+            showInDirectory: !settings.ghostMode.hideFromDirectory,
+            showActivity: !settings.ghostMode.hideActivity,
+            showOnlineStatus: !settings.ghostMode.hideOnlineStatus,
+            showLastSeen: !settings.ghostMode.hideLastSeen,
+          },
+          ghostMode: {
+            enabled: settings.ghostMode.enabled,
+            level: settings.ghostMode.level
+          },
+          updatedAt: new Date().toISOString()
+        });
+      });
+      await batch.commit();
+    }
   } catch (error) {
     logger.error(
       `Error updating space visibility at /api/privacy`,

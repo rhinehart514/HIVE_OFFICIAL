@@ -261,28 +261,28 @@ async function applyGhostModeChanges(userId: string, ghostMode: { enabled: boole
 
     const membershipsSnapshot = await membershipsQuery.get();
     
-    const updates = membershipsSnapshot.docs.map(async (memberDoc) => {
-      const memberData = memberDoc.data();
-      
-      const updatedMemberData = {
-        ...memberData,
-        visibility: {
-          showInDirectory: !ghostMode.hideFromDirectory,
-          showActivity: !ghostMode.hideActivity,
-          showOnlineStatus: !ghostMode.hideOnlineStatus,
-          showLastSeen: !ghostMode.hideLastSeen,
-        },
-        ghostMode: {
-          enabled: ghostMode.enabled,
-          level: ghostMode.level
-        },
-        updatedAt: new Date().toISOString()
-      };
-
-      return memberDoc.ref.update(updatedMemberData);
-    });
-
-    await Promise.all(updates);
+    const docs = membershipsSnapshot.docs;
+    for (let i = 0; i < docs.length; i += 500) {
+      const batch = dbAdmin.batch();
+      docs.slice(i, i + 500).forEach((memberDoc) => {
+        const memberData = memberDoc.data();
+        batch.update(memberDoc.ref, {
+          ...memberData,
+          visibility: {
+            showInDirectory: !ghostMode.hideFromDirectory,
+            showActivity: !ghostMode.hideActivity,
+            showOnlineStatus: !ghostMode.hideOnlineStatus,
+            showLastSeen: !ghostMode.hideLastSeen,
+          },
+          ghostMode: {
+            enabled: ghostMode.enabled,
+            level: ghostMode.level
+          },
+          updatedAt: new Date().toISOString()
+        });
+      });
+      await batch.commit();
+    }
 
     // Update user's online status
     const userDocRef = dbAdmin.collection('users').doc(userId);

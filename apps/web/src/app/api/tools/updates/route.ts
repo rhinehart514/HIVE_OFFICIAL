@@ -473,8 +473,12 @@ export async function DELETE(request: NextRequest) {
       }
 
       const cleanupSnapshot = await cleanupQuery.get();
-      const deletePromises = cleanupSnapshot.docs.map(doc => doc.ref.delete());
-      await Promise.all(deletePromises);
+      const docs = cleanupSnapshot.docs;
+      for (let i = 0; i < docs.length; i += 500) {
+        const batch = dbAdmin.batch();
+        docs.slice(i, i + 500).forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+      }
       deletedCount = cleanupSnapshot.size;
     } else {
       return NextResponse.json(ApiResponseHelper.error("Event ID or olderThan parameter required", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
