@@ -33,6 +33,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
   const [major, setMajor] = React.useState('');
   const [programType, setProgramType] = React.useState<'undergrad' | 'grad'>('undergrad');
   const [residentialSpaces, setResidentialSpaces] = React.useState<ResidentialSpace[]>([]);
+  const [offCampusSpaces, setOffCampusSpaces] = React.useState<ResidentialSpace[]>([]);
   const [residentialSpaceId, setResidentialSpaceId] = React.useState('');
   const [residenceType, setResidenceType] = React.useState<'on-campus' | 'off-campus' | ''>('');
   const [loading, setLoading] = React.useState(true);
@@ -52,6 +53,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
           setUndergradMajors((data.majors || []).map((m: any) => m.name || m));
           setGradPrograms((data.graduatePrograms || []).map((m: any) => m.name || m));
           setResidentialSpaces(data.residentialSpaces || []);
+          setOffCampusSpaces(data.offCampusSpaces || []);
         }
       } catch {
         // Fallback: still let them through
@@ -273,6 +275,24 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             >
               <option value="">Select your dorm</option>
               {residentialSpaces.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          )}
+
+          {residenceType === 'off-campus' && offCampusSpaces.length > 0 && (
+            <select
+              value={residentialSpaceId}
+              onChange={(e) => setResidentialSpaceId(e.target.value)}
+              className={[
+                'w-full h-11 px-3 rounded-[10px] bg-[#0A0A0A] border border-white/[0.06]',
+                'font-sans text-[14px] text-white outline-none',
+                'focus:border-white/[0.2] transition-colors',
+                'appearance-none',
+              ].join(' ')}
+            >
+              <option value="">Where do you live?</option>
+              {offCampusSpaces.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>

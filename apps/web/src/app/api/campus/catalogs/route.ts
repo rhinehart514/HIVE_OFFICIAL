@@ -31,22 +31,22 @@ export const GET = withCache(async (request: NextRequest) => {
 
     const data = doc.data()!;
 
-    // Also fetch residential spaces for housing picker
-    const residentialSnapshot = await dbAdmin.collection('spaces')
-      .where('campusId', '==', campusId)
-      .where('identityType', '==', 'residential')
-      .get();
+    // Fetch residential spaces for housing picker (on-campus + off-campus)
+    const [onCampusSnap, offCampusSnap] = await Promise.all([
+      dbAdmin.collection('spaces').where('campusId', '==', campusId).where('identityType', '==', 'residential').get(),
+      dbAdmin.collection('spaces').where('campusId', '==', campusId).where('identityType', '==', 'residential-offcampus').get(),
+    ]);
 
-    const residentialSpaces = residentialSnapshot.docs.map(d => ({
-      id: d.id,
-      name: d.data().name,
-    })).sort((a, b) => a.name.localeCompare(b.name));
+    const toOption = (d: FirebaseFirestore.QueryDocumentSnapshot) => ({ id: d.id, name: d.data().name });
+    const residentialSpaces = onCampusSnap.docs.map(toOption).sort((a, b) => a.name.localeCompare(b.name));
+    const offCampusSpaces = offCampusSnap.docs.map(toOption).sort((a, b) => a.name.localeCompare(b.name));
 
     return NextResponse.json({
       interests: data.interests || [],
       majors: data.majors || [],
       graduatePrograms: data.graduatePrograms || [],
       residentialSpaces,
+      offCampusSpaces,
     });
   } catch {
     return NextResponse.json({ interests: [], majors: [], gradPrograms: [] });

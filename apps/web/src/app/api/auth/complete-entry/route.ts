@@ -325,14 +325,15 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       // Pre-fetch and validate residential space if provided
       let validatedResidentialSpaceId: string | null = null;
       let residentialSpaceData: FirebaseFirestore.DocumentData | undefined;
-      if (body.residentialSpaceId && body.residenceType === 'on-campus' && campusId) {
+      if (body.residentialSpaceId && (body.residenceType === 'on-campus' || body.residenceType === 'off-campus') && campusId) {
         const residentialSpaceDoc = await transaction.get(
           dbAdmin.collection('spaces').doc(body.residentialSpaceId)
         );
         if (residentialSpaceDoc.exists) {
           const spaceData = residentialSpaceDoc.data();
-          // Validate space belongs to user's campus and is a residential space
-          if (spaceData?.campusId === campusId && spaceData?.identityType === 'residential') {
+          // Validate space belongs to user's campus and is a residential space (on or off campus)
+          const validIdentityTypes = ['residential', 'residential-offcampus'];
+          if (spaceData?.campusId === campusId && validIdentityTypes.includes(spaceData?.identityType)) {
             validatedResidentialSpaceId = body.residentialSpaceId;
             residentialSpaceData = spaceData;
           } else {
