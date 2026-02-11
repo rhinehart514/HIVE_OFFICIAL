@@ -5,8 +5,6 @@ export const metadata: Metadata = {
   description: 'Privacy Policy for HIVE — how we collect, use, and protect your information.',
 };
 
-export const dynamic = 'force-dynamic';
-
 const SECTIONS = [
   { id: 'overview', title: 'Overview' },
   { id: 'collect', title: 'What We Collect' },
