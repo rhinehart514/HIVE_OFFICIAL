@@ -4,16 +4,8 @@
  * Enforces per-user daily generation limits.
  */
 
-import { db } from './firebase';
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  increment,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { dbAdmin } from './firebase-admin';
 import { logger } from './logger';
 
 export const DAILY_GENERATION_LIMIT = 50;
@@ -41,19 +33,21 @@ interface UserSubscription {
 
 function getCurrentDayKey(): string {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
 }
 
 function getDayEndTimestamp(): Timestamp {
   const now = new Date();
-  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const endOfDay = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
+  );
   return Timestamp.fromDate(endOfDay);
 }
 
 export async function getUserTier(userId: string): Promise<UserTier> {
   try {
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (!userDoc.exists()) return 'free';
+    const userDoc = await dbAdmin.collection('users').doc(userId).get();
+    if (!userDoc.exists) return 'free';
 
     const data = userDoc.data();
     const subscription = data?.subscription as UserSubscription | undefined;
@@ -70,10 +64,11 @@ export async function getUserTier(userId: string): Promise<UserTier> {
 
 export async function getDailyUsage(userId: string): Promise<UsageRecord> {
   const dayKey = getCurrentDayKey();
+  const usageRef = dbAdmin.collection('usage').doc(userId).collection('daily').doc(dayKey);
 
   try {
-    const usageDoc = await getDoc(doc(db, 'usage', userId, 'daily', dayKey));
-    if (!usageDoc.exists()) {
+    const usageDoc = await usageRef.get();
+    if (!usageDoc.exists) {
       return {
         generations: 0,
         tokensUsed: 0,
@@ -82,7 +77,14 @@ export async function getDailyUsage(userId: string): Promise<UsageRecord> {
       };
     }
 
-    return usageDoc.data() as UsageRecord;
+    const data = usageDoc.data() as Partial<UsageRecord> | undefined;
+
+    return {
+      generations: typeof data?.generations === 'number' ? data.generations : 0,
+      tokensUsed: typeof data?.tokensUsed === 'number' ? data.tokensUsed : 0,
+      lastGeneration: data?.lastGeneration instanceof Timestamp ? data.lastGeneration : null,
+      resetAt: data?.resetAt instanceof Timestamp ? data.resetAt : getDayEndTimestamp(),
+    };
   } catch (error) {
     logger.error('Error getting daily usage', { component: 'ai-usage-tracker' }, error instanceof Error ? error : undefined);
     return {
@@ -124,24 +126,24 @@ export async function recordGeneration(
   tokensUsed: number = 0
 ): Promise<void> {
   const dayKey = getCurrentDayKey();
-  const usageRef = doc(db, 'usage', userId, 'daily', dayKey);
+  const usageRef = dbAdmin.collection('usage').doc(userId).collection('daily').doc(dayKey);
 
   try {
-    const usageDoc = await getDoc(usageRef);
+    const usageDoc = await usageRef.get();
 
-    if (!usageDoc.exists()) {
-      await setDoc(usageRef, {
+    if (!usageDoc.exists) {
+      await usageRef.set({
         generations: 1,
         tokensUsed,
-        lastGeneration: serverTimestamp(),
+        lastGeneration: FieldValue.serverTimestamp(),
         resetAt: getDayEndTimestamp(),
-        createdAt: serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
     } else {
-      await updateDoc(usageRef, {
-        generations: increment(1),
-        tokensUsed: increment(tokensUsed),
-        lastGeneration: serverTimestamp(),
+      await usageRef.update({
+        generations: FieldValue.increment(1),
+        tokensUsed: FieldValue.increment(tokensUsed),
+        lastGeneration: FieldValue.serverTimestamp(),
       });
     }
 

@@ -15,6 +15,7 @@ import {
   buildCompactSystemPrompt,
   type ToolComposition,
 } from '@hive/core/hivelab/goose';
+import { logger } from './logger';
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -53,6 +54,28 @@ export function getGooseConfig(): GooseConfig {
     groqModel: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
   };
 }
+
+let hasWarnedAboutMissingGroqKey = false;
+
+export function validateGroqConfig(): boolean {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) {
+    if (!hasWarnedAboutMissingGroqKey) {
+      logger.warn('GROQ_API_KEY not set — custom block generation will fail', {
+        component: 'goose-server',
+      });
+      hasWarnedAboutMissingGroqKey = true;
+    }
+    return false;
+  }
+
+  hasWarnedAboutMissingGroqKey = false;
+  return true;
+}
+
+// Startup-time configuration signal.
+const groqConfigValidAtStartup = validateGroqConfig();
+void groqConfigValidAtStartup;
 
 // ═══════════════════════════════════════════════════════════════════
 // GROQ BACKEND (Cloud Fallback)

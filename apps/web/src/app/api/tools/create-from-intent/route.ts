@@ -1,7 +1,8 @@
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { createPlacementDocument } from '@/lib/tool-placement';
-import { generateTool } from '@/lib/goose-server';
+import { generateTool, validateGroqConfig } from '@/lib/goose-server';
 import {
   withAuthAndErrors,
   getUserId,
@@ -9,6 +10,10 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { detectIntent, type Intent } from '@/lib/ai-generator/intent-detection';
+import {
+  getPatternForIntent,
+  enrichPatternForSpace,
+} from '@/lib/ai-generator/composition-patterns';
 import { canGenerate, recordGeneration } from '@/lib/ai-usage-tracker';
 import { aiGenerationRateLimit } from '@/lib/rate-limit-simple';
 import { logger } from '@/lib/logger';
@@ -27,7 +32,7 @@ interface SpaceContextResult {
   memberCount: number;
 }
 
-const INTENT_TO_ELEMENT: Record<string, string> = {
+const INTENT_TO_ELEMENT: Record<Intent, string> = {
   'enable-voting': 'poll-element',
   'coordinate-people': 'rsvp-button',
   'track-time': 'countdown-timer',
@@ -40,6 +45,15 @@ const INTENT_TO_ELEMENT: Record<string, string> = {
   'discover-events': 'personalized-event-feed',
   'find-food': 'dining-picker',
   'find-study-spot': 'study-spot-finder',
+  'photo-challenge': 'composition',
+  'attendance-tracking': 'composition',
+  'resource-management': 'composition',
+  'multi-vote': 'composition',
+  'event-series': 'composition',
+  'suggestion-triage': 'composition',
+  'group-matching': 'composition',
+  'competition-goals': 'composition',
+  'custom-visual': 'custom-block',
 };
 
 interface IntentMatch {
@@ -167,9 +181,11 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
 
   const usage = await canGenerate(userId);
   if (!usage.allowed) {
-    return respond.error(
-      'Daily generation limit reached. Resets at midnight.',
-      'RATE_LIMITED',
+    return NextResponse.json(
+      {
+        error: 'Daily generation limit reached',
+        resetAt: usage.resetAt.toISOString(),
+      },
       { status: 429 }
     );
   }
@@ -196,7 +212,86 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
     const intentMatch = findIntentMatch(body.prompt);
     const now = new Date();
 
-    if (intentMatch) {
+    if (intentMatch?.elementId === 'composition') {
+      const pattern = getPatternForIntent(
+        intentMatch.intent,
+        body.prompt,
+        spaceContext?.type || body.spaceType
+      );
+
+      if (pattern) {
+        const resolvedPattern = spaceContext
+          ? enrichPatternForSpace(pattern, spaceContext)
+          : pattern;
+
+        const toolDoc = {
+          name: resolvedPattern.name,
+          description: resolvedPattern.description || body.prompt.slice(0, 160),
+          status: 'draft',
+          type: 'visual',
+          elements: resolvedPattern.elements.map((element) => ({
+            elementId: element.elementId,
+            instanceId: element.instanceId,
+            config: element.config,
+            position: element.position,
+            size: element.size,
+          })),
+          connections: resolvedPattern.connections.map((connection) => ({
+            from: {
+              instanceId: connection.fromElement,
+              output: connection.fromPort,
+            },
+            to: {
+              instanceId: connection.toElement,
+              input: connection.toPort,
+            },
+          })),
+          ownerId: userId,
+          campusId,
+          createdAt: now,
+          updatedAt: now,
+          metadata: {
+            generatedFrom: 'composition-pattern',
+            patternId: resolvedPattern.id,
+            prompt: body.prompt,
+          },
+        };
+
+        const toolRef = await dbAdmin.collection('tools').add(toolDoc);
+        await createPlacementIfNeeded({
+          spaceId: body.spaceId,
+          toolId: toolRef.id,
+          userId,
+          campusId,
+          toolName: toolDoc.name,
+          toolDescription: toolDoc.description,
+        });
+
+        try {
+          await recordGeneration(userId, 500);
+        } catch (error) {
+          logger.warn('Failed to record AI generation usage', {
+            component: 'tools-create-from-intent',
+            userId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+
+        return respond.success(
+          {
+            tool: {
+              id: toolRef.id,
+              name: toolDoc.name,
+              description: toolDoc.description,
+            },
+            creationType: 'composition',
+          },
+          { status: 201 }
+        );
+      }
+    }
+
+    if (intentMatch && intentMatch.elementId !== 'custom-block') {
       const composition = await generateTool({ prompt: body.prompt });
 
       const toolDoc = {
@@ -265,6 +360,13 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
           creationType: 'composition',
         },
         { status: 201 }
+      );
+    }
+
+    if (!validateGroqConfig()) {
+      return NextResponse.json(
+        { error: 'AI generation not configured', code: 'GROQ_NOT_CONFIGURED' },
+        { status: 503 }
       );
     }
 
