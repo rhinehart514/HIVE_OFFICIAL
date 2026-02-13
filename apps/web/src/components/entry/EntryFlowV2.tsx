@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Button, Input } from '@hive/ui/design-system/primitives';
+import { useOnboardingAnalytics } from '@hive/hooks';
 import { InterestPicker } from './InterestPicker';
 
 type Step = 'email' | 'code' | 'interests';
@@ -43,6 +44,52 @@ export function EntryFlowV2() {
   const otpRefs = React.useRef<Array<HTMLInputElement | null>>([]);
   const lastSubmittedCode = React.useRef('');
 
+  // Analytics
+  const analytics = useOnboardingAnalytics();
+  const analyticsInitRef = React.useRef(false);
+
+  // Track flow_started on mount
+  React.useEffect(() => {
+    if (!analyticsInitRef.current) {
+      analyticsInitRef.current = true;
+      analytics.trackOnboardingStarted();
+      analytics.trackStepStarted('welcome');
+    }
+  }, [analytics]);
+
+  // Track step transitions
+  const prevStepRef = React.useRef<Step>(step);
+  React.useEffect(() => {
+    const prev = prevStepRef.current;
+    if (prev === step) return;
+
+    if (prev === 'email' && step === 'code') {
+      analytics.trackStepCompleted('welcome');
+      analytics.trackStepStarted('name');
+    } else if (prev === 'code' && step === 'interests') {
+      analytics.trackStepCompleted('name');
+      analytics.trackStepStarted('handle');
+    } else if (step === 'email' && prev === 'code') {
+      // Going back — track abandonment of current step
+      analytics.trackOnboardingAbandoned('name', 'user_went_back');
+      analytics.trackStepStarted('welcome');
+    }
+
+    prevStepRef.current = step;
+  }, [step, analytics]);
+
+  // Track flow_abandoned on unmount if not completed
+  const flowCompletedRef = React.useRef(false);
+  React.useEffect(() => {
+    return () => {
+      if (!flowCompletedRef.current && analyticsInitRef.current) {
+        const lastStep = prevStepRef.current === 'email' ? 'welcome' : prevStepRef.current === 'code' ? 'name' : 'handle';
+        analytics.trackOnboardingAbandoned(lastStep, 'component_unmounted');
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const resetOtpState = React.useCallback(() => {
     setCode(['', '', '', '', '', '']);
     setCodeError(null);
@@ -79,6 +126,7 @@ export function EntryFlowV2() {
   const sendCode = React.useCallback(async () => {
     if (!isValidEmail(email)) {
       setEmailError('Enter a valid email');
+      analytics.trackValidationError('welcome', 'email', 'invalid_email');
       return;
     }
 
@@ -102,11 +150,13 @@ export function EntryFlowV2() {
       setStep('code');
       setResendCountdown(30);
     } catch (error) {
-      setEmailError(error instanceof Error ? error.message : 'Unable to send code');
+      const msg = error instanceof Error ? error.message : 'Unable to send code';
+      setEmailError(msg);
+      analytics.trackValidationError('welcome', 'email', msg);
     } finally {
       setIsSendingCode(false);
     }
-  }, [email, resetOtpState]);
+  }, [email, resetOtpState, analytics]);
 
   const triggerCodeError = React.useCallback((message: string) => {
     setCodeError(message);
@@ -140,6 +190,7 @@ export function EntryFlowV2() {
         lastSubmittedCode.current = '';
         focusOtpIndex(0);
         triggerCodeError('Wrong code. Try again.');
+        analytics.trackValidationError('name', 'code', 'wrong_code');
         return;
       }
 
@@ -157,10 +208,11 @@ export function EntryFlowV2() {
       lastSubmittedCode.current = '';
       focusOtpIndex(0);
       triggerCodeError('Wrong code. Try again.');
+      analytics.trackValidationError('name', 'code', 'verification_failed');
     } finally {
       setIsVerifyingCode(false);
     }
-  }, [email, focusOtpIndex, goToApp, isCodeVerified, isVerifyingCode, triggerCodeError]);
+  }, [email, focusOtpIndex, goToApp, isCodeVerified, isVerifyingCode, triggerCodeError, analytics]);
 
   React.useEffect(() => {
     const codeString = code.join('');
@@ -209,11 +261,12 @@ export function EntryFlowV2() {
   const goToInterests = React.useCallback(() => {
     if (!firstName.trim() || !lastName.trim()) {
       setNameError('Enter your first and last name');
+      analytics.trackValidationError('name', 'name', 'missing_name');
       return;
     }
     setNameError(null);
     setStep('interests');
-  }, [firstName, lastName]);
+  }, [firstName, lastName, analytics]);
 
   const submitProfile = React.useCallback(async (interestData: { interests: string[]; major?: string; residentialSpaceId?: string; residenceType?: string }) => {
     setIsSubmittingName(true);
@@ -240,6 +293,11 @@ export function EntryFlowV2() {
         throw new Error(result.error || 'Failed to complete entry');
       }
 
+      // Track completion
+      flowCompletedRef.current = true;
+      analytics.trackStepCompleted('handle', { interestCount: interestData.interests.length });
+      analytics.trackOnboardingCompleted(0, ['welcome', 'name', 'handle']);
+
       goToApp(result.redirect || '/discover');
     } catch (error) {
       setNameError(error instanceof Error ? error.message : 'Failed to complete entry');
@@ -248,7 +306,7 @@ export function EntryFlowV2() {
     } finally {
       setIsSubmittingName(false);
     }
-  }, [firstName, lastName, goToApp]);
+  }, [firstName, lastName, goToApp, analytics]);
 
   const updateOtpAtIndex = React.useCallback((index: number, nextChar: string) => {
     if (!/^\d?$/.test(nextChar) || isVerifyingCode || isCodeVerified) return;
@@ -394,7 +452,7 @@ export function EntryFlowV2() {
                   setLastName('');
                   setNameError(null);
                 }}
-                className="text-[13px] font-sans text-white/50 hover:text-white/50 transition-colors"
+                className="text-[13px] font-sans text-white/50 hover:text-white/80 transition-colors"
               >
                 ← Back
               </button>
@@ -459,7 +517,7 @@ export function EntryFlowV2() {
                     <button
                       type="button"
                       onClick={resendCode}
-                      className="text-white/50 hover:text-white/50 transition-colors"
+                      className="text-white/50 hover:text-white/80 transition-colors"
                     >
                       Resend
                     </button>
@@ -543,7 +601,7 @@ export function EntryFlowV2() {
               <button
                 type="button"
                 onClick={() => setStep('code')}
-                className="text-[13px] font-sans text-white/50 hover:text-white/50 transition-colors"
+                className="text-[13px] font-sans text-white/50 hover:text-white/80 transition-colors"
               >
                 ← Back
               </button>

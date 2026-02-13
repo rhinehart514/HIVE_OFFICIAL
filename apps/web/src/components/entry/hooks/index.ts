@@ -1,11 +1,12 @@
-export {
-  useEntry,
-  type EntryPhase,
-  type GateStep,
-  type FieldStep,
-  type EntryData,
-  type EntryState,
-  type UseEntryOptions,
-  type UseEntryReturn,
-  type WaitlistSchoolInfo,
+// useEntry hook removed — EntryFlowV2 is the active flow.
+// Types preserved for reference if needed.
+export type {
+  EntryPhase,
+  GateStep,
+  FieldStep,
+  EntryData,
+  EntryState,
+  UseEntryOptions,
+  UseEntryReturn,
+  WaitlistSchoolInfo,
 } from './useEntry';
