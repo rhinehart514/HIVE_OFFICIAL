@@ -182,6 +182,18 @@ export function AppSurface({
     return tool.elements || compositionElements;
   }, [tool.composition, tool.elements]);
 
+  const connections = useMemo(() => {
+    const compositionConnections = (
+      tool.composition as {
+        connections?: Array<{
+          from: { instanceId: string; output?: string; port?: string };
+          to: { instanceId: string; input?: string; port?: string };
+        }>;
+      }
+    )?.connections;
+    return compositionConnections || [];
+  }, [tool.composition]);
+
   // Use external state if provided, otherwise empty object
   const state = externalState ?? {};
 
@@ -229,6 +241,7 @@ export function AppSurface({
           <ToolCanvas
             elements={elements}
             state={state}
+            connections={connections}
             layout="flow"
             onElementChange={handleElementChange}
             onElementAction={handleElementAction}

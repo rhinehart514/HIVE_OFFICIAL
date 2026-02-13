@@ -245,6 +245,7 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
                 state={runtime.state}
                 sharedState={runtime.sharedState}
                 userState={runtime.userState}
+                connections={tool.connections || []}
                 layout="stack"
                 onElementChange={(instanceId, data) => {
                   runtime.updateState({ [instanceId]: data });
@@ -256,6 +257,8 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
                 error={runtime.error?.message || null}
                 context={{
                   userId: user?.uid,
+                  userDisplayName: user?.displayName || user?.fullName || undefined,
+                  userRole: user ? 'member' : 'guest',
                   isSpaceLeader: false,
                 }}
               />

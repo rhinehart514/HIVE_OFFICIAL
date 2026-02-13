@@ -65,6 +65,10 @@ export interface ToolRuntimeModalProps {
         position?: { x: number; y: number };
         size?: { width: number; height: number };
       }>;
+      connections?: Array<{
+        from: { instanceId: string; output?: string; port?: string };
+        to: { instanceId: string; input?: string; port?: string };
+      }>;
       config?: Record<string, unknown>;
     } | null;
     state: Record<string, unknown>;
@@ -184,6 +188,7 @@ export function ToolRuntimeModal({
   // Determine content to show
   const tool = runtime?.tool;
   const elements = tool?.elements || [];
+  const connections = tool?.connections || [];
   const toolConfig = tool?.config || {};
   const state = runtime?.state || {};
   // Phase 1: SharedState Architecture
@@ -326,6 +331,7 @@ export function ToolRuntimeModal({
                   state={state}
                   sharedState={sharedState}
                   userState={userState}
+                  connections={connections}
                   layout={(toolConfig.layout as 'grid' | 'flow' | 'stack') || 'stack'}
                   onElementChange={handleElementChange}
                   onElementAction={handleElementAction}

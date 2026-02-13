@@ -669,6 +669,7 @@ export default function ToolStudioPage({ params }: Props) {
                     state={runtime.state}
                     sharedState={runtime.sharedState}
                     userState={runtime.userState}
+                    connections={composition.connections}
                     layout="stack"
                     onElementChange={(instanceId, data) => {
                       runtime.updateState({ [instanceId]: data });
@@ -680,6 +681,8 @@ export default function ToolStudioPage({ params }: Props) {
                     error={runtime.error?.message || null}
                     context={{
                       userId: user?.uid,
+                      userDisplayName: user?.displayName || user?.fullName || undefined,
+                      userRole: isSpaceLeader ? 'admin' : user ? 'member' : 'guest',
                       isSpaceLeader,
                     }}
                   />

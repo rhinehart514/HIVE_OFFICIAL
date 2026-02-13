@@ -8,10 +8,11 @@
  */
 
 import * as React from 'react';
+import { toast } from 'sonner';
 import { CustomBlockRenderer } from '../../../../design-system/components/hivelab/CustomBlockRenderer';
-import { createParentMessage } from '../../../../lib/hivelab/hive-sdk';
 import type { ElementProps } from '../../../../lib/hivelab/element-system';
-import type { CustomBlockConfig, IframeMessage } from '@hive/core';
+import { extractOutputValue } from '@hive/core';
+import type { BlockContext, CustomBlockConfig, IframeMessage } from '@hive/core';
 import type { ElementMode } from '../core';
 
 // ============================================================
@@ -32,6 +33,11 @@ export function CustomBlockElement({
   config,
   sharedState,
   userState,
+  context,
+  connections,
+  allElementStates,
+  elementDefinitions,
+  onOutput,
   onAction,
   mode = 'runtime',
 }: CustomBlockElementProps) {
@@ -46,6 +52,77 @@ export function CustomBlockElement({
       shared: sharedState || {},
     };
   }, [userState, sharedState]);
+
+  const blockContextBase = React.useMemo(() => {
+    const runtimeRole = context?.member?.role;
+    const mappedRole: BlockContext['userRole'] =
+      context?.userRole ||
+      (runtimeRole === 'owner'
+        ? 'admin'
+        : runtimeRole === 'admin' || runtimeRole === 'moderator' || runtimeRole === 'member' || runtimeRole === 'guest'
+          ? runtimeRole
+          : context?.isSpaceLeader
+            ? 'admin'
+            : undefined);
+
+    const resolvedUserId = context?.userId || context?.member?.userId || 'anonymous';
+    const resolvedSpaceId = context?.spaceId || context?.space?.spaceId;
+    const resolvedSpaceName = context?.spaceName || context?.space?.spaceName;
+    const resolvedDisplayName = context?.userDisplayName || context?.member?.displayName;
+
+    return {
+      userId: resolvedUserId,
+      userDisplayName: resolvedDisplayName,
+      userRole: mappedRole,
+      spaceId: resolvedSpaceId,
+      spaceName: resolvedSpaceName,
+    };
+  }, [context]);
+
+  const resolveConnectedInput = React.useCallback((inputId: string) => {
+    if (!connections || connections.length === 0 || !allElementStates) {
+      return null;
+    }
+
+    const incoming = connections.filter((connection) => {
+      if (!connection?.to || connection.to.instanceId !== id) {
+        return false;
+      }
+      const targetInput = connection.to.input || connection.to.port;
+      return targetInput === inputId;
+    });
+
+    for (const connection of incoming) {
+      const sourceInstanceId = connection.from.instanceId;
+      const sourceOutputId = connection.from.output || connection.from.port || 'data';
+      const sourceState = allElementStates[sourceInstanceId];
+
+      if (sourceState === undefined) {
+        continue;
+      }
+
+      const normalizedState =
+        sourceState && typeof sourceState === 'object' && !Array.isArray(sourceState)
+          ? (sourceState as Record<string, unknown>)
+          : { value: sourceState, data: sourceState };
+
+      const sourceElementId = elementDefinitions?.find(
+        (element) => element.instanceId === sourceInstanceId
+      )?.elementId;
+
+      const extracted = extractOutputValue(
+        normalizedState,
+        sourceOutputId,
+        sourceElementId
+      );
+
+      if (extracted !== undefined) {
+        return extracted;
+      }
+    }
+
+    return null;
+  }, [connections, allElementStates, id, elementDefinitions]);
 
   // Handle messages from iframe
   const handleMessage = React.useCallback((message: IframeMessage) => {
@@ -98,31 +175,35 @@ export function CustomBlockElement({
 
       case 'get_input':
         // Get input data (for element connections)
-        // TODO: Implement input data retrieval from tool runtime
         if (message.requestId) {
           sendResponse({
             type: 'input_response',
             requestId: message.requestId,
-            data: null, // Placeholder
+            data: resolveConnectedInput(message.inputId),
           });
         }
         break;
 
       case 'emit_output':
         // Output emission (for element connections)
-        // Will be handled by tool runtime in Phase 6
-        console.log('[CustomBlock] Output emitted:', message.outputId, message.data);
+        if (onOutput) {
+          onOutput(message.outputId, message.data);
+        } else if (onAction) {
+          onAction('emit_output', {
+            outputId: message.outputId,
+            data: message.data,
+          });
+        }
         break;
 
       case 'get_context':
         // Get user/space context
-        // TODO: Get from tool runtime context
         if (message.requestId) {
           sendResponse({
             type: 'context_response',
             requestId: message.requestId,
             context: {
-              userId: 'current-user', // Placeholder
+              ...blockContextBase,
               timestamp: new Date().toISOString(),
             },
           });
@@ -141,14 +222,19 @@ export function CustomBlockElement({
 
       case 'notify':
         // Toast notifications
-        // Will be handled by tool runtime
-        console.log('[CustomBlock] Notification:', message.message, message.notifyType);
+        if (message.notifyType === 'success') {
+          toast.success(message.message);
+        } else if (message.notifyType === 'error') {
+          toast.error(message.message);
+        } else {
+          toast.info(message.message);
+        }
         break;
 
       default:
         console.warn('[CustomBlock] Unknown message type:', (message as any).type);
     }
-  }, [onAction, blockState]);
+  }, [onAction, onOutput, blockState, resolveConnectedInput, blockContextBase]);
 
   // Handle block ready
   const handleReady = React.useCallback(() => {
@@ -170,6 +256,10 @@ export function CustomBlockElement({
         instanceId={id}
         config={config}
         initialState={blockState}
+        context={{
+          ...blockContextBase,
+          timestamp: new Date().toISOString(),
+        }}
         onReady={handleReady}
         onMessage={handleMessage}
         onError={handleError}

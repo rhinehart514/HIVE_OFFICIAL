@@ -74,6 +74,23 @@ export interface ElementUserState {
   [key: string]: unknown;
 }
 
+/**
+ * Runtime connection shape for element-level I/O wiring.
+ * Supports both canonical `input`/`output` and IDE `port` naming.
+ */
+export interface ElementConnectionRef {
+  from: { instanceId: string; output?: string; port?: string };
+  to: { instanceId: string; input?: string; port?: string };
+}
+
+/**
+ * Minimal element instance metadata for resolving connection source types.
+ */
+export interface ElementInstanceRef {
+  instanceId: string;
+  elementId: string;
+}
+
 export interface ElementProps {
   id: string;
   config: Record<string, any>;
@@ -92,8 +109,11 @@ export interface ElementProps {
    */
   context?: {
     userId?: string;
+    userDisplayName?: string;
+    userRole?: 'admin' | 'moderator' | 'member' | 'guest';
     campusId?: string;
     spaceId?: string;      // Only set if user is a leader of this space
+    spaceName?: string;
     isSpaceLeader?: boolean;
     // Sprint 2: Full context objects
     temporal?: TemporalContext;
@@ -128,6 +148,28 @@ export interface ElementProps {
    * Read from: toolStates/{deploymentId}_{userId}
    */
   userState?: ElementUserState;
+
+  /**
+   * Intra-tool connections available at runtime.
+   * Used by custom blocks to resolve `get_input` requests.
+   */
+  connections?: ElementConnectionRef[];
+
+  /**
+   * Runtime state for all element instances in the tool.
+   * Keyed by instanceId.
+   */
+  allElementStates?: Record<string, unknown>;
+
+  /**
+   * Element instance metadata for connection source/target resolution.
+   */
+  elementDefinitions?: ElementInstanceRef[];
+
+  /**
+   * Callback for element-emitted output events.
+   */
+  onOutput?: (outputId: string, data: unknown) => void;
 }
 
 export interface ElementDefinition {

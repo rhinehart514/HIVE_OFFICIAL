@@ -74,10 +74,16 @@ export interface ToolCanvasContext {
   deploymentId?: string;
   /** User ID for user-scoped actions */
   userId?: string;
+  /** Display name for runtime personalization */
+  userDisplayName?: string;
+  /** Runtime role for personalization */
+  userRole?: 'admin' | 'moderator' | 'member' | 'guest';
   /** Whether user is a space leader */
   isSpaceLeader?: boolean;
   /** Campus ID for campus-scoped data (replaces hardcoded value) */
   campusId?: string;
+  /** Space name for runtime personalization */
+  spaceName?: string;
   /** Full runtime context for visibility evaluation and interpolation */
   runtimeContext?: ToolRuntimeContext;
 }
@@ -93,6 +99,8 @@ export interface ToolCanvasProps {
   onElementChange?: (instanceId: string, data: unknown) => void;
   /** Callback when element triggers an action */
   onElementAction?: (instanceId: string, action: string, payload: unknown) => void;
+  /** Callback when element emits an output event */
+  onElementOutput?: (instanceId: string, outputId: string, data: unknown) => void;
   /** Additional CSS classes */
   className?: string;
   /** Whether the tool is loading */
@@ -120,6 +128,11 @@ export interface ToolCanvasProps {
    */
   userState?: ElementUserState;
 
+  /**
+   * Intra-tool element connections for runtime I/O resolution.
+   */
+  connections?: ElementProps['connections'];
+
   // ============================================================================
   // Sprint 5: Theme Inheritance
   // ============================================================================
@@ -140,14 +153,16 @@ interface LayoutProps {
   state: Record<string, unknown>;
   onElementChange?: (instanceId: string, data: unknown) => void;
   onElementAction?: (instanceId: string, action: string, payload: unknown) => void;
+  onElementOutput?: (instanceId: string, outputId: string, data: unknown) => void;
   context?: ToolCanvasContext;
   // Phase 1: SharedState Architecture
   sharedState?: ElementSharedState;
   userState?: ElementUserState;
+  connections?: ElementProps['connections'];
 }
 
 // Grid layout: position-based rendering with 12-column grid
-function GridLayout({ elements, state, onElementChange, onElementAction, context, sharedState, userState }: LayoutProps) {
+function GridLayout({ elements, state, onElementChange, onElementAction, onElementOutput, context, sharedState, userState, connections }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   // Sort by position (top to bottom, left to right)
@@ -198,9 +213,15 @@ function GridLayout({ elements, state, onElementChange, onElementAction, context
                     state={state}
                     onElementChange={onElementChange}
                     onElementAction={onElementAction}
+                    onElementOutput={onElementOutput}
                     context={context}
                     sharedState={sharedState}
                     userState={userState}
+                    connections={connections}
+                    elementDefinitions={elements.map((item) => ({
+                      instanceId: item.instanceId,
+                      elementId: item.elementId,
+                    }))}
                   />
                 </motion.div>
               );
@@ -212,7 +233,7 @@ function GridLayout({ elements, state, onElementChange, onElementAction, context
 }
 
 // Flow layout: flex wrap for responsive horizontal flow
-function FlowLayout({ elements, state, onElementChange, onElementAction, context, sharedState, userState }: LayoutProps) {
+function FlowLayout({ elements, state, onElementChange, onElementAction, onElementOutput, context, sharedState, userState, connections }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -233,9 +254,15 @@ function FlowLayout({ elements, state, onElementChange, onElementAction, context
             state={state}
             onElementChange={onElementChange}
             onElementAction={onElementAction}
+            onElementOutput={onElementOutput}
             context={context}
             sharedState={sharedState}
             userState={userState}
+            connections={connections}
+            elementDefinitions={elements.map((item) => ({
+              instanceId: item.instanceId,
+              elementId: item.elementId,
+            }))}
           />
         </motion.div>
       ))}
@@ -244,7 +271,7 @@ function FlowLayout({ elements, state, onElementChange, onElementAction, context
 }
 
 // Stack layout: vertical stack (default, mobile-friendly)
-function StackLayout({ elements, state, onElementChange, onElementAction, context, sharedState, userState }: LayoutProps) {
+function StackLayout({ elements, state, onElementChange, onElementAction, onElementOutput, context, sharedState, userState, connections }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -264,9 +291,15 @@ function StackLayout({ elements, state, onElementChange, onElementAction, contex
             state={state}
             onElementChange={onElementChange}
             onElementAction={onElementAction}
+            onElementOutput={onElementOutput}
             context={context}
             sharedState={sharedState}
             userState={userState}
+            connections={connections}
+            elementDefinitions={elements.map((item) => ({
+              instanceId: item.instanceId,
+              elementId: item.elementId,
+            }))}
           />
         </motion.div>
       ))}
@@ -283,18 +316,24 @@ function ElementWrapper({
   state,
   onElementChange,
   onElementAction,
+  onElementOutput,
   context,
   sharedState,
   userState,
+  connections,
+  elementDefinitions,
 }: {
   element: ToolElement;
   state: Record<string, unknown>;
   onElementChange?: (instanceId: string, data: unknown) => void;
   onElementAction?: (instanceId: string, action: string, payload: unknown) => void;
+  onElementOutput?: (instanceId: string, outputId: string, data: unknown) => void;
   context?: ToolCanvasContext;
   // Phase 1: SharedState Architecture
   sharedState?: ElementSharedState;
   userState?: ElementUserState;
+  connections?: ElementProps['connections'];
+  elementDefinitions?: ElementProps['elementDefinitions'];
 }) {
   // Evaluate visibility conditions if present
   const isVisible = React.useMemo(() => {
@@ -336,12 +375,29 @@ function ElementWrapper({
     [element.instanceId, onElementAction]
   );
 
+  const handleOutput = React.useCallback(
+    (outputId: string, data: unknown) => {
+      onElementOutput?.(element.instanceId, outputId, data);
+    },
+    [element.instanceId, onElementOutput]
+  );
+
   // Convert ToolCanvasContext to ElementProps context format
   // Include full context objects from runtimeContext if available
   const runtimeCtx = context?.runtimeContext;
+  const runtimeRole = runtimeCtx?.member?.role;
+  const normalizedRuntimeRole: ToolCanvasContext['userRole'] =
+    runtimeRole === 'owner'
+      ? 'admin'
+      : runtimeRole === 'admin' || runtimeRole === 'moderator' || runtimeRole === 'member' || runtimeRole === 'guest'
+        ? runtimeRole
+        : undefined;
   const elementContext = context ? {
     userId: context.userId,
+    userDisplayName: context.userDisplayName || runtimeCtx?.member?.displayName,
+    userRole: context.userRole || normalizedRuntimeRole || (context.isSpaceLeader ? 'admin' : undefined),
     spaceId: context.spaceId,
+    spaceName: context.spaceName || runtimeCtx?.space?.spaceName,
     isSpaceLeader: context.isSpaceLeader,
     campusId: context.campusId || runtimeCtx?.campusId,
     // Sprint 2: Full context objects for advanced element personalization
@@ -357,10 +413,14 @@ function ElementWrapper({
     data: elementState,
     onChange: handleChange,
     onAction: handleAction,
+    onOutput: handleOutput,
     context: elementContext,
     // Phase 1: SharedState Architecture
     sharedState,
     userState,
+    connections,
+    allElementStates: state,
+    elementDefinitions,
     // Sprint 2: Visibility conditions (pass through for element self-awareness)
     visibilityConditions: element.visibilityConditions,
   };
@@ -569,6 +629,7 @@ export function ToolCanvas({
   layout = 'stack',
   onElementChange,
   onElementAction,
+  onElementOutput,
   className,
   isLoading,
   error,
@@ -576,6 +637,7 @@ export function ToolCanvas({
   context,
   sharedState,
   userState,
+  connections,
   theme,
 }: ToolCanvasProps) {
   // Build CSS variable style object from theme
@@ -601,10 +663,12 @@ export function ToolCanvas({
     state,
     onElementChange,
     onElementAction,
+    onElementOutput,
     context,
     // Phase 1: SharedState Architecture
     sharedState,
     userState,
+    connections,
   };
 
   return (

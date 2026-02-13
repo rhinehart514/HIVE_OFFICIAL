@@ -40,11 +40,17 @@ export interface ToolElement {
   id?: string;
 }
 
+export interface ToolElementConnection {
+  from: { instanceId: string; output?: string; port?: string };
+  to: { instanceId: string; input?: string; port?: string };
+}
+
 export interface Tool {
   id: string;
   name: string;
   description?: string;
   elements: ToolElement[];
+  connections?: ToolElementConnection[];
   category?: string;
   version?: number;
   currentVersion?: number;
@@ -370,11 +376,44 @@ export function useToolRuntime(
         }
       );
 
+      const normalizedConnections: ToolElementConnection[] = (
+        toolData.connections ||
+        toolData.config?.composition?.connections ||
+        []
+      ).map((conn: Record<string, unknown>) => {
+        const from = (conn.from || {}) as Record<string, unknown>;
+        const to = (conn.to || {}) as Record<string, unknown>;
+
+        return {
+          from: {
+            instanceId: String(from.instanceId || ''),
+            output:
+              typeof from.output === 'string'
+                ? from.output
+                : typeof from.port === 'string'
+                  ? from.port
+                  : undefined,
+            port: typeof from.port === 'string' ? from.port : undefined,
+          },
+          to: {
+            instanceId: String(to.instanceId || ''),
+            input:
+              typeof to.input === 'string'
+                ? to.input
+                : typeof to.port === 'string'
+                  ? to.port
+                  : undefined,
+            port: typeof to.port === 'string' ? to.port : undefined,
+          },
+        };
+      });
+
       setTool({
         id: toolData.id,
         name: toolData.name,
         description: toolData.description,
         elements: normalizedElements,
+        connections: normalizedConnections,
         category: toolData.category,
         version: toolData.version,
         currentVersion: toolData.currentVersion,

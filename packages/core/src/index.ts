@@ -607,6 +607,7 @@ export {
   validateToolComposition,
   validateElement as validateHiveLabElement,
   validateConnection as validateHiveLabConnection,
+  validateCustomBlockCode,
   type CanvasElementForValidation,
   type ConnectionForValidation,
   type CompositionValidationResult,

@@ -159,6 +159,12 @@ export {
   type WidgetOperationResult
 } from './application/space-management.service';
 
+// HiveLab Custom Block Generation (server-only, requires GROQ_API_KEY)
+export {
+  generateCustomBlock,
+  DEFAULT_CUSTOM_BLOCK_MODEL,
+} from './application/hivelab/custom-block-generator.service';
+
 // Domain Events (Phase 1 - DDD Foundation)
 export {
   SpaceUpdatedEvent,

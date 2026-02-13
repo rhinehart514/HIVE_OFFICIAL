@@ -35,6 +35,11 @@ export {
   type CompositionWarningCode,
 } from './validate-composition';
 
+// Custom block code validation
+export {
+  validateCustomBlockCode,
+} from './custom-block-validator';
+
 // Composition validator service (re-export from application layer)
 export {
   CompositionValidatorService,

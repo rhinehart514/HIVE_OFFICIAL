@@ -613,6 +613,7 @@ function ToolContent({
                 state={runtime.state}
                 sharedState={runtime.sharedState}
                 userState={runtime.userState}
+                connections={deployment.config.connections || []}
                 layout="stack"
                 onElementChange={(instanceId, data) => {
                   runtime.updateState({ [instanceId]: data });
@@ -631,10 +632,21 @@ function ToolContent({
                   spaceId,
                   deploymentId: deployment.id,
                   userId: user?.uid,
+                  userDisplayName: user?.displayName || user?.fullName || undefined,
+                  userRole:
+                    context?.member?.role === 'owner'
+                      ? 'admin'
+                      : context?.member?.role === 'admin' ||
+                          context?.member?.role === 'moderator' ||
+                          context?.member?.role === 'member' ||
+                          context?.member?.role === 'guest'
+                        ? context.member.role
+                        : undefined,
                   isSpaceLeader: context?.member?.role === 'owner' ||
                                 context?.member?.role === 'admin' ||
                                 context?.member?.role === 'moderator',
                   campusId: user?.campusId || 'ub-buffalo',
+                  spaceName: context?.space?.spaceName,
                   runtimeContext: context || undefined,
                 }}
               />
