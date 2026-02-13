@@ -14,7 +14,7 @@ import {
   buildSystemPrompt,
   buildCompactSystemPrompt,
   type ToolComposition,
-} from '../../../../packages/core/src/hivelab/goose';
+} from '@hive/core/hivelab/goose';
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES

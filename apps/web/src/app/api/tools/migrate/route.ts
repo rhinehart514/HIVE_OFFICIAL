@@ -1,6 +1,6 @@
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
-import { db } from '@hive/firebase';
-import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
+import { dbAdmin } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
@@ -47,14 +47,13 @@ export const POST = withAuthAndErrors(async (request, context, respond) => {
     }
 
     // Batch write to Firestore (max 500 operations per batch)
-    const batch = writeBatch(db);
-    const toolsCollection = collection(db, 'tools');
+    const batch = dbAdmin.batch();
 
     let migratedCount = 0;
 
     for (const tool of validated.tools) {
       // Create new tool document
-      const toolRef = doc(toolsCollection, tool.id);
+      const toolRef = dbAdmin.collection('tools').doc(tool.id);
 
       batch.set(toolRef, {
         name: tool.name || 'Untitled Tool',
@@ -69,8 +68,8 @@ export const POST = withAuthAndErrors(async (request, context, respond) => {
         config: {
           composition: tool,
         },
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         deployCount: 0,
         viewCount: 0,
         interactionCount: 0,

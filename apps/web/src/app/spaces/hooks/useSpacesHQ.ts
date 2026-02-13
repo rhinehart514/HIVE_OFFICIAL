@@ -118,7 +118,7 @@ export function useSpacesHQ(): UseSpacesHQReturn {
     try {
       // Fetch in parallel
       const [spacesRes, identityRes] = await Promise.all([
-        secureApiFetch('/api/spaces/my', { method: 'GET' }),
+        secureApiFetch('/api/spaces/mine', { method: 'GET' }),
         secureApiFetch('/api/spaces/identity', { method: 'GET' }),
       ]);
 
