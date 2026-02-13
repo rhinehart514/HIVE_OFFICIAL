@@ -8,11 +8,26 @@ import { logger } from "@/lib/logger";
 import { withCache } from '../../../../../lib/cache-headers';
 
 // Schema for tool state update requests
+const StateScopeSchema = z.enum(['personal', 'shared']);
 const ToolStateSchema = z.object({
   spaceId: z.string().min(1, "spaceId is required"),
   userId: z.string().optional(),
+  scope: StateScopeSchema.optional(),
   state: z.record(z.any())
 });
+
+type StateScope = z.infer<typeof StateScopeSchema>;
+
+function getStateDocumentId(
+  toolId: string,
+  spaceId: string,
+  scope: StateScope,
+  userId: string
+): string {
+  return scope === 'shared'
+    ? `${toolId}_${spaceId}_shared`
+    : `${toolId}_${spaceId}_${userId}`;
+}
 
 const _GET = withAuthAndErrors(async (
   request,
@@ -24,10 +39,20 @@ const _GET = withAuthAndErrors(async (
   const { toolId } = await params;
   const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
+  const requestedScope = searchParams.get("scope");
+  const scopeResult = StateScopeSchema.safeParse(requestedScope ?? undefined);
+  if (requestedScope && !scopeResult.success) {
+    return respond.error("Invalid scope. Use personal or shared", "INVALID_INPUT", { status: 400 });
+  }
+  const scope = scopeResult.success ? scopeResult.data : 'personal';
   const userId = searchParams.get("userId") || authenticatedUserId;
 
   if (!spaceId) {
     return respond.error("spaceId parameter is required", "INVALID_INPUT", { status: 400 });
+  }
+
+  if (scope === 'personal' && userId !== authenticatedUserId) {
+    return respond.error("Cannot read another user's personal state", "FORBIDDEN", { status: 403 });
   }
 
     const db = dbAdmin;
@@ -39,9 +64,10 @@ const _GET = withAuthAndErrors(async (
     }
     
     // Get tool state document
+    const stateDocId = getStateDocumentId(toolId, spaceId, scope, userId);
     const stateDoc = await db
       .collection("tool_states")
-      .doc(`${toolId}_${spaceId}_${userId}`)
+      .doc(stateDocId)
       .get();
 
     if (!stateDoc.exists) {
@@ -50,7 +76,10 @@ const _GET = withAuthAndErrors(async (
 
     const stateData = stateDoc.data();
 
-    return respond.success(stateData);
+    return respond.success({
+      ...stateData,
+      scope,
+    });
 });
 
 type ToolStateData = z.infer<typeof ToolStateSchema>;
@@ -64,22 +93,24 @@ export const POST = withAuthValidationAndErrors(
     respond
   ) => {
     const { spaceId, userId: requestUserId, state } = body;
+    const scope = body.scope || 'personal';
     const authenticatedUserId = getUserId(request as AuthenticatedRequest);
     const campusId = getCampusId(request as AuthenticatedRequest);
     const { toolId } = await params;
 
-    // Ensure user can only update their own state
-    const userId = requestUserId || authenticatedUserId;
-    if (userId !== authenticatedUserId) {
+    // Ensure user can only update their own personal state
+    const stateUserId = requestUserId || authenticatedUserId;
+    if (scope === 'personal' && stateUserId !== authenticatedUserId) {
       return respond.error("Cannot update another user's state", "FORBIDDEN", { status: 403 });
     }
+    const actorUserId = authenticatedUserId;
 
     const db = dbAdmin;
 
     // Verify user has access to the space (using flat spaceMembers collection)
     const membershipSnapshot = await db
       .collection("spaceMembers")
-      .where("userId", "==", userId)
+      .where("userId", "==", actorUserId)
       .where("spaceId", "==", spaceId)
       .where("status", "==", "active")
       .where("campusId", "==", campusId)
@@ -120,15 +151,21 @@ export const POST = withAuthValidationAndErrors(
     }
 
     // Prepare state document
-    const stateDocId = `${toolId}_${spaceId}_${userId}`;
+    const stateDocId = getStateDocumentId(toolId, spaceId, scope, stateUserId);
+    const metadataState = (state.metadata && typeof state.metadata === 'object')
+      ? state.metadata as Record<string, unknown>
+      : {};
     const stateData = {
       ...state,
       toolId,
       spaceId,
-      userId,
+      ...(scope === 'personal' ? { userId: stateUserId } : {}),
+      scope,
       campusId: campusId,
       metadata: {
-        ...state.metadata,
+        ...metadataState,
+        scope,
+        updatedBy: actorUserId,
         updatedAt: new Date().toISOString(),
         savedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
@@ -151,7 +188,7 @@ export const POST = withAuthValidationAndErrors(
       campusId: campusId,
       lastUsed: admin.firestore.FieldValue.serverTimestamp(),
       usageCount: admin.firestore.FieldValue.increment(1),
-      activeUsers: admin.firestore.FieldValue.arrayUnion(userId),
+      activeUsers: admin.firestore.FieldValue.arrayUnion(actorUserId),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
@@ -160,10 +197,10 @@ export const POST = withAuthValidationAndErrors(
     if (deploymentId) {
       triggerThresholdAutomations(
         deploymentId,
-        toolId,
         spaceId,
         state,
-        userId
+        actorUserId,
+        stateDocId
       ).catch(err => {
         // Non-blocking - log but don't fail the request
         logger.warn('Threshold automation trigger failed', {
@@ -171,7 +208,8 @@ export const POST = withAuthValidationAndErrors(
           deploymentId,
           toolId,
           spaceId,
-          userId,
+          userId: actorUserId,
+          scope,
           errorMessage: err instanceof Error ? err.message : String(err),
         });
       });
@@ -193,14 +231,20 @@ export const DELETE = withAuthAndErrors(async (
   const { toolId } = await params;
   const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
+  const requestedScope = searchParams.get("scope");
+  const scopeResult = StateScopeSchema.safeParse(requestedScope ?? undefined);
+  if (requestedScope && !scopeResult.success) {
+    return respond.error("Invalid scope. Use personal or shared", "INVALID_INPUT", { status: 400 });
+  }
+  const scope = scopeResult.success ? scopeResult.data : 'personal';
   const userId = searchParams.get("userId") || authenticatedUserId;
 
   if (!spaceId) {
     return respond.error("spaceId parameter is required", "INVALID_INPUT", { status: 400 });
   }
 
-  // Ensure user can only delete their own state
-  if (userId !== authenticatedUserId) {
+  // Ensure user can only delete their own personal state
+  if (scope === 'personal' && userId !== authenticatedUserId) {
     return respond.error("Cannot delete another user's state", "FORBIDDEN", { status: 403 });
   }
 
@@ -213,13 +257,14 @@ export const DELETE = withAuthAndErrors(async (
     }
     
     // Delete tool state document
-    const stateDocId = `${toolId}_${spaceId}_${userId}`;
+    const stateDocId = getStateDocumentId(toolId, spaceId, scope, userId);
     await db
       .collection("tool_states")
       .doc(stateDocId)
       .delete();
 
     return respond.success({
+      scope,
       deletedAt: new Date().toISOString()
     });
 });
@@ -230,10 +275,10 @@ export const DELETE = withAuthAndErrors(async (
  */
 async function triggerThresholdAutomations(
   deploymentId: string,
-  toolId: string,
   spaceId: string,
   newState: Record<string, unknown>,
-  userId: string
+  actorUserId: string,
+  stateDocId: string
 ): Promise<void> {
   const { FieldValue } = await import('firebase-admin/firestore');
 
@@ -251,7 +296,7 @@ async function triggerThresholdAutomations(
   // Get previous state for comparison
   const previousStateDoc = await dbAdmin
     .collection('tool_states')
-    .doc(`${toolId}_${spaceId}_${userId}`)
+    .doc(stateDocId)
     .get();
 
   const previousState = previousStateDoc.exists ? previousStateDoc.data() || {} : {};
@@ -294,7 +339,7 @@ async function triggerThresholdAutomations(
     try {
       // Execute actions
       for (const action of automation.actions || []) {
-        await executeAutomationAction(action, deploymentId, spaceId, userId, newState);
+        await executeAutomationAction(action, deploymentId, spaceId, actorUserId, newState);
       }
 
       // Log run and update stats

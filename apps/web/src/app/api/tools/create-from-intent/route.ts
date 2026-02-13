@@ -8,7 +8,10 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
-import { ELEMENT_CATALOG } from '@hive/core/hivelab/goose';
+import { detectIntent, type Intent } from '@/lib/ai-generator/intent-detection';
+import { canGenerate, recordGeneration } from '@/lib/ai-usage-tracker';
+import { aiGenerationRateLimit } from '@/lib/rate-limit-simple';
+import { logger } from '@/lib/logger';
 import { generateCustomBlock } from '@hive/core/server';
 
 const CreateFromIntentSchema = z.object({
@@ -24,40 +27,45 @@ interface SpaceContextResult {
   memberCount: number;
 }
 
-interface CatalogMatch {
+const INTENT_TO_ELEMENT: Record<string, string> = {
+  'enable-voting': 'poll-element',
+  'coordinate-people': 'rsvp-button',
+  'track-time': 'countdown-timer',
+  'broadcast': 'announcement',
+  'collect-input': 'form-builder',
+  'rank-items': 'leaderboard',
+  'show-results': 'result-list',
+  'search-filter': 'search-input',
+  'visualize-data': 'chart-display',
+  'discover-events': 'personalized-event-feed',
+  'find-food': 'dining-picker',
+  'find-study-spot': 'study-spot-finder',
+};
+
+interface IntentMatch {
+  intent: Intent;
   elementId: string;
-  score: number;
-  matchedKeywords: string[];
+  confidence: number;
+  keywords: string[];
 }
 
-function findCatalogMatch(prompt: string): CatalogMatch | null {
-  const text = prompt.toLowerCase();
-  let best: CatalogMatch | null = null;
-
-  for (const [elementId, entry] of Object.entries(ELEMENT_CATALOG)) {
-    const normalizedElementHint = elementId.replace(/-/g, ' ');
-    const keywords = [normalizedElementHint, ...entry.use_for.map((value) => value.toLowerCase())];
-    const matchedKeywords = keywords.filter((keyword) => text.includes(keyword));
-
-    const baseScore = matchedKeywords.length;
-    const exactElementBonus = text.includes(normalizedElementHint) ? 1.5 : 0;
-    const score = baseScore + exactElementBonus;
-
-    if (!best || score > best.score) {
-      best = { elementId, score, matchedKeywords };
-    }
+function findIntentMatch(prompt: string): IntentMatch | null {
+  const detected = detectIntent(prompt);
+  if (detected.confidence < 0.3) {
+    return null;
   }
 
-  if (!best) return null;
+  const elementId = INTENT_TO_ELEMENT[detected.primary];
+  if (!elementId) {
+    return null;
+  }
 
-  // High-confidence intent threshold:
-  // - At least 2 matched catalog keywords, or
-  // - Explicit element hint match plus one supporting signal.
-  const highConfidence =
-    best.matchedKeywords.length >= 2 ||
-    (best.score >= 2.5 && best.matchedKeywords.length >= 1);
-
-  return highConfidence ? best : null;
+  return {
+    intent: detected.primary,
+    elementId,
+    confidence: detected.confidence,
+    keywords: detected.keywords,
+  };
 }
 
 async function resolveSpaceContext(
@@ -142,6 +150,29 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
   const campusId = getCampusId(req);
+  const forwarded = request.headers.get('x-forwarded-for');
+  const clientIp = forwarded?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+
+  const rateLimitKey = userId ? `user:${userId}` : `ip:${clientIp}`;
+  const rateLimitResult = aiGenerationRateLimit.check(rateLimitKey);
+  if (!rateLimitResult.success) {
+    return respond.error(
+      'Too many generation requests. Please wait before trying again.',
+      'RATE_LIMITED',
+      { status: 429 }
+    );
+  }
+
+  const usage = await canGenerate(userId);
+  if (!usage.allowed) {
+    return respond.error(
+      'Daily generation limit reached. Resets at midnight.',
+      'RATE_LIMITED',
+      { status: 429 }
+    );
+  }
 
   let body: z.infer<typeof CreateFromIntentSchema>;
   try {
@@ -162,10 +193,10 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
       );
     }
 
-    const catalogMatch = findCatalogMatch(body.prompt);
+    const intentMatch = findIntentMatch(body.prompt);
     const now = new Date();
 
-    if (catalogMatch) {
+    if (intentMatch) {
       const composition = await generateTool({ prompt: body.prompt });
 
       const toolDoc = {
@@ -197,8 +228,10 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
         metadata: {
           generatedFrom: 'intent-composition',
           prompt: body.prompt,
-          intentElement: catalogMatch.elementId,
-          intentScore: catalogMatch.score,
+          intent: intentMatch.intent,
+          intentElement: intentMatch.elementId,
+          intentScore: intentMatch.confidence,
+          intentKeywords: intentMatch.keywords,
         },
       };
 
@@ -211,6 +244,16 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
         toolName: toolDoc.name,
         toolDescription: toolDoc.description,
       });
+
+      try {
+        await recordGeneration(userId, 500);
+      } catch (error) {
+        logger.warn('Failed to record AI generation usage', {
+          component: 'tools-create-from-intent',
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
 
       return respond.success(
         {
@@ -264,6 +307,16 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
       toolName: toolDoc.name,
       toolDescription: toolDoc.description,
     });
+
+    try {
+      await recordGeneration(userId, 500);
+    } catch (error) {
+      logger.warn('Failed to record AI generation usage', {
+        component: 'tools-create-from-intent',
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     return respond.success(
       {

@@ -7,6 +7,9 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
+import { canGenerate, recordGeneration } from '@/lib/ai-usage-tracker';
+import { aiGenerationRateLimit } from '@/lib/rate-limit-simple';
+import { logger } from '@/lib/logger';
 import { generateCustomBlock } from '@hive/core/server';
 
 const CreateCustomBlockSchema = z.object({
@@ -79,6 +82,29 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
   const campusId = getCampusId(req);
+  const forwarded = request.headers.get('x-forwarded-for');
+  const clientIp = forwarded?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+
+  const rateLimitKey = userId ? `user:${userId}` : `ip:${clientIp}`;
+  const rateLimitResult = aiGenerationRateLimit.check(rateLimitKey);
+  if (!rateLimitResult.success) {
+    return respond.error(
+      'Too many generation requests. Please wait before trying again.',
+      'RATE_LIMITED',
+      { status: 429 }
+    );
+  }
+
+  const usage = await canGenerate(userId);
+  if (!usage.allowed) {
+    return respond.error(
+      'Daily generation limit reached. Resets at midnight.',
+      'RATE_LIMITED',
+      { status: 429 }
+    );
+  }
 
   let body: z.infer<typeof CreateCustomBlockSchema>;
   try {
@@ -147,6 +173,16 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
         visibility: 'all',
         name: toolDoc.name,
         description: toolDoc.description,
+      });
+    }
+
+    try {
+      await recordGeneration(userId, 500);
+    } catch (error) {
+      logger.warn('Failed to record AI generation usage', {
+        component: 'tools-create-custom-block',
+        userId,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
 

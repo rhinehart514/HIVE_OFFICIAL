@@ -2,50 +2,20 @@
  * AI Tool Generation API (Streaming)
  *
  * Generates HiveLab tools from natural language prompts.
- * Supports multiple backends: Goose (Ollama), Firebase AI (Gemini), Groq, or rules-based.
- *
- * Priority order:
- * 1. Goose (Ollama) - Custom fine-tuned model, self-hosted
- * 2. Groq - Fast cloud inference, low cost
- * 3. Firebase AI - Gemini 2.0 Flash
- * 4. Rules-based - Zero cost fallback
+ * Uses rules-based generation as primary with optional Groq enhancement path.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { mockGenerateToolStreaming, type StreamingChunk } from '@/lib/mock-ai-generator';
-import {
-  firebaseGenerateToolStreaming,
-  isFirebaseAIAvailable,
-  type GenerationContext,
-} from '@/lib/firebase-ai-generator';
 import {
   generateToolStream,
   getAvailableBackend,
-  checkOllamaHealth,
-  type GooseBackend,
+  type StreamMessage,
 } from '@/lib/goose-server';
 import { canGenerate, recordGeneration } from '@/lib/ai-usage-tracker';
 import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { aiGenerationRateLimit } from '@/lib/rate-limit-simple';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
-
-/**
- * Backend selection configuration
- *
- * GOOSE_BACKEND options:
- * - 'goose' or 'ollama': Use Goose (fine-tuned Phi-3) via Ollama - self-hosted, free
- * - 'groq': Use Groq cloud API - fast, ~$0.0001/request
- * - 'firebase': Use Firebase AI (Gemini) - ~$0.001/request
- * - 'rules': Use rules-based generator - $0, deterministic
- *
- * Default behavior:
- * 1. Try Goose/Ollama if GOOSE_BACKEND=goose and Ollama is running
- * 2. Try Groq if GROQ_API_KEY is set
- * 3. Fall back to rules-based (always works, $0)
- */
-const GOOSE_BACKEND = process.env.GOOSE_BACKEND as GooseBackend | undefined;
-const USE_RULES_BASED_GENERATION = process.env.USE_RULES_BASED_GENERATION !== 'false';
 
 /**
  * Request schema for tool generation
@@ -131,8 +101,8 @@ export async function POST(request: NextRequest) {
             error: 'Usage limit reached',
             tier: usage.tier,
             limit: usage.limit,
-            message: `You've used all ${usage.limit} tool generations this month. Upgrade for more.`,
-            upgradeUrl: '/settings/subscription',
+            resetAt: usage.resetAt.toISOString(),
+            message: 'Daily generation limit reached. Resets at midnight.',
           },
           { status: 429 }
         );
@@ -143,62 +113,29 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = GenerateToolRequestSchema.parse(body);
 
-    // Determine which generator to use
-    // Priority: Goose (Ollama) > Groq > Firebase AI > Rules-based
-    const firebaseAvailable = isFirebaseAIAvailable() && process.env.NEXT_PUBLIC_USE_FIREBASE_AI !== 'false';
-    const gooseBackend = GOOSE_BACKEND || (await getAvailableBackend());
-    const useGoose = gooseBackend === 'ollama' || gooseBackend === 'groq';
-    const useFirebaseAI = !useGoose && !USE_RULES_BASED_GENERATION && firebaseAvailable;
-
-    // Create generation context for quality tracking
-    const generationContext: GenerationContext = {
-      userId,
-      sessionId: `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      campusId: undefined, // Could be extracted from user session if available
-    };
+    const availableBackend = await getAvailableBackend();
+    const groqAvailable = availableBackend === 'groq';
 
     // Create streaming response
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Select generator based on available backend
-          // Priority: Goose > Firebase AI > Rules-based
-          let generator: AsyncGenerator<StreamingChunk>;
-          let providerName: string;
-          let costEstimate: string;
-
-          if (useGoose) {
-            // Use Goose (Ollama or Groq)
-            generator = generateToolStream({
-              prompt: validated.prompt,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              existingComposition: validated.existingComposition as any,
-              isIteration: validated.isIteration,
-            }) as AsyncGenerator<StreamingChunk>;
-            const groqModel = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
-            const is70b = groqModel.includes('70b');
-            providerName = gooseBackend === 'ollama'
-              ? 'Goose (Ollama)'
-              : `Goose (Groq ${is70b ? '70b' : '8b'})`;
-            costEstimate = gooseBackend === 'ollama' ? '$0' : (is70b ? '~$0.001' : '~$0.0001');
-          } else if (useFirebaseAI) {
-            generator = firebaseGenerateToolStreaming(validated, generationContext);
-            providerName = 'Firebase AI (Gemini 2.0 Flash)';
-            costEstimate = '~$0.001';
-          } else {
-            generator = mockGenerateToolStreaming(validated);
-            providerName = 'Rules-based generator';
-            costEstimate = '$0';
-          }
+          const generator = generateToolStream({
+            prompt: validated.prompt,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            existingComposition: validated.existingComposition as any,
+            isIteration: validated.isIteration,
+          }) as AsyncGenerator<StreamMessage>;
 
           const mode = validated.isIteration ? 'iteration' : 'new';
           logger.info(`Tool generation (${mode})`, {
             component: 'tools-generate',
-            provider: providerName,
-            backend: gooseBackend,
+            provider: 'Rules-based generator',
+            backend: 'rules',
+            groqAvailable,
             userId: userId || 'anonymous',
-            cost: costEstimate,
+            cost: '$0',
           });
 
           // Start streaming generation
@@ -236,7 +173,7 @@ export async function POST(request: NextRequest) {
           logger.error('Generation error', { component: 'tools-generate' }, error instanceof Error ? error : undefined);
 
           // Send error chunk
-          const errorChunk: StreamingChunk = {
+          const errorChunk: StreamMessage = {
             type: 'error',
             data: { error: error instanceof Error ? error.message : 'Unknown error' }
           };
@@ -289,61 +226,38 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   const { DEMO_PROMPTS } = await import('@hive/core');
-  const firebaseAvailable = isFirebaseAIAvailable() && process.env.NEXT_PUBLIC_USE_FIREBASE_AI !== 'false';
-  const gooseBackend = await getAvailableBackend();
-  const ollamaHealthy = await checkOllamaHealth();
-
-  // Determine active backend for response
-  let activeBackend: string;
-  let model: string;
-  let costPerGeneration: string;
-  let latency: string;
-
-  if (gooseBackend === 'ollama' && ollamaHealthy) {
-    activeBackend = 'goose-ollama';
-    model = 'goose-phi3-finetuned';
-    costPerGeneration = '$0 (self-hosted)';
-    latency = '~500ms';
-  } else if (gooseBackend === 'groq') {
-    const groqModel = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
-    const is70b = groqModel.includes('70b');
-    activeBackend = 'goose-groq';
-    model = groqModel;
-    costPerGeneration = is70b ? '~$0.001' : '~$0.0001';
-    latency = is70b ? '~800ms' : '~300ms';
-  } else if (!USE_RULES_BASED_GENERATION && firebaseAvailable) {
-    activeBackend = 'firebase-ai';
-    model = 'gemini-2.0-flash';
-    costPerGeneration = '~$0.001';
-    latency = '~2000ms';
-  } else {
-    activeBackend = 'rules-based';
-    model = 'rules-based-v1';
-    costPerGeneration = '$0';
-    latency = '~100ms';
-  }
+  const availableBackend = await getAvailableBackend();
+  const groqAvailable = availableBackend === 'groq';
+  const groqModel = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+  const is70b = groqModel.includes('70b');
 
   return NextResponse.json({
     demoPrompts: Array.from(DEMO_PROMPTS),
-    model,
-    backend: activeBackend,
+    model: 'rules-based-v1',
+    backend: 'rules-based',
     maxPromptLength: 1000,
     streamingSupported: true,
-    costPerGeneration,
-    latency,
+    costPerGeneration: '$0',
+    latency: '~100ms',
+    enhancedOption: groqAvailable
+      ? {
+          backend: 'groq',
+          model: groqModel,
+          costPerGeneration: is70b ? '~$0.001' : '~$0.0001',
+          latency: is70b ? '~800ms' : '~300ms',
+        }
+      : null,
     features: {
       structuredOutput: true,
-      complexTools: activeBackend !== 'rules-based',
-      multiStage: activeBackend !== 'rules-based',
+      complexTools: groqAvailable,
+      multiStage: groqAvailable,
       campusSpecificIntents: true,
       refinementSupport: true,
-      gooseModel: activeBackend.startsWith('goose'),
+      gooseModel: groqAvailable,
     },
     config: {
-      GOOSE_BACKEND: GOOSE_BACKEND,
-      USE_RULES_BASED_GENERATION,
-      firebaseAIAvailable: firebaseAvailable,
-      ollamaHealthy,
+      activeBackend: 'rules',
+      groqAvailable,
     },
   });
 }

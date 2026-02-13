@@ -1,8 +1,7 @@
 /**
  * AI Usage Tracker
  *
- * Tracks AI generation usage per user for rate limiting and subscription tiers.
- * Stores in Firestore for persistence across sessions.
+ * Enforces per-user daily generation limits.
  */
 
 import { db } from './firebase';
@@ -17,11 +16,12 @@ import {
 } from 'firebase/firestore';
 import { logger } from './logger';
 
-// Usage limits by tier
+export const DAILY_GENERATION_LIMIT = 50;
+
 export const USAGE_LIMITS = {
-  free: 10,
-  pro: 100,
-  team: Infinity,
+  free: DAILY_GENERATION_LIMIT,
+  pro: DAILY_GENERATION_LIMIT,
+  team: DAILY_GENERATION_LIMIT,
 } as const;
 
 export type UserTier = keyof typeof USAGE_LIMITS;
@@ -39,17 +39,17 @@ interface UserSubscription {
   currentPeriodEnd?: Timestamp;
 }
 
-/**
- * Get current month key (YYYY-MM)
- */
-function getCurrentMonthKey(): string {
+function getCurrentDayKey(): string {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
-/**
- * Get user's current tier
- */
+function getDayEndTimestamp(): Timestamp {
+  const now = new Date();
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return Timestamp.fromDate(endOfDay);
+}
+
 export async function getUserTier(userId: string): Promise<UserTier> {
   try {
     const userDoc = await getDoc(doc(db, 'users', userId));
@@ -57,7 +57,6 @@ export async function getUserTier(userId: string): Promise<UserTier> {
 
     const data = userDoc.data();
     const subscription = data?.subscription as UserSubscription | undefined;
-
     if (!subscription || subscription.status !== 'active') {
       return 'free';
     }
@@ -69,82 +68,76 @@ export async function getUserTier(userId: string): Promise<UserTier> {
   }
 }
 
-/**
- * Get user's usage for current month
- */
-export async function getMonthlyUsage(userId: string): Promise<UsageRecord> {
-  const monthKey = getCurrentMonthKey();
+export async function getDailyUsage(userId: string): Promise<UsageRecord> {
+  const dayKey = getCurrentDayKey();
 
   try {
-    const usageDoc = await getDoc(doc(db, 'usage', userId, 'monthly', monthKey));
-
+    const usageDoc = await getDoc(doc(db, 'usage', userId, 'daily', dayKey));
     if (!usageDoc.exists()) {
-      // No usage yet this month
       return {
         generations: 0,
         tokensUsed: 0,
         lastGeneration: null,
-        resetAt: getMonthEndTimestamp(),
+        resetAt: getDayEndTimestamp(),
       };
     }
 
     return usageDoc.data() as UsageRecord;
   } catch (error) {
-    logger.error('Error getting monthly usage', { component: 'ai-usage-tracker' }, error instanceof Error ? error : undefined);
+    logger.error('Error getting daily usage', { component: 'ai-usage-tracker' }, error instanceof Error ? error : undefined);
     return {
       generations: 0,
       tokensUsed: 0,
       lastGeneration: null,
-      resetAt: getMonthEndTimestamp(),
+      resetAt: getDayEndTimestamp(),
     };
   }
 }
 
-/**
- * Check if user can generate (within limits)
- */
 export async function canGenerate(userId: string): Promise<{
   allowed: boolean;
   remaining: number;
   tier: UserTier;
   limit: number;
+  resetAt: Date;
 }> {
   const [tier, usage] = await Promise.all([
     getUserTier(userId),
-    getMonthlyUsage(userId),
+    getDailyUsage(userId),
   ]);
 
-  const limit = USAGE_LIMITS[tier];
+  const limit = DAILY_GENERATION_LIMIT;
   const remaining = Math.max(0, limit - usage.generations);
   const allowed = usage.generations < limit;
 
-  return { allowed, remaining, tier, limit };
+  return {
+    allowed,
+    remaining,
+    tier,
+    limit,
+    resetAt: usage.resetAt.toDate(),
+  };
 }
 
-/**
- * Record a generation (call after successful generation)
- */
 export async function recordGeneration(
   userId: string,
   tokensUsed: number = 0
 ): Promise<void> {
-  const monthKey = getCurrentMonthKey();
-  const usageRef = doc(db, 'usage', userId, 'monthly', monthKey);
+  const dayKey = getCurrentDayKey();
+  const usageRef = doc(db, 'usage', userId, 'daily', dayKey);
 
   try {
     const usageDoc = await getDoc(usageRef);
 
     if (!usageDoc.exists()) {
-      // First generation this month
       await setDoc(usageRef, {
         generations: 1,
         tokensUsed,
         lastGeneration: serverTimestamp(),
-        resetAt: getMonthEndTimestamp(),
+        resetAt: getDayEndTimestamp(),
         createdAt: serverTimestamp(),
       });
     } else {
-      // Increment existing usage
       await updateDoc(usageRef, {
         generations: increment(1),
         tokensUsed: increment(tokensUsed),
@@ -155,22 +148,10 @@ export async function recordGeneration(
     logger.debug('Recorded generation', { component: 'ai-usage-tracker', userId });
   } catch (error) {
     logger.error('Error recording generation', { component: 'ai-usage-tracker' }, error instanceof Error ? error : undefined);
-    // Don't throw - usage tracking failure shouldn't block generation
+    // Usage tracking failure should not block generation responses.
   }
 }
 
-/**
- * Get timestamp for end of current month
- */
-function getMonthEndTimestamp(): Timestamp {
-  const now = new Date();
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  return Timestamp.fromDate(endOfMonth);
-}
-
-/**
- * Get usage summary for display
- */
 export async function getUsageSummary(userId: string): Promise<{
   used: number;
   limit: number;
@@ -181,12 +162,12 @@ export async function getUsageSummary(userId: string): Promise<{
 }> {
   const [tier, usage] = await Promise.all([
     getUserTier(userId),
-    getMonthlyUsage(userId),
+    getDailyUsage(userId),
   ]);
 
-  const limit = USAGE_LIMITS[tier];
+  const limit = DAILY_GENERATION_LIMIT;
   const remaining = Math.max(0, limit - usage.generations);
-  const percentUsed = limit === Infinity ? 0 : Math.round((usage.generations / limit) * 100);
+  const percentUsed = Math.round((usage.generations / limit) * 100);
 
   return {
     used: usage.generations,

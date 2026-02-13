@@ -1,7 +1,7 @@
 /**
  * Goose Server - Backend utilities for HiveLab tool generation
  *
- * Handles communication with Ollama (local) and Groq (cloud) backends.
+ * Handles local rules-based generation and optional Groq enhancement.
  * Used by the /api/tools/generate endpoint.
  */
 
@@ -20,12 +20,10 @@ import {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════
 
-export type GooseBackend = 'ollama' | 'groq' | 'rules';
+export type GooseBackend = 'groq' | 'rules';
 
 export interface GooseConfig {
   backend: GooseBackend;
-  ollamaHost: string;
-  ollamaModel: string;
   groqApiKey?: string;
   groqModel: string;
 }
@@ -46,46 +44,14 @@ export interface StreamMessage {
 // ═══════════════════════════════════════════════════════════════════
 
 export function getGooseConfig(): GooseConfig {
+  const requestedBackend = process.env.GOOSE_BACKEND;
+  const backend: GooseBackend = requestedBackend === 'groq' ? 'groq' : 'rules';
+
   return {
-    backend: (process.env.GOOSE_BACKEND as GooseBackend) || 'rules',
-    ollamaHost: process.env.OLLAMA_HOST || 'http://localhost:11434',
-    ollamaModel: process.env.OLLAMA_MODEL || 'goose',
+    backend,
     groqApiKey: process.env.GROQ_API_KEY,
     groqModel: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
   };
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// OLLAMA BACKEND
-// ═══════════════════════════════════════════════════════════════════
-
-async function callOllama(
-  config: GooseConfig,
-  prompt: string,
-  systemPrompt: string
-): Promise<string> {
-  const response = await fetch(`${config.ollamaHost}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: config.ollamaModel,
-      prompt: prompt,
-      system: systemPrompt,
-      stream: false,
-      options: {
-        temperature: 0.3,
-        top_p: 0.9,
-        num_ctx: 2048,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Ollama error: ${response.status} ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data.response;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -633,7 +599,7 @@ export async function generateTool(
   request: GenerateRequest
 ): Promise<ToolComposition> {
   const config = getGooseConfig();
-  const systemPrompt = buildSystemPrompt({
+  const fullSystemPrompt = buildSystemPrompt({
     existingComposition: request.existingComposition,
     isIteration: request.isIteration,
   });
@@ -641,26 +607,20 @@ export async function generateTool(
   let rawOutput: string;
   let composition: ToolComposition | null = null;
 
-  // Try backends in order of preference
-  const backends: GooseBackend[] = [config.backend];
-  if (config.backend === 'ollama' && config.groqApiKey) {
+  // Rules-first execution; Groq is optional enhancement fallback.
+  const backends: GooseBackend[] = ['rules'];
+  if (config.backend === 'groq' && config.groqApiKey) {
     backends.push('groq');
   }
-  backends.push('rules');
 
   for (const backend of backends) {
     try {
       switch (backend) {
-        case 'ollama':
-          rawOutput = await callOllama(config, request.prompt, systemPrompt);
-          composition = parseModelOutput(rawOutput);
-          break;
-
         case 'groq': {
           // Use full system prompt for 70b model, compact for 8b
           const is70b = config.groqModel.includes('70b');
           const groqSystemPrompt = is70b
-            ? systemPrompt  // Full prompt for 70b - better understanding
+            ? fullSystemPrompt  // Full prompt for 70b - better understanding
             : buildCompactSystemPrompt();  // Compact for smaller models
           rawOutput = await callGroq(config, request.prompt, groqSystemPrompt);
           composition = parseModelOutput(rawOutput);
@@ -736,39 +696,7 @@ export async function* generateToolStream(
 // HEALTH CHECK
 // ═══════════════════════════════════════════════════════════════════
 
-export async function checkOllamaHealth(): Promise<boolean> {
-  const config = getGooseConfig();
-
-  try {
-    const response = await fetch(`${config.ollamaHost}/api/tags`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!response.ok) return false;
-
-    const data = await response.json();
-    const models = data.models || [];
-    return models.some((m: { name: string }) => m.name.includes(config.ollamaModel));
-  } catch {
-    return false;
-  }
-}
-
 export async function getAvailableBackend(): Promise<GooseBackend> {
   const config = getGooseConfig();
-
-  // Check Ollama first
-  if (config.backend === 'ollama') {
-    const ollamaAvailable = await checkOllamaHealth();
-    if (ollamaAvailable) return 'ollama';
-  }
-
-  // Check Groq
-  if (config.groqApiKey) {
-    return 'groq';
-  }
-
-  // Fallback to rules
-  return 'rules';
+  return config.groqApiKey ? 'groq' : 'rules';
 }

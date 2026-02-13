@@ -127,6 +127,7 @@ interface UseToolRuntimeReturn {
 // ============================================================================
 
 const DEFAULT_AUTO_SAVE_DELAY = 2000;
+const ACTION_STATE_SYNC_DELAY = 300;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 const CONNECTION_RESOLVE_TTL_MS = 300_000; // 5 minutes
@@ -134,6 +135,12 @@ const CONNECTION_RESOLVE_TTL_MS = 300_000; // 5 minutes
 interface CachedConnectionValue {
   value: unknown;
   resolvedAt: number;
+}
+
+interface ToolStateStreamEvent {
+  type: 'connected' | 'shared_state' | 'personal_state' | 'ping' | 'error';
+  state?: Record<string, unknown>;
+  timestamp?: number;
 }
 
 /**
@@ -249,6 +256,7 @@ export function useToolRuntime(
 
   // Refs
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const actionSyncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
   const stateRef = useRef<ToolState>(state); // Keep current state for save closure
   const sharedStateRef = useRef<ToolSharedState>(sharedState); // Keep current shared state
@@ -314,6 +322,71 @@ export function useToolRuntime(
       };
     });
   }, [enableRealtime, isRealtimeConnected, realtimeCounters, realtimeCollections, realtimeTimeline]);
+
+  // ============================================================================
+  // SSE State Sync (deployed tools)
+  // ============================================================================
+
+  useEffect(() => {
+    if (!toolId || !spaceId || !enabled) return;
+    if (typeof EventSource === "undefined") return;
+
+    const streamUrl = `/api/tools/${encodeURIComponent(toolId)}/state/stream?spaceId=${encodeURIComponent(spaceId)}`;
+    const eventSource = new EventSource(streamUrl, { withCredentials: true });
+
+    eventSource.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data) as ToolStateStreamEvent;
+
+        if (parsed.type === "shared_state" && parsed.state) {
+          const incoming = parsed.state;
+          setSharedState((prev) => {
+            const next: ToolSharedState = {
+              ...prev,
+              ...(incoming as Partial<ToolSharedState>),
+              counters: {
+                ...prev.counters,
+                ...((incoming.counters as Record<string, number>) || {}),
+              },
+              collections: {
+                ...prev.collections,
+                ...((incoming.collections as ToolSharedState["collections"]) || {}),
+              },
+              computed: {
+                ...prev.computed,
+                ...((incoming.computed as Record<string, unknown>) || {}),
+              },
+              timeline: Array.isArray(incoming.timeline)
+                ? incoming.timeline as ToolSharedState["timeline"]
+                : prev.timeline,
+            };
+            sharedStateRef.current = next;
+            return next;
+          });
+          setIsSynced(true);
+        }
+
+        if (parsed.type === "personal_state" && parsed.state) {
+          setState((prev) => {
+            const next = { ...prev, ...parsed.state };
+            stateRef.current = next;
+            return next;
+          });
+          setIsSynced(true);
+        }
+      } catch {
+        // Ignore malformed events
+      }
+    };
+
+    eventSource.onerror = () => {
+      // Browser auto-reconnect handles transient disconnects
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [toolId, spaceId, enabled]);
 
   // ============================================================================
   // Load Tool and State (Combined - reduces N+1 queries)
@@ -640,6 +713,10 @@ export function useToolRuntime(
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
+    if (actionSyncTimeoutRef.current) {
+      clearTimeout(actionSyncTimeoutRef.current);
+      actionSyncTimeoutRef.current = null;
+    }
 
     setIsSaving(true);
     try {
@@ -678,6 +755,67 @@ export function useToolRuntime(
       }
     }
   }, [effectiveDeploymentId, toolId, spaceId]);
+
+  // ============================================================================
+  // Action State Sync (Task 3: explicit Firestore persistence after actions)
+  // ============================================================================
+
+  const syncActionStateToFirestore = useCallback(async () => {
+    if (!toolId || !spaceId) return;
+
+    const personalStatePayload = {
+      spaceId,
+      scope: "personal" as const,
+      state: stateRef.current as Record<string, unknown>,
+    };
+
+    const sharedStatePayload = {
+      spaceId,
+      scope: "shared" as const,
+      state: sharedStateRef.current as unknown as Record<string, unknown>,
+    };
+
+    const [personalResponse, sharedResponse] = await Promise.all([
+      fetchWithRetry(`/api/tools/${encodeURIComponent(toolId)}/state`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(personalStatePayload),
+      }),
+      fetchWithRetry(`/api/tools/${encodeURIComponent(toolId)}/state`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sharedStatePayload),
+      }),
+    ]);
+
+    if (!personalResponse.ok || !sharedResponse.ok) {
+      throw new Error("Failed to persist action state");
+    }
+
+    if (mountedRef.current) {
+      setLastSaved(new Date());
+      setIsSynced(true);
+    }
+  }, [toolId, spaceId]);
+
+  const scheduleActionStateSync = useCallback(() => {
+    if (!toolId || !spaceId) return;
+
+    if (actionSyncTimeoutRef.current) {
+      clearTimeout(actionSyncTimeoutRef.current);
+    }
+
+    setIsSynced(false);
+    actionSyncTimeoutRef.current = setTimeout(() => {
+      void syncActionStateToFirestore().catch(() => {
+        if (mountedRef.current) {
+          setIsSynced(false);
+        }
+      });
+    }, ACTION_STATE_SYNC_DELAY);
+  }, [toolId, spaceId, syncActionStateToFirestore]);
 
   // ============================================================================
   // Auto-Save with Debounce
@@ -746,12 +884,14 @@ export function useToolRuntime(
 
         // Extract the execution result (API returns { result: executionResult, ... })
         const executionResult = result.result || {};
+        let shouldSyncActionState = false;
 
         // ==========================================================================
         // Handle SharedStateUpdate (aggregate data like vote counts, RSVP lists)
         // ==========================================================================
         const sharedStateUpdate = executionResult.sharedStateUpdate;
         if (sharedStateUpdate) {
+          shouldSyncActionState = true;
           setSharedState((prev) => {
             const updated = { ...prev };
 
@@ -815,6 +955,7 @@ export function useToolRuntime(
 
             updated.version = (updated.version || 0) + 1;
             updated.lastModified = new Date().toISOString();
+            sharedStateRef.current = updated;
             return updated;
           });
         }
@@ -824,6 +965,7 @@ export function useToolRuntime(
         // ==========================================================================
         const userStateUpdate = executionResult.userStateUpdate;
         if (userStateUpdate) {
+          shouldSyncActionState = true;
           setState((prev) => {
             const updated = { ...prev };
 
@@ -851,9 +993,9 @@ export function useToolRuntime(
               };
             }
 
+            stateRef.current = updated;
             return updated;
           });
-          stateRef.current = { ...stateRef.current, ...(userStateUpdate as Record<string, unknown>) };
           scheduleAutoSave();
         }
 
@@ -862,9 +1004,14 @@ export function useToolRuntime(
         // ==========================================================================
         const legacyState = executionResult.state || result.state;
         if (legacyState && !userStateUpdate) {
+          shouldSyncActionState = true;
           setState((prev) => ({ ...prev, ...legacyState }));
           stateRef.current = { ...stateRef.current, ...legacyState };
           scheduleAutoSave();
+        }
+
+        if (shouldSyncActionState) {
+          scheduleActionStateSync();
         }
 
         // Extract cascaded elements for visual feedback
@@ -898,7 +1045,7 @@ export function useToolRuntime(
         }
       }
     },
-    [toolId, effectiveDeploymentId, spaceId, scheduleAutoSave, onCascade]
+    [toolId, effectiveDeploymentId, spaceId, scheduleAutoSave, scheduleActionStateSync, onCascade]
   );
 
   // ============================================================================
@@ -932,6 +1079,10 @@ export function useToolRuntime(
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
+    if (actionSyncTimeoutRef.current) {
+      clearTimeout(actionSyncTimeoutRef.current);
+      actionSyncTimeoutRef.current = null;
+    }
 
     // Reset to initial state
     setState(initialStateRef.current);
@@ -957,6 +1108,10 @@ export function useToolRuntime(
       // Clear pending auto-save timeout
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+      }
+
+      if (actionSyncTimeoutRef.current) {
+        clearTimeout(actionSyncTimeoutRef.current);
       }
     };
   }, []);
