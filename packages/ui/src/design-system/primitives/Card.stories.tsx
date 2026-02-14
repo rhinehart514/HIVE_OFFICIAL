@@ -39,8 +39,8 @@ const meta: Meta<typeof Card> = {
     },
     elevation: {
       control: 'select',
-      options: ['resting', 'raised', 'floating'],
-      description: 'Shadow depth',
+      options: ['subtle', 'resting', 'raised', 'floating'],
+      description: 'Surface/elevation treatment',
     },
     translucent: {
       control: 'boolean',
@@ -164,22 +164,43 @@ export const WarmthLevels: Story = {
 };
 
 /**
- * Elevation levels — Shadow depth
+ * Subtle elevation — Barely-there surface, no border
+ */
+export const SubtleElevation: Story = {
+  args: {
+    elevation: 'subtle',
+    children: (
+      <div>
+        <Heading level={4}>Subtle Card</Heading>
+        <Text size="sm" tone="secondary" className="mt-2">
+          Barely-there surface using background only, no border or shadow.
+        </Text>
+      </div>
+    ),
+  },
+};
+
+/**
+ * Elevation levels — Surface depth comparison
  */
 export const ElevationLevels: Story = {
   render: () => (
     <div className="flex gap-4">
+      <Card elevation="subtle" className="w-40">
+        <Text size="sm">Subtle</Text>
+        <Text size="xs" tone="muted">BG only, no border</Text>
+      </Card>
       <Card elevation="resting" className="w-40">
         <Text size="sm">Resting</Text>
-        <Text size="xs" tone="muted">2px shadow</Text>
+        <Text size="xs" tone="muted">Default card surface</Text>
       </Card>
       <Card elevation="raised" className="w-40">
         <Text size="sm">Raised</Text>
-        <Text size="xs" tone="muted">4px shadow</Text>
+        <Text size="xs" tone="muted">Higher contrast surface</Text>
       </Card>
       <Card elevation="floating" className="w-40">
         <Text size="sm">Floating</Text>
-        <Text size="xs" tone="muted">8px shadow</Text>
+        <Text size="xs" tone="muted">Shadowed overlay surface</Text>
       </Card>
     </div>
   ),

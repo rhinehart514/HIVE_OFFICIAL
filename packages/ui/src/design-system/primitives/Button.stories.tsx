@@ -7,8 +7,8 @@ import { PlusIcon, ArrowRightIcon, TrashIcon } from '@heroicons/react/24/outline
 /**
  * Button — Interactive trigger primitive
  *
- * 5 variants with strict gold discipline.
- * CTA (gold) is the 1% rule - use sparingly!
+ * 6 variants with a clear primary action.
+ * Primary (gold) is reserved for key actions and brand moments.
  * Focus ring is WHITE, never gold.
  *
  * @see docs/design-system/PRIMITIVES.md (Button)
@@ -22,15 +22,15 @@ const meta: Meta<typeof Button> = {
     docs: {
       description: {
         component:
-          'Interactive button with 5 variants. CTA (gold) follows the 1% rule. Focus rings are WHITE.',
+          'Interactive button with 6 variants. Primary (gold) is reserved for key actions and brand accents. Focus rings are WHITE.',
       },
     },
   },
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'cta', 'secondary', 'ghost', 'destructive', 'link'],
-      description: 'Visual variant (cta = gold, use sparingly)',
+      options: ['primary', 'default', 'secondary', 'ghost', 'destructive', 'link'],
+      description: 'Visual variant (primary = gold)',
     },
     size: {
       control: 'select',
@@ -56,7 +56,7 @@ export default meta;
 type Story = StoryObj<typeof Button>;
 
 /**
- * Default — White button, black text
+ * Default — Neutral dark button
  */
 export const Default: Story = {
   args: {
@@ -65,26 +65,25 @@ export const Default: Story = {
 };
 
 /**
- * CTA — Gold button (THE 1% RULE)
- * Use ONLY for final CTAs where user has "earned" the moment.
+ * Primary — Gold button for key actions
  */
-export const CTA: Story = {
+export const Primary: Story = {
   args: {
-    variant: 'cta',
+    variant: 'primary',
     children: 'Enter HIVE',
   },
   parameters: {
     docs: {
       description: {
         story:
-          '⚠️ THE 1% RULE: Gold buttons should appear on ~1% of screens. Use only for earned moments like "Enter HIVE", "Submit", "Confirm".',
+          'Use primary for high-priority actions and brand-accent moments, such as major confirmations or entry points.',
       },
     },
   },
 };
 
 /**
- * Secondary — Outlined
+ * Secondary — Alternate neutral button
  */
 export const Secondary: Story = {
   args: {
@@ -131,14 +130,14 @@ export const AllVariants: Story = {
     <div className="flex flex-col gap-4">
       <div className="flex gap-3">
         <Button variant="default">Default</Button>
-        <Button variant="cta">CTA (Gold)</Button>
+        <Button variant="primary">Primary</Button>
         <Button variant="secondary">Secondary</Button>
         <Button variant="ghost">Ghost</Button>
         <Button variant="destructive">Destructive</Button>
         <Button variant="link">Link</Button>
       </div>
       <Text size="xs" tone="muted">
-        Gold CTA follows the 1% rule — use only for earned moments.
+        Primary uses gold for key actions and brand accents.
       </Text>
     </div>
   ),
@@ -180,7 +179,7 @@ export const WithIcons: Story = {
         <Button leadingIcon={<PlusIcon />} trailingIcon={<ArrowRightIcon />}>
           Both Icons
         </Button>
-        <Button leadingIcon={<PlusIcon />} variant="cta">
+        <Button leadingIcon={<PlusIcon />} variant="primary">
           Add to HIVE
         </Button>
       </div>
@@ -197,7 +196,7 @@ export const LoadingWithIcons: Story = {
       <Button loading leadingIcon={<PlusIcon />}>
         Creating...
       </Button>
-      <Button loading trailingIcon={<ArrowRightIcon />} variant="cta">
+      <Button loading trailingIcon={<ArrowRightIcon />} variant="primary">
         Processing...
       </Button>
     </div>
@@ -225,17 +224,17 @@ export const Disabled: Story = {
 };
 
 /**
- * Focus state — WHITE ring (never gold)
+ * Focus state — border and ring stay white
  */
 export const FocusState: Story = {
   render: () => (
     <div className="flex flex-col gap-4">
       <Text size="sm" tone="muted">
-        Tab to see WHITE focus ring (never gold):
+        Tab to see white focus treatment (never gold):
       </Text>
       <div className="flex gap-3">
         <Button>Focus me</Button>
-        <Button variant="cta">Focus me (gold button, white ring)</Button>
+        <Button variant="primary">Focus me (primary button, white focus)</Button>
       </div>
     </div>
   ),
@@ -254,7 +253,7 @@ export const FormActionsContext: Story = {
 };
 
 /**
- * In context — Hero CTA
+ * In context — Hero primary action
  */
 export const HeroCTAContext: Story = {
   render: () => (
@@ -264,7 +263,7 @@ export const HeroCTAContext: Story = {
         <Text size="sm" tone="secondary">Join 847 students already on HIVE.</Text>
       </div>
       <div className="flex gap-3">
-        <Button variant="cta" size="lg">
+        <Button variant="primary" size="lg">
           Enter HIVE
           <Icon icon={ArrowRightIcon} size="sm" />
         </Button>

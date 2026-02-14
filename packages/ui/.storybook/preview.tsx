@@ -96,9 +96,9 @@ const preview: Preview = {
     backgrounds: {
       default: 'hive-dark',
       values: [
-        { name: 'hive-dark', value: '#0A0A0B' },
-        { name: 'hive-elevated', value: '#111113' },
-        { name: 'hive-card', value: '#141414' },
+        { name: 'hive-dark', value: '#000000' },
+        { name: 'hive-elevated', value: '#080808' },
+        { name: 'hive-card', value: '#080808' },
         { name: 'light', value: '#FFFFFF' },
       ],
     },
@@ -108,9 +108,9 @@ const preview: Preview = {
         brandTitle: 'HIVE Design System',
         colorPrimary: '#FFD700',
         colorSecondary: '#FFD700',
-        appBg: '#0A0A0B',
-        appContentBg: '#111113',
-        appBorderColor: '#2A2A2C',
+        appBg: '#000000',
+        appContentBg: '#080808',
+        appBorderColor: 'rgba(255,255,255,0.06)',
         appBorderRadius: 8,
         fontBase: 'system-ui, sans-serif',
         fontCode: 'monospace',
@@ -119,10 +119,10 @@ const preview: Preview = {
         barTextColor: '#E5E5E7',
         barSelectedColor: '#FFD700',
         barBg: '#111113',
-        inputBg: '#1A1A1C',
-        inputBorder: '#2A2A2C',
+        inputBg: '#080808',
+        inputBorder: 'rgba(255,255,255,0.06)',
         inputTextColor: '#E5E5E7',
-        inputBorderRadius: 6,
+        inputBorderRadius: 12,
       },
     },
     layout: 'centered',
@@ -143,7 +143,7 @@ const preview: Preview = {
       }
 
       const isLight = theme === 'light';
-      const surface = isLight ? '#FFFFFF' : '#0A0A0B';
+      const surface = isLight ? '#FFFFFF' : '#000000';
       const text = isLight ? '#0A0A0B' : '#E5E5E7';
 
       // Warmth edge glow
@@ -172,9 +172,9 @@ const preview: Preview = {
                 style={{
                   background: isLight
                     ? 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(245,245,250,0.9))'
-                    : 'linear-gradient(135deg, rgba(10,10,11,0.95), rgba(20,20,22,0.9))',
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.95), rgba(8,8,8,0.9))',
                   boxShadow: warmthStyles[warmth],
-                  borderRadius: '12px',
+                  borderRadius: '16px',
                 }}
               >
                 <Story />

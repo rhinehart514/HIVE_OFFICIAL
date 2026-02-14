@@ -6,7 +6,7 @@ import { Text } from './Text';
 /**
  * Input — Text input primitive
  *
- * Focus ring is WHITE, never gold.
+ * Focus uses border brightening only (no ring).
  * Supports error state with red border.
  *
  * @see docs/design-system/PRIMITIVES.md (Input)
@@ -20,7 +20,7 @@ const meta: Meta<typeof Input> = {
     docs: {
       description: {
         component:
-          'Text input with WHITE focus ring (never gold). Supports error and disabled states.',
+          'Text input with border-only focus treatment (no focus ring). Supports error and disabled states.',
       },
     },
   },
@@ -111,15 +111,33 @@ export const Disabled: Story = {
 };
 
 /**
- * Focus state — WHITE ring (never gold)
+ * Focus state — Border brightens on focus
  */
 export const FocusState: Story = {
   render: () => (
     <div className="flex flex-col gap-4 w-80">
       <Text size="sm" tone="muted">
-        Tab to see WHITE focus ring (never gold):
+        Tab to see the border brighten on focus (no ring):
       </Text>
-      <Input placeholder="Focus me to see white ring" />
+      <Input placeholder="Focus me to see brighter border" />
+    </div>
+  ),
+};
+
+/**
+ * Text size — 15px on default and large
+ */
+export const TextSize15px: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4 w-80">
+      <div>
+        <Text size="xs" tone="muted" className="mb-1">Default (15px)</Text>
+        <Input size="default" defaultValue="15px text size" />
+      </div>
+      <div>
+        <Text size="xs" tone="muted" className="mb-1">Large (15px)</Text>
+        <Input size="lg" defaultValue="Also 15px text size" />
+      </div>
     </div>
   ),
 };

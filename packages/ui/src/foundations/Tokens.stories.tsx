@@ -25,7 +25,7 @@ export default meta;
 type Story = StoryObj;
 
 const surfaceStyle: React.CSSProperties = {
-  background: '#0A0A0B',
+  background: '#000000',
   color: '#E5E5E7',
   fontFamily: "'Geist Sans', system-ui, sans-serif",
   padding: '2.5rem',
@@ -51,7 +51,7 @@ const ColorGrid = ({ palette }: { palette: Record<string, string> }) => (
     {Object.entries(palette).map(([name, value]) => (
       <div key={name} style={{ borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ height: '96px', background: value }} />
-        <div style={{ padding: '0.75rem', fontSize: '0.85rem', background: 'rgba(17,17,19,0.8)', display: 'grid', gap: '0.25rem' }}>
+        <div style={{ padding: '0.75rem', fontSize: '0.85rem', background: 'rgba(0,0,0,0.8)', display: 'grid', gap: '0.25rem' }}>
           <span style={{ fontWeight: 600 }}>{name}</span>
           <code style={{ color: 'rgba(229, 229, 231, 0.7)' }}>{value}</code>
         </div>
@@ -171,7 +171,7 @@ const tableStyle: React.CSSProperties = {
   width: '100%',
   borderCollapse: 'collapse',
   fontSize: '0.85rem',
-  background: 'rgba(17,17,19,0.6)',
+  background: 'rgba(0,0,0,0.6)',
 };
 
 const TokensOverview = () => (
@@ -180,7 +180,7 @@ const TokensOverview = () => (
       <h1 style={{ fontSize: '2rem', fontWeight: 600 }}>HIVE Token Overview</h1>
       <p style={{ color: 'rgba(229,229,231,0.75)', fontSize: '1rem' }}>
         Use this catalog to reference the canonical design tokens for color, typography, spacing, motion, and foundational styles.
-        Gold (`#FFD700`) is reserved for focus rings, verification, and Celebrate/Warm accents—never primary buttons.
+        Gold (`#FFD700`) is reserved for primary actions and brand accents.
       </p>
     </header>
 
