@@ -27,7 +27,6 @@ import {
   Badge,
   Button,
 } from '../primitives';
-import { ActivityBar } from '../primitives/ActivityBar';
 
 // Import territory config from SpaceCard
 import { type SpaceTerritory, territoryConfig } from './SpaceCard';

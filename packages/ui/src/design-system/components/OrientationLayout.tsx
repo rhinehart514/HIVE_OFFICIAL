@@ -275,7 +275,7 @@ export function OrientationAvatar({
         <div
           className="w-full h-full flex items-center justify-center"
           style={{
-            background: 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
+            background: 'rgba(255,255,255,0.04)',
           }}
         >
           <span className={`${textSize} font-semibold text-white/30`}>

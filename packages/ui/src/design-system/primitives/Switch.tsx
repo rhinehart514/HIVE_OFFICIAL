@@ -102,7 +102,7 @@ const Switch = React.forwardRef<
       className={cn(switchVariants({ size }), className)}
       style={{
         background: isChecked
-          ? 'linear-gradient(90deg, var(--life-gold-active) 0%, var(--life-gold) 100%)'
+          ? '#FFD700'
           : 'var(--bg-muted)',
       }}
       {...props}

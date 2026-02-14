@@ -137,7 +137,7 @@ export function ProfileHero({
               <div
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)',
+                  background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
                 }}
               >

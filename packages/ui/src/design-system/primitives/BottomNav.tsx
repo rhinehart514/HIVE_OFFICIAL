@@ -19,19 +19,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
-// LOCKED: Glass surface for container
-const glassContainerSurface = {
-  background: 'linear-gradient(180deg, rgba(20,19,18,0.95) 0%, rgba(10,10,9,0.98) 100%)',
-  backdropFilter: 'blur(20px)',
-  WebkitBackdropFilter: 'blur(20px)',
-  borderTop: '1px solid rgba(255,255,255,0.06)',
-};
+// Container: frosted dark bar
+const containerClass = 'bg-black/95 backdrop-blur-xl border-t border-white/[0.06]';
 
 // LOCKED: Glass pill surface for active item
-const glassPillSurface = {
-  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
-};
+// Active pill: flat bg, no gradient
+const activePillClass = "bg-white/[0.08]";
 
 // LOCKED: Spring animation config
 const springConfig = {
@@ -175,8 +168,7 @@ const BottomNavItemComponent = React.forwardRef<
     <button
       ref={ref}
       type="button"
-      className={cn(bottomNavItemVariants({ active: isActive }))}
-      style={isActive ? glassPillSurface : undefined}
+      className={cn(bottomNavItemVariants({ active: isActive }), isActive && activePillClass)}
       onClick={onClick}
       disabled={item.disabled}
       aria-current={isActive ? 'page' : undefined}
@@ -233,8 +225,8 @@ const BottomNav = React.forwardRef<HTMLElement, BottomNavProps>(
     return (
       <nav
         ref={ref}
-        className={cn(bottomNavContainerVariants({ size }), className)}
-        style={{ ...glassContainerSurface, ...style }}
+        className={cn(bottomNavContainerVariants({ size }), containerClass, className)}
+        style={style}
         role="navigation"
         aria-label="Main navigation"
         {...props}
@@ -281,8 +273,7 @@ const BottomNav = React.forwardRef<HTMLElement, BottomNavProps>(
             return (
               <React.Fragment key={item.value}>
                 {renderItem(item, {
-                  className: cn(bottomNavItemVariants({ active: isActive })),
-                  style: isActive ? glassPillSurface : undefined,
+                  className: cn(bottomNavItemVariants({ active: isActive }), isActive && activePillClass),
                   isActive,
                   onClick: handleClick,
                   children: itemChildren,
@@ -337,6 +328,4 @@ export {
   bottomNavItemVariants,
   bottomNavBadgeVariants,
   // Export style helpers
-  glassContainerSurface,
-  glassPillSurface as bottomNavGlassPillSurface,
 };

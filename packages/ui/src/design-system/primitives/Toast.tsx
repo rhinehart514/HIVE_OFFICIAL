@@ -16,11 +16,7 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
-// LOCKED: Apple Glass Dark surface (slightly more opaque for toast)
-const toastSurface = {
-  background: 'linear-gradient(135deg, rgba(32,32,32,0.98) 0%, rgba(22,22,22,0.96) 100%)',
-  boxShadow: '0 0 0 1px rgba(255,255,255,0.1), 0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
-};
+const toastSurfaceClass = 'bg-[#080808] border border-white/[0.06] shadow-[0_12px_40px_rgba(0,0,0,0.5)]';
 
 const toastVariants = cva(
   [
@@ -153,17 +149,16 @@ const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
 
     const currentProgress = progress ?? autoProgress;
 
-    // Error variant gets red glow
-    const errorSurface = variant === 'error' ? {
-      ...toastSurface,
-      boxShadow: '0 0 0 1px rgba(239,68,68,0.2), 0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
-    } : toastSurface;
-
     return (
       <div
         ref={ref}
-        className={cn(toastVariants({ variant }), className)}
-        style={{ ...errorSurface, ...style }}
+        className={cn(
+          toastVariants({ variant }),
+          toastSurfaceClass,
+          variant === 'error' && 'border-red-500/20',
+          className
+        )}
+        style={style}
         role="alert"
         {...props}
       >

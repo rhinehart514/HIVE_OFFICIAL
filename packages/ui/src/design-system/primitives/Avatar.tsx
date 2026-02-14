@@ -48,11 +48,8 @@ const avatarImageStyles = cn(
   'aspect-square h-full w-full object-cover'
 );
 
-// LOCKED: Glass fallback style
-const glassFallbackStyle = {
-  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
-};
+// Flat fallback — no gradient
+const fallbackBgClass = 'bg-white/[0.06]';
 
 const avatarFallbackStyles = cn(
   'flex h-full w-full items-center justify-center',
@@ -126,10 +123,10 @@ const AvatarFallback = React.forwardRef<
     className={cn(
       avatarFallbackStyles,
       avatarFallbackSizeVariants({ size }),
+      fallbackBgClass,
       className
     )}
-    // LOCKED: Glass fallback style
-    style={{ ...glassFallbackStyle, ...style }}
+    style={style}
     {...props}
   />
 ));

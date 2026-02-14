@@ -33,10 +33,8 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../pri
 // ============================================
 
 // LOCKED: Glass pill surface for active tab
-const glassPillSurface = {
-  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
-};
+// Active pill: flat bg, no gradient
+const activePillClass = "bg-white/[0.08]";
 
 // LOCKED: Spring animation config
 const springConfig = {
@@ -184,9 +182,8 @@ const BoardTabs = React.forwardRef<HTMLDivElement, BoardTabsProps>(
               {/* Sliding active indicator */}
               {activeTabRect && (
                 <motion.div
-                  className="absolute inset-y-0 rounded-full pointer-events-none"
+                  className="absolute inset-y-0 rounded-full pointer-events-none bg-white/[0.08]"
                   style={{
-                    ...glassPillSurface,
                     width: activeTabRect.width,
                     left: activeTabRect.left,
                   }}

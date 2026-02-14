@@ -18,11 +18,8 @@ import * as React from 'react';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '../../lib/utils';
 
-// LOCKED: Apple Glass Dark surface
-const tooltipSurface = {
-  background: 'linear-gradient(135deg, rgba(28,28,28,0.98) 0%, rgba(18,18,18,0.95) 100%)',
-  boxShadow: '0 0 0 1px rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
-};
+// Flat tooltip surface
+const tooltipClass = 'bg-[#080808] border border-white/[0.06] shadow-[0_8px_24px_rgba(0,0,0,0.5)]';
 
 // Types
 export interface TooltipProps
@@ -57,9 +54,8 @@ const TooltipContent = React.forwardRef<
         'z-50',
         'px-3 py-1.5',
         'text-xs font-medium text-white',
-        // LOCKED: rounded-lg (8px)
         'rounded-lg',
-        // LOCKED: Scale+Fade animation
+        tooltipClass,
         'animate-in fade-in-0 zoom-in-95',
         'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
         'data-[side=bottom]:slide-in-from-top-1',
@@ -68,7 +64,6 @@ const TooltipContent = React.forwardRef<
         'data-[side=top]:slide-in-from-bottom-1',
         className
       )}
-      style={tooltipSurface}
       {...props}
     >
       {children}
@@ -112,5 +107,4 @@ export {
   TooltipContent,
   TooltipProvider,
   SimpleTooltip,
-  tooltipSurface,
 };

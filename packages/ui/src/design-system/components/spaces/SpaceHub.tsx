@@ -20,8 +20,6 @@ import {
   Card,
   Button,
   Text,
-  LiveDotOnly,
-  ActivityHeartbeatStrip,
 } from '../../primitives';
 import { easingArrays } from '@hive/tokens';
 
@@ -210,7 +208,7 @@ export function SpaceHub({
                 <div
                   className="w-full h-full flex items-center justify-center"
                   style={{
-                    background: 'linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
+                    background: 'rgba(255,255,255,0.04)',
                   }}
                 >
                   <span className="text-4xl font-semibold text-white/30">
@@ -272,7 +270,7 @@ export function SpaceHub({
             {/* Online indicator - gold accent for live presence */}
             {onlineCount !== undefined && onlineCount > 0 && (
               <div className="flex items-center gap-2">
-                <LiveDotOnly size="sm" animate glowIntensity="subtle" />
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-sm text-white/50">
                   <span className="text-[var(--color-accent-gold,#FFD700)] font-medium">{onlineCount}</span>
                   {' '}online now
@@ -351,7 +349,7 @@ export function SpaceHub({
                     Chat
                   </span>
                   {modeData?.chat?.typingCount && modeData.chat.typingCount > 0 && (
-                    <LiveDotOnly size="xs" animate glowIntensity="strong" />
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   )}
                 </div>
                 <span className="text-white/30">→</span>
@@ -494,7 +492,7 @@ export function SpaceHub({
                         </Text>
                         {modeData?.members?.onlineCount && modeData.members.onlineCount > 0 && (
                           <div className="flex items-center gap-1.5">
-                            <LiveDotOnly size="xs" animate glowIntensity="subtle" />
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                             <Text size="xs" className="text-[var(--color-accent-gold,#FFD700)]">
                               {modeData.members.onlineCount} online now
                             </Text>

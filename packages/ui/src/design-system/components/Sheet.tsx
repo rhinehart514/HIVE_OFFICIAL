@@ -79,7 +79,7 @@ const SheetContent = React.forwardRef<
         className
       )}
       style={{
-        background: 'linear-gradient(135deg, rgba(28,28,28,0.98) 0%, rgba(18,18,18,0.95) 100%)',
+        background: '#080808',
         boxShadow: '-8px 0 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
         ...style,
       }}

@@ -23,23 +23,11 @@ import { X } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
-// LOCKED: Glass surfaces (matches Badge primitive)
-const surfaces = {
-  default: {
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.1)',
-  },
-  gold: {
-    background: 'linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(255,215,0,0.06) 100%)',
-    boxShadow: 'inset 0 1px 0 rgba(255,215,0,0.15), 0 0 12px rgba(255,215,0,0.15)',
-    border: '1px solid rgba(255,215,0,0.3)',
-  },
-  muted: {
-    background: 'rgba(255,255,255,0.02)',
-    boxShadow: 'none',
-    border: '1px solid rgba(255,255,255,0.06)',
-  },
+// Flat surface classes — no gradients
+const surfaceClasses = {
+  default: 'bg-white/[0.06]',
+  gold: 'bg-[#FFD700]/10',
+  muted: 'bg-white/[0.02] border border-white/[0.06]',
 };
 
 const tagVariants = cva(
@@ -109,7 +97,7 @@ const Tag = React.forwardRef<HTMLButtonElement, TagProps>(
   ) => {
     // Selected prop overrides variant to gold
     const variant = selected ? 'gold' : (variantProp ?? 'default');
-    const surface = surfaces[variant];
+    const surfaceCls = surfaceClasses[variant];
 
     const handleRemove = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -121,8 +109,8 @@ const Tag = React.forwardRef<HTMLButtonElement, TagProps>(
         ref={ref}
         type="button"
         disabled={disabled}
-        className={cn(tagVariants({ variant, size }), className)}
-        style={{ ...surface, ...style }}
+        className={cn(tagVariants({ variant, size }), surfaceCls, className)}
+        style={style}
         aria-pressed={selected}
         {...props}
       >

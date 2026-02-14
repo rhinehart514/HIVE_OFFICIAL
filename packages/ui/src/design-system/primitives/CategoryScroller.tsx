@@ -20,9 +20,8 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 // LOCKED: Glass pill surface for hover
-const glassPillSurface = {
-  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)',
-};
+// Active pill: flat bg, no gradient
+const activePillClass = "bg-white/[0.08]";
 
 // Container variants
 const categoryScrollerContainerVariants = cva(

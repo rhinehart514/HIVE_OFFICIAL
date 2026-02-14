@@ -18,10 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
-// LOCKED: Glass card surface
-const glassCardSurface = {
-  background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)',
-};
+const surfaceClass = 'bg-white/[0.02]';
 
 // LOCKED: Spring animation
 const springConfig = {
@@ -204,8 +201,7 @@ const DeploymentTargetCard: React.FC<{
       className={cn(deploymentTargetCardVariants({
         selected: isSelected,
         disabled: isDeploying
-      }))}
-      style={glassCardSurface}
+      }), surfaceClass)}
     >
       <div className="flex items-start gap-3">
         <SpaceAvatar name={target.name} avatarUrl={target.avatarUrl} />
@@ -376,5 +372,4 @@ export {
   deploymentTargetCardVariants,
   surfacePillVariants as deploymentSurfacePillVariants,
   // Export style helpers
-  glassCardSurface as deploymentTargetGlassSurface,
 };

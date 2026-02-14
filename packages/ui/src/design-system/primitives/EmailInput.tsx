@@ -1,115 +1,65 @@
 'use client';
 
 /**
- * EmailInput Primitive - LOCKED 2026-01-12
+ * EmailInput Primitive
+ * REFINED: Feb 14, 2026 - Premium minimal, matches Input
  *
  * Composite: Input + domain suffix
  * For campus email entry: "username" + "@buffalo.edu"
- *
- * Uses Pure Float style from Input primitive
- * Suffix is non-editable, visually integrated
  */
 
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
-// LOCKED: Pure Float shadow recipes (from Input primitive)
-const shadowRecipes = {
-  resting: '0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)',
-  focused: '0 6px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12)',
-  error: '0 0 20px rgba(239,68,68,0.15), 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
-};
-
-const backgroundRecipes = {
-  resting: 'linear-gradient(180deg, rgba(48,48,48,1) 0%, rgba(38,38,38,1) 100%)',
-  focused: 'linear-gradient(180deg, rgba(56,56,56,1) 0%, rgba(44,44,44,1) 100%)',
-  error: 'linear-gradient(180deg, rgba(55,40,42,1) 0%, rgba(42,32,34,1) 100%)',
-};
-
 export interface EmailInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'> {
-  /** Domain suffix (e.g., "buffalo.edu") */
   domain: string;
-  /** Error state styling */
   error?: boolean;
-  /** Size variant */
   size?: 'sm' | 'default' | 'lg';
 }
 
 const sizeClasses = {
   sm: 'h-10 text-sm',
-  default: 'h-12 text-base',
-  lg: 'h-14 text-lg',
+  default: 'h-12 text-[15px]',
+  lg: 'h-14 text-[15px]',
 };
 
 const EmailInput = React.forwardRef<HTMLInputElement, EmailInputProps>(
-  ({ className, domain, error, size = 'default', onFocus, onBlur, ...props }, ref) => {
-    const [isFocused, setIsFocused] = React.useState(false);
-
-    const handleFocus = React.useCallback(
-      (e: React.FocusEvent<HTMLInputElement>) => {
-        setIsFocused(true);
-        onFocus?.(e);
-      },
-      [onFocus]
-    );
-
-    const handleBlur = React.useCallback(
-      (e: React.FocusEvent<HTMLInputElement>) => {
-        setIsFocused(false);
-        onBlur?.(e);
-      },
-      [onBlur]
-    );
-
-    // LOCKED: Pure Float style with shadow-based focus
-    const containerStyles = React.useMemo(() => {
-      if (error) {
-        return {
-          background: backgroundRecipes.error,
-          boxShadow: shadowRecipes.error,
-        };
-      }
-      return {
-        background: isFocused ? backgroundRecipes.focused : backgroundRecipes.resting,
-        boxShadow: isFocused ? shadowRecipes.focused : shadowRecipes.resting,
-      };
-    }, [error, isFocused]);
-
-    return (
-      <div
+  ({ className, domain, error, size = 'default', ...props }, ref) => (
+    <div
+      className={cn(
+        'flex items-center',
+        'bg-[#080808]',
+        'border border-white/[0.06]',
+        'rounded-[12px]',
+        'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
+        'focus-within:border-white/[0.15] focus-within:bg-[#0D0D0D]',
+        error && 'border-[#EF4444]',
+        sizeClasses[size],
+        className
+      )}
+    >
+      <input
+        ref={ref}
+        type="text"
+        autoComplete="username"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         className={cn(
-          'flex items-center rounded-xl backdrop-blur-sm',
-          'transition-all duration-150 ease-out',
-          sizeClasses[size],
-          className
+          'flex-1 bg-transparent pl-4 pr-1',
+          'text-white placeholder:text-white/40',
+          'outline-none border-0',
+          'disabled:opacity-40 disabled:cursor-not-allowed'
         )}
-        style={containerStyles}
-      >
-        <input
-          ref={ref}
-          type="text"
-          autoComplete="username"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          className={cn(
-            'flex-1 bg-transparent pl-4 pr-1',
-            'text-white placeholder:text-white/30',
-            'outline-none border-0',
-            'disabled:opacity-50 disabled:cursor-not-allowed'
-          )}
-          aria-invalid={error}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          {...props}
-        />
-        <span className="pr-4 text-white/50 font-medium select-none">
-          @{domain}
-        </span>
-      </div>
-    );
-  }
+        aria-invalid={error}
+        {...props}
+      />
+      <span className="pr-4 text-white/40 font-medium select-none">
+        @{domain}
+      </span>
+    </div>
+  )
 );
 
 EmailInput.displayName = 'EmailInput';

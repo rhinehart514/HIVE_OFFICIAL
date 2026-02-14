@@ -387,8 +387,6 @@ export {
   bottomNavContainerVariants,
   bottomNavItemVariants,
   bottomNavBadgeVariants,
-  glassContainerSurface as bottomNavGlassContainerSurface,
-  bottomNavGlassPillSurface,
   type BottomNavItem,
   type BottomNavProps,
   type BottomNavItemRenderProps,
@@ -409,18 +407,6 @@ export {
 // SPACE PRIMITIVES (Phase 13)
 // ============================================
 
-export {
-  SpacePreviewModal,
-  spacePreviewModalContainerVariants,
-  spacePreviewModalHeaderVariants,
-  spacePreviewModalBodyVariants,
-  spacePreviewModalFooterVariants,
-  SpacePreviewStatsRow,
-  SpacePreviewCloseButton,
-  spacePreviewModalGlassSurface,
-  type SpacePreviewModalProps,
-} from './SpacePreviewModal';
-
 // ============================================
 // HIVELAB PRIMITIVES (Phase 14)
 // ============================================
@@ -433,7 +419,6 @@ export {
   deploymentTargetContainerVariants,
   deploymentTargetCardVariants,
   deploymentSurfacePillVariants,
-  deploymentTargetGlassSurface,
   type DeploymentSurface,
   type DeploymentSpaceTarget,
   type DeploymentTargetProps,

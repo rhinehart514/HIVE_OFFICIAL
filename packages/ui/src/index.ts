@@ -613,7 +613,6 @@ export type { ProgressProps, CircularProgressProps } from "./design-system/primi
 export { CommandPalette } from "./design-system/components/CommandPalette";
 export type { CommandPaletteProps, CommandPaletteItem } from "./design-system/components/CommandPalette";
 
-
 // HiveLogo Component and Shell Icons (standalone for use anywhere)
 export {
   HiveLogo,
@@ -651,9 +650,6 @@ export { AuthSuccessState, AuthSuccessStateCompact } from "./design-system/compo
 export type { AuthSuccessStateProps } from "./design-system/components/AuthSuccessState";
 
 // Signature Expression Components (Jan 2026 - Migrated to design-system)
-// AnimatedCounter - Use LiveCounter from design-system/primitives
-export { LiveCounter, LiveCounterGroup, liveCounterVariants, formatCompact } from "./design-system/primitives/LiveCounter";
-export type { LiveCounterProps, LiveCounterGroupProps } from "./design-system/primitives/LiveCounter";
 
 // AvatarStack - Use AvatarGroup from design-system/primitives
 export { AvatarGroup, avatarGroupVariants } from "./design-system/primitives/AvatarGroup";
@@ -1021,15 +1017,6 @@ export type { IconProps } from "./design-system/primitives/Icon";
 // NOTE: MediaThumb, PercentBar, VoteBar, PostCard were in atomic/ (now deleted)
 // Use Card for post cards, Progress/ProgressBar for vote bars
 
-// Universal Shell (navigation)
-export { UniversalShell, SHELL_TOKENS } from "./shells/UniversalShell";
-export type {
-  UniversalShellProps,
-  SpaceData,
-  ToolData,
-  ShellMode,
-} from "./shells/UniversalShell";
-
 // Space Mobile Navigation
 export { SpaceMobileNav } from "./shells/SpaceMobileNav";
 export type { SpaceMobileNavProps, SpaceTab } from "./shells/SpaceMobileNav";
@@ -1291,9 +1278,6 @@ export type { BoardTabsProps, Board } from "./design-system/components/BoardTabs
 export { SpacePanel, SpacePanelSkeleton, NowSection, NextUpSection, PinnedSection } from "./design-system/components/SpacePanel";
 export type { SpacePanelProps, OnlineMember as SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from "./design-system/components/SpacePanel";
 
-// ActivityBar - 10-segment activity visualization
-export { ActivityBar } from "./design-system/primitives/ActivityBar";
-export type { ActivityBarProps } from "./design-system/primitives/ActivityBar";
 
 // Premium UI Components - REMOVED (Use design-system components)
 // NOTE: PremiumHeader - Use SpaceHeader from design-system
@@ -1482,7 +1466,6 @@ export { PageHeader, SectionHeader } from "./layout/page-header";
 export type { PageHeaderProps, SectionHeaderProps } from "./layout/page-header";
 export { CollapsiblePageHeader } from "./layout/collapsible-page-header";
 export type { CollapsiblePageHeaderProps, TabItem as HeaderTabItem } from "./layout/collapsible-page-header";
-
 
 // HiveLab: Deployment modal
 export {
@@ -1946,7 +1929,6 @@ export {
   type ReportContentType,
   type ReportCategory,
 } from "./design-system/components/moderation";
-
 
 // ============================================
 // LEGACY TYPE ALIASES (Backwards Compatibility)

@@ -10,7 +10,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-import UniversalShell from '../shells/UniversalShell';
+// UniversalShell removed — replaced by AppShell
 import { NotificationProvider } from '../systems/modal-toast-system';
 
 // HIVE Configuration
@@ -133,9 +133,9 @@ export const HiveProvider: React.FC<{
   };
 
   const content = withShell ? (
-    <UniversalShell {...shellProps}>
+    <div>
       {children}
-    </UniversalShell>
+    </div>
   ) : children;
 
   return (

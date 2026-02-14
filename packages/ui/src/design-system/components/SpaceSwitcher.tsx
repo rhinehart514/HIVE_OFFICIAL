@@ -264,7 +264,7 @@ export function SpaceSwitcher({
             <div
               className="relative rounded-2xl overflow-hidden"
               style={{
-                background: 'linear-gradient(180deg, rgba(30,30,30,0.98) 0%, rgba(20,20,20,0.98) 100%)',
+                background: '#080808',
                 boxShadow: `
                   0 0 0 1px rgba(255,255,255,0.08),
                   0 25px 50px -12px rgba(0,0,0,0.5),
