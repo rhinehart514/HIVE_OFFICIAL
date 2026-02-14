@@ -9,7 +9,7 @@ export function LandingHeader() {
   const enterHref = buildUbEnterUrl(searchParams.get('redirect'));
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-xl">
       <div className="px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2" aria-label="HIVE home">

@@ -13,15 +13,15 @@ export function CTASection() {
   const browseHref = buildUbEnterUrl(searchParams.get('redirect'), '/discover');
 
   return (
-    <section className="py-28 md:py-40 px-6">
+    <section className="py-32 md:py-48 px-6 bg-black">
       <div className="max-w-3xl mx-auto text-center">
         <h2
           className={`${clashDisplay} text-[clamp(32px,6vw,56px)] font-semibold leading-tight text-white mb-6`}
         >
-          Your club is already here.
+          Your club&apos;s already here.
         </h2>
 
-        <p className="text-lg text-white/50 mb-10 max-w-xl mx-auto">
+        <p className="text-lg text-white/40 mb-10 max-w-xl mx-auto">
           Claim your space, verify leadership, and start running your org before the next meeting.
         </p>
 
@@ -36,7 +36,7 @@ export function CTASection() {
           </Link>
           <Link
             href={browseHref}
-            className="px-8 py-4 bg-[#1A1A1A] text-white text-base font-medium rounded-full border border-white/[0.1] hover:bg-white/[0.06] transition-colors"
+            className="px-8 py-4 bg-white/[0.06] text-white text-base font-medium rounded-full hover:bg-white/[0.1] transition-colors"
           >
             Browse spaces
           </Link>
