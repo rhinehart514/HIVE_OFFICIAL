@@ -2,20 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Bell, Search, Sparkles, User } from 'lucide-react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
-
-export type ShellActiveView = 'home' | 'space' | 'profile';
-
-/* ── HIVE Mark ─────────────────────────────────────────── */
 
 function HiveMark() {
   return (
     <Link
       href="/discover"
-      className="flex items-center gap-2 px-5 py-5"
+      className="flex items-center gap-2 rounded-full px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
       aria-label="HIVE home"
     >
       <span className="h-5 w-5 rounded-full bg-[#FFD700]" aria-hidden />
@@ -26,65 +22,79 @@ function HiveMark() {
   );
 }
 
-/* ── Desktop Nav Item ──────────────────────────────────── */
-
-function DesktopNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
+function TopBarNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
   return (
     <Link
       href={item.href}
       className={cn(
-        'relative flex items-center gap-2.5 px-5 py-2 text-[14px] font-medium transition-colors',
+        'relative flex h-14 items-center px-2 text-sm font-medium transition-colors',
         isActive ? 'text-white' : 'text-white/50 hover:text-white'
       )}
     >
+      <span>{item.label}</span>
       {isActive && (
         <span
-          className="absolute left-2 h-1.5 w-1.5 rounded-full bg-[#FFD700]"
+          className="absolute bottom-2 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#FFD700]"
           aria-hidden
         />
       )}
-      <span>{item.label}</span>
     </Link>
   );
 }
 
-/* ── Desktop Sidebar ───────────────────────────────────── */
-
-function DesktopSidebar() {
+function TopBar() {
   const pathname = usePathname();
   const { hasCampus } = useCampusMode();
   const navItems = getNavItems(hasCampus);
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[200px] flex-col bg-black md:flex">
-      <HiveMark />
+    <header className="fixed inset-x-0 top-0 z-40 hidden h-14 border-b border-white/[0.06] bg-black md:flex">
+      <div className="mx-auto flex h-full w-full max-w-[1200px] items-center gap-8 px-6">
+        <HiveMark />
 
-      <nav className="flex flex-col gap-0.5 px-0 py-2">
-        {navItems.map((item) => (
-          <DesktopNavItem
-            key={item.id}
-            item={item}
-            isActive={isNavItemActive(item, pathname)}
-          />
-        ))}
-      </nav>
+        <nav className="flex h-full items-center gap-4">
+          {navItems.map((item) => (
+            <TopBarNavItem
+              key={item.id}
+              item={item}
+              isActive={isNavItemActive(item, pathname)}
+            />
+          ))}
+        </nav>
 
-      <div className="flex-1" />
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            className="flex h-9 items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.04] px-3 text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+            <span className="hidden text-sm font-medium lg:inline">Search</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em]">
+              cmd+K
+            </span>
+          </button>
 
-      <div className="px-4 pb-5">
-        <Link
-          href="/lab/new"
-          className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#FFD700] px-4 text-[13px] font-medium text-black transition-opacity hover:opacity-90"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Create
-        </Link>
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.08] text-white/60"
+            aria-label="Account"
+          >
+            <User className="h-4 w-4" />
+          </button>
+        </div>
       </div>
-    </aside>
+    </header>
   );
 }
-
-/* ── Mobile Bottom Bar ─────────────────────────────────── */
 
 function MobileNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
   const Icon = item.icon;
@@ -113,17 +123,58 @@ function MobileNavItem({ item, isActive }: { item: NavItem; isActive: boolean })
   );
 }
 
+function MobileCreateItem({ isActive }: { isActive: boolean }) {
+  return (
+    <Link
+      href="/lab/new"
+      className="flex flex-1 flex-col items-center gap-1 py-1.5 text-white"
+      aria-label="Create"
+    >
+      <span
+        className={cn(
+          'flex h-11 w-11 items-center justify-center rounded-full border bg-white/[0.04] transition-colors',
+          isActive
+            ? 'border-[#FFD700] ring-2 ring-[#FFD700]/35'
+            : 'border-[#FFD700]/70 ring-1 ring-[#FFD700]/20'
+        )}
+      >
+        <Sparkles className="h-5 w-5 text-[#FFD700]" />
+      </span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-white/80">
+        Create
+      </span>
+    </Link>
+  );
+}
+
 function MobileBottomBar() {
   const pathname = usePathname();
   const { hasCampus } = useCampusMode();
   const navItems = getNavItems(hasCampus);
+  const leadingItems = navItems.slice(0, 2);
+  const trailingItems = navItems.slice(2);
+  const isCreateActive = /^\/lab(\/|$)/.test(pathname);
 
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 flex items-center border-t border-white/[0.06] md:hidden"
-      style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
+      style={{
+        background: 'rgba(0,0,0,0.8)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      }}
     >
-      {navItems.map((item) => (
+      {leadingItems.map((item) => (
+        <MobileNavItem
+          key={item.id}
+          item={item}
+          isActive={isNavItemActive(item, pathname)}
+        />
+      ))}
+
+      <MobileCreateItem isActive={isCreateActive} />
+
+      {trailingItems.map((item) => (
         <MobileNavItem
           key={item.id}
           item={item}
@@ -134,7 +185,5 @@ function MobileBottomBar() {
   );
 }
 
-/* ── Exports ───────────────────────────────────────────── */
-
-export { DesktopSidebar, MobileBottomBar };
-export default DesktopSidebar;
+export { TopBar, MobileBottomBar };
+export default TopBar;
