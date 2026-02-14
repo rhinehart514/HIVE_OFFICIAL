@@ -7,6 +7,7 @@
 
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
+import { sendPushToUser } from '@/lib/server-push-notifications';
 import type { NotificationCategory } from '@/lib/notification-service';
 
 interface NotificationDocument {
@@ -190,59 +191,31 @@ async function sendEmailNotification(
 }
 
 /**
- * Send push notification via Firebase Cloud Messaging
+ * Send push notification via server-side FCM service
  */
 async function sendPushNotification(
-  fcmTokens: string[],
+  userId: string,
   notification: NotificationDocument
 ): Promise<{ success: boolean; error?: string }> {
-  if (fcmTokens.length === 0) {
-    return { success: false, error: 'No FCM tokens' };
-  }
-
   try {
-    const admin = require('firebase-admin');
-    const messaging = admin.messaging();
-
-    const message = {
-      notification: {
-        title: notification.title,
-        body: notification.body || undefined,
-      },
+    const result = await sendPushToUser(userId, {
+      title: notification.title,
+      body: notification.body || undefined,
       data: {
         type: notification.type,
         category: notification.category,
         actionUrl: notification.actionUrl || '',
         timestamp: notification.timestamp,
       },
-      tokens: fcmTokens,
-    };
-
-    const response = await messaging.sendEachForMulticast(message);
+    });
 
     logger.info('Push notification sent', {
       notificationType: notification.type,
-      successCount: response.successCount,
-      failureCount: response.failureCount,
+      successCount: result.successCount,
+      failureCount: result.failureCount,
     });
 
-    // Remove invalid tokens
-    if (response.failureCount > 0) {
-      const invalidTokens: string[] = [];
-      response.responses.forEach((resp: { success: boolean; error?: { code: string } }, idx: number) => {
-        if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
-          invalidTokens.push(fcmTokens[idx]);
-        }
-      });
-
-      if (invalidTokens.length > 0) {
-        logger.info('Removing invalid FCM tokens', { count: invalidTokens.length });
-        // Clean up invalid tokens asynchronously
-        cleanupInvalidTokens(notification.userId, invalidTokens).catch(() => {});
-      }
-    }
-
-    return { success: response.successCount > 0 };
+    return { success: result.success };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Failed to send push notification', {
@@ -250,27 +223,6 @@ async function sendPushNotification(
       notificationType: notification.type,
     });
     return { success: false, error: errorMessage };
-  }
-}
-
-/**
- * Remove invalid FCM tokens from user document
- */
-async function cleanupInvalidTokens(userId: string, invalidTokens: string[]): Promise<void> {
-  try {
-    const userRef = dbAdmin.collection('users').doc(userId);
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) return;
-
-    const currentTokens = userDoc.data()?.fcmTokens || [];
-    const validTokens = currentTokens.filter((t: string) => !invalidTokens.includes(t));
-
-    await userRef.update({ fcmTokens: validTokens });
-  } catch (error) {
-    logger.warn('Failed to cleanup invalid FCM tokens', {
-      error: error instanceof Error ? error.message : String(error),
-      userId,
-    });
   }
 }
 
@@ -431,9 +383,9 @@ export async function deliverNotification(
       result.emailError = emailResult.error;
     }
 
-    // Send push if enabled and tokens exist
-    if (fcmTokens.length > 0 && isPushEnabled(preferences)) {
-      const pushResult = await sendPushNotification(fcmTokens, notification);
+    // Send push if enabled (token lookup happens inside sendPushNotification)
+    if (isPushEnabled(preferences)) {
+      const pushResult = await sendPushNotification(userId, notification);
       result.pushSent = pushResult.success;
       result.pushError = pushResult.error;
     }

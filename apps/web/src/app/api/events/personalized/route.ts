@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
-import { withAuth, type AuthContext } from '@/lib/api-auth-middleware';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { isContentHidden } from '@/lib/content-moderation';
 import {
   getEventEndDate,
@@ -194,10 +194,12 @@ function calculateInterestMatch(
 }
 
 async function handler(
-  request: NextRequest,
-  context: AuthContext
-): Promise<NextResponse> {
-  const { userId, campusId } = context;
+  request: AuthenticatedRequest,
+  _context: unknown,
+  respond: unknown
+): Promise<Response> {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request) || 'ub-buffalo';
 
   try {
     // Parse query params
@@ -494,6 +496,6 @@ async function handler(
   }
 }
 
-const _GET = withAuth(handler);
+const _GET = withAuthAndErrors(handler);
 
-export const GET = withCache(_GET, 'SHORT');
+export const GET = withCache(_GET as (req: NextRequest, ctx: unknown) => Promise<Response>, 'SHORT');

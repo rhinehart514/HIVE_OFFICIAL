@@ -1,10 +1,9 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
-import { getCampusIdFromAuth } from "@/lib/campus-context";
-import { withAuth } from '@/lib/api-auth-middleware';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { getServerProfileRepository } from '@hive/core/server';
 import { withCache } from '../../../../lib/cache-headers';
 
@@ -17,14 +16,14 @@ const mySpacesQuerySchema = z.object({
  * Get current user's spaces - joined, owned, favorited
  * Updated to use flat collection structure
  */
-const _GET = withAuth(async (request, authContext) => {
+const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
   try {
     const url = new URL(request.url);
     const queryParams = Object.fromEntries(url.searchParams.entries());
     const { includeInactive, limit } = mySpacesQuerySchema.parse(queryParams);
 
-    const userId = authContext.userId;
-    const campusId = getCampusIdFromAuth(authContext);
+    const userId = getUserId(request);
+    const campusId = getCampusId(request) || 'ub-buffalo';
 
     // Try DDD repository first for profile validation
     const profileRepository = getServerProfileRepository();
@@ -304,8 +303,6 @@ const _GET = withAuth(async (request, authContext) => {
       { status: HttpStatus.INTERNAL_SERVER_ERROR }
     );
   }
-}, {
-  operation: 'get_my_spaces'
 });
 
-export const GET = withCache(_GET, 'SHORT');
+export const GET = withCache(_GET as (req: NextRequest, ctx: unknown) => Promise<Response>, 'SHORT');

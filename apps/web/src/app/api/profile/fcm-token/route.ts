@@ -3,16 +3,17 @@
  *
  * POST /api/profile/fcm-token - Save FCM token to user profile
  * DELETE /api/profile/fcm-token - Remove FCM token from user profile
+ *
+ * Tokens are stored as an array on the users document: users/{userId}.fcmTokens
  */
 
-import type { NextRequest as _NextRequest } from 'next/server';
-import { withAuthValidationAndErrors } from '@/lib/middleware';
+import { withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { z } from 'zod';
 import { FieldValue } from 'firebase-admin/firestore';
 
 const FCMTokenSchema = z.object({
-  token: z.string().min(100, 'Invalid FCM token'),
+  token: z.string().min(10, 'Invalid FCM token'),
 });
 
 /**
@@ -20,27 +21,33 @@ const FCMTokenSchema = z.object({
  */
 export const POST = withAuthValidationAndErrors(
   FCMTokenSchema,
-  async (request, context, body, respond) => {
+  async (request, _context, body, respond) => {
+    const userId = getUserId(request as AuthenticatedRequest);
     const { token } = body;
-    const userId = (context as { auth: { userId: string } }).auth?.userId;
-
-    if (!userId) {
-      return respond.error('Authentication required', 'UNAUTHORIZED', { status: 401 });
-    }
 
     try {
-      // Generate a unique token ID based on device/browser fingerprint
-      // Using hash of token for simplicity
-      const tokenId = `web_${hashString(token).slice(0, 16)}`;
+      const userRef = dbAdmin.collection('users').doc(userId);
 
-      // Save token to user's fcmTokens map
-      await dbAdmin.collection('users').doc(userId).update({
-        [`fcmTokens.${tokenId}`]: token,
+      // Add token to array (arrayUnion avoids duplicates)
+      await userRef.update({
+        fcmTokens: FieldValue.arrayUnion(token),
         fcmTokensUpdatedAt: FieldValue.serverTimestamp(),
       });
 
-      return respond.success({ tokenId });
-    } catch {
+      return respond.success({ registered: true });
+    } catch (error) {
+      // If document doesn't exist, create with merge
+      if ((error as { code?: number }).code === 5) {
+        await dbAdmin.collection('users').doc(userId).set(
+          {
+            fcmTokens: [token],
+            fcmTokensUpdatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        return respond.success({ registered: true });
+      }
+
       return respond.error('Failed to save push token', 'INTERNAL_ERROR', { status: 500 });
     }
   }
@@ -51,33 +58,17 @@ export const POST = withAuthValidationAndErrors(
  */
 export const DELETE = withAuthValidationAndErrors(
   FCMTokenSchema,
-  async (request, context, body, respond) => {
+  async (request, _context, body, respond) => {
+    const userId = getUserId(request as AuthenticatedRequest);
     const { token } = body;
-    const userId = (context as { auth: { userId: string } }).auth?.userId;
-
-    if (!userId) {
-      return respond.error('Authentication required', 'UNAUTHORIZED', { status: 401 });
-    }
 
     try {
-      // Get current tokens to find the one to remove
-      const userDoc = await dbAdmin.collection('users').doc(userId).get();
-      const userData = userDoc.data();
+      const userRef = dbAdmin.collection('users').doc(userId);
 
-      if (userData?.fcmTokens) {
-        // Find token ID by value
-        const tokenEntry = Object.entries(userData.fcmTokens).find(
-          ([, value]) => value === token
-        );
-
-        if (tokenEntry) {
-          const [tokenId] = tokenEntry;
-          await dbAdmin.collection('users').doc(userId).update({
-            [`fcmTokens.${tokenId}`]: FieldValue.delete(),
-            fcmTokensUpdatedAt: FieldValue.serverTimestamp(),
-          });
-        }
-      }
+      await userRef.update({
+        fcmTokens: FieldValue.arrayRemove(token),
+        fcmTokensUpdatedAt: FieldValue.serverTimestamp(),
+      });
 
       return respond.success({ removed: true });
     } catch {
@@ -85,16 +76,3 @@ export const DELETE = withAuthValidationAndErrors(
     }
   }
 );
-
-/**
- * Simple hash function for creating token IDs
- */
-function hashString(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString(36);
-}

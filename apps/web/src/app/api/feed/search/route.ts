@@ -80,59 +80,69 @@ export const POST = withAuthValidationAndErrors(
 
       const postsSnapshot = await postsQuery.get();
       
+      // First pass: filter matching posts and collect IDs for batch fetch
+      const matchingPosts: Array<{ doc: typeof postsSnapshot.docs[0]; postData: ReturnType<typeof postsSnapshot.docs[0]['data']>; contentMatch: boolean; titleMatch: boolean }> = [];
+      const postAuthorIds = new Set<string>();
+      const postSpaceIds = new Set<string>();
+
       for (const doc of postsSnapshot.docs) {
         const postData = doc.data();
-        
-        // Text matching
         const content = (postData.content || '').toLowerCase();
         const title = (postData.title || '').toLowerCase();
-        
         const contentMatch = content.includes(queryLower);
         const titleMatch = title.includes(queryLower);
-        
         if (!contentMatch && !titleMatch) continue;
 
-        // Get author info
-        let author = null;
-        if (postData.authorId) {
-          try {
-            const authorDoc = await dbAdmin.collection('users').doc(postData.authorId).get();
-            if (authorDoc.exists) {
-              const authorData = authorDoc.data();
-              author = {
-                id: authorDoc.id,
-                name: authorData?.fullName || 'Unknown',
-                avatar: authorData?.photoURL || null,
-                handle: authorData?.handle || 'unknown',
-              };
-            }
-          } catch {
-            // Silently ignore author fetch errors - not critical to search results
-            logger.warn(
-      `Failed to fetch author info at /api/feed/search`
-    );
-          }
-        }
+        matchingPosts.push({ doc, postData, contentMatch, titleMatch });
+        if (postData.authorId) postAuthorIds.add(postData.authorId);
+        if (postData.spaceId) postSpaceIds.add(postData.spaceId);
+      }
 
-        // Get space info
-        let space = null;
-        if (postData.spaceId) {
-          try {
-            const spaceDoc = await dbAdmin.collection('spaces').doc(postData.spaceId).get();
-            if (spaceDoc.exists) {
-              const spaceData = spaceDoc.data();
-              space = {
-                id: spaceDoc.id,
-                name: spaceData?.name || 'Unknown Space',
-              };
-            }
-          } catch {
-            // Silently ignore space fetch errors - not critical to search results
-            logger.warn(
-      `Failed to fetch space info at /api/feed/search`
-    );
+      // Batch fetch authors and spaces (max 30 per Firestore 'in' query)
+      const postAuthorMap = new Map<string, Record<string, unknown>>();
+      if (postAuthorIds.size > 0) {
+        const refs = Array.from(postAuthorIds).map(id => dbAdmin.collection('users').doc(id));
+        try {
+          const docs = await dbAdmin.getAll(...refs);
+          for (const doc of docs) {
+            if (doc.exists) postAuthorMap.set(doc.id, doc.data() as Record<string, unknown>);
           }
+        } catch {
+          logger.warn('Failed to batch fetch authors at /api/feed/search');
         }
+      }
+
+      const postSpaceMap = new Map<string, Record<string, unknown>>();
+      if (postSpaceIds.size > 0) {
+        const refs = Array.from(postSpaceIds).map(id => dbAdmin.collection('spaces').doc(id));
+        try {
+          const docs = await dbAdmin.getAll(...refs);
+          for (const doc of docs) {
+            if (doc.exists) postSpaceMap.set(doc.id, doc.data() as Record<string, unknown>);
+          }
+        } catch {
+          logger.warn('Failed to batch fetch spaces at /api/feed/search');
+        }
+      }
+
+      // Second pass: build feed items using batch-fetched data
+      for (const { doc, postData, contentMatch, titleMatch } of matchingPosts) {
+        const content = (postData.content || '').toLowerCase();
+        const title = (postData.title || '').toLowerCase();
+
+        const authorData = postData.authorId ? postAuthorMap.get(postData.authorId) : null;
+        const author = authorData ? {
+          id: postData.authorId,
+          name: (authorData.fullName as string) || 'Unknown',
+          avatar: (authorData.photoURL as string) || null,
+          handle: (authorData.handle as string) || 'unknown',
+        } : null;
+
+        const spaceData = postData.spaceId ? postSpaceMap.get(postData.spaceId) : null;
+        const space = spaceData ? {
+          id: postData.spaceId,
+          name: (spaceData.name as string) || 'Unknown Space',
+        } : null;
 
         // Calculate relevance score
         let relevanceScore = 0;
@@ -195,54 +205,59 @@ export const POST = withAuthValidationAndErrors(
 
         const eventsSnapshot = await eventsQuery.get();
         
+        // First pass: filter matching events and collect IDs
+        const matchingEvents: Array<{ doc: typeof eventsSnapshot.docs[0]; eventData: ReturnType<typeof eventsSnapshot.docs[0]['data']>; titleMatch: boolean; descriptionMatch: boolean }> = [];
+        const eventOrganizerIds = new Set<string>();
+
         for (const doc of eventsSnapshot.docs) {
           const eventData = doc.data();
-          
-          // Text matching
           const title = (eventData.title || '').toLowerCase();
           const description = (eventData.description || '').toLowerCase();
-          
           const titleMatch = title.includes(queryLower);
           const descriptionMatch = description.includes(queryLower);
-          
           if (!titleMatch && !descriptionMatch) continue;
 
-          // Get organizer info
-          let organizer = null;
-          if (eventData.organizerId) {
-            try {
-              const organizerDoc = await dbAdmin.collection('users').doc(eventData.organizerId).get();
-              if (organizerDoc.exists) {
-                const organizerData = organizerDoc.data();
-                organizer = {
-                  id: organizerDoc.id,
-                  name: organizerData?.fullName || 'Unknown',
-                  avatar: organizerData?.photoURL || null,
-                };
-              }
-            } catch {
-              logger.warn(
-      `Failed to fetch organizer info at /api/feed/search`
-    );
-            }
-          }
+          matchingEvents.push({ doc, eventData, titleMatch, descriptionMatch });
+          if (eventData.organizerId) eventOrganizerIds.add(eventData.organizerId);
+        }
 
-          // Get space info
-          let space = null;
+        // Batch fetch organizers
+        const eventOrganizerMap = new Map<string, Record<string, unknown>>();
+        if (eventOrganizerIds.size > 0) {
+          const refs = Array.from(eventOrganizerIds).map(id => dbAdmin.collection('users').doc(id));
           try {
-            const spaceDoc = await dbAdmin.collection('spaces').doc(currentSpaceId).get();
-            if (spaceDoc.exists) {
-              const spaceData = spaceDoc.data();
-              space = {
-                id: spaceDoc.id,
-                name: spaceData?.name || 'Unknown Space',
-              };
+            const docs = await dbAdmin.getAll(...refs);
+            for (const doc of docs) {
+              if (doc.exists) eventOrganizerMap.set(doc.id, doc.data() as Record<string, unknown>);
             }
           } catch {
-            logger.warn(
-      `Failed to fetch space info at /api/feed/search`
-    );
+            logger.warn('Failed to batch fetch organizers at /api/feed/search');
           }
+        }
+
+        // Batch fetch space info for the current space (single fetch, reused)
+        let eventSpaceInfo: { id: string; name: string } | null = null;
+        try {
+          const spaceDoc = await dbAdmin.collection('spaces').doc(currentSpaceId).get();
+          if (spaceDoc.exists) {
+            const spaceData = spaceDoc.data();
+            eventSpaceInfo = { id: spaceDoc.id, name: spaceData?.name || 'Unknown Space' };
+          }
+        } catch {
+          logger.warn('Failed to fetch space info at /api/feed/search');
+        }
+
+        // Second pass: build feed items
+        for (const { doc, eventData, titleMatch, descriptionMatch } of matchingEvents) {
+          const title = (eventData.title || '').toLowerCase();
+          const description = (eventData.description || '').toLowerCase();
+
+          const organizerData = eventData.organizerId ? eventOrganizerMap.get(eventData.organizerId) : null;
+          const organizer = organizerData ? {
+            id: eventData.organizerId,
+            name: (organizerData.fullName as string) || 'Unknown',
+            avatar: (organizerData.photoURL as string) || null,
+          } : null;
 
           // Calculate relevance score
           let relevanceScore = 0;
@@ -265,7 +280,7 @@ export const POST = withAuthValidationAndErrors(
             location: eventData.location,
             createdAt: eventData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
             organizer,
-            space,
+            space: eventSpaceInfo,
             currentAttendees: eventData.currentAttendees || 0,
             relevanceScore,
             highlights: {
@@ -291,41 +306,49 @@ export const POST = withAuthValidationAndErrors(
 
       const toolsSnapshot = await toolsQuery.get();
       
+      // First pass: filter matching tools and collect creator IDs
+      const matchingTools: Array<{ doc: typeof toolsSnapshot.docs[0]; toolData: ReturnType<typeof toolsSnapshot.docs[0]['data']>; nameMatch: boolean; descriptionMatch: boolean }> = [];
+      const toolCreatorIds = new Set<string>();
+
       for (const doc of toolsSnapshot.docs) {
         const toolData = doc.data();
-        
-        // Skip private tools unless they belong to the user
         if (toolData.isPrivate && toolData.creatorId !== userId) continue;
-        
-        // Text matching
+
         const name = (toolData.name || '').toLowerCase();
         const description = (toolData.description || '').toLowerCase();
-        
         const nameMatch = name.includes(queryLower);
         const descriptionMatch = description.includes(queryLower);
-        
         if (!nameMatch && !descriptionMatch) continue;
 
-        // Get creator info
-        let creator = null;
-        if (toolData.creatorId) {
-          try {
-            const creatorDoc = await dbAdmin.collection('users').doc(toolData.creatorId).get();
-            if (creatorDoc.exists) {
-              const creatorData = creatorDoc.data();
-              creator = {
-                id: creatorDoc.id,
-                name: creatorData?.fullName || 'Unknown',
-                avatar: creatorData?.photoURL || null,
-              };
-            }
-          } catch {
-            // Silently ignore creator fetch errors - not critical to search results
-            logger.warn(
-      `Failed to fetch creator info at /api/feed/search`
-    );
+        matchingTools.push({ doc, toolData, nameMatch, descriptionMatch });
+        if (toolData.creatorId) toolCreatorIds.add(toolData.creatorId);
+      }
+
+      // Batch fetch creators
+      const toolCreatorMap = new Map<string, Record<string, unknown>>();
+      if (toolCreatorIds.size > 0) {
+        const refs = Array.from(toolCreatorIds).map(id => dbAdmin.collection('users').doc(id));
+        try {
+          const docs = await dbAdmin.getAll(...refs);
+          for (const doc of docs) {
+            if (doc.exists) toolCreatorMap.set(doc.id, doc.data() as Record<string, unknown>);
           }
+        } catch {
+          logger.warn('Failed to batch fetch creators at /api/feed/search');
         }
+      }
+
+      // Second pass: build feed items
+      for (const { doc, toolData, nameMatch, descriptionMatch } of matchingTools) {
+        const name = (toolData.name || '').toLowerCase();
+        const description = (toolData.description || '').toLowerCase();
+
+        const creatorData = toolData.creatorId ? toolCreatorMap.get(toolData.creatorId) : null;
+        const creator = creatorData ? {
+          id: toolData.creatorId,
+          name: (creatorData.fullName as string) || 'Unknown',
+          avatar: (creatorData.photoURL as string) || null,
+        } : null;
 
         // Calculate relevance score
         let relevanceScore = 0;

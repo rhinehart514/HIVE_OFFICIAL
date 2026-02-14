@@ -2,12 +2,17 @@ import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import {
   withOptionalAuth,
+  withAuthValidationAndErrors,
   getUser,
+  getUserId,
+  getCampusId,
   ResponseFormatter,
+  type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { isContentHidden } from "@/lib/content-moderation";
+import { SecurityScanner } from "@/lib/secure-input-validation";
 import {
   getEventEndDate,
   getEventStartDate,
@@ -489,3 +494,113 @@ const _GET = withOptionalAuth(async (
 });
 
 export const GET = withCache(_GET, 'SHORT');
+
+/**
+ * POST /api/events — Create a campus-wide event (not tied to a specific space).
+ */
+
+const CreateCampusEventSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().min(1).max(2000),
+  startDate: z.string().datetime(),
+  endDate: z.string().datetime(),
+  location: z.string().max(500).optional(),
+  category: z
+    .enum(["academic", "social", "professional", "recreational", "official", "meeting", "virtual"])
+    .optional(),
+  imageUrl: z.string().url().optional(),
+  visibility: z.enum(["public", "invited_only"]).default("public"),
+});
+
+export const POST = withAuthValidationAndErrors(
+  CreateCampusEventSchema,
+  async (request, _context, body, respond) => {
+    try {
+      const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
+
+      // Validate dates
+      const startDate = new Date(body.startDate);
+      const endDate = new Date(body.endDate);
+      const now = new Date();
+
+      if (startDate >= endDate) {
+        return respond.error("End date must be after start date", "INVALID_INPUT", {
+          status: HttpStatus.BAD_REQUEST,
+        });
+      }
+
+      if (startDate < now) {
+        return respond.error("Start date cannot be in the past", "INVALID_INPUT", {
+          status: HttpStatus.BAD_REQUEST,
+        });
+      }
+
+      // Security: scan text fields for XSS/injection
+      const fieldsToScan = [
+        { name: "title", value: body.title },
+        { name: "description", value: body.description },
+        ...(body.location ? [{ name: "location", value: body.location }] : []),
+      ];
+
+      for (const field of fieldsToScan) {
+        const scan = SecurityScanner.scanInput(field.value);
+        if (scan.level === "dangerous") {
+          logger.warn("XSS attempt blocked in campus event creation", {
+            userId,
+            field: field.name,
+            threats: scan.threats,
+          });
+          return respond.error(
+            `Event ${field.name} contains invalid content`,
+            "INVALID_INPUT",
+            { status: HttpStatus.BAD_REQUEST },
+          );
+        }
+      }
+
+      const eventData = {
+        title: body.title,
+        description: body.description,
+        startDate,
+        endDate,
+        location: body.location || null,
+        type: body.category || "social",
+        imageUrl: body.imageUrl || null,
+        visibility: body.visibility,
+        isPrivate: body.visibility === "invited_only",
+        scope: "campus" as const,
+        isCampusWide: true,
+        campusId,
+        organizerId: userId,
+        status: "scheduled",
+        isHidden: false,
+        attendeeCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const eventRef = await dbAdmin.collection("events").add(eventData);
+
+      logger.info("Campus-wide event created", {
+        eventId: eventRef.id,
+        campusId,
+        userId,
+      });
+
+      return respond.created({
+        event: {
+          id: eventRef.id,
+          ...eventData,
+        },
+      });
+    } catch (error) {
+      logger.error("Error creating campus event", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return respond.error("Failed to create event", "INTERNAL_ERROR", {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
+    }
+  },
+);

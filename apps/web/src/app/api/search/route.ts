@@ -13,7 +13,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/structured-logger';
+import { logger } from '@/lib/logger';
 import { HttpStatus } from '@/lib/api-response-types';
 import {
   GhostModeService,

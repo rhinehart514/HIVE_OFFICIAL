@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { logger } from "@/lib/structured-logger";
+import { type NextRequest, NextResponse } from 'next/server';
+import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { withAuth, ApiResponse as _ApiResponse } from '@/lib/api-auth-middleware';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { withCache } from '../../../../lib/cache-headers';
 
@@ -179,81 +179,43 @@ const fetchUsageStats = async (userId: string, campusId: string): Promise<ToolUs
  * Get tool usage statistics for the authenticated user
  * GET /api/tools/usage-stats
  */
-const _GET = withAuth(async (request, authContext) => {
-  try {
-    const stats = await fetchUsageStats(authContext.userId, authContext.campusId);
-    
-    return NextResponse.json({
-      success: true,
-      stats,
-      userId: authContext.userId,
-      generatedAt: new Date().toISOString(),
-      message: 'Usage statistics retrieved successfully'
-    });
-
-  } catch (error) {
-    logger.error(
-      `Usage stats fetch error at /api/tools/usage-stats`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch usage statistics',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: HttpStatus.INTERNAL_SERVER_ERROR }
-    );
-  }
-}, {
-  operation: 'fetch_usage_stats'
+const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request) || 'ub-buffalo';
+  const stats = await fetchUsageStats(userId, campusId);
+  
+  return respond.success({
+    stats,
+    userId,
+    generatedAt: new Date().toISOString(),
+    message: 'Usage statistics retrieved successfully'
+  });
 });
 
 /**
  * Record a tool usage event
  * POST /api/tools/usage-stats
  */
-export const POST = withAuth(async (request, authContext) => {
-  try {
-    const body = await request.json();
-    const { toolId, action, _metadata } = body;
+export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
+  const userId = getUserId(request);
+  const body = await request.json();
+  const { toolId, action, _metadata } = body;
 
-    if (!toolId || !action) {
-      return NextResponse.json(ApiResponseHelper.error("Invalid request. Must specify toolId and action", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 150));
-
-    // Production usage tracking ready for analytics system integration
-
-    logger.info(
-      `Tool usage tracked: toolId=${toolId}, action=${action} at /api/tools/usage-stats`
-    );
-
-    return NextResponse.json({
-      success: true,
-      toolId,
-      action,
-      userId: authContext.userId,
-      timestamp: new Date().toISOString(),
-      message: `Usage event recorded successfully`
-    });
-
-  } catch (error) {
-    logger.error(
-      `Usage tracking error at /api/tools/usage-stats`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(
-      { 
-        error: 'Failed to record usage event',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: HttpStatus.INTERNAL_SERVER_ERROR }
-    );
+  if (!toolId || !action) {
+    return respond.error('Invalid request. Must specify toolId and action', 'INVALID_INPUT', { status: 400 });
   }
-}, {
-  operation: 'record_usage_event'
+
+  await new Promise(resolve => setTimeout(resolve, 150));
+
+  logger.info(`Tool usage tracked: toolId=${toolId}, action=${action} at /api/tools/usage-stats`);
+
+  return respond.success({
+    toolId,
+    action,
+    userId,
+    timestamp: new Date().toISOString(),
+    message: 'Usage event recorded successfully'
+  });
 });
 
-export const GET = withCache(_GET, 'SHORT');
+export const GET = withCache(_GET as (req: NextRequest, ctx: unknown) => Promise<Response>, 'SHORT');

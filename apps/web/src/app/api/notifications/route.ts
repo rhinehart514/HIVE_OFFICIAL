@@ -1,9 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/auth-server';
-import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { logger } from '@/lib/logger';
+import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { withCache } from '../../../lib/cache-headers';
 
 // Zod schemas for notification actions
@@ -83,181 +82,120 @@ async function getUserNotifications(
   }
 }
 
-async function _GET(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
+const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
+  const userId = getUserId(request);
+  const { searchParams } = new URL(request.url);
+  const limit = parseInt(searchParams.get('limit') || '10');
+  const unreadOnly = searchParams.get('unread') === 'true';
+  const category = searchParams.get('category') || undefined;
+
+  const { notifications, unreadCount } = await getUserNotifications(
+    userId,
+    limit,
+    unreadOnly,
+    category
+  );
+
+  return respond.success({
+    notifications,
+    unreadCount,
+    hasMore: notifications.length === limit
+  });
+});
+
+export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
+  const userId = getUserId(request);
+  const body = NotificationActionSchema.parse(await request.json());
+
+  if (body.action === 'mark_read') {
+    const notificationIds = Array.isArray(body.notificationIds)
+      ? body.notificationIds
+      : [body.notificationIds];
+
+    const batch = dbAdmin.batch();
+    for (const notificationId of notificationIds) {
+      const notificationRef = dbAdmin.collection('notifications').doc(notificationId);
+      batch.update(notificationRef, { 
+        isRead: true, 
+        readAt: new Date().toISOString() 
+      });
     }
+    await batch.commit();
 
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const unreadOnly = searchParams.get('unread') === 'true';
-    const category = searchParams.get('category') || undefined;
+    logger.info('Marked notifications as read', { notificationId: notificationIds.join(','), userId });
 
-    const { notifications, unreadCount } = await getUserNotifications(
-      user.uid,
-      limit,
-      unreadOnly,
-      category
-    );
+    return respond.success({ message: 'Notifications marked as read' });
+  }
 
-    return NextResponse.json({
-      notifications,
-      unreadCount,
-      hasMore: notifications.length === limit
+  if (body.action === 'mark_all_read') {
+    const unreadNotifications = await dbAdmin.collection('notifications')
+      .where('userId', '==', userId)
+      .where('isRead', '==', false)
+      .get();
+
+    const batch = dbAdmin.batch();
+    unreadNotifications.docs.forEach(doc => {
+      batch.update(doc.ref, { 
+        isRead: true, 
+        readAt: new Date().toISOString() 
+      });
     });
+    await batch.commit();
 
-  } catch (error) {
-    logger.error(
-      `Error fetching notifications at /api/notifications`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to fetch notifications", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
-  }
-}
+    logger.info('Marked all notifications as read', { userId, count: unreadNotifications.size });
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
-
-    const body = NotificationActionSchema.parse(await request.json());
-
-    if (body.action === 'mark_read') {
-      const notificationIds = Array.isArray(body.notificationIds)
-        ? body.notificationIds
-        : [body.notificationIds];
-
-      // Update notifications in Firebase
-      const batch = dbAdmin.batch();
-      for (const notificationId of notificationIds) {
-        const notificationRef = dbAdmin.collection('notifications').doc(notificationId);
-        batch.update(notificationRef, { 
-          isRead: true, 
-          readAt: new Date().toISOString() 
-        });
-      }
-      await batch.commit();
-
-      logger.info('Marked notifications as read', { notificationId: notificationIds.join(','), userId: user.uid });
-
-      return NextResponse.json({
-        success: true,
-        message: 'Notifications marked as read'
-      });
-    }
-
-    if (body.action === 'mark_all_read') {
-      // Update all unread notifications for user
-      const unreadNotifications = await dbAdmin.collection('notifications')
-        .where('userId', '==', user.uid)
-        .where('isRead', '==', false)
-        .get();
-
-      const batch = dbAdmin.batch();
-      unreadNotifications.docs.forEach(doc => {
-        batch.update(doc.ref, { 
-          isRead: true, 
-          readAt: new Date().toISOString() 
-        });
-      });
-      await batch.commit();
-
-      logger.info('Marked all notifications as read', { userId: user.uid, count: unreadNotifications.size });
-
-      return NextResponse.json({
-        success: true,
-        message: 'All notifications marked as read',
-        updatedCount: unreadNotifications.size
-      });
-    }
-
-    if (body.action === 'delete' && 'notificationIds' in body) {
-      const notificationIds = Array.isArray(body.notificationIds)
-        ? body.notificationIds
-        : [body.notificationIds];
-
-      // Delete notifications from Firebase
-      const batch = dbAdmin.batch();
-      for (const notificationId of notificationIds) {
-        const notificationRef = dbAdmin.collection('notifications').doc(notificationId);
-        batch.delete(notificationRef);
-      }
-      await batch.commit();
-
-      logger.info('Deleted notifications', { notificationId: notificationIds.join(','), userId: user.uid });
-
-      return NextResponse.json({
-        success: true,
-        message: 'Notifications deleted'
-      });
-    }
-
-    return NextResponse.json(ApiResponseHelper.error("Invalid action", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(ApiResponseHelper.error(error.errors[0]?.message || "Invalid input", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-    logger.error(
-      `Error handling notification action at /api/notifications`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to process notification action", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
-
-    const { notificationId, isRead } = NotificationUpdateSchema.parse(await request.json());
-
-    // Verify notification belongs to user and update
-    const notificationRef = dbAdmin.collection('notifications').doc(notificationId);
-    const notificationDoc = await notificationRef.get();
-    
-    if (!notificationDoc.exists) {
-      return NextResponse.json(ApiResponseHelper.error("Notification not found", "RESOURCE_NOT_FOUND"), { status: HttpStatus.NOT_FOUND });
-    }
-
-    const notificationData = notificationDoc.data();
-    if (notificationData?.userId !== user.uid) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized access to notification", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
-    }
-
-    // Update notification with explicit shape
-    const updates: Partial<HiveNotification> = { isRead } as Partial<HiveNotification>;
-    if (isRead && !notificationData?.readAt) {
-      // Extend payload with readAt without widening type to any
-      (updates as Record<string, unknown>).readAt = new Date().toISOString();
-    }
-    
-    await notificationRef.update(updates);
-
-    logger.info('Updated notification read status', { notificationId, userId: user.uid });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Notification updated successfully'
+    return respond.success({
+      message: 'All notifications marked as read',
+      updatedCount: unreadNotifications.size
     });
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(ApiResponseHelper.error(error.errors[0]?.message || "Invalid input", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-    logger.error(
-      `Error updating notification at /api/notifications`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to update notification", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
-}
 
-export const GET = withCache(_GET, 'PRIVATE');
+  if (body.action === 'delete' && 'notificationIds' in body) {
+    const notificationIds = Array.isArray(body.notificationIds)
+      ? body.notificationIds
+      : [body.notificationIds];
+
+    const batch = dbAdmin.batch();
+    for (const notificationId of notificationIds) {
+      const notificationRef = dbAdmin.collection('notifications').doc(notificationId);
+      batch.delete(notificationRef);
+    }
+    await batch.commit();
+
+    logger.info('Deleted notifications', { notificationId: notificationIds.join(','), userId });
+
+    return respond.success({ message: 'Notifications deleted' });
+  }
+
+  return respond.error('Invalid action', 'INVALID_INPUT', { status: 400 });
+});
+
+export const PUT = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
+  const userId = getUserId(request);
+  const { notificationId, isRead } = NotificationUpdateSchema.parse(await request.json());
+
+  const notificationRef = dbAdmin.collection('notifications').doc(notificationId);
+  const notificationDoc = await notificationRef.get();
+  
+  if (!notificationDoc.exists) {
+    return respond.error('Notification not found', 'RESOURCE_NOT_FOUND', { status: 404 });
+  }
+
+  const notificationData = notificationDoc.data();
+  if (notificationData?.userId !== userId) {
+    return respond.error('Unauthorized access to notification', 'FORBIDDEN', { status: 403 });
+  }
+
+  const updates: Partial<HiveNotification> = { isRead } as Partial<HiveNotification>;
+  if (isRead && !notificationData?.readAt) {
+    (updates as Record<string, unknown>).readAt = new Date().toISOString();
+  }
+  
+  await notificationRef.update(updates);
+
+  logger.info('Updated notification read status', { notificationId, userId });
+
+  return respond.success({ message: 'Notification updated successfully' });
+});
+
+export const GET = withCache(_GET as (req: NextRequest, ctx: unknown) => Promise<Response>, 'PRIVATE');
