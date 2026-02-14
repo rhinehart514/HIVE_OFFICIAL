@@ -21,6 +21,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { SpaceContextProvider } from '@/contexts/space';
 import { usePermissions } from '@/hooks/use-permissions';
 import {
   Button,
@@ -36,7 +37,11 @@ import {
   SpaceLayout,
   SpaceSidebar,
   MainContent,
+  SpaceTabs,
   MessageFeed,
+  SpaceEventsTab,
+  SpacePostsTab,
+  type SpaceTab,
   TypingIndicator,
   type OnlineMember,
   LeaderDashboard,
@@ -105,6 +110,8 @@ export default function SpacePageUnified() {
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<SpaceTab>('chat');
+  const [postCount, setPostCount] = React.useState<number | undefined>(undefined);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
   const [reportModal, setReportModal] = React.useState<{
     messageId: string;
@@ -135,7 +142,7 @@ export default function SpacePageUnified() {
     sendMessage,
     joinSpace,
     leaveSpace,
-    rsvpToEvent: _rsvpToEvent,
+    rsvpToEvent,
     onlineMembers,
     upcomingEvents,
     navigateBack,
@@ -657,7 +664,13 @@ export default function SpacePageUnified() {
               />
           </div>
 
-          {/* Chat is the only view — no tab navigation */}
+          <SpaceTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            unreadCount={unreadCount}
+            eventCount={upcomingEvents.length}
+            postCount={postCount}
+          />
 
           {/* Tab Content */}
           <div className="flex-1 overflow-hidden">
@@ -695,7 +708,7 @@ export default function SpacePageUnified() {
                   }}
                 />
               }
-              input={
+              input={activeTab === 'chat' ? (
                 <div>
                   <TypingIndicator typingUsers={typingUsers} />
                   <ChatInput
@@ -707,46 +720,68 @@ export default function SpacePageUnified() {
                     onPrefillConsumed={() => setChatPrefill(null)}
                   />
                 </div>
-              }
+              ) : undefined}
             >
               <MainContent
-                boardName={space.name}
-                contentKey="chat"
-                isLoading={isLoadingMessages}
+                boardName={
+                  activeTab === 'chat'
+                    ? space.name
+                    : activeTab === 'events'
+                      ? 'Events'
+                      : 'Posts'
+                }
+                contentKey={activeTab}
+                isLoading={activeTab === 'chat' ? isLoadingMessages : false}
               >
-                {feedMessages.length === 0 && !isLoadingMessages ? (
-                  <div className="flex-1 flex items-center justify-center text-hive-text-tertiary">
-                    <p>No messages yet. Start the conversation!</p>
-                  </div>
+                {activeTab === 'chat' ? (
+                  feedMessages.length === 0 && !isLoadingMessages ? (
+                    <div className="flex-1 flex items-center justify-center text-hive-text-tertiary">
+                      <p>No messages yet. Start the conversation!</p>
+                    </div>
+                  ) : (
+                    <MessageFeed
+                      messages={feedMessages}
+                      currentUserId={user?.id}
+                      lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
+                      unreadCount={unreadCount}
+                      isLoading={isLoadingMessages}
+                      isLoadingMore={isLoadingMoreMessages}
+                      hasMore={hasMoreMessages}
+                      onLoadMore={loadMoreMessages}
+                      onReact={async (messageId, emoji) => {
+                        if (!space?.id) return;
+                        try {
+                          await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ emoji }),
+                          });
+                        } catch (error) {
+                          logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+                        }
+                      }}
+                      onReply={(messageId) => handleOpenThread(messageId)}
+                      onDelete={handleDeleteMessage}
+                      onEdit={handleEditMessage}
+                      canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
+                      onReport={handleReportMessage}
+                      onComponentVote={handleComponentVote}
+                      onComponentRsvp={handleComponentRsvp}
+                    />
+                  )
+                ) : activeTab === 'events' ? (
+                  <SpaceContextProvider spaceId={space.id}>
+                    <SpaceEventsTab
+                      isLeader={space.isLeader}
+                      onCreateEvent={() => setShowEventModal(true)}
+                      onRsvp={rsvpToEvent}
+                    />
+                  </SpaceContextProvider>
                 ) : (
-                  <MessageFeed
-                    messages={feedMessages}
-                    currentUserId={user?.id}
-                    lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
-                    unreadCount={unreadCount}
-                    isLoading={isLoadingMessages}
-                    isLoadingMore={isLoadingMoreMessages}
-                    hasMore={hasMoreMessages}
-                    onLoadMore={loadMoreMessages}
-                    onReact={async (messageId, emoji) => {
-                      if (!space?.id) return;
-                      try {
-                        await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ emoji }),
-                        });
-                      } catch (error) {
-                        logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-                      }
-                    }}
-                    onReply={(messageId) => handleOpenThread(messageId)}
-                    onDelete={handleDeleteMessage}
-                    onEdit={handleEditMessage}
-                    canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
-                    onReport={handleReportMessage}
-                    onComponentVote={handleComponentVote}
-                    onComponentRsvp={handleComponentRsvp}
+                  <SpacePostsTab
+                    spaceId={space.id}
+                    isMember={space.isMember}
+                    onPostCountChange={setPostCount}
                   />
                 )}
               </MainContent>

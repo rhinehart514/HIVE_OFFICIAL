@@ -3,26 +3,31 @@
 /**
  * SpaceTabs - Tab navigation for space pages
  *
- * Chat-only navigation
+ * Chat / Events / Posts navigation
  */
 
 import { motion } from 'framer-motion';
-import { MessageSquare } from 'lucide-react';
+import { Calendar, FileText, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MOTION } from '@hive/ui/design-system/primitives';
 
-export type SpaceTab = 'chat';
+export type SpaceTab = 'chat' | 'events' | 'posts';
 
 interface SpaceTabsProps {
+  activeTab: SpaceTab;
   onTabChange?: (tab: SpaceTab) => void;
   unreadCount?: number;
+  eventCount?: number;
+  postCount?: number;
 }
 
 export function SpaceTabs({
+  activeTab,
   onTabChange,
   unreadCount = 0,
+  eventCount,
+  postCount,
 }: SpaceTabsProps) {
-  const activeTab: SpaceTab = 'chat';
   const tabs: Array<{
     id: SpaceTab;
     label: string;
@@ -34,6 +39,18 @@ export function SpaceTabs({
       label: 'Chat',
       icon: <MessageSquare className="w-4 h-4" />,
       count: unreadCount,
+    },
+    {
+      id: 'events',
+      label: 'Events',
+      icon: <Calendar className="w-4 h-4" />,
+      count: eventCount,
+    },
+    {
+      id: 'posts',
+      label: 'Posts',
+      icon: <FileText className="w-4 h-4" />,
+      count: postCount,
     },
   ];
 
