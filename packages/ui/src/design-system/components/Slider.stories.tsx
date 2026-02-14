@@ -431,7 +431,7 @@ export const AudioMixer: Story = {
     const [voice, setVoice] = React.useState([100]);
 
     return (
-      <div className="space-y-4 p-4 rounded-xl border border-[var(--color-border)] bg-[#141414]">
+      <div className="space-y-4 p-4 rounded-xl border border-[var(--color-border)] bg-[#0D0D0D]">
         <h3 className="text-sm font-medium text-white mb-4">Audio Settings</h3>
         <SliderWithLabels
           label="Master Volume"

@@ -211,7 +211,7 @@ export const SettingsPanel: StoryObj = {
     };
 
     return (
-      <div className="w-96 space-y-4 p-4 rounded-xl border border-[var(--color-border)] bg-[#141414]">
+      <div className="w-96 space-y-4 p-4 rounded-xl border border-[var(--color-border)] bg-[#0D0D0D]">
         <h3 className="text-lg font-medium text-white mb-4">Settings</h3>
 
         <SwitchField

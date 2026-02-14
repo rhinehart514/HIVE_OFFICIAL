@@ -263,7 +263,7 @@ export const ProfilePageSkeleton: Story = {
  */
 export const SpaceCardSkeleton: Story = {
   render: () => (
-    <div className="w-80 p-4 rounded-xl border border-[var(--color-border)] bg-[#141414]">
+    <div className="w-80 p-4 rounded-xl border border-[var(--color-border)] bg-[#0D0D0D]">
       {/* Image */}
       <Skeleton className="h-32 w-full rounded-lg mb-4" />
 

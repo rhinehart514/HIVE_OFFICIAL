@@ -84,7 +84,7 @@ const tabsTriggerVariants = cva(
     'text-white/50 hover:text-white/70',
     'data-[state=active]:text-white',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
     'disabled:pointer-events-none disabled:opacity-50',
   ].join(' '),
   {
@@ -213,7 +213,7 @@ const TabsTrigger = React.forwardRef<
         'data-[state=active]:text-white',
         // Focus (WHITE, never gold)
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-        'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+        'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
         // Disabled
         'disabled:pointer-events-none disabled:opacity-50',
         tabsTriggerSizeVariants({ size }),
@@ -241,7 +241,7 @@ const TabsContent = React.forwardRef<
       'mt-3',
       // Focus (WHITE, never gold)
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-      'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+      'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
       className
     )}
     {...props}
@@ -328,7 +328,7 @@ const AnimatedTabs: React.FC<AnimatedTabsProps> = ({
               'text-white/50 hover:text-white/70',
               'data-[state=active]:text-white',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-              'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+              'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
               'disabled:pointer-events-none disabled:opacity-50',
               sizeClasses[size].trigger
             )}

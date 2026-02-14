@@ -83,7 +83,7 @@ const boardTabTriggerVariants = cva(
     'text-white/50 hover:text-white/70',
     'data-[state=active]:text-white',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
     'disabled:pointer-events-none disabled:opacity-50',
     'whitespace-nowrap',
     'group',

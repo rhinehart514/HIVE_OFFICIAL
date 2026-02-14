@@ -252,7 +252,7 @@ export const StatusDotsOnly: StoryObj<typeof StatusBadge> = {
  */
 export const InUserCard: Story = {
   render: () => (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-[#141414] border border-[var(--color-border)]">
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-[#0D0D0D] border border-[var(--color-border)]">
       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
       <div className="flex-1">
         <div className="flex items-center gap-2">

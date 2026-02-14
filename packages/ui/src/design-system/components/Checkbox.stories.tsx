@@ -365,7 +365,7 @@ export const InForm: Story = {
     const [agreed, setAgreed] = React.useState(false);
 
     return (
-      <div className="space-y-6 p-4 rounded-xl border border-[var(--color-border)] bg-[#141414]">
+      <div className="space-y-6 p-4 rounded-xl border border-[var(--color-border)] bg-[#0D0D0D]">
         <div>
           <h3 className="text-sm font-medium text-white mb-1">Privacy Settings</h3>
           <p className="text-xs text-[var(--color-text-muted)] mb-3">

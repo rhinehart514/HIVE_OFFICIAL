@@ -289,7 +289,7 @@ export const Steps: Story = {
  */
 export const ProfileCompletion: Story = {
   render: () => (
-    <div className="p-4 bg-[#141414] rounded-xl space-y-4">
+    <div className="p-4 bg-[#0D0D0D] rounded-xl space-y-4">
       <div className="flex items-center justify-between">
         <span className="text-white font-medium">Profile Completion</span>
         <ProgressCircle value={75} size={48} showValue variant="gold" />

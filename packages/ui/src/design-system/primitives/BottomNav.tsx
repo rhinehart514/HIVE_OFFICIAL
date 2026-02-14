@@ -77,7 +77,7 @@ const bottomNavItemVariants = cva(
     'hover:text-white/70',
     // Focus (WHITE, never gold)
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
     // Disabled
     'disabled:pointer-events-none disabled:opacity-50',
     // Touch action

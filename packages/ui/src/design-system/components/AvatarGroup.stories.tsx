@@ -229,7 +229,7 @@ export const MixedAvatars: Story = {
  */
 export const InCardContext: Story = {
   render: () => (
-    <div className="w-80 p-4 rounded-xl border border-[var(--color-border)] bg-[#141414]">
+    <div className="w-80 p-4 rounded-xl border border-[var(--color-border)] bg-[#0D0D0D]">
       <h3 className="text-sm font-medium text-white mb-1">Design Team</h3>
       <p className="text-xs text-[var(--color-text-muted)] mb-3">12 members • 5 online</p>
       <div className="flex items-center justify-between">
@@ -252,7 +252,7 @@ export const InCardContext: Story = {
  */
 export const CompactHeader: Story = {
   render: () => (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-[#141414] border border-[var(--color-border)]">
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-[#0D0D0D] border border-[var(--color-border)]">
       <div className="w-8 h-8 rounded-lg bg-[#FFD700]/20 flex items-center justify-center">
         <span className="text-lg">🐝</span>
       </div>
@@ -275,7 +275,7 @@ export const CompactHeader: Story = {
  */
 export const EventAttendees: Story = {
   render: () => (
-    <div className="w-96 p-4 rounded-xl border border-[var(--color-border)] bg-[#141414]">
+    <div className="w-96 p-4 rounded-xl border border-[var(--color-border)] bg-[#0D0D0D]">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-[#22C55E]">●</span>
         <span className="text-sm text-white">Happening now</span>

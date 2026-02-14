@@ -219,7 +219,7 @@ export const AllVariants: Story = {
     <div className="space-y-8">
       <div>
         <p className="text-sm text-white mb-2">Full (with role grouping)</p>
-        <div className="p-4 bg-[#141414] rounded-xl">
+        <div className="p-4 bg-[#0D0D0D] rounded-xl">
           <MemberList
             variant="full"
             members={sampleMembers.slice(0, 6)}
@@ -232,14 +232,14 @@ export const AllVariants: Story = {
 
       <div>
         <p className="text-sm text-white mb-2">Compact (sidebar)</p>
-        <div className="p-4 bg-[#141414] rounded-xl w-48">
+        <div className="p-4 bg-[#0D0D0D] rounded-xl w-48">
           <MemberList variant="compact" members={sampleMembers} totalCount={24} />
         </div>
       </div>
 
       <div>
         <p className="text-sm text-white mb-2">Stack (avatar row)</p>
-        <div className="p-4 bg-[#141414] rounded-xl">
+        <div className="p-4 bg-[#0D0D0D] rounded-xl">
           <MemberList variant="stack" members={sampleMembers} maxVisible={5} />
         </div>
       </div>

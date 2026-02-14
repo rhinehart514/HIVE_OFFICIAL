@@ -69,17 +69,6 @@ export { Button, buttonVariants, type ButtonProps } from './Button';
 export { Input, inputVariants, type InputProps } from './Input';
 export { EmailInput, type EmailInputProps } from './EmailInput';
 export { HandleInput, type HandleInputProps, type HandleStatus } from './HandleInput';
-export { OTPInput, type OTPInputProps } from './OTPInput';
-export {
-  CountdownTimer,
-  formatTime,
-  type CountdownTimerProps,
-} from './CountdownTimer';
-export {
-  SuccessCheckmark,
-  CHECKMARK_GOLD,
-  type SuccessCheckmarkProps,
-} from './SuccessCheckmark';
 export { Textarea, textareaVariants, type TextareaProps } from './Textarea';
 export {
   Select,
@@ -264,11 +253,6 @@ export {
   type TagProps,
 } from './Tag';
 
-export {
-  SelectionCard,
-  type SelectionCardProps,
-} from './SelectionCard';
-
 // ============================================
 // LIFE PRIMITIVES (Phase 7)
 // ============================================
@@ -289,15 +273,6 @@ export {
 } from './ActivityEdge';
 
 export {
-  LiveCounter,
-  LiveCounterGroup,
-  liveCounterVariants,
-  formatCompact,
-  type LiveCounterProps,
-  type LiveCounterGroupProps,
-} from './LiveCounter';
-
-export {
   TypingIndicator,
   TypingDotsOnly,
   TypingDots,
@@ -307,83 +282,11 @@ export {
   type TypingDotsOnlyProps,
 } from './TypingIndicator';
 
-export {
-  ActivityBar,
-  ActivityBarCompact,
-  activityBarContainerVariants,
-  activitySegmentVariants,
-  getActivityPercentage,
-  getActivityLabel,
-  type ActivityBarProps,
-  type ActivityBarCompactProps,
-} from './ActivityBar';
-
-export {
-  ActivityHeartbeat,
-  ActivityHeartbeatStrip,
-  activityHeartbeatVariants,
-  getActivityLevel,
-  isSpaceLive,
-  getHeartbeatColor,
-  type ActivityHeartbeatProps,
-  type ActivityHeartbeatStripProps,
-  type ActivityLevel,
-} from './ActivityHeartbeat';
-
-export {
-  LiveIndicator,
-  LiveBadge,
-  LiveCountIndicator,
-  ExploringNow,
-  LiveDotOnly,
-  liveIndicatorContainerVariants,
-  liveDotVariants,
-  liveTextVariants,
-  countTextVariants,
-  liveBadgeVariants,
-  type LiveIndicatorProps,
-  type LiveBadgeProps,
-  type LiveCountIndicatorProps,
-  type ExploringNowProps,
-  type LiveDotOnlyProps,
-} from './LiveIndicator';
-
 // Note: LifeBadge is covered by Badge with variant="gold" for achievements
 
 // ============================================
 // WORKSHOP PRIMITIVES (Phase 8)
 // ============================================
-
-export {
-  PropertyField,
-  PropertyGroup,
-  PropertySection,
-  propertyFieldVariants,
-  type PropertyFieldProps,
-  type PropertyGroupProps,
-  type PropertySectionProps,
-} from './PropertyField';
-
-export {
-  CanvasArea,
-  CanvasElement,
-  CanvasGuides,
-  canvasAreaVariants,
-  type CanvasAreaProps,
-  type CanvasElementProps,
-  type CanvasGuidesProps,
-} from './CanvasArea';
-
-export {
-  HandleDot,
-  HandleGroup,
-  RotationHandle,
-  handleDotVariants,
-  type HandleDotProps,
-  type HandlePosition,
-  type HandleGroupProps,
-  type RotationHandleProps,
-} from './HandleDot';
 
 // ============================================
 // GLOBAL NAV PRIMITIVES (Top + Sidebar)
@@ -408,30 +311,6 @@ export {
   type TopBarNotificationsProps,
   type TopBarProfileProps,
 } from './TopBar';
-
-export {
-  GlobalSidebar,
-  SidebarSection as GlobalSidebarSection,
-  SidebarSpaceItem as GlobalSidebarSpaceItem,
-  SidebarToolItem,
-  SidebarAddButton,
-  SidebarNavItem as GlobalSidebarNavItem,
-  SidebarDivider as GlobalSidebarDivider,
-  SidebarFooter as GlobalSidebarFooter,
-  SidebarCollapseToggle as GlobalSidebarCollapseToggle,
-  useGlobalSidebar,
-  SIDEBAR_TOKENS as GLOBAL_SIDEBAR_TOKENS,
-  BrowseIcon,
-  SettingsIcon,
-  ToolsIcon,
-  type GlobalSidebarProps,
-  type SidebarSectionProps as GlobalSidebarSectionProps,
-  type SidebarSpaceItemProps as GlobalSidebarSpaceItemProps,
-  type SidebarToolItemProps,
-  type SidebarAddButtonProps,
-  type SidebarNavItemProps as GlobalSidebarNavItemProps,
-  type SidebarFooterProps as GlobalSidebarFooterProps,
-} from './GlobalSidebar';
 
 // ============================================
 // LAYOUT PRIMITIVES (Phase 9)
@@ -531,23 +410,6 @@ export {
 // ============================================
 
 export {
-  SpacePreviewSheet,
-  sheetContainerVariants as spacePreviewSheetContainerVariants,
-  sheetHeaderVariants as spacePreviewSheetHeaderVariants,
-  sheetBodyVariants as spacePreviewSheetBodyVariants,
-  sheetFooterVariants as spacePreviewSheetFooterVariants,
-  activityDotVariants as spaceActivityDotVariants,
-  DragHandle as SpacePreviewDragHandle,
-  DefaultAvatar as SpacePreviewDefaultAvatar,
-  DefaultEventCard as SpacePreviewDefaultEventCard,
-  glassSheetSurface as spacePreviewGlassSheetSurface,
-  HIVE_GOLD,
-  type ActivityStatus,
-  type SpacePreviewData,
-  type SpacePreviewSheetProps,
-} from './SpacePreviewSheet';
-
-export {
   SpacePreviewModal,
   spacePreviewModalContainerVariants,
   spacePreviewModalHeaderVariants,
@@ -558,23 +420,6 @@ export {
   spacePreviewModalGlassSurface,
   type SpacePreviewModalProps,
 } from './SpacePreviewModal';
-
-export {
-  MemberCard,
-  MemberList,
-  memberCardContainerVariants,
-  memberAvatarVariants,
-  roleBadgeVariants,
-  presenceDotVariants as memberPresenceDotVariants,
-  MemberAvatar,
-  DefaultRoleIcon,
-  ROLE_COLORS,
-  type MemberRole,
-  type PresenceStatus as MemberPresenceStatus,
-  type MemberCardData,
-  type MemberCardProps,
-  type MemberListProps,
-} from './MemberCard';
 
 // ============================================
 // HIVELAB PRIMITIVES (Phase 14)
@@ -593,26 +438,6 @@ export {
   type DeploymentSpaceTarget,
   type DeploymentTargetProps,
 } from './DeploymentTarget';
-
-export {
-  ElementGroup,
-  ElementPalette,
-  ElementItemCard,
-  TierBadge,
-  ChevronIcon,
-  elementGroupContainerVariants,
-  elementGroupHeaderVariants,
-  elementGroupContentVariants,
-  elementItemVariants,
-  tierBadgeVariants,
-  TIER_COLORS,
-  elementGroupGlassHeaderSurface,
-  type ElementTier,
-  type ElementItem,
-  type ElementGroupData,
-  type ElementGroupProps,
-  type ElementPaletteProps,
-} from './ElementGroup';
 
 // ============================================
 // MOTION PRIMITIVES (Phase 11)

@@ -10,14 +10,14 @@ const surfaceVariants = cva(
       tone: {
         // Canonical 3-tier surface set
         standard: "bg-[#080808] border-white/[0.06] text-white",
-        subtle: "bg-[#141414] border-white/[0.06] text-white",
-        overlay: "bg-[#141414] border-white/[0.08] text-white",
+        subtle: "bg-[#0D0D0D] border-white/[0.06] text-white",
+        overlay: "bg-[#0D0D0D] border-white/[0.08] text-white",
 
         // Compatibility aliases
         default: "bg-[#080808] border-white/[0.06] text-white",
-        contrast: "bg-[#141414] border-white/[0.08] text-white",
-        inverted: "bg-[#141414] border-white/[0.08] text-white",
-        glass: "bg-[#141414] border-white/[0.08] text-white",
+        contrast: "bg-[#0D0D0D] border-white/[0.08] text-white",
+        inverted: "bg-[#0D0D0D] border-white/[0.08] text-white",
+        glass: "bg-[#0D0D0D] border-white/[0.08] text-white",
       },
       elevation: {
         flat: "shadow-none",
@@ -39,7 +39,7 @@ const surfaceVariants = cva(
         full: "rounded-[24px]",
       },
       interactive: {
-        true: "hover:bg-[#141414] hover:border-white/[0.08]",
+        true: "hover:bg-[#0D0D0D] hover:border-white/[0.08]",
       },
     },
     defaultVariants: {

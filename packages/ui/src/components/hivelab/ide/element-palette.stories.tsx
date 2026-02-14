@@ -27,7 +27,7 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+      <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
         <Story />
       </div>
     ),
@@ -176,7 +176,7 @@ export const InteractivePalette: Story = {
 
     return (
       <div className="flex gap-4">
-        <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+        <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
           <ElementPalette
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
@@ -228,7 +228,7 @@ export const SearchDemo: Story = {
 
     return (
       <div className="flex gap-4">
-        <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+        <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
           <ElementPalette
             onDragStart={(id) => setSearchLog(prev => [...prev, `Drag: ${id}`])}
             onDragEnd={() => {}}
@@ -283,7 +283,7 @@ export const AllCategoriesExpanded: Story = {
 
 export const InputCategory: Story = {
   render: () => (
-    <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+    <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
       <div className="px-3 py-3 border-b border-[#333]">
         <h3 className="text-sm font-medium text-white mb-2">Input Elements</h3>
         <p className="text-xs text-[#888]">Elements for collecting user input</p>
@@ -307,7 +307,7 @@ export const InputCategory: Story = {
 
 export const DisplayCategory: Story = {
   render: () => (
-    <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+    <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
       <div className="px-3 py-3 border-b border-[#333]">
         <h3 className="text-sm font-medium text-white mb-2">Display Elements</h3>
         <p className="text-xs text-[#888]">Elements for showing data and results</p>
@@ -331,7 +331,7 @@ export const DisplayCategory: Story = {
 
 export const ActionCategory: Story = {
   render: () => (
-    <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+    <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
       <div className="px-3 py-3 border-b border-[#333]">
         <h3 className="text-sm font-medium text-white mb-2">Action Elements</h3>
         <p className="text-xs text-[#888]">Elements for user interactions and voting</p>
@@ -376,7 +376,7 @@ export const UniversalTierOnly: Story = {
 
 export const ConnectedTierHighlight: Story = {
   render: () => (
-    <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+    <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
       <div className="px-3 py-3 border-b border-[#333] bg-blue-500/5">
         <h3 className="text-sm font-medium text-white mb-1">Connected Elements</h3>
         <p className="text-xs text-blue-400">Elements that connect to campus data</p>
@@ -400,7 +400,7 @@ export const ConnectedTierHighlight: Story = {
 
 export const SpaceTierHighlight: Story = {
   render: () => (
-    <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+    <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
       <div className="px-3 py-3 border-b border-[#333] bg-purple-500/5">
         <h3 className="text-sm font-medium text-white mb-1">Space Elements</h3>
         <p className="text-xs text-purple-400">Leader-only elements for space management</p>
@@ -431,7 +431,7 @@ export const EmptySearch: Story = {
     // This story demonstrates the empty search state
     // The actual search input is in the component
     return (
-      <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+      <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
         <div className="px-3 py-3 border-b border-[#333]">
           <p className="text-xs text-[#888] mb-2">Try searching for "xyz" to see empty state</p>
         </div>
@@ -464,7 +464,7 @@ export const NarrowWidth: Story = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[220px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+      <div className="w-[220px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
         <Story />
       </div>
     ),
@@ -485,7 +485,7 @@ export const WideWidth: Story = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[360px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+      <div className="w-[360px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
         <Story />
       </div>
     ),
@@ -506,7 +506,7 @@ export const ShortHeight: Story = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[280px] h-[400px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+      <div className="w-[280px] h-[400px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
         <Story />
       </div>
     ),
@@ -527,7 +527,7 @@ export const TallHeight: Story = {
   },
   decorators: [
     (Story) => (
-      <div className="w-[280px] h-[800px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+      <div className="w-[280px] h-[800px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
         <Story />
       </div>
     ),
@@ -548,7 +548,7 @@ export const TallHeight: Story = {
 export const PremiumEffects: Story = {
   render: () => (
     <div className="flex gap-4 items-start">
-      <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+      <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
         <div className="px-3 py-3 border-b border-[#333]">
           <p className="text-xs text-[#888]">Hover over elements to see effects</p>
         </div>
@@ -602,7 +602,7 @@ export const RegularVsLeader: Story = {
     <div className="flex gap-4">
       <div>
         <div className="text-xs text-[#888] mb-2 text-center">Regular User</div>
-        <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+        <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
           <ElementPalette
             onDragStart={console.log}
             onDragEnd={() => {}}
@@ -612,7 +612,7 @@ export const RegularVsLeader: Story = {
       </div>
       <div>
         <div className="text-xs text-[#888] mb-2 text-center">Space Leader</div>
-        <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+        <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
           <ElementPalette
             onDragStart={console.log}
             onDragEnd={() => {}}
@@ -646,7 +646,7 @@ export const InIDEContext: Story = {
   render: () => (
     <div className="flex h-[600px] bg-[#0f0f0f]">
       {/* Simulated IDE Layout */}
-      <div className="w-[280px] bg-[#141414] border-r border-[#333]">
+      <div className="w-[280px] bg-[#0D0D0D] border-r border-[#333]">
         <ElementPalette
           onDragStart={console.log}
           onDragEnd={() => {}}
@@ -663,7 +663,7 @@ export const InIDEContext: Story = {
           <p className="text-sm">Drop elements here</p>
         </div>
       </div>
-      <div className="w-[280px] bg-[#141414] border-l border-[#333] p-4">
+      <div className="w-[280px] bg-[#0D0D0D] border-l border-[#333] p-4">
         <h3 className="text-sm font-medium text-white mb-2">Properties</h3>
         <p className="text-xs text-[#555]">Select an element to edit properties</p>
       </div>
@@ -711,7 +711,7 @@ export const ReducedMotion: Story = {
 
 export const KeyboardNavigation: Story = {
   render: () => (
-    <div className="w-[280px] h-[600px] bg-[#141414] border border-[#333] rounded-lg overflow-hidden">
+    <div className="w-[280px] h-[600px] bg-[#0D0D0D] border border-[#333] rounded-lg overflow-hidden">
       <div className="px-3 py-3 border-b border-[#333] bg-blue-500/5">
         <p className="text-xs text-blue-400">Use Tab to navigate, Enter/Space to toggle categories</p>
       </div>

@@ -85,7 +85,7 @@ export function BreadcrumbItem({
           'inline-flex items-center gap-1.5',
           'text-white/50 hover:text-white/80',
           'transition-colors duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#0A0A09]',
+          'focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#000000]',
           'rounded',
           className
         )}

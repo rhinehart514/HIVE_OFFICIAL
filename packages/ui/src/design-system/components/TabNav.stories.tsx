@@ -245,7 +245,7 @@ export const Vertical: Story = {
           variant="underline"
           className="w-48"
         />
-        <div className="flex-1 p-4 bg-[#141414] rounded-xl">
+        <div className="flex-1 p-4 bg-[#0D0D0D] rounded-xl">
           <p className="text-sm text-[#818187]">Content for: {active}</p>
         </div>
       </div>
@@ -268,7 +268,7 @@ export const WithPanels: Story = {
           onTabChange={setActive}
         />
 
-        <div className="p-4 bg-[#141414] rounded-xl min-h-[200px]">
+        <div className="p-4 bg-[#0D0D0D] rounded-xl min-h-[200px]">
           <TabPanel id="overview" activeTab={active}>
             <h3 className="text-white font-medium mb-2">Overview</h3>
             <p className="text-[#818187]">This is the overview content.</p>

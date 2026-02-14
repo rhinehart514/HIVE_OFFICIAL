@@ -45,7 +45,7 @@ const textareaVariants = cva(
     'outline-none',
     // Focus (WHITE, never gold) - fallback for keyboard nav
     'focus-visible:ring-2 focus-visible:ring-white/50',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ].join(' '),
   {

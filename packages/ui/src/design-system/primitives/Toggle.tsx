@@ -64,7 +64,7 @@ const checkboxVariants = cva(
     'rounded-md',
     'transition-all duration-150',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ].join(' '),
   {
@@ -153,7 +153,7 @@ const radioItemVariants = cva(
     'rounded-full',
     'transition-all duration-150',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ].join(' '),
   {
@@ -224,7 +224,7 @@ const switchVariants = cva(
     'relative inline-flex shrink-0 cursor-pointer rounded-full',
     'transition-all duration-200',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ].join(' '),
   {

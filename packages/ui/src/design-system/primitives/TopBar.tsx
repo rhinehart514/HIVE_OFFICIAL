@@ -35,7 +35,7 @@ export const TOPBAR_TOKENS = {
   transition: '150ms ease',
 } as const;
 
-const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0A0A0A]';
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-1 focus-visible:ring-offset-[#000000]';
 
 // ============================================
 // TOPBAR CONTAINER
