@@ -4,3 +4,8 @@
 audit-results/
 test-results/
 playwright-report/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
