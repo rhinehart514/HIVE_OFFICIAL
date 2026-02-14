@@ -17,24 +17,22 @@ import { cn } from '../../lib/utils';
 const inputVariants = cva(
   [
     'w-full',
-    'bg-[#0A0A0A]',
+    'bg-[#080808]',
     'text-white',
     'placeholder:text-white/40',
-    'border border-white/[0.08]',
+    'border border-white/[0.06]',
     'rounded-[12px]',
     'outline-none',
     'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
-    'focus:border-white/[0.2] focus:bg-[#141414]',
-    'focus-visible:ring-2 focus-visible:ring-white/[0.20]',
-    'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
+    'focus:border-white/[0.15] focus:bg-[#0D0D0D]',
     'disabled:opacity-40 disabled:cursor-not-allowed',
   ].join(' '),
   {
     variants: {
       size: {
         sm: 'h-9 px-3 text-sm',
-        default: 'h-11 px-4 text-sm',
-        lg: 'h-12 px-4 text-base',
+        default: 'h-11 px-4 text-[15px]',
+        lg: 'h-12 px-4 text-[15px]',
       },
       variant: {
         default: '',

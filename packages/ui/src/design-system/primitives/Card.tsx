@@ -18,19 +18,18 @@ import { useAtmosphereOptional, type AtmosphereLevel, type WarmthLevel } from '.
 const cardVariants = cva(
   [
     'relative overflow-hidden',
-    'bg-[#0A0A0A]',
-    'border border-white/[0.08]',
     'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
   ].join(' '),
   {
     variants: {
       elevation: {
-        resting: '',
-        raised: 'bg-[#141414] border-white/[0.10]',
-        floating: 'bg-[#141414] border-white/[0.12] shadow-[0_16px_32px_rgba(0,0,0,0.45)]',
+        subtle: 'bg-white/[0.02]',
+        resting: 'bg-white/[0.02] border border-white/[0.06]',
+        raised: 'bg-white/[0.04] border border-white/[0.06]',
+        floating: 'bg-[#141414] border border-white/[0.12] shadow-[0_16px_32px_rgba(0,0,0,0.45)]',
       },
       size: {
-        default: 'rounded-[12px]',
+        default: 'rounded-[16px]',
         compact: 'rounded-[12px]',
         modal: 'rounded-[12px]',
         tooltip: 'rounded-[12px]',
@@ -80,7 +79,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         !noPadding && 'p-5',
         interactive && [
           'cursor-pointer select-none',
-          'hover:bg-[#141414] hover:border-white/[0.12]',
+          elevation === 'subtle'
+            ? 'hover:bg-white/[0.04]'
+            : 'hover:bg-white/[0.04] hover:border-white/[0.08]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
           'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
         ],

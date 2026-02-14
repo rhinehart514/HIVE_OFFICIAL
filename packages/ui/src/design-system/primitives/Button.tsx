@@ -31,11 +31,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: [
-          'bg-[#1A1A1A]',
+          'bg-white/[0.06]',
           'text-white',
-          'border border-white/[0.10]',
-          'hover:bg-[#202020] hover:border-white/[0.16]',
-          'active:bg-[#171717]',
+          'border-none',
+          'hover:bg-white/[0.08]',
+          'active:bg-white/[0.10]',
         ].join(' '),
         primary: [
           'bg-[#FFD700]',
@@ -45,17 +45,17 @@ const buttonVariants = cva(
           'active:bg-[#E6BF00]',
         ].join(' '),
         secondary: [
-          'bg-[#1A1A1A]',
+          'bg-white/[0.06]',
           'text-white',
-          'border border-white/[0.10]',
-          'hover:bg-[#202020] hover:border-white/[0.16]',
-          'active:bg-[#171717]',
+          'border-none',
+          'hover:bg-white/[0.08]',
+          'active:bg-white/[0.10]',
         ].join(' '),
         ghost: [
           'bg-transparent',
           'text-white/50',
           'border border-transparent',
-          'hover:text-white/80 hover:bg-white/[0.06]',
+          'hover:text-white/80 hover:bg-white/[0.04]',
           'active:bg-white/[0.08]',
         ].join(' '),
         destructive: [

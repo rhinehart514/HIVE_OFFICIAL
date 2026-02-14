@@ -24,19 +24,19 @@ export const colors = {
   // Backgrounds - Neutral, no tint
   black: '#000000',
   bgBase: '#000000',        // Page background
-  bgSurface: '#0A0A0A',     // Cards, inputs, elevated
+  bgSurface: '#080808',     // Cards, inputs, elevated
   bgElevated: '#141414',    // Hover states
   bgActive: '#1A1A1A',      // Active/pressed states
 
   // Text hierarchy
   textPrimary: '#FFFFFF',                 // Main content
   textSecondary: 'rgba(255, 255, 255, 0.5)', // Supporting content
-  textSubtle: 'rgba(255, 255, 255, 0.35)',   // Timestamps, metadata
+  textSubtle: 'rgba(255, 255, 255, 0.3)',    // Timestamps, metadata
   textDisabled: 'rgba(255, 255, 255, 0.25)', // Disabled states
 
   // Borders
-  borderDefault: 'rgba(255, 255, 255, 0.08)', // Standard borders
-  borderHover: 'rgba(255, 255, 255, 0.12)',   // Hover state borders
+  borderDefault: 'rgba(255, 255, 255, 0.06)', // Standard borders
+  borderHover: 'rgba(255, 255, 255, 0.08)',   // Hover state borders
   borderFocus: 'rgba(255, 255, 255, 0.50)', // Focus rings (white, NOT gold)
 
   // Brand - Gold

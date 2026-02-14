@@ -58,11 +58,11 @@ export const spaceLayoutClasses = {
 
 export const SPACE_COLORS = {
   /** Base background - the void */
-  surfaceBase: '#0A0A09',
+  surfaceBase: '#000000',
   /** Subtle border - barely visible */
   borderSubtle: 'rgba(255, 255, 255, 0.06)',
   /** Hover surface - whisper of white */
-  surfaceHover: 'rgba(255, 255, 255, 0.04)',
+  surfaceHover: 'rgba(255, 255, 255, 0.03)',
   /** Active/selected surface */
   surfaceActive: 'rgba(255, 255, 255, 0.08)',
   /** Online indicator - life */
