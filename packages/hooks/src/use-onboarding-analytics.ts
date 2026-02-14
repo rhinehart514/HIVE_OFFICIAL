@@ -5,9 +5,12 @@ import { useAnalytics } from './use-analytics'
 // Matches the types defined in @hive/core/domain/analytics/types.ts
 export type OnboardingStepName =
   | 'welcome'
+  | 'verify'
   | 'name'
   | 'academics'
   | 'handle'
+  | 'interests'
+  | 'spaces'
   | 'photo'
   | 'builder'
   | 'legal';

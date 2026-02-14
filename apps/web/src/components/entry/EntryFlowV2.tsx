@@ -145,13 +145,13 @@ export function EntryFlowV2() {
     const prev = prevStepRef.current;
     if (prev === step) return;
 
-    const stepAnalyticsMap: Record<Step, string> = {
+    const stepAnalyticsMap = {
       email: 'welcome',
       code: 'verify',
       name: 'name',
       interests: 'interests',
       spaces: 'spaces',
-    };
+    } as const;
 
     analytics.trackStepCompleted(stepAnalyticsMap[prev]);
     analytics.trackStepStarted(stepAnalyticsMap[step]);
@@ -161,13 +161,13 @@ export function EntryFlowV2() {
   React.useEffect(() => {
     return () => {
       if (!flowCompletedRef.current && analyticsInitRef.current) {
-        const stepMap: Record<Step, string> = {
+        const stepMap = {
           email: 'welcome',
           code: 'verify',
           name: 'name',
           interests: 'interests',
           spaces: 'spaces',
-        };
+        } as const;
         analytics.trackOnboardingAbandoned(stepMap[prevStepRef.current], 'component_unmounted');
       }
     };
