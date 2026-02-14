@@ -18,6 +18,7 @@ export { MemberManagement } from './member-management';
 export { SpaceLayout } from './space-layout';
 export { SpaceSidebar } from './space-sidebar';
 export { MainContent } from './main-content';
+export { SpaceEventsTab } from './space-events-tab';
 
 // Sidebar components
 export { ToolsList, type ToolsListProps } from './sidebar/tools-list';
