@@ -474,6 +474,169 @@ The creation showcase.
 
 ---
 
+## Global Design Decisions
+
+### Breakpoints & Responsive
+```
+Mobile:    0 - 767px    → Bottom nav, full-width content, no sidebar
+Tablet:    768 - 1023px → Rail nav (64px), full-width content
+Desktop:   1024px+      → Rail nav (64px), max-width content containers
+```
+No intermediate "small tablet" breakpoint. Two shifts: mobile→rail, then content gets max-width.
+
+### Spacing Scale (4px base)
+```
+0:   0px
+1:   4px    — tight: between icon and label
+2:   8px    — compact: between list items
+3:   12px   — standard: component internal padding
+4:   16px   — comfortable: card padding, section gaps
+5:   20px   — spacious: between cards
+6:   24px   — section gap
+8:   32px   — major section breaks
+10:  40px   — page-level spacing
+12:  48px   — hero spacing
+```
+Use Tailwind classes (p-1 = 4px, p-4 = 16px, etc). No arbitrary pixel values.
+
+### Z-Index Layers
+```
+0:     Base content
+10:    Sticky headers, space sidebar
+20:    Rail nav, bottom nav
+30:    Drawers, bottom sheets (vaul)
+40:    Modals, dialogs
+50:    Command palette (Cmd+K)
+60:    Toasts (sonner)
+70:    Tooltips
+```
+
+### Max-Width Containers
+```
+Narrow:    480px   — auth pages, single-column forms
+Standard:  640px   — profile, settings, text-heavy pages
+Wide:      960px   — spaces hub, create tab, card grids
+Full:      100%    — space chat page (needs all the room), landing page
+```
+Content is centered with `mx-auto` and horizontal padding (16px mobile, 24px desktop).
+
+### Navigation Patterns
+- **Back button (←):** Appears in mobile top bar when navigating into a sub-page (space, profile, tool). Tapping goes to parent section. Desktop doesn't show ← (rail is always visible).
+- **Breadcrumbs:** No. Too enterprise. Back button + rail is enough.
+- **Deep linking:** Every view has a URL. Tabs in spaces use query params (`/s/handle?tab=events`). Drawers/modals don't change URL (they're ephemeral).
+- **Page transitions:** Instant content swap. No slide animations between pages. Optional 100ms opacity fade if content isn't ready.
+
+### Modal vs Drawer vs Page
+```
+Modal (Radix Dialog):    Confirmations, small forms (create event, edit bio)
+                         Centered, max-width 480px, backdrop blur
+Drawer (vaul):           Info panels, member list, notifications, settings
+                         Slides from right (desktop) or bottom (mobile)
+                         Can be swiped to dismiss on mobile
+Full page:               Anything with its own URL (/s/handle, /u/handle, /lab/[id])
+```
+
+### Toast Behavior (sonner)
+- Position: bottom-center on mobile, bottom-right on desktop
+- Max 3 visible, stack upward
+- Auto-dismiss: 4s for success, 6s for error, persistent for actions
+- Style: Surface-1 bg, white text, gold accent for success, red for error
+
+### Error Boundary
+- Crashed component shows: HIVE logo + "Something broke" + "Reload" button
+- Not the whole page — error boundaries wrap each major section (nav, content, sidebar)
+- Log errors to console in dev, silent in prod
+
+### 404 Page
+- HIVE logo (gold, centered)
+- "Lost in the hive" (Clash Display, 24px)
+- "This page doesn't exist or you don't have access." (14px, white/50)
+- "Go Home" button (gold pill)
+- Dark, minimal, on-brand
+
+### Offline Page
+- Already exists at `/offline`
+- Should show: HIVE logo + "You're offline" + "Check your connection and try again"
+- Subtle animation (logo pulse or honeycomb pattern)
+
+### Auth Redirects
+- Unauthenticated user hits any protected page → redirect to `/enter?redirect=/original-path`
+- After auth → redirect back to original path
+- Already implemented in the entry flow, just verify it works everywhere
+
+### Assets & Branding
+
+**Logo files (already exist):**
+```
+/public/assets/hive-logo-gold.svg      — primary, for dark backgrounds
+/public/assets/hive-logo-white.svg     — for colored/medium backgrounds
+/public/assets/hive-logo-black.svg     — for light backgrounds (if ever needed)
+/public/assets/hive-logo-platinum.svg  — subtle, for watermarks
+```
+The logo is a geometric interlocking hexagon pattern. Gold on black is the canonical mark.
+
+**Favicon:** `app/icon.svg` — gold logo on transparent. Already set.
+**Apple icon:** `app/apple-icon.svg` — gold logo. Already set.
+
+**OG Image (needs creation):**
+- Default: 1200x630, black bg, gold HIVE logo centered, "HIVE" text below, tagline
+- Per-space: could generate dynamically with space name + avatar (stretch goal)
+- Per-tool: tool name + "Built on HIVE" (stretch goal)
+
+**Font loading:**
+- Clash Display: loaded via `next/font/local` or Google Fonts, `display: swap`
+- System sans fallback for body (no external font dependency for body text)
+- Mono: system mono stack (`ui-monospace, 'SF Mono', 'JetBrains Mono', monospace`)
+
+**Avatar fallback:**
+- First letter of name, centered, white text
+- Background color: hash name to pick from accent palette (12 colors)
+- Consistent — same name always gets same color
+- 1px white/0.06 border always (prevents blending into dark bg)
+
+### Image Handling
+- **Upload:** max 5MB, client-side compression before upload
+- **Formats:** accept jpg/png/webp/gif, serve as webp when possible
+- **Avatars:** crop to square on upload (or allow positioning)
+- **Banners:** not V1 (accent colors handle space identity instead)
+- **Use `next/image`** everywhere for optimization
+
+### Copy & Voice
+- **Tone:** Direct, casual, slightly warm. Like a smart friend, not a corporation.
+- **Error messages:** Specific, not "Something went wrong." Say what happened and what to do.
+  - ✅ "Couldn't load messages. Check your connection and try again."
+  - ❌ "An error occurred. Please try again later."
+- **Empty states:** Active voice, suggest what to do.
+  - ✅ "No events yet. Create one and get your space moving."
+  - ❌ "No events found."
+- **Button labels:** Verbs. "Join", "Create", "Send", "Post". Not "Submit", "OK", "Confirm".
+- **No exclamation marks** unless genuinely exciting. "Welcome to HIVE" not "Welcome to HIVE!"
+
+### PWA
+```typescript
+// app/manifest.ts
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: 'HIVE',
+    short_name: 'HIVE',
+    description: 'Your campus, your tools, your community.',
+    start_url: '/spaces',
+    display: 'standalone',
+    background_color: '#0A0A09',
+    theme_color: '#0A0A09',
+    icons: [
+      { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+  }
+}
+```
+- Service worker: basic cache-first for static assets, network-first for API calls
+- Install prompt: show subtle "Add to Home Screen" banner after 3rd visit (not first visit)
+- Splash: black bg + gold HIVE logo (matches the theme_color)
+
+---
+
 ## Open Questions for Jacob
 
 1. **Rail vs current sidebar:** The rail is a bigger change but a better long-term pattern. Worth doing for V1 or keep the 200px sidebar and iterate later?
