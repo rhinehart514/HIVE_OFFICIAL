@@ -71,11 +71,6 @@ export { EmailInput, type EmailInputProps } from './EmailInput';
 export { HandleInput, type HandleInputProps, type HandleStatus } from './HandleInput';
 export { OTPInput, type OTPInputProps } from './OTPInput';
 export {
-  HandleStatusBadge,
-  type HandleStatusBadgeProps,
-  type HandleBadgeStatus,
-} from './HandleStatusBadge';
-export {
   CountdownTimer,
   formatTime,
   type CountdownTimerProps,
@@ -264,17 +259,6 @@ export {
 } from './Badge';
 
 export {
-  FeaturedBadge,
-  FeaturedBadgeGroup,
-  featuredBadgeVariants,
-  REASON_COLORS,
-  DEFAULT_LABELS as FEATURED_LABELS,
-  ReasonIcons as FeaturedReasonIcons,
-  type FeaturedReason,
-  type FeaturedBadgeProps,
-} from './FeaturedBadge';
-
-export {
   Tag,
   tagVariants,
   type TagProps,
@@ -303,19 +287,6 @@ export {
   getWarmthFromActiveUsers,
   type ActivityEdgeProps,
 } from './ActivityEdge';
-
-export {
-  WarmthDots,
-  InlineWarmth,
-  warmthDotsContainerVariants,
-  warmthDotVariants,
-  getWarmthLevel,
-  getFilledDots,
-  usesGold,
-  type WarmthDotsProps,
-  type InlineWarmthProps,
-  type WarmthLevel,
-} from './WarmthDots';
 
 export {
   LiveCounter,
@@ -358,16 +329,6 @@ export {
   type ActivityHeartbeatStripProps,
   type ActivityLevel,
 } from './ActivityHeartbeat';
-
-export {
-  FriendStack,
-  FriendStackInline,
-  friendStackContainerVariants,
-  friendAvatarRingVariants,
-  type FriendStackProps,
-  type FriendStackInlineProps,
-  type Friend,
-} from './FriendStack';
 
 export {
   LiveIndicator,
@@ -653,39 +614,9 @@ export {
   type MemberListProps,
 } from './MemberCard';
 
-export {
-  SpaceModeNav,
-  AnimatedSpaceModeNav,
-  spaceModeNavContainerVariants,
-  spaceModeNavItemVariants,
-  unreadBadgeVariants as spaceModeUnreadBadgeVariants,
-  SpaceModeIcons,
-  createSpaceModes,
-  detectActiveMode,
-  defaultSpaceModes,
-  spaceModeGlassPillSurface,
-  spaceModeSpringConfig,
-  type SpaceModeItem,
-  type SpaceModeNavProps,
-} from './SpaceModeNav';
-
 // ============================================
 // HIVELAB PRIMITIVES (Phase 14)
 // ============================================
-
-export {
-  TemplateScroller,
-  TemplateCard,
-  BlankCard,
-  templateScrollerContainerVariants,
-  templateScrollerScrollAreaVariants,
-  templateCardVariants,
-  templatePreviewVariants,
-  templateScrollerFadeOverlayVariants,
-  templateCardGlassSurface,
-  type TemplateItem,
-  type TemplateScrollerProps,
-} from './TemplateScroller';
 
 export {
   DeploymentTarget,
@@ -826,46 +757,6 @@ export {
 // ============================================
 // PROFILE PRIMITIVES (Phase 15)
 // ============================================
-
-export {
-  ProfileBentoGrid,
-  ProfileBentoItem,
-  ProfileBentoSidebar,
-  ProfileBentoMain,
-  ProfileBentoLayout,
-  bentogridContainerVariants,
-  bentogridItemVariants,
-  profileBentoContainerAnimationVariants,
-  profileBentoItemAnimationVariants,
-  type ProfileBentoGridProps,
-  type ProfileBentoItemProps,
-} from './ProfileBentoGrid';
-
-export {
-  ProfileCompletionNudge,
-  useProfileCompletionNudge,
-  nudgeContainerVariants,
-  progressBarVariants as profileNudgeProgressBarVariants,
-  shouldShowNudge,
-  recordDismiss,
-  glassNudgeSurface,
-  type ProfileCompletionItem,
-  type ProfileCompletionNudgeProps,
-} from './ProfileCompletionNudge';
-
-export {
-  ConnectionStrengthIndicator,
-  ConnectionStrengthInline,
-  connectionContainerVariants,
-  connectionDotVariants,
-  connectionBarVariants,
-  strengthToLevel,
-  levelToStrength,
-  getStrengthColor,
-  STRENGTH_LEVELS,
-  type StrengthLevel,
-  type ConnectionStrengthIndicatorProps,
-} from './ConnectionStrengthIndicator';
 
 // ============================================
 // FEEDBACK PRIMITIVES (Canvas)
