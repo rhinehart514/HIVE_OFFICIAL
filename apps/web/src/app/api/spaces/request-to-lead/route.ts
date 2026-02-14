@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/structured-logger';
+import { logger } from '@/lib/logger';
 import {
   withAuthValidationAndErrors,
   withAuthAndErrors,

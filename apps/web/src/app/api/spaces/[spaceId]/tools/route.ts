@@ -23,7 +23,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { Result, type PlacementLocation, type PlacementVisibility } from "@hive/core";
 import {

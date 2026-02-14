@@ -74,8 +74,8 @@ export function useDataExport(handle: string) {
         };
       }
 
-      // 5. Calendar
-      const calendarData = await safeFetch('/api/profile/calendar/events', 'calendar', 'Calendar', 5);
+      // 5. Calendar (skipped — endpoint removed)
+      const calendarData = null;
       if (calendarData) {
         const calendar = calendarData as { events?: unknown[] };
         exportData.calendar = {

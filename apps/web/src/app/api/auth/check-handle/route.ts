@@ -2,7 +2,6 @@ import { z } from "zod";
 import { withCache } from '@/lib/cache-headers';
 import { checkHandleAvailability } from "@/lib/handle-service";
 import { createCrudHandler, type ApiContext } from "@/lib/api-wrapper";
-import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { SecureSchemas } from "@/lib/secure-input-validation";
 
 // Validation schemas using SecureSchemas for security validation

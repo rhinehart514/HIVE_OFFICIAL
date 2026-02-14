@@ -3,30 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 
-interface CompletionData {
-  isComplete: boolean;
-  entryComplete: boolean;
-  profileComplete: boolean;
-  completionPercentage: number;
-  missingFields: string[];
-  missingRequired: string[];
-  missingRecommended: string[];
-  completedFields: string[];
-  requiredFields: readonly string[];
-  recommendedFields: readonly string[];
-  optionalFields: readonly string[];
-  nextSteps: string[];
-}
-
 interface UseProfileCompletionReturn {
   isLoading: boolean;
   error: string | null;
-  entryComplete: boolean;
   profileComplete: boolean;
   percentage: number;
-  missingRequired: string[];
-  missingRecommended: string[];
-  nextSteps: string[];
   refresh: () => Promise<void>;
 }
 
@@ -34,33 +15,33 @@ const CACHE_KEY = 'hive:profile-completion-dismissed';
 const DISMISS_DAYS = 7;
 
 /**
- * Hook for profile completion state
- * Fetches from /api/profile/completion
+ * Hook for profile completion state.
+ * Uses the main profile endpoint which returns completionPercentage.
  */
 export function useProfileCompletion(): UseProfileCompletionReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<CompletionData | null>(null);
+  const [percentage, setPercentage] = useState(100);
 
   const fetchCompletion = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/profile/completion', {
+      const response = await fetch('/api/profile', {
         credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch profile completion');
+        throw new Error('Failed to fetch profile');
       }
 
       const json = await response.json();
-      if (!json.success || !json.completion) {
+      if (!json.success || !json.data) {
         throw new Error(json.error || 'Invalid response');
       }
 
-      setData(json.completion);
+      setPercentage(json.data.completionPercentage ?? 100);
     } catch (err) {
       logger.error('Failed to fetch profile completion', {
         component: 'useProfileCompletion',
@@ -79,12 +60,8 @@ export function useProfileCompletion(): UseProfileCompletionReturn {
   return {
     isLoading,
     error,
-    entryComplete: data?.entryComplete ?? true,
-    profileComplete: data?.profileComplete ?? true,
-    percentage: data?.completionPercentage ?? 100,
-    missingRequired: data?.missingRequired ?? [],
-    missingRecommended: data?.missingRecommended ?? [],
-    nextSteps: data?.nextSteps ?? [],
+    profileComplete: percentage >= 100,
+    percentage,
     refresh: fetchCompletion,
   };
 }
@@ -117,19 +94,6 @@ export function dismissCompletion(): void {
 
   try {
     localStorage.setItem(CACHE_KEY, new Date().toISOString());
-  } catch {
-    // Ignore localStorage errors
-  }
-}
-
-/**
- * Clear dismissal (for testing)
- */
-export function clearCompletionDismissal(): void {
-  if (typeof window === 'undefined') return;
-
-  try {
-    localStorage.removeItem(CACHE_KEY);
   } catch {
     // Ignore localStorage errors
   }

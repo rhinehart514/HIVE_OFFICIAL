@@ -26,12 +26,6 @@ const CreateToolSchema = z.object({
   config: z.unknown().optional(),
 });
 
-const _localToolDefaults = {
-  status: 'draft' as const,
-  type: 'visual' as const,
-  config: {},
-};
-
 // Rate limiting: 10 tool creations per hour per user
 const createToolLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour

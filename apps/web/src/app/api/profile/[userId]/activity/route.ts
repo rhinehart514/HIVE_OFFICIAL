@@ -1,6 +1,6 @@
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { isTestUserId } from "@/lib/security-service";
 import { withCache } from '../../../../../lib/cache-headers';

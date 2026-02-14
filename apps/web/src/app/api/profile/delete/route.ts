@@ -11,7 +11,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/structured-logger';
+import { logger } from '@/lib/logger';
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,

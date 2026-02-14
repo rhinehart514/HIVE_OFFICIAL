@@ -8,7 +8,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { getServerSpaceRepository } from "@hive/core/server";
 import { withCache } from '../../../../../lib/cache-headers';

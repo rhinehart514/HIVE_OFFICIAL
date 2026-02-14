@@ -38,8 +38,6 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
     isLoading,
     profileComplete,
     percentage,
-    missingRequired,
-    missingRecommended,
   } = useProfileCompletion();
 
   // Check dismissal state on mount
@@ -61,13 +59,9 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
     onDismiss?.();
   };
 
-  // Combine missing fields, required first then recommended
-  const missingFields = [
-    ...missingRequired.map(field => ({ field, required: true })),
-    ...missingRecommended.map(field => ({ field, required: false })),
-  ].slice(0, 3); // Show max 3 items
-
-  const remainingCount = (missingRequired.length + missingRecommended.length) - missingFields.length;
+  // Simplified: no granular missing field data available
+  const missingFields: { field: string; required: boolean }[] = [];
+  const remainingCount = 0;
 
   return (
     <AnimatePresence>
@@ -143,7 +137,7 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
 
             {remainingCount > 0 && (
               <Text size="xs" className="text-white/50 pl-3.5">
-                +{remainingCount} more {remainingCount === 1 ? 'field' : 'fields'}
+                +{remainingCount} more fields
               </Text>
             )}
           </div>

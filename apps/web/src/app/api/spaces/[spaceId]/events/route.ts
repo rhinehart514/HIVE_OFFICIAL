@@ -9,7 +9,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
 import { SecurityScanner } from "@/lib/secure-input-validation";

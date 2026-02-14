@@ -2,7 +2,7 @@ import { z } from "zod";
 import * as admin from "firebase-admin";
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { HttpStatus } from "@/lib/api-response-types";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { Result } from "@hive/core";
 import {

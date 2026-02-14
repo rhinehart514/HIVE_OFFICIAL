@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 import { logger } from "@/lib/logger";
-import { NextRequest as _NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { changeHandle, getHandleChangeStatus } from '@/lib/handle-service';

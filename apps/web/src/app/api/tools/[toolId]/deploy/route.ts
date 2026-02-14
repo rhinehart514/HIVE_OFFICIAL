@@ -1,11 +1,8 @@
-import { NextRequest as _NextRequest, NextResponse } from 'next/server';
-import { getFirestore as _getFirestore, FieldValue as _FieldValue } from "firebase-admin/firestore";
 import * as admin from 'firebase-admin';
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthValidationAndErrors, withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
-import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/structured-logger';
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 import { validateToolForPublish } from "@/lib/tool-validation";
 import { notifyToolDeployed } from '@/lib/tool-notifications';
@@ -170,21 +167,18 @@ export const POST = withAuthValidationAndErrors(
       .get();
 
     if (!toolDoc.exists) {
-      return NextResponse.json(ApiResponseHelper.error("Tool not found", "RESOURCE_NOT_FOUND"), { status: HttpStatus.NOT_FOUND });
+      return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
 
     const toolData = toolDoc.data();
     if (toolData?.campusId !== campusId) {
-      return NextResponse.json(ApiResponseHelper.error("Access denied for this campus", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
+      return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
 
     // Quality gate: validate tool composition before deployment
     const validation = validateToolForPublish(toolData as Record<string, unknown>);
     if (!validation.valid) {
-      return NextResponse.json(
-        { success: false, error: 'Tool failed validation', validationErrors: validation.errors },
-        { status: 400 }
-      );
+      return respond.error("Tool failed validation", "VALIDATION_ERROR", { status: 400 });
     }
 
     // Auto-publish draft tools when deploying (deployment implies intent to publish)
@@ -206,7 +200,7 @@ export const POST = withAuthValidationAndErrors(
       .get();
 
     if (!existingDeploymentQuery.empty) {
-      return NextResponse.json(ApiResponseHelper.error("Tool is already deployed to this space", "UNKNOWN_ERROR"), { status: 409 });
+      return respond.error("Tool is already deployed to this space", "CONFLICT", { status: 409 });
     }
 
     // Check space's tool deployment limits
@@ -217,7 +211,7 @@ export const POST = withAuthValidationAndErrors(
 
     const spaceData = spaceDoc.data();
     if (spaceData?.campusId !== campusId) {
-      return NextResponse.json(ApiResponseHelper.error("Access denied for this campus", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
+      return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
     const maxTools = spaceData?.limits?.maxTools || 20;
 
@@ -228,10 +222,7 @@ export const POST = withAuthValidationAndErrors(
       .get();
 
     if (activeDeploymentsQuery.size >= maxTools) {
-      return NextResponse.json(
-        { error: `Space has reached the maximum of ${maxTools} deployed tools` },
-        { status: 409 }
-      );
+      return respond.error(`Space has reached the maximum of ${maxTools} deployed tools`, "LIMIT_REACHED", { status: 409 });
     }
 
     // Create deployment document

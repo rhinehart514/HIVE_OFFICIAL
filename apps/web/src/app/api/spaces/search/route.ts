@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { getServerSpaceRepository, type EnhancedSpace } from "@hive/core/server";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import {
   withAuthValidationAndErrors,
   getUserId,

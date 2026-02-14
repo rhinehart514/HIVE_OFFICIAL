@@ -1,5 +1,3 @@
-"use server";
-
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";

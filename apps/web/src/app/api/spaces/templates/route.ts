@@ -9,7 +9,7 @@ import {
   type SpaceTemplateCategory,
   type SpaceTemplate,
 } from "@hive/core";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { withCache } from '../../../../lib/cache-headers';
 

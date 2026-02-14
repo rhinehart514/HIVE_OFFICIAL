@@ -2,17 +2,13 @@ import { getStorage } from 'firebase-admin/storage';
 import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { isTestUserId } from "@/lib/security-service";
 import { mlContentAnalyzer } from "@/lib/ml-content-analyzer";
 
-// In-memory store for development mode profile data (shared with profile route)
-const devProfileStore: Record<string, unknown> = {};
-
 export const POST = withAuthAndErrors(async (
   request,
-  context,
+  _context,
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
@@ -27,18 +23,8 @@ export const POST = withAuthAndErrors(async (
 
     // Handle development mode (ONLY in development environment)
     if (isTestUserId(userId)) {
-      // In development, simulate successful upload with a unique URL
       const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`;
-      
-      // Store the avatar URL in development profile store
-      const existingProfile = (devProfileStore[userId] as Record<string, unknown>) || {};
-      devProfileStore[userId] = {
-        ...existingProfile,
-        avatarUrl,
-        profilePhoto: avatarUrl,
-      };
-      
-      logger.info('Development mode: Photo upload simulated for file', { data: file.name, endpoint: '/api/profile/upload-photo' });
+      logger.info('Development mode: Photo upload simulated', { fileName: file.name, endpoint: '/api/profile/upload-photo' });
       
       return respond.success({
         message: 'Photo uploaded successfully (development mode)',

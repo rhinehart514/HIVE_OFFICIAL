@@ -13,7 +13,7 @@
 import { randomUUID } from 'crypto';
 import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/structured-logger';
+import { logger } from '@/lib/logger';
 import {
   withAuthAndErrors,
   getUserId,

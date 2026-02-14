@@ -12,7 +12,7 @@ import { z } from "zod";
 import {
   createServerSpaceManagementService,
 } from "@hive/core/server";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import { withAdminAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 
 const GoLiveSchema = z.object({

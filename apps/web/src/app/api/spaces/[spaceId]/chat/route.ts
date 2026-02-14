@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
@@ -371,15 +371,6 @@ export const POST = withAuthValidationAndErrors(
       userId,
     });
 
-    // Trigger keyword automations (non-blocking)
-    triggerKeywordAutomations(spaceId, messageId, data.content, userId, data.boardId).catch(err => {
-      logger.warn('Keyword automation trigger failed', {
-        error: err instanceof Error ? err.message : String(err),
-        spaceId,
-        messageId,
-      });
-    });
-
     // Detect @mentions and create notifications (non-blocking)
     processMentions(spaceId, messageId, data.content, userId, data.boardId).catch(err => {
       logger.warn('Mention processing failed', {
@@ -491,154 +482,6 @@ async function processMentions(
         error: error instanceof Error ? error.message : String(error),
         spaceId,
         messageId,
-      });
-    }
-  }
-}
-
-/**
- * Trigger keyword-based automations for a message
- * Non-blocking - runs in background
- */
-async function triggerKeywordAutomations(
-  spaceId: string,
-  messageId: string,
-  content: string,
-  authorId: string,
-  boardId: string
-): Promise<void> {
-  const { FieldValue } = await import('firebase-admin/firestore');
-
-  // Get keyword automations for this space
-  const automationsSnapshot = await dbAdmin
-    .collection('spaces')
-    .doc(spaceId)
-    .collection('automations')
-    .where('trigger.type', '==', 'keyword')
-    .where('enabled', '==', true)
-    .get();
-
-  if (automationsSnapshot.empty) return;
-
-  const contentLower = content.toLowerCase();
-
-  for (const doc of automationsSnapshot.docs) {
-    const automation = doc.data();
-    const keywords: string[] = automation.trigger?.keywords || [];
-
-    // Check if any keyword matches
-    const matchedKeyword = keywords.find((kw: string) =>
-      contentLower.includes(kw.toLowerCase())
-    );
-
-    if (!matchedKeyword) continue;
-
-    try {
-      // Execute the automation action based on type
-      const action = automation.action;
-      if (!action) continue;
-
-      if (action.type === 'send_message') {
-        // Send a response message
-        const config = action.config || {};
-        let responseContent = config.content || '';
-
-        // Interpolate variables
-        responseContent = responseContent
-          .replace(/\{keyword\}/g, matchedKeyword)
-          .replace(/\{author\}/g, `<@${authorId}>`)
-          .replace(/\{message\}/g, content.slice(0, 100));
-
-        // Create system message in response
-        await dbAdmin
-          .collection('spaces')
-          .doc(spaceId)
-          .collection('boards')
-          .doc(boardId)
-          .collection('messages')
-          .add({
-            content: responseContent,
-            authorId: 'system',
-            authorName: 'HIVE Bot',
-            authorAvatarUrl: null,
-            authorRole: 'system',
-            type: 'system',
-            timestamp: Date.now(),
-            isDeleted: false,
-            isPinned: false,
-            reactions: [],
-            replyToId: messageId,
-            replyToPreview: content.slice(0, 100),
-            threadCount: 0,
-            metadata: {
-              automationId: doc.id,
-              automationName: automation.name,
-              triggeredBy: 'keyword',
-              matchedKeyword,
-            },
-          });
-      } else if (action.type === 'notify') {
-        // Send notification to leaders
-        const { createBulkNotifications } = await import('@/lib/notification-service');
-
-        const leadersSnapshot = await dbAdmin
-          .collection('spaceMembers')
-          .where('spaceId', '==', spaceId)
-          .where('role', 'in', ['owner', 'admin', 'moderator', 'leader'])
-          .where('isActive', '==', true)
-          .get();
-
-        const leaderIds = leadersSnapshot.docs.map(d => d.data().userId);
-
-        if (leaderIds.length > 0) {
-          let title = action.config?.title || 'Keyword Alert';
-          let body = action.config?.body || `Keyword "${matchedKeyword}" detected`;
-
-          title = title.replace(/\{keyword\}/g, matchedKeyword);
-          body = body.replace(/\{keyword\}/g, matchedKeyword)
-            .replace(/\{message\}/g, content.slice(0, 100));
-
-          await createBulkNotifications(leaderIds, {
-            type: 'system',
-            category: 'spaces',
-            title,
-            body,
-            actionUrl: `/s/${spaceId}`,
-            metadata: {
-              spaceId,
-              automationId: doc.id,
-              matchedKeyword,
-              messageId,
-            },
-          });
-        }
-      }
-
-      // Update stats
-      await doc.ref.update({
-        'stats.timesTriggered': FieldValue.increment(1),
-        'stats.successCount': FieldValue.increment(1),
-        'stats.lastTriggered': new Date(),
-      });
-
-      logger.info('Keyword automation triggered', {
-        automationId: doc.id,
-        automationName: automation.name,
-        matchedKeyword,
-        spaceId,
-        messageId,
-      });
-    } catch (error) {
-      const { FieldValue: FV } = await import('firebase-admin/firestore');
-      await doc.ref.update({
-        'stats.timesTriggered': FV.increment(1),
-        'stats.failureCount': FV.increment(1),
-        'stats.lastTriggered': new Date(),
-      });
-
-      logger.error('Keyword automation failed', {
-        automationId: doc.id,
-        error: error instanceof Error ? error.message : String(error),
       });
     }
   }

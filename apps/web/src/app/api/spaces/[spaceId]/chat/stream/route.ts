@@ -18,7 +18,7 @@
 import { type NextRequest } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { checkSpacePermission } from '@/lib/space-permission-middleware';
-import { logger, logSecurityEvent } from '@/lib/structured-logger';
+import { logger, logSecurityEvent } from '@/lib/logger';
 import { verifySession, type SessionData } from '@/lib/session';
 import { sseConnectionRateLimit } from '@/lib/rate-limit-simple';
 

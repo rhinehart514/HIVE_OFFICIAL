@@ -5,7 +5,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
 import { getServerSpaceRepository } from "@hive/core/server";
 import { getSpaceTemplateById } from "@hive/core";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import {
   withAuthValidationAndErrors,
   getUserId,

@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/structured-logger';
+import { logger } from '@/lib/logger';
 import { verifySession } from '@/lib/session';
 import { withCache } from '../../../../../../lib/cache-headers';
 

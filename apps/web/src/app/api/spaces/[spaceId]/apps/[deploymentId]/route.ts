@@ -1,7 +1,7 @@
 "use server";
 
 import { dbAdmin } from "@/lib/firebase-admin";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import {
   withAuthAndErrors,
   getUserId,

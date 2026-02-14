@@ -6,7 +6,7 @@ import {
   toSpaceDetailDTO,
   toSpaceWithToolsDTO,
 } from "@hive/core/server";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { SecurityScanner } from "@/lib/secure-input-validation";
 import { checkSpacePermission, type SpaceRole } from "@/lib/space-permission-middleware";

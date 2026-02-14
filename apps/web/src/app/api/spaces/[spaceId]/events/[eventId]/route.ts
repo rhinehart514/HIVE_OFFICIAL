@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { DocumentData, DocumentSnapshot } from 'firebase-admin/firestore';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/structured-logger';
+import { logger } from '@/lib/logger';
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,

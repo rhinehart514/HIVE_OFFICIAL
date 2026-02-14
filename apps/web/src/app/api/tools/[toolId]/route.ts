@@ -1,4 +1,3 @@
-import { getFirestore } from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, withErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
@@ -11,8 +10,6 @@ import {
 } from "@hive/core";
 import { notifyToolUpdated } from "@/lib/tool-notifications";
 import { withCache } from '../../../../lib/cache-headers';
-
-const db = getFirestore();
 
 // GET /api/tools/[toolId] - Get tool details (public access for published tools)
 const _GET = withErrors(async (
@@ -310,7 +307,7 @@ export const DELETE = withAuthAndErrors(async (
   }
 
   // Check if tool is being used in any posts
-  const postsSnapshot = await db
+  const postsSnapshot = await dbAdmin
     .collectionGroup("posts")
     .where("type", "==", "tool")
     .where("toolId", "==", toolId)

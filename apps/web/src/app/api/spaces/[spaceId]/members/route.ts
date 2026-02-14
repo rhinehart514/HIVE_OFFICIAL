@@ -11,7 +11,7 @@ import {
   type SpaceMemberData,
   type SpaceServiceCallbacks
 } from "@hive/core/server";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,

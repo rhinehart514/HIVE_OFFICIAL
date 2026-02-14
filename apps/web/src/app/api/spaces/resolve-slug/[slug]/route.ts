@@ -9,7 +9,7 @@
  */
 
 import { getServerSpaceRepository } from '@hive/core/server';
-import { logger } from '@/lib/structured-logger';
+import { logger } from '@/lib/logger';
 import { withErrors } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getDefaultCampusId } from '@/lib/campus-context';

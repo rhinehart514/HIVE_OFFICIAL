@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { logger } from '@/lib/structured-logger';
+import { logger } from '@/lib/logger';
 import {
   withAuthValidationAndErrors,
   getUserId,

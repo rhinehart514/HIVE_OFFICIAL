@@ -579,7 +579,7 @@ export function withAdminPermission<T = RouteParams>(
       );
 
       if (!hasAllPermissions) {
-        const { logger } = await import('@/lib/structured-logger');
+        const { logger } = await import('@/lib/logger');
         logger.warn('Admin permission denied', {
           adminId: payload.userId,
           role: adminRole,

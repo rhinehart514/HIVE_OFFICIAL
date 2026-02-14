@@ -7,7 +7,7 @@ import {
   type AuthenticatedRequest
 } from "@/lib/middleware";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
-import { logger } from "@/lib/structured-logger";
+import { logger } from "@/lib/logger";
 import { SecurityScanner } from "@/lib/secure-input-validation";
 import {
   createServerSpaceChatService,
