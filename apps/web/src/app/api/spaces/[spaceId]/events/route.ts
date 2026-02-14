@@ -22,6 +22,7 @@ import { autoLinkEventToBoard } from "@/lib/event-board-auto-link";
 import { isContentHidden } from "@/lib/content-moderation";
 import { notifySpaceEventCreated } from "@/lib/notification-service";
 import { withCache } from '../../../../../lib/cache-headers';
+import { canViewEvents, enforceSpaceRules, enforceVisibilityRules } from "@/lib/space-rules-middleware";
 
 const GetEventsSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
@@ -130,6 +131,18 @@ const _GET = withAuthAndErrors(async (
         "FORBIDDEN",
         { status: HttpStatus.FORBIDDEN }
       );
+    }
+
+    const visibilityRules = await enforceVisibilityRules(spaceId, userId);
+    if (!visibilityRules.allowed) {
+      return respond.error(visibilityRules.reason || "Permission denied", "FORBIDDEN", {
+        status: HttpStatus.FORBIDDEN,
+      });
+    }
+    if (!canViewEvents(visibilityRules.visibility.events, visibilityRules.isMember)) {
+      return respond.error("Events are only visible to members of this space", "FORBIDDEN", {
+        status: HttpStatus.FORBIDDEN,
+      });
     }
 
     const queryParams = GetEventsSchema.parse(
@@ -397,12 +410,19 @@ export const POST = withAuthValidationAndErrors(
       const userId = getUserId(request as AuthenticatedRequest);
       const campusId = getCampusId(request as AuthenticatedRequest);
 
-      // Require leader permission to create events
-      const permCheck = await checkSpacePermission(spaceId, userId, 'admin');
-      if (!permCheck.hasPermission) {
-        const code = permCheck.code === 'NOT_FOUND' ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-        const status = permCheck.code === 'NOT_FOUND' ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
-        return respond.error(permCheck.error ?? "Permission denied", code, { status });
+      // Keep baseline membership check pattern and then enforce fine-grained permissions
+      const membershipCheck = await checkSpacePermission(spaceId, userId, 'member');
+      if (!membershipCheck.hasPermission) {
+        const code = membershipCheck.code === 'NOT_FOUND' ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+        const status = membershipCheck.code === 'NOT_FOUND' ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
+        return respond.error(membershipCheck.error ?? "Permission denied", code, { status });
+      }
+
+      const permissionCheck = await enforceSpaceRules(spaceId, userId, 'events:create');
+      if (!permissionCheck.allowed) {
+        return respond.error(permissionCheck.reason || "Permission denied", "FORBIDDEN", {
+          status: HttpStatus.FORBIDDEN,
+        });
       }
 
       // SECURITY: Scan event fields for XSS/injection attacks
@@ -479,7 +499,7 @@ export const POST = withAuthValidationAndErrors(
       }
 
       // Notify space members about the new event (async, non-blocking)
-      const spaceName = permCheck.space?.name || 'a space';
+      const spaceName = membershipCheck.space?.name || 'a space';
       (async () => {
         try {
           // Get creator name for notification

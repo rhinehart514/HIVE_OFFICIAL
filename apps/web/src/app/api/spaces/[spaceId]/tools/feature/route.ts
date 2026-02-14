@@ -5,6 +5,7 @@ import { withAuthValidationAndErrors, getUserId, getCampusId, type Authenticated
 import { HttpStatus } from '@/lib/api-response-types';
 import { logger } from '@/lib/structured-logger';
 import { getServerSpaceRepository } from '@hive/core/server';
+import { enforceSpaceRules } from '@/lib/space-rules-middleware';
 
 const FeatureToolSchema = z.object({
   toolId: z.string().min(1)
@@ -66,11 +67,11 @@ export const POST = withAuthValidationAndErrors(
       return respond.error(validation.message, code, { status: validation.status });
     }
 
-    const role = validation.membership.role as string;
-    // Valid roles: owner, admin, moderator, member, guest
-    const canFeature = ['owner', 'admin', 'moderator'].includes(role);
-    if (!canFeature) {
-      return respond.error('Insufficient permissions to feature tools', 'FORBIDDEN', { status: HttpStatus.FORBIDDEN });
+    const configurePermission = await enforceSpaceRules(spaceId, userId, 'tools:configure');
+    if (!configurePermission.allowed) {
+      return respond.error(configurePermission.reason || 'Insufficient permissions to feature tools', 'FORBIDDEN', {
+        status: HttpStatus.FORBIDDEN,
+      });
     }
 
     // Validate tool exists

@@ -12,6 +12,7 @@ import {
 } from "@/lib/middleware";
 import { HttpStatus } from "@/lib/api-response-types";
 import { withCache } from '../../../../../lib/cache-headers';
+import { enforceSpaceRules } from "@/lib/space-rules-middleware";
 
 const GetAnalyticsSchema = z.object({
   period: z.enum(["7d", "30d", "90d"]).default("30d"),
@@ -121,6 +122,13 @@ const _GET = withAuthAndErrors(async (
   if (!validation.ok) {
     const code = validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
     return respond.error(validation.message, code, { status: validation.status });
+  }
+
+  const analyticsPermission = await enforceSpaceRules(spaceId, userId, 'analytics:view');
+  if (!analyticsPermission.allowed) {
+    return respond.error(analyticsPermission.reason || "Permission denied", "FORBIDDEN", {
+      status: HttpStatus.FORBIDDEN,
+    });
   }
 
   const queryParams = GetAnalyticsSchema.parse(

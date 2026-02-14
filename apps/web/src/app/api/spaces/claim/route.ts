@@ -30,6 +30,8 @@ import {
 import { ProfileId, type LeaderProofType, getSystemTemplateForCategory } from '@hive/core';
 import { createBulkNotifications } from '@/lib/notification-service';
 import { withCache } from '../../../../lib/cache-headers';
+import { normalizeSpaceType } from '@/lib/space-rules-middleware';
+import { getSpaceTypeRules } from '@/lib/space-type-rules';
 
 const claimSpaceSchema = z.object({
   spaceId: z.string().min(1, "Space ID is required"),
@@ -69,6 +71,34 @@ export const POST = withAuthValidationAndErrors(
         return respond.error('Access denied for this campus', 'FORBIDDEN', {
           status: HttpStatus.FORBIDDEN,
         });
+      }
+
+      // Enforce space-type claim rules
+      const normalizedSpaceType = normalizeSpaceType(space.category?.value);
+      const spaceTypeRules = getSpaceTypeRules(normalizedSpaceType);
+
+      if (normalizedSpaceType === 'campus_living' || spaceTypeRules.membership.joinMethod === 'automatic') {
+        return respond.error(
+          'Campus living spaces cannot be claimed manually',
+          'BUSINESS_RULE_VIOLATION',
+          { status: HttpStatus.BAD_REQUEST }
+        );
+      }
+
+      if (normalizedSpaceType === 'university_organizations' && !['email', 'document'].includes(proofType)) {
+        return respond.error(
+          'University organizations require email or document proof for claims',
+          'BUSINESS_RULE_VIOLATION',
+          { status: HttpStatus.BAD_REQUEST }
+        );
+      }
+
+      if (normalizedSpaceType === 'greek_life' && proofType === 'none') {
+        return respond.error(
+          'Greek life claims require leadership proof',
+          'BUSINESS_RULE_VIOLATION',
+          { status: HttpStatus.BAD_REQUEST }
+        );
       }
 
       // Check if space is claimable (must be unclaimed)
@@ -229,6 +259,7 @@ export const POST = withAuthValidationAndErrors(
             name: space.name.value,
             status: 'claimed',
             publishStatus: 'stealth',
+            type: normalizedSpaceType,
           },
           provisionalAccess: true,
           message: 'Space claimed! You have provisional access while we verify your leadership.',

@@ -12,6 +12,7 @@ import { HttpStatus } from '@/lib/api-response-types';
 import { getServerSpaceRepository, type EnhancedSpace } from '@hive/core/server';
 import { checkSpacePermission, getSpaceMembership } from '@/lib/space-permission-middleware';
 import { withCache } from '../../../../lib/cache-headers';
+import { enforceSpaceRules } from '@/lib/space-rules-middleware';
 
 interface MovementRestriction {
   spaceType: 'campus_living' | 'cohort' | 'fraternity_and_sorority';
@@ -129,6 +130,17 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
       'FORBIDDEN',
       { status: HttpStatus.FORBIDDEN }
     );
+  }
+
+  if (!isSystemAdmin) {
+    const transferPermission = await enforceSpaceRules(fromSpaceId, userId, 'space:transfer');
+    if (!transferPermission.allowed) {
+      return respond.error(
+        transferPermission.reason || 'Space transfer is restricted for this space type',
+        'FORBIDDEN',
+        { status: HttpStatus.FORBIDDEN }
+      );
+    }
   }
 
   // Get membership for later use (role transfer, etc.)

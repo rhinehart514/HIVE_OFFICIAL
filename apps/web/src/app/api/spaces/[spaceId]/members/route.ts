@@ -27,6 +27,11 @@ import {
 } from "@/lib/services/sharded-member-counter.service";
 import { notifySpaceInvite } from "@/lib/notification-service";
 import { withCache } from '../../../../../lib/cache-headers';
+import {
+  canViewMembers,
+  enforceSpaceRules,
+  enforceVisibilityRules,
+} from "@/lib/space-rules-middleware";
 
 const GetMembersQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
@@ -240,6 +245,27 @@ const _GET = withAuthAndErrors(async (
       validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
     return respond.error(validation.message, code, { status: validation.status });
   }
+
+  const permissionCheck = await enforceSpaceRules(spaceId, userId, 'members:view');
+  if (!permissionCheck.allowed) {
+    return respond.error(permissionCheck.reason || "Permission denied", "FORBIDDEN", {
+      status: HttpStatus.FORBIDDEN,
+    });
+  }
+
+  const visibilityRules = await enforceVisibilityRules(spaceId, userId);
+  if (!visibilityRules.allowed) {
+    return respond.error(visibilityRules.reason || "Permission denied", "FORBIDDEN", {
+      status: HttpStatus.FORBIDDEN,
+    });
+  }
+  if (!canViewMembers(visibilityRules.visibility.members, visibilityRules.isMember)) {
+    return respond.error("Member list visibility is restricted for non-members", "FORBIDDEN", {
+      status: HttpStatus.FORBIDDEN,
+    });
+  }
+  const showLimitedMemberData =
+    visibilityRules.visibility.members === 'limited_external' && !visibilityRules.isMember;
 
   const queryParams = GetMembersQuerySchema.parse(
     Object.fromEntries(new URL(request.url).searchParams.entries()),
@@ -503,7 +529,20 @@ const _GET = withAuthAndErrors(async (
       continue;
     }
 
-    members.push(memberRecord);
+    if (showLimitedMemberData) {
+      members.push({
+        id: memberRecord.id,
+        name: memberRecord.name,
+        username: memberRecord.username,
+        avatar: memberRecord.avatar,
+        role: memberRecord.role,
+        status: "offline",
+        joinedAt: memberRecord.joinedAt,
+        lastActive: memberRecord.joinedAt,
+      });
+    } else {
+      members.push(memberRecord);
+    }
   }
 
   const roleOrder: Record<string, number> = { owner: 5, admin: 4, moderator: 3, member: 2, guest: 1 };
@@ -570,6 +609,13 @@ export const POST = withAuthValidationAndErrors(
         const code =
           validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
         return respond.error(validation.message, code, { status: validation.status });
+      }
+
+      const invitePermission = await enforceSpaceRules(spaceId, inviterId, 'members:invite');
+      if (!invitePermission.allowed) {
+        return respond.error(invitePermission.reason || "Permission denied", "FORBIDDEN", {
+          status: HttpStatus.FORBIDDEN,
+        });
       }
 
       // Verify target user exists
@@ -707,6 +753,13 @@ export const PATCH = withAuthValidationAndErrors(
 
     // Handle role changes via DDD service
     if (body.role && body.role !== oldRole) {
+      const promotePermission = await enforceSpaceRules(spaceId, requesterId, 'members:promote');
+      if (!promotePermission.allowed) {
+        return respond.error(promotePermission.reason || "Permission denied", "FORBIDDEN", {
+          status: HttpStatus.FORBIDDEN,
+        });
+      }
+
       const spaceService = createServerSpaceManagementService(
         { userId: requesterId, campusId },
         createSpaceCallbacks(campusId)
@@ -730,6 +783,13 @@ export const PATCH = withAuthValidationAndErrors(
 
     // Handle suspend/unsuspend actions via DDD service
     if (body.action === "suspend" || body.action === "unsuspend") {
+      const removePermission = await enforceSpaceRules(spaceId, requesterId, 'members:remove');
+      if (!removePermission.allowed) {
+        return respond.error(removePermission.reason || "Permission denied", "FORBIDDEN", {
+          status: HttpStatus.FORBIDDEN,
+        });
+      }
+
       const spaceService = createServerSpaceManagementService(
         { userId: requesterId, campusId },
         createSpaceCallbacks(campusId)
@@ -830,6 +890,13 @@ export const DELETE = withAuthAndErrors(async (
     const code =
       validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
     return respond.error(validation.message, code, { status: validation.status });
+  }
+
+  const removePermission = await enforceSpaceRules(spaceId, requesterId, 'members:remove');
+  if (!removePermission.allowed) {
+    return respond.error(removePermission.reason || "Permission denied", "FORBIDDEN", {
+      status: HttpStatus.FORBIDDEN,
+    });
   }
 
   // Check for provisional access restriction (pending leader verification)

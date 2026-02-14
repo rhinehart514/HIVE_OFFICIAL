@@ -30,6 +30,7 @@ import {
 } from "@hive/core";
 import { validateToolElements } from "@hive/core/domain/creation/validate-tool-elements";
 import { withCache } from '../../../../lib/cache-headers';
+import { enforceSpaceRules, enforceToolRules } from '@/lib/space-rules-middleware';
 
 const SurfaceSchema = z.enum([
   "pinned",
@@ -587,6 +588,40 @@ export const POST = withAuthValidationAndErrors(
 
       // Capture space name for placementContext
       targetName = spaceValidation.spaceData?.name || 'Unknown Space';
+
+      const installPermission = await enforceSpaceRules(payload.targetId, userId, 'tools:install');
+      if (!installPermission.allowed) {
+        return respond.error(installPermission.reason || 'Insufficient permissions to deploy tools', 'FORBIDDEN', {
+          status: 403,
+        });
+      }
+
+      const resolvedToolType = (
+        toolResult.toolData.type ||
+        toolResult.toolData.toolType ||
+        toolResult.toolData.category ||
+        payload.toolId
+      ) as string;
+      const toolRules = await enforceToolRules(
+        payload.targetId,
+        userId,
+        resolvedToolType,
+        { requiredPermissions: ['tools:install'] }
+      );
+      if (!toolRules.allowed) {
+        const message = toolRules.reason || 'Tool rules violation';
+        const isRuleViolation =
+          message.toLowerCase().includes('not allowed') ||
+          message.toLowerCase().includes('maximum');
+        return respond.error(message, isRuleViolation ? 'BUSINESS_RULE_VIOLATION' : 'FORBIDDEN', {
+          status: isRuleViolation ? 400 : 403,
+        });
+      }
+      if (toolRules.requiresApproval) {
+        return respond.error('Tool deployment in this space requires approval', 'BUSINESS_RULE_VIOLATION', {
+          status: 400,
+        });
+      }
 
       if (payload.surface && !SurfaceSchema.options.includes(payload.surface)) {
         return respond.error("Invalid surface", "INVALID_INPUT", {

@@ -13,6 +13,7 @@ import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 import { createNotification, notifySpaceJoin } from '@/lib/notification-service';
 import { withCache } from '../../../../../lib/cache-headers';
+import { enforceJoinRules, enforceSpaceRules } from '@/lib/space-rules-middleware';
 
 /**
  * Space Join Requests Management API (for space leaders)
@@ -151,6 +152,18 @@ async function _GET(
       );
     }
 
+    // Enforce permission-system policy for reviewing membership operations
+    const permissionCheck = await enforceSpaceRules(spaceId, userId, 'members:invite');
+    if (!permissionCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: { message: permissionCheck.reason || 'Permission denied', code: 'FORBIDDEN' },
+        },
+        { status: 403 }
+      );
+    }
+
     // Parse query params
     const url = new URL(request.url);
     const status = url.searchParams.get('status') || 'pending';
@@ -252,6 +265,14 @@ export const PATCH = withAuthValidationAndErrors(
       });
     }
 
+    // Enforce baseline permission policy
+    const reviewerPermission = await enforceSpaceRules(spaceId, userId, 'members:invite');
+    if (!reviewerPermission.allowed) {
+      return respond.error(reviewerPermission.reason || 'Permission denied', 'FORBIDDEN', {
+        status: HttpStatus.FORBIDDEN,
+      });
+    }
+
     // Get the join request
     const requestRef = dbAdmin.collection('spaceJoinRequests').doc(body.requestId);
     const requestDoc = await requestRef.get();
@@ -278,6 +299,36 @@ export const PATCH = withAuthValidationAndErrors(
         'VALIDATION_ERROR',
         { status: HttpStatus.BAD_REQUEST }
       );
+    }
+
+    // Enforce per-space-type join approval process
+    const joinRules = await enforceJoinRules(spaceId, requestData.userId, 'approval');
+    if (!joinRules.allowed) {
+      const isConflict = joinRules.reason?.toLowerCase().includes('already a member');
+      return respond.error(
+        joinRules.reason || 'Join rules were not met',
+        isConflict ? 'CONFLICT' : 'BUSINESS_RULE_VIOLATION',
+        { status: isConflict ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST }
+      );
+    }
+    if (joinRules.joinMethod === 'invitation_only' || joinRules.joinMethod === 'automatic') {
+      return respond.error(
+        joinRules.reason || 'This space does not allow open join requests',
+        'BUSINESS_RULE_VIOLATION',
+        { status: HttpStatus.BAD_REQUEST }
+      );
+    }
+
+    // Faculty approval requires stronger permission than basic invite moderation
+    if (joinRules.approvalProcess === 'faculty_approval') {
+      const facultyPermission = await enforceSpaceRules(spaceId, userId, 'members:promote');
+      if (!facultyPermission.allowed) {
+        return respond.error(
+          'Faculty approval workflow requires owner/admin-level permissions',
+          'FORBIDDEN',
+          { status: HttpStatus.FORBIDDEN }
+        );
+      }
     }
 
     const now = admin.firestore.FieldValue.serverTimestamp();
@@ -311,6 +362,7 @@ export const PATCH = withAuthValidationAndErrors(
           joinMetadata: {
             requestId: body.requestId,
             approvedBy: userId,
+            approvalProcess: joinRules.approvalProcess || 'simple',
           },
         }),
         { merge: true }
@@ -372,6 +424,7 @@ export const PATCH = withAuthValidationAndErrors(
         message: 'Join request approved',
         requestId: body.requestId,
         status: 'approved',
+        approvalProcess: joinRules.approvalProcess || 'simple',
       });
     } else {
       // Reject: Update request status

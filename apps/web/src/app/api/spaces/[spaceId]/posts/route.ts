@@ -14,6 +14,7 @@ import { logger } from "@/lib/logger";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
 import { withCache } from '../../../../../lib/cache-headers';
+import { enforceSpaceRules } from "@/lib/space-rules-middleware";
 
 const profanityWords = ["spam", "scam"];
 const containsProfanity = (text: string) =>
@@ -227,6 +228,13 @@ export const POST = withAuthValidationAndErrors(
         const code =
           membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
         return respond.error(membership.message, code, { status: membership.status });
+      }
+
+      const permissionCheck = await enforceSpaceRules(spaceId, userId, 'posts:create');
+      if (!permissionCheck.allowed) {
+        return respond.error(permissionCheck.reason || "Permission denied", "FORBIDDEN", {
+          status: HttpStatus.FORBIDDEN,
+        });
       }
 
       await postCreationRateLimit.check(userId);

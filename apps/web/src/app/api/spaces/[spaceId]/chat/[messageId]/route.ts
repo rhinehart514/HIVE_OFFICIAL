@@ -16,6 +16,7 @@ import {
 } from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withCache } from '../../../../../../lib/cache-headers';
+import { enforceSpaceRules } from "@/lib/space-rules-middleware";
 
 /**
  * Single Message Operations API
@@ -75,6 +76,28 @@ function createProfileGetter(): GetUserProfileFn {
       avatarUrl: data.avatarUrl || data.photoURL,
     };
   };
+}
+
+async function getMessageAuthorId(
+  spaceId: string,
+  boardId: string,
+  messageId: string,
+): Promise<string | null> {
+  const messageDoc = await dbAdmin
+    .collection('spaces')
+    .doc(spaceId)
+    .collection('boards')
+    .doc(boardId)
+    .collection('messages')
+    .doc(messageId)
+    .get();
+
+  if (!messageDoc.exists) {
+    return null;
+  }
+
+  const data = messageDoc.data();
+  return (data?.authorId as string | undefined) || null;
 }
 
 /**
@@ -175,6 +198,22 @@ export const PATCH = withAuthValidationAndErrors(
       return respond.error("Space ID and Message ID are required", "INVALID_INPUT", { status: 400 });
     }
 
+    const messageAuthorId = await getMessageAuthorId(spaceId, data.boardId, messageId);
+    if (!messageAuthorId) {
+      return respond.error("Message not found", "NOT_FOUND", { status: 404 });
+    }
+
+    const editAny = await enforceSpaceRules(spaceId, userId, 'messages:edit_any');
+    if (!editAny.allowed) {
+      const editOwn = await enforceSpaceRules(spaceId, userId, 'messages:edit_own');
+      if (!editOwn.allowed) {
+        return respond.error(editOwn.reason || "Permission denied", "FORBIDDEN", { status: 403 });
+      }
+      if (messageAuthorId !== userId) {
+        return respond.error("You can only edit your own messages", "FORBIDDEN", { status: 403 });
+      }
+    }
+
     // SECURITY: Scan message content for XSS/injection attacks
     const securityScan = SecurityScanner.scanInput(data.content);
     if (securityScan.level === 'dangerous') {
@@ -246,6 +285,22 @@ export const DELETE = withAuthAndErrors(async (
 
   if (!boardId) {
     return respond.error("Board ID is required", "INVALID_INPUT", { status: 400 });
+  }
+
+  const messageAuthorId = await getMessageAuthorId(spaceId, boardId, messageId);
+  if (!messageAuthorId) {
+    return respond.error("Message not found", "NOT_FOUND", { status: 404 });
+  }
+
+  const deleteAny = await enforceSpaceRules(spaceId, userId, 'messages:delete_any');
+  if (!deleteAny.allowed) {
+    const deleteOwn = await enforceSpaceRules(spaceId, userId, 'messages:delete_own');
+    if (!deleteOwn.allowed) {
+      return respond.error(deleteOwn.reason || "Permission denied", "FORBIDDEN", { status: 403 });
+    }
+    if (messageAuthorId !== userId) {
+      return respond.error("You can only delete your own messages", "FORBIDDEN", { status: 403 });
+    }
   }
 
   // Create the chat service

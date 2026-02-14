@@ -18,6 +18,7 @@ import {
 } from "@/lib/services/sharded-member-counter.service";
 import { checkMajorSpaceUnlock } from "@/lib/services/space-unlock.service";
 import { DEFAULT_ACTIVATION_THRESHOLD } from "@hive/core/domain";
+import { enforceJoinRules } from "@/lib/space-rules-middleware";
 
 /**
  * Space Join API v2
@@ -61,6 +62,38 @@ export const POST = withAuthValidationAndErrors(
     }
 
     const space = joinValidation.space!;
+
+    // CHECK 2.5: Enforce space-type join rules (method, max spaces, approval policy)
+    const joinRules = await enforceJoinRules(spaceId, userId, joinMethod);
+    if (!joinRules.allowed) {
+      const isConflict = joinRules.reason?.toLowerCase().includes('already a member');
+      return respond.error(
+        joinRules.reason || 'Join rules were not met',
+        isConflict ? 'CONFLICT' : 'BUSINESS_RULE_VIOLATION',
+        {
+          status: isConflict ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST,
+          details: {
+            requiredJoinMethod: joinRules.joinMethod,
+            approvalProcess: joinRules.approvalProcess,
+          },
+        }
+      );
+    }
+
+    // Approval-mode spaces require join-request workflow unless joining with invite code
+    if (joinRules.requiresApproval && !inviteCode) {
+      return respond.error(
+        'This space requires an approval request before joining',
+        'BUSINESS_RULE_VIOLATION',
+        {
+          status: HttpStatus.BAD_REQUEST,
+          details: {
+            requiredJoinMethod: joinRules.joinMethod,
+            approvalProcess: joinRules.approvalProcess,
+          },
+        }
+      );
+    }
 
     // CHECK 3: Validate user is not banned from this specific space
     const spaceBanDoc = await dbAdmin.collection('spaceBans')

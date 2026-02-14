@@ -20,6 +20,8 @@ import {
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { withOptionalAuth } from '@/lib/middleware';
+import { normalizeSpaceType } from '@/lib/space-rules-middleware';
+import { getSpaceTypeRules } from '@/lib/space-type-rules';
 
 /**
  * Zod schema for browse query params validation
@@ -292,6 +294,17 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
   // - Only show 'stealth' spaces if user is a leader of that space
   // - Never show 'rejected' spaces in browse
   let visibleSpaces = spaces.filter(space => {
+    const rawCategory =
+      (space.category && 'value' in space.category
+        ? String(space.category.value)
+        : undefined) || 'hive_exclusive';
+    const normalizedType = normalizeSpaceType(rawCategory);
+    const discoverability = getSpaceTypeRules(normalizedType).visibility.spaceDiscoverable;
+    const isMemberOrLeader = userSpaceIds.has(space.spaceId.value) || leaderSpaceIds.has(space.spaceId.value);
+    if (!discoverability && !isMemberOrLeader) {
+      return false;
+    }
+
     if (space.isLive) return true;
     if (space.isStealth && leaderSpaceIds.has(space.spaceId.value)) return true;
     return false;

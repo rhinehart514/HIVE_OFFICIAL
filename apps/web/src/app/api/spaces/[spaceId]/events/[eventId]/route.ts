@@ -14,6 +14,7 @@ import { HttpStatus } from '@/lib/api-response-types';
 import { isContentHidden } from '@/lib/content-moderation';
 import { getServerSpaceRepository } from '@hive/core/server';
 import { withCache } from '../../../../../../lib/cache-headers';
+import { enforceSpaceRules } from '@/lib/space-rules-middleware';
 
 const UpdateEventSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -213,14 +214,29 @@ export const PATCH = withAuthValidationAndErrors(
       }
 
       const eventData = load.eventData;
-      const memberRole = validation.membership.role as string | undefined;
-      const canEdit =
-        eventData.organizerId === userId || ['owner', 'admin', 'moderator'].includes(memberRole || '');
+      const canEditAny = await enforceSpaceRules(spaceId, userId, 'events:edit_any');
+      if (!canEditAny.allowed) {
+        const canEditOwn = await enforceSpaceRules(spaceId, userId, 'events:edit_own');
+        if (!canEditOwn.allowed) {
+          return respond.error(canEditOwn.reason || 'Insufficient permissions to edit this event', 'FORBIDDEN', {
+            status: HttpStatus.FORBIDDEN,
+          });
+        }
+        if (eventData.organizerId !== userId) {
+          return respond.error('You can only edit your own events', 'FORBIDDEN', {
+            status: HttpStatus.FORBIDDEN,
+          });
+        }
+      }
 
-      if (!canEdit) {
-        return respond.error('Insufficient permissions to edit this event', 'FORBIDDEN', {
-          status: HttpStatus.FORBIDDEN,
-        });
+      // Managing event status/featured flags requires elevated manage permission
+      if (body.status !== undefined || body.isFeatured !== undefined) {
+        const managePermission = await enforceSpaceRules(spaceId, userId, 'events:manage');
+        if (!managePermission.allowed) {
+          return respond.error(managePermission.reason || 'Insufficient permissions to manage events', 'FORBIDDEN', {
+            status: HttpStatus.FORBIDDEN,
+          });
+        }
       }
 
       // SECURITY: Scan event fields for XSS/injection attacks
@@ -324,14 +340,19 @@ export const DELETE = withAuthAndErrors(async (
       return respond.error(load.message, code, { status: load.status });
     }
 
-    const memberRole = validation.membership.role as string | undefined;
-    const canDelete =
-      load.eventData.organizerId === userId || ['owner', 'admin'].includes(memberRole || '');
-
-    if (!canDelete) {
-      return respond.error('Insufficient permissions to delete this event', 'FORBIDDEN', {
-        status: HttpStatus.FORBIDDEN,
-      });
+    const canDeleteAny = await enforceSpaceRules(spaceId, userId, 'events:delete_any');
+    if (!canDeleteAny.allowed) {
+      const canDeleteOwn = await enforceSpaceRules(spaceId, userId, 'events:delete_own');
+      if (!canDeleteOwn.allowed) {
+        return respond.error(canDeleteOwn.reason || 'Insufficient permissions to delete this event', 'FORBIDDEN', {
+          status: HttpStatus.FORBIDDEN,
+        });
+      }
+      if (load.eventData.organizerId !== userId) {
+        return respond.error('You can only delete your own events', 'FORBIDDEN', {
+          status: HttpStatus.FORBIDDEN,
+        });
+      }
     }
 
     const rsvps = await dbAdmin

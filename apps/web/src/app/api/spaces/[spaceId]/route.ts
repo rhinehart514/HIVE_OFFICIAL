@@ -13,6 +13,7 @@ import { checkSpacePermission, type SpaceRole } from "@/lib/space-permission-mid
 import { isAdmin } from "@/lib/admin-auth";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withCache } from '../../../../lib/cache-headers';
+import { enforceSpaceRules } from "@/lib/space-rules-middleware";
 
 const UpdateSpaceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -241,6 +242,13 @@ export const PATCH = withAuthValidationAndErrors(
       return respond.error("No updates provided", "INVALID_INPUT", { status: 400 });
     }
 
+    const settingsPermission = await enforceSpaceRules(spaceId, userId, 'space:settings');
+    if (!settingsPermission.allowed) {
+      return respond.error(settingsPermission.reason || "Insufficient permissions to update space", "FORBIDDEN", {
+        status: 403,
+      });
+    }
+
     // SECURITY: Scan name and description for XSS/injection attacks
     if (updates.name) {
       const nameScan = SecurityScanner.scanInput(updates.name);
@@ -362,6 +370,15 @@ export const DELETE = withAuthAndErrors(async (
   const isOwner = space.owner?.id === userId;
   if (!isOwner && !userIsAdmin) {
     return respond.error("Only the space owner or a platform admin can delete a space", "FORBIDDEN", { status: 403 });
+  }
+
+  if (!userIsAdmin) {
+    const deletePermission = await enforceSpaceRules(spaceId, userId, 'space:delete');
+    if (!deletePermission.allowed) {
+      return respond.error(deletePermission.reason || "Space deletion is not allowed for this space type", "FORBIDDEN", {
+        status: 403,
+      });
+    }
   }
 
   // Check if user has provisional access (pending verification) - only applies to owners

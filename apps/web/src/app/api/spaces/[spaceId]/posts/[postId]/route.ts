@@ -13,6 +13,7 @@ import {
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
 import { withCache } from '../../../../../../lib/cache-headers';
+import { enforceSpaceRules } from "@/lib/space-rules-middleware";
 
 const EditPostSchema = z.object({
   content: z.string().min(1).max(2000),
@@ -143,6 +144,21 @@ export const PATCH = withAuthValidationAndErrors(
         return respond.error(post.message, "RESOURCE_NOT_FOUND", { status: post.status });
       }
 
+      const canEditAny = await enforceSpaceRules(spaceId, userId, 'posts:edit_any');
+      if (!canEditAny.allowed) {
+        const canEditOwn = await enforceSpaceRules(spaceId, userId, 'posts:edit_own');
+        if (!canEditOwn.allowed) {
+          return respond.error(canEditOwn.reason || "Permission denied", "FORBIDDEN", {
+            status: HttpStatus.FORBIDDEN,
+          });
+        }
+        if (post.postData.authorId !== userId) {
+          return respond.error("You can only edit your own post", "FORBIDDEN", {
+            status: HttpStatus.FORBIDDEN,
+          });
+        }
+      }
+
       const createdAt = post.postData.createdAt?.toDate
         ? post.postData.createdAt.toDate()
         : new Date(post.postData.createdAt);
@@ -153,12 +169,6 @@ export const PATCH = withAuthValidationAndErrors(
           "INVALID_INPUT",
           { status: HttpStatus.BAD_REQUEST },
         );
-      }
-
-      if (post.postData.authorId !== userId) {
-        return respond.error("Only the author can edit this post", "FORBIDDEN", {
-          status: HttpStatus.FORBIDDEN,
-        });
       }
 
       await post.postDoc.ref.update({
@@ -224,14 +234,19 @@ export const DELETE = withAuthAndErrors(async (
       return respond.error(post.message, "RESOURCE_NOT_FOUND", { status: post.status });
     }
 
-    const role = membership.membershipData.role;
-    const canDelete =
-      post.postData.authorId === userId || role === "builder" || role === "admin" || role === "owner";
-
-    if (!canDelete) {
-      return respond.error("Insufficient permissions to delete this post", "FORBIDDEN", {
-        status: HttpStatus.FORBIDDEN,
-      });
+    const canDeleteAny = await enforceSpaceRules(spaceId, userId, 'posts:delete_any');
+    if (!canDeleteAny.allowed) {
+      const canDeleteOwn = await enforceSpaceRules(spaceId, userId, 'posts:delete_own');
+      if (!canDeleteOwn.allowed) {
+        return respond.error(canDeleteOwn.reason || "Permission denied", "FORBIDDEN", {
+          status: HttpStatus.FORBIDDEN,
+        });
+      }
+      if (post.postData.authorId !== userId) {
+        return respond.error("You can only delete your own post", "FORBIDDEN", {
+          status: HttpStatus.FORBIDDEN,
+        });
+      }
     }
 
     await post.postDoc.ref.update({

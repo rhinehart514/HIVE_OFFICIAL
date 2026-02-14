@@ -26,6 +26,7 @@ import {
   incrementMemberCount,
   isShardedMemberCountEnabled
 } from "@/lib/services/sharded-member-counter.service";
+import { enforceSpaceRules } from "@/lib/space-rules-middleware";
 
 const BatchInviteSchema = z.object({
   action: z.literal("invite"),
@@ -242,6 +243,20 @@ export const POST = withAuthValidationAndErrors(
     if (!validation.ok) {
       const code = validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       return respond.error(validation.message, code, { status: validation.status });
+    }
+
+    const requiredPermission =
+      body.action === 'updateRoles' || body.action === 'approveRequests'
+        ? 'members:promote'
+        : body.action === 'remove'
+          ? 'members:remove'
+          : 'members:invite';
+
+    const permissionCheck = await enforceSpaceRules(spaceId, requesterId, requiredPermission);
+    if (!permissionCheck.allowed) {
+      return respond.error(permissionCheck.reason || "Permission denied", "FORBIDDEN", {
+        status: HttpStatus.FORBIDDEN,
+      });
     }
 
     const spaceService = createServerSpaceManagementService(

@@ -32,6 +32,7 @@ import {
   type SpaceDeploymentCallbacks,
   type PlacedToolData,
 } from "@hive/core/server";
+import { enforceSpaceRules, enforceToolRules } from "@/lib/space-rules-middleware";
 
 // ============================================================================
 // Validation Schemas
@@ -370,6 +371,13 @@ export const GET = withAuthAndErrors(async (
       return respond.error(validation.message, code, { status: validation.status });
     }
 
+    const viewPermission = await enforceSpaceRules(spaceId, userId, 'tools:view');
+    if (!viewPermission.allowed) {
+      return respond.error(viewPermission.reason || "Permission denied", "FORBIDDEN", {
+        status: HttpStatus.FORBIDDEN,
+      });
+    }
+
     // Parse query params
     const queryParams = GetSpaceToolsSchema.parse(
       Object.fromEntries(new URL(request.url).searchParams.entries()),
@@ -485,11 +493,9 @@ export const POST = withAuthValidationAndErrors(
         return respond.error(validation.message, code, { status: validation.status });
       }
 
-      // Check permission (must be leader/admin to post tools)
-      const { membership } = validation;
-      const canPost = ["owner", "admin", "moderator"].includes(membership.role);
-      if (!canPost) {
-        return respond.error("Only space leaders can post tools", "FORBIDDEN", {
+      const installPermission = await enforceSpaceRules(spaceId, userId, 'tools:install');
+      if (!installPermission.allowed) {
+        return respond.error(installPermission.reason || "Permission denied", "FORBIDDEN", {
           status: HttpStatus.FORBIDDEN,
         });
       }
@@ -508,6 +514,36 @@ export const POST = withAuthValidationAndErrors(
         return respond.error("Access denied for this campus", "FORBIDDEN", {
           status: HttpStatus.FORBIDDEN,
         });
+      }
+
+      const resolvedToolType = (
+        toolData?.type ||
+        toolData?.toolType ||
+        toolData?.category ||
+        body.toolId
+      ) as string;
+
+      const toolRules = await enforceToolRules(
+        spaceId,
+        userId,
+        resolvedToolType,
+        { requiredPermissions: ['tools:install'] }
+      );
+      if (!toolRules.allowed) {
+        const message = toolRules.reason || "Tool rules violation";
+        const isRuleViolation =
+          message.toLowerCase().includes('not allowed') ||
+          message.toLowerCase().includes('maximum');
+        return respond.error(message, isRuleViolation ? "BUSINESS_RULE_VIOLATION" : "FORBIDDEN", {
+          status: isRuleViolation ? HttpStatus.BAD_REQUEST : HttpStatus.FORBIDDEN,
+        });
+      }
+      if (toolRules.requiresApproval) {
+        return respond.error(
+          'Tool installation in this space requires approval',
+          "BUSINESS_RULE_VIOLATION",
+          { status: HttpStatus.BAD_REQUEST }
+        );
       }
 
       // Validate tool capabilities against space governance
@@ -634,11 +670,9 @@ export const DELETE = withAuthValidationAndErrors(
         return respond.error(validation.message, code, { status: validation.status });
       }
 
-      // Check permission (must be leader/admin to remove tools)
-      const { membership } = validation;
-      const canRemove = ["owner", "admin", "moderator"].includes(membership.role);
-      if (!canRemove) {
-        return respond.error("Only space leaders can remove tools", "FORBIDDEN", {
+      const removePermission = await enforceSpaceRules(spaceId, userId, 'tools:remove');
+      if (!removePermission.allowed) {
+        return respond.error(removePermission.reason || "Permission denied", "FORBIDDEN", {
           status: HttpStatus.FORBIDDEN,
         });
       }

@@ -8,6 +8,12 @@ import { GhostModeService, type GhostModeUser } from '@hive/core/domain/profile/
 import { ViewerContext } from '@hive/core/domain/shared/value-objects/viewer-context.value';
 import { isContentHidden } from '@/lib/content-moderation';
 import { withCache } from '../../../../../lib/cache-headers';
+import {
+  canViewEvents,
+  canViewMembers,
+  canViewPosts,
+  enforceVisibilityRules,
+} from '@/lib/space-rules-middleware';
 
 // COST OPTIMIZATION: Pre-fetched user data for ghost mode + display
 interface UserCacheEntry {
@@ -102,12 +108,23 @@ const _GET = withAuthAndErrors(async (
       .limit(1)
       .get();
 
-    if (membershipSnapshot.empty) {
+    const isMember = !membershipSnapshot.empty;
+    if (!isMember) {
       // Allow public spaces to be viewable without membership
       if (!space.isPublic) {
         return respond.error('You must be a member to view this space feed', 'FORBIDDEN', { status: HttpStatus.FORBIDDEN });
       }
     }
+
+    const visibilityRules = await enforceVisibilityRules(spaceId, userId);
+    if (!visibilityRules.allowed) {
+      return respond.error(visibilityRules.reason || 'Permission denied', 'FORBIDDEN', {
+        status: HttpStatus.FORBIDDEN,
+      });
+    }
+    const canSeePosts = canViewPosts(visibilityRules.visibility.posts, visibilityRules.isMember);
+    const canSeeEvents = canViewEvents(visibilityRules.visibility.events, visibilityRules.isMember);
+    const canSeeMembers = canViewMembers(visibilityRules.visibility.members, visibilityRules.isMember);
 
     // GHOST MODE: Build viewer context for privacy checks
     const viewerContext = ViewerContext.authenticated({
@@ -297,6 +314,7 @@ const _GET = withAuthAndErrors(async (
     // Process Posts
     if (postsSnapshot) {
       for (const postDoc of postsSnapshot.docs) {
+        if (!canSeePosts) continue;
         const postData = postDoc.data();
         // SECURITY: Skip posts from other campuses
         if (postData.campusId && postData.campusId !== campusId) continue;
@@ -331,6 +349,7 @@ const _GET = withAuthAndErrors(async (
     // Process Events
     if (eventsSnapshot) {
       for (const eventDoc of eventsSnapshot.docs) {
+        if (!canSeeEvents) continue;
         const eventData = eventDoc.data();
         // SECURITY: Skip events from other campuses
         if (eventData.campusId && eventData.campusId !== campusId) continue;
@@ -366,6 +385,7 @@ const _GET = withAuthAndErrors(async (
     // Process Member Joins
     if (membersSnapshot) {
       for (const memberDoc of membersSnapshot.docs) {
+        if (!canSeeMembers) continue;
         const memberData = memberDoc.data();
         if (memberData.campusId && memberData.campusId !== campusId) continue;
 
@@ -390,6 +410,7 @@ const _GET = withAuthAndErrors(async (
     // Process Tool Deployments
     if (deploymentsSnapshot) {
       for (const deploymentDoc of deploymentsSnapshot.docs) {
+        if (!canSeePosts) continue;
         const deploymentData = deploymentDoc.data();
         // GHOST MODE: Check using pre-computed cache
         if (shouldHideUserActivity(deploymentData.userId)) continue;

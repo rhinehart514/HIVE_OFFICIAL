@@ -16,6 +16,7 @@ import {
   type SpaceServiceCallbacks,
   type SpaceMemberData,
 } from "@hive/core/server";
+import { enforceSpaceRules } from "@/lib/space-rules-middleware";
 
 /**
  * Single Member Operations API - DDD Compliant
@@ -112,6 +113,13 @@ export const PATCH = withAuthAndErrors(async (
   }
   const { role: newRole } = parse.data;
 
+  const promotePermission = await enforceSpaceRules(spaceId, requesterId, 'members:promote');
+  if (!promotePermission.allowed) {
+    return respond.error(promotePermission.reason || "Permission denied", "FORBIDDEN", {
+      status: HttpStatus.FORBIDDEN,
+    });
+  }
+
   // Create the space management service with callbacks for member updates
   const spaceService = createServerSpaceManagementService(
     { userId: requesterId, campusId },
@@ -149,6 +157,13 @@ export const DELETE = withAuthAndErrors(async (
   const { spaceId, memberId } = await params;
   const requesterId = getUserId(request as AuthenticatedRequest);
   const campusId = getCampusId(request as AuthenticatedRequest);
+
+  const removePermission = await enforceSpaceRules(spaceId, requesterId, 'members:remove');
+  if (!removePermission.allowed) {
+    return respond.error(removePermission.reason || "Permission denied", "FORBIDDEN", {
+      status: HttpStatus.FORBIDDEN,
+    });
+  }
 
   // Check if target member is a leader and if category allows leader removal
   const LEADER_ROLES = new Set(['owner', 'admin', 'moderator']);
