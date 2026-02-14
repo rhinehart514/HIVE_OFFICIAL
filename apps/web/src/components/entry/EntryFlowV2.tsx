@@ -100,7 +100,6 @@ export function EntryFlowV2() {
 
   const focusOtpIndex = React.useCallback((index: number) => {
     otpRefs.current[index]?.focus();
-    otpRefs.current[index]?.select();
   }, []);
 
   React.useEffect(() => {
@@ -318,7 +317,9 @@ export function EntryFlowV2() {
     });
 
     if (nextChar && index < 5) {
-      focusOtpIndex(index + 1);
+      window.requestAnimationFrame(() => {
+        focusOtpIndex(index + 1);
+      });
     }
   }, [focusOtpIndex, isCodeVerified, isVerifyingCode]);
 
@@ -349,9 +350,7 @@ export function EntryFlowV2() {
 
     const filled = Array.from({ length: 6 }, (_, i) => pasted[i] || '');
     setCode(filled);
-    if (pasted.length < 6) {
-      focusOtpIndex(Math.max(0, pasted.length));
-    }
+    focusOtpIndex(Math.min(pasted.length, 5));
   }, [focusOtpIndex, isCodeVerified, isVerifyingCode]);
 
   const onEnterEmail = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -486,7 +485,7 @@ export function EntryFlowV2() {
                         onKeyDown={event => handleOtpKeyDown(index, event)}
                         onPaste={handleOtpPaste}
                         className={[
-                          'h-12 w-full rounded-[12px] bg-[#0A0A0A] text-center text-[18px] text-white',
+                          'h-12 w-full rounded-[12px] border bg-[#0A0A0A] text-center text-[18px] text-white',
                           'outline-none transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
                           'focus:border-white/[0.2]',
                           codeErrorFlash
