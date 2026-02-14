@@ -787,16 +787,16 @@ export default function SpacePageUnified() {
                 ) : activeTab === 'events' ? (
                   <SpaceContextProvider spaceId={space.id}>
                     <SpaceEventsTab
+                      spaceId={space.id}
                       isLeader={space.isLeader}
                       onCreateEvent={() => setShowEventModal(true)}
-                      onRsvp={rsvpToEvent}
+                      onEventClick={(eventId) => setSelectedEventId(eventId)}
                     />
                   </SpaceContextProvider>
                 ) : (
                   <SpacePostsTab
                     spaceId={space.id}
-                    isMember={space.isMember}
-                    onPostCountChange={setPostCount}
+                    currentUserId={user?.id}
                   />
                 )}
               </MainContent>
