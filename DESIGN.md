@@ -387,6 +387,93 @@ The creation showcase.
 
 ---
 
+## Dependencies & Tooling
+
+### Already Installed (keep and use)
+| Package | Version | Use for |
+|---------|---------|---------|
+| **Radix UI** (full suite) | ^1-2.x | Tooltips, popovers, dialogs, dropdowns, tabs, accordion, context menus, scroll areas — the accessible foundation for everything |
+| **cmdk** | ^1.0.4 | Global search / command palette (Cmd+K). Already installed, just needs to be wired into app shell |
+| **framer-motion** | ^11.x | All animations. Already used everywhere. Keep. |
+| **lucide-react** | ^0.562 | Icon system. Consistent, tree-shakeable, 1000+ icons. Keep as sole icon library. |
+| **sonner** | ^1.7 | Toast notifications. Already used. Keep. |
+| **@tanstack/react-virtual** | ^3.13 | Virtualized lists for long member lists, message feeds. Already installed. |
+| **recharts** | ^2.15 | If we ever need charts post-launch (activity pulse doesn't need them for V1) |
+| **@dnd-kit** | ^6-10.x | Drag and drop for tool editor canvas. Keep for HiveLab. |
+| **class-variance-authority** | ^0.7 | Component variant patterns. Already used in design system. |
+| **date-fns** | ^4.1 | Date formatting. Already used. |
+| **react-hotkeys-hook** | ^5.2 | Keyboard shortcuts. Already installed. Use for Cmd+K, Escape to close, etc. |
+| **react-intersection-observer** | ^10.0 | Lazy loading, infinite scroll triggers. Already installed. |
+| **input-otp** | ^1.4 | OTP/code input for auth flow. Already installed. |
+| **lottie-react** | ^2.4 | Micro-animations (loading states, success moments). Already installed. |
+
+### Need to Install
+| Package | Why | Effort |
+|---------|-----|--------|
+| **vaul** | Bottom sheet/drawer for mobile. The standard for React mobile drawers. Swipe to dismiss, snap points, body scroll lock. Currently no drawer library — space sidebar on mobile and notification panel both need this. | `pnpm add vaul` |
+| **next-pwa** or manual SW | PWA support — manifest, service worker, install prompt. Next.js 15 has built-in manifest support via `app/manifest.ts`. Service worker can be manual. | Config only, no heavy dep |
+
+### Don't Need / Remove
+| Package | Why remove |
+|---------|-----------|
+| **@heroicons/react** | Duplicate icon library. lucide-react covers everything. Grep for usage and migrate. |
+| **@radix-ui/react-icons** (in apps/web) | Same — lucide is the standard. Remove after migrating any usage. |
+| **@formkit/auto-animate** | Framer-motion handles all animation. This is redundant. |
+
+### Not Installing (considered and rejected)
+| Package | Why skip |
+|---------|---------|
+| **react-loading-skeleton** | We'll build skeletons with Tailwind + our token system. One-off components, not a library dependency. Keeps bundle smaller and matches our design tokens exactly. |
+| **novu** (notification infra) | Overkill. We have FCM + our own notification API. Bell + panel is custom UI over existing backend. |
+| **shadcn/ui** (full install) | We already have Radix primitives + our own design system. shadcn is great but would conflict with existing `@hive/ui`. Cherry-pick patterns from shadcn docs, don't install the library. |
+
+---
+
+## Design Inspiration (Specific References)
+
+### Navigation Rail
+- **Linear** — 48px icon rail, hover tooltips, workspace switcher at top. Clean, fast, no labels needed. This is the gold standard for web app rails.
+- **Figma** — Left rail with file/page structure. Shows that rails work for creative tools, not just project management.
+- **Discord** — Server rail (left-most) is 72px, icon-only, with active indicator (white pill on left edge). Direct inspiration for "recent spaces" section in our rail.
+- **Spotify** — Collapsible sidebar that can shrink to a rail. Interesting pattern but we should just commit to rail.
+
+### Space/Group Pages
+- **Geneva** — Rooms are typed (chat, post, event, audio). Clean header with group avatar + name. Minimal but alive-feeling. Closest comp to what HIVE spaces should feel like.
+- **Discord** — Channel header is compact (name + topic + icons). Member list sidebar on right. Chat is the star. Good density.
+- **Slack** — Channel header with topic, bookmarks bar, pinned items. Shows how to add context without cluttering.
+
+### Creation/Builder
+- **Canva** — "What will you design?" prompt hero. Template grid below. This is exactly the energy the Create tab needs.
+- **Notion** — Empty page with slash commands. "Type / for commands" is the same energy as our chat slash commands (/poll, /rsvp).
+- **v0.dev** — Prompt-first creation. Type what you want, watch it build. Streaming preview. Direct inspiration for our conversational creator.
+
+### Mobile Bottom Nav
+- **Instagram** — 5 tabs, center is Create (different icon treatment — plus in a square). The prominent create button pattern.
+- **TikTok** — Center create button is larger and differently colored. The most aggressive "create" emphasis in mobile nav.
+- **Threads** — Clean 5-tab with subtle active indicators. Dark mode done right — warm, not cold.
+
+### Profiles
+- **GitHub** — Contribution graph, pinned repos, activity. "What have you built?" as identity. Direct inspiration for HIVE profile as creation showcase.
+- **Dribbble** — Shot grid as portfolio. Clean profile card on top, work below. Shows that creation-first profiles work.
+- **Product Hunt** — Maker profiles show products launched. Social proof through creation. This is "creation = status."
+
+### Empty States
+- **Linear** — Every empty state has a specific illustration, a clear message, and an action button. Never generic.
+- **Notion** — Empty page is inviting, not sad. "Start writing, or press / for commands." Active emptiness.
+
+### Dark Mode
+- **Linear** — The reference for dark web apps. Near-black base, subtle borders, focused color for interactive elements. Warm enough to not feel sterile.
+- **Vercel** — Pure black (#000) base with white text. More stark than we want but shows how far you can push darkness.
+- **Raycast** — Dark with purple accent. Shows how a single accent color transforms an entire dark UI.
+- **Arc Browser** — Space-specific colors (they call it "space themes"). Direct comp for our per-space accent colors.
+
+### Activity / Social Proof
+- **GitHub** — "X contributions in the last year." Activity heatmap. Inline stats everywhere.
+- **Strava** — Kudos count, activity stats inline on every run card. The activity pulse concept already exists in fitness apps.
+- **Figma** — "X people viewing" with avatar stack. Live presence as activity signal.
+
+---
+
 ## Open Questions for Jacob
 
 1. **Rail vs current sidebar:** The rail is a bigger change but a better long-term pattern. Worth doing for V1 or keep the 200px sidebar and iterate later?
