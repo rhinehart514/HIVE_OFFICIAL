@@ -471,7 +471,7 @@ export default function EditSetupPage() {
   // Save mutation (placeholder - would need actual API)
   const saveMutation = useMutation({
     mutationFn: async (orchestration: OrchestrationRule[]) => {
-      // TODO: Implement actual save endpoint
+      // Saves orchestration via PATCH /api/setups/templates/[id]
       const response = await fetch(`/api/setups/templates/${setupId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

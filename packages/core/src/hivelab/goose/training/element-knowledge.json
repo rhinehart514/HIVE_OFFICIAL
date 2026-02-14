@@ -36,19 +36,36 @@
           "description": "Delay before triggering search"
         }
       },
-      "outputs": ["query", "searchTerm"],
+      "outputs": [
+        "query",
+        "searchTerm"
+      ],
       "inputs": [],
-      "connects_well_with": ["result-list", "filter-selector", "tag-cloud"],
-      "default_size": { "width": 280, "height": 60 },
+      "connects_well_with": [
+        "result-list",
+        "filter-selector",
+        "tag-cloud"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 60
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "placeholder": "Search events..." },
-        { "placeholder": "Find members...", "showSuggestions": true },
-        { "placeholder": "Search resources...", "debounceMs": 500 }
+        {
+          "placeholder": "Search events..."
+        },
+        {
+          "placeholder": "Find members...",
+          "showSuggestions": true
+        },
+        {
+          "placeholder": "Search resources...",
+          "debounceMs": 500
+        }
       ]
     },
-
     "date-picker": {
       "name": "Date Picker",
       "description": "Date and time selection calendar. Use for scheduling events, setting deadlines, or picking dates.",
@@ -66,7 +83,10 @@
       "config_schema": {
         "mode": {
           "type": "string",
-          "enum": ["single", "range"],
+          "enum": [
+            "single",
+            "range"
+          ],
           "default": "single",
           "description": "Single date or date range selection"
         },
@@ -86,19 +106,36 @@
           "description": "Latest selectable date"
         }
       },
-      "outputs": ["selectedDate", "dateRange"],
+      "outputs": [
+        "selectedDate",
+        "dateRange"
+      ],
       "inputs": [],
-      "connects_well_with": ["countdown-timer", "rsvp-button", "result-list"],
-      "default_size": { "width": 280, "height": 140 },
+      "connects_well_with": [
+        "countdown-timer",
+        "rsvp-button",
+        "result-list"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 140
+      },
       "stateful": false,
       "realtime": false,
       "example_configs": [
-        { "mode": "single" },
-        { "mode": "range", "showTime": true },
-        { "mode": "single", "showTime": true }
+        {
+          "mode": "single"
+        },
+        {
+          "mode": "range",
+          "showTime": true
+        },
+        {
+          "mode": "single",
+          "showTime": true
+        }
       ]
     },
-
     "user-selector": {
       "name": "User Selector",
       "description": "Campus user picker with search and multi-select. Use for inviting members, assigning people, or building teams.",
@@ -125,7 +162,9 @@
         },
         "filterByRole": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Filter users by role"
         },
         "placeholder": {
@@ -134,19 +173,37 @@
           "description": "Placeholder text"
         }
       },
-      "outputs": ["selectedUsers", "userIds"],
+      "outputs": [
+        "selectedUsers",
+        "userIds"
+      ],
       "inputs": [],
-      "connects_well_with": ["result-list", "leaderboard", "member-list"],
-      "default_size": { "width": 280, "height": 100 },
+      "connects_well_with": [
+        "result-list",
+        "leaderboard",
+        "member-list"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 100
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "allowMultiple": true, "placeholder": "Select team members..." },
-        { "allowMultiple": false, "placeholder": "Choose presenter..." },
-        { "maxSelections": 5, "placeholder": "Pick up to 5 attendees..." }
+        {
+          "allowMultiple": true,
+          "placeholder": "Select team members..."
+        },
+        {
+          "allowMultiple": false,
+          "placeholder": "Choose presenter..."
+        },
+        {
+          "maxSelections": 5,
+          "placeholder": "Pick up to 5 attendees..."
+        }
       ]
     },
-
     "form-builder": {
       "name": "Form Builder",
       "description": "Dynamic form with custom fields. Use for collecting structured data, surveys, or sign-ups.",
@@ -167,11 +224,32 @@
           "items": {
             "type": "object",
             "properties": {
-              "name": { "type": "string" },
-              "type": { "type": "string", "enum": ["text", "email", "number", "select", "textarea", "checkbox"] },
-              "label": { "type": "string" },
-              "required": { "type": "boolean" },
-              "options": { "type": "array", "items": { "type": "string" } }
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "text",
+                  "email",
+                  "number",
+                  "select",
+                  "textarea",
+                  "checkbox"
+                ]
+              },
+              "label": {
+                "type": "string"
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
             }
           },
           "description": "Form field definitions"
@@ -187,30 +265,65 @@
           "description": "Show field validation errors"
         }
       },
-      "outputs": ["formData", "submittedData"],
+      "outputs": [
+        "formData",
+        "submittedData"
+      ],
       "inputs": [],
-      "connects_well_with": ["result-list", "chart-display", "notification-center"],
-      "default_size": { "width": 280, "height": 200 },
+      "connects_well_with": [
+        "result-list",
+        "chart-display",
+        "notification-center"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 200
+      },
       "stateful": true,
       "realtime": false,
       "example_configs": [
         {
           "fields": [
-            { "name": "name", "type": "text", "label": "Your Name", "required": true },
-            { "name": "email", "type": "email", "label": "Email", "required": true }
+            {
+              "name": "name",
+              "type": "text",
+              "label": "Your Name",
+              "required": true
+            },
+            {
+              "name": "email",
+              "type": "email",
+              "label": "Email",
+              "required": true
+            }
           ],
           "submitButtonText": "Register"
         },
         {
           "fields": [
-            { "name": "feedback", "type": "textarea", "label": "Your Feedback", "required": true },
-            { "name": "rating", "type": "select", "label": "Rating", "options": ["1", "2", "3", "4", "5"] }
+            {
+              "name": "feedback",
+              "type": "textarea",
+              "label": "Your Feedback",
+              "required": true
+            },
+            {
+              "name": "rating",
+              "type": "select",
+              "label": "Rating",
+              "options": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5"
+              ]
+            }
           ],
           "submitButtonText": "Send Feedback"
         }
       ]
     },
-
     "filter-selector": {
       "name": "Filter Selector",
       "description": "Multi-select filter buttons with badges. Use for categorizing, tagging, or filtering by multiple criteria.",
@@ -230,9 +343,15 @@
           "items": {
             "type": "object",
             "properties": {
-              "value": { "type": "string" },
-              "label": { "type": "string" },
-              "count": { "type": "number" }
+              "value": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "count": {
+                "type": "number"
+              }
             }
           },
           "description": "Filter options to display"
@@ -248,32 +367,59 @@
           "description": "Show count badges on options"
         }
       },
-      "outputs": ["selectedFilters", "filters"],
+      "outputs": [
+        "selectedFilters",
+        "filters"
+      ],
       "inputs": [],
-      "connects_well_with": ["search-input", "result-list", "chart-display"],
-      "default_size": { "width": 280, "height": 80 },
+      "connects_well_with": [
+        "search-input",
+        "result-list",
+        "chart-display"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 80
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
         {
           "options": [
-            { "value": "academic", "label": "Academic" },
-            { "value": "social", "label": "Social" },
-            { "value": "professional", "label": "Professional" }
+            {
+              "value": "academic",
+              "label": "Academic"
+            },
+            {
+              "value": "social",
+              "label": "Social"
+            },
+            {
+              "value": "professional",
+              "label": "Professional"
+            }
           ],
           "allowMultiple": true
         },
         {
           "options": [
-            { "value": "beginner", "label": "Beginner" },
-            { "value": "intermediate", "label": "Intermediate" },
-            { "value": "advanced", "label": "Advanced" }
+            {
+              "value": "beginner",
+              "label": "Beginner"
+            },
+            {
+              "value": "intermediate",
+              "label": "Intermediate"
+            },
+            {
+              "value": "advanced",
+              "label": "Advanced"
+            }
           ],
           "allowMultiple": false
         }
       ]
     },
-
     "result-list": {
       "name": "Result List",
       "description": "Paginated list view for displaying results. Use for showing search results, filtered items, or collections.",
@@ -302,17 +448,31 @@
         }
       },
       "outputs": [],
-      "inputs": ["items"],
-      "connects_well_with": ["search-input", "filter-selector", "poll-element"],
-      "default_size": { "width": 280, "height": 300 },
+      "inputs": [
+        "items"
+      ],
+      "connects_well_with": [
+        "search-input",
+        "filter-selector",
+        "poll-element"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 300
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "itemsPerPage": 10, "showPagination": true },
-        { "itemsPerPage": 5, "showPagination": false }
+        {
+          "itemsPerPage": 10,
+          "showPagination": true
+        },
+        {
+          "itemsPerPage": 5,
+          "showPagination": false
+        }
       ]
     },
-
     "chart-display": {
       "name": "Chart Display",
       "description": "Data visualization charts (bar, line, pie). Use for showing poll results, voting statistics, or attendance data.",
@@ -330,7 +490,11 @@
       "config_schema": {
         "chartType": {
           "type": "string",
-          "enum": ["bar", "line", "pie"],
+          "enum": [
+            "bar",
+            "line",
+            "pie"
+          ],
           "required": true,
           "description": "Type of chart to display"
         },
@@ -345,18 +509,36 @@
         }
       },
       "outputs": [],
-      "inputs": ["data"],
-      "connects_well_with": ["poll-element", "form-builder", "counter"],
-      "default_size": { "width": 320, "height": 240 },
+      "inputs": [
+        "data"
+      ],
+      "connects_well_with": [
+        "poll-element",
+        "form-builder",
+        "counter"
+      ],
+      "default_size": {
+        "width": 320,
+        "height": 240
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "chartType": "bar", "title": "Poll Results", "showLegend": true },
-        { "chartType": "pie", "title": "Response Distribution" },
-        { "chartType": "line", "title": "Activity Over Time" }
+        {
+          "chartType": "bar",
+          "title": "Poll Results",
+          "showLegend": true
+        },
+        {
+          "chartType": "pie",
+          "title": "Response Distribution"
+        },
+        {
+          "chartType": "line",
+          "title": "Activity Over Time"
+        }
       ]
     },
-
     "tag-cloud": {
       "name": "Tag Cloud",
       "description": "Visual display of tags with frequency weighting. Use for topic exploration or filtering.",
@@ -377,7 +559,10 @@
         },
         "sortBy": {
           "type": "string",
-          "enum": ["frequency", "alphabetical"],
+          "enum": [
+            "frequency",
+            "alphabetical"
+          ],
           "default": "frequency",
           "description": "How to sort tags"
         },
@@ -387,18 +572,35 @@
           "description": "Show frequency counts"
         }
       },
-      "outputs": ["selectedTag", "tags"],
-      "inputs": ["tags"],
-      "connects_well_with": ["search-input", "filter-selector", "result-list"],
-      "default_size": { "width": 300, "height": 200 },
+      "outputs": [
+        "selectedTag",
+        "tags"
+      ],
+      "inputs": [
+        "tags"
+      ],
+      "connects_well_with": [
+        "search-input",
+        "filter-selector",
+        "result-list"
+      ],
+      "default_size": {
+        "width": 300,
+        "height": 200
+      },
       "stateful": false,
       "realtime": false,
       "example_configs": [
-        { "maxTags": 30, "sortBy": "frequency" },
-        { "maxTags": 20, "showCounts": false }
+        {
+          "maxTags": 30,
+          "sortBy": "frequency"
+        },
+        {
+          "maxTags": 20,
+          "showCounts": false
+        }
       ]
     },
-
     "map-view": {
       "name": "Map View",
       "description": "Geographic map for location-based features. Use for event locations or campus navigation.",
@@ -431,18 +633,35 @@
           "description": "Show map controls"
         }
       },
-      "outputs": ["selectedLocation", "markers"],
-      "inputs": ["locations"],
-      "connects_well_with": ["rsvp-button", "result-list", "event-picker"],
-      "default_size": { "width": 400, "height": 300 },
+      "outputs": [
+        "selectedLocation",
+        "markers"
+      ],
+      "inputs": [
+        "locations"
+      ],
+      "connects_well_with": [
+        "rsvp-button",
+        "result-list",
+        "event-picker"
+      ],
+      "default_size": {
+        "width": 400,
+        "height": 300
+      },
       "stateful": false,
       "realtime": false,
       "example_configs": [
-        { "defaultZoom": 15, "allowMarkers": true },
-        { "defaultZoom": 12, "showControls": false }
+        {
+          "defaultZoom": 15,
+          "allowMarkers": true
+        },
+        {
+          "defaultZoom": 12,
+          "showControls": false
+        }
       ]
     },
-
     "notification-center": {
       "name": "Notification Center",
       "description": "Display and manage notifications. Use for alerts and updates.",
@@ -472,18 +691,33 @@
           "description": "Auto-mark as read when viewed"
         }
       },
-      "outputs": ["unreadCount", "notifications"],
+      "outputs": [
+        "unreadCount",
+        "notifications"
+      ],
       "inputs": [],
-      "connects_well_with": ["rsvp-button", "announcement", "form-builder"],
-      "default_size": { "width": 320, "height": 400 },
+      "connects_well_with": [
+        "rsvp-button",
+        "announcement",
+        "form-builder"
+      ],
+      "default_size": {
+        "width": 320,
+        "height": 400
+      },
       "stateful": true,
       "realtime": true,
       "example_configs": [
-        { "maxNotifications": 20, "groupByType": true },
-        { "maxNotifications": 10, "autoMarkRead": true }
+        {
+          "maxNotifications": 20,
+          "groupByType": true
+        },
+        {
+          "maxNotifications": 10,
+          "autoMarkRead": true
+        }
       ]
     },
-
     "poll-element": {
       "name": "Poll",
       "description": "Interactive poll with voting options and results visualization.",
@@ -506,7 +740,9 @@
         },
         "options": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "minItems": 2,
           "maxItems": 10,
           "required": true,
@@ -533,31 +769,54 @@
           "description": "When voting closes"
         }
       },
-      "outputs": ["results", "totalVotes"],
+      "outputs": [
+        "results",
+        "totalVotes"
+      ],
       "inputs": [],
-      "connects_well_with": ["chart-display", "leaderboard", "result-list"],
-      "default_size": { "width": 300, "height": 200 },
+      "connects_well_with": [
+        "chart-display",
+        "leaderboard",
+        "result-list"
+      ],
+      "default_size": {
+        "width": 300,
+        "height": 200
+      },
       "stateful": true,
       "realtime": true,
       "example_configs": [
         {
           "question": "What's your favorite study spot?",
-          "options": ["Library", "Coffee shop", "Dorm", "Student union"],
+          "options": [
+            "Library",
+            "Coffee shop",
+            "Dorm",
+            "Student union"
+          ],
           "showResults": true
         },
         {
           "question": "When should we meet?",
-          "options": ["Monday", "Wednesday", "Friday"],
+          "options": [
+            "Monday",
+            "Wednesday",
+            "Friday"
+          ],
           "allowMultipleVotes": true
         },
         {
           "question": "Rate today's session",
-          "options": ["Great", "Good", "Okay", "Needs improvement"],
+          "options": [
+            "Great",
+            "Good",
+            "Okay",
+            "Needs improvement"
+          ],
           "showVoterCount": false
         }
       ]
     },
-
     "rsvp-button": {
       "name": "RSVP Button",
       "description": "Event RSVP button with attendance tracking and waitlist support.",
@@ -593,24 +852,55 @@
         },
         "options": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["Going", "Maybe", "Not Going"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "Going",
+            "Maybe",
+            "Not Going"
+          ],
           "description": "RSVP response options"
         }
       },
-      "outputs": ["attendees", "waitlist", "count"],
+      "outputs": [
+        "attendees",
+        "waitlist",
+        "count"
+      ],
       "inputs": [],
-      "connects_well_with": ["countdown-timer", "result-list", "notification-center", "map-view"],
-      "default_size": { "width": 240, "height": 120 },
+      "connects_well_with": [
+        "countdown-timer",
+        "result-list",
+        "notification-center",
+        "map-view"
+      ],
+      "default_size": {
+        "width": 240,
+        "height": 120
+      },
       "stateful": true,
       "realtime": true,
       "example_configs": [
-        { "eventName": "Weekly Meeting", "showAttendeeCount": true },
-        { "eventName": "Workshop", "maxAttendees": 30, "enableWaitlist": true },
-        { "eventName": "Party", "options": ["Yes!", "Maybe", "Can't make it"] }
+        {
+          "eventName": "Weekly Meeting",
+          "showAttendeeCount": true
+        },
+        {
+          "eventName": "Workshop",
+          "maxAttendees": 30,
+          "enableWaitlist": true
+        },
+        {
+          "eventName": "Party",
+          "options": [
+            "Yes!",
+            "Maybe",
+            "Can't make it"
+          ]
+        }
       ]
     },
-
     "countdown-timer": {
       "name": "Countdown Timer",
       "description": "Visual countdown to a target date/time with milestone alerts.",
@@ -661,19 +951,38 @@
           "description": "Message when countdown completes"
         }
       },
-      "outputs": ["remaining", "isComplete"],
+      "outputs": [
+        "remaining",
+        "isComplete"
+      ],
       "inputs": [],
-      "connects_well_with": ["rsvp-button", "notification-center", "announcement"],
-      "default_size": { "width": 280, "height": 140 },
+      "connects_well_with": [
+        "rsvp-button",
+        "notification-center",
+        "announcement"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 140
+      },
       "stateful": true,
       "realtime": true,
       "example_configs": [
-        { "targetDate": "2026-02-01T18:00:00Z", "title": "Event Starts In" },
-        { "targetDate": "2026-01-25T23:59:00Z", "title": "Application Deadline", "completedMessage": "Deadline passed!" },
-        { "title": "Meeting Starts", "showSeconds": false }
+        {
+          "targetDate": "2026-02-01T18:00:00Z",
+          "title": "Event Starts In"
+        },
+        {
+          "targetDate": "2026-01-25T23:59:00Z",
+          "title": "Application Deadline",
+          "completedMessage": "Deadline passed!"
+        },
+        {
+          "title": "Meeting Starts",
+          "showSeconds": false
+        }
       ]
     },
-
     "leaderboard": {
       "name": "Leaderboard",
       "description": "Competitive ranking display with scores and positions.",
@@ -711,19 +1020,39 @@
           "description": "Auto-refresh interval (ms)"
         }
       },
-      "outputs": ["rankings", "topScorer"],
-      "inputs": ["entries"],
-      "connects_well_with": ["poll-element", "counter", "chart-display"],
-      "default_size": { "width": 280, "height": 320 },
+      "outputs": [
+        "rankings",
+        "topScorer"
+      ],
+      "inputs": [
+        "entries"
+      ],
+      "connects_well_with": [
+        "poll-element",
+        "counter",
+        "chart-display"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 320
+      },
       "stateful": true,
       "realtime": true,
       "example_configs": [
-        { "title": "Top Contributors", "maxEntries": 10 },
-        { "title": "Study Streak", "showRankChange": true },
-        { "title": "Event Attendance", "maxEntries": 5 }
+        {
+          "title": "Top Contributors",
+          "maxEntries": 10
+        },
+        {
+          "title": "Study Streak",
+          "showRankChange": true
+        },
+        {
+          "title": "Event Attendance",
+          "maxEntries": 5
+        }
       ]
     },
-
     "counter": {
       "name": "Counter",
       "description": "Simple increment/decrement counter with optional limits.",
@@ -760,19 +1089,39 @@
           "description": "Counter label"
         }
       },
-      "outputs": ["value"],
+      "outputs": [
+        "value"
+      ],
       "inputs": [],
-      "connects_well_with": ["leaderboard", "chart-display", "notification-center"],
-      "default_size": { "width": 160, "height": 100 },
+      "connects_well_with": [
+        "leaderboard",
+        "chart-display",
+        "notification-center"
+      ],
+      "default_size": {
+        "width": 160,
+        "height": 100
+      },
       "stateful": true,
       "realtime": true,
       "example_configs": [
-        { "label": "Attendees", "initialValue": 0, "minValue": 0 },
-        { "label": "Points", "step": 5 },
-        { "label": "Available Spots", "initialValue": 50, "minValue": 0, "maxValue": 50 }
+        {
+          "label": "Attendees",
+          "initialValue": 0,
+          "minValue": 0
+        },
+        {
+          "label": "Points",
+          "step": 5
+        },
+        {
+          "label": "Available Spots",
+          "initialValue": 50,
+          "minValue": 0,
+          "maxValue": 50
+        }
       ]
     },
-
     "timer": {
       "name": "Timer",
       "description": "Stopwatch timer with start/stop/reset controls.",
@@ -802,19 +1151,37 @@
           "description": "Target duration in seconds"
         }
       },
-      "outputs": ["elapsed", "isRunning", "laps"],
+      "outputs": [
+        "elapsed",
+        "isRunning",
+        "laps"
+      ],
       "inputs": [],
-      "connects_well_with": ["counter", "notification-center", "leaderboard"],
-      "default_size": { "width": 200, "height": 120 },
+      "connects_well_with": [
+        "counter",
+        "notification-center",
+        "leaderboard"
+      ],
+      "default_size": {
+        "width": 200,
+        "height": 120
+      },
       "stateful": true,
       "realtime": true,
       "example_configs": [
-        { "autoStart": false },
-        { "targetDuration": 1500, "showMilliseconds": false },
-        { "autoStart": true, "showMilliseconds": true }
+        {
+          "autoStart": false
+        },
+        {
+          "targetDuration": 1500,
+          "showMilliseconds": false
+        },
+        {
+          "autoStart": true,
+          "showMilliseconds": true
+        }
       ]
     },
-
     "role-gate": {
       "name": "Role Gate",
       "description": "Show/hide content based on member role. Use for restricting access to specific features or content.",
@@ -830,8 +1197,13 @@
       "config_schema": {
         "allowedRoles": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["admin", "moderator"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "admin",
+            "moderator"
+          ],
           "description": "Roles that can access content"
         },
         "fallbackMessage": {
@@ -840,18 +1212,40 @@
           "description": "Message shown to unauthorized users"
         }
       },
-      "outputs": ["hasAccess", "userRole"],
-      "inputs": ["content"],
-      "connects_well_with": ["announcement", "form-builder", "member-selector"],
-      "default_size": { "width": 300, "height": 150 },
+      "outputs": [
+        "hasAccess",
+        "userRole"
+      ],
+      "inputs": [
+        "content"
+      ],
+      "connects_well_with": [
+        "announcement",
+        "form-builder",
+        "member-selector"
+      ],
+      "default_size": {
+        "width": 300,
+        "height": 150
+      },
       "stateful": false,
       "realtime": false,
       "example_configs": [
-        { "allowedRoles": ["admin"], "fallbackMessage": "Admin only feature" },
-        { "allowedRoles": ["admin", "moderator"], "fallbackMessage": "Leaders only" }
+        {
+          "allowedRoles": [
+            "admin"
+          ],
+          "fallbackMessage": "Admin only feature"
+        },
+        {
+          "allowedRoles": [
+            "admin",
+            "moderator"
+          ],
+          "fallbackMessage": "Leaders only"
+        }
       ]
     },
-
     "event-picker": {
       "name": "Event Picker",
       "description": "Browse and select from campus events. Use for event selection, linking, or scheduling.",
@@ -879,18 +1273,32 @@
           "description": "Maximum events to show"
         }
       },
-      "outputs": ["selectedEvent", "eventId"],
+      "outputs": [
+        "selectedEvent",
+        "eventId"
+      ],
       "inputs": [],
-      "connects_well_with": ["rsvp-button", "countdown-timer", "map-view"],
-      "default_size": { "width": 300, "height": 200 },
+      "connects_well_with": [
+        "rsvp-button",
+        "countdown-timer",
+        "map-view"
+      ],
+      "default_size": {
+        "width": 300,
+        "height": 200
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "showPastEvents": false, "maxEvents": 10 },
-        { "filterByCategory": "social" }
+        {
+          "showPastEvents": false,
+          "maxEvents": 10
+        },
+        {
+          "filterByCategory": "social"
+        }
       ]
     },
-
     "space-picker": {
       "name": "Space Picker",
       "description": "Browse and select from campus spaces. Use for space selection or cross-space tools.",
@@ -913,18 +1321,31 @@
           "description": "Show member counts"
         }
       },
-      "outputs": ["selectedSpace", "spaceId"],
+      "outputs": [
+        "selectedSpace",
+        "spaceId"
+      ],
       "inputs": [],
-      "connects_well_with": ["member-list", "space-events", "space-stats"],
-      "default_size": { "width": 300, "height": 200 },
+      "connects_well_with": [
+        "member-list",
+        "space-events",
+        "space-stats"
+      ],
+      "default_size": {
+        "width": 300,
+        "height": 200
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "showMemberCount": true },
-        { "filterByCategory": "academic" }
+        {
+          "showMemberCount": true
+        },
+        {
+          "filterByCategory": "academic"
+        }
       ]
     },
-
     "connection-list": {
       "name": "Connection List",
       "description": "Display user connections and mutual contacts. Use for networking features.",
@@ -949,18 +1370,33 @@
           "description": "Show mutual connections"
         }
       },
-      "outputs": ["connections"],
-      "inputs": ["userId"],
-      "connects_well_with": ["user-selector", "member-list", "result-list"],
-      "default_size": { "width": 280, "height": 300 },
+      "outputs": [
+        "connections"
+      ],
+      "inputs": [
+        "userId"
+      ],
+      "connects_well_with": [
+        "user-selector",
+        "member-list",
+        "result-list"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 300
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "maxConnections": 10, "showMutual": true },
-        { "maxConnections": 20 }
+        {
+          "maxConnections": 10,
+          "showMutual": true
+        },
+        {
+          "maxConnections": 20
+        }
       ]
     },
-
     "member-list": {
       "name": "Member List",
       "description": "Display space members with roles. Use for member directories and management.",
@@ -990,18 +1426,35 @@
           "description": "Show when they joined"
         }
       },
-      "outputs": ["members", "selectedMember"],
-      "inputs": ["spaceId"],
-      "connects_well_with": ["member-selector", "user-selector", "leaderboard"],
-      "default_size": { "width": 280, "height": 350 },
+      "outputs": [
+        "members",
+        "selectedMember"
+      ],
+      "inputs": [
+        "spaceId"
+      ],
+      "connects_well_with": [
+        "member-selector",
+        "user-selector",
+        "leaderboard"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 350
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "maxMembers": 20, "showRole": true },
-        { "showJoinDate": true, "showRole": true }
+        {
+          "maxMembers": 20,
+          "showRole": true
+        },
+        {
+          "showJoinDate": true,
+          "showRole": true
+        }
       ]
     },
-
     "member-selector": {
       "name": "Member Selector",
       "description": "Select members from your space. Use for task assignment or team selection.",
@@ -1029,18 +1482,34 @@
           "description": "Show member avatars"
         }
       },
-      "outputs": ["selectedMembers", "memberIds"],
-      "inputs": ["spaceId"],
-      "connects_well_with": ["member-list", "form-builder", "result-list"],
-      "default_size": { "width": 280, "height": 150 },
+      "outputs": [
+        "selectedMembers",
+        "memberIds"
+      ],
+      "inputs": [
+        "spaceId"
+      ],
+      "connects_well_with": [
+        "member-list",
+        "form-builder",
+        "result-list"
+      ],
+      "default_size": {
+        "width": 280,
+        "height": 150
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "allowMultiple": true, "showAvatars": true },
-        { "filterByRole": "admin" }
+        {
+          "allowMultiple": true,
+          "showAvatars": true
+        },
+        {
+          "filterByRole": "admin"
+        }
       ]
     },
-
     "space-events": {
       "name": "Space Events",
       "description": "Display events specific to your space. Use for event calendars and scheduling.",
@@ -1069,18 +1538,35 @@
           "description": "Show RSVP counts"
         }
       },
-      "outputs": ["events", "upcomingCount"],
-      "inputs": ["spaceId"],
-      "connects_well_with": ["rsvp-button", "countdown-timer", "calendar"],
-      "default_size": { "width": 300, "height": 280 },
+      "outputs": [
+        "events",
+        "upcomingCount"
+      ],
+      "inputs": [
+        "spaceId"
+      ],
+      "connects_well_with": [
+        "rsvp-button",
+        "countdown-timer",
+        "calendar"
+      ],
+      "default_size": {
+        "width": 300,
+        "height": 280
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "maxEvents": 5, "showRsvpCount": true },
-        { "showPast": true, "maxEvents": 10 }
+        {
+          "maxEvents": 5,
+          "showRsvpCount": true
+        },
+        {
+          "showPast": true,
+          "maxEvents": 10
+        }
       ]
     },
-
     "space-feed": {
       "name": "Space Feed",
       "description": "Display recent posts from your space. Use for activity feeds and announcements.",
@@ -1105,18 +1591,34 @@
           "description": "Show likes/comments counts"
         }
       },
-      "outputs": ["posts", "hasMore"],
-      "inputs": ["spaceId"],
-      "connects_well_with": ["announcement", "notification-center", "result-list"],
-      "default_size": { "width": 300, "height": 350 },
+      "outputs": [
+        "posts",
+        "hasMore"
+      ],
+      "inputs": [
+        "spaceId"
+      ],
+      "connects_well_with": [
+        "announcement",
+        "notification-center",
+        "result-list"
+      ],
+      "default_size": {
+        "width": 300,
+        "height": 350
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "maxPosts": 5, "showEngagement": true },
-        { "maxPosts": 10 }
+        {
+          "maxPosts": 5,
+          "showEngagement": true
+        },
+        {
+          "maxPosts": 10
+        }
       ]
     },
-
     "space-stats": {
       "name": "Space Stats",
       "description": "Display engagement metrics for your space. Use for analytics dashboards.",
@@ -1132,8 +1634,14 @@
       "config_schema": {
         "metrics": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["members", "posts", "events"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "members",
+            "posts",
+            "events"
+          ],
           "description": "Which metrics to display"
         },
         "showTrends": {
@@ -1142,18 +1650,41 @@
           "description": "Show trend indicators"
         }
       },
-      "outputs": ["stats", "trends"],
-      "inputs": ["spaceId"],
-      "connects_well_with": ["chart-display", "leaderboard", "counter"],
-      "default_size": { "width": 300, "height": 200 },
+      "outputs": [
+        "stats",
+        "trends"
+      ],
+      "inputs": [
+        "spaceId"
+      ],
+      "connects_well_with": [
+        "chart-display",
+        "leaderboard",
+        "counter"
+      ],
+      "default_size": {
+        "width": 300,
+        "height": 200
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "metrics": ["members", "posts", "events"], "showTrends": true },
-        { "metrics": ["members", "events"] }
+        {
+          "metrics": [
+            "members",
+            "posts",
+            "events"
+          ],
+          "showTrends": true
+        },
+        {
+          "metrics": [
+            "members",
+            "events"
+          ]
+        }
       ]
     },
-
     "announcement": {
       "name": "Announcement",
       "description": "Create and display announcements for space members. Use for important updates.",
@@ -1183,18 +1714,36 @@
           "description": "When announcement expires"
         }
       },
-      "outputs": ["announcementId", "viewCount"],
-      "inputs": ["content", "spaceId"],
-      "connects_well_with": ["notification-center", "countdown-timer", "space-feed"],
-      "default_size": { "width": 320, "height": 180 },
+      "outputs": [
+        "announcementId",
+        "viewCount"
+      ],
+      "inputs": [
+        "content",
+        "spaceId"
+      ],
+      "connects_well_with": [
+        "notification-center",
+        "countdown-timer",
+        "space-feed"
+      ],
+      "default_size": {
+        "width": 320,
+        "height": 180
+      },
       "stateful": true,
       "realtime": true,
       "example_configs": [
-        { "pinned": true, "sendNotification": true },
-        { "pinned": false, "sendNotification": false }
+        {
+          "pinned": true,
+          "sendNotification": true
+        },
+        {
+          "pinned": false,
+          "sendNotification": false
+        }
       ]
     },
-
     "availability-heatmap": {
       "name": "Availability Heatmap",
       "description": "Display aggregated member availability from connected calendars. Use for finding best meeting times.",
@@ -1215,7 +1764,10 @@
         },
         "timeFormat": {
           "type": "string",
-          "enum": ["12h", "24h"],
+          "enum": [
+            "12h",
+            "24h"
+          ],
           "default": "12h",
           "description": "Time display format"
         },
@@ -1241,107 +1793,359 @@
           "description": "Threshold for highlighting good times"
         }
       },
-      "outputs": ["selectedSlot", "bestTimes", "connectedMemberCount"],
-      "inputs": ["spaceId"],
-      "connects_well_with": ["rsvp-button", "date-picker", "member-selector"],
-      "default_size": { "width": 400, "height": 320 },
+      "outputs": [
+        "selectedSlot",
+        "bestTimes",
+        "connectedMemberCount"
+      ],
+      "inputs": [
+        "spaceId"
+      ],
+      "connects_well_with": [
+        "rsvp-button",
+        "date-picker",
+        "member-selector"
+      ],
+      "default_size": {
+        "width": 400,
+        "height": 320
+      },
       "stateful": false,
       "realtime": true,
       "example_configs": [
-        { "showSuggestions": true, "startHour": 9, "endHour": 17 },
-        { "timeFormat": "24h", "highlightThreshold": 0.8 }
+        {
+          "showSuggestions": true,
+          "startHour": 9,
+          "endHour": 17
+        },
+        {
+          "timeFormat": "24h",
+          "highlightThreshold": 0.8
+        }
+      ]
+    },
+    "progress-indicator": {
+      "name": "Progress Indicator",
+      "category": "display",
+      "description": "Visual progress bar toward a goal or target. Supports currency units, custom labels, and percentage display.",
+      "config_schema": {
+        "title": "string",
+        "current": "number",
+        "target": "number",
+        "unit": "string"
+      },
+      "example_prompts": [
+        "track fundraising progress",
+        "goal tracker for $500",
+        "show milestone progress"
+      ],
+      "pairs_well_with": [
+        "counter",
+        "form-builder"
+      ]
+    },
+    "signup-sheet": {
+      "name": "Signup Sheet",
+      "category": "action",
+      "description": "Slot-based signup list where members claim spots. Great for volunteering, potlucks, shift scheduling.",
+      "config_schema": {
+        "title": "string",
+        "slots": [
+          {
+            "label": "string",
+            "maxSignups": "number"
+          }
+        ]
+      },
+      "example_prompts": [
+        "potluck signup sheet",
+        "volunteer slots",
+        "who's bringing what"
+      ],
+      "pairs_well_with": [
+        "countdown-timer",
+        "announcement"
+      ]
+    },
+    "checklist-tracker": {
+      "name": "Checklist Tracker",
+      "category": "action",
+      "description": "Shared to-do/checklist where items can be checked off by members. Tracks completion.",
+      "config_schema": {
+        "title": "string",
+        "items": [
+          {
+            "text": "string",
+            "completed": "boolean"
+          }
+        ]
+      },
+      "example_prompts": [
+        "shared to-do list",
+        "event planning checklist",
+        "task tracker"
+      ],
+      "pairs_well_with": [
+        "progress-indicator",
+        "countdown-timer"
+      ]
+    },
+    "directory-list": {
+      "name": "Directory List",
+      "category": "display",
+      "description": "Searchable member/resource directory with filtering.",
+      "config_schema": {
+        "title": "string",
+        "searchable": "boolean",
+        "fields": [
+          "string"
+        ]
+      },
+      "example_prompts": [
+        "member directory",
+        "club officer list",
+        "resource directory"
+      ],
+      "pairs_well_with": [
+        "search-input",
+        "filter-selector"
+      ]
+    },
+    "qr-code-generator": {
+      "name": "QR Code Generator",
+      "category": "action",
+      "description": "Generates QR codes for links, check-ins, or attendance tracking.",
+      "config_schema": {
+        "title": "string",
+        "content": "string",
+        "size": "number"
+      },
+      "example_prompts": [
+        "event check-in QR",
+        "generate QR for link",
+        "attendance QR"
+      ],
+      "pairs_well_with": [
+        "rsvp-button",
+        "counter"
+      ]
+    },
+    "custom-block": {
+      "name": "Custom Block",
+      "category": "action",
+      "description": "AI-generated interactive HTML/CSS/JS widget for games, bingo, trivia, flashcards, spinners, and novel interactive elements.",
+      "config_schema": {
+        "blockId": "string",
+        "code": {
+          "html": "string",
+          "css": "string",
+          "js": "string"
+        },
+        "metadata": {
+          "name": "string"
+        }
+      },
+      "example_prompts": [
+        "bingo card game",
+        "trivia quiz",
+        "spin the wheel",
+        "flashcard deck"
+      ],
+      "pairs_well_with": [
+        "leaderboard",
+        "counter"
+      ]
+    },
+    "slot-1": {
+      "name": "Layout Slot 1",
+      "category": "layout",
+      "description": "First column in a multi-column layout.",
+      "config_schema": {
+        "width": "number"
+      },
+      "example_prompts": [],
+      "pairs_well_with": [
+        "slot-2"
+      ]
+    },
+    "slot-2": {
+      "name": "Layout Slot 2",
+      "category": "layout",
+      "description": "Second column in a multi-column layout.",
+      "config_schema": {
+        "width": "number"
+      },
+      "example_prompts": [],
+      "pairs_well_with": [
+        "slot-1"
       ]
     }
   },
-
   "connection_patterns": {
     "poll_to_chart": {
       "description": "Connect poll results to a chart for visualization",
-      "from": { "element": "poll-element", "output": "results" },
-      "to": { "element": "chart-display", "input": "data" }
+      "from": {
+        "element": "poll-element",
+        "output": "results"
+      },
+      "to": {
+        "element": "chart-display",
+        "input": "data"
+      }
     },
     "poll_to_leaderboard": {
       "description": "Connect poll results to leaderboard for rankings",
-      "from": { "element": "poll-element", "output": "results" },
-      "to": { "element": "leaderboard", "input": "entries" }
+      "from": {
+        "element": "poll-element",
+        "output": "results"
+      },
+      "to": {
+        "element": "leaderboard",
+        "input": "entries"
+      }
     },
     "search_to_results": {
       "description": "Connect search input to result list",
-      "from": { "element": "search-input", "output": "query" },
-      "to": { "element": "result-list", "input": "items" }
+      "from": {
+        "element": "search-input",
+        "output": "query"
+      },
+      "to": {
+        "element": "result-list",
+        "input": "items"
+      }
     },
     "filter_to_results": {
       "description": "Connect filters to result list",
-      "from": { "element": "filter-selector", "output": "filters" },
-      "to": { "element": "result-list", "input": "items" }
+      "from": {
+        "element": "filter-selector",
+        "output": "filters"
+      },
+      "to": {
+        "element": "result-list",
+        "input": "items"
+      }
     },
     "form_to_results": {
       "description": "Connect form submissions to result list",
-      "from": { "element": "form-builder", "output": "submittedData" },
-      "to": { "element": "result-list", "input": "items" }
+      "from": {
+        "element": "form-builder",
+        "output": "submittedData"
+      },
+      "to": {
+        "element": "result-list",
+        "input": "items"
+      }
     },
     "rsvp_to_results": {
       "description": "Connect RSVP attendees to result list",
-      "from": { "element": "rsvp-button", "output": "attendees" },
-      "to": { "element": "result-list", "input": "items" }
+      "from": {
+        "element": "rsvp-button",
+        "output": "attendees"
+      },
+      "to": {
+        "element": "result-list",
+        "input": "items"
+      }
     }
   },
-
-  "layout_types": ["grid", "flow", "tabs", "sidebar"],
-
+  "layout_types": [
+    "grid",
+    "flow",
+    "tabs",
+    "sidebar"
+  ],
   "common_tool_patterns": [
     {
       "name": "Simple Poll",
       "description": "Quick voting on a topic",
-      "elements": ["poll-element"],
+      "elements": [
+        "poll-element"
+      ],
       "connections": []
     },
     {
       "name": "Poll with Results Chart",
       "description": "Poll with visual results breakdown",
-      "elements": ["poll-element", "chart-display"],
-      "connections": ["poll_to_chart"]
+      "elements": [
+        "poll-element",
+        "chart-display"
+      ],
+      "connections": [
+        "poll_to_chart"
+      ]
     },
     {
       "name": "Poll with Leaderboard",
       "description": "Poll with ranked results",
-      "elements": ["poll-element", "leaderboard"],
-      "connections": ["poll_to_leaderboard"]
+      "elements": [
+        "poll-element",
+        "leaderboard"
+      ],
+      "connections": [
+        "poll_to_leaderboard"
+      ]
     },
     {
       "name": "Event RSVP",
       "description": "Event registration with countdown",
-      "elements": ["rsvp-button", "countdown-timer"],
+      "elements": [
+        "rsvp-button",
+        "countdown-timer"
+      ],
       "connections": []
     },
     {
       "name": "Event RSVP with Attendees",
       "description": "Event registration with attendee list",
-      "elements": ["rsvp-button", "result-list"],
-      "connections": ["rsvp_to_results"]
+      "elements": [
+        "rsvp-button",
+        "result-list"
+      ],
+      "connections": [
+        "rsvp_to_results"
+      ]
     },
     {
       "name": "Search and Filter",
       "description": "Search with category filters",
-      "elements": ["search-input", "filter-selector", "result-list"],
-      "connections": ["search_to_results", "filter_to_results"]
+      "elements": [
+        "search-input",
+        "filter-selector",
+        "result-list"
+      ],
+      "connections": [
+        "search_to_results",
+        "filter_to_results"
+      ]
     },
     {
       "name": "Feedback Form",
       "description": "Collect feedback with results",
-      "elements": ["form-builder", "result-list"],
-      "connections": ["form_to_results"]
+      "elements": [
+        "form-builder",
+        "result-list"
+      ],
+      "connections": [
+        "form_to_results"
+      ]
     },
     {
       "name": "Study Timer",
       "description": "Pomodoro-style study timer",
-      "elements": ["timer", "counter"],
+      "elements": [
+        "timer",
+        "counter"
+      ],
       "connections": []
     },
     {
       "name": "Meeting Scheduler",
       "description": "Find best meeting times",
-      "elements": ["availability-heatmap", "date-picker"],
+      "elements": [
+        "availability-heatmap",
+        "date-picker"
+      ],
       "connections": []
     }
   ]
