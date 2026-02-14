@@ -138,7 +138,7 @@ function EventCard({ event, size = 'medium', onRsvp, onClick }: EventCardProps) 
         'relative w-full text-left rounded-2xl overflow-hidden',
         'bg-[#141312] border border-white/[0.06]',
         'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-        'hover:border-white/[0.12]',
+        'hover:border-white/[0.08]',
         'focus:outline-none focus:ring-2 focus:ring-white/50',
         soon && upcoming && 'shadow-[inset_0_0_0_1px_rgba(255,215,0,0.20)]',
         isLarge && 'col-span-2 row-span-2',

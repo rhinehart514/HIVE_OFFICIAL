@@ -109,7 +109,7 @@ export interface ToolRuntimeModalProps {
 
 const glass = {
   overlay: 'bg-black/60 backdrop-blur-sm',
-  modal: 'bg-gray-950/95 backdrop-blur-xl border border-white/[0.08]',
+  modal: 'bg-gray-950/95 backdrop-blur-xl border border-white/[0.06]',
 };
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40';
@@ -209,7 +209,7 @@ export function ToolRuntimeModal({
         )}
       >
         {/* Header */}
-        <DialogHeader className="px-4 py-3 border-b border-white/[0.08] shrink-0">
+        <DialogHeader className="px-4 py-3 border-b border-white/[0.06] shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <DialogTitle className="text-base font-semibold text-white truncate">
@@ -348,7 +348,7 @@ export function ToolRuntimeModal({
         </div>
 
         {/* Footer with actions */}
-        <div className="px-4 py-3 border-t border-white/[0.08] flex justify-end gap-2 shrink-0">
+        <div className="px-4 py-3 border-t border-white/[0.06] flex justify-end gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"

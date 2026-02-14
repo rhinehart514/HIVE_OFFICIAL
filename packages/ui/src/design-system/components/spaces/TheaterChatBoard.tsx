@@ -254,7 +254,7 @@ function TheaterComposer({
             className={cn(
               'flex-1 resize-none bg-[#141312] rounded-xl px-4 py-3',
               'text-white placeholder:text-[#6B6B70]',
-              'border border-white/[0.06] focus:border-white/[0.12]',
+              'border border-white/[0.06] focus:border-white/[0.08]',
               'focus:outline-none focus:ring-2 focus:ring-white/[0.10]',
               'transition-all duration-200',
               'min-h-[48px] max-h-[200px]',
@@ -704,7 +704,7 @@ export function TheaterChatBoard({
             className={cn(
               'absolute bottom-24 right-6',
               'w-10 h-10 rounded-full',
-              'bg-[#141312] border border-white/[0.08]',
+              'bg-[#141312] border border-white/[0.06]',
               'flex items-center justify-center',
               'hover:bg-[#1E1D1B] transition-colors',
               'shadow-lg',

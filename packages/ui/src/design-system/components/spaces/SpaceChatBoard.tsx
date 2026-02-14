@@ -455,7 +455,7 @@ function ChatComposer({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
-              className="absolute bottom-full left-4 mb-2 p-3 rounded-xl bg-[#141312] border border-white/[0.08] shadow-xl"
+              className="absolute bottom-full left-4 mb-2 p-3 rounded-xl bg-[#141312] border border-white/[0.06] shadow-xl"
             >
               <p className="text-xs text-white/50 mb-2">Quick commands:</p>
               <div className="space-y-1 text-sm">
@@ -481,7 +481,7 @@ function ChatComposer({
             className={cn(
               'flex-1 resize-none bg-[#141312] rounded-xl px-4 py-3',
               'text-white placeholder:text-[#6B6B70]',
-              'border border-white/[0.06] focus:border-white/[0.12]',
+              'border border-white/[0.06] focus:border-white/[0.08]',
               'focus:outline-none focus:ring-2 focus:ring-white/[0.10]',
               'transition-all duration-200',
               'min-h-[48px] max-h-[200px]',

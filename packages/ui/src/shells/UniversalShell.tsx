@@ -182,7 +182,7 @@ function MobileNav({ pathname, onNavigate, notificationCount = 0 }: MobileNavPro
       style={{
         height: SHELL_TOKENS.mobileNavHeight,
         paddingBottom: SHELL_TOKENS.safeAreaBottom,
-        background: '#0A0A0A',
+        background: '#080808',
         borderColor: 'rgba(255,255,255,0.06)',
       }}
     >
@@ -390,7 +390,7 @@ export function UniversalShell({
   }, [pathname]);
 
   return (
-    <div className="min-h-screen" style={{ background: '#0A0A0A' }}>
+    <div className="min-h-screen" style={{ background: '#080808' }}>
       {/* FLOATING SIDEBAR (desktop only) */}
       {!isMobile && (
         <GlobalSidebar

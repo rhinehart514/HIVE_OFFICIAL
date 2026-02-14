@@ -123,7 +123,7 @@ function ToolCard({ tool, onRun, onView, onRemove, canRemove }: ToolCardProps) {
         'relative rounded-2xl p-5',
         'bg-[#141312] border border-white/[0.06]',
         'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-        'hover:border-white/[0.12]',
+        'hover:border-white/[0.08]',
         tool.isActive && 'shadow-[inset_0_0_0_1px_rgba(255,215,0,0.20)]',
       )}
       onMouseEnter={() => setShowActions(true)}

@@ -289,7 +289,7 @@ export function ChatRowMessage({
         <div className={cn(
           'absolute top-2 right-4',
           'flex items-center gap-0.5 p-1',
-          'bg-[#1E1D1B] rounded-lg border border-white/[0.08]',
+          'bg-[#1E1D1B] rounded-lg border border-white/[0.06]',
           'shadow-lg',
           'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
         )}>

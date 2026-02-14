@@ -151,7 +151,7 @@ const SkeletonMessageBubble: React.FC<{ align?: 'left' | 'right'; staggerOffset?
 );
 
 const SkeletonSpaceCard: React.FC<{ staggerOffset?: number }> = ({ staggerOffset = 0 }) => (
-  <div className="rounded-xl border border-white/[0.08] overflow-hidden">
+  <div className="rounded-xl border border-white/[0.06] overflow-hidden">
     <Skeleton height={120} className="rounded-none" staggerIndex={staggerOffset} />
     <div className="p-4 space-y-3">
       <Skeleton variant="text" width="60%" staggerIndex={staggerOffset + 1} />

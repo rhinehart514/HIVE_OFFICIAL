@@ -136,7 +136,7 @@ function SearchResultItem({
       className={cn(
         'w-full text-left p-3 rounded-xl',
         'bg-white/[0.02] hover:bg-white/[0.05]',
-        'border border-white/[0.04] hover:border-white/[0.08]',
+        'border border-white/[0.04] hover:border-white/[0.06]',
         'transition-all duration-150',
         'group'
       )}

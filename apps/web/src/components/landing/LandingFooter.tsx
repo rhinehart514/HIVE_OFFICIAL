@@ -1,15 +1,23 @@
 'use client';
 
-import { Footer } from '@hive/ui/design-system/primitives';
+import Link from 'next/link';
 
 export function LandingFooter() {
   return (
-    <Footer variant="minimal">
-      <Footer.Copyright>&copy; {new Date().getFullYear()} HIVE</Footer.Copyright>
-      <Footer.Links>
-        <Footer.Link href="/legal/terms">Terms</Footer.Link>
-        <Footer.Link href="/legal/privacy">Privacy</Footer.Link>
-      </Footer.Links>
-    </Footer>
+    <footer className="px-6 py-8 border-t border-white/[0.06]">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <span className="text-[11px] text-white/20 font-mono">
+          &copy; {new Date().getFullYear()} HIVE
+        </span>
+        <div className="flex items-center gap-4">
+          <Link href="/legal/terms" className="text-[11px] text-white/20 hover:text-white/40 transition-colors">
+            Terms
+          </Link>
+          <Link href="/legal/privacy" className="text-[11px] text-white/20 hover:text-white/40 transition-colors">
+            Privacy
+          </Link>
+        </div>
+      </div>
+    </footer>
   );
 }

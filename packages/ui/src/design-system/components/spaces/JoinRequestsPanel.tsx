@@ -203,7 +203,7 @@ function RequestCard({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md p-6 rounded-2xl bg-[var(--bg-elevated)] border border-white/[0.08]"
+              className="w-full max-w-md p-6 rounded-2xl bg-[var(--bg-elevated)] border border-white/[0.06]"
             >
               <h3 className="text-lg font-semibold text-white mb-4">Reject Request</h3>
               <p className="text-sm text-white/60 mb-4">
@@ -218,7 +218,7 @@ function RequestCard({
                 rows={3}
                 className={cn(
                   'w-full px-4 py-3 rounded-xl mb-4',
-                  'bg-[var(--bg-ground)] border border-white/[0.08]',
+                  'bg-[var(--bg-ground)] border border-white/[0.06]',
                   'text-white placeholder:text-white/40',
                   'focus:outline-none focus:ring-2 focus:ring-white/20',
                   'resize-none'

@@ -381,7 +381,7 @@ export function ProfileIdentityHero({
                               transition={{ duration: 0.15 }}
                               className={cn(
                                 'absolute right-0 top-full mt-2 z-20',
-                                'bg-[#1a1a1b] border border-white/[0.08] rounded-xl shadow-lg',
+                                'bg-[#1a1a1b] border border-white/[0.06] rounded-xl shadow-lg',
                                 'py-1 min-w-[140px]'
                               )}
                             >

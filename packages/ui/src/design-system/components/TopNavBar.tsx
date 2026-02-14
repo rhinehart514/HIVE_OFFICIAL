@@ -102,7 +102,7 @@ function SearchTrigger({ onClick }: { onClick?: () => void }) {
         'bg-white/[0.03] border border-white/[0.06]',
         'text-[var(--color-text-muted)]',
         'transition-all duration-150',
-        'hover:bg-white/[0.05] hover:border-white/[0.10]'
+        'hover:bg-white/[0.05] hover:border-white/[0.06]'
       )}
     >
       <SearchIcon className="w-4 h-4 flex-shrink-0" />

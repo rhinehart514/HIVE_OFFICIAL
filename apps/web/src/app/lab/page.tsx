@@ -838,7 +838,7 @@ export default function BuilderDashboard() {
                       key={template.id}
                       onClick={() => handleTemplateClick(template)}
                       disabled={isSubmitting}
-                      className="group text-left p-3 rounded-2xl border border-white/[0.08] bg-[#0A0A0A]
+                      className="group text-left p-3 rounded-2xl border border-white/[0.06] bg-[#080808]
                         hover:bg-white/[0.03] transition-all disabled:opacity-50"
                     >
                       <p className="text-sm font-medium text-white mb-0.5 truncate">{template.name}</p>
@@ -885,7 +885,7 @@ export default function BuilderDashboard() {
                           key={template.id}
                           onClick={() => handleTemplateClick(template)}
                           disabled={isSubmitting}
-                          className="group text-left p-3 rounded-2xl border border-white/[0.08] bg-[#0A0A0A]
+                          className="group text-left p-3 rounded-2xl border border-white/[0.06] bg-[#080808]
                             hover:bg-white/[0.03] transition-all disabled:opacity-50"
                         >
                           <p className="text-sm font-medium text-white mb-0.5 truncate">{template.name}</p>
@@ -919,7 +919,7 @@ export default function BuilderDashboard() {
               className="max-w-3xl mx-auto"
             >
               <div
-                className="p-4 rounded-lg border border-dashed border-white/[0.08] bg-white/[0.02]
+                className="p-4 rounded-lg border border-dashed border-white/[0.06] bg-white/[0.02]
                   flex items-center justify-between"
               >
                 <div>
@@ -932,7 +932,7 @@ export default function BuilderDashboard() {
                   onClick={handleNewTool}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-white/[0.06]
                     text-white hover:bg-white/[0.10] border border-white/[0.06]
-                    hover:border-white/[0.12] transition-all"
+                    hover:border-white/[0.08] transition-all"
                 >
                   Blank Canvas
                 </button>

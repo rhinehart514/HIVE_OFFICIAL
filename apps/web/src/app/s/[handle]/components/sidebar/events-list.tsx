@@ -64,7 +64,7 @@ export function EventsList({
               'w-full p-2 rounded-lg',
               'text-left',
               'bg-white/[0.06] hover:bg-white/[0.06]',
-              'border border-white/[0.06] hover:border-white/[0.10]',
+              'border border-white/[0.06] hover:border-white/[0.06]',
               'transition-colors'
             )}
           >

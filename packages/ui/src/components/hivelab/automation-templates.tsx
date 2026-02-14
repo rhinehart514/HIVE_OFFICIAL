@@ -105,7 +105,7 @@ function TemplateCard({ template, onApply, isApplying }: TemplateCardProps) {
       className={cn(
         'group relative rounded-xl border p-4 transition-all duration-200',
         'bg-white/[0.02] hover:bg-white/[0.04]',
-        'border-white/[0.08] hover:border-white/[0.15]'
+        'border-white/[0.06] hover:border-white/[0.15]'
       )}
     >
       {/* Header */}
@@ -332,7 +332,7 @@ export function AutomationTemplates({
       )}
 
       {/* Footer Help */}
-      <div className="pt-4 border-t border-white/[0.08]">
+      <div className="pt-4 border-t border-white/[0.06]">
         <p className="text-white/40 text-xs text-center">
           Want more control?{' '}
           <span className="text-[var(--hive-gold-cta)]">

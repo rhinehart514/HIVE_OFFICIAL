@@ -168,7 +168,7 @@ export default function AboutPage() {
             </Link>
             <Link
               href="/discover"
-              className="px-7 py-3.5 bg-[#1A1A1A] text-white text-[15px] font-medium rounded-full border border-white/[0.1] hover:bg-white/[0.06] transition-colors"
+              className="px-7 py-3.5 bg-white/[0.06] text-white text-[15px] font-medium rounded-full border border-white/[0.1] hover:bg-white/[0.06] transition-colors"
             >
               Browse spaces
             </Link>

@@ -29,7 +29,7 @@ import {
 // ============================================================================
 
 const glass = {
-  empty: "bg-white/[0.02] border border-dashed border-white/[0.12]",
+  empty: "bg-white/[0.02] border border-dashed border-white/[0.08]",
   error: "bg-red-500/5 border border-red-500/20",
 };
 
@@ -442,7 +442,7 @@ function CanvasSkeleton() {
   const skeletonElements = [
     // Poll-like element
     { height: 'h-auto', content: (
-      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-5 h-5 rounded bg-white/[0.06] animate-pulse" />
           <div className="h-4 w-36 bg-white/[0.06] rounded animate-pulse" />
@@ -460,7 +460,7 @@ function CanvasSkeleton() {
     )},
     // Counter-like element
     { height: 'h-auto', content: (
-      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
         <div className="text-center">
           <div className="h-3 w-20 bg-white/[0.06] rounded animate-pulse mx-auto mb-4" />
           <div className="flex items-center justify-center gap-4">
@@ -473,7 +473,7 @@ function CanvasSkeleton() {
     )},
     // RSVP/button-like element
     { height: 'h-auto', content: (
-      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="space-y-2">
             <div className="h-4 w-28 bg-white/[0.06] rounded animate-pulse" />

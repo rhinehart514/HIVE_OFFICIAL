@@ -248,7 +248,7 @@ export function ChatInput({
         <div
           className={cn(
             'absolute bottom-full left-3 right-3 mb-2',
-            'bg-[#0A0A0A] border border-white/[0.08] rounded-xl',
+            'bg-[#080808] border border-white/[0.06] rounded-xl',
             'py-2 max-h-[200px] overflow-y-auto'
           )}
         >

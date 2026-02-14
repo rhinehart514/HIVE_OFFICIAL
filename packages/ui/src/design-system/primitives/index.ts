@@ -498,44 +498,6 @@ export {
 // LANDING PRIMITIVES (Phase 10)
 // ============================================
 
-export {
-  LandingNav,
-  type LandingNavProps,
-  type LandingNavLinkProps,
-} from './landing/LandingNav';
-
-export {
-  Hero,
-  heroVariants,
-  type HeroProps,
-} from './landing/Hero';
-
-export {
-  Feature,
-  featureVariants,
-  featureIconVariants,
-  type FeatureProps,
-} from './landing/Feature';
-
-export {
-  Footer,
-  type FooterProps,
-  type FooterLinkProps,
-  type FooterLinkGroupProps,
-} from './landing/Footer';
-
-export {
-  SpacePreviewCard,
-  spacePreviewCardVariants,
-  type SpacePreviewCardProps,
-} from './landing/SpacePreviewCard';
-
-export {
-  LandingWindow,
-  type LandingWindowSpace,
-  type LandingWindowProps,
-} from './landing/LandingWindow';
-
 // ============================================
 // MOBILE NAVIGATION PRIMITIVES (Phase 12)
 // ============================================

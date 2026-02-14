@@ -228,7 +228,7 @@ export default function ProfilePageContent() {
                 <button
                   key={tool.id}
                   onClick={() => handleToolClick(tool.id)}
-                  className="rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-4 text-left hover:bg-white/[0.03] transition-colors"
+                  className="rounded-2xl bg-[#080808] border border-white/[0.06] p-4 text-left hover:bg-white/[0.03] transition-colors"
                 >
                   <span className="text-lg block mb-2">{tool.emoji || '🔧'}</span>
                   <p className="text-[13px] font-medium text-white truncate">
@@ -248,7 +248,7 @@ export default function ProfilePageContent() {
           <section className="mb-8">
             <Link
               href="/lab"
-              className="flex items-center gap-3 rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-5 hover:bg-white/[0.03] transition-colors"
+              className="flex items-center gap-3 rounded-2xl bg-[#080808] border border-white/[0.06] p-5 hover:bg-white/[0.03] transition-colors"
             >
               <Wrench className="w-5 h-5 text-white/30" />
               <div className="flex-1">

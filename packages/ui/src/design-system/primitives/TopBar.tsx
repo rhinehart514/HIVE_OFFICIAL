@@ -26,7 +26,7 @@ import { SPRING_SNAP_NAV } from '@hive/tokens';
 
 export const TOPBAR_TOKENS = {
   height: 48,
-  bg: '#0A0A0A',
+  bg: '#080808',
   border: 'rgba(255, 255, 255, 0.06)',
   textPrimary: '#FAFAFA',
   textSecondary: '#A1A1A6',

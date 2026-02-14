@@ -23,7 +23,7 @@ export interface SkeletonCanvasProps {
  */
 export function SkeletonCanvas({ elementCount = 3 }: SkeletonCanvasProps) {
   return (
-    <div className="relative h-[600px] lg:h-[700px] rounded-lg border border-white/[0.08] bg-white/[0.01] p-8 overflow-y-auto">
+    <div className="relative h-[600px] lg:h-[700px] rounded-lg border border-white/[0.06] bg-white/[0.01] p-8 overflow-y-auto">
       {/* Skeleton elements */}
       <div className="space-y-6">
         {Array.from({ length: elementCount }).map((_, index) => (
@@ -38,7 +38,7 @@ export function SkeletonCanvas({ elementCount = 3 }: SkeletonCanvasProps) {
             }}
             className="relative"
           >
-            <div className="rounded-xl border border-white/[0.12] bg-white/[0.03] p-6 shadow-sm">
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-6 shadow-sm">
               {/* Skeleton header */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-2 h-2 rounded-full bg-[var(--hive-gold-cta)] animate-pulse" />

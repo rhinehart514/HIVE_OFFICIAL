@@ -133,7 +133,7 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
         <div className="w-full max-w-[480px] space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-full max-w-xs" />
-          <div className="mt-6 rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-8">
+          <div className="mt-6 rounded-2xl bg-[#080808] border border-white/[0.06] p-8">
             <Skeleton className="h-48 w-full" />
           </div>
         </div>
@@ -242,7 +242,7 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
           </div>
 
           {/* Tool canvas */}
-          <div className="rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-6">
+          <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-6">
             {tool.elements.length > 0 ? (
               <LazyToolCanvas
                 elements={tool.elements}

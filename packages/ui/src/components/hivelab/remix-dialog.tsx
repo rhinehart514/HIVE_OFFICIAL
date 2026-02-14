@@ -126,12 +126,12 @@ export function RemixDialog({
           exit={{ opacity: 0, scale: 0.95 }}
           className={cn(
             'relative w-full max-w-md mx-4',
-            'bg-gray-900 rounded-2xl border border-white/[0.08]',
+            'bg-gray-900 rounded-2xl border border-white/[0.06]',
             'shadow-2xl shadow-black/40'
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/[0.08]">
+          <div className="flex items-center justify-between p-6 border-b border-white/[0.06]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
                 <ClipboardDocumentIcon className="w-5 h-5 text-purple-400" />
@@ -178,8 +178,8 @@ export function RemixDialog({
           ) : (
             <>
               {/* Template Preview */}
-              <div className="p-6 border-b border-white/[0.08]">
-                <div className="p-4 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+              <div className="p-6 border-b border-white/[0.06]">
+                <div className="p-4 rounded-xl bg-white/[0.04] border border-white/[0.06]">
                   <h3 className="font-medium text-white">{template.name}</h3>
                   <p className="text-sm text-white/50 mt-1 line-clamp-2">
                     {template.description}
@@ -223,7 +223,7 @@ export function RemixDialog({
                     maxLength={100}
                     className={cn(
                       'w-full px-4 py-2.5 rounded-lg',
-                      'bg-white/[0.04] border border-white/[0.08]',
+                      'bg-white/[0.04] border border-white/[0.06]',
                       'text-white placeholder:text-white/30',
                       'focus:outline-none focus:border-white/20'
                     )}
@@ -244,7 +244,7 @@ export function RemixDialog({
                       onChange={e => setSelectedSpaceId(e.target.value || null)}
                       className={cn(
                         'w-full px-4 py-2.5 rounded-lg',
-                        'bg-white/[0.04] border border-white/[0.08]',
+                        'bg-white/[0.04] border border-white/[0.06]',
                         'text-white',
                         'focus:outline-none focus:border-white/20'
                       )}
@@ -261,7 +261,7 @@ export function RemixDialog({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 p-6 border-t border-white/[0.08]">
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-white/[0.06]">
                 <button
                   onClick={onClose}
                   disabled={loading}

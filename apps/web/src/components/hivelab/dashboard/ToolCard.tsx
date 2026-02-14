@@ -117,7 +117,7 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
         whileTap={{ scale: 0.98 }}
         onClick={() => onClick(tool.id)}
         className="group relative flex flex-col items-start p-4 rounded-2xl
-         border border-white/[0.08] bg-[#0A0A0A]
+         border border-white/[0.06] bg-[#080808]
           hover:bg-white/[0.03]
           transition-all duration-200 text-left w-full"
       >
@@ -153,7 +153,7 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
     <motion.div
       whileHover={{ opacity: 0.96 }}
       className="group relative flex flex-col p-4 rounded-2xl
-       border border-white/[0.08] bg-[#0A0A0A]
+       border border-white/[0.06] bg-[#080808]
         hover:bg-white/[0.03]
         transition-all duration-200 text-left w-full cursor-pointer"
       onClick={() => onClick(tool.id)}

@@ -89,8 +89,8 @@ function formatLabel(key: string): string {
 }
 
 const glass = {
-  surface: "bg-white/[0.03] border border-white/[0.08] backdrop-blur-md",
-  hover: "hover:bg-white/[0.05] hover:border-white/[0.12]",
+  surface: "bg-white/[0.03] border border-white/[0.06] backdrop-blur-md",
+  hover: "hover:bg-white/[0.05] hover:border-white/[0.08]",
 };
 
 export function CompactSurface({

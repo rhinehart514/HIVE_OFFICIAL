@@ -75,7 +75,7 @@ const buttonVariants = cva(
         ].join(' '),
         // Legacy aliases for backwards compatibility
         solid: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
-        outline: 'bg-[#1A1A1A] text-white border border-white/[0.10] hover:bg-[#202020] hover:border-white/[0.16] active:bg-[#171717]',
+        outline: 'bg-white/[0.06] text-white border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.16] active:bg-[#171717]',
         cta: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
         brand: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
       },

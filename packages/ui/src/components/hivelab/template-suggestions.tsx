@@ -158,7 +158,7 @@ export function TemplateSuggestions({
               disabled={usingTemplate === template.id}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-sm font-medium',
-                'bg-white/[0.06] border border-white/[0.08]',
+                'bg-white/[0.06] border border-white/[0.06]',
                 'text-white/70 hover:text-white hover:bg-white/[0.1]',
                 'transition-colors',
                 usingTemplate === template.id && 'opacity-50'
@@ -173,7 +173,7 @@ export function TemplateSuggestions({
   }
 
   return (
-    <div className={cn('rounded-xl bg-white/[0.02] border border-white/[0.08] p-5', className)}>
+    <div className={cn('rounded-xl bg-white/[0.02] border border-white/[0.06] p-5', className)}>
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-lg bg-[var(--hive-gold-cta)]/20 flex items-center justify-center">

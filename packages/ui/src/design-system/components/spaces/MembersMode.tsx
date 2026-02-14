@@ -126,7 +126,7 @@ function MemberCard({
         'relative w-full text-left rounded-2xl overflow-hidden',
         'bg-[#141312] border border-white/[0.06]',
         'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-        'hover:border-white/[0.12]',
+        'hover:border-white/[0.08]',
         'focus:outline-none focus:ring-2 focus:ring-white/50',
         isLarge && 'col-span-2 row-span-2',
         isSmall ? 'p-3' : 'p-5',
@@ -391,7 +391,7 @@ export function MembersMode({
               className="w-full pl-10 pr-4 py-2.5 rounded-lg
                 bg-[#141312] border border-white/[0.06]
                 text-white placeholder:text-[#6B6B70]
-                focus:outline-none focus:border-white/[0.12] focus:ring-2 focus:ring-white/[0.10]
+                focus:outline-none focus:border-white/[0.08] focus:ring-2 focus:ring-white/[0.10]
                 transition-all"
             />
           </div>

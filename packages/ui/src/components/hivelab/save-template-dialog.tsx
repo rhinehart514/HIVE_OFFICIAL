@@ -180,12 +180,12 @@ export function SaveTemplateDialog({
           exit={{ opacity: 0, scale: 0.95 }}
           className={cn(
             'relative w-full max-w-lg mx-4',
-            'bg-gray-900 rounded-2xl border border-white/[0.08]',
+            'bg-gray-900 rounded-2xl border border-white/[0.06]',
             'shadow-2xl shadow-black/40'
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/[0.08]">
+          <div className="flex items-center justify-between p-6 border-b border-white/[0.06]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[var(--hive-gold-cta)]/20 flex items-center justify-center">
                 <ShareIcon className="w-5 h-5 text-[var(--hive-gold-cta)]" />
@@ -237,7 +237,7 @@ export function SaveTemplateDialog({
                     maxLength={100}
                     className={cn(
                       'w-full px-4 py-2.5 rounded-lg',
-                      'bg-white/[0.04] border border-white/[0.08]',
+                      'bg-white/[0.04] border border-white/[0.06]',
                       'text-white placeholder:text-white/30',
                       'focus:outline-none focus:border-white/20'
                     )}
@@ -257,7 +257,7 @@ export function SaveTemplateDialog({
                     maxLength={500}
                     className={cn(
                       'w-full px-4 py-2.5 rounded-lg resize-none',
-                      'bg-white/[0.04] border border-white/[0.08]',
+                      'bg-white/[0.04] border border-white/[0.06]',
                       'text-white placeholder:text-white/30',
                       'focus:outline-none focus:border-white/20'
                     )}
@@ -278,7 +278,7 @@ export function SaveTemplateDialog({
                           'p-3 rounded-lg text-left transition-colors',
                           category === cat.value
                             ? 'bg-[var(--hive-gold-cta)]/20 border border-[var(--hive-gold-cta)]/40'
-                            : 'bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.12]'
+                            : 'bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.08]'
                         )}
                       >
                         <p className="text-sm font-medium text-white">{cat.label}</p>
@@ -302,7 +302,7 @@ export function SaveTemplateDialog({
                           'w-full p-3 rounded-lg text-left transition-colors flex items-center gap-3',
                           visibility === opt.value
                             ? 'bg-[var(--hive-gold-cta)]/20 border border-[var(--hive-gold-cta)]/40'
-                            : 'bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.12]'
+                            : 'bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.08]'
                         )}
                       >
                         <opt.icon className={cn(
@@ -335,7 +335,7 @@ export function SaveTemplateDialog({
                         maxLength={20}
                         className={cn(
                           'w-full pl-10 pr-4 py-2 rounded-lg',
-                          'bg-white/[0.04] border border-white/[0.08]',
+                          'bg-white/[0.04] border border-white/[0.06]',
                           'text-white placeholder:text-white/30',
                           'focus:outline-none focus:border-white/20'
                         )}
@@ -376,7 +376,7 @@ export function SaveTemplateDialog({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 p-6 border-t border-white/[0.08]">
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-white/[0.06]">
                 <button
                   onClick={onClose}
                   disabled={loading}

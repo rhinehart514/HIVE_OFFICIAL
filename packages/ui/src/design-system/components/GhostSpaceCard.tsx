@@ -95,7 +95,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
           'p-3 cursor-pointer',
           'transition-all duration-[var(--duration-smooth)]',
           'hover:bg-[var(--color-bg-elevated)]',
-          'border-dashed border-white/[0.08]', // Dashed border = unclaimed
+          'border-dashed border-white/[0.06]', // Dashed border = unclaimed
           className
         )}
         onClick={onClick}
@@ -154,7 +154,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
           'p-3 cursor-pointer',
           'transition-all duration-[var(--duration-smooth)]',
           'hover:bg-[var(--color-bg-elevated)]',
-          'border-dashed border-white/[0.08]',
+          'border-dashed border-white/[0.06]',
           className
         )}
         onClick={onClick}
@@ -217,7 +217,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
         'overflow-hidden cursor-pointer',
         'transition-all duration-[var(--duration-smooth)]',
         'hover:opacity-90',
-        'border-dashed border-white/[0.08]',
+        'border-dashed border-white/[0.06]',
         className
       )}
       onClick={onClick}
@@ -323,7 +323,7 @@ const GhostSpaceCardSkeleton: React.FC<GhostSpaceCardSkeletonProps> = ({
 }) => {
   if (variant === 'dense' || variant === 'compact') {
     return (
-      <Card className={cn('p-3 border-dashed border-white/[0.08]', className)}>
+      <Card className={cn('p-3 border-dashed border-white/[0.06]', className)}>
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-white/[0.04] animate-pulse" />
           <div className="flex-1 space-y-2">
@@ -337,7 +337,7 @@ const GhostSpaceCardSkeleton: React.FC<GhostSpaceCardSkeletonProps> = ({
   }
 
   return (
-    <Card noPadding className={cn('overflow-hidden border-dashed border-white/[0.08]', className)}>
+    <Card noPadding className={cn('overflow-hidden border-dashed border-white/[0.06]', className)}>
       <div className="h-20 bg-white/[0.04] animate-pulse relative">
         <div className="absolute -bottom-8 left-5">
           <div className="w-16 h-16 rounded-xl bg-white/[0.06] animate-pulse ring-4 ring-[rgba(18,18,18,0.92)]" />

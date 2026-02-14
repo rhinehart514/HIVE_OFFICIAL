@@ -125,7 +125,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
                 'border',
                 isSelected
                   ? 'bg-white/[0.08] border-white/[0.2] text-white'
-                  : 'bg-[#0A0A0A] border-white/[0.06] text-white/50 hover:border-white/[0.12] hover:text-white/70',
+                  : 'bg-[#080808] border-white/[0.06] text-white/50 hover:border-white/[0.08] hover:text-white/70',
                 selected.size >= MAX_INTERESTS && !isSelected ? 'opacity-30 cursor-not-allowed' : '',
               ].join(' ')}
             >
@@ -178,7 +178,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
           className="space-y-3"
         >
           {/* Undergrad / Grad toggle */}
-          <div className="flex items-center gap-1 p-0.5 rounded-[8px] bg-[#0A0A0A] border border-white/[0.06]">
+          <div className="flex items-center gap-1 p-0.5 rounded-[8px] bg-[#080808] border border-white/[0.06]">
             <button
               type="button"
               onClick={() => { setProgramType('undergrad'); setMajor(''); }}
@@ -209,9 +209,9 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             value={major}
             onChange={(e) => setMajor(e.target.value)}
             className={[
-              'w-full h-11 px-3 rounded-[10px] bg-[#0A0A0A] border border-white/[0.06]',
+              'w-full h-11 px-3 rounded-[10px] bg-[#080808] border border-white/[0.06]',
               'font-sans text-[14px] text-white outline-none',
-              'focus:border-white/[0.2] transition-colors',
+              'focus:border-white/[0.15] transition-colors',
               'appearance-none',
             ].join(' ')}
           >
@@ -238,9 +238,9 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             value={residentialSpaceId}
             onChange={(e) => setResidentialSpaceId(e.target.value)}
             className={[
-              'w-full h-11 px-3 rounded-[10px] bg-[#0A0A0A] border border-white/[0.06]',
+              'w-full h-11 px-3 rounded-[10px] bg-[#080808] border border-white/[0.06]',
               'font-sans text-[14px] text-white outline-none',
-              'focus:border-white/[0.2] transition-colors',
+              'focus:border-white/[0.15] transition-colors',
               'appearance-none',
             ].join(' ')}
           >

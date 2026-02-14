@@ -200,7 +200,7 @@ export default function VerifyPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2, ease: EASE }}
-          className="p-5 rounded-xl bg-white/[0.04] border border-white/[0.08] mb-6"
+          className="p-5 rounded-xl bg-white/[0.04] border border-white/[0.06] mb-6"
         >
           <div className="flex items-center justify-between mb-4">
             <div>

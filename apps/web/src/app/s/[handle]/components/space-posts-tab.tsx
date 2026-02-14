@@ -725,7 +725,7 @@ export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
                     setComposerLinkOrImageUrl('');
                     setComposerToolId('');
                   }}
-                  className="h-11 rounded-[12px] border border-white/[0.08] bg-[#0A0A0A] px-3 text-sm text-white outline-none transition focus:border-white/[0.2]"
+                  className="h-11 rounded-[12px] border border-white/[0.06] bg-[#080808] px-3 text-sm text-white outline-none transition focus:border-white/[0.15]"
                 >
                   <option value="text">Text</option>
                   <option value="image">Image</option>
@@ -868,7 +868,7 @@ export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
                       </div>
                     </div>
 
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-xs text-white/70">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.06] bg-black/30 px-2.5 py-1 text-xs text-white/70">
                       <BadgeIcon className="h-3.5 w-3.5" />
                       {postTypeMeta.label}
                     </span>
@@ -879,7 +879,7 @@ export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
                   </p>
 
                   {post.type === 'image' && post.imageUrl && (
-                    <div className="mt-3 overflow-hidden rounded-xl border border-white/[0.08]">
+                    <div className="mt-3 overflow-hidden rounded-xl border border-white/[0.06]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={post.imageUrl}
@@ -894,7 +894,7 @@ export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
                       href={post.linkUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-3 block rounded-xl border border-white/[0.08] bg-black/30 p-3 transition hover:border-white/[0.14]"
+                      className="mt-3 block rounded-xl border border-white/[0.06] bg-black/30 p-3 transition hover:border-white/[0.14]"
                     >
                       <div className="mb-1 flex items-center gap-2 text-sm text-white/90">
                         <LinkIcon className="h-4 w-4 text-white/50" />
@@ -919,7 +919,7 @@ export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
                           'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition',
                           entry.hasReacted
                             ? 'border-white/20 bg-white/[0.12] text-white'
-                            : 'border-white/[0.08] bg-black/30 text-white/70 hover:bg-white/[0.08]'
+                            : 'border-white/[0.06] bg-black/30 text-white/70 hover:bg-white/[0.08]'
                         )}
                       >
                         <Heart className="h-3.5 w-3.5" />
@@ -932,7 +932,7 @@ export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
                       type="button"
                       onClick={() => toggleComments(post.id)}
                       className={cn(
-                        'inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-xs transition',
+                        'inline-flex items-center gap-1 rounded-full border border-white/[0.06] bg-black/30 px-2.5 py-1 text-xs transition',
                         isCommentsOpen
                           ? 'text-white'
                           : 'text-white/70 hover:bg-white/[0.08] hover:text-white'

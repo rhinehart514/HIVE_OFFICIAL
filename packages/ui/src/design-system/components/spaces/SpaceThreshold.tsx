@@ -97,7 +97,7 @@ function SpaceIcon({ iconUrl, name }: { iconUrl?: string; name: string }) {
   const monogram = name?.charAt(0)?.toUpperCase() || 'S';
 
   return (
-    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/[0.08] border border-white/[0.08] flex items-center justify-center">
+    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/[0.08] border border-white/[0.06] flex items-center justify-center">
       {iconUrl ? (
         <Image src={iconUrl} alt={name} width={80} height={80} className="object-cover" sizes="80px" />
       ) : (
@@ -390,7 +390,7 @@ export function SpaceThreshold({
                   rows={3}
                   className={cn(
                     'w-full px-4 py-3 rounded-xl',
-                    'bg-[var(--bg-elevated)] border border-white/[0.08]',
+                    'bg-[var(--bg-elevated)] border border-white/[0.06]',
                     'text-white placeholder:text-white/40',
                     'focus:outline-none focus:ring-2 focus:ring-white/20',
                     'resize-none'

@@ -53,7 +53,7 @@ function AdminToolbarInner() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed bottom-36 left-4 lg:bottom-[72px] lg:left-6 z-[9990] w-[min(400px,calc(100vw-2rem))] max-h-[70vh] bg-[#1A1A1A]/95 border border-white/[0.06] rounded-lg overflow-hidden flex flex-col"
+            className="fixed bottom-36 left-4 lg:bottom-[72px] lg:left-6 z-[9990] w-[min(400px,calc(100vw-2rem))] max-h-[70vh] bg-white/[0.06]/95 border border-white/[0.06] rounded-lg overflow-hidden flex flex-col"
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}

@@ -195,7 +195,7 @@ export function StreamingCanvasView({
         {isGenerating && displayedElements.length === 0 ? (
           <SkeletonCanvas elementCount={3} />
         ) : (
-          <div className="rounded-lg border border-white/[0.08] bg-white/[0.01] p-8 overflow-y-auto">
+          <div className="rounded-lg border border-white/[0.06] bg-white/[0.01] p-8 overflow-y-auto">
 
             {/* Elements - layout-aware rendering */}
             <AnimatePresence mode="popLayout">

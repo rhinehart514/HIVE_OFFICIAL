@@ -24,15 +24,15 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        neutral: 'bg-white/[0.06] text-white/60 border border-white/[0.08]',
+        neutral: 'bg-white/[0.06] text-white/60 border border-white/[0.06]',
         gold: 'bg-[var(--color-gold)]/10 text-[var(--color-gold)] border border-[var(--color-gold)]/20',
         success: 'bg-green-500/10 text-green-400 border border-green-500/20',
         error: 'bg-red-500/10 text-red-400 border border-red-500/20',
         warning: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
         info: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
         // Legacy aliases
-        default: 'bg-white/[0.06] text-white/60 border border-white/[0.08]',
-        secondary: 'bg-white/[0.06] text-white/60 border border-white/[0.08]',
+        default: 'bg-white/[0.06] text-white/60 border border-white/[0.06]',
+        secondary: 'bg-white/[0.06] text-white/60 border border-white/[0.06]',
         outline: 'bg-transparent text-white/60 border border-white/10',
         destructive: 'bg-red-500/10 text-red-400 border border-red-500/20',
       },

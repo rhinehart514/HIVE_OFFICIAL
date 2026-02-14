@@ -66,7 +66,7 @@ export function UnlockCelebration({
                 className={cn(
                   'relative overflow-hidden',
                   'rounded-lg border border-[var(--color-gold)]/20',
-                  'bg-[#0A0A09]',
+                  'bg-[#000000]',
                   'p-10',
                   'shadow-[var(--color-gold)]/10'
                 )}
