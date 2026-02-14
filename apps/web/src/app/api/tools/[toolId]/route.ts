@@ -1,12 +1,15 @@
 import { getFirestore } from "firebase-admin/firestore";
+import * as admin from "firebase-admin";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, withErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { getSession } from "@/lib/session";
+import { logger } from "@/lib/structured-logger";
 import {
   UpdateToolSchema,
   getNextVersion,
   validateToolStructure,
 } from "@hive/core";
+import { notifyToolUpdated } from "@/lib/tool-notifications";
 import { withCache } from '../../../../lib/cache-headers';
 
 const db = getFirestore();
@@ -55,12 +58,15 @@ const _GET = withErrors(async (
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
-  // Increment view count if not the owner (or anonymous)
+  // Track tool load usage; external viewers also increment view count.
+  const usageUpdates: Record<string, unknown> = {
+    useCount: admin.firestore.FieldValue.increment(1),
+    lastUsedAt: new Date(),
+  };
   if (!userId || toolData.ownerId !== userId) {
-    await toolDoc.ref.update({
-      viewCount: (toolData.viewCount || 0) + 1,
-      lastUsedAt: new Date() });
+    usageUpdates.viewCount = admin.firestore.FieldValue.increment(1);
   }
+  await toolDoc.ref.update(usageUpdates);
 
   // Get versions if user is owner (check both ownerId and createdBy)
   let versions: Array<Record<string, unknown>> = [];
@@ -117,6 +123,7 @@ export const PUT = withAuthAndErrors(async (
       id: string;
       campusId?: string;
       ownerId?: string;
+      name?: string;
       currentVersion?: string;
       elements?: Array<unknown>;
       spaceId?: string;
@@ -186,6 +193,32 @@ export const PUT = withAuthAndErrors(async (
           (Array.isArray(currentTool.elements) ? currentTool.elements.length : 0),
         changeType: updateData.elements ? 'minor' : 'config',
       } });
+
+    // Notify users who forked this tool that upstream changed.
+    try {
+      const actorDoc = await dbAdmin.collection('users').doc(userId).get();
+      const actorName =
+        (actorDoc.data()?.displayName as string | undefined) ||
+        (actorDoc.data()?.fullName as string | undefined) ||
+        undefined;
+
+      await notifyToolUpdated({
+        toolId,
+        toolName:
+          (currentTool.name as string | undefined) ||
+          (updateData.name as string | undefined) ||
+          'Untitled Tool',
+        updatedByUserId: userId,
+        updatedByName: actorName,
+        campusId: campusId || undefined,
+      });
+    } catch (notifyError) {
+      logger.warn('Failed to send tool.updated notifications', {
+        toolId,
+        userId,
+        error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+      });
+    }
 
     // Fetch and return updated tool
     const updatedDoc = await toolDoc.ref.get();

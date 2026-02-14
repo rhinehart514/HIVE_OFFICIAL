@@ -5,7 +5,15 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
+import * as admin from 'firebase-admin';
 import { logger } from '@/lib/structured-logger';
+import { z } from 'zod';
+import { notifyToolForked } from '@/lib/tool-notifications';
+
+const CloneRequestSchema = z.object({
+  mode: z.enum(['fork', 'remix']).default('fork'),
+  spaceId: z.string().optional(),
+});
 
 /**
  * POST /api/tools/[toolId]/clone — Clone a tool into the current user's lab
@@ -28,88 +36,149 @@ export const POST = withAuthAndErrors(async (
   }
 
   try {
-    // Fetch source tool
-    const toolDoc = await dbAdmin.collection('tools').doc(toolId).get();
+    // Parse optional body for mode and target space
+    let mode: 'fork' | 'remix' = 'fork';
+    let targetSpaceId: string | undefined;
+    try {
+      const rawBody = await request.json();
+      const parsed = CloneRequestSchema.safeParse(rawBody);
+      if (!parsed.success) {
+        return respond.error('Invalid clone payload', 'INVALID_INPUT', { status: 400 });
+      }
+      mode = parsed.data.mode;
+      targetSpaceId = parsed.data.spaceId;
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) {
+        throw error;
+      }
+      // No JSON body is fine - defaults to fork mode.
+    }
 
-    if (!toolDoc.exists) {
+    const sourceRef = dbAdmin.collection('tools').doc(toolId);
+    const sourceDoc = await sourceRef.get();
+    if (!sourceDoc.exists) {
       return respond.error('Tool not found', 'NOT_FOUND', { status: 404 });
     }
 
-    const sourceData = toolDoc.data()!;
+    const sourceData = sourceDoc.data() || {};
+    const sourceOwnerId =
+      (sourceData.ownerId as string | undefined) ||
+      (sourceData.creatorId as string | undefined) ||
+      (sourceData.createdBy as string | undefined);
 
-    // Only allow cloning published tools (or own tools)
-    if (sourceData.status !== 'published' && sourceData.ownerId !== userId) {
-      return respond.error('Can only clone published tools', 'FORBIDDEN', { status: 403 });
+    const isOwner = sourceOwnerId === userId;
+    const isPublishedOrPublic =
+      sourceData.status === 'published' ||
+      sourceData.visibility === 'public' ||
+      sourceData.isPublic === true;
+
+    if (!isOwner && !isPublishedOrPublic) {
+      return respond.error(
+        'Tool must be published or public to clone',
+        'FORBIDDEN',
+        { status: 403 }
+      );
     }
 
-    // Parse optional body for target space
-    let targetSpaceId: string | undefined;
-    try {
-      const body = await request.json();
-      targetSpaceId = body?.spaceId;
-    } catch {
-      // No body is fine
-    }
-
-    // Create the clone
     const now = new Date();
-    const cloneData = {
-      name: `${sourceData.name} (Copy)`,
-      description: sourceData.description || '',
-      status: 'draft',
-      type: sourceData.type || 'visual',
-      elements: sourceData.elements || [],
-      connections: sourceData.connections || [],
-      metadata: {
-        ...(sourceData.metadata || {}),
-        clonedFrom: toolId,
-        clonedAt: now.toISOString(),
-        originalName: sourceData.name,
-        originalOwnerId: sourceData.ownerId,
-      },
-      provenance: {
-        creatorId: userId,
-        createdAt: now.toISOString(),
-        forkedFrom: toolId,
-        lineage: [...(sourceData.provenance?.lineage || []), toolId],
-        forkCount: 0,
-        deploymentCount: 0,
-        trustTier: 'community',
-      },
+    const timestamp = now.toISOString();
+    const newToolRef = dbAdmin.collection('tools').doc();
+    const sourceLineage = Array.isArray(sourceData.provenance?.lineage)
+      ? (sourceData.provenance?.lineage as string[])
+      : [];
+    const cloneStatus = mode === 'remix'
+      ? 'draft'
+      : ((sourceData.status as string | undefined) || 'draft');
+
+    const cloneData: Record<string, unknown> = {
+      ...sourceData,
       ownerId: userId,
+      creatorId: userId,
+      createdBy: userId,
       campusId,
-      deployedSpaces: targetSpaceId ? [targetSpaceId] : [],
+      status: cloneStatus,
       createdAt: now,
       updatedAt: now,
+      deployedSpaces: targetSpaceId ? [targetSpaceId] : [],
+      forkCount: 0,
+      deploymentCount: 0,
+      useCount: 0,
+      viewCount: 0,
+      forkedFrom: {
+        toolId,
+        userId: sourceOwnerId || '',
+        timestamp,
+      },
+      metadata: {
+        ...(sourceData.metadata as Record<string, unknown> | undefined),
+        clonedFrom: toolId,
+        cloneMode: mode,
+        clonedAt: timestamp,
+        originalName: sourceData.name,
+        originalOwnerId: sourceOwnerId || '',
+      },
+      provenance: {
+        ...(sourceData.provenance as Record<string, unknown> | undefined),
+        creatorId: userId,
+        createdAt: timestamp,
+        forkedFrom: toolId,
+        lineage: [...sourceLineage, toolId],
+        forkCount: 0,
+      },
     };
 
-    const newToolRef = await dbAdmin.collection('tools').add(cloneData);
+    await dbAdmin.runTransaction(async (transaction) => {
+      transaction.set(newToolRef, cloneData);
+      transaction.update(sourceRef, {
+        forkCount: admin.firestore.FieldValue.increment(1),
+        'provenance.forkCount': admin.firestore.FieldValue.increment(1),
+        updatedAt: now,
+      });
 
-    // Increment fork count on source
-    await dbAdmin.collection('tools').doc(toolId).update({
-      'provenance.forkCount': (sourceData.provenance?.forkCount || 0) + 1,
-    }).catch(() => {
-      // Non-critical, don't fail the clone
-    });
+      if (targetSpaceId) {
+        const placementRef = dbAdmin
+          .collection('spaces')
+          .doc(targetSpaceId)
+          .collection('placed_tools')
+          .doc(newToolRef.id);
 
-    // If deploying to a space, add to space's tools
-    if (targetSpaceId) {
-      await dbAdmin
-        .collection('spaces')
-        .doc(targetSpaceId)
-        .collection('placed_tools')
-        .doc(newToolRef.id)
-        .set({
+        transaction.set(placementRef, {
           toolId: newToolRef.id,
           placedBy: userId,
           placedAt: now,
           location: 'sidebar',
           isActive: true,
           source: 'clone',
-        })
-        .catch(() => {
-          // Non-critical
+          campusId,
         });
+      }
+    });
+
+    // Notify source creator that their tool was forked/remixed
+    if (sourceOwnerId && sourceOwnerId !== userId) {
+      try {
+        const actorDoc = await dbAdmin.collection('users').doc(userId).get();
+        const actorName = (actorDoc.data()?.displayName ||
+          actorDoc.data()?.fullName ||
+          actorDoc.data()?.name) as string | undefined;
+
+        await notifyToolForked({
+          originalCreatorId: sourceOwnerId,
+          forkedByUserId: userId,
+          forkedByName: actorName,
+          toolId,
+          toolName: (sourceData.name as string | undefined) || 'Untitled Tool',
+          newToolId: newToolRef.id,
+        });
+      } catch (notifyError) {
+        logger.warn('Failed to send tool fork notification', {
+          component: 'clone-api',
+          toolId,
+          newToolId: newToolRef.id,
+          userId,
+          error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+        });
+      }
     }
 
     logger.info('Tool cloned', {
@@ -117,16 +186,19 @@ export const POST = withAuthAndErrors(async (
       sourceToolId: toolId,
       newToolId: newToolRef.id,
       userId,
+      mode,
       targetSpaceId,
     });
 
     return respond.success(
       {
+        toolId: newToolRef.id,
         tool: {
           id: newToolRef.id,
           name: cloneData.name,
           status: cloneData.status,
           clonedFrom: toolId,
+          mode,
         },
       },
       { status: 201 }

@@ -14,7 +14,7 @@ import {
 import {
   buildPlacementCompositeId,
 } from "@/lib/tool-placement";
-import { notifyToolDeployment } from "@/lib/notification-service";
+import { notifyToolDeployed } from "@/lib/tool-notifications";
 import {
   getDefaultBudgets,
   getCapabilityLane,
@@ -801,10 +801,10 @@ export const POST = withAuthValidationAndErrors(
         const memberIds = membersSnapshot.docs.map(doc => doc.data().userId);
 
         if (memberIds.length > 0) {
-          await notifyToolDeployment({
+          await notifyToolDeployed({
             memberIds,
-            deployerId: userId,
-            deployerName,
+            deployedByUserId: userId,
+            deployedByName: deployerName,
             toolId: payload.toolId,
             toolName: toolResult.toolData.name,
             spaceId: payload.targetId,

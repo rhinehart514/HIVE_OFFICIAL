@@ -22,7 +22,7 @@ import { extractedCollectionService } from '@/lib/services/extracted-collection.
 import { extractedTimelineService } from '@/lib/services/extracted-timeline.service';
 import { toolStateBroadcaster } from '@/lib/services/tool-state-broadcaster.service';
 import { getFirebaseConnectionRepository } from '@/lib/services/connection-repository.firebase';
-import { notifyToolMilestone } from '@/lib/notification-service';
+import { notifyToolMilestone, TOOL_MILESTONE_THRESHOLDS } from '@/lib/tool-notifications';
 import type {
   ToolSharedState,
   ToolSharedEntity,
@@ -2123,7 +2123,7 @@ export const POST = withAuthValidationAndErrors(
 
     // Update tool usage stats
     await dbAdmin.collection('tools').doc(deployment.toolId).update({
-      useCount: (tool.useCount || 0) + 1,
+      useCount: admin.firestore.FieldValue.increment(1),
       lastUsedAt: nowIso
     });
 
@@ -2223,15 +2223,28 @@ export const POST = withAuthValidationAndErrors(
     // ===========================================================================
     // Usage Milestone Notifications (fire-and-forget)
     // ===========================================================================
-    const USAGE_MILESTONES = [10, 50, 100, 500, 1000];
+    const USAGE_MILESTONES = [...TOOL_MILESTONE_THRESHOLDS];
     const toolRecord = tool as Record<string, unknown>;
-    const currentUseCount = (tool.useCount || 0) + 1; // +1 because we just incremented
-    const creatorId = toolRecord.creatorId as string | undefined;
-    const toolName = (toolRecord.name as string) || 'Untitled Tool';
     const toolId = deployment.toolId;
+    const latestToolSnapshot = toolId
+      ? await dbAdmin.collection('tools').doc(toolId).get()
+      : null;
+    const latestToolData = latestToolSnapshot?.data() as Record<string, unknown> | undefined;
+    const currentUseCount = typeof latestToolData?.useCount === 'number'
+      ? latestToolData.useCount
+      : (tool.useCount || 0) + 1;
+    const creatorId =
+      (latestToolData?.creatorId as string | undefined) ||
+      (toolRecord.creatorId as string | undefined);
+    const toolName =
+      (latestToolData?.name as string | undefined) ||
+      (toolRecord.name as string | undefined) ||
+      'Untitled Tool';
 
     if (creatorId && toolId) {
-      const milestonesReached = (toolRecord.milestonesReached as number[]) || [];
+      const milestonesReached = (latestToolData?.milestonesReached as number[] | undefined) ||
+        (toolRecord.milestonesReached as number[] | undefined) ||
+        [];
       const crossedMilestone = USAGE_MILESTONES.find(
         m => currentUseCount >= m && !milestonesReached.includes(m)
       );

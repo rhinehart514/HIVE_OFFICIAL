@@ -106,8 +106,12 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
       const res = await apiClient.post(`/api/tools/${toolId}/clone`, {});
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to clone');
+      const newToolId = json?.data?.toolId || json?.data?.tool?.id || json?.toolId || json?.tool?.id;
+      if (!newToolId) {
+        throw new Error('Clone created but no tool ID was returned');
+      }
       toast.success('Tool cloned to your lab');
-      router.push(`/lab/${json.data.tool.id}`);
+      router.push(`/lab/${newToolId}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to clone tool');
       setIsCloning(false);

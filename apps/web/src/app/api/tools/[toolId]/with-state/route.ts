@@ -1,5 +1,6 @@
 "use server";
 
+import * as admin from 'firebase-admin';
 import { dbAdmin } from "@/lib/firebase-admin";
 import { getPlacementFromDeploymentDoc } from "@/lib/tool-placement";
 import {
@@ -82,13 +83,15 @@ const _GET = withAuthAndErrors(async (
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
-  // Increment view count if not the owner
+  // Track load usage (all viewers) and external views (non-owners)
+  const usageUpdates: Record<string, unknown> = {
+    useCount: admin.firestore.FieldValue.increment(1),
+    lastUsedAt: new Date(),
+  };
   if (toolData.ownerId !== userId) {
-    await toolDoc.ref.update({
-      viewCount: (toolData.viewCount || 0) + 1,
-      lastUsedAt: new Date(),
-    });
+    usageUpdates.viewCount = admin.firestore.FieldValue.increment(1);
   }
+  await toolDoc.ref.update(usageUpdates);
 
   // Get versions if user is owner
   let versions: Array<Record<string, unknown>> = [];

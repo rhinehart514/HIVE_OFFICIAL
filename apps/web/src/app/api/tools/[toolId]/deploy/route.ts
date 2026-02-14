@@ -8,6 +8,7 @@ import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { logger } from '@/lib/logger';
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 import { validateToolForPublish } from "@/lib/tool-validation";
+import { notifyToolDeployed } from '@/lib/tool-notifications';
 import { withCache } from '../../../../../lib/cache-headers';
 
 // Schema for tool deployment requests
@@ -321,6 +322,56 @@ export const POST = withAuthValidationAndErrors(
         dailyUsage: {},
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+
+    // Notify space members about deployment (non-blocking)
+    try {
+      const [deployerDoc, membersByStatus, membersByIsActive] = await Promise.all([
+        db.collection('users').doc(userId).get(),
+        db
+          .collection('spaceMembers')
+          .where('spaceId', '==', spaceId)
+          .where('campusId', '==', campusId)
+          .where('status', '==', 'active')
+          .get(),
+        db
+          .collection('spaceMembers')
+          .where('spaceId', '==', spaceId)
+          .where('campusId', '==', campusId)
+          .where('isActive', '==', true)
+          .get(),
+      ]);
+
+      const memberIds = new Set<string>();
+      for (const doc of [...membersByStatus.docs, ...membersByIsActive.docs]) {
+        const memberId = doc.data()?.userId as string | undefined;
+        if (memberId) {
+          memberIds.add(memberId);
+        }
+      }
+
+      if (memberIds.size > 0) {
+        const deployerName =
+          (deployerDoc.data()?.displayName as string | undefined) ||
+          (deployerDoc.data()?.fullName as string | undefined) ||
+          'Someone';
+
+        await notifyToolDeployed({
+          memberIds: Array.from(memberIds),
+          deployedByUserId: userId,
+          deployedByName: deployerName,
+          toolId,
+          toolName: (toolData?.name as string | undefined) || 'Untitled Tool',
+          spaceId,
+          spaceName: (spaceData?.name as string | undefined) || 'a space',
+        });
+      }
+    } catch (notifyError) {
+      logger.warn('Failed to send deployment notifications', {
+        toolId,
+        spaceId,
+        error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+      });
+    }
 
     return respond.success({
       deploymentId,

@@ -27,6 +27,10 @@ export type NotificationType =
   | 'connection_new'    // New connection
   | 'tool_deployed'     // Tool was deployed to your space
   | 'tool_milestone'    // Your tool hit a usage milestone
+  | 'tool.forked'       // Someone forked your tool
+  | 'tool.deployed'     // Tool was added to a space
+  | 'tool.milestone'    // Tool hit a usage milestone
+  | 'tool.updated'      // Upstream tool was updated
   | 'ritual_joined'     // You joined a ritual
   | 'ritual_active'     // A ritual you joined is now active
   | 'ritual_checkin'    // Daily reminder to check in to ritual

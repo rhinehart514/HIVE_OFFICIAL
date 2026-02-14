@@ -20,6 +20,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { ToolSharedState, ToolConnection, DataTransform } from "@hive/core/client";
 import { applyTransform, getValueAtPath } from "@hive/core/client";
 import { useToolStateRealtime } from "./use-tool-state-realtime";
+import { useToolStateStream } from "./use-tool-state-stream";
 import { logger } from '@/lib/logger';
 
 // ============================================================================
@@ -137,12 +138,6 @@ interface CachedConnectionValue {
   resolvedAt: number;
 }
 
-interface ToolStateStreamEvent {
-  type: 'connected' | 'shared_state' | 'personal_state' | 'ping' | 'error';
-  state?: Record<string, unknown>;
-  timestamp?: number;
-}
-
 /**
  * Create empty shared state structure
  */
@@ -243,10 +238,48 @@ export function useToolRuntime(
     onCountersChange: onRealtimeCounterUpdate,
   });
 
+  const streamEnabled = Boolean(toolId && spaceId && enabled);
+  const personalStateStream = useToolStateStream<ToolState>({
+    toolId: toolId || null,
+    spaceId: spaceId || null,
+    eventType: 'personal_state',
+    enabled: streamEnabled,
+    initialState: {},
+  });
+  const sharedStateStream = useToolStateStream<ToolSharedState>({
+    toolId: toolId || null,
+    spaceId: spaceId || null,
+    eventType: 'shared_state',
+    enabled: streamEnabled,
+    initialState: EMPTY_SHARED_STATE,
+    mergeState: (prev, incoming) => ({
+      ...prev,
+      ...(incoming as Partial<ToolSharedState>),
+      counters: {
+        ...prev.counters,
+        ...((incoming.counters as Record<string, number> | undefined) || {}),
+      },
+      collections: {
+        ...prev.collections,
+        ...((incoming.collections as ToolSharedState['collections'] | undefined) || {}),
+      },
+      computed: {
+        ...prev.computed,
+        ...((incoming.computed as Record<string, unknown> | undefined) || {}),
+      },
+      timeline: Array.isArray(incoming.timeline)
+        ? (incoming.timeline as ToolSharedState['timeline'])
+        : prev.timeline,
+    }),
+  });
+
   // State
   const [tool, setTool] = useState<Tool | null>(null);
-  const [state, setState] = useState<ToolState>({});
-  const [sharedState, setSharedState] = useState<ToolSharedState>(EMPTY_SHARED_STATE);
+  const state = personalStateStream.state;
+  const setState = personalStateStream.setState;
+  const queueOptimisticStateWrite = personalStateStream.queueOptimisticWrite;
+  const sharedState = sharedStateStream.state;
+  const setSharedState = sharedStateStream.setState;
   const [isLoading, setIsLoading] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -270,6 +303,13 @@ export function useToolRuntime(
   useEffect(() => {
     sharedStateRef.current = sharedState;
   }, [sharedState]);
+
+  useEffect(() => {
+    const streamError = personalStateStream.error || sharedStateStream.error;
+    if (streamError) {
+      setError(streamError);
+    }
+  }, [personalStateStream.error, sharedStateStream.error]);
 
   // Merge real-time RTDB updates into sharedState
   // RTDB provides instant updates for counters, collections, and timeline
@@ -324,71 +364,6 @@ export function useToolRuntime(
   }, [enableRealtime, isRealtimeConnected, realtimeCounters, realtimeCollections, realtimeTimeline]);
 
   // ============================================================================
-  // SSE State Sync (deployed tools)
-  // ============================================================================
-
-  useEffect(() => {
-    if (!toolId || !spaceId || !enabled) return;
-    if (typeof EventSource === "undefined") return;
-
-    const streamUrl = `/api/tools/${encodeURIComponent(toolId)}/state/stream?spaceId=${encodeURIComponent(spaceId)}`;
-    const eventSource = new EventSource(streamUrl, { withCredentials: true });
-
-    eventSource.onmessage = (event) => {
-      try {
-        const parsed = JSON.parse(event.data) as ToolStateStreamEvent;
-
-        if (parsed.type === "shared_state" && parsed.state) {
-          const incoming = parsed.state;
-          setSharedState((prev) => {
-            const next: ToolSharedState = {
-              ...prev,
-              ...(incoming as Partial<ToolSharedState>),
-              counters: {
-                ...prev.counters,
-                ...((incoming.counters as Record<string, number>) || {}),
-              },
-              collections: {
-                ...prev.collections,
-                ...((incoming.collections as ToolSharedState["collections"]) || {}),
-              },
-              computed: {
-                ...prev.computed,
-                ...((incoming.computed as Record<string, unknown>) || {}),
-              },
-              timeline: Array.isArray(incoming.timeline)
-                ? incoming.timeline as ToolSharedState["timeline"]
-                : prev.timeline,
-            };
-            sharedStateRef.current = next;
-            return next;
-          });
-          setIsSynced(true);
-        }
-
-        if (parsed.type === "personal_state" && parsed.state) {
-          setState((prev) => {
-            const next = { ...prev, ...parsed.state };
-            stateRef.current = next;
-            return next;
-          });
-          setIsSynced(true);
-        }
-      } catch {
-        // Ignore malformed events
-      }
-    };
-
-    eventSource.onerror = () => {
-      // Browser auto-reconnect handles transient disconnects
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [toolId, spaceId, enabled]);
-
-  // ============================================================================
   // Load Tool and State (Combined - reduces N+1 queries)
   // ============================================================================
 
@@ -396,6 +371,7 @@ export function useToolRuntime(
     if (!toolId || !enabled) {
       setTool(null);
       setState({});
+      setSharedState(EMPTY_SHARED_STATE);
       setIsSynced(true);
       return;
     }
@@ -756,6 +732,38 @@ export function useToolRuntime(
     }
   }, [effectiveDeploymentId, toolId, spaceId]);
 
+  const persistOptimisticState = useCallback(async (nextState: ToolState) => {
+    if (!effectiveDeploymentId) {
+      return;
+    }
+
+    const response = await fetchWithRetry(
+      `/api/tools/state/${encodeURIComponent(effectiveDeploymentId)}`,
+      {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          state: nextState,
+          toolId,
+          ...(spaceId && { spaceId }),
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to save state: ${response.status}`);
+    }
+
+    if (mountedRef.current) {
+      setLastSaved(new Date());
+      setIsSynced(true);
+      initialStateRef.current = { ...nextState };
+    }
+  }, [effectiveDeploymentId, toolId, spaceId]);
+
   // ============================================================================
   // Action State Sync (Task 3: explicit Firestore persistence after actions)
   // ============================================================================
@@ -1054,23 +1062,50 @@ export function useToolRuntime(
 
   const updateState = useCallback(
     (updates: Partial<ToolState>) => {
-      setState((prev) => {
-        const newState = { ...prev, ...updates };
-        stateRef.current = newState;
-        return newState;
-      });
+      const previousState = stateRef.current;
+      const nextState = { ...previousState, ...updates };
+      stateRef.current = nextState;
+
+      if (effectiveDeploymentId) {
+        setIsSynced(false);
+        void queueOptimisticStateWrite(nextState, async () => {
+            await persistOptimisticState(nextState);
+          }, previousState)
+          .catch(() => {
+            if (mountedRef.current) {
+              setIsSynced(false);
+            }
+          });
+        return;
+      }
+
+      setState(nextState);
       scheduleAutoSave();
     },
-    [scheduleAutoSave]
+    [effectiveDeploymentId, persistOptimisticState, queueOptimisticStateWrite, scheduleAutoSave, setState]
   );
 
   const setFullState = useCallback(
     (newState: ToolState) => {
-      setState(newState);
+      const previousState = stateRef.current;
       stateRef.current = newState;
+      if (effectiveDeploymentId) {
+        setIsSynced(false);
+        void queueOptimisticStateWrite(newState, async () => {
+            await persistOptimisticState(newState);
+          }, previousState)
+          .catch(() => {
+            if (mountedRef.current) {
+              setIsSynced(false);
+            }
+          });
+        return;
+      }
+
+      setState(newState);
       scheduleAutoSave();
     },
-    [scheduleAutoSave]
+    [effectiveDeploymentId, persistOptimisticState, queueOptimisticStateWrite, scheduleAutoSave, setState]
   );
 
   const reset = useCallback(() => {
