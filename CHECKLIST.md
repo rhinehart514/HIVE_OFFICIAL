@@ -347,21 +347,33 @@ Shareable link for a tool outside of a space.
 
 ---
 
-## V1 Scope Decisions Needed
+## V1 Scope Decisions (Locked Feb 14)
 
-These items need a YES/NO before work starts:
+| Feature | V1? | Resolution |
+|---------|-----|-----------|
+| Moderation panel | ✅ YES | Simple: reported queue + remove. Leaders need content control day 1 |
+| Analytics panel | ❌ NO | Replaced by **inline activity pulse** — numbers on things that already exist |
+| Leader dashboard | ❌ NO | Replaced by inline activity pulse |
+| Setups/orchestration | ❌ NO | Too complex. Tools deploy directly. Post-launch. |
+| Tool analytics | ❌ NO | Replaced by inline activity pulse (vote counts, usage on tool cards) |
+| Tool feedback page | ❌ NO | Post-launch |
+| Space analytics | ❌ NO | Replaced by inline activity pulse (active members, message count in header) |
+| Builder levels/gamification | ❌ NO | Distracting. Add once creation has traction |
+| Tool runs/run history | ❌ NO | Developer feature, not student feature |
+| Notification settings | ✅ YES | One on/off toggle. Not a page. |
+| About page | ✅ YES | Keep — marketing/info page |
+| PWA/installable | ✅ YES | Web-first = "add to home screen" matters. Manifest + service worker. |
 
-| Feature | Ship V1? | Notes |
-|---------|----------|-------|
-| Moderation panel | ? | Leaders need basic content control |
-| Analytics panel | ? | Nice-to-have, not essential for launch |
-| Leader dashboard | ? | Useful or premature? |
-| Setups/orchestration | ? | Complex, maybe post-launch |
-| Tool analytics | ? | Post-launch if nobody has tools yet |
-| Tool feedback page | ? | Post-launch |
-| Space analytics | ? | Post-launch? |
-| Builder levels/gamification | ? | Fun or distracting for V1? |
-| Tool runs/run history | ? | Developer feature, not student feature |
-| Notification settings page | ? | Just a toggle for V1? |
-| About page | ? | Marketing page, low priority |
-| PWA/installable | ? | Nice-to-have for web-first |
+### Inline Activity Pulse (replaces 5 separate features)
+
+Instead of separate analytics/dashboard pages, surface activity numbers where users already are:
+
+- **Space header:** "23 active this week" · "X online"
+- **Tool cards:** "47 votes" · "12 signups" · "used by 3 spaces"
+- **Event cards:** "12 going" · "3 interested"
+- **Post cards:** "5 reactions" · "3 comments"
+- **Profile:** "4 tools built" · "3 spaces"
+- **Spaces hub:** last activity time, unread count per space
+
+Data already exists in backend. This is a display/design problem, not a backend problem.
+Post-launch: if leaders want deeper data, build a real dashboard then.
