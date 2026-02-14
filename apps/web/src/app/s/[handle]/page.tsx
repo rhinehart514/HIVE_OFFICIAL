@@ -63,6 +63,10 @@ const SpaceInfoDrawer = dynamic(() =>
   import('./components/space-info-drawer').then(m => ({ default: m.SpaceInfoDrawer })),
   { ssr: false }
 );
+const EventDetailDrawer = dynamic(() =>
+  import('./components/event-detail-drawer').then(m => ({ default: m.EventDetailDrawer })),
+  { ssr: false }
+);
 const ModerationPanel = dynamic(() =>
   import('./components/moderation-panel').then(m => ({ default: m.ModerationPanel })),
   { ssr: false }
@@ -100,6 +104,7 @@ export default function SpacePageUnified() {
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
   const [showInfoDrawer, setShowInfoDrawer] = React.useState(false);
   const [showEventModal, setShowEventModal] = React.useState(false);
+  const [selectedEventId, setSelectedEventId] = React.useState<string | null>(null);
   const [, setIsFirstEntry] = React.useState(true);
   const [showDeleteSpaceConfirm, setShowDeleteSpaceConfirm] = React.useState(false);
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
@@ -678,14 +683,24 @@ export default function SpacePageUnified() {
                     onAddTool: () => {},
                   }}
                   events={{
-                    events: upcomingEvents.map(event => ({
-                      id: event.id,
-                      title: event.title,
-                      startDate: event.time || new Date().toISOString(),
-                      rsvpCount: event.goingCount || 0,
-                    })),
+                    events: upcomingEvents.map(event => {
+                      const extendedEvent = event as typeof event & {
+                        location?: string;
+                        locationName?: string;
+                        isOnline?: boolean;
+                        locationType?: string;
+                      };
+                      return {
+                        id: event.id,
+                        title: event.title,
+                        startDate: event.time || new Date().toISOString(),
+                        location: extendedEvent.location || extendedEvent.locationName,
+                        isOnline: extendedEvent.isOnline || extendedEvent.locationType === 'virtual',
+                        rsvpCount: event.goingCount || 0,
+                      };
+                    }),
                     maxEvents: 3,
-                    onClick: () => {},
+                    onClick: (event) => setSelectedEventId(event.id),
                   }}
                   members={{
                     onlineCount: space.onlineCount,
@@ -761,6 +776,14 @@ export default function SpacePageUnified() {
           onCreateEvent={handleCreateEvent}
           spaceId={space.id}
           spaceName={space.name}
+        />
+
+        {/* Event Detail Drawer */}
+        <EventDetailDrawer
+          eventId={selectedEventId}
+          spaceId={space.id}
+          isOpen={!!selectedEventId}
+          onClose={() => setSelectedEventId(null)}
         />
 
         {/* Members Slide-Over Panel */}
