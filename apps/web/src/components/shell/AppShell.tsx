@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { MobileBottomBar, TopBar } from './AppSidebar';
+import { CreatePromptBar } from './CreatePromptBar';
 
 const AdminToolbar = dynamic(() => import('@/components/admin/AdminToolbar'), {
   ssr: false,
@@ -18,6 +19,12 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
+function extractActiveSpaceHandle(pathname: string): string | null {
+  if (!pathname.startsWith('/s/')) return null;
+  const segment = pathname.split('/')[2];
+  return segment || null;
+}
+
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
 
@@ -25,6 +32,11 @@ export function AppShell({ children }: AppShellProps) {
     if (NO_SHELL_EXACT_ROUTES.has(pathname)) return true;
     return NO_SHELL_PREFIX_ROUTES.some((prefix) => pathname.startsWith(prefix));
   }, [pathname]);
+
+  const activeSpaceHandle = React.useMemo(
+    () => extractActiveSpaceHandle(pathname),
+    [pathname]
+  );
 
   if (isNoShellRoute) {
     return (
@@ -48,6 +60,11 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </main>
       </div>
+
+      <CreatePromptBar
+        spaceHandle={activeSpaceHandle}
+        className="hidden md:flex"
+      />
 
       <AdminToolbar />
     </div>
