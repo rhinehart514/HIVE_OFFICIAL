@@ -15,8 +15,8 @@ import { Text } from './Text';
 /**
  * Select — Dropdown selection
  *
- * Radix-based dropdown with WHITE focus ring (never gold).
- * Supports groups, labels, and separators.
+ * Flat minimal: bg-[#080808], border-white/[0.06], border-only focus.
+ * Radix-based. Supports groups, labels, and separators.
  *
  * @see docs/design-system/PRIMITIVES.md (Select)
  */
