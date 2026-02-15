@@ -29,6 +29,7 @@ import {
   HeartIcon,
   PresentationChartBarIcon,
   InboxStackIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
 
 type AdminMode = "command" | "operations";
@@ -134,6 +135,13 @@ const navigationItems = [
     icon: Settings,
     href: "/system",
     description: "System settings and configuration",
+  },
+  {
+    id: "preview",
+    label: "Preview",
+    icon: EyeIcon,
+    href: "/preview",
+    description: "Preview and test the production frontend",
   },
 ];
 
