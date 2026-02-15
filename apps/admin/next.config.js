@@ -57,7 +57,11 @@ const nextConfig = {
         // Proxy admin-specific API routes to web app
         {
           source: '/api/admin/:path*',
-          destination: 'http://localhost:3000/api/admin/:path*',
+          destination: `${process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000'}/api/admin/:path*`,
+        },
+        {
+          source: '/api/auth/:path*',
+          destination: `${process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000'}/api/auth/:path*`,
         },
       ],
     };
