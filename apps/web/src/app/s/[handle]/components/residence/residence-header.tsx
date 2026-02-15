@@ -185,7 +185,7 @@ export function ResidenceHeader({
               </span>
               <span className="text-white/50">·</span>
               <span className="text-xs text-white/50">
-                {space.memberCount} members
+                {space.memberCount > 0 ? `${space.memberCount} members` : 'Be the first to join'}
               </span>
               {(space.activeTodayCount != null && space.activeTodayCount > 0) && (
                 <>
