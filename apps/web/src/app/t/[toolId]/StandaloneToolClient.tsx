@@ -1,16 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@hive/auth-logic';
 import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { Copy } from 'lucide-react';
-import { Skeleton } from '@hive/ui';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
-import { apiClient } from '@/lib/api-client';
 
 const LazyToolCanvas = dynamic(
   () => import('@hive/ui').then(mod => ({ default: mod.ToolCanvas })),
@@ -18,17 +14,12 @@ const LazyToolCanvas = dynamic(
     ssr: false,
     loading: () => (
       <div className="space-y-4 animate-pulse">
-        <div className="h-11 bg-white/[0.04] rounded-lg" />
-        <div className="h-11 bg-white/[0.04] rounded-lg" />
-        <div className="h-11 bg-white/[0.04] rounded-lg" />
+        <div className="h-11 bg-white/[0.03] rounded-lg" />
+        <div className="h-11 bg-white/[0.03] rounded-lg" />
+        <div className="h-11 bg-white/[0.03] rounded-lg" />
       </div>
     ),
   }
-);
-
-const LazyShareButton = dynamic(
-  () => import('@/components/share/ShareButton').then(mod => ({ default: mod.ShareButton })),
-  { ssr: false, loading: () => <div className="w-[72px] h-[34px] bg-white/[0.04] rounded-lg animate-pulse" /> }
 );
 
 interface ToolData {
@@ -76,7 +67,8 @@ async function fetchTool(toolId: string): Promise<ToolData> {
 export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; baseUrl: string }) {
   const router = useRouter();
   const { user } = useAuth();
-  const [isCloning, setIsCloning] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const interactionRef = useRef(false);
 
   const {
     data: tool,
@@ -86,37 +78,13 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
     queryKey: ['tool', toolId],
     queryFn: () => fetchTool(toolId),
     staleTime: 60000,
-    retry: (failureCount, error) => {
-      if (error instanceof Error && (error.message.includes('private') || error.message.includes('not found'))) {
+    retry: (failureCount, err) => {
+      if (err instanceof Error && (err.message.includes('private') || err.message.includes('not found'))) {
         return false;
       }
       return failureCount < 2;
     },
   });
-
-  const handleClone = useCallback(async () => {
-    if (!user) {
-      router.push(`/enter?redirect=/t/${toolId}`);
-      return;
-    }
-    if (isCloning) return;
-
-    setIsCloning(true);
-    try {
-      const res = await apiClient.post(`/api/tools/${toolId}/clone`, {});
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to clone');
-      const newToolId = json?.data?.toolId || json?.data?.tool?.id || json?.toolId || json?.tool?.id;
-      if (!newToolId) {
-        throw new Error('Clone created but no tool ID was returned');
-      }
-      toast.success('Tool cloned to your lab');
-      router.push(`/lab/${newToolId}`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to clone tool');
-      setIsCloning(false);
-    }
-  }, [user, toolId, router, isCloning]);
 
   const runtime = useToolRuntime({
     toolId,
@@ -126,15 +94,36 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
     enableRealtime: true,
   });
 
+  const handleElementChange = useCallback((instanceId: string, data: unknown) => {
+    runtime.updateState({ [instanceId]: data });
+    if (!interactionRef.current) {
+      interactionRef.current = true;
+      setHasInteracted(true);
+    }
+  }, [runtime]);
+
+  const handleElementAction = useCallback((instanceId: string, action: string, payload: unknown) => {
+    runtime.executeAction(instanceId, action, payload as Record<string, unknown>);
+    if (!interactionRef.current) {
+      interactionRef.current = true;
+      setHasInteracted(true);
+    }
+  }, [runtime]);
+
   // Loading
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-6">
-        <div className="w-full max-w-[480px] space-y-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-full max-w-xs" />
-          <div className="mt-6 rounded-2xl bg-[#080808] border border-white/[0.06] p-8">
-            <Skeleton className="h-48 w-full" />
+        <div className="w-full max-w-[480px]">
+          <div className="rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-8">
+            <div className="space-y-4 animate-pulse">
+              <div className="h-6 w-40 bg-white/[0.04] rounded-lg" />
+              <div className="h-4 w-64 bg-white/[0.03] rounded-lg" />
+              <div className="h-px bg-white/[0.06] my-4" />
+              <div className="h-11 bg-white/[0.03] rounded-lg" />
+              <div className="h-11 bg-white/[0.03] rounded-lg" />
+              <div className="h-11 bg-white/[0.03] rounded-lg" />
+            </div>
           </div>
         </div>
       </div>
@@ -150,20 +139,12 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
           <p className="text-white/50 text-sm mb-6">
             Sign in to view this tool if you have access.
           </p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => router.push('/enter')}
-              className="px-5 py-2.5 bg-[#FFD700] text-black text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => router.push('/discover')}
-              className="px-5 py-2.5 bg-white/[0.06] text-white/50 text-sm font-medium rounded-full hover:bg-white/[0.06] transition-colors"
-            >
-              Explore
-            </button>
-          </div>
+          <button
+            onClick={() => router.push('/enter')}
+            className="px-6 py-2.5 bg-[#FFD700] text-black text-sm font-medium rounded-full hover:bg-[#FFDF33] transition-colors"
+          >
+            Sign In
+          </button>
         </div>
       </div>
     );
@@ -180,7 +161,7 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
           </p>
           <button
             onClick={() => router.push('/discover')}
-            className="px-5 py-2.5 bg-[#FFD700] text-black text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
+            className="px-6 py-2.5 bg-[#FFD700] text-black text-sm font-medium rounded-full hover:bg-[#FFDF33] transition-colors"
           >
             Explore Tools
           </button>
@@ -189,60 +170,26 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
     );
   }
 
-  const toolUrl = `${baseUrl}/t/${toolId}`;
-
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* Tool content */}
+      {/* Tool — centered, frameless */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-[480px]">
-          {/* Tool header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-lg font-semibold text-white truncate">
+          {/* Tool surface */}
+          <div className="rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-6 sm:p-8">
+            {/* Tool title inside the card */}
+            <div className="mb-5">
+              <h1 className="text-lg font-semibold text-white leading-tight">
                 {tool.name}
               </h1>
               {tool.description && (
-                <p className="text-sm text-white/50 truncate mt-0.5">
+                <p className="text-sm text-white/50 mt-1 leading-relaxed">
                   {tool.description}
                 </p>
               )}
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-              <LazyShareButton url={toolUrl} title={tool.name} description={tool.description} />
-              {user && tool.ownerId === user.uid && (
-                <button
-                  onClick={() => router.push(`/lab/${toolId}`)}
-                  className="px-4 py-2 text-[13px] font-medium bg-[#FFD700] text-black rounded-full hover:opacity-90 transition-opacity"
-                >
-                  Edit
-                </button>
-              )}
-              {user && tool.ownerId !== user.uid && (
-                <button
-                  onClick={handleClone}
-                  disabled={isCloning}
-                  className="px-4 py-2 text-[13px] font-medium bg-white/[0.06] text-white rounded-full hover:bg-white/[0.10] transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  {isCloning ? 'Cloning...' : 'Clone'}
-                </button>
-              )}
-              {!user && (
-                <button
-                  onClick={handleClone}
-                  className="px-4 py-2 text-[13px] font-medium bg-white/[0.06] text-white rounded-full hover:bg-white/[0.10] transition-colors flex items-center gap-1.5"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  Clone
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Tool canvas */}
-          <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-6">
+            {/* Tool canvas */}
             {tool.elements.length > 0 ? (
               <LazyToolCanvas
                 elements={tool.elements}
@@ -251,12 +198,8 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
                 userState={runtime.userState}
                 connections={tool.connections || []}
                 layout="stack"
-                onElementChange={(instanceId, data) => {
-                  runtime.updateState({ [instanceId]: data });
-                }}
-                onElementAction={(instanceId, action, payload) => {
-                  runtime.executeAction(instanceId, action, payload as Record<string, unknown>);
-                }}
+                onElementChange={handleElementChange}
+                onElementAction={handleElementAction}
                 isLoading={runtime.isLoading || runtime.isExecuting}
                 error={runtime.error?.message || null}
                 context={{
@@ -272,29 +215,56 @@ export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; base
               </div>
             )}
           </div>
+
+          {/* Post-interaction CTA — appears after user engages */}
+          {hasInteracted && !user && (
+            <div className="mt-6 text-center animate-in fade-in duration-300">
+              <Link
+                href="/enter"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FFD700] text-black text-sm font-medium rounded-full hover:bg-[#FFDF33] transition-colors"
+              >
+                Create your own tool
+              </Link>
+            </div>
+          )}
         </div>
       </main>
 
       {/* HIVE watermark + CTA */}
-      <footer className="pb-8 text-center">
-        {/* Watermark */}
-        <div className="flex items-center justify-center gap-1.5 mb-3">
-          <span className="h-[6px] w-[6px] rounded-full bg-[#FFD700]" />
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/30">
+      <footer className="pb-8 pt-2 text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 group"
+        >
+          <span
+            className="h-[6px] w-[6px] rounded-full bg-[#FFD700]"
+            style={{ animation: 'pulse-breathe 3s ease-in-out infinite' }}
+          />
+          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 group-hover:text-white/50 transition-colors">
             HIVE
           </span>
-        </div>
+        </Link>
 
-        {/* CTA */}
-        {!user && (
-          <Link
-            href="/enter"
-            className="text-[13px] text-white/50 hover:text-white transition-colors"
-          >
-            Sign up to build your own &rarr;
-          </Link>
+        {/* Persistent subtle CTA for non-auth users */}
+        {!user && !hasInteracted && (
+          <div className="mt-3">
+            <Link
+              href="/enter"
+              className="text-[13px] text-white/30 hover:text-white/60 transition-colors"
+            >
+              Build your own &rarr;
+            </Link>
+          </div>
         )}
       </footer>
+
+      {/* Breathing animation for the yellow dot */}
+      <style jsx>{`
+        @keyframes pulse-breathe {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

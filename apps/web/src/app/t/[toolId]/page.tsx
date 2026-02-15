@@ -48,16 +48,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!tool) {
     return {
       title: 'Tool | HIVE',
-      description: 'Create and share tools instantly',
+      description: 'Create and share interactive tools on HIVE',
+      openGraph: {
+        title: 'Tool | HIVE',
+        description: 'Create and share interactive tools on HIVE',
+        siteName: 'HIVE',
+        type: 'website',
+      },
     };
   }
 
+  const ogDescription = tool.description
+    || (tool.ownerName ? `Built by ${tool.ownerName} on HIVE` : 'An interactive tool on HIVE');
+
   return {
     title: `${tool.name} | HIVE`,
-    description: tool.description || `Check out this tool on HIVE`,
+    description: ogDescription,
     openGraph: {
       title: tool.name,
-      description: tool.description || `Built by ${tool.ownerName || 'a HIVE user'}`,
+      description: ogDescription,
       url: `${baseUrl}/t/${toolId}`,
       siteName: 'HIVE',
       images: [
@@ -73,8 +82,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: tool.name,
-      description: tool.description || `Built by ${tool.ownerName || 'a HIVE user'}`,
+      description: ogDescription,
       images: [`${baseUrl}/api/og/tool/${toolId}`],
+    },
+    other: {
+      'theme-color': '#000000',
     },
   };
 }
