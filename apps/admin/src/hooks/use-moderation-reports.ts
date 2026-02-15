@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 
 interface Report {
   id: string;
@@ -59,7 +60,7 @@ export function useModerationReports(options: UseModerationReportsOptions = {}) 
       params.set("page", String(page));
       params.set("limit", String(limit));
 
-      const response = await fetch(`/api/admin/moderation/reports?${params}`);
+      const response = await fetchWithAuth(`/api/admin/moderation/reports?${params}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch reports");

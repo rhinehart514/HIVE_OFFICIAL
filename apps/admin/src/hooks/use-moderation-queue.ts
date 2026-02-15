@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 
 interface Report {
   id: string;
@@ -61,7 +62,7 @@ export function useModerationQueue(options: UseModerationQueueOptions = {}) {
       if (priorityFilter !== "all") params.set("priority", priorityFilter);
       if (typeFilter !== "all") params.set("type", typeFilter);
 
-      const response = await fetch(`/api/admin/moderation/queue?${params}`);
+      const response = await fetchWithAuth(`/api/admin/moderation/queue?${params}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch moderation queue");
@@ -84,7 +85,7 @@ export function useModerationQueue(options: UseModerationQueueOptions = {}) {
   ) => {
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/admin/moderation/reports/${reportId}/resolve`, {
+      const response = await fetchWithAuth(`/api/admin/moderation/reports/${reportId}/resolve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, resolution }),
