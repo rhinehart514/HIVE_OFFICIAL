@@ -1,6 +1,5 @@
 import { type NextRequest } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/logger';
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { withCache } from '../../../../../lib/cache-headers';
 

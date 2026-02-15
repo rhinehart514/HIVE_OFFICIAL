@@ -196,7 +196,7 @@ function calculateInterestMatch(
 async function handler(
   request: AuthenticatedRequest,
   _context: unknown,
-  respond: unknown
+  _respond: unknown
 ): Promise<Response> {
   const userId = getUserId(request);
   const campusId = getCampusId(request) || 'ub-buffalo';

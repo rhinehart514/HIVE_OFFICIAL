@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
   }
 
   // For now, just validate - could add token refresh logic here
-  return GET(request);
+  return _GET(request);
 }
 
 export const GET = withCache(_GET, 'PRIVATE');

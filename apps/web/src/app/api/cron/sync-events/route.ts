@@ -16,6 +16,81 @@ type SpaceIndex = {
   normalizedName: string;
 };
 
+/** Shape of a parsed RSS item from xml2js */
+interface RssItem {
+  title?: string | XmlTextNode;
+  description?: string | XmlTextNode;
+  location?: string | XmlTextNode;
+  category?: string | string[] | XmlTextNode | XmlTextNode[];
+  host?: string | string[] | XmlTextNode | XmlTextNode[];
+  author?: string | string[] | XmlTextNode | XmlTextNode[];
+  link?: string | XmlTextNode;
+  guid?: string | XmlTextNode;
+  start?: string | XmlTextNode;
+  end?: string | XmlTextNode;
+  status?: string | XmlTextNode;
+  enclosure?: RssEnclosure | RssEnclosure[];
+}
+
+interface RssEnclosure {
+  $?: { url?: string };
+}
+
+/** xml2js text node with underscore */
+interface XmlTextNode {
+  _?: string;
+  $?: Record<string, string>;
+}
+
+/** Parsed RSS feed structure */
+interface RssFeed {
+  rss?: {
+    channel?: {
+      item?: RssItem | RssItem[];
+    };
+  };
+}
+
+/** Firestore space document shape (partial) */
+interface SpaceDoc {
+  name?: string;
+  campusId?: string;
+}
+
+/** Event document written to Firestore */
+interface EventDoc {
+  title: string;
+  description: string;
+  location: string;
+  locationType: string;
+  startAt: FirebaseFirestore.Timestamp;
+  endAt: FirebaseFirestore.Timestamp;
+  startDate: string;
+  endDate: string;
+  timezone: string;
+  type: string;
+  eventType: string;
+  state: string;
+  status: string;
+  isHidden: boolean;
+  campusId: string;
+  source: {
+    platform: string;
+    guid: string;
+    url: string | null;
+    hosts: string[];
+    status: string;
+  };
+  categories: string[];
+  tags: string[];
+  imageUrl: string | null;
+  createdAt: FirebaseFirestore.FieldValue;
+  updatedAt: FirebaseFirestore.FieldValue;
+  importedAt: FirebaseFirestore.FieldValue;
+  spaceId?: string;
+  spaceName?: string;
+}
+
 async function _GET(request: NextRequest) {
   return runSync(request);
 }
@@ -78,8 +153,8 @@ async function syncCampusLabsEvents() {
   }
 
   const xml = await feedResponse.text();
-  const parsed: any = await parseStringPromise(xml, { explicitArray: false, trim: true });
-  const items = toArray(parsed?.rss?.channel?.item);
+  const parsed = await parseStringPromise(xml, { explicitArray: false, trim: true }) as RssFeed;
+  const items = toArray(parsed?.rss?.channel?.item) as RssItem[];
   const spaces = await loadCampusLabsSpaces();
 
   let created = 0;
@@ -111,7 +186,7 @@ async function syncCampusLabsEvents() {
     const eventRef = dbAdmin.collection("events").doc(eventId);
     const existingDoc = await eventRef.get();
 
-    const eventDoc: any = {
+    const eventDoc: EventDoc = {
       title,
       description,
       location,
@@ -167,7 +242,7 @@ async function loadCampusLabsSpaces(): Promise<SpaceIndex[]> {
 
   return snapshot.docs
     .map(doc => {
-      const data: any = doc.data();
+      const data = doc.data() as SpaceDoc | undefined;
       const name = toText(data?.name);
       const campusId = toText(data?.campusId);
       if (!name || (campusId && campusId !== CAMPUS_ID)) return null;
@@ -222,32 +297,32 @@ function inferLocationType(location: string) {
   return /(virtual|online|zoom|webex|teams)/i.test(location) ? "virtual" : "physical";
 }
 
-function collectHosts(item: any) {
+function collectHosts(item: RssItem): string[] {
   const values = [...toArray(item?.host), ...toArray(item?.author)].map(toText).filter(Boolean);
   return uniq(values);
 }
 
-function getImageUrl(item: any) {
-  const enclosure = toArray(item?.enclosure)[0];
+function getImageUrl(item: RssItem): string {
+  const enclosure = toArray(item?.enclosure)[0] as RssEnclosure | undefined;
   if (typeof enclosure?.$?.url === "string") return enclosure.$.url;
   return "";
 }
 
-function parseDate(value: any) {
+function parseDate(value: string | XmlTextNode | undefined): Date | null {
   const date = new Date(toText(value));
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function toArray(value: any): any[] {
+function toArray(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
   if (value === undefined || value === null) return [];
   return [value];
 }
 
-function toText(value: any): string {
+function toText(value: unknown): string {
   if (typeof value === "string") return value.trim();
   if (typeof value === "number") return String(value);
-  if (value && typeof value === "object" && typeof value._ === "string") return value._.trim();
+  if (value && typeof value === "object" && "_" in value && typeof (value as XmlTextNode)._ === "string") return (value as XmlTextNode)._!.trim();
   return "";
 }
 

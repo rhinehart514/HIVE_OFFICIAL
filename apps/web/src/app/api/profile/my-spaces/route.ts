@@ -16,7 +16,7 @@ const mySpacesQuerySchema = z.object({
  * Get current user's spaces - joined, owned, favorited
  * Updated to use flat collection structure
  */
-const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
+const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, _respond) => {
   try {
     const url = new URL(request.url);
     const queryParams = Object.fromEntries(url.searchParams.entries());

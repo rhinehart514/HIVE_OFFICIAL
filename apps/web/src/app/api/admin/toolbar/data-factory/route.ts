@@ -6,6 +6,7 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { logAdminActivity } from '@/lib/admin-activity';
 
 const CreateTestDataSchema = z.object({
@@ -55,7 +56,7 @@ export const POST = withAdminAuthAndErrors(async (request, context, respond) => 
     await setSpaceMember(spaceRef.id, adminId, {
       role: 'owner',
       isActive: true,
-      joinedAt: new Date() as any,
+      joinedAt: Timestamp.fromDate(new Date()),
       joinMethod: 'created',
       campusId,
     });

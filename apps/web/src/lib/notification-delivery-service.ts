@@ -359,7 +359,7 @@ export async function deliverNotification(
 
   try {
     // Get user preferences and contact info
-    const { preferences, email, fcmTokens } = await getUserDeliveryPreferences(userId);
+    const { preferences, email, fcmTokens: _fcmTokens } = await getUserDeliveryPreferences(userId);
 
     // Check if notifications are globally disabled
     if (!preferences.enabled) {

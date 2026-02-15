@@ -18,7 +18,7 @@ export interface SpaceMember {
   joinMethod?: string;
   joinedAt?: FirebaseFirestore.Timestamp;
   campusId?: string;
-  [key: string]: any;
+  [key: string]: string | boolean | string[] | FirebaseFirestore.Timestamp | undefined;
 }
 
 /**

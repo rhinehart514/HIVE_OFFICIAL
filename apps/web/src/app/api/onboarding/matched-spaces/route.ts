@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid input', details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { interests, major, housing, year } = parsed.data;
+    const { interests, major: _major, housing, year } = parsed.data;
 
     // Fetch org spaces for this campus
     const orgSpacesSnapshot = await dbAdmin

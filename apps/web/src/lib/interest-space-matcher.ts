@@ -186,11 +186,22 @@ function normalize(value: string): string {
   return value.toLowerCase().trim();
 }
 
-function resolveSpaceId(space: any): string {
+/** A space document with fields used during matching */
+interface MatchableSpace {
+  spaceId?: string;
+  id?: string;
+  tags?: string[];
+  orgTypeName?: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  identityType?: string;
+}
+function resolveSpaceId(space: MatchableSpace): string {
   return String(space?.spaceId || space?.id || '');
 }
 
-export function scoreSpaceForInterest(space: any, interestId: string): number {
+export function scoreSpaceForInterest(space: MatchableSpace, interestId: string): number {
   if (!space) return 0;
 
   // Check if this is an individual item ID
@@ -203,7 +214,7 @@ export function scoreSpaceForInterest(space: any, interestId: string): number {
   let score = 0;
 
   const rawTags = Array.isArray(space.tags) ? space.tags : [];
-  const normalizedTags = new Set(rawTags.map((tag: any) => normalize(String(tag))));
+  const normalizedTags = new Set(rawTags.map((tag: string) => normalize(String(tag))));
 
   // Score from category-level tags
   for (const tag of signal.tags) {
@@ -252,7 +263,7 @@ export interface MatchOptions {
   housing?: string | null;
 }
 
-export function matchSpacesForInterests(spaces: any[], interestIds: string[], limit = 10, options?: MatchOptions): Array<{
+export function matchSpacesForInterests(spaces: MatchableSpace[], interestIds: string[], limit = 10, options?: MatchOptions): Array<{
   spaceId: string;
   score: number;
   matchedInterests: string[];

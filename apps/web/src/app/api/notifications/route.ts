@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';

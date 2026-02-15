@@ -2,7 +2,6 @@ import * as admin from "firebase-admin";
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
-import { logger } from "@/lib/structured-logger";
 import { withCache } from '../../../../../lib/cache-headers';
 
 // Schema for tool state update requests

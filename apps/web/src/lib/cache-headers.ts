@@ -19,10 +19,10 @@ export type CacheTier = keyof typeof CACHE_TIERS;
  * Wrap a GET handler to add Cache-Control headers to all 2xx responses.
  */
 export function withCache(
-  handler: (request: NextRequest, context?: any) => Promise<Response> | Response,
+  handler: (request: NextRequest, context: any) => Promise<Response> | Response,
   tier: CacheTier = 'SHORT'
 ) {
-  return async (request: NextRequest, context?: any): Promise<Response> => {
+  return async (request: NextRequest, context: any): Promise<Response> => {
     const response = await handler(request, context);
     
     // Only add cache headers to successful responses that don't already have them
