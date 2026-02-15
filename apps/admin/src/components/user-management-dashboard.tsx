@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchWithAuth } from "@/hooks/use-admin-api";
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Button,
@@ -162,7 +164,7 @@ export function UserManagementDashboard({
       params.set("limit", String(pagination.limit));
       params.set("offset", String(reset ? 0 : pagination.offset));
 
-      const response = await fetch(`/api/admin/users?${params}`);
+      const response = await fetchWithAuth(`/api/admin/users?${params}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch users");
@@ -202,7 +204,7 @@ export function UserManagementDashboard({
   const fetchUserDetails = async (userId: string) => {
     setDetailLoading(true);
     try {
-      const response = await fetch(`/api/admin/users/${userId}`);
+      const response = await fetchWithAuth(`/api/admin/users/${userId}`);
       if (!response.ok) throw new Error("Failed to fetch user details");
       const data = await response.json();
       setUserDetails(data.data);
@@ -238,7 +240,7 @@ export function UserManagementDashboard({
   // User actions
   const suspendUser = async (userId: string, reason: string = "Admin action") => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/suspend`, {
+      const response = await fetchWithAuth(`/api/admin/users/${userId}/suspend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason, duration: "permanent" }),
@@ -252,7 +254,7 @@ export function UserManagementDashboard({
 
   const unsuspendUser = async (userId: string) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/unsuspend`, {
+      const response = await fetchWithAuth(`/api/admin/users/${userId}/unsuspend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -266,7 +268,7 @@ export function UserManagementDashboard({
 
   const updateUserRole = async (userId: string, role: "user" | "builder") => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetchWithAuth(`/api/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
@@ -287,7 +289,7 @@ export function UserManagementDashboard({
 
     setBulkLoading(true);
     try {
-      const response = await fetch("/api/admin/users/bulk", {
+      const response = await fetchWithAuth("/api/admin/users/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -317,7 +319,7 @@ export function UserManagementDashboard({
     if (roleFilter !== "all") params.set("role", roleFilter);
     if (statusFilter !== "all") params.set("status", statusFilter);
 
-    const response = await fetch(`/api/admin/users/export?${params}`);
+    const response = await fetchWithAuth(`/api/admin/users/export?${params}`);
     if (!response.ok) {
       setError("Export failed");
       return;

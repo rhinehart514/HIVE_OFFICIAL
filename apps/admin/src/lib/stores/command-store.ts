@@ -5,6 +5,7 @@
  * Handles SSE connection, metrics caching, and cross-component state.
  */
 
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
@@ -300,7 +301,7 @@ export const useCommandStore = create<CommandState>()(
       setPulseLoading(true);
 
       try {
-        const response = await fetch('/api/admin/command/pulse', {
+        const response = await fetchWithAuth('/api/admin/command/pulse', {
           credentials: 'include',
         });
 
@@ -327,7 +328,7 @@ export const useCommandStore = create<CommandState>()(
       setTerritoryLoading(true);
 
       try {
-        const response = await fetch('/api/admin/command/territory?connections=true', {
+        const response = await fetchWithAuth('/api/admin/command/territory?connections=true', {
           credentials: 'include',
         });
 
@@ -358,7 +359,7 @@ export const useCommandStore = create<CommandState>()(
       setHealthLoading(true);
 
       try {
-        const response = await fetch('/api/admin/command/health', {
+        const response = await fetchWithAuth('/api/admin/command/health', {
           credentials: 'include',
         });
 

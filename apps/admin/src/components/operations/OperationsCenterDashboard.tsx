@@ -24,8 +24,6 @@ import { QueueDashboard } from "./QueueDashboard";
 import { ControlPanel } from "./ControlPanel";
 import { CommsPanel } from "./CommsPanel";
 import { UserManagementDashboard } from "../user-management-dashboard";
-import { SpaceManagementDashboard } from "../space-management-dashboard";
-import { ContentModerationDashboard } from "../content-moderation-dashboard";
 import { ToolReviewDashboard } from "../tool-review-dashboard";
 import { SystemHealthDashboard } from "../system-health-dashboard";
 import {
@@ -174,9 +172,9 @@ export function OperationsCenterDashboard() {
       case "users":
         return <UserManagementDashboard />;
       case "spaces":
-        return <SpaceManagementDashboard />;
+        return <div className="text-white/50 p-4">Space management moved to /spaces</div>;
       case "content":
-        return <ContentModerationDashboard />;
+        return <div className="text-white/50 p-4">Content moderation moved to /moderation</div>;
       case "tools":
         return <ToolReviewDashboard />;
       case "comms":

@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchWithAuth } from "@/hooks/use-admin-api";
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -178,7 +180,7 @@ export function NotificationPanel({ isOpen, onClose, anchorRef }: NotificationPa
   const markAllAsRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     try {
-      await fetch("/api/admin/alerts/acknowledge", {
+      await fetchWithAuth("/api/admin/alerts/acknowledge", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

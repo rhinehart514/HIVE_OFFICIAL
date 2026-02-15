@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button as Button, Badge } from "@hive/ui";
-import { useAdminAuth } from "@/lib/auth";
-
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 interface BuilderRequest {
   id: string;
   userId: string;
@@ -21,23 +20,17 @@ interface BuilderRequest {
 }
 
 export function BuilderQueueEnhanced() {
-  const { admin } = useAdminAuth();
   const [requests, setRequests] = useState<BuilderRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchRequests = useCallback(async () => {
-    if (!admin) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/builder-requests', {
+      const response = await fetchWithAuth('/api/admin/builder-requests', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${admin.id}`,
-        },
       });
 
       if (!response.ok) {
@@ -51,20 +44,17 @@ export function BuilderQueueEnhanced() {
     } finally {
       setLoading(false);
     }
-  }, [admin]);
+  }, []);
 
   const handleRequest = async (requestId: string, action: 'approve' | 'reject') => {
-    if (!admin) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/builder-requests', {
+      const response = await fetchWithAuth('/api/admin/builder-requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin.id}`,
         },
         body: JSON.stringify({
           requestId,

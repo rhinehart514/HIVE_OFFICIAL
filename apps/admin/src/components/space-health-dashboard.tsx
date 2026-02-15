@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchWithAuth } from "@/hooks/use-admin-api";
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Button,
@@ -156,7 +158,7 @@ export function SpaceHealthDashboard() {
         params.set("category", categoryFilter);
       }
 
-      const response = await fetch(`/api/admin/spaces/health?${params}`);
+      const response = await fetchWithAuth(`/api/admin/spaces/health?${params}`);
       const data = await response.json();
 
       if (data.success) {
@@ -179,7 +181,7 @@ export function SpaceHealthDashboard() {
   const handleFeatureSpace = async (spaceId: string, featured: boolean) => {
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/admin/spaces/${spaceId}/feature`, {
+      const response = await fetchWithAuth(`/api/admin/spaces/${spaceId}/feature`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ featured }),

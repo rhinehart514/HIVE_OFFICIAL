@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
-import { useAdminAuth } from "@/lib/auth";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import { AdminNotification, NotificationPriority, NotificationType } from "@/lib/admin-notifications";
 
 interface AdminNotificationsProps {
@@ -11,24 +11,18 @@ interface AdminNotificationsProps {
 }
 
 export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }: AdminNotificationsProps) {
-  const { admin } = useAdminAuth();
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchNotifications = useCallback(async () => {
-    if (!admin) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/notifications', {
+      const response = await fetchWithAuth('/api/admin/notifications', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${admin.id}`,
-        },
       });
 
       if (!response.ok) {
@@ -43,17 +37,14 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
     } finally {
       setLoading(false);
     }
-  }, [admin]);
+  }, []);
 
   const markAsRead = async (notificationId: string) => {
-    if (!admin) return;
-
     try {
-      const response = await fetch('/api/admin/notifications', {
+      const response = await fetchWithAuth('/api/admin/notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin.id}`,
         },
         body: JSON.stringify({
           action: 'mark_read',
@@ -70,14 +61,11 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
   };
 
   const markAllAsRead = async () => {
-    if (!admin) return;
-
     try {
-      const response = await fetch('/api/admin/notifications', {
+      const response = await fetchWithAuth('/api/admin/notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin.id}`,
         },
         body: JSON.stringify({
           action: 'mark_all_read',

@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchWithAuth } from "@/hooks/use-admin-api";
+
 /**
  * Momentum View
  *
@@ -158,7 +160,7 @@ export function MomentumView() {
       setError(null);
 
       try {
-        const response = await fetch(`/api/admin/command/momentum?range=${range}`, {
+        const response = await fetchWithAuth(`/api/admin/command/momentum?range=${range}`, {
           credentials: "include",
         });
 

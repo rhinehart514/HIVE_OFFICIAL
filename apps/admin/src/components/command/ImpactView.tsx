@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchWithAuth } from "@/hooks/use-admin-api";
+
 /**
  * Impact View
  *
@@ -167,7 +169,7 @@ export function ImpactView() {
       setError(null);
 
       try {
-        const response = await fetch(`/api/admin/command/impact?period=${period}`, {
+        const response = await fetchWithAuth(`/api/admin/command/impact?period=${period}`, {
           credentials: "include",
         });
 

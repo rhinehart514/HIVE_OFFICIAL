@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import {
   MagnifyingGlassIcon, FunnelIcon, UsersIcon, ExclamationTriangleIcon,
   Cog6ToothIcon, EyeIcon, ChartBarIcon, ArrowPathIcon,
@@ -147,11 +148,8 @@ export function EnhancedSpaceControlDashboard() {
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/spaces', {
+      const response = await fetchWithAuth('/api/admin/spaces', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${admin.id}`,
-        },
       });
 
       if (!response.ok) {
@@ -253,11 +251,10 @@ export function EnhancedSpaceControlDashboard() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/spaces/bulk', {
+      const response = await fetchWithAuth('/api/admin/spaces/bulk', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin.id}`,
         },
         body: JSON.stringify(operation),
       });
@@ -283,11 +280,10 @@ export function EnhancedSpaceControlDashboard() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/spaces', {
+      const response = await fetchWithAuth('/api/admin/spaces', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin.id}`,
         },
         body: JSON.stringify({
           action,

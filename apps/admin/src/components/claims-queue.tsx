@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button, Badge, HiveCard as Card, CardContent } from "@hive/ui";
-import { useAdminAuth } from "@/lib/auth";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import {
   TrophyIcon,
   CheckIcon,
@@ -71,7 +71,6 @@ interface ClaimsSummary {
 }
 
 export function ClaimsQueue() {
-  const { admin } = useAdminAuth();
   const [claims, setClaims] = useState<ClaimRequest[]>([]);
   const [summary, setSummary] = useState<ClaimsSummary | null>(null);
   const [loading, setLoading] = useState(false);
@@ -81,17 +80,12 @@ export function ClaimsQueue() {
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   const fetchClaims = useCallback(async () => {
-    if (!admin) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/admin/claims?status=${statusFilter}`, {
+      const response = await fetchWithAuth(`/api/admin/claims?status=${statusFilter}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${admin.id}`,
-        },
       });
 
       if (!response.ok) {
@@ -106,20 +100,17 @@ export function ClaimsQueue() {
     } finally {
       setLoading(false);
     }
-  }, [admin, statusFilter]);
+  }, [statusFilter]);
 
   const handleClaim = async (claimId: string, action: 'approve' | 'reject', goLive: boolean = true) => {
-    if (!admin) return;
-
     setProcessingId(claimId);
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/claims', {
+      const response = await fetchWithAuth('/api/admin/claims', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin.id}`,
         },
         body: JSON.stringify({
           claimId,

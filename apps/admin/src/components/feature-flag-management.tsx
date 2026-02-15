@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@hive/ui";
-import { useAdminAuth } from "@/lib/auth";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import {
   FlagIcon,
   MagnifyingGlassIcon,
@@ -81,7 +81,6 @@ const ROLLOUT_ICONS: Record<string, typeof Users> = {
 };
 
 export function FeatureFlagManagement() {
-  const { admin } = useAdminAuth();
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,14 +89,11 @@ export function FeatureFlagManagement() {
   const [savingFlags, setSavingFlags] = useState<Set<string>>(new Set());
 
   const fetchFlags = useCallback(async () => {
-    if (!admin) return;
-
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch("/api/admin/feature-flags", {
-        headers: { Authorization: `Bearer ${admin.id}` },
+      const response = await fetchWithAuth("/api/admin/feature-flags", {
       });
 
       if (!response.ok) {
@@ -111,23 +107,20 @@ export function FeatureFlagManagement() {
     } finally {
       setIsLoading(false);
     }
-  }, [admin]);
+  }, []);
 
   useEffect(() => {
     fetchFlags();
   }, [fetchFlags]);
 
   const toggleFlag = async (flagId: string, enabled: boolean) => {
-    if (!admin) return;
-
     setSavingFlags((prev) => new Set(prev).add(flagId));
 
     try {
-      const response = await fetch(`/api/admin/feature-flags/${flagId}`, {
+      const response = await fetchWithAuth(`/api/admin/feature-flags/${flagId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${admin.id}`,
         },
         body: JSON.stringify({ enabled }),
       });

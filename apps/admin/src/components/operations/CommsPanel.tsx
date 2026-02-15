@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchWithAuth } from "@/hooks/use-admin-api";
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Button,
@@ -75,7 +77,7 @@ export function CommsPanel() {
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/admin/announcements", {
+      const response = await fetchWithAuth("/api/admin/announcements", {
         credentials: "include",
       });
       if (response.ok) {
@@ -119,7 +121,7 @@ export function CommsPanel() {
         payload.scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
       }
 
-      const response = await fetch("/api/admin/announcements", {
+      const response = await fetchWithAuth("/api/admin/announcements", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

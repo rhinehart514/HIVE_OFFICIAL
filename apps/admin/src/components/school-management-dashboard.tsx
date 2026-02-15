@@ -11,8 +11,7 @@ import {
   Label,
   Badge,
 } from "@hive/ui";
-import { useAdminAuth } from "@/lib/auth";
-
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 interface EventSource {
   type: "campuslabs" | "presence" | "generic_rss" | "atom";
   url: string;
@@ -65,7 +64,6 @@ const DEFAULT_SCHOOL: Partial<School> = {
 };
 
 export function SchoolManagementDashboard() {
-  const { admin } = useAdminAuth();
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,13 +73,11 @@ export function SchoolManagementDashboard() {
   const [saving, setSaving] = useState(false);
 
   const fetchSchools = useCallback(async () => {
-    if (!admin) return;
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/schools", {
-        headers: { Authorization: `Bearer ${admin.id}` },
+      const response = await fetchWithAuth("/api/admin/schools", {
       });
 
       if (!response.ok) {
@@ -95,7 +91,7 @@ export function SchoolManagementDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [admin]);
+  }, []);
 
   useEffect(() => {
     fetchSchools();
@@ -114,7 +110,6 @@ export function SchoolManagementDashboard() {
   };
 
   const handleSave = async () => {
-    if (!admin) return;
     setSaving(true);
     setError(null);
 
@@ -135,11 +130,10 @@ export function SchoolManagementDashboard() {
           }
         : formData;
 
-      const response = await fetch(url, {
+      const response = await fetchWithAuth(url, {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${admin.id}`,
         },
         body: JSON.stringify(payload),
       });
@@ -161,13 +155,12 @@ export function SchoolManagementDashboard() {
   };
 
   const handleDelete = async (schoolId: string) => {
-    if (!admin || !confirm("Are you sure you want to suspend this school?"))
+    if (!confirm("Are you sure you want to suspend this school?"))
       return;
 
     try {
-      const response = await fetch(`/api/admin/schools/${schoolId}`, {
+      const response = await fetchWithAuth(`/api/admin/schools/${schoolId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${admin.id}` },
       });
 
       if (!response.ok) {

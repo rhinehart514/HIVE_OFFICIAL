@@ -5,6 +5,7 @@
  * Handles queue counts, feature flags, and admin workflows.
  */
 
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
@@ -261,7 +262,7 @@ export const useOperationsStore = create<OperationsState>()(
 
       try {
         // Fetch from pulse endpoint which has counts
-        const response = await fetch('/api/admin/command/pulse', {
+        const response = await fetchWithAuth('/api/admin/command/pulse', {
           credentials: 'include',
         });
 
@@ -338,7 +339,7 @@ export const useOperationsStore = create<OperationsState>()(
       setFlagsLoading(true);
 
       try {
-        const response = await fetch('/api/admin/feature-flags', {
+        const response = await fetchWithAuth('/api/admin/feature-flags', {
           credentials: 'include',
         });
 
@@ -363,7 +364,7 @@ export const useOperationsStore = create<OperationsState>()(
       setAuditLoading(true);
 
       try {
-        const response = await fetch(`/api/admin/logs?limit=${limit}`, {
+        const response = await fetchWithAuth(`/api/admin/logs?limit=${limit}`, {
           credentials: 'include',
         });
 
@@ -389,7 +390,7 @@ export const useOperationsStore = create<OperationsState>()(
       setAnnouncementsError(null);
 
       try {
-        const response = await fetch('/api/admin/announcements', {
+        const response = await fetchWithAuth('/api/admin/announcements', {
           credentials: 'include',
         });
 
@@ -417,7 +418,7 @@ export const useOperationsStore = create<OperationsState>()(
       const newValue = !flag.enabled;
 
       try {
-        const response = await fetch(`/api/admin/feature-flags/${id}`, {
+        const response = await fetchWithAuth(`/api/admin/feature-flags/${id}`, {
           method: 'PATCH',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -453,7 +454,7 @@ export const useOperationsStore = create<OperationsState>()(
       const { removeQueueItem, addAuditEntry } = get();
 
       try {
-        const response = await fetch(`/api/admin/moderation/reports/${reportId}/resolve`, {
+        const response = await fetchWithAuth(`/api/admin/moderation/reports/${reportId}/resolve`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -487,7 +488,7 @@ export const useOperationsStore = create<OperationsState>()(
       const { removeQueueItem, addAuditEntry } = get();
 
       try {
-        const response = await fetch('/api/admin/claims', {
+        const response = await fetchWithAuth('/api/admin/claims', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -559,7 +560,7 @@ export const useOperationsStore = create<OperationsState>()(
       const { removeQueueItem, addAuditEntry } = get();
 
       try {
-        const response = await fetch('/api/admin/moderation/appeals', {
+        const response = await fetchWithAuth('/api/admin/moderation/appeals', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },

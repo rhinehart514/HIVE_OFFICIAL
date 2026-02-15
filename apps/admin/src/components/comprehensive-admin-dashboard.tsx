@@ -7,9 +7,7 @@ import { fetchWithAuth } from "@/hooks/use-admin-api";
 import { AdminSidebar } from "./admin-sidebar";
 import { OverviewDashboard } from "./overview-dashboard";
 import { UserManagementDashboard } from "./user-management-dashboard";
-import { SpaceManagementDashboard } from "./space-management-dashboard";
 import { SchoolManagementDashboard } from "./school-management-dashboard";
-import { ContentModerationDashboard } from "./content-moderation-dashboard";
 import { BuilderQueueEnhanced } from "./builder-queue-enhanced";
 import { AnalyticsDashboard } from "./analytics-dashboard";
 import { AdminNotifications } from "./admin-notifications";
@@ -95,11 +93,11 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
       case 'users':
         return <UserManagementDashboard />;
       case 'spaces':
-        return <SpaceManagementDashboard />;
+        return <div className="text-white/50 p-4">Space management moved to /spaces</div>;
       case 'schools':
         return <SchoolManagementDashboard />;
       case 'content':
-        return <ContentModerationDashboard />;
+        return <div className="text-white/50 p-4">Content moderation moved to /moderation</div>;
       case 'builders':
         return (
           <Card className="border-white/10 bg-[#141414]">

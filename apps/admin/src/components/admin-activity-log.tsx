@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge, useToast } from "@hive/ui";
-import { useAdminAuth } from "@/lib/auth";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import { AdminActivityLog, ActivityLogStats, AdminAction } from "@/lib/admin-activity-logger";
 
 export function AdminActivityLogDashboard() {
-  const { admin } = useAdminAuth();
   const { toast } = useToast();
   const [logs, setLogs] = useState<AdminActivityLog[]>([]);
   const [stats, setStats] = useState<ActivityLogStats | null>(null);
@@ -22,8 +21,6 @@ export function AdminActivityLogDashboard() {
   });
 
   const fetchActivityLogs = useCallback(async () => {
-    if (!admin) return;
-
     setLoading(true);
     setError(null);
 
@@ -33,11 +30,8 @@ export function AdminActivityLogDashboard() {
         if (value) queryParams.append(key, value.toString());
       });
 
-      const response = await fetch(`/api/admin/activity-logs?${queryParams}`, {
+      const response = await fetchWithAuth(`/api/admin/activity-logs?${queryParams}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${admin.id}`,
-        },
       });
 
       if (!response.ok) {
@@ -52,22 +46,17 @@ export function AdminActivityLogDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [admin, filters]);
+  }, [filters]);
 
   const exportLogs = async () => {
-    if (!admin) return;
-
     try {
       const queryParams = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
         if (value) queryParams.append(key, value.toString());
       });
 
-      const response = await fetch(`/api/admin/activity-logs/export?${queryParams}`, {
+      const response = await fetchWithAuth(`/api/admin/activity-logs/export?${queryParams}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${admin.id}`,
-        },
       });
 
       if (!response.ok) {
@@ -90,19 +79,16 @@ export function AdminActivityLogDashboard() {
   };
 
   const cleanupOldLogs = async () => {
-    if (!admin) return;
-
     if (!confirm('Are you sure you want to delete logs older than 90 days?')) {
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/activity-logs', {
+      const response = await fetchWithAuth('/api/admin/activity-logs', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin.id}`,
         },
         body: JSON.stringify({ daysOld: 90 }),
       });

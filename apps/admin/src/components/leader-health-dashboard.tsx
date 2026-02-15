@@ -13,7 +13,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button, Badge, HiveCard as Card, CardContent, CardHeader, CardTitle, Progress } from "@hive/ui";
-import { useAdminAuth } from "@/lib/auth";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import {
   TrophyIcon,
   UsersIcon,
@@ -70,23 +70,17 @@ interface AtRiskLeader {
 }
 
 export function LeaderHealthDashboard() {
-  const { admin } = useAdminAuth();
   const [metrics, setMetrics] = useState<LeaderHealthMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sendingNudge, setSendingNudge] = useState<string | null>(null);
 
   const fetchMetrics = useCallback(async () => {
-    if (!admin) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/leaders/health', {
-        headers: {
-          'Authorization': `Bearer ${admin.id}`,
-        },
+      const response = await fetchWithAuth('/api/admin/leaders/health', {
       });
 
       if (!response.ok) {
@@ -100,15 +94,13 @@ export function LeaderHealthDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [admin]);
+  }, []);
 
   const sendNudge = async (leader: AtRiskLeader) => {
-    if (!admin) return;
-
     setSendingNudge(leader.userId);
 
     try {
-      const response = await fetch("/api/admin/leaders/nudge", {
+      const response = await fetchWithAuth("/api/admin/leaders/nudge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

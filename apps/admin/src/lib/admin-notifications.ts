@@ -1,3 +1,4 @@
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 // Admin notifications system for monitoring platform activity
 
 export type NotificationType = 
@@ -218,7 +219,7 @@ class AdminNotificationSystem {
     // For critical security events, also persist to database for audit trail
     if (notification.priority === 'critical') {
       try {
-        await fetch('/api/admin/security-log', {
+        await fetchWithAuth('/api/admin/security-log', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

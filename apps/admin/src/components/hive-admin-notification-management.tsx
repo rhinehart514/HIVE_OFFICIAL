@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge, useToast } from "@hive/ui";
-import { useAdminAuth } from "@/lib/auth";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import { BellIcon, ExclamationTriangleIcon, XCircleIcon, ClockIcon, PaperAirplaneIcon, UserIcon, GlobeAltIcon, ShieldCheckIcon, BoltIcon, CalendarIcon, HeartIcon, FlagIcon, MagnifyingGlassIcon, ArrowPathIcon, EyeIcon, PencilSquareIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpIcon, ArrowDownIcon, ArrowUturnLeftIcon, ViewfinderCircleIcon, ChartBarIcon, DocumentTextIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
 
 // Aliases for lucide compatibility
@@ -459,7 +459,6 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
   // onUpdateTemplate,
   enableFeatureFlag = true
 }) => {
-  const { admin } = useAdminAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [notifications, setNotifications] = useState<HiveNotification[]>([]);
@@ -473,15 +472,12 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
   const [searchTerm, setSearchTerm] = useState('');
 
   const loadNotifications = useCallback(async () => {
-    if (!admin || !enableFeatureFlag) return;
+    if (!enableFeatureFlag) return;
 
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/notifications/comprehensive', {
+      const response = await fetchWithAuth('/api/admin/notifications/comprehensive', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${admin.id}`,
-        },
       });
 
       if (!response.ok) {
@@ -498,7 +494,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
     } finally {
       setLoading(false);
     }
-  }, [admin, enableFeatureFlag]);
+  }, [enableFeatureFlag]);
 
   useEffect(() => {
     if (!enableFeatureFlag) return;

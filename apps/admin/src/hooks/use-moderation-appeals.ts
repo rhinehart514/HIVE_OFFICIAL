@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchWithAuth } from "./use-admin-api";
+
 import { useState, useEffect, useCallback } from "react";
 
 interface Appeal {
@@ -23,7 +25,7 @@ export function useModerationAppeals() {
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/moderation/appeals?status=pending");
+      const response = await fetchWithAuth("/api/admin/moderation/appeals?status=pending");
       if (!response.ok) throw new Error("Failed to fetch appeals");
       const data = await response.json();
       setAppeals(data.appeals || []);
@@ -41,7 +43,7 @@ export function useModerationAppeals() {
   ) => {
     setActionLoading(true);
     try {
-      const response = await fetch("/api/admin/moderation/appeals", {
+      const response = await fetchWithAuth("/api/admin/moderation/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
