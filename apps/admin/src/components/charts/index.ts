@@ -3,3 +3,4 @@ export { BarChart } from "./bar-chart";
 export { PieChart } from "./pie-chart";
 export { LiveCounter } from "./live-counter";
 export { Sparkline } from "./sparkline";
+export { MetricCard } from "./metric-card";

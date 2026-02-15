@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -8,47 +9,35 @@ import {
 
 interface SparklineProps {
   data: number[];
-  color?: string;
-  height?: number;
+  dataKey?: string;
   width?: number;
-  showArea?: boolean;
-  trend?: "up" | "down" | "neutral";
+  height?: number;
+  color?: string;
 }
 
 export function Sparkline({
   data,
-  color,
-  height = 32,
   width = 80,
-  showArea = true,
-  trend,
+  height = 32,
+  color,
 }: SparklineProps) {
-  // Auto-detect trend if not provided
-  const detectedTrend =
-    trend ||
-    (data.length > 1
-      ? data[data.length - 1] > data[0]
-        ? "up"
-        : data[data.length - 1] < data[0]
-        ? "down"
-        : "neutral"
-      : "neutral");
+  const { chartData, strokeColor, gradientId } = useMemo(() => {
+    const id = `spark-${Math.random().toString(36).slice(2, 8)}`;
+    if (!data || data.length < 2) {
+      return { chartData: [], strokeColor: "rgba(255,255,255,0.5)", gradientId: id };
+    }
+    const trend = data[data.length - 1]! - data[0]!;
+    const auto = trend > 0 ? "#22C55E" : trend < 0 ? "#EF4444" : "rgba(255,255,255,0.5)";
+    return {
+      chartData: data.map((v, i) => ({ i, v })),
+      strokeColor: color || auto,
+      gradientId: id,
+    };
+  }, [data, color]);
 
-  const trendColors = {
-    up: "#22C55E",
-    down: "#EF4444",
-    neutral: "#6B7280",
-  };
-
-  const strokeColor = color || trendColors[detectedTrend];
-
-  // Convert array to chart data format
-  const chartData = data.map((value, index) => ({
-    index,
-    value,
-  }));
-
-  const gradientId = `sparkline-${Math.random().toString(36).substr(2, 9)}`;
+  if (chartData.length === 0) {
+    return <div style={{ width, height }} className="inline-block" />;
+  }
 
   return (
     <div style={{ width, height }} className="inline-block">
@@ -56,16 +45,16 @@ export function Sparkline({
         <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={strokeColor} stopOpacity={0.3} />
-              <stop offset="95%" stopColor={strokeColor} stopOpacity={0} />
+              <stop offset="0%" stopColor={strokeColor} stopOpacity={0.2} />
+              <stop offset="100%" stopColor={strokeColor} stopOpacity={0} />
             </linearGradient>
           </defs>
           <Area
             type="monotone"
-            dataKey="value"
+            dataKey="v"
             stroke={strokeColor}
             strokeWidth={1.5}
-            fill={showArea ? `url(#${gradientId})` : "none"}
+            fill={`url(#${gradientId})`}
             dot={false}
             isAnimationActive={false}
           />

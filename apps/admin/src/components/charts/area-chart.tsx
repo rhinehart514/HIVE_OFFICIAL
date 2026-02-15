@@ -10,13 +10,6 @@ import {
   YAxis,
 } from "recharts";
 
-interface DataPoint {
-  date?: string;
-  name?: string;
-  value?: number;
-  [key: string]: string | number | undefined;
-}
-
 interface AreaConfig {
   dataKey: string;
   color: string;
@@ -24,30 +17,44 @@ interface AreaConfig {
 }
 
 interface AreaChartProps {
-  data: DataPoint[];
+  data: Record<string, unknown>[];
+  dataKey?: string;
+  xAxisKey?: string;
   title?: string;
-  color?: string;
   height?: number;
-  showGrid?: boolean;
-  valueFormatter?: (value: number) => string;
+  formatValue?: (value: number) => string;
+  color?: string;
   gradientId?: string;
   areas?: AreaConfig[];
-  xAxisKey?: string;
 }
 
 export function AreaChart({
   data,
-  title,
-  color = "#FFD700",
-  height = 200,
-  showGrid = true,
-  valueFormatter = (v) => v.toLocaleString(),
-  gradientId = "areaGradient",
-  areas,
+  dataKey = "value",
   xAxisKey = "date",
+  title,
+  height = 240,
+  formatValue = (v) => v.toLocaleString(),
+  color = "#FFD700",
+  areas,
 }: AreaChartProps) {
-  // If areas is provided, use multi-area mode; otherwise use single area with "value" dataKey
-  const areaConfigs: AreaConfig[] = areas || [{ dataKey: "value", color, name: "Value" }];
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full" style={{ height }}>
+        {title && (
+          <h4 className="mb-3 text-sm font-medium text-white/50">{title}</h4>
+        )}
+        <div
+          className="flex items-center justify-center rounded-lg border border-white/[0.06] bg-black text-sm text-white/30"
+          style={{ height: height - (title ? 32 : 0) }}
+        >
+          No data
+        </div>
+      </div>
+    );
+  }
+
+  const areaConfigs: AreaConfig[] = areas || [{ dataKey, color }];
 
   return (
     <div className="w-full">
@@ -57,62 +64,59 @@ export function AreaChart({
       <ResponsiveContainer width="100%" height={height}>
         <RechartsAreaChart
           data={data}
-          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+          margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
         >
           <defs>
-            {areaConfigs.map((area, index) => (
-              <linearGradient key={`gradient-${index}`} id={`${gradientId}-${area.dataKey}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={area.color} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={area.color} stopOpacity={0} />
+            {areaConfigs.map((a) => (
+              <linearGradient key={a.dataKey} id={`area-grad-${a.dataKey}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={a.color} stopOpacity={0.1} />
+                <stop offset="100%" stopColor={a.color} stopOpacity={0} />
               </linearGradient>
             ))}
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={color} stopOpacity={0.3} />
-              <stop offset="95%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
           </defs>
-          {showGrid && (
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="rgba(255,255,255,0.1)"
-              vertical={false}
-            />
-          )}
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="rgba(255,255,255,0.06)"
+            vertical={false}
+          />
           <XAxis
-            dataKey={xAxisKey === "date" ? "date" : "name"}
-            tick={{ fill: "#6B7280", fontSize: 11 }}
-            axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
+            dataKey={xAxisKey}
+            tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }}
+            axisLine={{ stroke: "rgba(255,255,255,0.06)" }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: "#6B7280", fontSize: 11 }}
+            tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={valueFormatter}
-            width={40}
+            tickFormatter={formatValue}
+            width={48}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "#141414",
-              border: "1px solid rgba(255,255,255,0.1)",
+              backgroundColor: "#0a0a0a",
+              border: "1px solid rgba(255,215,0,0.2)",
               borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
             }}
-            labelStyle={{ color: "#9CA3AF" }}
-            itemStyle={{ color: "#FAFAFA" }}
+            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}
+            itemStyle={{ color: "#fff" }}
+            cursor={{ stroke: "rgba(255,215,0,0.3)" }}
           />
-          {areaConfigs.map((area, index) => (
+          {areaConfigs.map((a) => (
             <Area
-              key={`area-${index}`}
+              key={a.dataKey}
               type="monotone"
-              dataKey={area.dataKey}
-              stroke={area.color}
+              dataKey={a.dataKey}
+              stroke={a.color}
               strokeWidth={2}
-              fill={`url(#${gradientId}-${area.dataKey})`}
-              name={area.name}
+              fill={`url(#area-grad-${a.dataKey})`}
+              name={a.name}
+              animationDuration={800}
+              animationEasing="ease-out"
             />
           ))}
-          </RechartsAreaChart>
+        </RechartsAreaChart>
       </ResponsiveContainer>
     </div>
   );

@@ -4,38 +4,53 @@ import {
   Bar,
   BarChart as RechartsBarChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
-interface DataPoint {
-  name: string;
-  value: number;
+interface BarConfig {
+  dataKey: string;
   color?: string;
 }
 
 interface BarChartProps {
-  data: DataPoint[];
+  data: Record<string, unknown>[];
+  bars?: BarConfig[];
+  xAxisKey?: string;
   title?: string;
-  color?: string;
   height?: number;
   layout?: "horizontal" | "vertical";
-  showGrid?: boolean;
-  valueFormatter?: (value: number) => string;
+  color?: string;
 }
 
 export function BarChart({
   data,
+  bars,
+  xAxisKey = "name",
   title,
-  color = "#FFD700",
-  height = 200,
+  height = 240,
   layout = "vertical",
-  showGrid = true,
-  valueFormatter = (v) => v.toLocaleString(),
+  color = "#FFD700",
 }: BarChartProps) {
+  const resolvedBars = bars || [{ dataKey: "value", color }];
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full" style={{ height }}>
+        {title && (
+          <h4 className="mb-3 text-sm font-medium text-white/50">{title}</h4>
+        )}
+        <div
+          className="flex items-center justify-center rounded-lg border border-white/[0.06] bg-black text-sm text-white/30"
+          style={{ height: height - (title ? 32 : 0) }}
+        >
+          No data
+        </div>
+      </div>
+    );
+  }
+
   const isHorizontal = layout === "horizontal";
 
   return (
@@ -47,29 +62,26 @@ export function BarChart({
         <RechartsBarChart
           data={data}
           layout={isHorizontal ? "vertical" : "horizontal"}
-          margin={{ top: 10, right: 10, left: isHorizontal ? 80 : 0, bottom: 0 }}
+          margin={{ top: 8, right: 8, left: isHorizontal ? 80 : 0, bottom: 0 }}
         >
-          {showGrid && (
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="rgba(255,255,255,0.1)"
-              horizontal={!isHorizontal}
-              vertical={isHorizontal}
-            />
-          )}
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="rgba(255,255,255,0.06)"
+            horizontal={!isHorizontal}
+            vertical={isHorizontal}
+          />
           {isHorizontal ? (
             <>
               <XAxis
                 type="number"
-                tick={{ fill: "#6B7280", fontSize: 11 }}
-                axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
+                tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }}
+                axisLine={{ stroke: "rgba(255,255,255,0.06)" }}
                 tickLine={false}
-                tickFormatter={valueFormatter}
               />
               <YAxis
                 type="category"
-                dataKey="name"
-                tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                dataKey={xAxisKey}
+                tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
                 width={75}
@@ -78,37 +90,41 @@ export function BarChart({
           ) : (
             <>
               <XAxis
-                dataKey="name"
-                tick={{ fill: "#6B7280", fontSize: 11 }}
-                axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
+                dataKey={xAxisKey}
+                tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }}
+                axisLine={{ stroke: "rgba(255,255,255,0.06)" }}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "#6B7280", fontSize: 11 }}
+                tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={valueFormatter}
-                width={40}
+                width={48}
               />
             </>
           )}
           <Tooltip
             contentStyle={{
-              backgroundColor: "#141414",
-              border: "1px solid rgba(255,255,255,0.1)",
+              backgroundColor: "#0a0a0a",
+              border: "1px solid rgba(255,215,0,0.2)",
               borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
             }}
-            labelStyle={{ color: "#9CA3AF" }}
-            itemStyle={{ color: "#FAFAFA" }}
-            formatter={(value) => [valueFormatter(value as number), "Count"]}
-            cursor={{ fill: "rgba(255,255,255,0.05)" }}
+            labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}
+            itemStyle={{ color: "#fff" }}
+            cursor={{ fill: "rgba(255,215,0,0.06)" }}
           />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={40}>
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color || color} />
-            ))}
-          </Bar>
+          {resolvedBars.map((bar) => (
+            <Bar
+              key={bar.dataKey}
+              dataKey={bar.dataKey}
+              fill={bar.color || color}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={40}
+              stackId={resolvedBars.length > 1 ? "stack" : undefined}
+              animationDuration={600}
+            />
+          ))}
         </RechartsBarChart>
       </ResponsiveContainer>
     </div>
