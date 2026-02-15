@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { WordReveal, AnimatedLine, StatCounter } from '@hive/ui/motion';
+import { AnimatedLine, StatCounter } from '@hive/ui/motion';
 import { MOTION, durationSeconds } from '@hive/tokens';
 
 export interface TerritoryHeaderProps {
@@ -49,7 +49,7 @@ export function TerritoryHeader({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: durationSeconds.hero, ease: MOTION.ease.premium }}
       >
-        <WordReveal stagger={0.12}>Your campus, mapped.</WordReveal>
+        Your campus, mapped.
       </motion.h1>
 
       {/* Stats line - territory narrative */}

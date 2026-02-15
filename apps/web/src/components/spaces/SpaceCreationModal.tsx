@@ -16,7 +16,6 @@ import {
   Input,
   HandleInput,
   MOTION,
-  WordReveal,
   ThresholdReveal,
   useDramaticHandleCheck,
 } from '@hive/ui/design-system/primitives';
@@ -344,11 +343,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                         className="text-heading font-semibold mb-4"
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        <WordReveal
-                          text="Your territory is ready."
-                          variant="default"
-                          delay={0.2}
-                        />
+                        Your territory is ready.
                       </h2>
 
                       {/* Handle in gold */}

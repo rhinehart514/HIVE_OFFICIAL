@@ -166,6 +166,7 @@ async function sendViaSendGrid(
  * Generate HTML email template for magic link
  */
 function generateEmailHtml(magicLink: string, schoolName: string, email: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college';
   return `
 <!DOCTYPE html>
 <html>
@@ -272,7 +273,7 @@ function generateEmailHtml(magicLink: string, schoolName: string, email: string)
 <body>
   <div class="container">
     <div class="header">
-      <a href="https://hive.college" class="logo">HIVE</a>
+      <a href="${baseUrl}" class="logo">HIVE</a>
     </div>
 
     <div class="content">
@@ -302,9 +303,9 @@ function generateEmailHtml(magicLink: string, schoolName: string, email: string)
     <div class="footer">
       <p>
         Sent to ${email}<br>
-        <a href="https://hive.college/unsubscribe">Unsubscribe</a> •
-        <a href="https://hive.college/privacy">Privacy</a> •
-        <a href="https://hive.college/terms">Terms</a>
+        <a href="${baseUrl}/unsubscribe">Unsubscribe</a> •
+        <a href="${baseUrl}/privacy">Privacy</a> •
+        <a href="${baseUrl}/terms">Terms</a>
       </p>
       <p style="margin-top: 20px;">
         © 2025 HIVE. Connect. Coordinate. Thrive.
@@ -587,6 +588,7 @@ export async function sendReportResolvedToTarget(
 // ============================================================
 
 function generateSigninCodeHtml(code: string, schoolName: string, email: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college';
   return `
 <!DOCTYPE html>
 <html>
@@ -599,7 +601,7 @@ function generateSigninCodeHtml(code: string, schoolName: string, email: string)
 <body>
   <div class="container">
     <div class="header">
-      <a href="https://hive.college" class="logo">HIVE</a>
+      <a href="${baseUrl}" class="logo">HIVE</a>
     </div>
     <div class="content">
       <h1>Your sign-in code</h1>
@@ -616,8 +618,8 @@ function generateSigninCodeHtml(code: string, schoolName: string, email: string)
     <div class="footer">
       <p>
         Sent to ${email}<br>
-        <a href="https://hive.college/privacy">Privacy</a> •
-        <a href="https://hive.college/terms">Terms</a>
+        <a href="${baseUrl}/privacy">Privacy</a> •
+        <a href="${baseUrl}/terms">Terms</a>
       </p>
     </div>
   </div>
@@ -626,6 +628,7 @@ function generateSigninCodeHtml(code: string, schoolName: string, email: string)
 }
 
 function generateSuspensionHtml(displayName: string, reason: string, durationText: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college';
   return `
 <!DOCTYPE html>
 <html>
@@ -638,7 +641,7 @@ function generateSuspensionHtml(displayName: string, reason: string, durationTex
 <body>
   <div class="container">
     <div class="header">
-      <a href="https://hive.college" class="logo">HIVE</a>
+      <a href="${baseUrl}" class="logo">HIVE</a>
     </div>
     <div class="content">
       <h1>Account Suspended</h1>
@@ -653,7 +656,7 @@ function generateSuspensionHtml(displayName: string, reason: string, durationTex
     <div class="footer">
       <p>
         <a href="mailto:support@hive.college">Contact Support</a> •
-        <a href="https://hive.college/terms">Terms of Service</a>
+        <a href="${baseUrl}/terms">Terms of Service</a>
       </p>
     </div>
   </div>
@@ -662,6 +665,7 @@ function generateSuspensionHtml(displayName: string, reason: string, durationTex
 }
 
 function generateRestorationHtml(displayName: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college';
   return `
 <!DOCTYPE html>
 <html>
@@ -674,21 +678,21 @@ function generateRestorationHtml(displayName: string): string {
 <body>
   <div class="container">
     <div class="header">
-      <a href="https://hive.college" class="logo">HIVE</a>
+      <a href="${baseUrl}" class="logo">HIVE</a>
     </div>
     <div class="content">
       <h1>Account Restored</h1>
       <p>Hi ${displayName},</p>
       <p>Your HIVE account has been restored. You can now sign in and use the platform again.</p>
-      <a href="https://hive.college/signin" class="button">Sign in to HIVE</a>
+      <a href="${baseUrl}/signin" class="button">Sign in to HIVE</a>
       <p style="font-size: 14px; color: rgba(255, 255, 255, 0.5);">
         Please review our community guidelines to avoid future issues.
       </p>
     </div>
     <div class="footer">
       <p>
-        <a href="https://hive.college/guidelines">Community Guidelines</a> •
-        <a href="https://hive.college/terms">Terms of Service</a>
+        <a href="${baseUrl}/guidelines">Community Guidelines</a> •
+        <a href="${baseUrl}/terms">Terms of Service</a>
       </p>
     </div>
   </div>
@@ -697,6 +701,7 @@ function generateRestorationHtml(displayName: string): string {
 }
 
 function generateReportResolvedToReporterHtml(actionTaken: string, actionDescription: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college';
   const actionLabel = getActionLabel(actionTaken);
   return `
 <!DOCTYPE html>
@@ -710,7 +715,7 @@ function generateReportResolvedToReporterHtml(actionTaken: string, actionDescrip
 <body>
   <div class="container">
     <div class="header">
-      <a href="https://hive.college" class="logo">HIVE</a>
+      <a href="${baseUrl}" class="logo">HIVE</a>
     </div>
     <div class="content">
       <h1>Your report has been reviewed</h1>
@@ -723,7 +728,7 @@ function generateReportResolvedToReporterHtml(actionTaken: string, actionDescrip
     </div>
     <div class="footer">
       <p>
-        <a href="https://hive.college/guidelines">Community Guidelines</a>
+        <a href="${baseUrl}/guidelines">Community Guidelines</a>
       </p>
     </div>
   </div>
@@ -732,6 +737,7 @@ function generateReportResolvedToReporterHtml(actionTaken: string, actionDescrip
 }
 
 function generateReportResolvedToTargetHtml(displayName: string, actionTaken: string, actionDescription: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college';
   const actionLabel = getActionLabel(actionTaken);
   return `
 <!DOCTYPE html>
@@ -745,7 +751,7 @@ function generateReportResolvedToTargetHtml(displayName: string, actionTaken: st
 <body>
   <div class="container">
     <div class="header">
-      <a href="https://hive.college" class="logo">HIVE</a>
+      <a href="${baseUrl}" class="logo">HIVE</a>
     </div>
     <div class="content">
       <h1>Action taken on your account</h1>
@@ -762,7 +768,7 @@ function generateReportResolvedToTargetHtml(displayName: string, actionTaken: st
     </div>
     <div class="footer">
       <p>
-        <a href="https://hive.college/guidelines">Community Guidelines</a> •
+        <a href="${baseUrl}/guidelines">Community Guidelines</a> •
         <a href="mailto:support@hive.college">Appeal</a>
       </p>
     </div>

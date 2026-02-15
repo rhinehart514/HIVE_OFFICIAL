@@ -18,7 +18,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDownIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { Text } from '@hive/ui/design-system/primitives';
-import { WordReveal, AnimatedLine } from '@hive/ui/motion';
+import { AnimatedLine } from '@hive/ui/motion';
 import { MOTION } from '@hive/tokens';
 import {
   DiscoverSection,
@@ -80,9 +80,7 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
           className="text-heading-lg md:text-display-sm font-semibold text-white mb-4 tracking-tight leading-[1.0]"
           style={{ fontFamily: 'var(--font-display)' }}
         >
-          <WordReveal stagger={0.12} delay={0.2}>
-            Your campus, organized
-          </WordReveal>
+          Your campus, organized
         </h2>
 
         {/* Subtext */}

@@ -85,7 +85,7 @@ export function DataFactory() {
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder="Space name..."
-          className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/[0.06]"
+          className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/[0.15]"
           onKeyDown={e => e.key === 'Enter' && handleCreate()}
         />
 
@@ -98,7 +98,7 @@ export function DataFactory() {
               onChange={e => setMemberCount(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
               min={0}
               max={20}
-              className="w-full px-3 py-1.5 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white focus:outline-none focus:border-white/[0.06]"
+              className="w-full px-3 py-1.5 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white focus:outline-none focus:border-white/[0.15]"
             />
           </div>
           <div>
@@ -109,7 +109,7 @@ export function DataFactory() {
               onChange={e => setPostCount(Math.min(50, Math.max(0, parseInt(e.target.value) || 0)))}
               min={0}
               max={50}
-              className="w-full px-3 py-1.5 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white focus:outline-none focus:border-white/[0.06]"
+              className="w-full px-3 py-1.5 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white focus:outline-none focus:border-white/[0.15]"
             />
           </div>
         </div>

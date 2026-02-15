@@ -22,6 +22,7 @@ import { logger } from '@/lib/logger';
 import { withOptionalAuth } from '@/lib/middleware';
 import { normalizeSpaceType } from '@/lib/space-rules-middleware';
 import { getSpaceTypeRules } from '@/lib/space-type-rules';
+import { isFeaturedSpace } from '@/lib/featured-spaces';
 
 /**
  * Zod schema for browse query params validation
@@ -34,6 +35,8 @@ const BrowseQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
   cursor: z.string().optional(), // Cursor for pagination (spaceId to start after)
   search: z.string().max(100).optional(), // Full-text search across name and description
+  /** When true, show all spaces. Default false = only featured/curated spaces */
+  showAll: z.enum(['true', 'false']).default('false').transform(v => v === 'true'),
 });
 
 /**
@@ -216,7 +219,7 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
     });
   }
 
-  const { category, sort, limit, cursor, search } = parseResult.data;
+  const { category, sort, limit, cursor, search, showAll } = parseResult.data;
 
   logger.info('Browse spaces request', {
     category,
@@ -321,6 +324,15 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
     });
   }
 
+  // Featured filter: when not searching and not showAll, only show curated spaces
+  // Search always shows all matching spaces (so users can find anything)
+  if (!showAll && !search) {
+    visibleSpaces = visibleSpaces.filter(space => {
+      const slug = space.slug?.value;
+      return isFeaturedSpace(slug);
+    });
+  }
+
   // Extract visible space IDs for enrichment queries
   const visibleSpaceIds = visibleSpaces.map(s => s.spaceId.value);
 
@@ -386,11 +398,19 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
     : undefined;
 
   // Create response with cache headers
+  // Annotate spaces with isFeatured flag for client display
+  const annotatedSpaces = resultSpaces.map(s => ({
+    ...s,
+    isFeatured: isFeaturedSpace(s.slug),
+  }));
+
   const response = respond.success({
-    spaces: resultSpaces,
+    spaces: annotatedSpaces,
     totalCount: deduplicatedSpaces.length,
     hasMore,
-    nextCursor
+    nextCursor,
+    /** True when showing only curated spaces (not searching, not showAll) */
+    isCurated: !showAll && !search,
   });
 
   // Add cache headers for better performance

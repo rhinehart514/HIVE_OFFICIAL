@@ -2,7 +2,7 @@
  * Shared Navigation Config
  */
 
-import { CompassIcon, SpacesIcon, UserIcon } from '@hive/ui';
+import { CompassIcon, SpacesIcon, UserIcon, CalendarIcon } from '@hive/ui';
 
 export interface NavItem {
   id: string;
@@ -19,6 +19,13 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/discover',
     icon: CompassIcon,
     matchPattern: /^\/discover(\/|$)/,
+  },
+  {
+    id: 'events',
+    label: 'Events',
+    href: '/events',
+    icon: CalendarIcon,
+    matchPattern: /^\/events(\/|$)/,
   },
   {
     id: 'spaces',

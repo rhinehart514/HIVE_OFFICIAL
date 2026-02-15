@@ -255,7 +255,7 @@ export default function SetupsGalleryPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search setups..."
-              className="w-full pl-11 pr-4 py-3 rounded-lg bg-white/[0.06] border border-[var(--hivelab-border)] text-[var(--hivelab-text-primary)] transition-colors text-sm outline-none focus:border-white/[0.06]"
+              className="w-full pl-11 pr-4 py-3 rounded-lg bg-white/[0.06] border border-[var(--hivelab-border)] text-[var(--hivelab-text-primary)] transition-colors text-sm outline-none focus:border-white/[0.15]"
             />
           </div>
         </motion.div>

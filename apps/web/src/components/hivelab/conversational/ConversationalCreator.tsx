@@ -13,7 +13,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { ArrowLeft, Pencil, Rocket, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Check, Link2, Pencil, Rocket, RotateCcw } from 'lucide-react';
 import { MOTION, durationSeconds } from '@hive/tokens';
 import { BrandSpinner, ToolCanvas, type ToolElement } from '@hive/ui';
 import type { QuickTemplate } from '@hive/ui';
@@ -62,6 +62,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
   const [elements, setElements] = useState<ToolElement[]>([]);
   const [matchedTemplate, setMatchedTemplate] = useState<QuickTemplate | null>(null);
   const [isRefining, setIsRefining] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const hasCreatedInitial = useRef(false);
 
   // Create a tool document and start AI generation
@@ -169,11 +170,39 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
     }
   }, [toolId, router]);
 
+  // Copy shareable link — also publishes the tool so it's accessible
+  const handleCopyLink = useCallback(async () => {
+    if (!toolId) return;
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/t/${toolId}`;
+
+    // Auto-publish tool so the share link works for anyone
+    try {
+      await fetch('/api/tools', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ toolId, status: 'published' }),
+      });
+    } catch {
+      // Non-critical — tool may already be published
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      toast.success('Link copied! Share it anywhere.');
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch {
+      toast.success(`Share link: ${url}`);
+    }
+  }, [toolId]);
+
   // Navigate to deploy
   const handleDeploy = useCallback(() => {
     if (toolId) {
       const spaceParam = spaceContext ? `?spaceId=${spaceContext.spaceId}` : '';
-      router.push(`/lab/${toolId}${spaceParam}`);
+      router.push(`/lab/${toolId}/deploy${spaceParam}`);
     }
   }, [toolId, router, spaceContext]);
 
@@ -363,6 +392,33 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
             </motion.div>
 
             {/* Action buttons */}
+            {/* Share link display */}
+            {toolId && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: durationSeconds.standard, delay: 0.25, ease: EASE }}
+                className="mb-6 max-w-xl mx-auto"
+              >
+                <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.04] px-3 py-2">
+                  <Link2 className="w-4 h-4 text-white/30 flex-shrink-0" />
+                  <span className="text-xs text-white/50 truncate flex-1 font-mono">
+                    {typeof window !== 'undefined' ? window.location.origin : ''}/t/{toolId}
+                  </span>
+                  <button
+                    onClick={handleCopyLink}
+                    className="flex-shrink-0 px-3 py-1 rounded-md bg-[var(--life-gold)] text-black text-xs font-medium hover:brightness-110 transition-all"
+                  >
+                    {linkCopied ? <Check className="w-3.5 h-3.5" /> : 'Copy'}
+                  </button>
+                </div>
+                <p className="text-[11px] text-white/30 mt-1.5 text-center">
+                  Anyone with this link can use your tool — no account needed
+                </p>
+              </motion.div>
+            )}
+
+            {/* Action buttons */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -370,31 +426,31 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto"
             >
               <button
-                onClick={handleDeploy}
+                onClick={handleCopyLink}
                 className="flex-1 flex items-center justify-center gap-2 px-5 py-3
                   rounded-lg bg-[var(--life-gold)] text-black font-medium text-sm
                   hover:brightness-110 transition-all duration-150"
+              >
+                {linkCopied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+                {linkCopied ? 'Copied!' : 'Share Link'}
+              </button>
+              <button
+                onClick={handleDeploy}
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3
+                  rounded-lg bg-white/[0.06] text-white/50 text-sm border border-white/[0.06]
+                  hover:bg-white/[0.10] hover:text-white transition-all duration-150"
               >
                 <Rocket className="w-4 h-4" />
                 Deploy to Space
               </button>
               <button
                 onClick={handleEditManually}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3
-                  rounded-lg bg-white/[0.06] text-white/50 text-smborder-white/[0.06]
-                  hover:bg-white/[0.10] hover:text-white transition-all duration-150"
-              >
-                <Pencil className="w-4 h-4" />
-                Edit Manually
-              </button>
-              <button
-                onClick={handleStartOver}
                 className="flex items-center justify-center gap-2 px-5 py-3
                   rounded-lg text-white/50 text-sm
                   hover:text-white/50 hover:bg-white/[0.06] transition-all duration-150"
               >
-                <RotateCcw className="w-4 h-4" />
-                Start Over
+                <Pencil className="w-4 h-4" />
+                Edit
               </button>
             </motion.div>
           </motion.div>

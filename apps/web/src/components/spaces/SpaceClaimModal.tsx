@@ -20,7 +20,6 @@ import {
   Input,
   MOTION,
   ThresholdReveal,
-  WordReveal,
 } from '@hive/ui/design-system/primitives';
 import { toast } from '@hive/ui';
 
@@ -268,11 +267,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                     className="text-2xl font-semibold mb-4"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
-                    <WordReveal
-                      text="It's yours."
-                      variant="gold"
-                      delay={0.2}
-                    />
+                    It&apos;s yours.
                   </h2>
 
                   {/* Space name */}

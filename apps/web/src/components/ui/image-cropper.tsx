@@ -104,11 +104,11 @@ export function ImageCropper({
           type="button"
           onClick={handleConfirm}
           disabled={isProcessing}
-          className="p-2 rounded-lg text-gold-500 hover:bg-gold-500/10 transition-colors disabled:opacity-50"
+          className="p-2 rounded-lg text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors disabled:opacity-50"
           aria-label={isProcessing ? "Processing image" : "Confirm crop"}
         >
           {isProcessing ? (
-            <div className="w-5 h-5 border-2 border-gold-500/30 border-t-gold-500 rounded-full " aria-hidden="true" />
+            <div className="w-5 h-5 border-2 border-[#FFD700]/30 border-t-[#FFD700] rounded-full " aria-hidden="true" />
           ) : (
             <CheckIcon className="w-5 h-5" aria-hidden="true" />
           )}

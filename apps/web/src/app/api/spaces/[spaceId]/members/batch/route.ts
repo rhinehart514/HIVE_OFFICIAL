@@ -487,7 +487,7 @@ export const POST = withAuthValidationAndErrors(
           inviteResults.push({
             success: true,
             code,
-            url: `https://hive.college/spaces/join/${code}`,
+            url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college'}/spaces/join/${code}`,
             expiresAt: expiresAt.toISOString(),
           });
           successCount++;

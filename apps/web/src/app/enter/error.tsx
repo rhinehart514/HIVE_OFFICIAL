@@ -31,10 +31,7 @@ export default function EntryError({
       <div className="mx-auto max-w-md text-center">
         {/* Ambient glow (matches EntryShell error state) */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-30"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(239, 68, 68, 0.15) 0%, transparent 70%)',
-          }}
+          className="absolute inset-0 pointer-events-none bg-red-500/10"
         />
 
         <div className="relative z-10">

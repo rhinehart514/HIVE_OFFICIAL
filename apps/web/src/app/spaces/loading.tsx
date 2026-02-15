@@ -189,7 +189,7 @@ export default function SpacesLoading() {
               />
             </div>
             <motion.div
-              className="h-9 w-24 bg-gold-500/20 rounded-lg"
+              className="h-9 w-24 bg-[#FFD700]/20 rounded-lg"
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.smooth }}
             />

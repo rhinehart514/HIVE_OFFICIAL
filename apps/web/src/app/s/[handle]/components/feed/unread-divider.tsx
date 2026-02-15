@@ -52,8 +52,8 @@ export function UnreadDivider({
         className="flex-1"
         style={{
           height: `${unreadDivider.height}px`,
-          background: 'linear-gradient(90deg, transparent, var(--color-gold, #FFD700), transparent)',
-          opacity: 0.3,
+          background: 'var(--color-gold, #FFD700)',
+          opacity: 0.06,
         }}
       />
 
@@ -98,8 +98,8 @@ export function UnreadDivider({
         className="flex-1"
         style={{
           height: `${unreadDivider.height}px`,
-          background: 'linear-gradient(90deg, var(--color-gold, #FFD700), transparent)',
-          opacity: 0.3,
+          background: 'var(--color-gold, #FFD700)',
+          opacity: 0.06,
         }}
       />
     </motion.div>

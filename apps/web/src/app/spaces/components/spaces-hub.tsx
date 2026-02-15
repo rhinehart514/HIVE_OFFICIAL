@@ -46,8 +46,10 @@ function SpaceRow({ space }: { space: Space }) {
           {space.name}
         </p>
         <p className="truncate text-[13px] text-white/50">
-          {space.memberCount} member{space.memberCount !== 1 ? 's' : ''}
-          {space.category ? ` \u00b7 ${space.category}` : ''}
+          {space.memberCount > 0
+            ? `${space.memberCount} member${space.memberCount !== 1 ? 's' : ''}`
+            : 'Be the first to join'}
+          {space.category ? ` · ${space.category}` : ''}
         </p>
       </div>
 

@@ -230,9 +230,10 @@ async function sendPushNotification(
  * Generate HTML email for notification
  */
 function generateNotificationEmailHtml(notification: NotificationDocument): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college';
   const actionUrl = notification.actionUrl
-    ? `https://hive.college${notification.actionUrl}`
-    : 'https://hive.college';
+    ? `${baseUrl}${notification.actionUrl}`
+    : baseUrl;
 
   return `
 <!DOCTYPE html>
@@ -318,7 +319,7 @@ function generateNotificationEmailHtml(notification: NotificationDocument): stri
 <body>
   <div class="container">
     <div class="header">
-      <a href="https://hive.college" class="logo">HIVE</a>
+      <a href="${baseUrl}" class="logo">HIVE</a>
     </div>
 
     <div class="content">
@@ -330,8 +331,8 @@ function generateNotificationEmailHtml(notification: NotificationDocument): stri
 
     <div class="footer">
       <p>
-        <a href="https://hive.college/settings">Notification Settings</a> •
-        <a href="https://hive.college/unsubscribe">Unsubscribe</a>
+        <a href="${baseUrl}/settings">Notification Settings</a> •
+        <a href="${baseUrl}/unsubscribe">Unsubscribe</a>
       </p>
       <p style="margin-top: 12px;">
         © 2026 HIVE. Connect. Coordinate. Thrive.

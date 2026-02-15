@@ -141,57 +141,7 @@ const LIBRARY_SECTIONS = [
 // Submit loading state
 type CeremonyPhase = 'idle' | 'creating';
 
-/**
- * WordReveal -- Word-by-word text animation
- */
-function WordReveal({
-  text,
-  className,
-  delay = 0,
-  stagger = STAGGER.word,
-  onComplete,
-}: {
-  text: string;
-  className?: string;
-  delay?: number;
-  stagger?: number;
-  onComplete?: () => void;
-}) {
-  const shouldReduceMotion = useReducedMotion();
-  const words = text.split(' ');
-  const totalDuration = delay + (words.length * stagger) + DURATION.fast;
-
-  useEffect(() => {
-    if (onComplete) {
-      const timer = setTimeout(onComplete, totalDuration * 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [onComplete, totalDuration]);
-
-  if (shouldReduceMotion) {
-    return <span className={className}>{text}</span>;
-  }
-
-  return (
-    <span className={className}>
-      {words.map((word, i) => (
-        <motion.span
-          key={`${word}-${i}`}
-          className="inline-block mr-[0.25em]"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: DURATION.fast,
-            delay: delay + (i * stagger),
-            ease: EASE,
-          }}
-        >
-          {word}
-        </motion.span>
-      ))}
-    </span>
-  );
-}
+/* WordReveal removed — DESIGN-2026: no word-by-word reveals */
 
 /**
  * GoldBorderInput -- Input with animated goldon focus
@@ -319,7 +269,7 @@ export default function BuilderDashboard() {
   const [isFocused, setIsFocused] = useState(false);
   const [ceremonyPhase, setCeremonyPhase] = useState<CeremonyPhase>('idle');
   const [statusText, setStatusText] = useState('');
-  const [titleRevealed, setTitleRevealed] = useState(false);
+  const [titleRevealed] = useState(true);
   const [creatingFromTemplate, setCreatingFromTemplate] = useState(false);
   const [showAllTools, setShowAllTools] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -698,15 +648,7 @@ export default function BuilderDashboard() {
               className="text-center mb-8 pt-8"
             >
               <h1 className="text-2xl sm:text-3xl font-medium text-white mb-2">
-                {shouldReduceMotion ? (
-                  'Build something your campus will use'
-                ) : (
-                  <WordReveal
-                    text="Build something your campus will use"
-                    stagger={0.06}
-                    onComplete={() => setTitleRevealed(true)}
-                  />
-                )}
+                Build something your campus will use
               </h1>
               <motion.p
                 initial={{ opacity: 0 }}

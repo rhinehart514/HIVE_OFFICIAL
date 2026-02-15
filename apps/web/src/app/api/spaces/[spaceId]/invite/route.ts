@@ -222,7 +222,7 @@ export const POST = withAuthAndErrors(async (
         uses: 0,
         isActive: true,
       },
-      link: `https://hive.college/spaces/join/${code}`,
+      link: `${process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college'}/spaces/join/${code}`,
     });
   } catch (error) {
     logger.error('Failed to create invite link', {

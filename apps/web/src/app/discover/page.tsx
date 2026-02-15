@@ -418,7 +418,7 @@ export default function DiscoverPage() {
                         </div>
                         <p className="mt-1 text-xs text-white/30">
                           {isClaimed
-                            ? `${space.memberCount || 0} members`
+                            ? ((space.memberCount || 0) > 0 ? `${space.memberCount} members` : 'Be the first to join')
                             : 'No leader yet — claim this space'}
                         </p>
                       </Link>
@@ -483,7 +483,7 @@ export default function DiscoverPage() {
                       </div>
                       <p className="mt-1 line-clamp-1 text-xs text-white/30">
                         {isClaimed
-                          ? (space.description || `${space.memberCount || 0} members`)
+                          ? (space.description || ((space.memberCount || 0) > 0 ? `${space.memberCount} members` : 'Be the first to join'))
                           : 'No leader yet — claim this space'}
                       </p>
                     </Link>

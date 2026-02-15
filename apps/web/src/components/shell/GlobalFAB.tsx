@@ -271,7 +271,7 @@ export function GlobalFAB({
                 onClick={entry.action.onSelect}
                 className="flex h-10 items-center gap-2 rounded-lg border border-white/[0.06] bg-black px-3 text-sm text-white transition-colors hover:bg-white/[0.06]"
               >
-                <Icon className="h-4 w-4 text-white/55" />
+                <Icon className="h-4 w-4 text-white/50" />
                 <span>{entry.action.label}</span>
               </button>
             );

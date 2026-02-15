@@ -168,7 +168,7 @@ export function ViewAsPanel() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search by email or handle..."
-          className="w-full pl-9 pr-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/[0.06]"
+          className="w-full pl-9 pr-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/[0.15]"
         />
         {isSearching && (
           <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 " />

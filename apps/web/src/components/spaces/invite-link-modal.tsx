@@ -290,7 +290,7 @@ export function InviteLinkModal({
 
   // Copy invite link
   const handleCopy = async (invite: InviteLink) => {
-    const link = `https://hive.college/spaces/join/${invite.code}`;
+    const link = `${process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college'}/spaces/join/${invite.code}`;
     await navigator.clipboard.writeText(link);
     toast.success('Copied!', 'Invite link copied to clipboard');
   };
@@ -379,7 +379,7 @@ export function InviteLinkModal({
                   className="flex justify-center mb-4"
                 >
                   <QRCodeDisplay
-                    value={`https://hive.college/spaces/join/${selectedInvite.code}`}
+                    value={`${process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college'}/spaces/join/${selectedInvite.code}`}
                   />
                 </motion.div>
               )}
