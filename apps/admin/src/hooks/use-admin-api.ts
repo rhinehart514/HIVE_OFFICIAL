@@ -11,6 +11,19 @@ import { useCallback, useEffect, useState } from 'react';
 import { auth } from '@hive/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || '';
+
+/**
+ * Resolve a request URL: if it starts with '/', prepend the web app origin
+ * so cross-origin calls go directly to hive.college instead of through a proxy.
+ */
+function resolveUrl(input: RequestInfo | URL): RequestInfo | URL {
+  if (typeof input === 'string' && input.startsWith('/') && WEB_URL) {
+    return `${WEB_URL}${input}`;
+  }
+  return input;
+}
+
 /**
  * Get authenticated fetch function
  */
@@ -40,10 +53,9 @@ export function useAdminFetch() {
       }
     }
 
-    return fetch(input, {
+    return fetch(resolveUrl(input), {
       ...init,
       headers,
-      credentials: 'include',
     });
   }, []);
 
@@ -69,9 +81,8 @@ export async function fetchWithAuth(
     }
   }
 
-  return fetch(input, {
+  return fetch(resolveUrl(input), {
     ...init,
     headers,
-    credentials: 'include',
   });
 }

@@ -49,20 +49,6 @@ const nextConfig = {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001',
   },
 
-  // Proxy admin API requests to the web app
-  // Keep local auth routes on the admin app
-  async rewrites() {
-    return {
-      afterFiles: [
-        // Proxy admin-specific API routes to web app (afterFiles so local routes take priority)
-        {
-          source: '/api/admin/:path*',
-          destination: `${process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000'}/api/admin/:path*`,
-        },
-      ],
-    };
-  },
-
   // Headers for security
   async headers() {
     return [

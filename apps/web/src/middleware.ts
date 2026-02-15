@@ -222,11 +222,33 @@ async function verifySessionAtEdge(sessionCookie: string): Promise<SessionPayloa
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // === API ROUTES: Rate limiting only ===
+  // === API ROUTES: CORS + Rate limiting ===
   if (pathname.startsWith('/api/')) {
     // Skip health check endpoints
     if (pathname === '/api/health' || pathname === '/api/ping') {
       return NextResponse.next();
+    }
+
+    // CORS for admin API routes — allow admin dashboard cross-origin calls
+    const ADMIN_CORS_ORIGINS = (process.env.ADMIN_ALLOWED_ORIGINS || 'https://admin.hive.college')
+      .split(',')
+      .map(o => o.trim());
+    const requestOrigin = request.headers.get('origin');
+    const isAdminApiRoute = pathname.startsWith('/api/admin/');
+    const isAllowedAdminOrigin = requestOrigin && ADMIN_CORS_ORIGINS.includes(requestOrigin);
+
+    // Handle CORS preflight for admin API routes
+    if (isAdminApiRoute && request.method === 'OPTIONS' && isAllowedAdminOrigin) {
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': requestOrigin,
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
     }
 
     const clientId = getClientIdentifier(request);
@@ -262,6 +284,13 @@ export async function middleware(request: NextRequest) {
     response.headers.set('X-RateLimit-Limit', String(config.maxRequests));
     response.headers.set('X-RateLimit-Remaining', String(result.remaining));
     response.headers.set('X-RateLimit-Reset', String(result.resetTime));
+
+    // Add CORS headers for admin API responses
+    if (isAdminApiRoute && isAllowedAdminOrigin) {
+      response.headers.set('Access-Control-Allow-Origin', requestOrigin);
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+    }
+
     return response;
   }
 

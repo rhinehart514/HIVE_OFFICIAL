@@ -144,7 +144,14 @@ function withCSRFCheck(handler: ApiHandler): ApiHandler {
         const isLocalhost = originHost === 'localhost' || originHost === '127.0.0.1';
         const hostIsLocalhost = expectedHost === 'localhost' || expectedHost === '127.0.0.1';
 
-        if (!isLocalhost && !hostIsLocalhost && originHost !== expectedHost) {
+        // Allowed cross-origin sources (e.g. admin dashboard)
+        const ADMIN_ALLOWED_ORIGINS = (process.env.ADMIN_ALLOWED_ORIGINS || 'https://admin.hive.college')
+          .split(',')
+          .map(o => o.trim());
+
+        const isAllowedCrossOrigin = ADMIN_ALLOWED_ORIGINS.includes(origin);
+
+        if (!isLocalhost && !hostIsLocalhost && originHost !== expectedHost && !isAllowedCrossOrigin) {
           return new Response(
             JSON.stringify({
               success: false,
