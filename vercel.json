@@ -19,7 +19,7 @@
     },
     {
       "path": "/api/cron/tool-lifecycle",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 3 * * *"
     }
   ],
   "headers": [
