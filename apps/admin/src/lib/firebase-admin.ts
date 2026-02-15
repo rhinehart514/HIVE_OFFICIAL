@@ -40,7 +40,7 @@ try {
           "base64"
         ).toString("utf-8");
         credential = admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID || "hive-dev-2025",
+          projectId: process.env.FIREBASE_PROJECT_ID || "hive-9265c",
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
           privateKey: decodedKey,
         });
@@ -50,7 +50,7 @@ try {
     } else if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
       // Format 2: Individual environment variables (raw key with \n escapes)
       credential = admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID || "hive-dev-2025",
+        projectId: process.env.FIREBASE_PROJECT_ID || "hive-9265c",
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
       });
@@ -81,7 +81,7 @@ try {
     if (credential) {
       admin.initializeApp({
         credential: credential,
-        projectId: process.env.FIREBASE_PROJECT_ID || "hive-dev-2025",
+        projectId: process.env.FIREBASE_PROJECT_ID || "hive-9265c",
       });
 
       dbAdmin = admin.firestore();
