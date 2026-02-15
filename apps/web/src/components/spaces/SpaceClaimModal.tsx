@@ -265,7 +265,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                   {/* Word-by-word reveal: "It's yours." */}
                   <h2
                     className="text-2xl font-semibold mb-4"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    style={{ fontFamily: 'var(--font-clash)' }}
                   >
                     It&apos;s yours.
                   </h2>

@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { buildUbEnterUrl } from './entry-url';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
+const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
 
 export function CTASection() {
   const searchParams = useSearchParams();

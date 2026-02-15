@@ -255,7 +255,7 @@ export function OnboardingOverlay({
                   {/* Headline */}
                   <motion.h2
                     className="text-heading md:text-heading-lg font-semibold text-white mb-4 tracking-tight leading-[1.1]"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    style={{ fontFamily: 'var(--font-clash)' }}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.2 }}
@@ -301,7 +301,7 @@ export function OnboardingOverlay({
                   {/* Headline */}
                   <motion.h3
                     className="text-heading-sm md:text-heading font-semibold text-white mb-3 tracking-tight"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    style={{ fontFamily: 'var(--font-clash)' }}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.1 }}
@@ -355,7 +355,7 @@ export function OnboardingOverlay({
                 >
                   <motion.h3
                     className="text-heading-sm md:text-heading font-semibold text-white mb-3 tracking-tight"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    style={{ fontFamily: 'var(--font-clash)' }}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.1 }}

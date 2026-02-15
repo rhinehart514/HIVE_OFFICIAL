@@ -248,7 +248,7 @@ function EmptyState({ message }: { message?: string }) {
       >
         <h3
           className="text-title font-semibold text-white mb-2"
-          style={{ fontFamily: 'var(--font-display)' }}
+          style={{ fontFamily: 'var(--font-clash)' }}
         >
           No activity yet
         </h3>

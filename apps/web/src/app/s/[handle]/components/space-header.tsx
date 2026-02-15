@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
+const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
 
 interface SpaceHeaderProps {
   space: {

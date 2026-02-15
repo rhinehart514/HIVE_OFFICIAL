@@ -18,7 +18,8 @@
    * ====================================================================== */
 
   /* Typography */
-  --font-display: "Clash Display", "Geist", system-ui, sans-serif;
+  --font-clash: "Clash Display", "Geist", system-ui, sans-serif;
+  --font-display: var(--font-clash); /* legacy alias — use --font-clash */
   --font-body: "Geist", system-ui, sans-serif;
   --font-mono: "Geist Mono", "SF Mono", ui-monospace, monospace;
 
@@ -552,7 +553,7 @@
   --hive-spacing-12: var(--space-12);
 
   --hive-font-sans: var(--font-body);
-  --hive-font-display: var(--font-display);
+  --hive-font-display: var(--font-clash);
   --hive-font-mono: var(--font-mono);
   --hive-font-family-sans: var(--font-body);
 

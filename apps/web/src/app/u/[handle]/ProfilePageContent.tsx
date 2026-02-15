@@ -13,7 +13,7 @@ import {
 } from '@hive/ui';
 import { useProfileByHandle } from './hooks';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
+const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
 
 function ProfileLoadingState() {
   return (

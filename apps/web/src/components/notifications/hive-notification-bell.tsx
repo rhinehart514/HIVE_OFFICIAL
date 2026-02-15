@@ -340,7 +340,7 @@ export const HiveNotificationBell: React.FC<HiveNotificationBellProps> = ({
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
           <h3
             className="text-sm font-semibold text-white"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-clash)' }}
           >
             Notifications
           </h3>

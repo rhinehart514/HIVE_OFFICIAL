@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
+const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
 
 const CONTRIBUTORS = [
   { name: 'Brunda', role: 'Development', linkedin: 'https://www.linkedin.com/in/brunda-venkatesh/' },

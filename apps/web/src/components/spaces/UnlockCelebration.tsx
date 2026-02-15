@@ -95,7 +95,7 @@ export function UnlockCelebration({
                       ease: MOTION.ease.premium,
                     }}
                     className="text-heading-sm font-semibold text-white text-center mb-4 leading-tight"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    style={{ fontFamily: 'var(--font-clash)' }}
                   >
                     Welcome to {majorName}
                   </motion.h2>

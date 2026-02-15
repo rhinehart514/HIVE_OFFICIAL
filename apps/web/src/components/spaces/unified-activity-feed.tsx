@@ -553,7 +553,7 @@ function EmptyState() {
       </motion.div>
       <h3
         className="text-title-lg font-semibold text-white mb-3"
-        style={{ fontFamily: 'var(--font-display)' }}
+        style={{ fontFamily: 'var(--font-clash)' }}
       >
         No activity yet
       </h3>

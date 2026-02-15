@@ -44,7 +44,7 @@ export function TerritoryHeader({
       {/* Main headline - Clash Display */}
       <motion.h1
         className="text-heading-lg md:text-display-sm font-semibold leading-[1.0] tracking-tight text-white mb-4"
-        style={{ fontFamily: 'var(--font-display)' }}
+        style={{ fontFamily: 'var(--font-clash)' }}
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: durationSeconds.hero, ease: MOTION.ease.premium }}

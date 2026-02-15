@@ -1,6 +1,6 @@
 'use client';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--hive-font-display)]";
+const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
 
 const sections = [
   {

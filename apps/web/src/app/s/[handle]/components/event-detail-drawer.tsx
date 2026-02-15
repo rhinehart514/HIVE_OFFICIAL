@@ -338,7 +338,7 @@ export function EventDetailDrawer({
                   <div>
                     <h2
                       className="text-title font-semibold text-white"
-                      style={{ fontFamily: 'var(--font-display)' }}
+                      style={{ fontFamily: 'var(--font-clash)' }}
                     >
                       {event.title}
                     </h2>

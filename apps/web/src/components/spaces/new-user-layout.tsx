@@ -78,7 +78,7 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
         {/* Headline with word reveal */}
         <h2
           className="text-heading-lg md:text-display-sm font-semibold text-white mb-4 tracking-tight leading-[1.0]"
-          style={{ fontFamily: 'var(--font-display)' }}
+          style={{ fontFamily: 'var(--font-clash)' }}
         >
           Your campus, organized
         </h2>

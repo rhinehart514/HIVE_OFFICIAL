@@ -227,7 +227,7 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-3">
             <h1
               className="text-[32px] font-semibold text-white tracking-tight"
-              style={{ fontFamily: 'var(--font-clash, var(--font-display))' }}
+              style={{ fontFamily: 'var(--font-clash, var(--font-clash))' }}
             >
               Notifications
             </h1>

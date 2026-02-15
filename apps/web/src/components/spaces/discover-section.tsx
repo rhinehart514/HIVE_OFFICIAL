@@ -254,7 +254,7 @@ function EmptyState({ isSearch }: { isSearch?: boolean }) {
       >
         <h3
           className="text-title-lg md:text-heading-sm font-semibold text-white mb-3"
-          style={{ fontFamily: 'var(--font-display)' }}
+          style={{ fontFamily: 'var(--font-clash)' }}
         >
           {isSearch ? 'Nothing here yet' : 'This category is empty'}
         </h3>

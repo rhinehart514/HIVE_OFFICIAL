@@ -152,7 +152,7 @@ export function SpaceInfoDrawer({
                 <div className="flex-1 min-w-0">
                   <h2
                     className="text-title font-semibold text-white mb-1"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    style={{ fontFamily: 'var(--font-clash)' }}
                   >
                     {space.name}
                   </h2>
@@ -162,7 +162,7 @@ export function SpaceInfoDrawer({
                   <div className="flex items-center gap-2 mt-2">
                     <Users className="h-3.5 w-3.5 text-white/50" />
                     <Text size="xs" tone="muted">
-                      {space.memberCount} members
+                      {space.memberCount > 0 ? `${space.memberCount} members` : 'Be the first to join'}
                     </Text>
                   </div>
                 </div>

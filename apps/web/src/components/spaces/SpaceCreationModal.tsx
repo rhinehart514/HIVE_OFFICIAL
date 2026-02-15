@@ -341,7 +341,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                       {/* Word-by-word reveal */}
                       <h2
                         className="text-heading font-semibold mb-4"
-                        style={{ fontFamily: 'var(--font-display)' }}
+                        style={{ fontFamily: 'var(--font-clash)' }}
                       >
                         Your territory is ready.
                       </h2>

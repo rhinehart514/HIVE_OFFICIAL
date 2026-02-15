@@ -18,7 +18,6 @@ import {
   Text,
   MOTION,
   ThresholdReveal,
-  WordReveal,
 } from '@hive/ui/design-system/primitives';
 import { Avatar, AvatarImage, AvatarFallback } from '@hive/ui';
 
@@ -269,13 +268,9 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
                     {/* Word-by-word reveal: "You're in." */}
                     <h2
                       className="text-2xl font-semibold mb-4"
-                      style={{ fontFamily: 'var(--font-display)' }}
+                      style={{ fontFamily: 'var(--font-clash)' }}
                     >
-                      <WordReveal
-                        text="You're in."
-                        variant="gold"
-                        delay={0.2}
-                      />
+                      You&apos;re in.
                     </h2>
 
                     {/* Space name */}

@@ -591,7 +591,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-white mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 General Settings
               </h2>
@@ -742,7 +742,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-white mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 Member Management
               </h2>
@@ -787,7 +787,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-white mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 Moderation
               </h2>
@@ -819,7 +819,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-white mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 Join Requests
               </h2>
@@ -941,7 +941,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-white mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 Analytics
               </h2>
@@ -973,7 +973,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-white mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 Contact Information
               </h2>
@@ -1152,7 +1152,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-white mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 Board Management
               </h2>
@@ -1314,7 +1314,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-white mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 Tools
               </h2>
@@ -1407,7 +1407,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-white mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 Automations
               </h2>
@@ -1509,7 +1509,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
             <>
               <h2
                 className="text-title-lg font-semibold text-red-400 mb-2"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
               >
                 Danger Zone
               </h2>

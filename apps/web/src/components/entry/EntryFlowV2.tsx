@@ -68,7 +68,9 @@ function SpaceCard({
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium text-white truncate">{space.name}</div>
           {space.memberCount != null && (
-            <div className="text-[11px] text-white/20 font-mono">{space.memberCount} members</div>
+            <div className="text-[11px] text-white/20 font-mono">
+              {space.memberCount > 0 ? `${space.memberCount} members` : 'Be the first to join'}
+            </div>
           )}
         </div>
       </div>

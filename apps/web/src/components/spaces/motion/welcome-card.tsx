@@ -161,7 +161,7 @@ export function WelcomeCard({
 
               <motion.h2
                 className="text-2xl font-semibold text-white tracking-tight"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-clash)' }}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
