@@ -216,7 +216,7 @@ function generatePosition(index: number): { x: number; y: number } {
 }
 
 function getDefaultSize(elementType: string): { width: number; height: number } {
-  const element = (elementKnowledge.elements as Record<string, { default_size: { width: number; height: number } }>)[elementType];
+  const element = (elementKnowledge.elements as unknown as Record<string, { default_size: { width: number; height: number } }>)[elementType];
   return element?.default_size || { width: 280, height: 200 };
 }
 

@@ -462,9 +462,7 @@ export {
   GlassOverlay,
   GlassPill,
   FrostedEdge,
-  // Border Glow Primitives
-Cursor
-// Scroll Transform Primitives
+  // Scroll Transform Primitives
   ScrollTransform,
   ScrollFade,
   ScrollSticky,
@@ -507,17 +505,6 @@ Cursor
   type GlassOverlayProps,
   type GlassPillProps,
   type FrostedEdgeProps,
-  // Border Glow Types
-  type
-Props,
-  type
-Props,
-  type
-Props,
-  type
-Props,
-  type Cursor
-Props,
   // Scroll Transform Types
   type ScrollTransformProps,
   type ScrollFadeProps,
