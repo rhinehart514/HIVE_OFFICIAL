@@ -46,7 +46,7 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
     onClose();
     switch (result.type) {
       case 'member':
-        router.push(`/profile/${result.id}`);
+        router.push(`/u/${result.id}`);
         break;
       case 'event':
         router.push(`/s/${spaceHandle}?event=${result.id}`);

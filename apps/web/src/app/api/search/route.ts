@@ -435,7 +435,7 @@ async function searchProfiles(
         description: data.bio || `${data.major || ''} ${data.graduationYear ? '• ' + data.graduationYear : ''}`.trim(),
         type: 'person',
         category: 'people',
-        url: handle ? `/user/${handle}` : `/profile/${profileId}`,
+        url: `/u/${handle || profileId}`,
         metadata: {
           handle: data.handle,
           photoURL: data.photoURL,

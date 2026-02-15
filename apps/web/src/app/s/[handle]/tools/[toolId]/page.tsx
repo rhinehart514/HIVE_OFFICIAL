@@ -526,7 +526,7 @@ function ToolContent({
               {/* Creator attribution */}
               {deployment.tool.creatorName && (
                 <button
-                  onClick={() => router.push(`/profile/${deployment.tool.creatorId}`)}
+                  onClick={() => router.push(`/u/${deployment.tool.creatorId}`)}
                   className="flex items-center gap-2 text-xs text-white/50 hover:text-white/50 transition-colors"
                 >
                   {deployment.tool.creatorPhotoURL ? (

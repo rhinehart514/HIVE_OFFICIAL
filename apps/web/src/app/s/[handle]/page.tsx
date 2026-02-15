@@ -866,7 +866,7 @@ export default function SpacePageUnified() {
                       currentUserId={user?.id}
                       onMemberClick={(memberId) => {
                         setShowMembersPanel(false);
-                        router.push(`/profile/${memberId}`);
+                        router.push(`/u/${memberId}`);
                       }}
                     />
                   </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search, Sparkles, User } from 'lucide-react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
@@ -44,6 +44,7 @@ function TopBarNavItem({ item, isActive }: { item: NavItem; isActive: boolean })
 
 function TopBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { hasCampus } = useCampusMode();
   const navItems = getNavItems(hasCampus);
 
@@ -77,6 +78,7 @@ function TopBar() {
 
           <button
             type="button"
+            onClick={() => router.push('/notifications')}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
             aria-label="Notifications"
           >
@@ -85,6 +87,7 @@ function TopBar() {
 
           <button
             type="button"
+            onClick={() => router.push('/me')}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.08] text-white/60"
             aria-label="Account"
           >

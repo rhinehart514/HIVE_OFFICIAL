@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@hive/ui/design-system/primitives';
+import { useAuth } from '@hive/auth-logic';
 import { useSpacesHQ, type Space } from '../hooks/useSpacesHQ';
 import { SpaceCreationModal, SpaceClaimModal, SpaceJoinModal } from '@/components/spaces';
 
@@ -60,7 +61,22 @@ function SpaceRow({ space }: { space: Space }) {
 
 export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProps) {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/enter?redirect=/spaces');
+    }
+  }, [authLoading, user, router]);
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
+      </div>
+    );
+  }
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [showClaimModal, setShowClaimModal] = React.useState(false);
   const [showJoinModal, setShowJoinModal] = React.useState(false);

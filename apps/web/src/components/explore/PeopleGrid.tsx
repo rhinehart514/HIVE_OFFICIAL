@@ -159,7 +159,7 @@ function PersonCard({ person }: PersonCardProps) {
       whileHover="hover"
       initial="initial"
     >
-      <Link href={`/profile/${person.id}`}>
+      <Link href={`/u/${person.id}`}>
         <motion.div>
           <div
            
