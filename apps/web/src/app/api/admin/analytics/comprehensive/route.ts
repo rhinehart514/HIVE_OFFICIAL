@@ -192,17 +192,8 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   });
 
   try {
-    // Parallel queries for all metrics
-    const [
-      usersSnapshot,
-      spacesSnapshot,
-      postsSnapshot,
-      eventsSnapshot,
-      toolsSnapshot,
-      deployedToolsSnapshot,
-      membersSnapshot,
-      activitySnapshot,
-    ] = await Promise.all([
+    // Parallel queries for all metrics — use allSettled so partial failures don't crash everything
+    const results = await Promise.allSettled([
       // Total users
       dbAdmin.collection('profiles')
         .where('campusId', '==', campusId)
@@ -242,6 +233,24 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
         .limit(10000)
         .get(),
     ]);
+
+    // Helper to safely extract snapshot from allSettled result
+    const emptySnapshot = { size: 0, docs: [], empty: true };
+    const getSnapshot = (idx: number) => {
+      const r = results[idx];
+      if (r.status === 'fulfilled') return r.value;
+      logger.warn('admin_analytics_partial_failure', { query: idx, error: String(r.reason) });
+      return emptySnapshot as unknown as FirebaseFirestore.QuerySnapshot;
+    };
+
+    const usersSnapshot = getSnapshot(0);
+    const spacesSnapshot = getSnapshot(1);
+    const postsSnapshot = getSnapshot(2);
+    const eventsSnapshot = getSnapshot(3);
+    const toolsSnapshot = getSnapshot(4);
+    const deployedToolsSnapshot = getSnapshot(5);
+    const membersSnapshot = getSnapshot(6);
+    const activitySnapshot = getSnapshot(7);
 
     // Process data
     const totalUsers = usersSnapshot.size;
