@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@hive/ui";
 import { motion, AnimatePresence } from "framer-motion";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import {
   DocumentTextIcon,
   MagnifyingGlassIcon,
@@ -109,7 +110,7 @@ export function ActivityLogViewer() {
           params.set("severity", severityFilter);
         }
 
-        const response = await fetch(`/api/admin/logs?${params}`);
+        const response = await fetchWithAuth(`/api/admin/logs?${params}`);
         const data = await response.json();
 
         if (data.success) {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { fetchWithAuth } from '@/hooks/use-admin-api'
 import { HiveCard as Card, CardContent, CardHeader, CardTitle } from '@hive/ui'
 import { UsersIcon, ArrowTrendingUpIcon, ExclamationTriangleIcon, WrenchIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 
@@ -22,7 +23,7 @@ export const MetricCards = () => {
     async function fetchMetrics() {
       try {
         setLoading(true)
-        const response = await fetch('/api/admin/analytics/comprehensive?timeRange=30d', {
+        const response = await fetchWithAuth('/api/admin/analytics/comprehensive?timeRange=30d', {
           credentials: 'include',
         })
 

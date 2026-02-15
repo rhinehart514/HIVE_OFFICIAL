@@ -10,6 +10,7 @@ import {
   Badge,
 } from "@hive/ui";
 import { motion } from "framer-motion";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import {
   ChartBarIcon,
   CheckCircleIcon,
@@ -87,7 +88,7 @@ export function SystemHealthDashboard() {
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/system/health");
+      const response = await fetchWithAuth("/api/admin/system/health");
       const data = await response.json();
 
       if (data.success) {

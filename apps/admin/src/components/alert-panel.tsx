@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from "@hive/ui";
 import { motion, AnimatePresence } from "framer-motion";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import {
   BellIcon,
   BellSlashIcon,
@@ -138,7 +139,7 @@ export function AlertPanel() {
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/alerts");
+      const response = await fetchWithAuth("/api/admin/alerts");
       const data = await response.json();
 
       if (data.success) {
@@ -161,7 +162,7 @@ export function AlertPanel() {
 
   const handleSaveRule = async () => {
     try {
-      const response = await fetch("/api/admin/alerts", {
+      const response = await fetchWithAuth("/api/admin/alerts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -188,7 +189,7 @@ export function AlertPanel() {
     if (!confirm("Are you sure you want to delete this alert rule?")) return;
 
     try {
-      const response = await fetch(`/api/admin/alerts?id=${ruleId}`, {
+      const response = await fetchWithAuth(`/api/admin/alerts?id=${ruleId}`, {
         method: "DELETE",
       });
 
@@ -205,7 +206,7 @@ export function AlertPanel() {
 
   const handleAcknowledge = async (alertId: string) => {
     try {
-      const response = await fetch("/api/admin/alerts/acknowledge", {
+      const response = await fetchWithAuth("/api/admin/alerts/acknowledge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ alertId }),
