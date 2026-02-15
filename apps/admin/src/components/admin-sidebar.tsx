@@ -184,6 +184,16 @@ const crossSliceItems = [
   },
 ];
 
+const platformItems = [
+  {
+    id: "appConfig",
+    label: "App Config",
+    icon: Settings,
+    href: "/config",
+    description: "Platform configuration management",
+  },
+];
+
 const secondaryItems = [
   {
     id: "alerts",
@@ -439,6 +449,52 @@ export function AdminSidebar({
                       {badge > 0 && (
                         <span className="ml-2 text-xs text-[#FFD700]">({badge})</span>
                       )}
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Platform */}
+        <div className="mt-6 pt-4 border-t border-white/10">
+          {!isCollapsed && (
+            <span className="px-3 text-xs font-medium text-white/40 uppercase tracking-wider">
+              Platform
+            </span>
+          )}
+          <div className="mt-2 space-y-1">
+            {platformItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className={`
+                    group relative flex items-center w-full rounded-lg transition-all duration-150
+                    ${isCollapsed ? "justify-center p-2" : "gap-3 px-3 py-2"}
+                    ${
+                      active
+                        ? "bg-[#FFD700]/10 text-[#FFD700]"
+                        : "text-white/50 hover:text-white hover:bg-white/5"
+                    }
+                  `}
+                  title={isCollapsed ? item.label : undefined}
+                >
+                  <Icon className={`h-5 w-5 flex-shrink-0 ${active ? "text-[#FFD700]" : ""}`} />
+
+                  {!isCollapsed && (
+                    <span className="flex-1 text-left text-sm font-medium">
+                      {item.label}
+                    </span>
+                  )}
+
+                  {isCollapsed && (
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-[var(--bg-void)] border border-white/10 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                      <span className="text-sm text-white">{item.label}</span>
                     </div>
                   )}
                 </Link>
