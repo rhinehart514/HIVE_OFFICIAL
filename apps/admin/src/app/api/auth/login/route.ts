@@ -40,11 +40,20 @@ export async function POST(request: NextRequest) {
     const userId = decodedToken.uid;
 
     // Get admin user (also verifies admin status)
-    const admin = await getAdminUser(userId);
+    let admin;
+    try {
+      admin = await getAdminUser(userId);
+    } catch (adminErr) {
+      console.error('[Admin Login] getAdminUser error:', adminErr);
+      return NextResponse.json(
+        { error: 'Admin lookup failed', detail: String(adminErr) },
+        { status: 500 }
+      );
+    }
 
     if (!admin) {
       return NextResponse.json(
-        { error: 'Admin access required' },
+        { error: 'Admin access required', userId, email: decodedToken.email },
         { status: 403 }
       );
     }
@@ -73,7 +82,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Admin Login] Error:', error);
     return NextResponse.json(
-      { error: 'Login failed' },
+      { error: 'Login failed', detail: String(error) },
       { status: 500 }
     );
   }
