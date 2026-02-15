@@ -53,15 +53,11 @@ const nextConfig = {
   // Keep local auth routes on the admin app
   async rewrites() {
     return {
-      beforeFiles: [
-        // Proxy admin-specific API routes to web app
+      afterFiles: [
+        // Proxy admin-specific API routes to web app (afterFiles so local routes take priority)
         {
           source: '/api/admin/:path*',
           destination: `${process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000'}/api/admin/:path*`,
-        },
-        {
-          source: '/api/auth/:path*',
-          destination: `${process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000'}/api/auth/:path*`,
         },
       ],
     };
