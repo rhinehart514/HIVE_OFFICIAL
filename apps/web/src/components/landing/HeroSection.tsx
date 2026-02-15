@@ -93,7 +93,7 @@ function ProductMockup() {
         </div>
         <div className="flex-1 flex justify-center">
           <div className="rounded-md bg-white/[0.04] px-4 py-1 font-mono text-[10px] text-white/30">
-            hive.app/s/ub-photo-club
+            hive.college/s/ub-photo-club
           </div>
         </div>
         <div className="w-[46px]" />
@@ -104,7 +104,7 @@ function ProductMockup() {
         {/* Space header */}
         <div className="px-5 pt-5 pb-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFD700]/30 to-[#FFD700]/5 border border-[#FFD700]/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#FFD700]/20 border border-[#FFD700]/20 flex items-center justify-center">
               <span className="text-sm">📷</span>
             </div>
             <div>
