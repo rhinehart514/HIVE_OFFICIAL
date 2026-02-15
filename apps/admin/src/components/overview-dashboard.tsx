@@ -33,6 +33,9 @@ import { AreaChart } from "./charts/area-chart";
 import { BarChart } from "./charts/bar-chart";
 import { LiveCounter } from "./charts/live-counter";
 import { Sparkline } from "./charts/sparkline";
+import { PageSkeleton } from "./ui/loading-skeleton";
+import { ErrorState } from "./ui/error-state";
+import { EmptyState } from "./ui/empty-state";
 
 interface PlatformMetrics {
   totalUsers: number;
@@ -231,28 +234,11 @@ export function OverviewDashboard() {
   };
 
   if (loading && !metrics) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-[#FFD700]" />
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   if (error && !metrics) {
-    return (
-      <Card className="border-red-500/20 bg-red-500/5">
-        <CardContent className="py-12 text-center">
-          <XCircle className="mx-auto h-8 w-8 text-red-400 mb-4" />
-          <p className="text-red-400">{error}</p>
-          <button
-            onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm"
-          >
-            Retry
-          </button>
-        </CardContent>
-      </Card>
-    );
+    return <ErrorState message={error} onRetry={fetchData} />;
   }
 
   return (
@@ -413,9 +399,11 @@ export function OverviewDashboard() {
                 </div>
               ))}
               {recentActivity.length === 0 && (
-                <p className="text-sm text-white/50 text-center py-4">
-                  No recent activity
-                </p>
+                <EmptyState
+                  variant="no-data"
+                  title="No recent activity"
+                  description="Activity will appear here as actions are taken."
+                />
               )}
             </div>
           </CardContent>
