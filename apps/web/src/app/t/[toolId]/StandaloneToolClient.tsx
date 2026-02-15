@@ -64,7 +64,7 @@ async function fetchTool(toolId: string): Promise<ToolData> {
   return result.data || result;
 }
 
-export function StandaloneToolClient({ toolId, baseUrl }: { toolId: string; baseUrl: string }) {
+export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: string; baseUrl: string }) {
   const router = useRouter();
   const { user } = useAuth();
   const [hasInteracted, setHasInteracted] = useState(false);

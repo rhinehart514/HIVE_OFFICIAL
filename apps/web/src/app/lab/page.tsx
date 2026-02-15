@@ -29,7 +29,7 @@ import {
   Trophy,
   BarChart3,
 } from 'lucide-react';
-import { MOTION, staggerPresets, durationSeconds } from '@hive/tokens';
+import { MOTION, durationSeconds } from '@hive/tokens';
 import {
   BrandSpinner,
   getQuickTemplate,
@@ -58,9 +58,6 @@ const DURATION = {
   base: durationSeconds.standard,
   slow: durationSeconds.slow,
 };
-
-// Stagger for word reveals
-const STAGGER = staggerPresets;
 
 const fadeInUpVariants = {
   initial: { opacity: 0, y: 10 },

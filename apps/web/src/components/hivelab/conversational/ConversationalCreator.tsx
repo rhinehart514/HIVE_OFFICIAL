@@ -13,7 +13,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, Link2, Pencil, Rocket, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Check, Link2, Pencil, Rocket } from 'lucide-react';
 import { MOTION, durationSeconds } from '@hive/tokens';
 import { BrandSpinner, ToolCanvas, type ToolElement } from '@hive/ui';
 import type { QuickTemplate } from '@hive/ui';

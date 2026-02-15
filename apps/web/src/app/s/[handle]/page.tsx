@@ -116,7 +116,7 @@ export default function SpacePageUnified() {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<SpaceTab>('chat');
-  const [postCount, setPostCount] = React.useState<number | undefined>(undefined);
+  const [postCount, _setPostCount] = React.useState<number | undefined>(undefined);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
   const [reportModal, setReportModal] = React.useState<{
     messageId: string;
@@ -147,7 +147,7 @@ export default function SpacePageUnified() {
     sendMessage,
     joinSpace,
     leaveSpace,
-    rsvpToEvent,
+    rsvpToEvent: _rsvpToEvent,
     onlineMembers,
     upcomingEvents,
     navigateBack,

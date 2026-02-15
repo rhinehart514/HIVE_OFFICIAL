@@ -6,7 +6,6 @@
  */
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -16,21 +15,13 @@ import {
   Users,
   Clock,
   Zap,
-  Check,
-  ChevronDown,
   Sparkles,
-  Filter,
   X,
 } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
-import { Button } from '@hive/ui';
 import { cn } from '@/lib/utils';
 import { EventDetailsModal } from '@/components/events/event-details-modal';
 import type { EventData } from '@/hooks/use-events';
-import {
-  formatEventTime,
-  getEventTypeColor,
-} from '@/hooks/use-events';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -147,11 +138,11 @@ function getCategoryDot(type: string): string {
 
 function EventCard({
   event,
-  onRsvp,
+  _onRsvp,
   onClick,
 }: {
   event: ApiEvent;
-  onRsvp?: (id: string, status: 'going' | 'not_going') => void;
+  _onRsvp?: (id: string, status: 'going' | 'not_going') => void;
   onClick?: () => void;
 }) {
   const soon = event.startTime ? isStartingSoon(event.startTime) : false;
@@ -305,7 +296,6 @@ function Chip({
 // ─── Page Component ──────────────────────────────────────────
 
 export default function EventsPage() {
-  const router = useRouter();
   const { user } = useAuth();
 
   // Filter state
@@ -366,7 +356,7 @@ export default function EventsPage() {
       }
 
       // Use personalized endpoint if user is logged in and wants personalized sort
-      let url = `/api/events?${params.toString()}`;
+      const url = `/api/events?${params.toString()}`;
 
       const resp = await fetch(url);
       if (!resp.ok) throw new Error('Failed to fetch');

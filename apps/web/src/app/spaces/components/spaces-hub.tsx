@@ -66,24 +66,17 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
   const { user, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
 
-  React.useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace('/enter?redirect=/spaces');
-    }
-  }, [authLoading, user, router]);
-
-  if (authLoading || !user) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
-      </div>
-    );
-  }
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [showClaimModal, setShowClaimModal] = React.useState(false);
   const [showJoinModal, setShowJoinModal] = React.useState(false);
   const [joinCode, setJoinCode] = React.useState<string | null>(null);
   const [claimDefaultQuery, setClaimDefaultQuery] = React.useState('');
+
+  React.useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/enter?redirect=/spaces');
+    }
+  }, [authLoading, user, router]);
 
   React.useEffect(() => {
     const create = searchParams.get('create');
@@ -106,6 +99,14 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
   }, [searchParams, router]);
 
   const { loading, error, organizations, refresh } = useSpacesHQ();
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-black">

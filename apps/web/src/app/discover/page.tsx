@@ -178,13 +178,6 @@ export default function DiscoverPage() {
     }
   }, [authLoading, user, router]);
 
-  if (authLoading || !user) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
-      </div>
-    );
-  }
   const trimmedSearch = searchQuery.trim();
 
   const campusDiscover = useQuery({
@@ -216,6 +209,14 @@ export default function DiscoverPage() {
   const isLoading = hasCampus ? campusDiscover.isLoading : nonCampusDiscover.isLoading;
   const hasError = false; // Sections degrade independently; no global error banner
   const searchResults = searchResultsQuery.data || [];
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-[var(--bg-ground)]">
