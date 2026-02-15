@@ -463,12 +463,8 @@ export {
   GlassPill,
   FrostedEdge,
   // Border Glow Primitives
-  GlowBorder,
-  PulseBorder,
-  TrailBorder,
-  BreatheBorder,
-  CursorTrailBorder,
-  // Scroll Transform Primitives
+Cursor
+// Scroll Transform Primitives
   ScrollTransform,
   ScrollFade,
   ScrollSticky,
@@ -512,11 +508,16 @@ export {
   type GlassPillProps,
   type FrostedEdgeProps,
   // Border Glow Types
-  type GlowBorderProps,
-  type PulseBorderProps,
-  type TrailBorderProps,
-  type BreatheBorderProps,
-  type CursorTrailBorderProps,
+  type
+Props,
+  type
+Props,
+  type
+Props,
+  type
+Props,
+  type Cursor
+Props,
   // Scroll Transform Types
   type ScrollTransformProps,
   type ScrollFadeProps,

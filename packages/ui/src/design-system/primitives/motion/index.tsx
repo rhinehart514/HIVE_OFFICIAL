@@ -521,22 +521,7 @@ export {
   type FrostedEdgeProps,
 } from './Glass';
 
-// ============================================
-// BORDER GLOW PRIMITIVES
-// ============================================
-
-export {
-  GlowBorder,
-  PulseBorder,
-  TrailBorder,
-  BreatheBorder,
-  CursorTrailBorder,
-  type GlowBorderProps,
-  type PulseBorderProps,
-  type TrailBorderProps,
-  type BreatheBorderProps,
-  type CursorTrailBorderProps,
-} from './BorderGlow';
+// Border glow primitives — removed (BorderGlow.tsx deleted Feb 14)
 
 // ============================================
 // SCROLL TRANSFORM PRIMITIVES
