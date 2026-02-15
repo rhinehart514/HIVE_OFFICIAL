@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search, Sparkles, User } from 'lucide-react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
-import { getNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
+import { getNavItems, getMobileNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 
 function HiveMark() {
@@ -153,7 +153,7 @@ function MobileCreateItem({ isActive }: { isActive: boolean }) {
 function MobileBottomBar() {
   const pathname = usePathname();
   const { hasCampus } = useCampusMode();
-  const navItems = getNavItems(hasCampus);
+  const navItems = getMobileNavItems(hasCampus);
   const leadingItems = navItems.slice(0, 2);
   const trailingItems = navItems.slice(2);
   const isCreateActive = /^\/lab(\/|$)/.test(pathname);

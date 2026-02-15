@@ -2,7 +2,7 @@
  * Shared Navigation Config
  */
 
-import { CompassIcon, SpacesIcon, UserIcon, CalendarIcon } from '@hive/ui';
+import { CompassIcon, SpacesIcon, UserIcon, CalendarIcon, BeakerIcon } from '@hive/ui';
 
 export interface NavItem {
   id: string;
@@ -10,6 +10,8 @@ export interface NavItem {
   href: string;
   icon: React.ElementType;
   matchPattern?: RegExp;
+  /** Hide this item from the mobile bottom bar (shown only on desktop top bar). */
+  desktopOnly?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -18,7 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Home',
     href: '/discover',
     icon: CompassIcon,
-    matchPattern: /^\/discover(\/|$)/,
+    matchPattern: /^\/discover(\/|$)|^\/feed(\/|$)/,
   },
   {
     id: 'events',
@@ -26,6 +28,14 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/events',
     icon: CalendarIcon,
     matchPattern: /^\/events(\/|$)/,
+  },
+  {
+    id: 'lab',
+    label: 'Lab',
+    href: '/lab',
+    icon: BeakerIcon,
+    matchPattern: /^\/lab(\/|$)/,
+    desktopOnly: true,
   },
   {
     id: 'spaces',
@@ -46,6 +56,11 @@ export const NAV_ITEMS: NavItem[] = [
 export function getNavItems(hasCampus: boolean): NavItem[] {
   void hasCampus;
   return NAV_ITEMS;
+}
+
+/** Return only the items suitable for the mobile bottom bar (excludes desktopOnly). */
+export function getMobileNavItems(hasCampus: boolean): NavItem[] {
+  return getNavItems(hasCampus).filter((item) => !item.desktopOnly);
 }
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {

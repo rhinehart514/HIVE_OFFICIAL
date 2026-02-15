@@ -503,6 +503,19 @@ function SettingsContent() {
         </motion.section>
       </div>
 
+      {/* About & Legal Links */}
+      <motion.section
+        variants={fadeInUpVariants}
+        initial="initial"
+        animate="animate"
+        className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/[0.06] pt-6 text-xs text-white/30"
+      >
+        <a href="/about" className="hover:text-white/50 transition-colors">About HIVE</a>
+        <a href="/legal/terms" className="hover:text-white/50 transition-colors">Terms</a>
+        <a href="/legal/privacy" className="hover:text-white/50 transition-colors">Privacy</a>
+        <a href="/legal/community-guidelines" className="hover:text-white/50 transition-colors">Guidelines</a>
+      </motion.section>
+
       <AnimatePresence>
         <ConfirmModal
           open={showDeleteModal}

@@ -228,9 +228,18 @@ export default function DiscoverPage() {
                 {hasCampus ? 'Live campus intel + events + tools' : 'Trending tools and communities'}
               </p>
             </div>
-            <span className="rounded-full border border-white/[0.06] bg-white/[0.06] px-3 py-1 text-xs text-white/50">
-              {hasCampus ? 'Campus Mode' : 'Community Mode'}
-            </span>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/feed"
+                className="flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.06] px-3 py-1 text-xs text-white/50 transition-colors hover:bg-white/[0.1] hover:text-white/70"
+              >
+                <Users className="h-3 w-3" />
+                Activity
+              </Link>
+              <span className="rounded-full border border-white/[0.06] bg-white/[0.06] px-3 py-1 text-xs text-white/50">
+                {hasCampus ? 'Campus Mode' : 'Community Mode'}
+              </span>
+            </div>
           </div>
 
           <div className="relative">

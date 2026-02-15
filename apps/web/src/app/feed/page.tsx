@@ -140,6 +140,9 @@ export default function FeedPage() {
         {/* Header */}
         <header className="mb-6 flex items-center justify-between">
           <div>
+            <Link href="/discover" className="mb-1 inline-flex items-center gap-1 text-xs text-white/40 hover:text-white/60 transition-colors">
+              ← Discover
+            </Link>
             <h1 className="text-2xl font-semibold text-white">Activity</h1>
             <p className="text-sm text-white/40">What&apos;s happening across HIVE right now</p>
           </div>
