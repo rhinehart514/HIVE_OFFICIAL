@@ -103,6 +103,8 @@ export interface RouteParams {
 // Admin emails that bypass campus domain checks (maps to ub-buffalo)
 const ADMIN_EMAIL_WHITELIST: Record<string, string> = {
   'rhinehart514@gmail.com': 'ub-buffalo',
+  'jwrhineh@buffalo.edu': 'ub-buffalo',
+  'noahowsh@gmail.com': 'ub-buffalo',
 };
 
 export function deriveCampusFromEmail(email: string): string | undefined {
