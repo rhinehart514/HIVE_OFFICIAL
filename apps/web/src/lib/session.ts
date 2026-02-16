@@ -152,7 +152,7 @@ export async function verifySession(token: string): Promise<SessionData | null> 
     if (
       typeof payload.userId === 'string' &&
       typeof payload.email === 'string' &&
-      typeof payload.campusId === 'string' &&
+      (typeof payload.campusId === 'string' || typeof payload.campusId === 'undefined') &&
       typeof payload.sessionId === 'string' &&
       typeof payload.verifiedAt === 'string'
     ) {
@@ -355,13 +355,15 @@ export function setTokenPairCookies(
     path: '/',
   });
 
-  // Set refresh token cookie (longer-lived, more restrictive path)
+  // Set refresh token cookie.
+  // NOTE: middleware reads this cookie on page routes for graceful recovery when access tokens expire,
+  // so scope must include page requests.
   response.cookies.set(REFRESH_COOKIE_NAME, tokens.refreshToken, {
     httpOnly: true,
     secure: isProduction,
     sameSite: 'strict', // Stricter for refresh token
     maxAge: tokens.refreshTokenExpiresIn,
-    path: '/api/auth', // Only sent to auth endpoints
+    path: '/',
   });
 
   return response;
