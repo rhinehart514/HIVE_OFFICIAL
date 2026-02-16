@@ -94,7 +94,7 @@ describe('SessionData Interface', () => {
   it('includes required user identification fields', () => {
     expect(sessionFileContent).toContain('userId: string');
     expect(sessionFileContent).toContain('email: string');
-    expect(sessionFileContent).toContain('campusId: string');
+    expect(sessionFileContent).toContain('campusId?: string');
   });
 
   it('includes session tracking fields', () => {

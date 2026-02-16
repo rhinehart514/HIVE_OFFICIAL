@@ -54,7 +54,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Fetch current user data to ensure they're still valid
     let userData: {
       email: string;
-      campusId: string;
+      campusId?: string;
       isAdmin: boolean;
       onboardingCompleted: boolean;
       isActive: boolean;
@@ -94,18 +94,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return response;
       }
 
-      if (!user?.campusId) {
-        const response = NextResponse.json(
-          { error: 'Campus identification required', code: 'CAMPUS_REQUIRED' },
-          { status: 401 }
-        );
-        clearAllSessionCookies(response);
-        return response;
-      }
-
       userData = {
         email: user?.email || '',
-        campusId: user.campusId,
+        campusId: typeof user?.campusId === 'string' ? user.campusId : undefined,
         isAdmin: user?.isAdmin || false,
         onboardingCompleted: user?.onboardingCompleted || user?.onboardingComplete || false,
         isActive: user?.isActive !== false,
