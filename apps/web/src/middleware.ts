@@ -66,6 +66,7 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   // Alias routes
   '/browse': '/spaces',
   '/build': '/lab/create',
+  '/explore': '/discover',
   // Dead route consolidation
   '/home': '/discover',
   '/feed': '/discover',
@@ -84,7 +85,7 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/terms': '/legal/terms',
   // IA Consolidation: Convert pages to modals
   '/spaces/browse': '/discover',
-  // '/spaces/claim' handled dynamically below to preserve query params
+  '/spaces/claim': '/spaces?claim=true',
   '/spaces/new': '/spaces?create=true',
   '/spaces/create': '/spaces?create=true',
   '/people': '/discover?tab=people',
@@ -307,15 +308,12 @@ export async function middleware(request: NextRequest) {
 
   // Handle route redirects (from deleted client-side redirect pages)
   // These are PERMANENT (301) per IA_INVARIANTS.md - canonical route changes
+
+  // Handle /explore -> /discover and preserve query params
   if (pathname === '/explore') {
     const target = new URL('/discover', request.url);
     target.search = request.nextUrl.search;
     return NextResponse.redirect(target, 301);
-  }
-
-  const redirectTarget = ROUTE_REDIRECTS[pathname];
-  if (redirectTarget) {
-    return NextResponse.redirect(new URL(redirectTarget, request.url), 301);
   }
 
   // Handle /spaces/claim -> /spaces?claim=true (preserve handle param)
@@ -325,6 +323,11 @@ export async function middleware(request: NextRequest) {
       ? `/spaces?claim=true&handle=${encodeURIComponent(handle)}`
       : '/spaces?claim=true';
     return NextResponse.redirect(new URL(target, request.url), 301);
+  }
+
+  const redirectTarget = ROUTE_REDIRECTS[pathname];
+  if (redirectTarget) {
+    return NextResponse.redirect(new URL(redirectTarget, request.url), 301);
   }
 
   // Handle dynamic route redirects: /spaces/join/:code -> /spaces?join=:code
