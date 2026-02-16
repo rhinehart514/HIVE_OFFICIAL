@@ -3,20 +3,17 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Bookmark,
   Calendar,
   Check,
   Clock,
   MapPin,
-  Megaphone,
   RefreshCw,
-  Search,
   Share2,
   Users,
   Video,
-  Wrench,
   Zap,
 } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
@@ -26,7 +23,7 @@ import { useAuth } from '@hive/auth-logic';
 /* ------------------------------------------------------------------ */
 
 type FeedTab = 'for-you' | 'latest';
-type FilterPill = 'all' | 'events' | 'announcements' | 'tools';
+type EventCategory = 'all' | 'social' | 'academic' | 'professional' | 'recreation' | 'official';
 
 interface FeedEvent {
   id: string;
@@ -36,108 +33,57 @@ interface FeedEvent {
   endDate?: string;
   location?: string;
   isOnline?: boolean;
+  eventType?: string;
   rsvpCount: number;
+  isUserRsvped?: boolean;
   userRsvp?: 'going' | 'maybe' | 'not_going' | null;
   spaceName?: string;
   spaceHandle?: string;
   spaceId?: string;
   spaceAvatarUrl?: string;
-  isLive?: boolean;
+  organizerName?: string;
   relevanceScore?: number;
-}
-
-interface GlobalFeedItem {
-  id: string;
-  type: 'member_joined' | 'event_created' | 'tool_deployed' | 'message_summary' | 'rsvp' | 'tool_created' | 'space_created';
-  headline: string;
-  detail?: string;
-  spaceId?: string;
-  spaceName?: string;
-  spaceHandle?: string;
-  actorName?: string;
-  actorAvatarUrl?: string;
-  toolId?: string;
-  toolName?: string;
-  eventId?: string;
-  eventTitle?: string;
-  timestamp: string;
-}
-
-interface UnifiedFeedItem {
-  id: string;
-  kind: 'event' | 'announcement' | 'tool' | 'activity';
-  timestamp: Date;
-  score: number; // for "For You" weighting
-  event?: FeedEvent;
-  activity?: GlobalFeedItem;
-}
-
-interface SearchResult {
-  id: string;
-  title: string;
-  description?: string;
-  type: 'space' | 'tool' | 'person' | 'event' | 'post';
-  url: string;
+  matchReasons?: string[];
+  friendsAttending?: number;
+  friendsAttendingNames?: string[];
+  interestMatch?: string[];
 }
 
 /* ------------------------------------------------------------------ */
 /*  Data fetching                                                      */
 /* ------------------------------------------------------------------ */
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { credentials: 'include' });
-  if (!res.ok) throw new Error(`Failed: ${url}`);
+async function fetchEvents(sort: 'relevance' | 'newest' | 'soonest', page: number, category?: string): Promise<{ events: FeedEvent[]; hasMore: boolean }> {
+  const params = new URLSearchParams({
+    timeRange: 'this-month',
+    maxItems: '20',
+    page: String(page),
+  });
+  if (sort === 'newest') params.set('sort', 'newest');
+  if (sort === 'soonest') params.set('sort', 'soonest');
+  if (category && category !== 'all') params.set('eventTypes', category);
+
+  const res = await fetch(`/api/events/personalized?${params}`, { credentials: 'include' });
+  if (!res.ok) return { events: [], hasMore: false };
   const payload = await res.json();
-  return (payload.data || payload) as T;
+  const data = payload.data || payload;
+  const events: FeedEvent[] = data.events || [];
+  return { events, hasMore: data.meta?.hasMoreEvents || events.length >= 20 };
 }
 
-async function fetchEvents(page: number): Promise<{ events: FeedEvent[]; hasMore: boolean }> {
-  try {
-    const data = await fetchJson<{ events?: FeedEvent[] }>(
-      `/api/events/personalized?timeRange=upcoming&maxItems=20&page=${page}`
-    );
-    const events = data.events || [];
-    return { events, hasMore: events.length >= 20 };
-  } catch {
-    return { events: [], hasMore: false };
-  }
-}
-
-async function fetchGlobalFeed(before?: string): Promise<{ items: GlobalFeedItem[]; hasMore: boolean; oldestTimestamp: string | null }> {
-  try {
-    const url = before
-      ? `/api/feed/global?limit=30&before=${encodeURIComponent(before)}`
-      : '/api/feed/global?limit=30';
-    const data = await fetchJson<{ items: GlobalFeedItem[]; hasMore: boolean; oldestTimestamp: string | null }>(url);
-    return data;
-  } catch {
-    return { items: [], hasMore: false, oldestTimestamp: null };
-  }
-}
-
-async function fetchSearchResults(query: string): Promise<SearchResult[]> {
-  const data = await fetchJson<{ results?: SearchResult[] }>(
-    `/api/search?q=${encodeURIComponent(query)}&limit=8`
-  );
-  return data.results || [];
+async function rsvpToEvent(spaceId: string, eventId: string, status: 'going' | 'maybe' | 'not_going'): Promise<void> {
+  const res = await fetch(`/api/spaces/${spaceId}/events/${eventId}/rsvp`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) throw new Error('RSVP failed');
 }
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
-
-function relativeTime(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return 'now';
-  if (diffMin < 60) return `${diffMin}m`;
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `${diffH}h`;
-  const diffD = Math.floor(diffH / 24);
-  if (diffD < 7) return `${diffD}d`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 function eventTimeLabel(startDate: string): string {
   const start = new Date(startDate);
@@ -146,13 +92,12 @@ function eventTimeLabel(startDate: string): string {
   const diffMin = Math.floor(diffMs / 60000);
 
   if (diffMs < 0) return 'Happening now';
-  if (diffMin <= 15) return 'Starting soon!';
+  if (diffMin <= 15) return 'Starting soon';
   if (diffMin < 60) return `In ${diffMin}m`;
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `In ${diffH}h`;
-  const diffD = Math.floor(diffH / 24);
-  if (diffD < 7) return `In ${diffD}d`;
-
+  if (diffH < 24) {
+    return start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
   return start.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -162,64 +107,23 @@ function eventTimeLabel(startDate: string): string {
   });
 }
 
-function eventUrgencyScore(startDate: string): number {
-  const start = new Date(startDate);
-  const now = new Date();
-  const hoursAway = (start.getTime() - now.getTime()) / (1000 * 60 * 60);
-  if (hoursAway < 0) return 100; // happening now
-  if (hoursAway < 1) return 90;
-  if (hoursAway < 6) return 70;
-  if (hoursAway < 24) return 50;
-  if (hoursAway < 72) return 30;
-  return 10;
+function isUrgent(startDate: string): boolean {
+  const diffMs = new Date(startDate).getTime() - Date.now();
+  return diffMs >= 0 && diffMs <= 15 * 60 * 1000;
 }
 
-function classifyActivity(type: GlobalFeedItem['type']): UnifiedFeedItem['kind'] {
-  if (type === 'event_created' || type === 'rsvp') return 'announcement';
-  if (type === 'tool_created' || type === 'tool_deployed') return 'tool';
-  return 'activity';
-}
-
-function unifyFeed(events: FeedEvent[], activities: GlobalFeedItem[], tab: FeedTab): UnifiedFeedItem[] {
-  const items: UnifiedFeedItem[] = [];
-
-  for (const ev of events) {
-    items.push({
-      id: `ev-${ev.id}`,
-      kind: 'event',
-      timestamp: new Date(ev.startDate),
-      score: tab === 'for-you' ? eventUrgencyScore(ev.startDate) + (ev.relevanceScore || 0) : 0,
-      event: ev,
-    });
-  }
-
-  for (const act of activities) {
-    const kind = classifyActivity(act.type);
-    items.push({
-      id: act.id,
-      kind,
-      timestamp: new Date(act.timestamp),
-      score: tab === 'for-you' ? (kind === 'announcement' ? 40 : 20) : 0,
-      activity: act,
-    });
-  }
-
-  if (tab === 'for-you') {
-    items.sort((a, b) => b.score - a.score || b.timestamp.getTime() - a.timestamp.getTime());
-  } else {
-    items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }
-
-  return items;
+function isHappeningNow(startDate: string): boolean {
+  return new Date(startDate).getTime() - Date.now() < 0;
 }
 
 /* ------------------------------------------------------------------ */
-/*  Sub-components                                                     */
+/*  Components                                                         */
 /* ------------------------------------------------------------------ */
 
 function Avatar({ name, url, size = 36 }: { name?: string; url?: string; size?: number }) {
   if (url) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={url}
         alt={name || ''}
@@ -239,141 +143,94 @@ function Avatar({ name, url, size = 36 }: { name?: string; url?: string; size?: 
   );
 }
 
-function EventFeedCard({ item }: { item: FeedEvent }) {
-  const timeLabel = eventTimeLabel(item.startDate);
-  const isUrgent = timeLabel === 'Starting soon!' || timeLabel === 'Happening now';
+function EventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (eventId: string, spaceId: string) => void }) {
+  const urgent = isUrgent(event.startDate);
+  const live = isHappeningNow(event.startDate);
+  const isGoing = event.isUserRsvped || event.userRsvp === 'going';
 
   return (
     <div className="px-4 py-3">
-      {/* Header: avatar + space name + time */}
+      {/* Header */}
       <div className="flex items-center gap-2.5 mb-2">
-        <Avatar name={item.spaceName} url={item.spaceAvatarUrl} size={36} />
+        <Avatar name={event.spaceName} url={event.spaceAvatarUrl} size={36} />
         <div className="flex-1 min-w-0 flex items-center gap-2">
           <Link
-            href={item.spaceHandle ? `/s/${item.spaceHandle}` : '#'}
+            href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'}
             className="text-[15px] font-semibold text-white hover:underline truncate"
           >
-            {item.spaceName || 'Campus Event'}
+            {event.spaceName || event.organizerName || 'Campus Event'}
           </Link>
-          <span className="text-white/30 text-[13px]">·</span>
-          <span className="text-white/40 text-[13px] flex-shrink-0">{relativeTime(new Date(item.startDate))}</span>
+          <span className="text-white/20">·</span>
+          <span className="text-white/40 text-[13px] flex-shrink-0">
+            <Clock className="w-3 h-3 inline mr-1" />
+            {eventTimeLabel(event.startDate)}
+          </span>
         </div>
-        {isUrgent && (
-          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FFD700]/15 text-[#FFD700] flex-shrink-0">
+        {(urgent || live) && (
+          <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0 ${
+            live
+              ? 'bg-red-500/15 text-red-400'
+              : 'bg-[#FFD700]/15 text-[#FFD700]'
+          }`}>
             <Zap className="w-3 h-3" />
-            {timeLabel}
+            {live ? 'Live' : 'Soon'}
           </span>
         )}
       </div>
 
-      {/* Event content */}
+      {/* Content */}
       <div className="ml-[46px]">
-        <h3 className="text-[15px] font-medium text-white leading-snug">{item.title}</h3>
+        <h3 className="text-[15px] font-medium text-white leading-snug">{event.title}</h3>
 
-        {item.description && (
-          <p className="text-[14px] text-white/50 mt-1 line-clamp-2 leading-relaxed">{item.description}</p>
+        {event.description && (
+          <p className="text-[14px] text-white/50 mt-1 line-clamp-2 leading-relaxed">{event.description}</p>
         )}
 
-        {/* Meta row */}
+        {/* Match reasons */}
+        {event.matchReasons && event.matchReasons.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {event.matchReasons.slice(0, 2).map((reason, i) => (
+              <span key={i} className="text-[11px] text-[#FFD700]/80 bg-[#FFD700]/10 px-2 py-0.5 rounded-full">
+                ✦ {reason}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Meta */}
         <div className="flex items-center gap-4 mt-2 text-[13px] text-white/40">
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" />
-            {eventTimeLabel(item.startDate)}
-          </span>
-          {item.location && (
+          {event.location && (
             <span className="flex items-center gap-1">
-              {item.isOnline ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
-              <span className="truncate max-w-[150px]">{item.isOnline ? 'Online' : item.location}</span>
+              {event.isOnline ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+              <span className="truncate max-w-[180px]">{event.isOnline ? 'Online' : event.location}</span>
             </span>
           )}
           <span className="flex items-center gap-1">
             <Users className="w-3.5 h-3.5" />
-            {item.rsvpCount} going
+            {event.rsvpCount} going
           </span>
+          {event.friendsAttending && event.friendsAttending > 0 && (
+            <span className="text-[#FFD700]/70">
+              {event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}
+            </span>
+          )}
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-1 mt-3 -ml-2">
-          <button
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-              item.userRsvp === 'going'
-                ? 'bg-[#FFD700]/15 text-[#FFD700]'
-                : 'text-white/40 hover:text-[#FFD700] hover:bg-[#FFD700]/10'
-            }`}
-          >
-            {item.userRsvp === 'going' ? <Check className="w-3.5 h-3.5" /> : <Calendar className="w-3.5 h-3.5" />}
-            {item.userRsvp === 'going' ? 'Going' : 'RSVP'}
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors">
-            <Share2 className="w-3.5 h-3.5" />
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors">
-            <Bookmark className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ActivityFeedCard({ item }: { item: GlobalFeedItem }) {
-  const icon = item.type === 'tool_created' || item.type === 'tool_deployed'
-    ? <Wrench className="w-4 h-4 text-[#FFD700]" />
-    : item.type === 'event_created'
-    ? <Calendar className="w-4 h-4 text-[#FFD700]" />
-    : item.type === 'rsvp'
-    ? <Check className="w-4 h-4 text-[#FFD700]" />
-    : item.type === 'message_summary'
-    ? <Megaphone className="w-4 h-4 text-[#FFD700]" />
-    : <Users className="w-4 h-4 text-[#FFD700]" />;
-
-  const linkHref = item.spaceHandle
-    ? `/s/${item.spaceHandle}`
-    : item.toolId
-    ? `/t/${item.toolId}`
-    : item.eventId
-    ? '#'
-    : '#';
-
-  return (
-    <div className="px-4 py-3">
-      <div className="flex items-center gap-2.5 mb-2">
-        <Avatar name={item.actorName || item.spaceName} url={item.actorAvatarUrl} size={36} />
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="text-[15px] font-semibold text-white truncate">
-            {item.actorName || item.spaceName || 'HIVE'}
-          </span>
-          {item.spaceName && item.actorName && (
-            <>
-              <span className="text-white/30 text-[13px]">in</span>
-              <Link
-                href={item.spaceHandle ? `/s/${item.spaceHandle}` : '#'}
-                className="text-[13px] text-white/50 hover:underline truncate"
-              >
-                {item.spaceName}
-              </Link>
-            </>
-          )}
-          <span className="text-white/30 text-[13px]">·</span>
-          <span className="text-white/40 text-[13px] flex-shrink-0">
-            {relativeTime(new Date(item.timestamp))}
-          </span>
-        </div>
-      </div>
-
-      <div className="ml-[46px]">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-[#FFD700]/10 flex-shrink-0">{icon}</div>
-          <Link href={linkHref} className="text-[15px] text-white hover:underline leading-snug">
-            {item.headline}
-          </Link>
-        </div>
-        {item.detail && (
-          <p className="text-[14px] text-white/40 mt-1 line-clamp-2 leading-relaxed">{item.detail}</p>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-1 mt-2 -ml-2">
+          {event.spaceId ? (
+            <button
+              onClick={() => onRsvp(event.id, event.spaceId!)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
+                isGoing
+                  ? 'bg-[#FFD700]/15 text-[#FFD700]'
+                  : 'text-white/40 hover:text-[#FFD700] hover:bg-[#FFD700]/10'
+              }`}
+            >
+              {isGoing ? <Check className="w-3.5 h-3.5" /> : <Calendar className="w-3.5 h-3.5" />}
+              {isGoing ? 'Going' : 'RSVP'}
+            </button>
+          ) : null}
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors">
             <Share2 className="w-3.5 h-3.5" />
           </button>
@@ -387,18 +244,20 @@ function ActivityFeedCard({ item }: { item: GlobalFeedItem }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Main page                                                          */
+/*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
 export default function DiscoverPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<FeedTab>('for-you');
-  const [filter, setFilter] = useState<FilterPill>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [category, setCategory] = useState<EventCategory>('all');
+  const [page, setPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
+
+  const sort = tab === 'for-you' ? 'relevance' : 'newest';
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -406,83 +265,79 @@ export default function DiscoverPage() {
     }
   }, [authLoading, user, router]);
 
-  // Events query
+  // Reset page when tab/category changes
+  useEffect(() => {
+    setPage(1);
+  }, [tab, category]);
+
   const eventsQuery = useQuery({
-    queryKey: ['discover-events'],
-    queryFn: () => fetchEvents(1),
+    queryKey: ['discover-events', sort, category, page],
+    queryFn: () => fetchEvents(sort as 'relevance' | 'newest' | 'soonest', page, category),
     staleTime: 60_000,
+    enabled: !authLoading && !!user,
   });
 
-  // Global feed with infinite scroll
-  const feedQuery = useInfiniteQuery({
-    queryKey: ['discover-global-feed'],
-    queryFn: ({ pageParam }) => fetchGlobalFeed(pageParam as string | undefined),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.oldestTimestamp : undefined,
-    staleTime: 60_000,
-  });
-
-  // Search
-  const trimmedSearch = searchQuery.trim();
-  const searchResultsQuery = useQuery({
-    queryKey: ['discover-search', trimmedSearch],
-    queryFn: () => fetchSearchResults(trimmedSearch),
-    enabled: trimmedSearch.length >= 2,
-    staleTime: 20_000,
-  });
-
-  // Unify feed items
-  const feedItems = useMemo(() => {
-    const events = eventsQuery.data?.events || [];
-    const activities = feedQuery.data?.pages.flatMap((p) => p.items) || [];
-    let items = unifyFeed(events, activities, tab);
-
-    if (filter !== 'all') {
-      items = items.filter((item) => {
-        if (filter === 'events') return item.kind === 'event';
-        if (filter === 'announcements') return item.kind === 'announcement';
-        if (filter === 'tools') return item.kind === 'tool';
-        return true;
+  const rsvpMutation = useMutation({
+    mutationFn: ({ eventId, spaceId }: { eventId: string; spaceId: string }) =>
+      rsvpToEvent(spaceId, eventId, 'going'),
+    onMutate: async ({ eventId }) => {
+      await queryClient.cancelQueries({ queryKey: ['discover-events'] });
+      const prev = queryClient.getQueryData(['discover-events', sort, category, page]);
+      queryClient.setQueryData(['discover-events', sort, category, page], (old: { events: FeedEvent[]; hasMore: boolean } | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          events: old.events.map((e) =>
+            e.id === eventId
+              ? { ...e, isUserRsvped: true, userRsvp: 'going' as const, rsvpCount: e.rsvpCount + 1 }
+              : e
+          ),
+        };
       });
-    }
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) {
+        queryClient.setQueryData(['discover-events', sort, category, page], context.prev);
+      }
+    },
+  });
 
-    return items;
-  }, [eventsQuery.data, feedQuery.data, tab, filter]);
+  const handleRsvp = useCallback((eventId: string, spaceId: string) => {
+    rsvpMutation.mutate({ eventId, spaceId });
+  }, [rsvpMutation]);
 
-  // Infinite scroll observer
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['discover-events'] });
+    setIsRefreshing(false);
+  }, [queryClient]);
+
+  // Load more on scroll
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) {
-          feedQuery.fetchNextPage();
+        if (entries[0].isIntersecting && eventsQuery.data?.hasMore && !eventsQuery.isFetching) {
+          setPage((p) => p + 1);
         }
       },
       { rootMargin: '200px' }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [feedQuery.hasNextPage, feedQuery.isFetchingNextPage, feedQuery.fetchNextPage]);
+  }, [eventsQuery.data?.hasMore, eventsQuery.isFetching]);
 
-  // Refresh
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['discover-events'] }),
-      queryClient.invalidateQueries({ queryKey: ['discover-global-feed'] }),
-    ]);
-    setIsRefreshing(false);
-  }, [queryClient]);
+  const events = eventsQuery.data?.events || [];
 
-  const isLoading = eventsQuery.isLoading && feedQuery.isLoading;
-  const searchResults = searchResultsQuery.data || [];
-
-  const pills: { key: FilterPill; label: string }[] = [
+  const categories: { key: EventCategory; label: string }[] = [
     { key: 'all', label: 'All' },
-    { key: 'events', label: 'Events' },
-    { key: 'announcements', label: 'Announcements' },
-    { key: 'tools', label: 'Tools' },
+    { key: 'social', label: 'Social' },
+    { key: 'academic', label: 'Academic' },
+    { key: 'professional', label: 'Professional' },
+    { key: 'recreation', label: 'Recreation' },
+    { key: 'official', label: 'Official' },
   ];
 
   if (authLoading || !user) {
@@ -496,47 +351,9 @@ export default function DiscoverPage() {
   return (
     <div className="min-h-screen w-full bg-black">
       <div className="mx-auto w-full max-w-[600px]">
-        {/* Search bar */}
+        {/* Header */}
         <div className="sticky top-0 z-20 bg-black/80 backdrop-blur-xl border-b border-white/[0.08]">
-          <div className="px-4 pt-3 pb-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search"
-                className="h-10 w-full rounded-full border border-white/[0.08] bg-white/[0.06] pl-10 pr-3 text-[15px] text-white outline-none placeholder:text-white/35 focus:border-[#FFD700]/40"
-              />
-            </div>
-          </div>
-
-          {/* Search results dropdown */}
-          {trimmedSearch.length >= 2 && (
-            <div className="border-b border-white/[0.08] px-4 pb-2">
-              {searchResultsQuery.isLoading && (
-                <div className="py-3 text-[13px] text-white/30">Searching…</div>
-              )}
-              {!searchResultsQuery.isLoading && searchResults.length === 0 && (
-                <div className="py-3 text-[13px] text-white/30">No results</div>
-              )}
-              {!searchResultsQuery.isLoading && searchResults.length > 0 && (
-                <div>
-                  {searchResults.map((r) => (
-                    <Link
-                      key={`${r.type}-${r.id}`}
-                      href={r.url}
-                      className="flex items-center justify-between py-2 px-1 hover:bg-white/[0.04] rounded-lg"
-                    >
-                      <span className="text-[14px] text-white truncate">{r.title}</span>
-                      <span className="text-[11px] uppercase tracking-wide text-white/30 ml-2 flex-shrink-0">{r.type}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Tabs: For You / Latest */}
+          {/* Tabs */}
           <div className="flex">
             <button
               onClick={() => setTab('for-you')}
@@ -563,34 +380,33 @@ export default function DiscoverPage() {
           </div>
         </div>
 
-        {/* Filter pills */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.08] overflow-x-auto">
-          {pills.map((p) => (
+        {/* Category pills */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.08] overflow-x-auto no-scrollbar">
+          {categories.map((c) => (
             <button
-              key={p.key}
-              onClick={() => setFilter(p.key)}
+              key={c.key}
+              onClick={() => setCategory(c.key)}
               className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors ${
-                filter === p.key
+                category === c.key
                   ? 'bg-white text-black'
                   : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1]'
               }`}
             >
-              {p.label}
+              {c.label}
             </button>
           ))}
-
           <div className="flex-1" />
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-2 rounded-full text-white/40 hover:text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors"
+            className="p-2 rounded-full text-white/40 hover:text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors flex-shrink-0"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
-        {/* Feed */}
-        {isLoading && (
+        {/* Loading */}
+        {eventsQuery.isLoading && (
           <div className="space-y-0">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="border-b border-white/[0.08] px-4 py-4">
@@ -607,25 +423,23 @@ export default function DiscoverPage() {
           </div>
         )}
 
-        {!isLoading && feedItems.length === 0 && (
+        {/* Empty */}
+        {!eventsQuery.isLoading && events.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
             <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-white/20" />
+              <Calendar className="w-6 h-6 text-white/20" />
             </div>
-            <p className="text-[15px] text-white/50">Nothing here yet</p>
-            <p className="text-[13px] text-white/30 mt-1">Join some spaces to see activity in your feed</p>
+            <p className="text-[15px] text-white/50">No events yet</p>
+            <p className="text-[13px] text-white/30 mt-1">Events from your spaces and campus will show up here</p>
           </div>
         )}
 
-        {!isLoading && feedItems.length > 0 && (
+        {/* Events feed */}
+        {!eventsQuery.isLoading && events.length > 0 && (
           <div>
-            {feedItems.map((item) => (
-              <div key={item.id} className="border-b border-white/[0.08]">
-                {item.kind === 'event' && item.event ? (
-                  <EventFeedCard item={item.event} />
-                ) : item.activity ? (
-                  <ActivityFeedCard item={item.activity} />
-                ) : null}
+            {events.map((event) => (
+              <div key={event.id} className="border-b border-white/[0.08]">
+                <EventCard event={event} onRsvp={handleRsvp} />
               </div>
             ))}
           </div>
@@ -633,7 +447,7 @@ export default function DiscoverPage() {
 
         {/* Infinite scroll sentinel */}
         <div ref={sentinelRef} className="h-10" />
-        {feedQuery.isFetchingNextPage && (
+        {eventsQuery.isFetching && page > 1 && (
           <div className="flex justify-center py-4">
             <div className="w-6 h-6 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
           </div>

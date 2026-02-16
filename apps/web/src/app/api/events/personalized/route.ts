@@ -25,8 +25,10 @@ import { withCache } from '../../../../lib/cache-headers';
 
 // Request schema
 const PersonalizedEventsSchema = z.object({
-  timeRange: z.enum(['tonight', 'today', 'this-week', 'this-month']).default('tonight'),
-  maxItems: z.coerce.number().min(1).max(50).default(10),
+  timeRange: z.enum(['tonight', 'today', 'this-week', 'this-month', 'upcoming']).default('tonight'),
+  maxItems: z.coerce.number().min(1).max(50).default(20),
+  page: z.coerce.number().min(1).default(1),
+  sort: z.enum(['relevance', 'newest', 'soonest']).default('relevance'),
   eventTypes: z.array(z.string()).optional(),
   excludeRsvped: z.boolean().optional().default(false),
 });
@@ -144,6 +146,11 @@ function getTimeRange(range: string): { start: Date; end: Date } {
       end.setMonth(end.getMonth() + 1);
       end.setHours(23, 59, 59, 999);
       break;
+    case 'upcoming':
+      // Next 30 days from now
+      end.setDate(end.getDate() + 30);
+      end.setHours(23, 59, 59, 999);
+      break;
   }
 
   return { start, end };
@@ -206,7 +213,9 @@ async function handler(
     const { searchParams } = new URL(request.url);
     const params = PersonalizedEventsSchema.parse({
       timeRange: searchParams.get('timeRange') || 'tonight',
-      maxItems: searchParams.get('maxItems') || 10,
+      maxItems: searchParams.get('maxItems') || 20,
+      page: searchParams.get('page') || 1,
+      sort: searchParams.get('sort') || 'relevance',
       eventTypes: searchParams.get('eventTypes')?.split(',').filter(Boolean),
       excludeRsvped: searchParams.get('excludeRsvped') === 'true',
     });
@@ -441,6 +450,8 @@ async function handler(
         eventType,
         spaceId: eventSpaceId,
         spaceName: event.spaceName as string | undefined,
+        spaceHandle: event.spaceHandle as string | undefined,
+        spaceAvatarUrl: event.spaceAvatarUrl as string | undefined,
         organizerName: event.organizerName as string | undefined,
         coverImageUrl: event.coverImageUrl as string | undefined,
         rsvpCount: rsvp.count,
@@ -453,11 +464,19 @@ async function handler(
       } as PersonalizedEvent;
     }).filter((e): e is PersonalizedEvent => e !== null);
 
-    // Sort by relevance score (descending)
-    personalizedEvents.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    // Sort based on requested sort mode
+    if (params.sort === 'newest') {
+      personalizedEvents.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    } else if (params.sort === 'soonest') {
+      personalizedEvents.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    } else {
+      // relevance (default)
+      personalizedEvents.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    }
 
-    // Apply maxItems limit
-    const result = personalizedEvents.slice(0, params.maxItems);
+    // Paginate
+    const startIdx = (params.page - 1) * params.maxItems;
+    const result = personalizedEvents.slice(startIdx, startIdx + params.maxItems);
 
     logger.info('Personalized events fetched', {
       component: 'events-personalized',
@@ -473,10 +492,12 @@ async function handler(
       events: result,
       meta: {
         timeRange: params.timeRange,
+        sort: params.sort,
+        page: params.page,
         totalAvailable: personalizedEvents.length,
         returned: result.length,
-        userInterests: userInterests.slice(0, 5), // Include for UI display
-        hasMoreEvents: personalizedEvents.length > params.maxItems,
+        userInterests: userInterests.slice(0, 5),
+        hasMoreEvents: startIdx + params.maxItems < personalizedEvents.length,
       },
     }));
   } catch (error) {
