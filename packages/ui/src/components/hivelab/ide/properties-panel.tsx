@@ -8,7 +8,7 @@ import { cn } from '../../../lib/utils';
 import { ArrayEditor } from './field-primitives';
 import { ContextPicker } from './context-picker';
 import { ConditionBuilder } from './condition-builder';
-import { ConnectionsPanel, type ConnectionWithMetadata } from './connections-panel';
+type ConnectionWithMetadata = Record<string, unknown>;
 import type { CanvasElement } from './types';
 import type { ContextRequirements, VisibilityCondition, ConditionGroup, ToolConnection } from '@hive/core';
 
@@ -733,16 +733,7 @@ function AdvancedSection({
               exit={prefersReducedMotion ? {} : { opacity: 0, x: 10 }}
               transition={{ duration: 0.15 }}
             >
-              <ConnectionsPanel
-                incomingConnections={elementConnections || []}
-                loading={connectionsLoading}
-                onEdit={onEditConnection}
-                onDelete={onDeleteConnection}
-                onToggleEnabled={onToggleConnection}
-                onTest={onTestConnection}
-                onAddConnection={onAddConnection}
-                onRefresh={onRefreshConnections}
-              />
+              <div className="p-4 text-sm opacity-50">Connections removed</div>
             </motion.div>
           )}
         </AnimatePresence>

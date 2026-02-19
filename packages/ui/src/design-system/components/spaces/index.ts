@@ -1,22 +1,12 @@
 /**
- * Spaces Components
- *
- * Components for space management, events, collaboration,
- * Hub + Theater Mode architecture.
+ * Spaces Components (Simplified Feb 2026)
+ * Hub/Theater/Modes/Boards/Widgets removed.
  */
 
 // ============================================
-// MODAL COMPONENTS (New - Phase 2)
+// MODAL COMPONENTS
 // ============================================
 
-export { AddTabModal, type AddTabInput, type AddTabModalProps } from './AddTabModal';
-export {
-  AddWidgetModal,
-  type AddWidgetInputUI,
-  type ExistingTool,
-  type AddWidgetModalProps,
-  type QuickTemplateUI,
-} from './AddWidgetModal';
 export {
   MemberInviteModal,
   type InviteableUser,
@@ -41,33 +31,11 @@ export {
 } from './EventEditModal';
 
 // ============================================
-// HUB + THEATER MODE COMPONENTS (Existing)
+// CHAT COMPONENTS
 // ============================================
-
-// Hub - Orientation Archetype (v2.0.0)
-export { SpaceHub, type SpaceMode, type SpaceIdentity, type SpaceHubProps } from './SpaceHub';
-
-// Mode Cards (legacy - used by ContextPill, not by SpaceHub)
-export {
-  ModeCard,
-  ChatModeCard,
-  EventsModeCard,
-  ToolsModeCard,
-  MembersModeCard,
-} from './ModeCard';
-
-export { ModeCard as BaseModeCard } from './ModeCard';
-
-// Mode Transitions
-export {
-  ModeTransition,
-  ModeHeader,
-  FullScreenMode,
-} from './ModeTransition';
 
 export { ContextPill, ContextPillMobile } from './ContextPill';
 
-// Chat Components
 export {
   ChatRowMessage,
   SystemMessage,
@@ -89,41 +57,8 @@ export {
   type TypingUser,
 } from './TypingDots';
 
-export {
-  TheaterChatBoard,
-  type TheaterChatBoardProps,
-  type TheaterMessage,
-} from './TheaterChatBoard';
-
-export {
-  SpaceChatBoard,
-  type SpaceChatBoardProps,
-  type SpaceBoardData,
-  type ChatMessageData,
-  type SlashCommandData,
-} from './SpaceChatBoard';
-
-// Full-Screen Modes
-export {
-  EventsMode,
-  type EventsModeProps,
-  type SpaceEvent,
-} from './EventsMode';
-
-export {
-  ToolsMode,
-  type ToolsModeProps,
-  type SpaceTool,
-} from './ToolsMode';
-
-export {
-  MembersMode,
-  type MembersModeProps,
-  type SpaceMember,
-} from './MembersMode';
-
 // ============================================
-// SIDEBAR & MOBILE COMPONENTS (Phase 3)
+// SIDEBAR & MOBILE COMPONENTS
 // ============================================
 
 export {
@@ -146,11 +81,8 @@ export {
 
 export { MobileDrawer, type MobileDrawerProps } from './MobileDrawer';
 
-// SpaceSidebar - REMOVED (Jan 2026)
-// Use GlobalSidebar from design-system/primitives instead
-
 // ============================================
-// ONBOARDING & ANIMATION COMPONENTS (Phase 4)
+// ONBOARDING & ANIMATION COMPONENTS
 // ============================================
 
 export {
@@ -171,15 +103,8 @@ export {
   type SpaceEntryAnimationProps,
 } from './SpaceEntryAnimation';
 
-export {
-  IntentConfirmationInline,
-  type IntentType,
-  type IntentPreview,
-  type IntentConfirmationInlineProps,
-} from './IntentConfirmationInline';
-
 // ============================================
-// THRESHOLD (Entry Gateway for Non-Members)
+// THRESHOLD
 // ============================================
 
 export {
@@ -188,7 +113,7 @@ export {
 } from './SpaceThreshold';
 
 // ============================================
-// JOIN REQUESTS (Leader Management)
+// JOIN REQUESTS
 // ============================================
 
 export {
@@ -199,7 +124,7 @@ export {
 } from './JoinRequestsPanel';
 
 // ============================================
-// CHAT SEARCH (Message Search)
+// CHAT SEARCH
 // ============================================
 
 export {

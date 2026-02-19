@@ -11,7 +11,7 @@ import { type NextRequest } from 'next/server';
 import { getSession } from '@/lib/session';
 import { revokeSessionAsync } from '@/lib/session-revocation';
 import { logger } from '@/lib/logger';
-import { auditAuthEvent } from '@/lib/production-auth';
+import { auditAuthEvent } from '@/lib/middleware/auth';
 import {
   withAuthAndErrors,
   getUserId,

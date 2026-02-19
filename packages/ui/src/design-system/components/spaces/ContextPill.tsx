@@ -3,7 +3,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, X } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import type { SpaceMode } from './ModeCard';
+// SpaceMode was from ModeCard (removed Feb 2026)
+type SpaceMode = 'hub' | 'chat' | 'events' | 'tools' | 'members';
 
 interface ContextPillProps {
   currentMode: SpaceMode;

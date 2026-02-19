@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getCatalog } from '@/server/onboarding-catalog-store';
 import { getCampusId as getCampusIdFromRequest, getCampusFromEmail } from '@/lib/campus-context';
-import { getCurrentUser } from '@/lib/server-auth';
+import { getCurrentUser } from '@/lib/middleware/auth';
 import { withCache } from '../../../../lib/cache-headers';
 
 /**

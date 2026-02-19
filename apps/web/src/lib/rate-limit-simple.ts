@@ -492,3 +492,8 @@ export function getRateLimitConfig() {
     limits: RATE_LIMITS
   };
 }
+
+// Aliases for backward compatibility
+export const postCreationRateLimit = apiRateLimit;
+export const magicLinkRateLimit = authRateLimit;
+export const handleCheckRateLimit = strictRateLimit;

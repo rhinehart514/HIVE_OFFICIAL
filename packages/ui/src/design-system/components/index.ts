@@ -12,25 +12,6 @@
 // LAYOUT ARCHETYPES (Locked)
 // ============================================
 
-// Orientation - For identity/navigation surfaces (Profile, Space Hub, Settings)
-export {
-  OrientationLayout,
-  IdentityBlock,
-  ActionBlock,
-  NavigationBlock,
-  ExtraSection,
-  OrientationHeading,
-  OrientationSubheading,
-  SectionLabel,
-  NavCardHeader,
-  OrientationAvatar,
-  EmptyState as OrientationEmptyState,
-  Orientation,
-  fadeIn as orientationFadeIn,
-} from './OrientationLayout';
-
-export type { } from './OrientationLayout';
-
 // ============================================
 // CARD COMPONENTS (New Design System)
 // ============================================
@@ -457,15 +438,7 @@ export {
   type TabItem,
 } from './TabNav';
 
-// BoardTabs - Board navigation for Space pages with unread indicators
-export {
-  BoardTabs,
-  BoardTabsSkeleton,
-  boardTabsContainerVariants,
-  boardTabTriggerVariants,
-  type BoardTabsProps,
-  type Board,
-} from './BoardTabs';
+// BoardTabs - REMOVED Feb 2026
 
 // ============================================
 // PROGRESS COMPONENTS (New Design System)
@@ -1070,7 +1043,6 @@ export {
   ProfileToolsCard,
   ProfileConnectionsCard,
   ProfileInterestsCard,
-  ProfileActivityHeatmap,
   ProfileToolModal,
 } from './profile';
 

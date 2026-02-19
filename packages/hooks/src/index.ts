@@ -65,10 +65,7 @@ export type {
 // export { useFeatureFlags, useToolBuilderVariant, useNavigationVariant } from './use-feature-flags';
 // Design Token hooks
 export * from './use-tokens';
-export * from './use-cognitive-budget';
 
-// Legacy topology budget hook (use use-cognitive-budget.ts instead)
-export { useCognitiveBudget as useCognitiveBudgetLegacy } from './topology/use-cognitive-budget';
 
 // Real-time Firestore hooks
 export { useRealtimeCollection } from './use-realtime-collection';

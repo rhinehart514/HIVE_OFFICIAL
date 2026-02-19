@@ -10,27 +10,11 @@ export { cn } from "./lib/utils";
 // ============================================
 
 export {
-  OrientationLayout,
-  OrientationBlock,
-} from "./layouts/OrientationLayout";
-
-export {
   DiscoveryLayout,
   DiscoveryGrid,
   DiscoveryList,
   DiscoveryEmpty,
 } from "./layouts/DiscoveryLayout";
-
-export {
-  ImmersionLayout,
-  ImmersionPanel,
-} from "./layouts/ImmersionLayout";
-
-export {
-  FocusFlowLayout,
-  FocusFlowStep,
-  FocusFlowActions,
-} from "./layouts/FocusFlowLayout";
 
 export {
   LayoutProvider,
@@ -629,8 +613,15 @@ export {
 } from "./shells/shell-icons";
 
 // Page Transition (Jan 2026 - Route animations)
-export { PageTransition as RouteTransition, PageTransitionProvider, usePageTransition } from "./design-system/templates/PageTransition";
-export type { PageTransitionProps as RouteTransitionProps, PageTransitionContextValue, PageTransitionProviderProps, TransitionMode } from "./design-system/templates/PageTransition";
+// PageTransition template REMOVED Feb 2026 — use motion primitives directly
+// Stub exports to avoid breaking downstream imports
+export const RouteTransition = ({ children }: { children: React.ReactNode }) => children;
+export const PageTransitionProvider = ({ children }: { children: React.ReactNode }) => children;
+export const usePageTransition = () => ({ mode: 'fade' as const, setMode: () => {} });
+export type RouteTransitionProps = { children: React.ReactNode };
+export type PageTransitionContextValue = { mode: string; setMode: (m: string) => void };
+export type PageTransitionProviderProps = { children: React.ReactNode; defaultMode?: string };
+export type TransitionMode = 'fade' | 'slide' | 'scale';
 
 // Phase 2: Territory-First Navigation Templates (Jan 2026)
 export { AppShell, AppShellSkeleton, useAppShell, APP_SHELL_HEADER_HEIGHT, APP_SHELL_MOBILE_NAV_HEIGHT } from "./design-system/templates/AppShell";
@@ -1136,35 +1127,7 @@ export {
   getSupportedElementTypes,
 } from "./components/hivelab/element-renderers";
 
-// HiveLab: Element Showcase (ChatGPT-style - Dec 2025)
-export {
-  // Components
-  ElementShowcase,
-  ElementBundleCard,
-  ElementShowcaseGrid,
-  ElementShowcaseSidebar,
-  // Hook
-  useElementShowcase,
-  // Data
-  ELEMENT_BUNDLES,
-  ELEMENT_SHOWCASE_DATA,
-  BUNDLE_ORDER,
-  getBundleElements,
-  getElementBundle,
-  getAllShowcaseElements,
-  getRandomPrompt,
-} from "./components/hivelab/showcase";
-export type {
-  ElementShowcaseProps,
-  ElementBundleCardProps,
-  ElementShowcaseGridProps,
-  ElementShowcaseSidebarProps,
-  ShowcaseState,
-  UseElementShowcaseOptions,
-  UseElementShowcaseReturn,
-  ElementBundleDefinition,
-  ElementShowcaseMetadata,
-} from "./components/hivelab/showcase";
+// HiveLab: Element Showcase (removed)
 
 // HiveLab: Modern @dnd-kit Studio Components (Nov 2025)
 export { DndStudioProvider } from "./components/hivelab/studio/DndStudioProvider";
@@ -1270,9 +1233,7 @@ export type { SpaceCardProps, SpaceTerritory } from "./design-system/components/
 export { GhostSpaceCard, GhostSpaceCardSkeleton } from "./design-system/components/GhostSpaceCard";
 export type { GhostSpaceCardProps } from "./design-system/components/GhostSpaceCard";
 
-// BoardTabs - Board navigation with unread indicators
-export { BoardTabs, BoardTabsSkeleton, boardTabsContainerVariants, boardTabTriggerVariants } from "./design-system/components/BoardTabs";
-export type { BoardTabsProps, Board } from "./design-system/components/BoardTabs";
+// BoardTabs - REMOVED Feb 2026
 
 // SpacePanel - 40% sidebar with NOW/NEXT UP/PINNED sections
 export { SpacePanel, SpacePanelSkeleton, NowSection, NextUpSection, PinnedSection } from "./design-system/components/SpacePanel";
@@ -1297,19 +1258,7 @@ export type { MessageGroupProps } from "./design-system/components/MessageGroup"
 // Space Tab Navigation - Use TabNav from design-system
 // NOTE: TabNav already exported above (line ~798)
 
-// Space Celebrations
-export {
-  GoldConfettiBurst,
-  JoinCelebration,
-  FirstPostCelebration,
-  MilestoneBadge,
-} from "./components/motion-primitives/space-celebrations";
-export type {
-  GoldConfettiBurstProps,
-  JoinCelebrationProps,
-  FirstPostCelebrationProps,
-  MilestoneBadgeProps,
-} from "./components/motion-primitives/space-celebrations";
+// Space Celebrations - REMOVED Feb 2026
 
 // Space Welcome Modal - REMOVED (Use Modal + custom content)
 // NOTE: SpaceWelcomeModal, SpaceLeaderOnboardingModal were in atomic/ (now deleted)
@@ -1390,17 +1339,8 @@ export type {
 // NOTE: ContextPanel - Use Drawer from design-system
 // NOTE: ChatToolbar - Use ToggleGroup from design-system
 
-// Theater Mode Spaces (from design-system)
+// Spaces (simplified Feb 2026 - Hub/Theater/Modes/Boards removed)
 export {
-  SpaceHub,
-  ModeCard,
-  ChatModeCard,
-  EventsModeCard,
-  ToolsModeCard,
-  MembersModeCard,
-  ModeTransition,
-  ModeHeader,
-  FullScreenMode,
   ContextPill,
   ContextPillMobile,
   ChatRowMessage,
@@ -1409,18 +1349,10 @@ export {
   ChatTypingDots,
   ChatTypingDotsCompact,
   ChatTypingDotsInline,
-  TheaterChatBoard,
-  SpaceChatBoard,
-  EventsMode,
-  ToolsMode,
-  MembersMode,
   SpaceThreshold,
   JoinRequestsPanel,
 } from "./design-system/components/spaces";
 export type {
-  SpaceIdentity,
-  SpaceHubProps,
-  SpaceMode,
   ChatRowMessageProps,
   ChatRowMessageAuthor,
   ChatRowMessageReaction,
@@ -1430,24 +1362,10 @@ export type {
   ChatTypingDotsCompactProps,
   ChatTypingDotsInlineProps,
   TypingUser,
-  TheaterChatBoardProps,
-  TheaterMessage,
-  SpaceChatBoardProps,
-  SpaceBoardData as SpaceChatBoardData,
-  ChatMessageData as SpaceChatMessageData,
-  SlashCommandData as SpaceChatSlashCommand,
-  EventsModeProps,
-  SpaceEvent,
-  ToolsModeProps,
-  SpaceTool,
-  MembersModeProps,
-  SpaceMember,
   SpaceThresholdProps,
   JoinRequestsPanelProps,
   JoinRequestItem,
   JoinRequestUser,
-  // Modal types
-  QuickTemplateUI,
   PinnedMessage,
   SpaceFeature,
   SpaceLeaderInfo,
@@ -1494,22 +1412,7 @@ export type {
   InlineComponentData,
 } from "./components/hivelab/inline-element-renderer";
 
-// HiveLab: Automations panel (Phase 3)
-export { AutomationsPanel, AutomationsBadge } from "./components/hivelab/automations-panel";
-export type { AutomationItem } from "./components/hivelab/automations-panel";
-
-// Automation Templates Browser (Phase 3.5)
-export { AutomationTemplates, AutomationTemplatesCompact } from "./components/hivelab/automation-templates";
-
-// Automation Builder Modal (Phase 4 - Full Automation UI)
-export { AutomationBuilderModal } from "./components/hivelab/ide/automation-builder-modal";
-export type {
-  AutomationData,
-  AutomationTrigger,
-  AutomationCondition,
-  AutomationAction,
-  AutomationTestResult,
-} from "./components/hivelab/ide/automation-builder-modal";
+// HiveLab: Automations (removed)
 
 // ============================================
 // HIVELAB: LEGACY STUDIO EXPORTS (REMOVED)
@@ -1745,32 +1648,7 @@ export type {
   CommandBarNotification,
 } from "./design-system/components/campus";
 
-// Campus Dock
-export { CampusDock } from "./design-system/components/campus";
-export type {
-  CampusDockProps,
-  DockSpaceItem,
-  DockToolItem,
-} from "./design-system/components/campus";
-
-// Dock Orb
-export { DockOrb } from "./design-system/components/campus";
-export type {
-  DockOrbProps,
-  WarmthLevel as DockWarmthLevel,
-} from "./design-system/components/campus";
-
-// Preview Card
-export { DockPreviewCard } from "./design-system/components/campus";
-export type {
-  DockPreviewCardProps,
-  SpacePreviewData,
-  ToolPreviewData,
-} from "./design-system/components/campus";
-
-// Mobile Drawer
-export { CampusDrawer } from "./design-system/components/mobile";
-export type { CampusDrawerProps } from "./design-system/components/mobile";
+// Campus Dock, DockOrb, DockPreviewCard, CampusDrawer - REMOVED Feb 2026
 
 // ============================================
 // PROFILE COMPONENTS (Jan 2026 - Profile Rebuild)

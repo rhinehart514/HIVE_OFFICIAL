@@ -11,7 +11,7 @@ import {
   type ConnectionForValidation,
 } from "@hive/core";
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit } from "@/lib/rate-limit-simple";
 import { validateToolContext } from "@hive/core/infrastructure/api/validate-tool-context";
 import { getQuickTemplate } from "@hive/ui";
 import { withCache } from '../../../lib/cache-headers';

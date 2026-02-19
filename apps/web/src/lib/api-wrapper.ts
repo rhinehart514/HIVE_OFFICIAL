@@ -5,7 +5,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { type ZodTypeAny } from 'zod';
-import { validateApiAuth, type AuthOptions as AuthConfig, type AuthContext } from './api-auth-middleware';
+import { validateApiAuth, type AuthOptions as AuthConfig, type AuthContext } from './middleware/auth';
 import { handleApiError, validateRequest } from './api-error-handler';
 import { trackApiCall } from './error-monitoring';
 import { createRequestLogger, logApiCall, logPerformance, logger } from './structured-logger';

@@ -21,7 +21,7 @@ import {
   ContentModerationService
 } from '@hive/core';
 import type { GhostModeUser } from '@hive/core';
-import { getCurrentUser } from '@/lib/server-auth';
+import { getCurrentUser } from '@/lib/middleware/auth';
 import { searchRateLimit } from '@/lib/rate-limit-simple';
 import { getCampusFromEmail, getDefaultCampusId } from '@/lib/campus-context';
 import { withCache } from '../../../lib/cache-headers';

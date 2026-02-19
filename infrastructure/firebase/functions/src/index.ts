@@ -137,8 +137,6 @@ export const events = {
     cleanupSentReminders: eventReminders.cleanupSentReminders,
 };
 
-export * from "./auth/sendMagicLink";
-export * from "./auth/verifyMagicLink";
 export * from "./auth/checkHandleUniqueness";
 export * from "./auth/completeOnboarding";
 export * from "./auth/updateUserAvatar";

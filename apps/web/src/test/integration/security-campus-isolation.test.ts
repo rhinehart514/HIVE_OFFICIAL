@@ -16,7 +16,7 @@ vi.mock('@/lib/session', () => ({
   // re-export types used by the code if any
 }));
 
-import { withSecureAuth } from '@/lib/api-auth-secure';
+import { withSecureAuth } from '@/lib/middleware/auth';
 
 function makeReq(url: string, init?: RequestInit) {
   const headers = new Headers(init?.headers as any);

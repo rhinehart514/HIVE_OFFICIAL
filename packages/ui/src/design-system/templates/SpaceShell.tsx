@@ -61,7 +61,8 @@ import {
   AvatarFallback,
   getInitials,
 } from '../primitives';
-import { BoardTabs, type Board } from '../components/BoardTabs';
+// BoardTabs removed Feb 2026
+type Board = { id: string; name: string; type?: string; isDefault?: boolean; unreadCount?: number };
 import {
   SpacePanel,
   type OnlineMember,
@@ -497,14 +498,8 @@ export function SpaceShell({
             WebkitBackdropFilter: 'blur(12px)',
           }}
         >
-          <BoardTabs
-            boards={boards}
-            activeBoard={activeBoard}
-            onBoardChange={onBoardChange}
-            onAddBoard={onAddBoard}
-            canAddBoard={canAddBoard}
-            className="h-full"
-          />
+          {/* BoardTabs removed Feb 2026 */}
+          <div className="h-full" />
         </div>
 
         {/* Main Layout */}

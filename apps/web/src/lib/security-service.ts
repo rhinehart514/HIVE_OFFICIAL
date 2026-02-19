@@ -369,7 +369,7 @@ export async function validateAuthToken(
 
   // For real Firebase tokens, validate with production auth service
   try {
-    const { validateProductionToken } = await import('./production-auth');
+    const { validateProductionToken } = await import('./middleware/auth');
     const result = await validateProductionToken(token, request, {
       operation: context?.operation
     });

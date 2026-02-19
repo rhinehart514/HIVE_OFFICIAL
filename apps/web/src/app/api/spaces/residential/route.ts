@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { getCampusId as getCampusIdFromRequest, getDefaultCampusId, getCampusFromEmail } from '@/lib/campus-context';
-import { getCurrentUser } from '@/lib/server-auth';
+import { getCurrentUser } from '@/lib/middleware/auth';
 import { withCache } from '../../../../lib/cache-headers';
 
 /**

@@ -11,7 +11,7 @@ import { cn } from '../../../lib/utils';
 import { ElementPalette } from './element-palette';
 import { LayersPanel } from './layers-panel';
 import { OtherToolsPanel, type OtherToolData } from './other-tools-panel';
-import { AutomationsPanel, type AutomationSummary } from './automations-panel';
+type AutomationSummary = Record<string, unknown>;
 import type { CanvasElement, Connection } from './types';
 
 const AUTOMATIONS_ENABLED = true;

@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { validateApiAuth } from '@/lib/api-auth-middleware';
+import { validateApiAuth } from '@/lib/middleware/auth';
 import { logger } from '@/lib/logger';
 import { clearDomainCache } from '@/lib/campus-context';
 import { withCache } from '../../../../../lib/cache-headers';

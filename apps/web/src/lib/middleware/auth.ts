@@ -568,3 +568,294 @@ export function requireCampusFromEmail(email: string | undefined): string | null
   if (!email) return null;
   return deriveCampusFromEmail(email) || null;
 }
+
+// ============================================
+// Consolidated from auth-server.ts
+// ============================================
+
+import { authAdmin as adminAuth } from '@/lib/firebase-admin';
+
+export interface AuthenticatedUser {
+  uid: string;
+  email?: string;
+  email_verified?: boolean;
+  displayName?: string;
+}
+
+/**
+ * Extract and verify auth token from request headers
+ * Returns null if authentication fails
+ */
+export async function getCurrentUser(request: NextRequest): Promise<AuthenticatedUser | null> {
+  try {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return null;
+    }
+    const token = authHeader.replace('Bearer ', '');
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    return {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      email_verified: decodedToken.email_verified,
+      displayName: decodedToken.name
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Require authentication - throws if not authenticated
+ */
+export async function requireAuth(request: NextRequest): Promise<AuthenticatedUser> {
+  const user = await getCurrentUser(request);
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+  return user;
+}
+
+/** Alias for requireAuth */
+export const validateAuth = requireAuth;
+
+/**
+ * Extract bearer token string from request headers
+ */
+export function getAuthTokenFromRequest(request: NextRequest): string | null {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+  return authHeader.replace('Bearer ', '');
+}
+
+/**
+ * Verify an auth token and return decoded user info
+ */
+export async function verifyAuthToken(token: string): Promise<AuthenticatedUser | null> {
+  try {
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    return {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      email_verified: decodedToken.email_verified,
+      displayName: decodedToken.name
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ============================================
+// Consolidated from production-auth.ts
+// ============================================
+
+/**
+ * Check if running in production environment
+ */
+export function isProductionEnvironment(): boolean {
+  return process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+}
+
+type AuthEventType = 'success' | 'failure' | 'suspicious' | 'forbidden';
+
+interface AuthEventContext {
+  operation: string;
+  error?: string;
+  threats?: string;
+  securityLevel?: string;
+  [key: string]: unknown;
+}
+
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  const realIP = request.headers.get('x-real-ip');
+  if (realIP) return realIP;
+  return 'unknown';
+}
+
+function getRequestUserAgent(request: NextRequest): string {
+  return request.headers.get('user-agent') || 'unknown';
+}
+
+/**
+ * Audit authentication events for security monitoring
+ */
+export async function auditAuthEvent(
+  eventType: AuthEventType,
+  request: NextRequest,
+  context: AuthEventContext
+): Promise<void> {
+  const timestamp = new Date().toISOString();
+  const ip = getClientIP(request);
+  const userAgent = getRequestUserAgent(request);
+  const requestId = request.headers.get('x-request-id') || `req_${Date.now()}`;
+
+  const auditLog = {
+    timestamp,
+    eventType,
+    ip,
+    userAgent,
+    path: request.nextUrl.pathname,
+    requestId,
+    ...context,
+  };
+
+  switch (eventType) {
+    case 'success':
+      logger.info(`Auth event: ${context.operation} succeeded`, { action: 'auth_audit', metadata: auditLog });
+      break;
+    case 'failure':
+      logger.warn(`Auth event: ${context.operation} failed`, { action: 'auth_audit', metadata: auditLog });
+      break;
+    case 'suspicious':
+      logger.warn(`Auth event: suspicious activity in ${context.operation}`, { action: 'auth_audit', metadata: auditLog });
+      break;
+    case 'forbidden':
+      logger.error(`Auth event: ${context.operation} blocked`, { action: 'auth_audit', metadata: auditLog });
+      break;
+  }
+}
+
+/**
+ * Check if request should be blocked based on security heuristics
+ */
+export function shouldBlockRequest(request: NextRequest): { blocked: boolean; reason?: string } {
+  const userAgent = getRequestUserAgent(request);
+
+  if (userAgent === 'unknown' || userAgent.length < 10) {
+    return { blocked: true, reason: 'missing_user_agent' };
+  }
+
+  const maliciousPatterns = [/sqlmap/i, /nikto/i, /nmap/i, /masscan/i, /python-requests\/.*attack/i];
+  for (const pattern of maliciousPatterns) {
+    if (pattern.test(userAgent)) {
+      return { blocked: true, reason: 'malicious_user_agent' };
+    }
+  }
+
+  return { blocked: false };
+}
+
+// ============================================
+// Consolidated from api-auth-middleware.ts
+// ============================================
+
+export interface AuthContext {
+  userId: string;
+  token: string;
+  isAdmin?: boolean;
+  email?: string;
+  campusId: string;
+}
+
+export interface AuthOptions {
+  requireAdmin?: boolean;
+  operation?: string;
+}
+
+/**
+ * Validate API request authentication (session cookie or Bearer token)
+ */
+export async function validateApiAuth(
+  request: NextRequest,
+  options: AuthOptions = {}
+): Promise<AuthContext> {
+  const { requireAdmin: needsAdmin = false, operation } = options;
+
+  // Check session cookie first
+  const sessionCookie = request.cookies.get('hive_session');
+  if (sessionCookie?.value) {
+    const session = await verifySession(sessionCookie.value);
+    if (session && session.userId && session.email) {
+      if (needsAdmin) {
+        const { isAdmin } = await import('@/lib/admin-auth');
+        const admin = await isAdmin(session.userId, session.email);
+        if (!admin) {
+          throw new Response(JSON.stringify({ error: 'Admin access required' }), { status: 403, headers: { 'content-type': 'application/json' } });
+        }
+      }
+
+      let campusId: string | undefined = session.campusId;
+      if (!campusId && session.email) campusId = deriveCampusFromEmail(session.email);
+      if (!campusId) campusId = 'ub-buffalo';
+
+      return {
+        userId: session.userId,
+        token: sessionCookie.value,
+        isAdmin: session.isAdmin,
+        email: session.email,
+        campusId
+      };
+    }
+  }
+
+  // Bearer token
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    throw new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401, headers: { 'content-type': 'application/json' } });
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  try {
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    if (!decodedToken?.uid) throw new Error('Invalid token data');
+
+    let campusId = decodedToken.email ? deriveCampusFromEmail(decodedToken.email) : undefined;
+    if (!campusId) campusId = 'ub-buffalo';
+
+    return {
+      userId: decodedToken.uid,
+      token,
+      email: decodedToken.email,
+      campusId
+    };
+  } catch {
+    throw new Response(JSON.stringify({ error: 'Invalid authentication token' }), { status: 401, headers: { 'content-type': 'application/json' } });
+  }
+}
+
+/**
+ * Create standardized API responses
+ */
+/**
+ * Validate a Firebase ID token (production-grade)
+ */
+export async function validateProductionToken(
+  token: string,
+  _request: NextRequest,
+  context?: { operation?: string }
+): Promise<{ uid: string; email?: string }> {
+  const decodedToken = await adminAuth.verifyIdToken(token);
+  if (!decodedToken.uid) {
+    throw Object.assign(new Error('Token missing uid'), { httpStatus: 401 });
+  }
+  if (isProductionEnvironment()) {
+    logger.info('Production token validated', {
+      action: 'token_validation',
+      operation: context?.operation,
+      uid: decodedToken.uid
+    });
+  }
+  return { uid: decodedToken.uid, email: decodedToken.email };
+}
+
+/** @deprecated Use withAuth instead. Alias for backward compatibility. */
+export const withSecureAuth = withAuth;
+
+export class ApiResponse {
+  static success(data: unknown, status = 200) {
+    return NextResponse.json({ success: true, data }, { status });
+  }
+  static error(message: string, code?: string, status = 400) {
+    return NextResponse.json({ success: false, error: { message, code } }, { status });
+  }
+  static unauthorized(message = 'Authentication required') {
+    return NextResponse.json({ success: false, error: { message, code: 'UNAUTHORIZED' } }, { status: 401 });
+  }
+  static forbidden(message = 'Access denied') {
+    return NextResponse.json({ success: false, error: { message, code: 'FORBIDDEN' } }, { status: 403 });
+  }
+}

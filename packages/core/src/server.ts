@@ -55,36 +55,7 @@ export {
 } from './infrastructure/repositories/firebase-admin/inline-component.repository';
 
 // Setup System Repositories (Orchestrated Tool Bundles)
-// Firebase Admin implementations - import directly from repository file
-export {
-  FirebaseAdminSetupTemplateRepository,
-  getServerSetupTemplateRepository,
-  FirebaseAdminSetupDeploymentRepository,
-  getServerSetupDeploymentRepository,
-  resetSetupRepositories,
-} from './domain/hivelab/setup/setup.repository';
-
-// Setup types and entities - import from main setup exports
-export {
-  // Types
-  type ISetupTemplateRepository,
-  type SetupTemplateQueryOptions,
-  type ISetupDeploymentRepository,
-  type SetupDeploymentQueryOptions,
-  type PaginatedResult as SetupPaginatedResult,
-  // Entities
-  SetupTemplate,
-  SetupDeployment,
-  // DTOs
-  toSetupTemplateListDTO,
-  toSetupTemplateDetailDTO,
-  toSetupDeploymentListDTO,
-  toSetupDeploymentDetailDTO,
-  // Types
-  type SetupCategory,
-  type SetupDeploymentStatus,
-  type OrchestrationRule,
-} from './domain/hivelab/setup';
+// Setup system (removed)
 
 // Inline Component Domain Entity
 export {
@@ -159,11 +130,7 @@ export {
   type WidgetOperationResult
 } from './application/space-management.service';
 
-// HiveLab Custom Block Generation (server-only, requires GROQ_API_KEY)
-export {
-  generateCustomBlock,
-  DEFAULT_CUSTOM_BLOCK_MODEL,
-} from './application/hivelab/custom-block-generator.service';
+// HiveLab Custom Block Generation (removed)
 
 // Domain Events (Phase 1 - DDD Foundation)
 export {
@@ -304,7 +271,7 @@ export {
 export {
   ConnectionStrength,
   ConnectionTier,
-  type ConnectionFactors
+  type ConnectionFactors,
 } from './domain/profile/value-objects/connection-strength.value';
 export {
   CampusEmail,

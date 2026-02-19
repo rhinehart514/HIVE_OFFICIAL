@@ -16,7 +16,6 @@ export { CampusId } from '../../domain/profile/value-objects/campus-id.value';
 export { ConnectionId } from '../../domain/profile/value-objects/connection-id.value';
 
 // Re-export aggregates
-export { EnhancedFeed } from '../../domain/feed/enhanced-feed';
 export { EnhancedRitual } from '../../domain/rituals/aggregates/enhanced-ritual';
 export { EnhancedSpace } from '../../domain/spaces/aggregates/enhanced-space';
 export { EnhancedProfile } from '../../domain/profile/aggregates/enhanced-profile';

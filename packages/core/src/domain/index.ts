@@ -406,16 +406,7 @@ export {
   type NotifyAction,
 } from './hivelab/entities';
 
-// Automation Templates
-export {
-  AUTOMATION_TEMPLATES,
-  getAllTemplates as getAllAutomationTemplates,
-  getTemplatesByCategory as getAutomationTemplatesByCategory,
-  getTemplateById as getAutomationTemplateById,
-  createFromTemplate,
-  getTemplateCategories as getAutomationTemplateCategories,
-  type AutomationTemplate,
-} from './hivelab/automation-templates';
+// Automation Templates (removed)
 
 // Element Registry
 export {
@@ -532,60 +523,7 @@ export {
   type UniversalTemplate,
 } from './hivelab/system-tool-templates';
 
-// Setup System
-export {
-  SetupTemplate,
-  type SetupTemplateProps,
-  type SetupCategory,
-  type SetupSource,
-  type SetupToolSlot,
-  type SetupConfigField,
-  type OrchestrationRule,
-  type OrchestrationTriggerType,
-  type OrchestrationTriggerConfig,
-  type ToolEventTriggerConfig,
-  type TimeRelativeTriggerConfig,
-  type DataConditionTriggerConfig,
-  type ManualTriggerConfig,
-  type OrchestrationActionType,
-  type OrchestrationActionConfig,
-  type DataFlowActionConfig,
-  type VisibilityActionConfig,
-  type ConfigActionConfig,
-  type NotificationActionConfig,
-  type StateActionConfig,
-  type SetupTemplateListDTO,
-  type SetupTemplateDetailDTO,
-  toSetupTemplateListDTO,
-  toSetupTemplateDetailDTO,
-  SetupDeployment,
-  type SetupDeploymentProps,
-  type SetupDeploymentStatus,
-  type DeployedSetupTool,
-  type OrchestrationState,
-  type OrchestrationLogEntry,
-  type SetupDeploymentListDTO,
-  type SetupDeploymentDetailDTO,
-  toSetupDeploymentListDTO,
-  toSetupDeploymentDetailDTO,
-  type ISetupTemplateRepository,
-  type ISetupDeploymentRepository,
-  type SetupTemplateQueryOptions,
-  type SetupDeploymentQueryOptions,
-  type PaginatedResult,
-  EVENT_SERIES_TEMPLATE,
-  SYSTEM_SETUP_TEMPLATES,
-  getSystemSetupTemplate,
-  getSystemSetupTemplatesByCategory,
-  OrchestrationExecutorService,
-  getOrchestrationExecutor,
-  resetOrchestrationExecutor,
-  type ExecutionContext,
-  type OrchestrationActionResult,
-  type RuleExecutionResult,
-  type OrchestrationExecutionResult,
-  type ExecutorCallbacks,
-} from './hivelab/setup';
+// Setup System (removed)
 
 // Sprint 3: Tool-to-Tool Connections
 export type {

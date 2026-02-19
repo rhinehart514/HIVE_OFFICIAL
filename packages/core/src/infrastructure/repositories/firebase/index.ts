@@ -16,7 +16,6 @@ export type {
 // Import actual repository implementations
 import { FirebaseSpaceRepository } from './space.repository';
 import { FirebaseProfileRepository } from './profile.repository';
-import { FirebaseFeedRepository } from './feed.repository';
 import { FirebaseRitualRepository } from './ritual.repository';
 import type {
   IProfileRepository,
@@ -55,11 +54,9 @@ export function getProfileRepository(): IProfileRepository {
 
 /**
  * Get the Feed Repository instance
- * Returns singleton instance of FirebaseFeedRepository
  */
 export function getFeedRepository(): IFeedRepository {
   if (!feedRepositoryInstance) {
-    feedRepositoryInstance = new FirebaseFeedRepository();
   }
   return feedRepositoryInstance;
 }

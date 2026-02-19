@@ -133,12 +133,6 @@ export {
   type ProfileInterestsCardProps,
 } from './ProfileInterestsCard';
 
-export {
-  ProfileActivityHeatmap,
-  type ProfileActivityHeatmapProps,
-  type ActivityContribution,
-} from './ProfileActivityHeatmap';
-
 // ============================================
 // CONNECTION COMPONENTS
 // ============================================
@@ -152,13 +146,6 @@ export {
 // ============================================
 // DISCOVERY COMPONENTS
 // ============================================
-
-export {
-  PeopleYouMayKnow,
-  type PeopleYouMayKnowProps,
-  type UserSuggestion,
-  type SuggestedUser,
-} from './PeopleYouMayKnow';
 
 // ============================================
 // BENTO GRID WIDGETS (New - Phase 2)

@@ -9,7 +9,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { postCreationRateLimit } from "@/lib/rate-limit";
+import { postCreationRateLimit } from "@/lib/rate-limit-simple";
 import { logger } from "@/lib/logger";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";

@@ -16,10 +16,12 @@ import type {
   HistoryEntry,
 } from '../types';
 import type { RailState, RailTab } from '../element-rail';
-import type { AutomationSummary } from '../automations-panel';
-import type { AutomationData } from '../automation-builder-modal';
-import type { AutomationRun } from '../automation-logs-viewer';
 import type { OtherToolData } from '../other-tools-panel';
+
+// Stub types for removed automation system
+type AutomationSummary = Record<string, unknown>;
+type AutomationData = Record<string, unknown>;
+type AutomationRun = Record<string, unknown>;
 
 // ============================================
 // HiveLab IDE State Management

@@ -7,7 +7,6 @@ import { IUnitOfWork, IProfileRepository, IConnectionRepository, ISpaceRepositor
 import { FirebaseProfileRepository } from './profile.repository';
 import { FirebaseConnectionRepository } from './connection.repository';
 import { FirebaseSpaceRepository } from './space.repository';
-import { FirebaseFeedRepository } from './feed.repository';
 import { FirebaseRitualRepository } from './ritual.repository';
 
 export class FirebaseUnitOfWork implements IUnitOfWork {
@@ -25,7 +24,6 @@ export class FirebaseUnitOfWork implements IUnitOfWork {
     this._profiles = new FirebaseProfileRepository();
     this._connections = new FirebaseConnectionRepository();
     this._spaces = new FirebaseSpaceRepository();
-    this._feeds = new FirebaseFeedRepository();
     this._rituals = new FirebaseRitualRepository();
   }
 

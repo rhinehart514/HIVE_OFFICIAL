@@ -108,16 +108,13 @@ export type {
   OwnershipTransferInput
 } from './space-management.service';
 
-// Feed domain services
-export {
-  FeedGenerationService
-} from './feed-generation.service';
+// Feed domain services (stub - not yet implemented)
+// export { } from './feed.service';
 
-export type {
-  FeedGenerationOptions,
-  FeedInsights,
-  FeedContent
-} from './feed-generation.service';
+// Feed types (stub)
+export type FeedGenerationOptions = Record<string, unknown>;
+export type FeedInsights = Record<string, unknown>;
+export type FeedContent = Record<string, unknown>;
 
 // Ritual domain services
 export {

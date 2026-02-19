@@ -388,21 +388,7 @@ export {
   canRunAutomation,
 } from "./domain/hivelab/tool-automation.types";
 
-// Sprint 4: Automation Runner Service
-export {
-  AutomationRunnerService,
-  getAutomationRunner,
-  initializeAutomationRunner,
-  createAutomationRunner,
-  resetAutomationRunner,
-} from "./application/hivelab/automation-runner.service";
-export type {
-  AutomationRunnerRepository,
-  ActionExecutorCallbacks,
-  AutomationExecutionContext,
-  AutomationActionResult,
-  AutomationExecutionResult,
-} from "./application/hivelab/automation-runner.service";
+// Sprint 4: Automation Runner Service (removed)
 
 // Sprint 2: Tool Runtime Context Types
 export type {
@@ -673,132 +659,11 @@ export {
   type StreamingMessage
 } from "./application/hivelab/prompts/tool-generation.prompt";
 
-// HiveLab AI Learning System
-export {
-  // Types
-  type ElementAffinity,
-  type MissingPattern,
-  type OverGenerationPattern,
-  type ConfigDrift,
-  type OptimalConfig,
-  type LayoutPattern,
-  type LearnedPatterns,
-  type EmbeddingDocument,
-  type RetrievedContext,
-  type GraduationCandidate,
-  type CapabilityGap,
-  type EnhancedPrompt,
-  type PromptEnhancementOptions,
-  // Services
-  PatternExtractorService,
-  getPatternExtractorService,
-  initializePatternExtractor,
-  ConfigLearnerService,
-  getConfigLearnerService,
-  initializeConfigLearner,
-  ContextRetrieverService,
-  getContextRetrieverService,
-  initializeContextRetriever,
-  PromptEnhancerService,
-  getPromptEnhancerService,
-  initializePromptEnhancer,
-  initializeLearningServices,
-} from "./application/hivelab/learning";
+// HiveLab AI Learning System (removed)
 
-// HiveLab AI Benchmarking System
-export {
-  // Types
-  type BenchmarkCategory,
-  type BenchmarkPrompt,
-  type BenchmarkResult,
-  type BenchmarkSuiteResult,
-  type BenchmarkComparison,
-  type BenchmarkRunnerOptions,
-  type CategoryResult,
-  type ExpectationResult,
-  type RegressionThresholds,
-  type MockGenerationResult,
-  DEFAULT_REGRESSION_THRESHOLDS,
-  // Prompts
-  BENCHMARK_PROMPTS,
-  getPromptsByCategory,
-  getPromptsByTag,
-  getPromptById,
-  getPromptIdsByCategory,
-  PROMPT_COUNTS,
-  TOTAL_PROMPT_COUNT,
-  // Services
-  BenchmarkRunnerService,
-  getBenchmarkRunner,
-  MockGeneratorService,
-  getMockGenerator,
-  BenchmarkReporter,
-  getBenchmarkReporter,
-  type OutputFormat,
-} from "./application/hivelab/benchmarks";
+// HiveLab AI Benchmarking System (removed)
 
-// HiveLab Setup System (Orchestrated Tool Bundles)
-export {
-  // SetupTemplate Entity & Types
-  SetupTemplate,
-  type SetupTemplateProps,
-  type SetupCategory,
-  type SetupSource,
-  type SetupToolSlot,
-  type SetupConfigField,
-  // Orchestration Types
-  type OrchestrationRule,
-  type OrchestrationTriggerType,
-  type OrchestrationTriggerConfig,
-  type ToolEventTriggerConfig,
-  type TimeRelativeTriggerConfig,
-  type DataConditionTriggerConfig,
-  type ManualTriggerConfig,
-  type OrchestrationActionType,
-  type OrchestrationActionConfig,
-  type DataFlowActionConfig,
-  type VisibilityActionConfig,
-  type ConfigActionConfig,
-  type NotificationActionConfig,
-  type StateActionConfig,
-  // SetupTemplate DTOs
-  type SetupTemplateListDTO,
-  type SetupTemplateDetailDTO,
-  toSetupTemplateListDTO,
-  toSetupTemplateDetailDTO,
-  // SetupDeployment Entity & Types
-  SetupDeployment,
-  type SetupDeploymentProps,
-  type SetupDeploymentStatus,
-  type DeployedSetupTool,
-  type OrchestrationState,
-  type OrchestrationLogEntry,
-  // SetupDeployment DTOs
-  type SetupDeploymentListDTO,
-  type SetupDeploymentDetailDTO,
-  toSetupDeploymentListDTO,
-  toSetupDeploymentDetailDTO,
-  // Repository Interfaces (types only - implementations in @hive/core/server)
-  type ISetupTemplateRepository,
-  type ISetupDeploymentRepository,
-  type SetupTemplateQueryOptions,
-  type SetupDeploymentQueryOptions,
-  type PaginatedResult,
-  // System Templates
-  EVENT_SERIES_TEMPLATE,
-  SYSTEM_SETUP_TEMPLATES,
-  getSystemSetupTemplate,
-  getSystemSetupTemplatesByCategory,
-  // Orchestration Executor
-  OrchestrationExecutorService,
-  getOrchestrationExecutor,
-  resetOrchestrationExecutor,
-  type ExecutionContext,
-  type OrchestrationActionResult,
-  type RuleExecutionResult,
-  type OrchestrationExecutionResult,
-  type ExecutorCallbacks,
-} from "./domain/hivelab/setup";
+// HiveLab Setup System (removed)
 
 // Sprint 5: Tool Theme Inheritance
 export type {

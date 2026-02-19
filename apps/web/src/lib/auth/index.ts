@@ -1,82 +1,40 @@
 /**
  * HIVE Consolidated Authentication Utilities
  *
- * This is the single source of truth for authentication functions.
- * All auth-related imports should use this file.
- *
- * @author HIVE Platform Team
- * @version 2.0.0 - Consolidated from 14 auth files
+ * Single source of truth for authentication functions.
+ * Server-side auth: lib/middleware/auth.ts
+ * Client-side auth: lib/secure-auth-utils.ts
  */
 
-// Client-side secure auth utilities (from secure-auth-utils.ts)
-import {
-  getSecureAuthHeaders,
-  secureApiFetch,
-  isAuthenticated as isAuthenticatedFn,
-  clearAuthentication,
-  handleAuthError,
-  type SecureAuthHeaders
-} from '../secure-auth-utils'
-
-// Re-export the primary auth hook from auth-logic package
-import { useAuth, type UseAuthReturn as AuthHook } from '@hive/auth-logic'
-
-// Server-side auth utilities - imported separately to avoid circular deps
-import { getCurrentUser, requireAuth as requireAuthFn, getAuthTokenFromRequest, verifyAuthToken } from '../auth-server'
-import { isAdmin as isAdminFn } from '../admin-auth'
-
-// Type for authenticated user
-export interface AuthUser {
-  uid: string;
-  email?: string;
-  email_verified?: boolean;
-  displayName?: string;
-}
-
-// Re-export individual functions for direct imports
+// Server-side auth (consolidated in middleware/auth.ts)
 export {
   getCurrentUser,
-  requireAuthFn as requireAuth,
-  isAdminFn as isAdmin,
+  requireAuth,
+  validateAuth,
   getAuthTokenFromRequest,
   verifyAuthToken,
+  auditAuthEvent,
+  shouldBlockRequest,
+  isProductionEnvironment,
+  validateApiAuth,
+  ApiResponse,
+  type AuthenticatedUser,
+  type AuthContext,
+  type AuthOptions,
+} from '../middleware/auth';
+
+// Client-side auth utils
+export {
   getSecureAuthHeaders,
   secureApiFetch,
-  isAuthenticatedFn as isAuthenticated,
+  isAuthenticated,
   clearAuthentication,
   handleAuthError,
-  useAuth,
   type SecureAuthHeaders,
-  type AuthHook
-}
+} from '../secure-auth-utils';
 
-/**
- * Legacy compatibility exports
- * These will be phased out in favor of the consolidated functions above
- */
-export type { AuthUser as LegacyAuthUser }
+// Re-export the primary auth hook
+export { useAuth, type UseAuthReturn as AuthHook } from '@hive/auth-logic';
 
-/**
- * Consolidated auth utilities - preferred interface
- */
-export const Auth = {
-  // Server-side functions
-  server: {
-    requireAuth: requireAuthFn,
-    isAdmin: isAdminFn,
-    getTokenFromRequest: getAuthTokenFromRequest,
-    verifyToken: verifyAuthToken,
-  },
-
-  // Client-side functions
-  client: {
-    getHeaders: getSecureAuthHeaders,
-    fetch: secureApiFetch,
-    isAuthenticated: isAuthenticatedFn,
-    logout: clearAuthentication,
-    handleError: handleAuthError,
-  },
-
-  // React hook
-  useAuth,
-} as const
+// Admin auth
+export { isAdmin } from '../admin-auth';

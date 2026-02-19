@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createHash, randomInt } from 'crypto';
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
 import { getSchoolFromEmailAsync, type SchoolLookupResult } from "@/lib/campus-context";
-import { auditAuthEvent } from "@/lib/production-auth";
+import { auditAuthEvent } from "@/lib/middleware/auth";
 import { currentEnvironment } from "@/lib/env";
 import { validateWithSecurity, ApiSchemas } from "@/lib/secure-input-validation";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
@@ -12,7 +12,6 @@ import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { validateOrigin } from "@/lib/security-middleware";
 import { Resend } from 'resend';
-import { isDevAuthBypassAllowed, logDevCode } from "@/lib/dev-auth-bypass";
 
 // Firebase Client SDK for school validation fallback
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -269,12 +268,6 @@ async function sendVerificationCodeEmail(
   code: string,
   schoolName: string
 ): Promise<boolean> {
-  // In development with explicit bypass, just log the code
-  if (isDevAuthBypassAllowed('send_verification_email', { email, endpoint: '/api/auth/send-code' })) {
-    logDevCode(email, code);
-    return true;
-  }
-
   // Domain verified - using hello@hive.college via RESEND_FROM_EMAIL env var
   const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'hello@hive.college';
   const sendGridFromEmail = process.env.EMAIL_FROM || 'hello@hive.college';

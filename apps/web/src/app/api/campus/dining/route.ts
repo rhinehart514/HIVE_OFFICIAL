@@ -19,7 +19,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { getCampusId as getCampusIdFromRequest, getDefaultCampusId } from '@/lib/campus-context';
-import { getCurrentUser } from '@/lib/server-auth';
+import { getCurrentUser } from '@/lib/middleware/auth';
 import {
   type DiningLocation,
   type DiningLocationStatus,

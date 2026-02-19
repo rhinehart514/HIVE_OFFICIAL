@@ -10,7 +10,10 @@ import {
 import { canGenerate, recordGeneration } from '@/lib/ai-usage-tracker';
 import { aiGenerationRateLimit } from '@/lib/rate-limit-simple';
 import { logger } from '@/lib/logger';
-import { generateCustomBlock } from '@hive/core/server';
+// Custom block generation removed
+const generateCustomBlock = async (_opts: Record<string, unknown>): Promise<{ config: Record<string, unknown>; explanation: string }> => {
+  throw new Error('Custom block generation has been removed');
+};
 
 const CreateCustomBlockSchema = z.object({
   prompt: z.string().min(1).max(4000),

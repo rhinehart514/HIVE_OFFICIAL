@@ -14,7 +14,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
 import { logger } from '@/lib/logger';
 import { clearAllSessionCookies, getSession } from '@/lib/session';
-import { auditAuthEvent } from '@/lib/production-auth';
+import { auditAuthEvent } from '@/lib/middleware/auth';
 import { revokeSession, revokeAllUserSessionsAsync } from '@/lib/session-revocation';
 import {
   withErrors,

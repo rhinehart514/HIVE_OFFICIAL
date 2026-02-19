@@ -8,7 +8,6 @@ import { EnhancedProfile } from '../../domain/profile/aggregates/enhanced-profil
 import { Connection } from '../../domain/profile/aggregates/connection';
 import { EnhancedRitual } from '../../domain/rituals/aggregates/enhanced-ritual';
 import { EnhancedSpace } from '../../domain/spaces/aggregates/enhanced-space';
-import { EnhancedFeed } from '../../domain/feed/enhanced-feed';
 import { Participation } from '../../domain/rituals/entities/participation';
 import { RitualPhase, RitualUnion, RitualArchetype } from '../../domain/rituals/archetypes';
 
@@ -73,31 +72,6 @@ export interface ISpaceRepository extends IRepository<EnhancedSpace> {
   }): Promise<Result<{ spaces: EnhancedSpace[]; hasMore: boolean; nextCursor?: string }>>;
 }
 
-// Feed repository
-export interface IFeedRepository extends IRepository<EnhancedFeed> {
-  findByUserId(userId: any): Promise<Result<EnhancedFeed>>;
-  findByCampus(campusId: string): Promise<Result<EnhancedFeed[]>>;
-  saveFeed(feed: EnhancedFeed): Promise<Result<void>>;
-  getFeedContent(
-    userId: string,
-    userSpaces: string[],
-    userConnections: string[],
-    limitCount?: number
-  ): Promise<Result<any[]>>;
-  getTrendingContent(campusId: string, limitCount?: number): Promise<Result<any[]>>;
-  getEventContent(campusId: string, limitCount?: number): Promise<Result<any[]>>;
-  getRitualContent(campusId: string, limitCount?: number): Promise<Result<any[]>>;
-  recordInteraction(
-    userId: string,
-    itemId: string,
-    interactionType: string,
-    metadata?: Record<string, unknown>
-  ): Promise<Result<void>>;
-  addFeedItem(feedId: string, item: any): Promise<Result<void>>;
-  removeFeedItem(feedId: string, itemId: string): Promise<Result<void>>;
-  subscribeToFeed(userId: string, callback: (items: any[]) => void): () => void;
-}
-
 // Ritual repository
 export interface IRitualRepository extends IRepository<EnhancedRitual> {
   findByCampus(campusId: string): Promise<Result<EnhancedRitual[]>>;
@@ -126,7 +100,6 @@ export interface IUnitOfWork {
   profiles: IProfileRepository;
   connections: IConnectionRepository;
   spaces: ISpaceRepository;
-  feeds: IFeedRepository;
   rituals: IRitualRepository;
   ritualConfigs?: IRitualConfigRepository;
 

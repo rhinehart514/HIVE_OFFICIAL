@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { MobileBottomBar, TopBar } from './AppSidebar';
-import { CreatePromptBar } from './CreatePromptBar';
 
 const AdminToolbar = dynamic(() => import('@/components/admin/AdminToolbar'), {
   ssr: false,
@@ -60,11 +59,6 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </main>
       </div>
-
-      <CreatePromptBar
-        spaceHandle={activeSpaceHandle}
-        className="hidden md:flex"
-      />
 
       <AdminToolbar />
     </div>

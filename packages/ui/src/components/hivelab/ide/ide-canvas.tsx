@@ -34,7 +34,6 @@ import { springPresets, easingArrays } from '@hive/tokens';
 import { getElementById, type ElementSpec } from '@hive/core';
 import type { CanvasElement, Connection, ToolMode } from './types';
 import type { ElementProps } from '../../../lib/hivelab/element-system';
-import { SmartGuides, snapToGuides } from './smart-guides';
 import { ElementErrorBoundary } from '../elements/error-boundary';
 import { ElementRenderer, type PreviewMode, getElementModeFromPreviewMode } from './element-renderer';
 

@@ -12,7 +12,7 @@ import {
   type StreamMessage,
 } from '@/lib/goose-server';
 import { canGenerate, recordGeneration } from '@/lib/ai-usage-tracker';
-import { validateApiAuth } from '@/lib/api-auth-middleware';
+import { validateApiAuth } from '@/lib/middleware/auth';
 import { aiGenerationRateLimit } from '@/lib/rate-limit-simple';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';

@@ -40,18 +40,7 @@ export {
 export { SwipeableCarousel, type SwipeableCarouselProps } from './swipeable-carousel';
 
 // Space Celebrations (for achievement moments - gold is appropriate here)
-export {
-  GoldConfettiBurst,
-  JoinCelebration,
-  FirstPostCelebration,
-  MilestoneBadge,
-} from './space-celebrations';
-export type {
-  GoldConfettiBurstProps,
-  JoinCelebrationProps,
-  FirstPostCelebrationProps,
-  MilestoneBadgeProps,
-} from './space-celebrations';
+// Space celebrations - REMOVED Feb 2026
 
 // Brand Spinner (configurable colors, neutral by default)
 export {

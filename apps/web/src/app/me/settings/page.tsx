@@ -334,10 +334,6 @@ function SettingsContent() {
                 onPrivacyChange={handlePrivacyChange}
                 onSavePrivacy={handleSavePrivacy}
                 isUpdating={isUpdating}
-                ghostModeEnabled={ghostModeEnabled}
-                showGhostModeModal={showGhostModeModal}
-                setShowGhostModeModal={setShowGhostModeModal}
-                onToggleGhostMode={handleToggleGhostMode}
               />
             )}
             {activeSection === 'account' && (

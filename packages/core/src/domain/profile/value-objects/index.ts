@@ -31,7 +31,7 @@ export {
 export {
   ConnectionStrength,
   ConnectionTier,
-  type ConnectionFactors
+  type ConnectionFactors,
 } from './connection-strength.value';
 
 // Email (multi-campus)

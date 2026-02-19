@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { parseStringPromise } from "xml2js";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
-import { validateApiAuth } from "@/lib/api-auth-middleware";
+import { validateApiAuth } from "@/lib/middleware/auth";
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
 import { withCache } from '../../../../lib/cache-headers';
 

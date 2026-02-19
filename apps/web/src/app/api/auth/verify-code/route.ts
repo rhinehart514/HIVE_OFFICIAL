@@ -2,13 +2,12 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from "zod";
 import { createHash } from 'crypto';
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
-import { auditAuthEvent } from "@/lib/production-auth";
+import { auditAuthEvent } from "@/lib/middleware/auth";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { SESSION_CONFIG, createTokenPair, setTokenPairCookies } from "@/lib/session";
 import { validateOrigin } from "@/lib/security-middleware";
-import { isDevAuthBypassAllowed, getDevUserId } from "@/lib/dev-auth-bypass";
 
 // Admin emails that get isAdmin flag on session creation
 const ADMIN_EMAILS = new Set(['rhinehart514@gmail.com']);
@@ -126,16 +125,6 @@ export const POST = withValidation(
           "RATE_LIMITED",
           { status: 429 }
         );
-      }
-
-      // DEV BYPASS: In development mode, accept any valid 6-digit code
-      // This avoids Firebase quota issues during testing
-      if (isDevAuthBypassAllowed('verify_code', { email: normalizedEmail, endpoint: '/api/auth/verify-code' })) {
-        if (normalizedCode.length === 6 && /^\d+$/.test(normalizedCode)) {
-          // Create session in dev mode - schoolId is optional
-          return await createSessionResponse(normalizedEmail, schoolId || null, true, respond);
-        }
-        return respond.error("Invalid code format", "INVALID_CODE", { status: 400 });
       }
 
       // Find the most recent pending code for this email
@@ -284,12 +273,7 @@ async function createSessionResponse(
   let needsOnboarding = true;
   let isAdmin = false;
 
-  // DEV BYPASS: Skip Firebase user lookup in development mode
-  if (isDevMode) {
-    userId = getDevUserId(email);
-    needsOnboarding = true;
-    logger.info('DEV MODE: Using dev user ID', { userId, email: email.replace(/(.{3}).*@/, '$1***@') });
-  } else if (isFirebaseConfigured) {
+  if (isFirebaseConfigured) {
     // Check if user exists
     const existingUsers = await dbAdmin
       .collection('users')

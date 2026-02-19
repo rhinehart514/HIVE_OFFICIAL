@@ -32,7 +32,7 @@ import { SparklesIcon, ChevronLeftIcon, ChevronRightIcon, CommandLineIcon } from
 
 // Aliases for lucide compatibility
 const Command = CommandLineIcon;
-import { ElementShowcaseSidebar } from '../../components/hivelab/showcase';
+// ElementShowcaseSidebar removed
 
 const EXAMPLE_PROMPTS = [
   {
@@ -434,14 +434,7 @@ export function AILandingPageChat({
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="h-full border-r border-neutral-800 bg-neutral-900/50 overflow-hidden"
             >
-              <ElementShowcaseSidebar
-                onElementSelect={handleElementSelect}
-                onPromptClick={handleShowcasePromptClick}
-                onTemplateSelect={handleTemplateSelect}
-                collapsed={false}
-                onCollapseChange={() => setSidebarCollapsed(true)}
-                className="h-full"
-              />
+              <div className="h-full p-4 text-sm text-neutral-500">Showcase removed</div>
             </motion.div>
           )}
         </AnimatePresence>

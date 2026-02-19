@@ -24,17 +24,14 @@ import { FloatingActionBar, type FloatingActionBarRef } from './floating-action-
 import { TemplateOverlay } from './template-overlay';
 import { TemplateGallery } from './template-gallery';
 import { AIChatPill, type AIChatPillRef } from './ai-chat-pill';
-import { CanvasMinimap } from './canvas-minimap';
 import { toast } from 'sonner';
-
-// Sprint 3: Connections
-import { ConnectionBuilderModal, type ConnectionCreateData } from './connection-builder-modal';
 import type { OtherToolData } from './other-tools-panel';
 
-// Sprint 4: Automations
-import type { AutomationSummary } from './automations-panel';
-import { AutomationBuilderModal, type AutomationData } from './automation-builder-modal';
-import { AutomationLogsViewer, type AutomationRun } from './automation-logs-viewer';
+// Stub types for removed systems
+type AutomationSummary = Record<string, unknown>;
+type AutomationData = Record<string, unknown> & { id?: string; name?: string; enabled?: boolean; trigger?: { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number }; conditions?: unknown[]; actions?: unknown[]; limits?: unknown };
+type AutomationRun = Record<string, unknown>;
+type ConnectionCreateData = { source: unknown; target: unknown; transform?: unknown; label?: string };
 
 // Mobile detection hook
 function useIsMobile() {

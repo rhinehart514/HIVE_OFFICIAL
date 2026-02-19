@@ -5,7 +5,7 @@
  * and sends push notifications to RSVP'd attendees.
  *
  * Vercel cron config in vercel.json:
- *   { "path": "/api/cron/event-reminders", "schedule": "*/5 * * * *" }
+ *   { "path": "/api/cron/event-reminders", "schedule": "star/5 * * * *" }
  */
 
 import { NextResponse } from 'next/server';

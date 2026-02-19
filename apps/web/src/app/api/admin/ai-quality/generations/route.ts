@@ -8,7 +8,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { validateApiAuth } from '@/lib/api-auth-middleware';
+import { validateApiAuth } from '@/lib/middleware/auth';
 import { logger } from '@/lib/logger';
 import { getGenerationTrackerService, type AIGenerationRecord } from '@hive/core';
 import { withCache } from '../../../../../lib/cache-headers';

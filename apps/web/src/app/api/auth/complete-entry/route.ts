@@ -9,7 +9,6 @@ import { createTokenPair, setTokenPairCookies, getSession } from '@/lib/session'
 import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction, validateHandleFormat } from '@/lib/handle-service';
 import { logger } from '@/lib/logger';
 import { SecureSchemas } from '@/lib/secure-input-validation';
-import { isDevAuthBypassAllowed } from '@/lib/dev-auth-bypass';
 import { enforceRateLimit } from '@/lib/secure-rate-limiter';
 import { matchSpacesForInterests } from '@/lib/interest-space-matcher';
 
@@ -129,49 +128,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
     normalizedHandle = baseHandle;
   }
 
-  // Development mode bypass
-  if (isDevAuthBypassAllowed('complete_entry', { email: email || undefined, endpoint: '/api/auth/complete-entry' })) {
-    logger.warn('DEV MODE: Skipping Firestore transaction for entry', {
-      userId,
-      handle: normalizedHandle,
-      campusId,
-      endpoint: '/api/auth/complete-entry'
-    });
-
-    const formatResult = validateHandleFormat(normalizedHandle);
-    if (!formatResult.isAvailable) {
-      return respond.error(formatResult.error || 'Invalid handle format', 'BAD_REQUEST', { status: 400 });
-    }
-
-    const tokens = await createTokenPair({
-      userId,
-      email: email || '',
-      campusId: campusId || undefined,
-      isAdmin,
-      onboardingCompleted: true,
-    });
-
-    const response = NextResponse.json({
-      success: true,
-      user: {
-        id: userId,
-        email,
-        handle: normalizedHandle,
-        fullName,
-        firstName: body.firstName.trim(),
-        lastName: body.lastName.trim(),
-      },
-      autoJoinedSpaces: [],
-      redirect: '/discover',
-      devMode: true,
-      expiresIn: tokens.accessTokenExpiresIn,
-    });
-
-    setTokenPairCookies(response, tokens, { isAdmin });
-    return response;
-  }
-
-  // Rate limit (after dev bypass so devs don't get blocked during testing)
+  // Rate limit
   const rateLimitResult = await enforceRateLimit('authStrict', request as NextRequest);
   if (!rateLimitResult.allowed) {
     logger.warn('Complete-entry rate limit exceeded', {

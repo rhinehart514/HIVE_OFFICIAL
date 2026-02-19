@@ -9,7 +9,7 @@ import {
 } from '@/lib/session';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
-import { auditAuthEvent } from '@/lib/production-auth';
+import { auditAuthEvent } from '@/lib/middleware/auth';
 
 /**
  * POST /api/auth/refresh

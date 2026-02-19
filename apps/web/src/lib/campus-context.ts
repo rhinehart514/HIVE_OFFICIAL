@@ -6,7 +6,7 @@
  */
 
 import 'server-only';
-import { validateApiAuth, type AuthContext } from './api-auth-middleware';
+import { validateApiAuth, type AuthContext } from './middleware/auth';
 import { type SessionData } from './session';
 import { NextRequest } from 'next/server';
 import { logger } from './logger';

@@ -16,7 +16,7 @@ const PinOff = BookmarkIcon;
 import { cn } from '../../../lib/utils';
 import type { CanvasElement, Connection } from './types';
 import { PropertiesPanel } from './properties-panel';
-import { ConnectionConfig } from './connection-config';
+// ConnectionConfig removed
 
 import { FOCUS_RING, WORKSHOP_TRANSITION } from '../tokens';
 
@@ -890,12 +890,7 @@ export function ContextRail({
                   exit={{ opacity: 0 }}
                   className="h-full"
                 >
-                  <ConnectionConfig
-                    connection={selectedConnection}
-                    elements={allElements}
-                    onUpdate={(updates) => onUpdateConnection?.(selectedConnection.id, updates)}
-                    onDelete={() => onDeleteConnection?.(selectedConnection.id)}
-                  />
+                  <div className="p-4 text-sm text-[var(--hivelab-text-secondary)]">Connection config removed</div>
                 </motion.div>
               ) : !hasSelection ? (
                 <SearchableToolsPanel key="tools" />
