@@ -50,15 +50,15 @@ import { Zap } from 'lucide-react';
 // Premium easing
 const EASE = MOTION.ease.premium;
 
-// Colors
+// Colors — HIVE design system: true black, #080808 surfaces, white text hierarchy
 const COLORS = {
-  gold: 'var(--life-gold, #D4AF37)',
-  bg: 'var(--bg-ground, #0A0A09)',
-  text: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  surface: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
+  gold: '#FFD700', // Used sparingly — primary actions only
+  bg: '#000000',
+  text: '#FAF9F7',
+  textSecondary: '#8A8A8A',
+  textTertiary: '#5A5A5A',
+  surface: '#080808',
+  border: 'rgba(255, 255, 255, 0.06)',
 };
 
 // Icon mapping from template icon names to Lucide components
@@ -110,16 +110,15 @@ function GoldBorderInput({
   return (
     <div className="relative">
       {/* Goldcontainer */}
-      <div className="relative rounded-lg overflow-hidden">
-        {/* Gold borders on focus */}
+      <div className="relative rounded-2xl overflow-hidden">
+        {/* Focus ring */}
         <motion.div
-          className="absolute inset-0 rounded-lg pointer-events-none"
+          className="absolute inset-0 rounded-2xl pointer-events-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: isFocused ? 1 : 0 }}
           transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
           style={{
-            border: `1px solid ${COLORS.gold}30`,
-            boxShadow: `0 0 20px ${COLORS.gold}10`,
+            border: `1px solid rgba(255, 255, 255, 0.12)`,
           }}
         />
 
@@ -133,9 +132,9 @@ function GoldBorderInput({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
-            className="w-full pl-11 pr-4 py-3 rounded-lg bg-white/[0.06] transition-colors text-sm outline-none"
+            className="w-full pl-11 pr-4 py-3 rounded-2xl bg-[#080808] transition-colors text-[15px] outline-none border"
             style={{
-              borderColor: isFocused ? `${COLORS.gold}30` : COLORS.border,
+              borderColor: isFocused ? 'rgba(255, 255, 255, 0.12)' : COLORS.border,
               color: COLORS.text,
             }}
           />
@@ -181,33 +180,29 @@ function TemplateCard({
       }}
       whileHover={!isSelected ? { scale: 1.01 } : {}}
       onClick={() => onSelect(template)}
-      className="text-left p-4 rounded-lg transition-all duration-200 group"
+      className="text-left p-4 rounded-2xl transition-all duration-200 group"
       style={{
         backgroundColor: COLORS.surface,
-        borderColor: isApp ? `${COLORS.gold}20` : COLORS.border,
+        borderColor: COLORS.border,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = isApp ? `${COLORS.gold}40` : 'rgba(255, 255, 255, 0.15)';
-        e.currentTarget.style.boxShadow = isApp
-          ? `0 4px 20px ${COLORS.gold}15`
-          : '0 4px 20px rgba(0, 0, 0, 0.15)';
+        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = isApp ? `${COLORS.gold}20` : COLORS.border;
-        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.borderColor = COLORS.border;
       }}
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <div
-          className="p-2.5 rounded-lg transition-colors"
+          className="p-2.5 rounded-xl transition-colors"
           style={{
-            backgroundColor: isApp ? `${COLORS.gold}15` : 'rgba(255, 255, 255, 0.04)',
+            backgroundColor: 'rgba(255, 255, 255, 0.04)',
           }}
         >
           <IconComponent
             className="h-5 w-5"
-            style={{ color: isApp ? COLORS.gold : COLORS.textSecondary }}
+            style={{ color: COLORS.textSecondary }}
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -234,8 +229,8 @@ function TemplateCard({
               <span
                 className="text-label-xs px-2 py-0.5 rounded-full font-medium"
                 style={{
-                  backgroundColor: `${COLORS.gold}20`,
-                  color: COLORS.gold,
+                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                  color: COLORS.textSecondary,
                 }}
               >
                 {template.composition.elements.length} elements
@@ -382,11 +377,11 @@ export default function ToolTemplatesPage() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="mb-6 p-3 rounded-lg text-center text-sm"
+            className="mb-6 p-3 rounded-2xl text-center text-sm"
             style={{
-              backgroundColor: `${COLORS.gold}10`,
-              border: `1px solid ${COLORS.gold}20`,
-              color: COLORS.gold,
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              border: `1px solid ${COLORS.border}`,
+              color: COLORS.textSecondary,
             }}
           >
             Deploying to <span className="font-medium">{decodeURIComponent(originSpaceName)}</span>
@@ -442,9 +437,9 @@ export default function ToolTemplatesPage() {
             onClick={() => setCategory('all')}
             className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
             style={{
-              backgroundColor: category === 'all' ? `${COLORS.gold}20` : 'transparent',
-              color: category === 'all' ? COLORS.gold : COLORS.textSecondary,
-              border: `1px solid ${category === 'all' ? `${COLORS.gold}40` : COLORS.border}`,
+              backgroundColor: category === 'all' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+              color: category === 'all' ? COLORS.text : COLORS.textSecondary,
+              border: `1px solid ${category === 'all' ? 'rgba(255, 255, 255, 0.12)' : COLORS.border}`,
             }}
           >
             All
@@ -455,9 +450,9 @@ export default function ToolTemplatesPage() {
               onClick={() => setCategory(cat.category)}
               className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
               style={{
-                backgroundColor: category === cat.category ? `${COLORS.gold}20` : 'transparent',
-                color: category === cat.category ? COLORS.gold : COLORS.textSecondary,
-                border: `1px solid ${category === cat.category ? `${COLORS.gold}40` : COLORS.border}`,
+                backgroundColor: category === cat.category ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                color: category === cat.category ? COLORS.text : COLORS.textSecondary,
+                border: `1px solid ${category === cat.category ? 'rgba(255, 255, 255, 0.12)' : COLORS.border}`,
               }}
             >
               {CATEGORY_CONFIG[cat.category]?.label || cat.category}
@@ -476,8 +471,8 @@ export default function ToolTemplatesPage() {
               style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
             >
               <div className="flex flex-col items-center gap-4">
-                <BrandSpinner size="lg" variant="gold" />
-                <span className="text-sm font-medium" style={{ color: COLORS.gold }}>
+                <BrandSpinner size="lg" variant="default" />
+                <span className="text-sm font-medium" style={{ color: COLORS.text }}>
                   Creating tool...
                 </span>
               </div>
@@ -514,7 +509,7 @@ export default function ToolTemplatesPage() {
                 setSearch('');
                 setCategory('all');
               }}
-              className="mt-6 px-4 py-2 rounded-lg text-sm transition-colors"
+              className="mt-6 px-4 py-2 rounded-2xl text-sm transition-colors"
               style={{
                 backgroundColor: COLORS.surface,
                 color: COLORS.text,
@@ -544,8 +539,8 @@ export default function ToolTemplatesPage() {
               <span
                 className="text-label-xs px-2 py-0.5 rounded-full font-medium"
                 style={{
-                  backgroundColor: `${COLORS.gold}15`,
-                  color: COLORS.gold,
+                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                  color: COLORS.textSecondary,
                 }}
               >
                 {recommendedTemplates.length} templates
@@ -588,8 +583,8 @@ export default function ToolTemplatesPage() {
                     <span
                       className="text-label-xs px-2 py-0.5 rounded-full font-medium"
                       style={{
-                        backgroundColor: `${COLORS.gold}20`,
-                        color: COLORS.gold,
+                        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                        color: COLORS.textSecondary,
                       }}
                     >
                       Multi-element
@@ -642,7 +637,7 @@ export default function ToolTemplatesPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: shouldReduceMotion ? 0 : 0.8 }}
-          className="mt-8 p-4 rounded-lg border border-dashed"
+          className="mt-8 p-4 rounded-2xl border border-dashed"
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.02)',
             border: `1px dashed ${COLORS.border}`,
@@ -659,14 +654,14 @@ export default function ToolTemplatesPage() {
             </div>
             <button
               onClick={() => router.push('/lab')}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              className="px-4 py-2 rounded-2xl text-sm font-medium transition-all"
               style={{
                 backgroundColor: COLORS.surface,
                 color: COLORS.text,
                 border: `1px solid ${COLORS.border}`,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = COLORS.gold;
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = COLORS.border;

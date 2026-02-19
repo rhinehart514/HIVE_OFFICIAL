@@ -192,9 +192,9 @@ export default function ProfilePageContent() {
             <button
               onClick={handleToggleFollow}
               disabled={isFollowLoading}
-              className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150 ${
                 isFollowing
-                  ? 'bg-white/[0.06] text-white/70 hover:bg-red-500/20 hover:text-red-400'
+                  ? 'bg-white/[0.06] text-white/50 hover:bg-white/[0.08] hover:text-white/40'
                   : 'bg-[#FFD700] text-black hover:opacity-90'
               } ${isFollowLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >

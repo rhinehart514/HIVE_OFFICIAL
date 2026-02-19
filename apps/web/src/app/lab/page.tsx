@@ -40,7 +40,6 @@ import {
 
 import { ToolCard, NewToolCard } from '@/components/hivelab/dashboard/ToolCard';
 import { StatsBar } from '@/components/hivelab/dashboard/StatsBar';
-import { BuilderLevel } from '@/components/hivelab/dashboard/BuilderLevel';
 import { QuickStartChips } from '@/components/hivelab/dashboard/QuickStartChips';
 import { useMyTools } from '@/hooks/use-my-tools';
 import { useCurrentProfile } from '@/hooks/queries';
@@ -141,9 +140,9 @@ type CeremonyPhase = 'idle' | 'creating';
 /* WordReveal removed — DESIGN-2026: no word-by-word reveals */
 
 /**
- * GoldBorderInput -- Input with animated goldon focus
+ * PromptInput — Clean input with subtle focus state. No animated borders.
  */
-function GoldBorderInput({
+function PromptInput({
   value,
   onChange,
   onKeyDown,
@@ -164,93 +163,30 @@ function GoldBorderInput({
   placeholder: string;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
 }) {
-  const shouldReduceMotion = useReducedMotion();
-  const borderDelay = 0;
-
   return (
     <div className="relative">
-      {/* Goldcontainer */}
-      <div className="relative rounded-lg overflow-hidden">
-        {/* Top*/}
-        <motion.div
-          className="absolute top-0 left-0 right-0 h-px bg-white/[0.06]"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: isFocused ? 1 : 0 }}
-          transition={{
-            duration: shouldReduceMotion ? 0 : DURATION.base,
-            delay: borderDelay,
-            ease: EASE,
-          }}
-          style={{ transformOrigin: 'left' }}
+      <div
+        className={`
+          rounded-2xl border transition-all duration-200
+          ${isFocused
+            ? 'border-white/[0.12] bg-[#080808]'
+            : 'border-white/[0.06] bg-[#080808]'
+          }
+        `}
+      >
+        <textarea
+          ref={inputRef}
+          value={value}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          placeholder={placeholder}
+          rows={2}
+          disabled={disabled}
+          className="w-full px-5 py-4 pr-14 bg-transparent text-white placeholder-white/20
+            resize-none outline-none text-[15px] leading-relaxed"
         />
-        {/* Bottom*/}
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-px bg-white/[0.06]"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: isFocused ? 1 : 0 }}
-          transition={{
-            duration: shouldReduceMotion ? 0 : DURATION.base,
-            delay: borderDelay + 0.1,
-            ease: EASE,
-          }}
-          style={{ transformOrigin: 'right' }}
-        />
-        {/* Left*/}
-        <motion.div
-          className="absolute top-0 bottom-0 left-0 w-px bg-white/[0.06]"
-          initial={{ scaleY: 0 }}
-          animate={{ scaleY: isFocused ? 1 : 0 }}
-          transition={{
-            duration: shouldReduceMotion ? 0 : DURATION.base,
-            delay: borderDelay + 0.2,
-            ease: EASE,
-          }}
-          style={{ transformOrigin: 'top' }}
-        />
-        {/* Right*/}
-        <motion.div
-          className="absolute top-0 bottom-0 right-0 w-px bg-white/[0.06]"
-          initial={{ scaleY: 0 }}
-          animate={{ scaleY: isFocused ? 1 : 0 }}
-          transition={{
-            duration: shouldReduceMotion ? 0 : DURATION.base,
-            delay: borderDelay + 0.3,
-            ease: EASE,
-          }}
-          style={{ transformOrigin: 'bottom' }}
-        />
-
-        {/* Input container */}
-        <div
-          className={`
-            relative rounded-lg transition-colors duration-200
-            ${isFocused
-              ? 'border-white/[0.06] bg-white/[0.06]'
-              : 'border-white/[0.06] bg-white/[0.06]'
-            }
-          `}
-        >
-          <textarea
-            ref={inputRef}
-            value={value}
-            onChange={onChange}
-            onKeyDown={onKeyDown}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            placeholder={placeholder}
-            rows={2}
-            disabled={disabled}
-            className="w-full px-5 py-4 pr-14 bg-transparent text-white placeholder-white/50
-              resize-none outline-none text-base leading-relaxed"
-          />
-        </div>
-      </div>
-
-      {/* Start hint */}
-      <div className="absolute -top-3 left-4 flex items-center gap-1.5 px-2 py-0.5
-        bg-[var(--bg-ground,#0A0A09)] text-white/50 text-xs">
-        <Sparkles className="w-3 h-3" />
-        <span>Quick start</span>
       </div>
     </div>
   );
@@ -373,7 +309,7 @@ export default function BuilderDashboard() {
   // Guest state
   if (!authLoading && !user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-[var(--bg-ground,#0A0A09)]">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-black">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -388,8 +324,8 @@ export default function BuilderDashboard() {
           </p>
           <button
             onClick={() => router.push('/enter?redirect=/lab')}
-            className="px-6 py-3 bg-white text-[var(--color-bg-void,#0A0A09)] rounded-lg font-medium
-              hover:bg-white transition-colors"
+            className="px-6 py-3 bg-white text-black rounded-2xl font-medium text-sm
+              hover:bg-white/90 transition-colors"
           >
             Sign in to start building
           </button>
@@ -401,8 +337,8 @@ export default function BuilderDashboard() {
   // Loading state
   if (authLoading || creatingFromTemplate) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-ground,#0A0A09)]">
-        <BrandSpinner size="md" variant="gold" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-black">
+        <BrandSpinner size="md" variant="default" />
         {creatingFromTemplate && (
           <motion.p
             initial={{ opacity: 0 }}
@@ -421,7 +357,7 @@ export default function BuilderDashboard() {
   const displayTools = showAllTools ? userTools : userTools.slice(0, 8);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-ground,#0A0A09)]">
+    <div className="min-h-screen bg-black">
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* ============================================================ */}
         {/* ACTIVE BUILDER STATE (1+ tools)                              */}
@@ -445,8 +381,8 @@ export default function BuilderDashboard() {
                     const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
                     router.push(`/lab/templates${spaceParam}`);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                    text-white/50 hover:text-white/50 bg-white/[0.06] hover:bg-white/[0.06]
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl
+                    text-white/40 hover:text-white/60 bg-white/[0.04] hover:bg-white/[0.06]
                     transition-colors text-sm"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
@@ -454,8 +390,8 @@ export default function BuilderDashboard() {
                 </button>
                 <button
                   onClick={handleNewTool}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                    text-white hover:text-white bg-white/[0.06] hover:bg-white/[0.10]
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl
+                    text-white/70 hover:text-white bg-white/[0.06] hover:bg-white/[0.08]
                     transition-colors text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
@@ -476,7 +412,6 @@ export default function BuilderDashboard() {
                 totalUsers={stats.totalUsers}
                 weeklyInteractions={stats.weeklyInteractions}
               />
-              <BuilderLevel />
             </motion.div>
 
             {/* Your Tools Grid */}
@@ -550,7 +485,7 @@ export default function BuilderDashboard() {
               className="max-w-xl"
             >
               <div className="relative">
-                <GoldBorderInput
+                <PromptInput
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -570,7 +505,7 @@ export default function BuilderDashboard() {
                     disabled:cursor-not-allowed transition-all duration-200"
                   animate={{
                     backgroundColor: isSubmitting
-                      ? 'rgba(255, 215, 0, 0.1)'
+                      ? 'rgba(255, 255, 255, 0.06)'
                       : prompt.trim()
                         ? 'rgba(255, 255, 255, 1)'
                         : 'rgba(255, 255, 255, 0.2)',
@@ -585,7 +520,7 @@ export default function BuilderDashboard() {
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.1 }}
                       >
-                        <BrandSpinner size="sm" variant="gold" />
+                        <BrandSpinner size="sm" variant="default" />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -603,7 +538,7 @@ export default function BuilderDashboard() {
 
                 {/* Dimming overlay during ceremony */}
                 <motion.div
-                  className="absolute inset-0 rounded-lg pointer-events-none bg-[var(--bg-ground,#0A0A09)]"
+                  className="absolute inset-0 rounded-lg pointer-events-none bg-black"
                   initial={{ opacity: 0 }}
                   animate={{
                     opacity: showStatus ? 0.4 : 0,
@@ -622,7 +557,7 @@ export default function BuilderDashboard() {
                     transition={{ duration: 0.3, ease: EASE }}
                     className="flex justify-center mt-4"
                   >
-                    <span className="text-[var(--life-gold)]/80 text-sm font-medium">
+                    <span className="text-white/40 text-sm font-medium">
                       {statusText}
                     </span>
                   </motion.div>
@@ -665,7 +600,7 @@ export default function BuilderDashboard() {
               className="max-w-xl mx-auto mb-10"
             >
               <div className="relative">
-                <GoldBorderInput
+                <PromptInput
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -685,7 +620,7 @@ export default function BuilderDashboard() {
                     disabled:cursor-not-allowed transition-all duration-200"
                   animate={{
                     backgroundColor: isSubmitting
-                      ? 'rgba(255, 215, 0, 0.1)'
+                      ? 'rgba(255, 255, 255, 0.06)'
                       : prompt.trim()
                         ? 'rgba(255, 255, 255, 1)'
                         : 'rgba(255, 255, 255, 0.2)',
@@ -700,7 +635,7 @@ export default function BuilderDashboard() {
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.1 }}
                       >
-                        <BrandSpinner size="sm" variant="gold" />
+                        <BrandSpinner size="sm" variant="default" />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -718,7 +653,7 @@ export default function BuilderDashboard() {
 
                 {/* Dimming overlay */}
                 <motion.div
-                  className="absolute inset-0 rounded-lg pointer-events-none bg-[var(--bg-ground,#0A0A09)]"
+                  className="absolute inset-0 rounded-lg pointer-events-none bg-black"
                   initial={{ opacity: 0 }}
                   animate={{
                     opacity: showStatus ? 0.4 : 0,
@@ -737,7 +672,7 @@ export default function BuilderDashboard() {
                     transition={{ duration: 0.3, ease: EASE }}
                     className="flex justify-center mt-4"
                   >
-                    <span className="text-[var(--life-gold)]/80 text-sm font-medium">
+                    <span className="text-white/40 text-sm font-medium">
                       {statusText}
                     </span>
                   </motion.div>
@@ -858,7 +793,7 @@ export default function BuilderDashboard() {
               className="max-w-3xl mx-auto"
             >
               <div
-                className="p-4 rounded-lg border border-dashed border-white/[0.06] bg-white/[0.02]
+                className="p-4 rounded-2xl border border-dashed border-white/[0.06] bg-[#080808]
                   flex items-center justify-between"
               >
                 <div>
@@ -869,9 +804,9 @@ export default function BuilderDashboard() {
                 </div>
                 <button
                   onClick={handleNewTool}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-white/[0.06]
-                    text-white hover:bg-white/[0.10] border border-white/[0.06]
-                    hover:border-white/[0.08] transition-all"
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-white/[0.04]
+                    text-white/60 hover:text-white/80 hover:bg-white/[0.06] border border-white/[0.06]
+                    transition-all"
                 >
                   Blank Canvas
                 </button>

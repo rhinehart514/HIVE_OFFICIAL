@@ -214,7 +214,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
   }, [handlePromptSubmit]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-ground,#0A0A09)]">
+    <div className="min-h-screen bg-black">
       {/* Top bar - shown after prompt phase */}
       {phase !== 'prompt' && (
         <motion.div
@@ -222,7 +222,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: durationSeconds.quick, ease: EASE }}
           className="sticky top-0 z-10 flex items-center gap-3 px-6 py-4
-            bg-[var(--bg-ground,#0A0A09)]/80 border-b border-white/[0.06]"
+            bg-black/80 backdrop-blur-sm border-b border-white/[0.06]"
         >
           <button
             onClick={handleStartOver}
@@ -285,7 +285,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
             transition={{ duration: durationSeconds.quick }}
             className="min-h-[60vh] flex flex-col items-center justify-center"
           >
-            <BrandSpinner size="md" variant="gold" />
+            <BrandSpinner size="md" variant="default" />
             <p className="mt-4 text-white/50 text-sm">Setting up your workspace...</p>
           </motion.div>
         )}
@@ -351,8 +351,8 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               className="mb-6 text-center"
             >
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full
-                bg-green-500/10 text-green-400 text-xs font-medium mb-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                bg-white/[0.06] text-white/50 text-xs font-medium mb-3 border border-white/[0.06]">
+                <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
                 Ready
               </div>
               <h2 className="text-xl font-semibold text-white">{toolName || 'Your Tool'}</h2>
@@ -363,7 +363,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: durationSeconds.smooth, delay: 0.1, ease: EASE }}
-              className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-4 sm:p-6 mb-6"
+              className="rounded-2xl border border-white/[0.06] bg-[#080808] p-4 sm:p-6 mb-6"
             >
               {elements.length > 0 ? (
                 <ToolCanvas
@@ -400,14 +400,14 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
                 transition={{ duration: durationSeconds.standard, delay: 0.25, ease: EASE }}
                 className="mb-6 max-w-xl mx-auto"
               >
-                <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.04] px-3 py-2">
+                <div className="flex items-center gap-2 rounded-2xl border border-white/[0.06] bg-[#080808] px-3 py-2">
                   <Link2 className="w-4 h-4 text-white/30 flex-shrink-0" />
-                  <span className="text-xs text-white/50 truncate flex-1 font-mono">
+                  <span className="text-xs text-white/40 truncate flex-1 font-mono">
                     {typeof window !== 'undefined' ? window.location.origin : ''}/t/{toolId}
                   </span>
                   <button
                     onClick={handleCopyLink}
-                    className="flex-shrink-0 px-3 py-1 rounded-md bg-[var(--life-gold)] text-black text-xs font-medium hover:brightness-110 transition-all"
+                    className="flex-shrink-0 px-3 py-1 rounded-lg bg-white text-black text-xs font-medium hover:bg-white/90 transition-all"
                   >
                     {linkCopied ? <Check className="w-3.5 h-3.5" /> : 'Copy'}
                   </button>
@@ -428,8 +428,8 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               <button
                 onClick={handleCopyLink}
                 className="flex-1 flex items-center justify-center gap-2 px-5 py-3
-                  rounded-lg bg-[var(--life-gold)] text-black font-medium text-sm
-                  hover:brightness-110 transition-all duration-150"
+                  rounded-2xl bg-white text-black font-medium text-sm
+                  hover:bg-white/90 transition-all duration-150"
               >
                 {linkCopied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
                 {linkCopied ? 'Copied!' : 'Share Link'}
@@ -437,8 +437,8 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               <button
                 onClick={handleDeploy}
                 className="flex-1 flex items-center justify-center gap-2 px-5 py-3
-                  rounded-lg bg-white/[0.06] text-white/50 text-sm border border-white/[0.06]
-                  hover:bg-white/[0.10] hover:text-white transition-all duration-150"
+                  rounded-2xl bg-[#080808] text-white/50 text-sm border border-white/[0.06]
+                  hover:bg-white/[0.06] hover:text-white/70 transition-all duration-150"
               >
                 <Rocket className="w-4 h-4" />
                 Deploy to Space
@@ -446,8 +446,8 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
               <button
                 onClick={handleEditManually}
                 className="flex items-center justify-center gap-2 px-5 py-3
-                  rounded-lg text-white/50 text-sm
-                  hover:text-white/50 hover:bg-white/[0.06] transition-all duration-150"
+                  rounded-2xl text-white/40 text-sm
+                  hover:text-white/60 hover:bg-white/[0.04] transition-all duration-150"
               >
                 <Pencil className="w-4 h-4" />
                 Edit

@@ -688,9 +688,9 @@ export function EntryFlowV2() {
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="text-[13px] text-[#FFD700]/60"
+                    className="text-[13px] text-white/30"
                   >
-                    💡 Check your spam or junk folder — codes sometimes land there.
+                    Not seeing it? Check your spam folder.
                   </motion.p>
                 )}
               </motion.div>

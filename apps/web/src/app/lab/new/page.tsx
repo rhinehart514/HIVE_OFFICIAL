@@ -38,8 +38,8 @@ function NewToolPageInner() {
   // Auth loading
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-ground,#0A0A09)]">
-        <BrandSpinner size="md" variant="gold" />
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <BrandSpinner size="md" variant="default" />
       </div>
     );
   }
@@ -49,8 +49,8 @@ function NewToolPageInner() {
     const returnUrl = `/lab/new${prompt ? `?prompt=${encodeURIComponent(prompt)}` : ''}`;
     router.push(`/enter?redirect=${encodeURIComponent(returnUrl)}`);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-ground,#0A0A09)]">
-        <BrandSpinner size="md" variant="gold" />
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <BrandSpinner size="md" variant="default" />
       </div>
     );
   }
@@ -67,8 +67,8 @@ export default function NewToolPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-ground,#0A0A09)]">
-          <BrandSpinner size="md" variant="gold" />
+        <div className="min-h-screen flex items-center justify-center bg-black">
+          <BrandSpinner size="md" variant="default" />
         </div>
       }
     >

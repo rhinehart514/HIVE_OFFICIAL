@@ -97,23 +97,23 @@ export function QuickStartChips({
                 }}
                 onClick={() => handleClick(template)}
                 disabled={disabled || !!loadingId}
-                className="group relative p-3 rounded-lg border border-white/[0.06] bg-white/[0.06]
-                  hover:border-white/15 hover:bg-white/[0.06]
+                className="group relative p-3 rounded-2xl border border-white/[0.06] bg-[#080808]
+                  hover:border-white/[0.10]
                   transition-all duration-200 text-center
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className="p-2 rounded-lg bg-white/[0.06] group-hover:bg-[var(--life-gold)]/10
+                  <div className="p-2 rounded-xl bg-white/[0.04] group-hover:bg-white/[0.06]
                     transition-colors">
                     {isLoading ? (
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                       >
-                        <IconComponent className="w-5 h-5 text-[var(--life-gold)]" />
+                        <IconComponent className="w-5 h-5 text-white/40" />
                       </motion.div>
                     ) : (
-                      <IconComponent className="w-5 h-5 text-white/50 group-hover:text-[var(--life-gold)]
+                      <IconComponent className="w-5 h-5 text-white/30 group-hover:text-white/60
                         transition-colors" />
                     )}
                   </div>
@@ -174,7 +174,7 @@ export function QuickStartChips({
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               >
-                <IconComponent className="w-3 h-3 text-[var(--life-gold)]" />
+                <IconComponent className="w-3 h-3 text-white/40" />
               </motion.div>
             ) : (
               <IconComponent className="w-3 h-3" />

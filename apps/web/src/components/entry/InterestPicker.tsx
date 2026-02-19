@@ -25,18 +25,19 @@ interface InterestPickerProps {
 const MIN_INTERESTS = 3;
 const MAX_INTERESTS = 6;
 
-// Hardcoded fallback categories — never show an empty picker
+// Hardcoded fallback categories — never show an empty picker.
+// Mirrors the real UB catalog IDs and voice so the experience feels native.
 const FALLBACK_INTEREST_CATEGORIES: InterestCategory[] = [
-  { id: 'academic_identity', title: 'Academics', icon: '📚', items: ['cs', 'bio', 'psych', 'engineering'] },
-  { id: 'creative_energy', title: 'Creative', icon: '🎨', items: ['art', 'music', 'film', 'writing'] },
-  { id: 'social_vibes', title: 'Social', icon: '🎉', items: ['parties', 'greek life', 'clubs'] },
-  { id: 'sports_fitness', title: 'Sports & Fitness', icon: '💪', items: ['gym', 'intramurals', 'running'] },
-  { id: 'gaming', title: 'Gaming', icon: '🎮', items: ['pc gaming', 'console', 'esports'] },
-  { id: 'food_culture', title: 'Food & Culture', icon: '🍜', items: ['cooking', 'foodie', 'boba'] },
-  { id: 'career_hustle', title: 'Career & Hustle', icon: '💼', items: ['internships', 'startups', 'networking'] },
-  { id: 'wellness', title: 'Wellness', icon: '🧘', items: ['mental health', 'meditation', 'self-care'] },
-  { id: 'tech', title: 'Tech', icon: '💻', items: ['coding', 'AI', 'hackathons'] },
-  { id: 'outdoors', title: 'Outdoors', icon: '🏕️', items: ['hiking', 'nature', 'travel'] },
+  { id: 'academic_identity', title: 'Academic identity (just say what you study)', icon: '📚', items: ['cs', 'ai/ml', 'psych major', 'bio on a pre-med lie', 'meche', 'finance bros', 'nursing gang'] },
+  { id: 'study_style', title: 'How you do school', icon: '🧠', items: ['8am victim', 'solo grinder', 'finals crammer', 'lecture napper', 'lockwood fifth floor only'] },
+  { id: 'food_behaviors', title: 'Food behavior (realistic)', icon: '🍴', items: ['tim\'s line again', 'meal plan regret', 'free food radar', 'ramen and vibes', 'boba on the spine'] },
+  { id: 'campus_events', title: 'Chaos / events / culture', icon: '🎉', items: ['spring fest in the mud', 'club fair sticker hoarder', 'midnight breakfast squad'] },
+  { id: 'gaming_and_game_night', title: 'Dorm gamers & game night folks', icon: '🎮', items: ['league until 3am', 'valorant but angry', 'dorm mario kart lobby', 'uno bloodbath'] },
+  { id: 'creative_scene', title: 'Artsy / creative people', icon: '🧵', items: ['poster designer', 'theatre crew energy', 'beat maker', 'open mic reader'] },
+  { id: 'builders_and_hustle', title: 'Build / hustle / tools', icon: '🛠️', items: ['side project graveyard', 'startup idea 12', 'resume panic edit', 'job app spammer'] },
+  { id: 'social_energy', title: 'Social behavior', icon: '🧍', items: ['house show fan', 'stayed in tonight', 'brunch with 1 friend', 'joined club for vibes'] },
+  { id: 'health_wellness', title: 'Health & wellness', icon: '🧘', items: ['gym twice a week (ish)', 'sleep schedule destroyed', 'therapy squad', 'self-care spreadsheet'] },
+  { id: 'media_and_content', title: 'Media & content consumption', icon: '💻', items: ['reddit all day', 'discord during lecture', 'tiktok but only food', 'groupchat lurker'] },
 ];
 
 export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestPickerProps) {

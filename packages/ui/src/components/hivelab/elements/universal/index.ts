@@ -16,7 +16,6 @@ export { FilterSelectorElement } from './filter-selector-element';
 export { ResultListElement } from './result-list-element';
 export { TagCloudElement } from './tag-cloud-element';
 export { ChartDisplayElement } from './chart-display-element';
-export { NotificationCenterElement } from './notification-center-element';
 export { PhotoGalleryElement } from './photo-gallery';
 
 // Input
@@ -29,6 +28,9 @@ export { ProgressIndicatorElement } from './progress-indicator-element';
 
 // Spatial
 export { MapViewElement } from './map-view-element';
+
+// Notifications
+export { NotificationCenterElement } from './notification-center-element';
 
 // Directory & QR (also available via direct import for circular-dep avoidance)
 export { DirectoryListElement } from './directory-list-element';

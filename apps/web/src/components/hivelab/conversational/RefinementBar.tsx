@@ -47,11 +47,11 @@ export function RefinementBar({ onSubmit, isGenerating, disabled }: RefinementBa
     >
       <div
         className={`
-          flex items-center gap-3 px-4 py-3 rounded-lg
+          flex items-center gap-3 px-4 py-3 rounded-2xl border
          transition-all duration-200
           ${isFocused
-            ? 'border-white/[0.06] bg-white/[0.06]'
-            : 'border-white/[0.06] bg-white/[0.06] hover:border-white/[0.06]'
+            ? 'border-white/[0.10] bg-[#080808]'
+            : 'border-white/[0.06] bg-[#080808] hover:border-white/[0.08]'
           }
           ${disabled ? 'opacity-50 pointer-events-none' : ''}
         `}
@@ -63,11 +63,11 @@ export function RefinementBar({ onSubmit, isGenerating, disabled }: RefinementBa
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             >
-              <Sparkles className="w-4 h-4 text-[var(--life-gold)]" />
+              <Sparkles className="w-4 h-4 text-white/30" />
             </motion.div>
           ) : (
             <Sparkles className={`w-4 h-4 transition-colors duration-150 ${
-              isFocused ? 'text-[var(--life-gold)]' : 'text-white/50'
+              isFocused ? 'text-white/50' : 'text-white/25'
             }`} />
           )}
         </div>
@@ -98,9 +98,9 @@ export function RefinementBar({ onSubmit, isGenerating, disabled }: RefinementBa
               onClick={handleSubmit}
               disabled={disabled}
               className="flex-shrink-0 w-7 h-7 rounded-lg
-                bg-[var(--life-gold)] text-black
+                bg-white text-black
                 flex items-center justify-center
-                hover:brightness-110 transition-all duration-150"
+                hover:bg-white/90 transition-all duration-150"
             >
               <ArrowUp className="w-3.5 h-3.5" />
             </motion.button>

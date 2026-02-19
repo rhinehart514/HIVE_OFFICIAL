@@ -115,7 +115,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-6">
         <div className="w-full max-w-[480px]">
-          <div className="rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-8">
+          <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-8">
             <div className="space-y-4 animate-pulse">
               <div className="h-6 w-40 bg-white/[0.04] rounded-lg" />
               <div className="h-4 w-64 bg-white/[0.03] rounded-lg" />
@@ -141,7 +141,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           </p>
           <button
             onClick={() => router.push('/enter')}
-            className="px-6 py-2.5 bg-[#FFD700] text-black text-sm font-medium rounded-full hover:bg-[#FFDF33] transition-colors"
+            className="px-6 py-2.5 bg-white text-black text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
           >
             Sign In
           </button>
@@ -161,7 +161,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           </p>
           <button
             onClick={() => router.push('/discover')}
-            className="px-6 py-2.5 bg-[#FFD700] text-black text-sm font-medium rounded-full hover:bg-[#FFDF33] transition-colors"
+            className="px-6 py-2.5 bg-white text-black text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
           >
             Explore Tools
           </button>
@@ -176,7 +176,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-[480px]">
           {/* Tool surface */}
-          <div className="rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-6 sm:p-8">
+          <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-6 sm:p-8">
             {/* Tool title inside the card */}
             <div className="mb-5">
               <h1 className="text-lg font-semibold text-white leading-tight">
@@ -221,7 +221,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             <div className="mt-6 text-center animate-in fade-in duration-300">
               <Link
                 href="/enter"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FFD700] text-black text-sm font-medium rounded-full hover:bg-[#FFDF33] transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-black text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
               >
                 Create your own tool
               </Link>

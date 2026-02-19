@@ -50,11 +50,11 @@ export function TemplateSuggestion({
         transition={{ duration: durationSeconds.smooth, delay: 0.15, ease: EASE }}
         className="w-full max-w-md"
       >
-        <div className="rounded-lg border border-[var(--life-gold)]/20 bg-[var(--life-gold)]/[0.04] p-6">
+        <div className="rounded-2xl border border-white/[0.06] bg-[#080808] p-6">
           <div className="flex items-center gap-2 mb-3">
-            <Zap className="w-4 h-4 text-[var(--life-gold)]" />
-            <span className="text-[var(--life-gold)] text-sm font-medium">
-              We have a template for that
+            <Zap className="w-4 h-4 text-white/40" />
+            <span className="text-white/60 text-xs font-medium uppercase tracking-wider">
+              Template match
             </span>
           </div>
 
@@ -70,8 +70,8 @@ export function TemplateSuggestion({
               onClick={() => onUseTemplate(template)}
               disabled={disabled}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5
-                rounded-lg bg-[var(--life-gold)] text-black font-medium text-sm
-                hover:brightness-110 transition-all duration-150
+                rounded-2xl bg-white text-black font-medium text-sm
+                hover:bg-white/90 transition-all duration-150
                 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Zap className="w-4 h-4" />
@@ -81,8 +81,8 @@ export function TemplateSuggestion({
               onClick={onBuildWithAI}
               disabled={disabled}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5
-                rounded-lg bg-white/[0.06] text-white/50 text-smborder-white/[0.06]
-                hover:bg-white/[0.10] hover:text-white transition-all duration-150
+                rounded-2xl bg-white/[0.06] text-white/50 text-sm border border-white/[0.06]
+                hover:bg-white/[0.08] hover:text-white/70 transition-all duration-150
                 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-4 h-4" />

@@ -112,6 +112,7 @@ export const ELEMENT_RENDERERS: Record<string, ElementRenderer> = {
   'countdown-timer': CountdownTimerElement,
   'leaderboard': LeaderboardElement,
   'counter': CounterElement,
+  'counter-element': CounterElement, // Alias: AI generator emits 'counter-element'
   'timer': TimerElement,
   'signup-sheet': SignupSheetElement,
   'checklist-tracker': ChecklistTrackerElement,
