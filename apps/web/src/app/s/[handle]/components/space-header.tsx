@@ -53,8 +53,7 @@ export function SpaceHeader({
   return (
     <header
       className={cn(
-        'flex items-center justify-between px-4 py-3',
-        'border-b border-white/[0.04]',
+        'flex items-center justify-between',
         className
       )}
     >

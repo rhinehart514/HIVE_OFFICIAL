@@ -298,8 +298,8 @@ function EventCard({
         }
       }}
       className={cn(
-        'rounded-xl border border-white/[0.06] bg-white/[0.06] p-4 text-left transition-colors',
-        'hover:border-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+        'rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-left transition-colors',
+        'hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20',
         isPast && 'opacity-80'
       )}
       whileHover={{ opacity: 0.96 }}

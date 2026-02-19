@@ -67,7 +67,7 @@ export function SpaceTabs({
                 'relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
                 isActive
                   ? 'text-white'
-                  : 'text-white/50 hover:text-white/50'
+                  : 'text-white/40 hover:text-white/70'
               )}
             >
               {tab.icon}

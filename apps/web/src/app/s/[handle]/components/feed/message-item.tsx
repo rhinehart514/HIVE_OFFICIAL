@@ -196,10 +196,10 @@ export function MessageItem({
                 onChange={(e) => setEditContent(e.target.value)}
                 onKeyDown={handleEditKeyDown}
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg',
-                  'bg-white/[0.06] border border-white/[0.06]',
-                  'text-white text-sm placeholder:text-white/50',
-                  'focus:outline-none focus:ring-2 focus:ring-white/50',
+                  'w-full px-4 py-2.5 rounded-xl',
+                  'bg-white/[0.03] border border-white/[0.06]',
+                  'text-white text-[15px] placeholder:text-white/30',
+                  'focus:outline-none focus:ring-1 focus:ring-white/20',
                   'resize-none'
                 )}
                 rows={Math.max(2, editContent.split('\n').length)}
@@ -316,7 +316,7 @@ export function MessageItem({
           {message.replyCount && message.replyCount > 0 && (
             <button
               onClick={onReply}
-              className="mt-2 text-xs text-white/50 hover:text-white/50 transition-colors"
+              className="mt-2 text-xs text-white/40 hover:text-white/70 transition-colors"
             >
               {message.replyCount} {message.replyCount === 1 ? 'reply' : 'replies'}
             </button>

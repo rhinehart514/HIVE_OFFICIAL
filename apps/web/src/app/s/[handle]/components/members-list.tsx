@@ -111,11 +111,11 @@ export function MembersList({
             placeholder="Search members..."
             className={cn(
               'w-full pl-10 pr-4 py-2',
-              'rounded-lg text-sm',
-              'bg-white/[0.06] border border-white/[0.06]',
-              'text-white placeholder:text-white/50',
-              'focus:outline-none focus:ring-2 focus:ring-white/50',
-              'transition-all duration-150'
+              'rounded-xl text-[15px]',
+              'bg-white/[0.03] border border-white/[0.06]',
+              'text-white placeholder:text-white/30',
+              'focus:outline-none focus:ring-1 focus:ring-white/20',
+              'transition-colors'
             )}
           />
         </div>
@@ -267,7 +267,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
         </Avatar>
         {/* Online indicator - green for online, grey for offline */}
         {member.isOnline ? (
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border border-2 border-[var(--bg-ground)]" />
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[var(--bg-ground)]" />
         ) : (() => {
           // Show amber dot for recently active (< 1h), grey otherwise
           const lastSeenDate = member.lastSeen
@@ -277,7 +277,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
           return (
             <span
               className={cn(
-                'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-2 border-[var(--bg-ground)]',
+                'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-ground)]',
                 recentlyActive ? 'bg-amber-400/60' : 'bg-white/[0.06]'
               )}
             />

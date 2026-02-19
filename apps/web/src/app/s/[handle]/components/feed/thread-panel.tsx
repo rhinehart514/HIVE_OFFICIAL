@@ -258,10 +258,10 @@ export function ThreadPanel({
                   placeholder="Reply..."
                   rows={1}
                   className={cn(
-                    'flex-1 px-3 py-2 rounded-lg',
-                    'bg-white/[0.06] border border-white/[0.06]',
-                    'text-white text-sm placeholder:text-white/50',
-                    'focus:outline-none focus:ring-2 focus:ring-white/50',
+                    'flex-1 px-4 py-2.5 rounded-2xl',
+                    'bg-white/[0.03] border border-white/[0.06]',
+                    'text-white text-[15px] placeholder:text-white/30',
+                    'focus:outline-none focus:ring-1 focus:ring-white/20',
                     'resize-none min-h-[40px] max-h-[120px]'
                   )}
                   style={{
@@ -273,10 +273,10 @@ export function ThreadPanel({
                   onClick={handleSendReply}
                   disabled={!replyContent.trim() || isSending}
                   className={cn(
-                    'p-2 rounded-lg',
-                    'bg-[var(--color-gold)] text-black',
-                    'hover:bg-[var(--color-gold)]/90 transition-colors',
-                    'disabled:opacity-50 disabled:cursor-not-allowed'
+                    'p-2.5 rounded-xl',
+                    'bg-white/[0.06] text-white',
+                    'hover:bg-white/[0.10] transition-colors',
+                    'disabled:opacity-30 disabled:cursor-not-allowed'
                   )}
                 >
                   {isSending ? (

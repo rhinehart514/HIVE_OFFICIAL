@@ -356,12 +356,12 @@ export function ChatInput({
             rows={1}
             className={cn(
               'w-full px-4 py-2.5',
-              'rounded-xl text-sm',
+              'rounded-2xl text-[15px]',
               'bg-white/[0.03]',
               'border border-white/[0.06]',
               'text-white placeholder:text-white/30',
               'resize-none',
-              'focus:outline-none focus:ring-1 focus:ring-white/50',
+              'focus:outline-none focus:ring-1 focus:ring-white/20',
               'disabled:opacity-50',
               'transition-colors'
             )}

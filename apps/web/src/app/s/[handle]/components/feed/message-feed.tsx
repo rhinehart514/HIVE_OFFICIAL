@@ -187,7 +187,7 @@ export function MessageFeed({
       {hasMore && !isLoadingMore && (
         <button
           onClick={onLoadMore}
-          className="text-xs text-white/50 hover:text-white/50 py-2 transition-colors"
+          className="text-xs text-white/40 hover:text-white/70 py-2 transition-colors"
         >
           Load earlier messages
         </button>
