@@ -91,7 +91,51 @@ export default function ProfilePageContent() {
     handleToolRemove,
     handleSpaceClick,
     handleToolClick,
+    interests,
   } = state;
+
+  // Follow/unfollow state
+  const [isFollowing, setIsFollowing] = React.useState(false);
+  const [isFollowLoading, setIsFollowLoading] = React.useState(false);
+  const [followChecked, setFollowChecked] = React.useState(false);
+
+  // Check follow status on load
+  React.useEffect(() => {
+    if (!profileId || isOwnProfile || followChecked) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/profile/${profileId}/follow`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setIsFollowing(data.data?.isFollowing ?? data.isFollowing ?? false);
+        }
+      } catch { /* ignore */ }
+      setFollowChecked(true);
+    })();
+  }, [profileId, isOwnProfile, followChecked]);
+
+  const handleToggleFollow = React.useCallback(async () => {
+    if (!profileId || isFollowLoading) return;
+    setIsFollowLoading(true);
+    try {
+      const method = isFollowing ? 'DELETE' : 'POST';
+      const res = await fetch(`/api/profile/${profileId}/follow`, {
+        method,
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setIsFollowing(!isFollowing);
+        toast.success(isFollowing ? 'Unfollowed' : 'Following');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error?.message || 'Failed');
+      }
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setIsFollowLoading(false);
+    }
+  }, [profileId, isFollowing, isFollowLoading]);
 
   const handleSubmitReport = async (data: ReportContentInput) => {
     const response = await fetch('/api/content/reports', {
@@ -142,9 +186,20 @@ export default function ProfilePageContent() {
           </div>
         )}
 
-        {/* Report button (other profiles) */}
+        {/* Follow + Report buttons (other profiles) */}
         {!isOwnProfile && (
-          <div className="flex justify-end mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={handleToggleFollow}
+              disabled={isFollowLoading}
+              className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-all ${
+                isFollowing
+                  ? 'bg-white/[0.06] text-white/70 hover:bg-red-500/20 hover:text-red-400'
+                  : 'bg-[#FFD700] text-black hover:opacity-90'
+              } ${isFollowLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isFollowLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
+            </button>
             <button
               onClick={() => setShowReportModal(true)}
               className="text-[13px] text-white/50 hover:text-white transition-colors"
@@ -202,6 +257,20 @@ export default function ProfilePageContent() {
             <p className="text-[13px] text-white/50">{infoLine}</p>
           )}
         </div>
+
+        {/* Interests */}
+        {interests.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            {interests.map((interest) => (
+              <span
+                key={interest}
+                className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[12px] text-white/40"
+              >
+                {interest}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Divider */}
         <div className="h-px bg-white/[0.06] mb-8" />

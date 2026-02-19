@@ -128,6 +128,7 @@ export function EntryFlowV2() {
 
   const otpRefs = React.useRef<Array<HTMLInputElement | null>>([]);
   const lastSubmittedCode = React.useRef('');
+  const [showSpamHint, setShowSpamHint] = React.useState(false);
 
   // Analytics
   const analytics = useOnboardingAnalytics();
@@ -196,8 +197,22 @@ export function EntryFlowV2() {
   // ── OTP focus on step enter ─────────────────────────────────
 
   React.useEffect(() => {
-    if (step === 'code') focusOtpIndex(0);
+    if (step === 'code') {
+      focusOtpIndex(0);
+      setShowSpamHint(false);
+    }
   }, [step, focusOtpIndex]);
+
+  // ── Spam folder hint after 10s on verify screen ─────────────
+
+  React.useEffect(() => {
+    if (step !== 'code' || isCodeVerified) return;
+    const timer = window.setTimeout(() => {
+      const hasEnteredCode = code.some(d => d !== '');
+      if (!hasEnteredCode) setShowSpamHint(true);
+    }, 10_000);
+    return () => window.clearTimeout(timer);
+  }, [step, isCodeVerified, code]);
 
   // ── Resend countdown ────────────────────────────────────────
 
@@ -242,7 +257,15 @@ export function EntryFlowV2() {
             avatarUrl: s.avatarUrl,
             memberCount: s.memberCount,
           }));
-          if (!cancelled) setRecommendedSpaces(spaces);
+          if (!cancelled) {
+            setRecommendedSpaces(spaces);
+            // Pre-select the first 2-3 popular spaces so "Enter HIVE" gives a non-empty experience
+            const preSelected = spaces
+              .sort((a, b) => (b.memberCount ?? 0) - (a.memberCount ?? 0))
+              .slice(0, Math.min(3, spaces.length))
+              .map(s => s.id);
+            setJoinedSpaces(prev => prev.length === 0 ? preSelected : prev);
+          }
         }
       } catch {
         // Silently fail — user can skip
@@ -658,6 +681,17 @@ export function EntryFlowV2() {
                   <p className="text-[13px] text-white/20 font-mono">
                     Resend in {resendCountdown}s
                   </p>
+                )}
+
+                {showSpamHint && !isCodeVerified && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-[13px] text-[#FFD700]/60"
+                  >
+                    💡 Check your spam or junk folder — codes sometimes land there.
+                  </motion.p>
                 )}
               </motion.div>
             </motion.div>

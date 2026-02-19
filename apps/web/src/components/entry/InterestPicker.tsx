@@ -25,6 +25,20 @@ interface InterestPickerProps {
 const MIN_INTERESTS = 3;
 const MAX_INTERESTS = 6;
 
+// Hardcoded fallback categories — never show an empty picker
+const FALLBACK_INTEREST_CATEGORIES: InterestCategory[] = [
+  { id: 'academic_identity', title: 'Academics', icon: '📚', items: ['cs', 'bio', 'psych', 'engineering'] },
+  { id: 'creative_energy', title: 'Creative', icon: '🎨', items: ['art', 'music', 'film', 'writing'] },
+  { id: 'social_vibes', title: 'Social', icon: '🎉', items: ['parties', 'greek life', 'clubs'] },
+  { id: 'sports_fitness', title: 'Sports & Fitness', icon: '💪', items: ['gym', 'intramurals', 'running'] },
+  { id: 'gaming', title: 'Gaming', icon: '🎮', items: ['pc gaming', 'console', 'esports'] },
+  { id: 'food_culture', title: 'Food & Culture', icon: '🍜', items: ['cooking', 'foodie', 'boba'] },
+  { id: 'career_hustle', title: 'Career & Hustle', icon: '💼', items: ['internships', 'startups', 'networking'] },
+  { id: 'wellness', title: 'Wellness', icon: '🧘', items: ['mental health', 'meditation', 'self-care'] },
+  { id: 'tech', title: 'Tech', icon: '💻', items: ['coding', 'AI', 'hackathons'] },
+  { id: 'outdoors', title: 'Outdoors', icon: '🏕️', items: ['hiking', 'nature', 'travel'] },
+];
+
 export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestPickerProps) {
   const [categories, setCategories] = React.useState<InterestCategory[]>([]);
   const [undergradMajors, setUndergradMajors] = React.useState<string[]>([]);
@@ -48,14 +62,16 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
         const res = await fetch(`/api/campus/catalogs?campusId=${campusId || 'ub-buffalo'}`);
         if (res.ok) {
           const data = await res.json();
-          setCategories(data.interests || []);
+          const fetchedCategories = data.interests || [];
+          setCategories(fetchedCategories.length > 0 ? fetchedCategories : FALLBACK_INTEREST_CATEGORIES);
           setUndergradMajors((data.majors || []).map((m: any) => m.name || m));
           setGradPrograms((data.graduatePrograms || []).map((m: any) => m.name || m));
           setOnCampusSpaces(data.residentialSpaces || []);
           setOffCampusSpaces(data.offCampusSpaces || []);
         }
       } catch {
-        // Fallback: still let them through
+        // Fallback: use hardcoded categories so the picker is never empty
+        setCategories(FALLBACK_INTEREST_CATEGORIES);
       } finally {
         setLoading(false);
       }

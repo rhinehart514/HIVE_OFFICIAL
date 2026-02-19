@@ -17,7 +17,7 @@ export default function MeEditPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/profile/edit');
+    router.replace('/me/settings?section=profile');
   }, [router]);
 
   return (

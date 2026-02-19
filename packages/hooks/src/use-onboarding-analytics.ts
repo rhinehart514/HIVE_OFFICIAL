@@ -234,13 +234,17 @@ export const useOnboardingAnalytics = (): UseOnboardingAnalyticsReturn => {
 function getStepIndex(stepName: OnboardingStepName): number {
   const stepOrder: OnboardingStepName[] = [
     'welcome',
+    'verify',
     'name',
     'academics',
     'handle',
+    'interests',
+    'spaces',
     'photo',
     'builder',
     'legal'
   ]
   
-  return stepOrder.indexOf(stepName)
+  const idx = stepOrder.indexOf(stepName)
+  return idx >= 0 ? idx : -1
 } 
