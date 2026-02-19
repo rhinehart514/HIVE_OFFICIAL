@@ -6,6 +6,10 @@
   "regions": ["iad1"],
   "crons": [
     {
+      "path": "/api/cron/sync-events",
+      "schedule": "0 */4 * * *"
+    },
+    {
       "path": "/api/cron/automations",
       "schedule": "0 0 * * *"
     },
