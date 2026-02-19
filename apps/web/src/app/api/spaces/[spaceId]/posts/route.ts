@@ -279,7 +279,14 @@ export const POST = withAuthValidationAndErrors(
           updatedAt: now,
         });
 
-      // Real-time updates handled by Firestore listeners on client
+      // Notify space members about new post (non-blocking)
+      notifyNewSpacePost(spaceId, postRef.id, body.content, userId, campusId).catch(err => {
+        logger.warn('Post notification failed', {
+          error: err instanceof Error ? err.message : String(err),
+          spaceId,
+          postId: postRef.id,
+        });
+      });
 
       return respond.created({
         post: {
@@ -300,3 +307,58 @@ export const POST = withAuthValidationAndErrors(
 );
 
 export const GET = withCache(_GET, 'SHORT');
+
+/**
+ * Notify space members about a new post.
+ * Sends bulk notifications to all active members except the author.
+ */
+async function notifyNewSpacePost(
+  spaceId: string,
+  postId: string,
+  content: string,
+  authorId: string,
+  campusId: string
+): Promise<void> {
+  const { createBulkNotifications } = await import('@/lib/notification-service');
+
+  // Get author name
+  const authorDoc = await dbAdmin.collection('users').doc(authorId).get();
+  const authorName = authorDoc.data()?.fullName || authorDoc.data()?.displayName || 'Someone';
+
+  // Get space info
+  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+  const spaceData = spaceDoc.data();
+  const spaceName = spaceData?.name || 'a space';
+  const spaceHandle = spaceData?.handle || spaceId;
+
+  // Get all active members
+  const membersSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', campusId)
+    .get();
+
+  const memberIds = membersSnapshot.docs
+    .map(d => d.data().userId)
+    .filter(id => id !== authorId);
+
+  if (memberIds.length === 0) return;
+
+  const preview = content.substring(0, 100) + (content.length > 100 ? '...' : '');
+
+  await createBulkNotifications(memberIds, {
+    type: 'comment', // closest existing type for post activity
+    category: 'social',
+    title: `${authorName} posted in ${spaceName}`,
+    body: preview,
+    actionUrl: `/s/${spaceHandle}/posts/${postId}`,
+    metadata: {
+      actorId: authorId,
+      actorName: authorName,
+      postId,
+      spaceId,
+      spaceName,
+    },
+  });
+}

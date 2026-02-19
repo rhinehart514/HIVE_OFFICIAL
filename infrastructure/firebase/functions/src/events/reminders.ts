@@ -272,6 +272,63 @@ export const eventReminders = functions.pubsub
                 "stats.lastTriggered": nowTimestamp,
               });
 
+              // Also send push notifications to RSVP'd attendees
+              try {
+                const rsvpsSnapshot = await firestore
+                  .collection("rsvps")
+                  .where("eventId", "==", eventId)
+                  .where("status", "in", ["going", "maybe"])
+                  .get();
+
+                if (!rsvpsSnapshot.empty) {
+                  const attendeeIds = rsvpsSnapshot.docs.map(d => d.data().userId);
+
+                  // Send push to each attendee
+                  for (const attendeeId of attendeeIds) {
+                    try {
+                      const userDoc = await firestore.collection("users").doc(attendeeId).get();
+                      if (!userDoc.exists) continue;
+                      const userData = userDoc.data();
+                      const tokens = userData?.fcmTokens
+                        ? (Array.isArray(userData.fcmTokens)
+                            ? userData.fcmTokens
+                            : Object.values(userData.fcmTokens))
+                        : [];
+
+                      if (tokens.length === 0) continue;
+
+                      await admin.messaging().sendEachForMulticast({
+                        tokens: tokens as string[],
+                        notification: {
+                          title: `⏰ ${event.title} starts in ${beforeMinutes} minutes`,
+                          body: spaceId ? `Don't forget — your event is about to begin!` : undefined,
+                        },
+                        data: {
+                          type: "event_reminder",
+                          eventId,
+                          spaceId: spaceId || "",
+                          actionUrl: spaceId ? `/s/${spaceId}/events/${eventId}` : `/events/${eventId}`,
+                        },
+                        webpush: {
+                          fcmOptions: {
+                            link: spaceId ? `/s/${spaceId}/events/${eventId}` : `/events/${eventId}`,
+                          },
+                        },
+                      });
+                    } catch (pushErr) {
+                      functions.logger.warn(`Push failed for attendee ${attendeeId}`, pushErr);
+                    }
+                  }
+
+                  functions.logger.info(`Push reminders sent to ${attendeeIds.length} attendees`, {
+                    eventId,
+                    spaceId,
+                  });
+                }
+              } catch (pushError) {
+                functions.logger.warn(`Failed to send push reminders for event ${eventId}`, pushError);
+              }
+
               remindersSent++;
 
               functions.logger.info(`Sent reminder for event ${event.title}`, {

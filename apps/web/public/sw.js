@@ -158,7 +158,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Push notification handler
+// Push notification handler (supports both FCM and generic push)
 self.addEventListener('push', (event) => {
   if (!event.data) {
     return;
@@ -167,24 +167,54 @@ self.addEventListener('push', (event) => {
   try {
     const data = event.data.json();
 
+    // FCM sends notifications under data.notification and data.data
+    const notification = data.notification || data;
+    const extraData = data.data || {};
+
+    // Build action URL from FCM data or fcmOptions
+    const actionUrl = data.fcmOptions?.link
+      || extraData.actionUrl
+      || notification.click_action
+      || data.url
+      || '/me/notifications';
+
+    // Use notification type for tag deduplication
+    const tag = extraData.type
+      ? `hive-${extraData.type}-${Date.now()}`
+      : (data.tag || `hive-notification-${Date.now()}`);
+
     const options = {
-      body: data.body || 'New notification from HIVE',
-      icon: '/assets/hive-logo-gold.svg',
+      body: notification.body || 'New notification from HIVE',
+      icon: notification.image || notification.icon || '/assets/hive-logo-gold.svg',
       badge: '/assets/hive-logo-gold.svg',
-      tag: data.tag || 'hive-notification',
+      tag,
       data: {
-        url: data.url || '/',
-        ...data.data,
+        url: actionUrl,
+        ...extraData,
       },
       actions: data.actions || [],
-      requireInteraction: data.requireInteraction || false,
+      requireInteraction: extraData.type === 'mention' || extraData.type === 'event_reminder',
+      vibrate: [200, 100, 200],
     };
 
     event.waitUntil(
-      self.registration.showNotification(data.title || 'HIVE', options)
+      self.registration.showNotification(notification.title || 'HIVE', options)
     );
   } catch (error) {
     console.error('[SW] Push notification error:', error);
+
+    // Fallback: try showing raw text
+    try {
+      const text = event.data.text();
+      event.waitUntil(
+        self.registration.showNotification('HIVE', {
+          body: text,
+          icon: '/assets/hive-logo-gold.svg',
+        })
+      );
+    } catch (fallbackError) {
+      console.error('[SW] Push fallback failed:', fallbackError);
+    }
   }
 });
 

@@ -24,6 +24,10 @@
     {
       "path": "/api/cron/tool-lifecycle",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/event-reminders",
+      "schedule": "*/5 * * * *"
     }
   ],
   "headers": [
