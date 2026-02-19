@@ -430,6 +430,30 @@ export function EventDetailDrawer({
                     </div>
                   </div>
 
+                  {/* Add to Google Calendar */}
+                  {start && (
+                    <a
+                      href={(() => {
+                        const endDate = end || new Date(start.getTime() + 60 * 60 * 1000);
+                        const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+                        const params = new URLSearchParams({
+                          action: 'TEMPLATE',
+                          text: event.title,
+                          dates: `${fmt(start)}/${fmt(endDate)}`,
+                          details: event.description || '',
+                          location: location || '',
+                        });
+                        return `https://www.google.com/calendar/render?${params.toString()}`;
+                      })()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full p-3 rounded-xl border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-[13px] text-white/40 hover:text-white/60"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Add to Google Calendar
+                    </a>
+                  )}
+
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.06] p-4">
                     <Text size="xs" weight="medium" className="uppercase tracking-wider text-white/50">
                       Organizer

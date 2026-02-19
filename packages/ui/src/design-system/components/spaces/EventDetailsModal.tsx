@@ -378,8 +378,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               ))}
             </div>
 
-            {/* Add to Calendar - shows when RSVP'd as going */}
-            {currentRSVP === 'going' && (
+            {/* Add to Google Calendar */}
               <a
                 href={generateGoogleCalendarUrl(event)}
                 target="_blank"
@@ -396,7 +395,6 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 </svg>
                 Add to Google Calendar
               </a>
-            )}
           </div>
 
           {/* Linked Board */}
