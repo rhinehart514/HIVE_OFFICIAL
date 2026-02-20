@@ -233,9 +233,9 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
     }
     if (member.role === 'moderator') {
       return (
-        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10">
-          <Shield className="w-3 h-3 text-blue-400" />
-          <span className="text-[10px] font-medium text-blue-400">Mod</span>
+        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.06]">
+          <Shield className="w-3 h-3 text-white/50" />
+          <span className="text-[10px] font-medium text-white/50">Mod</span>
         </span>
       );
     }

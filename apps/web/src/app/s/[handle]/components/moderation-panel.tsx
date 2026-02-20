@@ -76,9 +76,9 @@ type ModerationAction = 'approve' | 'hide' | 'unhide' | 'remove' | 'restore';
 const ACTION_CONFIG: Record<ModerationAction, { icon: typeof Check; label: string; color: string }> = {
   approve: { icon: Check, label: 'Approve', color: 'text-green-400' },
   hide: { icon: EyeOff, label: 'Hide', color: 'text-yellow-400' },
-  unhide: { icon: RotateCcw, label: 'Unhide', color: 'text-blue-400' },
+  unhide: { icon: RotateCcw, label: 'Unhide', color: 'text-white/50' },
   remove: { icon: Trash2, label: 'Remove', color: 'text-red-400' },
-  restore: { icon: RotateCcw, label: 'Restore', color: 'text-blue-400' },
+  restore: { icon: RotateCcw, label: 'Restore', color: 'text-white/50' },
 };
 
 const TYPE_ICON: Record<string, typeof FileText> = {
@@ -491,7 +491,7 @@ export function ModerationPanel({
                                   const hoverBgMap: Record<string, string> = {
                                     green: 'hover:bg-green-400/10',
                                     yellow: 'hover:bg-yellow-400/10',
-                                    blue: 'hover:bg-blue-400/10',
+                                    white: 'hover:bg-white/[0.06]',
                                     red: 'hover:bg-red-400/10',
                                   };
                                   const colorKey = config.color.split('-')[1] || '';

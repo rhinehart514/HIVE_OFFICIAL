@@ -101,6 +101,21 @@ export async function GET(
   let unsubscribeShared: (() => void) | null = null;
   let unsubscribePersonal: (() => void) | null = null;
   let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+  let inactivityTimeout: ReturnType<typeof setInterval> | null = null;
+  let lastActivity = Date.now();
+
+  const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+  function forceCleanup(controller: ReadableStreamDefaultController, reason: string) {
+    if (isClosed) return;
+    isClosed = true;
+    if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+    if (inactivityTimeout) { clearInterval(inactivityTimeout); inactivityTimeout = null; }
+    unsubscribeShared?.();
+    unsubscribePersonal?.();
+    try { controller.close(); } catch { /* already closed */ }
+    logger.info('Tool state SSE stream force-closed', { userId, toolId, spaceId, reason });
+  }
 
   const stream = new ReadableStream({
     start(controller) {
@@ -128,6 +143,7 @@ export async function GET(
         .onSnapshot(
           (snapshot) => {
             if (isClosed) return;
+            lastActivity = Date.now();
             if (!snapshot.exists) return;
 
             const raw = snapshot.data() || {};
@@ -161,6 +177,7 @@ export async function GET(
         .onSnapshot(
           (snapshot) => {
             if (isClosed) return;
+            lastActivity = Date.now();
             if (!snapshot.exists) return;
 
             const raw = snapshot.data() || {};
@@ -188,17 +205,28 @@ export async function GET(
           }
         );
 
+      // Heartbeat every 30s — also resets lastActivity so idle detection
+      // only fires when neither snapshots NOR pings are flowing
       heartbeatInterval = setInterval(() => {
         if (isClosed) {
           if (heartbeatInterval) clearInterval(heartbeatInterval);
           return;
         }
         if (!sendMessage({ type: 'ping', timestamp: Date.now() })) {
-          if (heartbeatInterval) clearInterval(heartbeatInterval);
-          unsubscribeShared?.();
-          unsubscribePersonal?.();
+          // sendMessage failed — client likely disconnected
+          forceCleanup(controller, 'heartbeat_send_failed');
+        } else {
+          lastActivity = Date.now();
         }
-      }, 30000);
+      }, 30_000);
+
+      // Inactivity timeout — if no data flows for 5 minutes, force-close.
+      // Guards against leaked listeners when client disconnects without cancel().
+      inactivityTimeout = setInterval(() => {
+        if (Date.now() - lastActivity > INACTIVITY_TIMEOUT_MS) {
+          forceCleanup(controller, 'inactivity_timeout');
+        }
+      }, 60_000);
     },
 
     cancel() {
@@ -206,6 +234,10 @@ export async function GET(
       if (heartbeatInterval) {
         clearInterval(heartbeatInterval);
         heartbeatInterval = null;
+      }
+      if (inactivityTimeout) {
+        clearInterval(inactivityTimeout);
+        inactivityTimeout = null;
       }
       unsubscribeShared?.();
       unsubscribePersonal?.();

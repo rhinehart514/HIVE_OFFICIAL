@@ -172,8 +172,26 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
+      {/* Minimal header — way back to HIVE */}
+      <header className="flex items-center justify-between px-6 py-4 flex-shrink-0">
+        <Link
+          href="/discover"
+          className="flex items-center gap-2 rounded-full px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
+        >
+          <span className="h-4 w-4 rounded-full bg-[#FFD700]" aria-hidden />
+          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
+            HIVE
+          </span>
+        </Link>
+        {tool.ownerName && (
+          <span className="text-[12px] text-white/25 font-mono tracking-wide">
+            by {tool.ownerName}
+          </span>
+        )}
+      </header>
+
       {/* Tool — centered, frameless */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-6">
         <div className="w-full max-w-[480px]">
           {/* Tool surface */}
           <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-6 sm:p-8">

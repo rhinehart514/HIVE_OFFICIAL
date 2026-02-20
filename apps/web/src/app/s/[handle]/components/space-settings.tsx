@@ -1253,7 +1253,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                               )}
                               <div className="flex items-center gap-2 mt-1">
                                 {board.isDefault && (
-                                  <Text size="xs" className="text-blue-400">Default</Text>
+                                  <Text size="xs" className="text-white/50">Default</Text>
                                 )}
                                 {board.isLocked && (
                                   <Text size="xs" className="text-orange-400">Locked</Text>
@@ -1582,7 +1582,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                                 <span className={cn(
                                   'text-xs px-1.5 py-0.5 rounded-md',
                                   selectedCandidate.role === 'admin' ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]' :
-                                  selectedCandidate.role === 'moderator' ? 'bg-blue-400/10 text-blue-400' :
+                                  selectedCandidate.role === 'moderator' ? 'bg-white/[0.06] text-white/50' :
                                   'bg-white/[0.06] text-white/50'
                                 )}>
                                   {selectedCandidate.role === 'admin' ? 'Leader' : selectedCandidate.role === 'moderator' ? 'Mod' : 'Member'}
@@ -1641,7 +1641,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                                     <span className={cn(
                                       'text-xs px-1.5 py-0.5 rounded-md flex-shrink-0',
                                       candidate.role === 'admin' ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]' :
-                                      candidate.role === 'moderator' ? 'bg-blue-400/10 text-blue-400' :
+                                      candidate.role === 'moderator' ? 'bg-white/[0.06] text-white/50' :
                                       'bg-white/[0.06] text-white/50'
                                     )}>
                                       {candidate.role === 'admin' ? 'Leader' : candidate.role === 'moderator' ? 'Mod' : 'Member'}

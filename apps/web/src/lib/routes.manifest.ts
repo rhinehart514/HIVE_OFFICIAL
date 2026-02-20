@@ -79,12 +79,6 @@ export const routeManifest: Record<string, RouteOwnership> = {
     allowedMutations: ['executeTool'],
     frictionWeight: 'medium',
   },
-  '/s/[handle]/analytics': {
-    owns: ['spaceAnalytics'],
-    neverContains: ['identityConfig', 'accountSettings'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
   '/lab/[toolId]': {
     owns: ['builderTools', 'toolEditing'],
     neverContains: ['socialContent', 'discovery'],
@@ -101,30 +95,6 @@ export const routeManifest: Record<string, RouteOwnership> = {
     owns: ['spacesList', 'spaceManagement'],
     neverContains: ['identityConfig', 'accountSettings'],
     allowedMutations: ['createSpace', 'joinSpace'],
-    frictionWeight: 'medium',
-  },
-  '/spaces/[spaceId]/tools': {
-    owns: ['spaceTools', 'deployedTools'],
-    neverContains: ['identityConfig', 'accountSettings'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  '/spaces/[spaceId]/tools/[deploymentId]': {
-    owns: ['toolExecution', 'deploymentView'],
-    neverContains: ['identityConfig', 'accountSettings'],
-    allowedMutations: ['executeTool'],
-    frictionWeight: 'medium',
-  },
-  '/spaces/[spaceId]/setups': {
-    owns: ['spaceSetups'],
-    neverContains: ['identityConfig', 'accountSettings'],
-    allowedMutations: [],
-    frictionWeight: 'light',
-  },
-  '/spaces/[spaceId]/setups/[deploymentId]': {
-    owns: ['setupExecution', 'setupView'],
-    neverContains: ['identityConfig', 'accountSettings'],
-    allowedMutations: ['executeSetup'],
     frictionWeight: 'medium',
   },
   '/lab': {
@@ -156,18 +126,6 @@ export const routeManifest: Record<string, RouteOwnership> = {
     neverContains: ['socialContent', 'discovery'],
     allowedMutations: ['deployTool'],
     frictionWeight: 'heavy',
-  },
-  '/lab/[toolId]/run': {
-    owns: ['toolExecution'],
-    neverContains: ['socialContent', 'discovery'],
-    allowedMutations: ['executeTool'],
-    frictionWeight: 'medium',
-  },
-  '/lab/[toolId]/runs': {
-    owns: ['toolRunHistory'],
-    neverContains: ['socialContent', 'discovery'],
-    allowedMutations: [],
-    frictionWeight: 'light',
   },
   '/lab/[toolId]/analytics': {
     owns: ['toolAnalytics'],

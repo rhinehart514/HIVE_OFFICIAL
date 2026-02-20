@@ -38,9 +38,8 @@ async function fetchToolForMetadata(toolId: string) {
 /**
  * Tool Studio Layout
  *
- * Wraps all tool-specific routes: edit, preview, deploy, settings, analytics, run.
+ * Wraps all tool-specific routes: edit, preview, deploy, settings, analytics.
  * Provides dynamic OG metadata based on tool data.
- * Uses LayoutProvider to hide shell (immersion archetype).
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { toolId } = await params;

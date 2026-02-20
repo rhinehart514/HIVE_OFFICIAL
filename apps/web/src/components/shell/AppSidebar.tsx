@@ -74,10 +74,13 @@ export function TopBar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Search */}
+          {/* Search — TODO: wire to Cmd+K overlay when /search route exists */}
           <button
             type="button"
-            onClick={() => router.push('/search')}
+            onClick={() => {
+              // Dispatch Cmd+K event to open search overlay if available
+              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+            }}
             className="flex h-9 items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.04] px-3 text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
             aria-label="Search"
           >

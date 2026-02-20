@@ -128,9 +128,10 @@ placedTools/{placementId}       ← canonical deployment record
   └─ spaceId, toolId, placement, order, isActive, visibility, titleOverride, placedAt
 deployedTools/{id}              ← legacy overlap, prefer placedTools
 
-tool_states/{toolId}_{spaceId}_shared    ← shared state doc ID format
+tool_states/{toolId}_{deploymentId}_shared    ← shared state doc ID format
   └─ counters{}, collections{}, timeline[], version, lastModified, metadata{}
-tool_states/{toolId}_{spaceId}_{userId}  ← personal state doc ID format
+  └─ deploymentId = spaceId (SSE stream) or "standalone" (standalone tools)
+tool_states/{toolId}_{deploymentId}_{userId}  ← personal state doc ID format
   └─ selections{}, participation{}, userId, scope, metadata{}
 
 posts/{postId}
@@ -213,7 +214,7 @@ Space → SpaceMembers (1:many, composite key spaceId_userId)
 Space → Events (1:many, via events.spaceId)
 Space → PlacedTools (1:many, via placedTools.spaceId)
 Tool → PlacedTools (1:many, a tool can be deployed to multiple spaces)
-Tool → tool_states (1:many, keyed by {toolId}_{spaceId}_shared)
+Tool → tool_states (1:many, keyed by {toolId}_{deploymentId}_shared)
 Event → RSVPs (1:many, via rsvps.eventId)
 User → Profiles (1:1, same userId)
 User → Connections (many:many, via connections collection)
@@ -306,13 +307,14 @@ AI generation: `POST /api/tools/generate` streams NDJSON
 
 ```typescript
 // sharedState — visible to all users
-// Doc ID: tool_states/{toolId}_{spaceId}_shared
+// Doc ID: tool_states/{toolId}_{deploymentId}_shared
+// deploymentId = spaceId for space-deployed tools, "standalone" for standalone tools
 sharedState.counters["poll-1:option-a"] = 12      // vote counts
 sharedState.collections["form-1:submissions"]      // form responses
 sharedState.timeline                               // last 100 events
 
 // userState — per user
-// Doc ID: tool_states/{toolId}_{spaceId}_{userId}
+// Doc ID: tool_states/{toolId}_{deploymentId}_{userId}
 userState.participation["poll-1:hasVoted"] = true
 userState.selections["poll-1:choice"] = "option-a"
 ```
@@ -691,8 +693,9 @@ return respond.success({ data });
 ```
 
 ### 8. tool_states doc ID format
-Shared state: `{toolId}_{spaceId}_shared`
-Personal state: `{toolId}_{spaceId}_{userId}`
+Shared state: `{toolId}_{deploymentId}_shared`
+Personal state: `{toolId}_{deploymentId}_{userId}`
+`deploymentId` = `spaceId` for space-deployed tools (SSE stream route), `"standalone"` for standalone tools (execute route).
 Collections are NOT subcollections — they're flat documents in `tool_states`.
 
 ### 9. Connection system is incomplete

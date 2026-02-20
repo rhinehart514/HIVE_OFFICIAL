@@ -268,7 +268,7 @@ function MemberRow({
       return <Crown className="w-3.5 h-3.5 text-[var(--color-gold)]" />;
     }
     if (member.role === 'moderator') {
-      return <Shield className="w-3.5 h-3.5 text-blue-400" />;
+      return <Shield className="w-3.5 h-3.5 text-white/50" />;
     }
     return null;
   };

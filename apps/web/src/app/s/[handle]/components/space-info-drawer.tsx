@@ -217,7 +217,7 @@ export function SpaceInfoDrawer({
                             href={space.sourceUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                            className="text-white/50 hover:text-white transition-colors"
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
                           </a>
@@ -249,7 +249,7 @@ export function SpaceInfoDrawer({
                       <Mail className="h-4 w-4 text-white/50" />
                       <a
                         href={`mailto:${space.email}`}
-                        className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                        className="text-sm text-white/50 hover:text-white transition-colors"
                       >
                         {space.email}
                       </a>

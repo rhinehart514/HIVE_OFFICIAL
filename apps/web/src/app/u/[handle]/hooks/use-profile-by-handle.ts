@@ -204,10 +204,10 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
   // Viewer interests for shared interests computation
   const [viewerInterests, setViewerInterests] = React.useState<string[]>([]);
 
-  // Connection state (social features removed, hardcoded)
-  const connectionState: ConnectionState = 'none';
-  const pendingRequestId: string | null = null;
-  const isConnectionLoading = false;
+  // Connection state — fetched from API
+  const [connectionState, setConnectionState] = React.useState<ConnectionState>('none');
+  const [pendingRequestId] = React.useState<string | null>(null);
+  const [isConnectionLoading, setIsConnectionLoading] = React.useState(false);
 
   const profileId = resolvedProfileId;
   const isOwnProfile = currentUser?.id === profileId;
@@ -563,8 +563,44 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
     fetchViewerInterests();
   }, [currentUser?.id, isOwnProfile]);
 
-  // Connection state — social features removed
-  // connectionState always 'none', no API calls
+  // ============================================================================
+  // Fetch connection state between viewer and profile
+  // ============================================================================
+
+  React.useEffect(() => {
+    if (!profileId || isOwnProfile || !currentUser?.id) return;
+
+    let cancelled = false;
+
+    async function fetchConnectionState() {
+      try {
+        const res = await fetch(`/api/profile/${profileId}/follow`, {
+          credentials: 'include',
+        });
+        if (cancelled || !res.ok) return;
+
+        const json = await res.json();
+        const data = json.data || json;
+
+        if (data.isSelf) {
+          setConnectionState('none');
+        } else if (data.isMutual) {
+          setConnectionState('friends');
+        } else if (data.isFollowing) {
+          setConnectionState('pending_outgoing');
+        } else if (data.isFollower) {
+          setConnectionState('pending_incoming');
+        } else {
+          setConnectionState('none');
+        }
+      } catch {
+        // Silently fail — default to 'none'
+      }
+    }
+
+    fetchConnectionState();
+    return () => { cancelled = true; };
+  }, [profileId, isOwnProfile, currentUser?.id]);
 
   // ============================================================================
   // Computed Values
@@ -834,14 +870,104 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
     router.push(`/lab/${toolId}`);
   }, [router]);
 
-  // Social handlers — no-ops (social features removed)
-  const handleConnect = React.useCallback(async () => {}, []);
-  const handleAcceptRequest = React.useCallback(async (_requestId: string) => {}, []);
-  const handleRejectRequest = React.useCallback(async (_requestId: string) => {}, []);
-  const handleUnfriend = React.useCallback(async () => {}, []);
+  // Social handlers — connected to /api/profile/[userId]/follow
+  const handleConnect = React.useCallback(async () => {
+    if (!profileId || isConnectionLoading) return;
+    setIsConnectionLoading(true);
+    // Optimistic update
+    const prevState = connectionState;
+    setConnectionState('pending_outgoing');
+    try {
+      const res = await fetch(`/api/profile/${profileId}/follow`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        setConnectionState(prevState);
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error?.message || 'Failed to connect');
+        return;
+      }
+      const json = await res.json();
+      const data = json.data || json;
+      // If mutual follow happened, upgrade to friends
+      if (data.type === 'friend') {
+        setConnectionState('friends');
+        toast.success('You are now friends!');
+      } else {
+        setConnectionState('pending_outgoing');
+        toast.success('Connection request sent');
+      }
+    } catch {
+      setConnectionState(prevState);
+      toast.error('Something went wrong');
+    } finally {
+      setIsConnectionLoading(false);
+    }
+  }, [profileId, isConnectionLoading, connectionState, toast]);
+
+  const handleAcceptRequest = React.useCallback(async (_requestId: string) => {
+    // In the follow model, "accepting" = following them back, which auto-upgrades to friend
+    if (!profileId || isConnectionLoading) return;
+    setIsConnectionLoading(true);
+    const prevState = connectionState;
+    setConnectionState('friends');
+    try {
+      const res = await fetch(`/api/profile/${profileId}/follow`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        setConnectionState(prevState);
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error?.message || 'Failed to accept');
+        return;
+      }
+      setConnectionState('friends');
+      toast.success('You are now friends!');
+    } catch {
+      setConnectionState(prevState);
+      toast.error('Something went wrong');
+    } finally {
+      setIsConnectionLoading(false);
+    }
+  }, [profileId, isConnectionLoading, connectionState, toast]);
+
+  const handleRejectRequest = React.useCallback(async (_requestId: string) => {
+    // Rejecting = no action needed in the follow model (just don't follow back)
+    // The incoming follow remains but we don't have to reciprocate
+    setConnectionState('none');
+    toast.info('Request dismissed');
+  }, [toast]);
+
+  const handleUnfriend = React.useCallback(async () => {
+    if (!profileId || isConnectionLoading) return;
+    setIsConnectionLoading(true);
+    const prevState = connectionState;
+    setConnectionState('none');
+    try {
+      const res = await fetch(`/api/profile/${profileId}/follow`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        setConnectionState(prevState);
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error?.message || 'Failed to disconnect');
+        return;
+      }
+      setConnectionState('none');
+      toast.success('Disconnected');
+    } catch {
+      setConnectionState(prevState);
+      toast.error('Something went wrong');
+    } finally {
+      setIsConnectionLoading(false);
+    }
+  }, [profileId, isConnectionLoading, connectionState, toast]);
 
   const handleMessage = React.useCallback(() => {
-    toast.info('Coming soon', 'Direct messages coming in a future update');
+    toast.info('Messaging coming soon', 'Direct messages are being built right now');
   }, [toast]);
 
   return {

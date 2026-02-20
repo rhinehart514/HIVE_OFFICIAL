@@ -252,20 +252,20 @@ export function LeaderDashboard({
             label="Members"
             value={metrics.memberCount}
             growth={metrics.memberGrowth}
-            color="text-blue-400"
+            color="text-white/50"
           />
           <MetricCard
             icon={MessageSquare}
             label="Messages this week"
             value={metrics.messagesThisWeek}
             growth={metrics.messageGrowth}
-            color="text-green-400"
+            color="text-white/50"
           />
           <MetricCard
             icon={CheckCircle2}
             label="Active members"
             value={metrics.activeMembers}
-            color="text-purple-400"
+            color="text-white/50"
           />
           <MetricCard
             icon={Calendar}

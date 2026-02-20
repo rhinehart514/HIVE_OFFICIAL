@@ -41,6 +41,38 @@ export interface StreamMessage {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// XSS SANITIZATION
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Recursively strip HTML tags from all string values in a config object.
+ * Prevents XSS injection from AI-generated or user-provided content.
+ */
+function sanitizeValue(val: unknown): unknown {
+  if (typeof val === 'string') return val.replace(/<[^>]*>/g, '').trim();
+  if (Array.isArray(val)) return val.map(sanitizeValue);
+  if (val && typeof val === 'object') {
+    return Object.fromEntries(
+      Object.entries(val as Record<string, unknown>).map(([k, v]) => [k, sanitizeValue(v)])
+    );
+  }
+  return val;
+}
+
+/**
+ * Sanitize all element configs in a composition to remove HTML tags.
+ */
+function sanitizeElementConfigs(composition: ToolComposition): ToolComposition {
+  return {
+    ...composition,
+    elements: composition.elements.map((el) => ({
+      ...el,
+      config: sanitizeValue(el.config) as Record<string, unknown>,
+    })),
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════
 
@@ -648,11 +680,12 @@ export async function generateTool(
             : buildCompactSystemPrompt();  // Compact for smaller models
           rawOutput = await callGroq(config, request.prompt, groqSystemPrompt);
           composition = parseModelOutput(rawOutput);
+          if (composition) composition = sanitizeElementConfigs(composition);
           break;
         }
 
         case 'rules':
-          composition = generateWithRules(request.prompt);
+          composition = sanitizeElementConfigs(generateWithRules(request.prompt));
           break;
       }
 
@@ -673,7 +706,7 @@ export async function generateTool(
   }
 
   // Ultimate fallback
-  return generateWithRules(request.prompt);
+  return sanitizeElementConfigs(generateWithRules(request.prompt));
 }
 
 export async function* generateToolStream(

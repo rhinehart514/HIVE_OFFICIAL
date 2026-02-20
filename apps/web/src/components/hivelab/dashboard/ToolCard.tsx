@@ -18,7 +18,6 @@ import {
   Rocket,
   Users,
   TrendingUp,
-  MessageSquare,
   Trash2,
 } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/hivelab/create-tool';
@@ -85,11 +84,6 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
   const handleAnalytics = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     router.push(`/lab/${tool.id}/analytics`);
-  }, [router, tool.id]);
-
-  const handleFeedback = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    router.push(`/lab/${tool.id}/feedback`);
   }, [router, tool.id]);
 
   const handleDeploy = useCallback((e: React.MouseEvent) => {
@@ -220,13 +214,6 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
             title="Analytics"
           >
             <BarChart3 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={handleFeedback}
-            className="p-1.5 rounded-md hover:bg-white/[0.06] text-white/50 hover:text-white/50 transition-colors"
-            title="Feedback"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
           </button>
           {tool.status === 'draft' || tool.status === 'published' ? (
             <button

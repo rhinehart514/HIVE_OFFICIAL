@@ -651,7 +651,7 @@ export default function SpacePageUnified() {
   if (error || !space) {
     return (
       <motion.div
-        className="min-h-screen flex items-center justify-center"
+        className="min-h-screen bg-black flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
@@ -706,7 +706,7 @@ export default function SpacePageUnified() {
     <AnimatePresence mode="wait">
       <motion.div
         key="split-panel"
-        className="h-screen"
+        className="h-screen bg-black"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -1355,7 +1355,7 @@ export default function SpacePageUnified() {
 // Loading skeleton matching SpaceLayout: header top, sidebar LEFT (200px), content RIGHT (fluid)
 function SpacePageSkeleton() {
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-black">
       {/* Header skeleton */}
       <motion.div
         className="h-14 border-b border-white/[0.06] px-4 flex items-center gap-3 flex-shrink-0"

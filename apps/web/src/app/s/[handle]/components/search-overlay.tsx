@@ -52,7 +52,7 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
         router.push(`/s/${spaceHandle}?event=${result.id}`);
         break;
       case 'tool':
-        router.push(`/s/${spaceHandle}/tools/${result.id}`);
+        router.push(`/t/${result.id}`);
         break;
       case 'message':
       default:

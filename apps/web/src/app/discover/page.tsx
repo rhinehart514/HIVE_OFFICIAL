@@ -362,7 +362,7 @@ function SpaceCard({ space }: { space: FeedSpace }) {
 
 function CreationCard({ creation }: { creation: FeedCreation }) {
   return (
-    <Link href={`/tools/${creation.id}`} className="block rounded-2xl bg-[#080808] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors group">
+    <Link href={`/t/${creation.id}`} className="block rounded-2xl bg-[#080808] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors group">
       {creation.thumbnail && (
         <div className="h-32 bg-white/[0.02] overflow-hidden">
           <img src={creation.thumbnail} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity" />

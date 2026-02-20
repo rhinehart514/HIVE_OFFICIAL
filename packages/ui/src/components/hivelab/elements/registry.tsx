@@ -15,6 +15,7 @@
 import * as React from 'react';
 import type { ErrorInfo } from 'react';
 import type { ElementProps } from '../../../lib/hivelab/element-system';
+import { validateAndCoerceConfig } from '../../../lib/hivelab/element-config-validation';
 import { ElementErrorBoundary } from './shared/error-boundary';
 
 // Universal elements - basic UI components
@@ -185,7 +186,8 @@ export function renderElement(elementId: string, props: ElementProps) {
     return <UnknownElementPlaceholder elementId={elementId} />;
   }
 
-  return renderer(props);
+  const validatedConfig = validateAndCoerceConfig(normalizedId, props.config);
+  return renderer({ ...props, config: validatedConfig });
 }
 
 /**
@@ -208,9 +210,10 @@ export function renderElementSafe(
     return <UnknownElementPlaceholder elementId={elementId} />;
   }
 
+  const validatedConfig = validateAndCoerceConfig(normalizedId, props.config);
   return (
     <ElementErrorBoundary elementType={normalizedId} onError={onError}>
-      {renderer(props)}
+      {renderer({ ...props, config: validatedConfig })}
     </ElementErrorBoundary>
   );
 }

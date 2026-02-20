@@ -136,7 +136,7 @@ export const api = {
       apiClient.get(`/api/spaces/${id}`),
 
     join: (spaceId: string) =>
-      apiClient.post('/api/spaces/join', { spaceId }),
+      apiClient.post('/api/spaces/join-v2', { spaceId }),
 
     leave: (spaceId: string) =>
       apiClient.post('/api/spaces/leave', { spaceId }),

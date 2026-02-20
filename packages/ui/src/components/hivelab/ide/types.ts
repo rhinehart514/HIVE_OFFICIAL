@@ -160,6 +160,15 @@ export const DEFAULT_CANVAS_STATE: CanvasState = {
   gridSize: 20,
 };
 
+export interface HiveLabComposition {
+  id: string;
+  name: string;
+  description: string;
+  elements: CanvasElement[];
+  connections: Connection[];
+  layout: 'flow';
+}
+
 export const DEFAULT_IDE_STATE: IDEState = {
   toolId: null,
   toolName: '',

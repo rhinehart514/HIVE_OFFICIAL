@@ -1,8 +1,12 @@
 'use client';
 
 /**
- * Legacy redirect → /s/[handle]
- * @deprecated
+ * /spaces/[spaceId]/tools/[deploymentId] — Legacy redirect
+ *
+ * Resolves spaceId to its handle via the public resolve-slug endpoint,
+ * then redirects to /s/[handle].
+ *
+ * @deprecated Use /s/[handle] instead.
  */
 
 import { useEffect } from 'react';
@@ -14,12 +18,18 @@ export default function LegacySpaceToolDetailPage() {
   const spaceId = params.spaceId as string;
 
   useEffect(() => {
-    router.replace(`/s/${encodeURIComponent(spaceId)}`);
+    fetch(`/api/spaces/resolve-slug/${encodeURIComponent(spaceId)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const slug = data?.data?.slug || data?.slug;
+        if (slug) {
+          router.replace(`/s/${slug}`);
+        } else {
+          router.replace('/spaces');
+        }
+      })
+      .catch(() => router.replace('/spaces'));
   }, [spaceId, router]);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-black">
-      <p className="text-sm text-white/50">Redirecting…</p>
-    </div>
-  );
+  return <div className="min-h-screen bg-black" />;
 }

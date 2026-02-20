@@ -1,17 +1,13 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AutomationBuilderModal } from './automation-builder-modal';
-import type { AutomationSummary } from "./automations-panel";
-import type { AutomationData } from "./automation-builder-modal";
-import { useStreamingGeneration } from '@hive/hooks';
-import { cn } from '../../../lib/utils';
 import type {
   CanvasElement,
   Connection,
   ToolMode,
-  HistoryEntry,
+  HiveLabComposition,
 } from './types';
 import type { ElementConnection } from '@hive/core';
 import { IDECanvas } from './ide-canvas';
@@ -20,19 +16,25 @@ import { useIDEKeyboard } from './use-ide-keyboard';
 // Context provider for state management (Phase 2)
 import { HiveLabProvider } from './context';
 
-// New layout components
+// Layout components
 import { ElementRail, type RailState, type RailTab, type UserToolItem } from './element-rail';
-import { ContextRail, type AlignmentType } from './context-rail';
+import { ContextRail } from './context-rail';
 import { FloatingActionBar, type FloatingActionBarRef } from './floating-action-bar';
 import { TemplateOverlay } from './template-overlay';
 import { TemplateGallery } from './template-gallery';
 import { AIChatPill, type AIChatPillRef } from './ai-chat-pill';
-import { toast } from 'sonner';
-import type { OtherToolData } from './other-tools-panel';
+import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
-// Stub types for removed systems
-type AutomationRun = Record<string, unknown>;
-type ConnectionCreateData = { source: unknown; target: unknown; transform?: unknown; label?: string };
+// Extracted hooks
+import {
+  useCanvasState,
+  useIDEHistory,
+  useIDEAutomations,
+  useIDEAI,
+  useIDESave,
+  useIDEDeploy,
+  useIDESpaceTools,
+} from './hooks';
 
 // Mobile detection hook
 function useIsMobile() {
@@ -48,34 +50,6 @@ function useIsMobile() {
   }, []);
 
   return isMobile;
-}
-import type { ToolComposition } from '../../../lib/hivelab/element-system';
-
-// Maximum history entries to prevent unbounded memory growth
-const MAX_HISTORY = 50;
-
-/**
- * Normalize connections to IDE format (Connection with { port } keys)
- */
-function normalizeConnections(saved?: ElementConnection[] | Connection[]): Connection[] {
-  if (!saved || saved.length === 0) return [];
-  return saved.map((conn, idx) => {
-    const fromConn = conn.from as { instanceId: string; port?: string; output?: string };
-    const toConn = conn.to as { instanceId: string; port?: string; input?: string };
-    const isIDEFormat = 'port' in fromConn || 'port' in toConn;
-
-    return {
-      id: (conn as Connection).id || `conn_${idx}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      from: {
-        instanceId: fromConn.instanceId,
-        port: isIDEFormat ? (fromConn.port || 'output') : (fromConn.output || 'output'),
-      },
-      to: {
-        instanceId: toConn.instanceId,
-        port: isIDEFormat ? (toConn.port || 'input') : (toConn.input || 'input'),
-      },
-    };
-  });
 }
 
 export interface UserContext {
@@ -102,30 +76,16 @@ export interface HiveLabIDEProps {
   onConnectionFlowReady?: (controls: ConnectionFlowControls) => void;
   originSpaceId?: string;
   onDeploy?: (composition: HiveLabComposition) => Promise<void>;
-  /** User's tools for the "Your Tools" drawer */
   userTools?: UserToolItem[];
-  /** Callback when user selects a tool from the drawer */
   onToolSelect?: (id: string) => void;
-  /** Callback when user clicks "New Tool" */
   onNewTool?: () => void;
-  /** Initial prompt to pre-fill AI palette (opens AI panel on mount) */
   initialPrompt?: string | null;
-  /** Deployment ID for accessing automations API (required for automation features) */
   deploymentId?: string;
 }
 
 export interface ConnectionFlowControls {
   triggerFlow: (connectionIds: string[], duration?: number) => void;
   getConnectionsFrom: (instanceId: string) => string[];
-}
-
-export interface HiveLabComposition {
-  id: string;
-  name: string;
-  description: string;
-  elements: CanvasElement[];
-  connections: Connection[];
-  layout: 'flow'; // Only flow is implemented; grid/tabs/sidebar are future work
 }
 
 // Mobile gate component
@@ -136,7 +96,6 @@ function MobileGate({ onBack }: { onBack: () => void }) {
       style={{ backgroundColor: 'var(--hivelab-bg, #0A0A0A)' }}
     >
       <div className="max-w-sm">
-        {/* Icon */}
         <div
           className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center"
           style={{ backgroundColor: 'var(--hivelab-surface, #1A1A1A)' }}
@@ -156,25 +115,19 @@ function MobileGate({ onBack }: { onBack: () => void }) {
             />
           </svg>
         </div>
-
-        {/* Title */}
         <h1
           className="text-xl font-semibold mb-2"
           style={{ color: 'var(--hivelab-text-primary, #FAF9F7)' }}
         >
           Desktop Required
         </h1>
-
-        {/* Description */}
         <p
           className="text-sm mb-6 leading-relaxed"
           style={{ color: 'var(--hivelab-text-secondary, #8A8A8A)' }}
         >
-          HiveLab's visual builder requires a larger screen. Open this page on
+          HiveLab&apos;s visual builder requires a larger screen. Open this page on
           your laptop or desktop for the best experience.
         </p>
-
-        {/* Back button */}
         <button
           type="button"
           onClick={onBack}
@@ -189,6 +142,112 @@ function MobileGate({ onBack }: { onBack: () => void }) {
         </button>
       </div>
     </div>
+  );
+}
+
+// Deploy success celebration overlay
+function DeploySuccessOverlay({
+  confettiParticles,
+  onContinue,
+  onViewInSpace,
+}: {
+  confettiParticles: Array<{
+    id: number;
+    targetX: number;
+    targetY: number;
+    rotation: number;
+    delay: number;
+    size: number;
+    color: string;
+    isCircle: boolean;
+  }>;
+  onContinue: () => void;
+  onViewInSpace: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+    >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {confettiParticles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            initial={{ x: '50%', y: '50%', scale: 0, opacity: 1 }}
+            animate={{
+              x: `${particle.targetX}%`,
+              y: `${particle.targetY}%`,
+              scale: [0, 1, 0.5],
+              opacity: [1, 1, 0],
+              rotate: particle.rotation,
+            }}
+            transition={{ duration: 1.5, delay: particle.delay, ease: 'easeOut' }}
+            className="absolute"
+            style={{
+              width: particle.size,
+              height: particle.size,
+              backgroundColor: particle.color,
+              borderRadius: particle.isCircle ? '50%' : '2px',
+            }}
+          />
+        ))}
+      </div>
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        className="relative z-10 flex flex-col items-center gap-4 p-8 bg-[var(--hivelab-panel)] backdrop-blur-xl rounded-3xl border border-[var(--life-gold)]/20 shadow-2xl"
+      >
+        <motion.div
+          animate={{
+            boxShadow: [
+              '0 0 0 0 rgba(212,175,55,0)',
+              '0 0 40px 20px rgba(212,175,55,0.15)',
+              '0 0 0 0 rgba(212,175,55,0)',
+            ],
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute inset-0 rounded-3xl"
+        />
+        <motion.div
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[var(--life-gold)] to-[#B8860B]"
+        >
+          <svg className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </motion.div>
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-[var(--hivelab-text-primary)] mb-1">
+            Tool Deployed!
+          </h3>
+          <p className="text-sm text-[var(--hivelab-text-secondary)]">
+            Your tool is now live in the space
+          </p>
+        </div>
+        <div className="flex gap-3 mt-2">
+          <button
+            type="button"
+            onClick={onContinue}
+            className="px-4 py-2 text-sm font-medium text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] transition-colors"
+          >
+            Continue Editing
+          </button>
+          <button
+            type="button"
+            onClick={onViewInSpace}
+            className="px-4 py-2 text-sm font-semibold bg-[var(--life-gold)] text-black rounded-lg hover:bg-[var(--life-gold)]/90 transition-colors"
+          >
+            View in Space
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -208,7 +267,6 @@ export function HiveLabIDE({
   initialPrompt,
   deploymentId,
 }: HiveLabIDEProps) {
-  // Mobile gate
   const isMobile = useIsMobile();
 
   // Tool metadata
@@ -216,194 +274,111 @@ export function HiveLabIDE({
   const [toolName, setToolName] = useState(initialComposition?.name || '');
   const [toolDescription] = useState(initialComposition?.description || '');
 
-  // Canvas state
-  const [elements, setElements] = useState<CanvasElement[]>(
-    initialComposition?.elements || []
-  );
-  const [connections, setConnections] = useState<Connection[]>(() =>
-    normalizeConnections(initialComposition?.connections)
-  );
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [showGrid, setShowGrid] = useState(true);
-  const [snapToGrid, setSnapToGrid] = useState(true);
-  const gridSize = 20;
-
-  // UI state - new layout
+  // UI state
   const [mode, setMode] = useState<ToolMode>('select');
-  // Start collapsed like Make.com - icon-only sidebar by default
   const [elementRailState, setElementRailState] = useState<RailState>('collapsed');
   const [elementRailTab, setElementRailTab] = useState<RailTab>('elements');
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
-
-  // Sprint 4: Automations state
-  const [automations, setAutomations] = useState<AutomationSummary[]>([]);
-  const [automationsLoading, setAutomationsLoading] = useState(false);
-  const [automationBuilderOpen, setAutomationBuilderOpen] = useState(false);
-  const [automationLogsOpen, setAutomationLogsOpen] = useState(false);
-  const [editingAutomation, setEditingAutomation] = useState<AutomationData | null>(null);
-  const [viewingAutomationId, setViewingAutomationId] = useState<string | null>(null);
-  const [automationRuns, setAutomationRuns] = useState<AutomationRun[]>([]);
-  const [automationRunsLoading, setAutomationRunsLoading] = useState(false);
-
-  // Sprint 3: Connection Builder state
-  const [connectionBuilderOpen, setConnectionBuilderOpen] = useState(false);
-  const [connectionCreating, setConnectionCreating] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | undefined>();
-  const [otherTools, setOtherTools] = useState<OtherToolData[]>([]);
-  const [otherToolsLoading, setOtherToolsLoading] = useState(false);
-  const [preSelectedConnectionSource, setPreSelectedConnectionSource] = useState<{
-    deploymentId: string;
-    path: string;
-    type: string;
-  } | undefined>();
-
-  // Fetch automations from API
-  const fetchAutomations = useCallback(async () => {
-    if (!deploymentId) {
-      setAutomations([]);
-      return;
-    }
-
-    setAutomationsLoading(true);
-    try {
-      const response = await fetch(`/api/tools/${deploymentId}/automations`);
-      if (response.ok) {
-        const data = await response.json();
-        // Convert ToolAutomation to AutomationSummary
-        const summaries: AutomationSummary[] = data.automations.map((auto: {
-          id: string;
-          name: string;
-          enabled: boolean;
-          trigger: { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number };
-          runCount: number;
-          errorCount: number;
-          lastRun?: string;
-        }) => ({
-          id: auto.id,
-          name: auto.name,
-          enabled: auto.enabled,
-          triggerType: auto.trigger.type as 'event' | 'schedule' | 'threshold',
-          triggerSummary: getTriggerSummaryFromTrigger(auto.trigger),
-          runCount: auto.runCount,
-          errorCount: auto.errorCount,
-          lastRun: auto.lastRun,
-        }));
-        setAutomations(summaries);
-      }
-    } catch (error) {
-      console.error('Failed to fetch automations:', error);
-    } finally {
-      setAutomationsLoading(false);
-    }
-  }, [deploymentId]);
-
-  // Load automations when deploymentId is available
-  useEffect(() => {
-    fetchAutomations();
-  }, [fetchAutomations]);
-
-  // Fetch other tools in the same space for cross-tool connections
-  useEffect(() => {
-    if (!deploymentId || !originSpaceId) {
-      setOtherTools([]);
-      return;
-    }
-
-    const fetchOtherTools = async () => {
-      setOtherToolsLoading(true);
-      try {
-        // Fetch tools deployed to the same space
-        const response = await fetch(`/api/spaces/${originSpaceId}/tools`);
-        if (response.ok) {
-          const data = await response.json();
-          // Filter out current tool and map to OtherToolData format
-          const tools: OtherToolData[] = (data.tools || [])
-            .filter((tool: { deploymentId: string }) => tool.deploymentId !== deploymentId)
-            .map((tool: {
-              deploymentId: string;
-              name: string;
-              toolId: string;
-              outputs?: Array<{ path: string; type: string; label?: string }>;
-            }) => ({
-              deploymentId: tool.deploymentId,
-              name: tool.name,
-              toolId: tool.toolId,
-              outputs: tool.outputs || [],
-            }));
-          setOtherTools(tools);
-        }
-      } catch (error) {
-        console.error('Failed to fetch other tools:', error);
-      } finally {
-        setOtherToolsLoading(false);
-      }
-    };
-
-    fetchOtherTools();
-  }, [deploymentId, originSpaceId]);
-
-  // Helper to generate trigger summary from API trigger data
-  function getTriggerSummaryFromTrigger(trigger: { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number }): string {
-    switch (trigger?.type) {
-      case 'event':
-        return `When ${trigger?.event || 'event'} occurs`;
-      case 'schedule':
-        return `Scheduled: ${trigger?.cron || 'custom'}`;
-      case 'threshold':
-        return `When ${trigger.path || 'value'} ${trigger.operator || '>'} ${trigger.value || 0}`;
-      default:
-        return 'Manual trigger';
-    }
-  }
-
-  // Ref for floating action bar (includes AI input)
-  const floatingBarRef = useRef<FloatingActionBarRef>(null);
-  // Ref for AI chat pill
-  const aiChatPillRef = useRef<AIChatPillRef>(null);
-  // AI chat dock position
   const [aiChatDock, setAIChatDock] = useState<'float' | 'left'>('float');
-  const [saving, setSaving] = useState(false);
-  const [deploying, setDeploying] = useState(false);
-  const [showDeploySuccess, setShowDeploySuccess] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lastAutoSave, setLastAutoSave] = useState<number>(0);
-
-  // History for undo/redo - initialize with current state
-  const [history, setHistory] = useState<HistoryEntry[]>(() => [{
-    elements: initialComposition?.elements || [],
-    connections: normalizeConnections(initialComposition?.connections),
-    timestamp: Date.now(),
-    description: 'Initial state',
-  }]);
-  const [historyIndex, setHistoryIndex] = useState(0);
-
-  // Connection flow feedback
-  const [flowingConnections, setFlowingConnections] = useState<Set<string>>(new Set());
-
-  // Memoized confetti particles for deploy celebration
-  const confettiParticles = useMemo(() => {
-    if (!showDeploySuccess) return [];
-    return Array.from({ length: 30 }).map((_, i) => ({
-      id: i,
-      targetX: 50 + (Math.random() - 0.5) * 80,
-      targetY: 50 + (Math.random() - 0.5) * 80,
-      rotation: Math.random() * 360,
-      delay: Math.random() * 0.3,
-      size: Math.random() * 8 + 4,
-      color: ['#FFD700', '#FFA500', '#FFDF00', '#DAA520'][Math.floor(Math.random() * 4)],
-      isCircle: Math.random() > 0.5,
-    }));
-  }, [showDeploySuccess]);
 
   // Refs
+  const floatingBarRef = useRef<FloatingActionBarRef>(null);
+  const aiChatPillRef = useRef<AIChatPillRef>(null);
   const draggingElementId = useRef<string | null>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 1000, height: 800 });
+  const gridSize = 20;
 
-  // Track canvas container size for minimap
+  // ---- History ----
+  const historyHook = useIDEHistory({
+    initialElements: initialComposition?.elements,
+    initialConnections: initialComposition?.connections,
+  });
+
+  // Ref-based bridge so pushHistory always reads current canvas state
+  const elementsRef = useRef<CanvasElement[]>(initialComposition?.elements || []);
+  const connectionsRef = useRef<Connection[]>([]);
+
+  const pushHistory = useCallback((description: string) => {
+    historyHook.pushHistory(description, elementsRef.current, connectionsRef.current);
+  }, [historyHook]);
+
+  // ---- Canvas State ----
+  const canvas = useCanvasState({
+    initialElements: initialComposition?.elements,
+    initialConnections: initialComposition?.connections,
+    isSpaceLeader: userContext?.isSpaceLeader,
+    snapToGrid: true,
+    gridSize,
+    pushHistory,
+  });
+
+  // Keep refs in sync with canvas state for history
+  elementsRef.current = canvas.elements;
+  connectionsRef.current = canvas.connections;
+
+  // Undo/Redo wired to canvas state
+  const undo = useCallback(() => {
+    const entry = historyHook.undo();
+    if (entry) {
+      canvas.setElements(entry.elements);
+      canvas.setConnections(entry.connections);
+    }
+  }, [historyHook, canvas]);
+
+  const redo = useCallback(() => {
+    const entry = historyHook.redo();
+    if (entry) {
+      canvas.setElements(entry.elements);
+      canvas.setConnections(entry.connections);
+    }
+  }, [historyHook, canvas]);
+
+  // ---- Save ----
+  const saveHook = useIDESave({
+    toolId,
+    toolName,
+    toolDescription,
+    elements: canvas.elements,
+    connections: canvas.connections,
+    onSave,
+  });
+
+  // ---- Deploy ----
+  const deployHook = useIDEDeploy({
+    buildComposition: saveHook.buildComposition,
+    onSave,
+    onDeploy,
+    setSaving: saveHook.setSaving,
+    setHasUnsavedChanges: saveHook.setHasUnsavedChanges,
+  });
+
+  // ---- AI ----
+  const aiHook = useIDEAI({
+    elements: canvas.elements,
+    connections: canvas.connections,
+    selectedIds: canvas.selectedIds,
+    toolId,
+    toolName,
+    toolDescription,
+    setElements: canvas.setElements,
+    setSelectedIds: (ids: string[]) => canvas.selectElements(ids),
+    pushHistory,
+  });
+
+  // ---- Automations (opt-in: only fetch when deploymentId exists) ----
+  const automationHook = useIDEAutomations({
+    deploymentId,
+    enabled: !!deploymentId,
+  });
+
+  // ---- Space Tools (cross-tool connections) ----
+  const spaceToolsHook = useIDESpaceTools({
+    deploymentId,
+    originSpaceId,
+  });
+
+  // ---- Canvas container size tracking ----
   useEffect(() => {
     if (!canvasContainerRef.current) return;
 
@@ -414,727 +389,55 @@ export function HiveLabIDE({
       }
     };
 
-    // Initial size
     updateSize();
-
-    // ResizeObserver for dynamic updates
     const resizeObserver = new ResizeObserver(updateSize);
     resizeObserver.observe(canvasContainerRef.current);
-
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Derived state
-  const selectedElements = elements.filter((el) => selectedIds.includes(el.id));
-  const isCanvasEmpty = elements.length === 0;
-
-  // Track unsaved changes (skip initial load to avoid false positive)
-  const isInitialLoad = useRef(true);
-  useEffect(() => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
-      return;
-    }
-    if (elements.length > 0 || connections.length > 0) {
-      setHasUnsavedChanges(true);
-    }
-  }, [elements, connections]);
-
-  // Warn user before leaving with unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-        return e.returnValue;
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
-  // Auto-save every 30 seconds when there are unsaved changes
-  useEffect(() => {
-    // Don't auto-save if there are no unsaved changes or already saving
-    if (!hasUnsavedChanges || saving) return;
-
-    // Don't auto-save if elements is empty (no real content yet)
-    if (elements.length === 0) return;
-
-    const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
-
-    const timeoutId = setTimeout(async () => {
-      // Double-check we still have unsaved changes and aren't saving
-      if (!hasUnsavedChanges || saving) return;
-
-      try {
-        setSaving(true);
-        const composition: HiveLabComposition = {
-          id: toolId,
-          name: toolName || 'Untitled Tool',
-          description: toolDescription,
-          elements,
-          connections,
-          layout: 'flow',
-        };
-        await onSave(composition);
-        setHasUnsavedChanges(false);
-        setLastAutoSave(Date.now());
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-        // Show a warning toast so user knows to manually save
-        toast.warning('Auto-save failed', { description: 'Your changes are not saved. Please save manually.' });
-      } finally {
-        setSaving(false);
-      }
-    }, AUTO_SAVE_INTERVAL);
-
-    return () => clearTimeout(timeoutId);
-  }, [hasUnsavedChanges, saving, elements, connections, toolId, toolName, toolDescription, onSave]);
-
-  // Push to history with MAX_HISTORY limit
-  const pushHistory = useCallback(
-    (description: string) => {
-      const entry: HistoryEntry = {
-        elements: JSON.parse(JSON.stringify(elements)),
-        connections: JSON.parse(JSON.stringify(connections)),
-        timestamp: Date.now(),
-        description,
-      };
-      setHistory((prev) => {
-        const newHistory = [...prev.slice(0, historyIndex + 1), entry];
-        if (newHistory.length > MAX_HISTORY) {
-          return newHistory.slice(newHistory.length - MAX_HISTORY);
-        }
-        return newHistory;
-      });
-      setHistoryIndex((prev) => Math.min(prev + 1, MAX_HISTORY - 1));
-    },
-    [elements, connections, historyIndex]
-  );
-
-  // Undo/Redo
-  const undo = useCallback(() => {
-    // Can't undo if we're at the initial state (index 0)
-    if (historyIndex <= 0) return;
-    const previousEntry = history[historyIndex - 1];
-    if (previousEntry) {
-      setElements(previousEntry.elements);
-      setConnections(previousEntry.connections);
-      setHistoryIndex(historyIndex - 1);
-    }
-  }, [history, historyIndex]);
-
-  const redo = useCallback(() => {
-    // Can't redo if we're at the latest state
-    if (historyIndex >= history.length - 1) return;
-    const nextEntry = history[historyIndex + 1];
-    if (nextEntry) {
-      setElements(nextEntry.elements);
-      setConnections(nextEntry.connections);
-      setHistoryIndex(historyIndex + 1);
-    }
-  }, [history, historyIndex]);
-
-  // Space-tier element IDs
-  const SPACE_TIER_ELEMENTS = [
-    'member-list',
-    'member-selector',
-    'space-events',
-    'space-feed',
-    'space-stats',
-    'announcement',
-    'role-gate',
-  ];
-
-  // Element operations
-  const addElement = useCallback(
-    (elementId: string, position: { x: number; y: number }) => {
-      if (SPACE_TIER_ELEMENTS.includes(elementId) && !userContext?.isSpaceLeader) {
-        console.warn(`Cannot add ${elementId}: requires space leader access`);
-        return;
-      }
-
-      const newElement: CanvasElement = {
-        id: `element_${Date.now()}`,
-        elementId,
-        instanceId: `${elementId}_${Date.now()}`,
-        position,
-        size: { width: 240, height: 120 },
-        config: {},
-        zIndex: elements.length + 1,
-        locked: false,
-        visible: true,
-      };
-      setElements((prev) => [...prev, newElement]);
-      setSelectedIds([newElement.id]);
-      pushHistory(`Add ${elementId}`);
-    },
-    [elements.length, pushHistory, userContext?.isSpaceLeader]
-  );
-
-  const updateElement = useCallback(
-    (id: string, updates: Partial<CanvasElement>) => {
-      setElements((prev) =>
-        prev.map((el) => (el.id === id ? { ...el, ...updates } : el))
-      );
-    },
-    []
-  );
-
-  const deleteElements = useCallback(
-    (ids: string[]) => {
-      const toDelete = ids.length > 0 ? ids : selectedIds;
-      if (toDelete.length === 0) return;
-
-      setElements((prev) => prev.filter((el) => !toDelete.includes(el.id)));
-      setConnections((prev) =>
-        prev.filter(
-          (conn) =>
-            !toDelete.some(
-              (id) =>
-                elements.find((el) => el.id === id)?.instanceId === conn.from.instanceId ||
-                elements.find((el) => el.id === id)?.instanceId === conn.to.instanceId
-            )
-        )
-      );
-      setSelectedIds([]);
-      pushHistory(`Delete ${toDelete.length} element(s)`);
-    },
-    [selectedIds, elements, pushHistory]
-  );
-
-  const duplicateElements = useCallback(
-    (ids: string[]) => {
-      const toDuplicate = ids.length > 0 ? ids : selectedIds;
-      if (toDuplicate.length === 0) return;
-
-      const newElements = elements
-        .filter((el) => toDuplicate.includes(el.id))
-        .map((el) => ({
-          ...el,
-          id: `element_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-          instanceId: `${el.elementId}_${Date.now()}`,
-          position: { x: el.position.x + 30, y: el.position.y + 30 },
-          zIndex: elements.length + 1,
-        }));
-
-      setElements((prev) => [...prev, ...newElements]);
-      setSelectedIds(newElements.map((el) => el.id));
-      pushHistory(`Duplicate ${newElements.length} element(s)`);
-    },
-    [selectedIds, elements, pushHistory]
-  );
-
-  // Clipboard
-  const clipboardRef = useRef<CanvasElement[]>([]);
-  // Track which AI elements have been processed to prevent duplicate additions
-  const processedAIElementIdsRef = useRef<Set<string>>(new Set());
-
-  const copyElements = useCallback(() => {
-    if (selectedIds.length === 0) return;
-    const toCopy = elements.filter((el) => selectedIds.includes(el.id));
-    clipboardRef.current = JSON.parse(JSON.stringify(toCopy));
-  }, [selectedIds, elements]);
-
-  const pasteElements = useCallback(() => {
-    if (clipboardRef.current.length === 0) return;
-
-    const now = Date.now();
-    const newElements = clipboardRef.current.map((el, i) => ({
-      ...el,
-      id: `element_${now}_${i}_${Math.random().toString(36).slice(2)}`,
-      instanceId: `${el.elementId}_${now}_${i}`,
-      position: { x: el.position.x + 40, y: el.position.y + 40 },
-      zIndex: elements.length + i + 1,
-    }));
-
-    setElements((prev) => [...prev, ...newElements]);
-    setSelectedIds(newElements.map((el) => el.id));
-    pushHistory(`Paste ${newElements.length} element(s)`);
-  }, [elements.length, pushHistory]);
-
-  const cutElements = useCallback(() => {
-    if (selectedIds.length === 0) return;
-    copyElements();
-    deleteElements([]);
-    pushHistory(`Cut ${selectedIds.length} element(s)`);
-  }, [selectedIds.length, copyElements, deleteElements, pushHistory]);
-
-  // Alignment
-  const alignElements = useCallback(
-    (alignment: AlignmentType) => {
-      if (selectedIds.length < 2) return;
-
-      const selected = elements.filter((el) => selectedIds.includes(el.id));
-      if (selected.length < 2) return;
-
-      // Calculate bounding box of selected elements
-      let minX = Infinity,
-        maxX = -Infinity,
-        minY = Infinity,
-        maxY = -Infinity;
-
-      selected.forEach((el) => {
-        minX = Math.min(minX, el.position.x);
-        maxX = Math.max(maxX, el.position.x + el.size.width);
-        minY = Math.min(minY, el.position.y);
-        maxY = Math.max(maxY, el.position.y + el.size.height);
-      });
-
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
-
-      setElements((prev) =>
-        prev.map((el) => {
-          if (!selectedIds.includes(el.id)) return el;
-
-          let newX = el.position.x;
-          let newY = el.position.y;
-
-          switch (alignment) {
-            case 'left':
-              newX = minX;
-              break;
-            case 'center':
-              newX = centerX - el.size.width / 2;
-              break;
-            case 'right':
-              newX = maxX - el.size.width;
-              break;
-            case 'top':
-              newY = minY;
-              break;
-            case 'middle':
-              newY = centerY - el.size.height / 2;
-              break;
-            case 'bottom':
-              newY = maxY - el.size.height;
-              break;
-          }
-
-          // Snap to grid if enabled
-          if (snapToGrid) {
-            newX = Math.round(newX / gridSize) * gridSize;
-            newY = Math.round(newY / gridSize) * gridSize;
-          }
-
-          return {
-            ...el,
-            position: { x: newX, y: newY },
-          };
-        })
-      );
-
-      pushHistory(`Align ${selected.length} elements (${alignment})`);
-    },
-    [selectedIds, elements, snapToGrid, gridSize, pushHistory]
-  );
-
-  // Distribute elements evenly
-  const distributeElements = useCallback(
-    (direction: 'horizontal' | 'vertical') => {
-      if (selectedIds.length < 3) return; // Need at least 3 elements to distribute
-
-      const selected = elements.filter((el) => selectedIds.includes(el.id));
-      if (selected.length < 3) return;
-
-      // Sort elements by position
-      const sorted = [...selected].sort((a, b) =>
-        direction === 'horizontal'
-          ? a.position.x - b.position.x
-          : a.position.y - b.position.y
-      );
-
-      // Calculate total span
-      const first = sorted[0];
-      const last = sorted[sorted.length - 1];
-
-      if (direction === 'horizontal') {
-        const startX = first.position.x;
-        const endX = last.position.x;
-        const totalWidth = sorted.reduce((sum, el) => sum + el.size.width, 0);
-        const availableSpace = endX + last.size.width - startX - totalWidth;
-        const gap = availableSpace / (sorted.length - 1);
-
-        let currentX = startX;
-
-        setElements((prev) =>
-          prev.map((el) => {
-            const sortIndex = sorted.findIndex((s) => s.id === el.id);
-            if (sortIndex === -1) return el;
-
-            let newX = currentX;
-            currentX += el.size.width + gap;
-
-            // Snap to grid if enabled
-            if (snapToGrid) {
-              newX = Math.round(newX / gridSize) * gridSize;
-            }
-
-            return {
-              ...el,
-              position: { ...el.position, x: newX },
-            };
-          })
-        );
-      } else {
-        const startY = first.position.y;
-        const endY = last.position.y;
-        const totalHeight = sorted.reduce((sum, el) => sum + el.size.height, 0);
-        const availableSpace = endY + last.size.height - startY - totalHeight;
-        const gap = availableSpace / (sorted.length - 1);
-
-        let currentY = startY;
-
-        setElements((prev) =>
-          prev.map((el) => {
-            const sortIndex = sorted.findIndex((s) => s.id === el.id);
-            if (sortIndex === -1) return el;
-
-            let newY = currentY;
-            currentY += el.size.height + gap;
-
-            // Snap to grid if enabled
-            if (snapToGrid) {
-              newY = Math.round(newY / gridSize) * gridSize;
-            }
-
-            return {
-              ...el,
-              position: { ...el.position, y: newY },
-            };
-          })
-        );
-      }
-
-      pushHistory(`Distribute ${selected.length} elements (${direction})`);
-    },
-    [selectedIds, elements, snapToGrid, gridSize, pushHistory]
-  );
-
-  // Selection
-  const selectElements = useCallback((ids: string[], append = false) => {
-    setSelectedIds((prev) => (append ? [...new Set([...prev, ...ids])] : ids));
-    // Clear connection selection when selecting elements (mutually exclusive)
-    if (ids.length > 0) {
-      setSelectedConnectionId(null);
-    }
-  }, []);
-
-  const selectAll = useCallback(() => {
-    setSelectedIds(elements.map((el) => el.id));
-    setSelectedConnectionId(null);
-  }, [elements]);
-
-  const clearSelection = useCallback(() => {
-    setSelectedIds([]);
-    setSelectedConnectionId(null);
-  }, []);
-
-  // Connection flow feedback
-  const triggerConnectionFlow = useCallback(
-    (connectionIds: string[], duration = 300) => {
-      if (connectionIds.length === 0) return;
-      setFlowingConnections((prev) => {
-        const next = new Set(prev);
-        connectionIds.forEach((id) => next.add(id));
-        return next;
-      });
-      setTimeout(() => {
-        setFlowingConnections((prev) => {
-          const next = new Set(prev);
-          connectionIds.forEach((id) => next.delete(id));
-          return next;
-        });
-      }, duration);
-    },
-    []
-  );
-
-  const getConnectionsFromElement = useCallback(
-    (instanceId: string): string[] => {
-      return connections
-        .filter((conn) => conn.from.instanceId === instanceId)
-        .map((conn) => conn.id);
-    },
-    [connections]
-  );
-
-  // Connections
-  const addConnection = useCallback(
-    (from: Connection['from'], to: Connection['to']) => {
-      const connectionId = `conn_${Date.now()}`;
-      const newConnection: Connection = { id: connectionId, from, to };
-      setConnections((prev) => [...prev, newConnection]);
-      pushHistory('Add connection');
-      setTimeout(() => triggerConnectionFlow([connectionId]), 50);
-    },
-    [pushHistory, triggerConnectionFlow]
-  );
-
-  const deleteConnection = useCallback(
-    (id: string) => {
-      setConnections((prev) => prev.filter((conn) => conn.id !== id));
-      // Clear selection if deleting selected connection
-      if (selectedConnectionId === id) {
-        setSelectedConnectionId(null);
-      }
-      pushHistory('Delete connection');
-    },
-    [pushHistory, selectedConnectionId]
-  );
-
-  const updateConnection = useCallback(
-    (id: string, updates: Partial<Connection>) => {
-      setConnections((prev) =>
-        prev.map((conn) => (conn.id === id ? { ...conn, ...updates } : conn))
-      );
-      pushHistory('Update connection');
-    },
-    [pushHistory]
-  );
-
-  const selectConnection = useCallback(
-    (id: string | null) => {
-      setSelectedConnectionId(id);
-      // Clear element selection when selecting a connection (mutually exclusive)
-      if (id !== null) {
-        setSelectedIds([]);
-      }
-    },
-    []
-  );
-
-  // Expose flow controls
+  // ---- Connection flow controls ----
   useEffect(() => {
     if (onConnectionFlowReady) {
       onConnectionFlowReady({
-        triggerFlow: triggerConnectionFlow,
-        getConnectionsFrom: getConnectionsFromElement,
+        triggerFlow: canvas.triggerConnectionFlow,
+        getConnectionsFrom: canvas.getConnectionsFromElement,
       });
     }
-  }, [onConnectionFlowReady, triggerConnectionFlow, getConnectionsFromElement]);
+  }, [onConnectionFlowReady, canvas.triggerConnectionFlow, canvas.getConnectionsFromElement]);
 
-  // Canvas controls
-  const fitToScreen = useCallback(() => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }, []);
-
-  // Save
-  const save = useCallback(async () => {
-    setSaving(true);
-    try {
-      const composition: HiveLabComposition = {
-        id: toolId,
-        name: toolName || 'Untitled Tool',
-        description: toolDescription,
-        elements,
-        connections,
-        layout: 'flow',
-      };
-      await onSave(composition);
-      setHasUnsavedChanges(false);
-      toast.success('Tool saved', { description: 'Your changes have been saved.' });
-    } catch (error) {
-      console.error('Save failed:', error);
-      toast.error('Failed to save tool', {
-        description: error instanceof Error ? error.message : 'Please try again.'
-      });
-    } finally {
-      setSaving(false);
-    }
-  }, [toolId, toolName, toolDescription, elements, connections, onSave]);
-
-  // Deploy
-  const deploy = useCallback(async () => {
-    if (!onDeploy) return;
-    setSaving(true);
-    setDeploying(true);
-    try {
-      const composition: HiveLabComposition = {
-        id: toolId,
-        name: toolName || 'Untitled Tool',
-        description: toolDescription,
-        elements,
-        connections,
-        layout: 'flow',
-      };
-      await onSave(composition);
-      await onDeploy(composition);
-      setHasUnsavedChanges(false);
-      setShowDeploySuccess(true);
-    } catch (error) {
-      console.error('Deploy failed:', error);
-      toast.error('Failed to deploy tool', {
-        description: error instanceof Error ? error.message : 'Please try again.'
-      });
-    } finally {
-      setSaving(false);
-      setDeploying(false);
-    }
-  }, [toolId, toolName, toolDescription, elements, connections, onSave, onDeploy]);
-
-  // Preview
+  // ---- Preview ----
   const preview = useCallback(() => {
-    const composition: HiveLabComposition = {
-      id: toolId,
-      name: toolName || 'Untitled Tool',
-      description: toolDescription,
-      elements,
-      connections,
-      layout: 'flow',
-    };
-    onPreview(composition);
-  }, [toolId, toolName, toolDescription, elements, connections, onPreview]);
+    onPreview(saveHook.buildComposition());
+  }, [onPreview, saveHook]);
 
-  // AI streaming generation
-  const { state: aiState, generate, cancel: cancelGeneration } = useStreamingGeneration({
-    onComplete: () => pushHistory('AI generation complete'),
-    onError: () => {},
-    onStatusUpdate: () => {},
-    onElementAdded: () => {},
-  });
-
-  // Position helper for AI
-  const getPositionNearSelection = useCallback(() => {
-    if (selectedIds.length === 0) return { x: 100, y: 100 };
-    const selected = elements.filter(el => selectedIds.includes(el.id));
-    if (selected.length === 0) return { x: 100, y: 100 };
-    const maxX = Math.max(...selected.map(el => el.position.x + (el.size?.width || 240)));
-    const avgY = selected.reduce((sum, el) => sum + el.position.y, 0) / selected.length;
-    return { x: maxX + 40, y: avgY };
-  }, [elements, selectedIds]);
-
-  // Merge AI elements - only process new elements that haven't been added yet
-  useEffect(() => {
-    if (aiState.elements.length > 0 && !aiState.isGenerating) {
-      // Filter to only elements we haven't processed yet
-      const newElements = aiState.elements.filter(
-        el => el.instanceId && !processedAIElementIdsRef.current.has(el.instanceId)
-      );
-
-      if (newElements.length === 0) return;
-
-      const insertPosition = getPositionNearSelection();
-      const timestamp = Date.now();
-      const canvasElements: CanvasElement[] = newElements.map((el, index) => ({
-        id: `element_${timestamp}_${index}`,
-        elementId: el.elementId || 'unknown',
-        instanceId: el.instanceId || `${el.elementId}_${timestamp}_${index}`,
-        position: el.position || {
-          x: insertPosition.x + (index % 3) * 280,
-          y: insertPosition.y + Math.floor(index / 3) * 160,
-        },
-        size: el.size || { width: 260, height: 140 },
-        config: el.config || {},
-        zIndex: elements.length + index + 1,
-        locked: false,
-        visible: true,
-      }));
-
-      // Mark these elements as processed
-      newElements.forEach(el => {
-        if (el.instanceId) {
-          processedAIElementIdsRef.current.add(el.instanceId);
-        }
-      });
-
-      if (canvasElements.length > 0) {
-        setElements(prev => [...prev, ...canvasElements]);
-        setSelectedIds(canvasElements.map(el => el.id));
-      }
-    }
-  }, [aiState.elements, aiState.isGenerating, getPositionNearSelection]);
-
-  // AI handler
-  const handleAISubmit = useCallback(async (prompt: string, type: string) => {
-    const selectedEls = elements.filter(el => selectedIds.includes(el.id));
-    const hasSelection = selectedEls.length > 0;
-    const isIteration = type === 'modify' || type === 'iterate' || hasSelection;
-    const elementsForContext = hasSelection ? selectedEls : elements;
-
-    const existingComposition = isIteration ? {
-      id: toolId,
-      name: toolName || 'Untitled Tool',
-      description: toolDescription,
-      elements: elementsForContext.map(el => ({
-        elementId: el.elementId,
-        instanceId: el.instanceId,
-        type: el.elementId,
-        name: el.elementId,
-        config: el.config,
-        position: el.position,
-        size: el.size,
-      })),
-      connections: connections.filter(conn =>
-        elementsForContext.some(el =>
-          el.instanceId === conn.from.instanceId || el.instanceId === conn.to.instanceId
-        )
-      ).map(conn => ({
-        from: { instanceId: conn.from.instanceId, output: conn.from.port || 'default' },
-        to: { instanceId: conn.to.instanceId, input: conn.to.port || 'default' },
-      })),
-      layout: 'flow' as const,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    } : undefined;
-
-    const selectionContext = hasSelection ? {
-      count: selectedEls.length,
-      types: selectedEls.map(el => el.elementId),
-      prompt: `Acting on ${selectedEls.length} selected element(s): ${selectedEls.map(el => el.elementId).join(', ')}`,
-    } : undefined;
-
-    await generate({
-      prompt: selectionContext ? `${selectionContext.prompt}. ${prompt}` : prompt,
-      isIteration,
-      existingComposition,
-    });
-  }, [generate, toolId, toolName, toolDescription, elements, connections, selectedIds]);
-
-  // Handle quick prompt from StartZone
+  // ---- Quick prompt from StartZone ----
   const handleQuickPrompt = useCallback((prompt: string) => {
     floatingBarRef.current?.focusInput();
-    // Submit the prompt directly
     setTimeout(() => {
-      handleAISubmit(prompt, 'generate');
+      aiHook.handleAISubmit(prompt, 'generate');
     }, 100);
-  }, [handleAISubmit]);
+  }, [aiHook]);
 
-  // Toggle element rail
-  const toggleElementRail = useCallback(() => {
-    setElementRailState(prev => {
-      if (prev === 'expanded') return 'collapsed';
-      if (prev === 'collapsed') return 'hidden';
-      return 'expanded';
-    });
-  }, []);
-
-  // Open elements (expand rail to elements tab)
+  // ---- Rail toggles ----
   const openElements = useCallback(() => {
     setElementRailState('expanded');
     setElementRailTab('elements');
   }, []);
 
-  // Open templates
   const openTemplates = useCallback(() => {
     setTemplateGalleryOpen(true);
   }, []);
 
-  // Auto-focus AI chat bar with initial prompt on mount
+  // ---- Auto-focus AI chat bar with initial prompt on mount ----
   useEffect(() => {
-    if (initialPrompt && elements.length === 0) {
+    if (initialPrompt && canvas.elements.length === 0) {
       floatingBarRef.current?.focusInput();
     }
-  }, [initialPrompt, elements.length]);
+  }, [initialPrompt, canvas.elements.length]);
 
-  // Load template composition into canvas
+  // ---- Load template composition into canvas ----
   const loadTemplateComposition = useCallback(
     (composition: ToolComposition) => {
-      // Convert template elements to canvas elements
       const newElements: CanvasElement[] = composition.elements.map((el, idx) => ({
         id: `element_${Date.now()}_${idx}`,
         elementId: el.elementId,
@@ -1147,7 +450,6 @@ export function HiveLabIDE({
         visible: true,
       }));
 
-      // Convert connections
       const newConnections: Connection[] = (composition.connections || []).map((conn, idx) => ({
         id: `conn_${Date.now()}_${idx}`,
         from: {
@@ -1160,427 +462,107 @@ export function HiveLabIDE({
         },
       }));
 
-      setElements(newElements);
-      setConnections(newConnections);
+      canvas.setElements(newElements);
+      canvas.setConnections(newConnections);
       setToolName(composition.name || 'Untitled Tool');
-      setSelectedIds([]);
+      canvas.selectElements([]);
       pushHistory(`Load template: ${composition.name}`);
       setTemplateGalleryOpen(false);
     },
-    [pushHistory]
+    [canvas, pushHistory]
   );
 
-  // ============================================================================
-  // Sprint 4: Automation Handlers (Wired to API)
-  // ============================================================================
-
-  // Open automation builder for creating a new automation
-  const handleCreateAutomation = useCallback(() => {
-    if (!deploymentId) {
-      toast.error('Deploy the tool first to add automations');
-      return;
-    }
-    setEditingAutomation(null);
-    setAutomationBuilderOpen(true);
-  }, [deploymentId]);
-
-  // Open automation builder for editing an existing automation
-  const handleEditAutomation = useCallback(async (id: string) => {
-    if (!deploymentId) return;
-
-    try {
-      // Fetch full automation data from API
-      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        const auto = data.automation;
-        setEditingAutomation({
-          id: auto.id,
-          name: auto.name,
-          enabled: auto.enabled,
-          trigger: auto.trigger,
-          conditions: auto.conditions || [],
-          actions: auto.actions || [],
-          limits: auto.limits || { maxRunsPerDay: 100, cooldownSeconds: 60 },
-        });
-        setAutomationBuilderOpen(true);
-      } else {
-        toast.error('Failed to load automation');
-      }
-    } catch (error) {
-      console.error('Failed to fetch automation:', error);
-      toast.error('Failed to load automation');
-    }
-  }, [deploymentId]);
-
-  // Delete an automation
-  const handleDeleteAutomation = useCallback(async (id: string) => {
-    if (!deploymentId) return;
-
-    try {
-      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setAutomations(prev => prev.filter(a => a.id !== id));
-        toast.success('Automation deleted');
-      } else {
-        const data = await response.json();
-        toast.error(data.error || 'Failed to delete automation');
-      }
-    } catch (error) {
-      console.error('Failed to delete automation:', error);
-      toast.error('Failed to delete automation');
-    }
-  }, [deploymentId]);
-
-  // Toggle automation enabled state
-  const handleToggleAutomation = useCallback(async (id: string, enabled: boolean) => {
-    if (!deploymentId) return;
-
-    // Optimistically update UI
-    setAutomations(prev =>
-      prev.map(a => a.id === id ? { ...a, enabled } : a)
-    );
-
-    try {
-      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled }),
-      });
-
-      if (response.ok) {
-        toast.success(enabled ? 'Automation enabled' : 'Automation paused');
-      } else {
-        // Revert on error
-        setAutomations(prev =>
-          prev.map(a => a.id === id ? { ...a, enabled: !enabled } : a)
-        );
-        const data = await response.json();
-        toast.error(data.error || 'Failed to update automation');
-      }
-    } catch (error) {
-      // Revert on error
-      setAutomations(prev =>
-        prev.map(a => a.id === id ? { ...a, enabled: !enabled } : a)
-      );
-      console.error('Failed to toggle automation:', error);
-      toast.error('Failed to update automation');
-    }
-  }, [deploymentId]);
-
-  // View automation logs
-  const handleViewAutomationLogs = useCallback(async (id: string) => {
-    if (!deploymentId) return;
-
-    setViewingAutomationId(id);
-    setAutomationLogsOpen(true);
-    setAutomationRunsLoading(true);
-
-    try {
-      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}/runs?limit=50`);
-      if (response.ok) {
-        const data = await response.json();
-        setAutomationRuns(data.runs || []);
-      } else {
-        setAutomationRuns([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch automation runs:', error);
-      setAutomationRuns([]);
-    } finally {
-      setAutomationRunsLoading(false);
-    }
-  }, [deploymentId]);
-
-  // Run automation immediately (manual trigger)
-  const handleRunAutomationNow = useCallback(async (id: string) => {
-    if (!deploymentId) return;
-
-    try {
-      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}/trigger`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        toast.success('Automation triggered successfully');
-        // Refresh automations list to update runCount/lastRun
-        fetchAutomations();
-      } else {
-        toast.error(result.error || 'Failed to trigger automation');
-      }
-    } catch (error) {
-      toast.error('Failed to trigger automation');
-    }
-  }, [deploymentId, fetchAutomations]);
-
-  // Save automation from builder (create or update)
-  const handleSaveAutomation = useCallback(async (data: AutomationData) => {
-    if (!deploymentId) {
-      toast.error('Deploy the tool first to add automations');
-      return;
-    }
-
-    try {
-      if (data.id) {
-        // Update existing automation
-        const response = await fetch(`/api/tools/${deploymentId}/automations/${data.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: data.name,
-            enabled: data.enabled,
-            trigger: data.trigger,
-            conditions: data.conditions,
-            actions: data.actions,
-            limits: data.limits,
-          }),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          const auto = result.automation;
-          setAutomations(prev =>
-            prev.map(a => a.id === data.id ? {
-              id: auto.id,
-              name: auto.name,
-              enabled: auto.enabled,
-              triggerType: auto.trigger.type,
-              triggerSummary: getTriggerSummary(auto.trigger),
-              runCount: auto.runCount,
-              errorCount: auto.errorCount,
-              lastRun: auto.lastRun,
-            } : a)
-          );
-          toast.success('Automation updated');
-        } else {
-          const result = await response.json();
-          toast.error(result.error || 'Failed to update automation');
-          return;
-        }
-      } else {
-        // Create new automation
-        const response = await fetch(`/api/tools/${deploymentId}/automations`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: data.name,
-            trigger: data.trigger,
-            conditions: data.conditions,
-            actions: data.actions,
-            limits: data.limits,
-          }),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          const auto = result.automation;
-          const newAutomation: AutomationSummary = {
-            id: auto.id,
-            name: auto.name,
-            enabled: auto.enabled,
-            triggerType: auto.trigger.type,
-            triggerSummary: getTriggerSummary(auto.trigger),
-            runCount: 0,
-            errorCount: 0,
-          };
-          setAutomations(prev => [...prev, newAutomation]);
-          toast.success('Automation created');
-        } else {
-          const result = await response.json();
-          toast.error(result.error || 'Failed to create automation');
-          return;
-        }
-      }
-
-      setAutomationBuilderOpen(false);
-      setEditingAutomation(null);
-    } catch (error) {
-      console.error('Failed to save automation:', error);
-      toast.error('Failed to save automation');
-    }
-  }, [deploymentId]);
-
-  // Helper to generate trigger summary text
-  function getTriggerSummary(trigger: AutomationData['trigger'] | { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number }): string {
-    switch (trigger?.type) {
-      case 'event':
-        return `When ${trigger?.event || 'event'} occurs`;
-      case 'schedule':
-        return `Scheduled: ${trigger?.cron || 'custom'}`;
-      case 'threshold':
-        return `When ${trigger.path || 'value'} ${trigger.operator || '>'} ${trigger.value || 0}`;
-      default:
-        return 'Manual trigger';
-    }
-  }
-
-  // ============================================================================
-  // Sprint 3: Connection Builder Handlers
-  // ============================================================================
-
-  // Open connection builder modal
-  const handleOpenConnectionBuilder = useCallback((preSelected?: {
-    deploymentId: string;
-    path: string;
-    type: string;
-  }) => {
-    if (!deploymentId) {
-      toast.error('Deploy the tool first to add connections');
-      return;
-    }
-    setPreSelectedConnectionSource(preSelected);
-    setConnectionError(undefined);
-    setConnectionBuilderOpen(true);
-  }, [deploymentId]);
-
-  // Create a new cross-tool connection
-  const handleCreateConnection = useCallback(async (data: ConnectionCreateData) => {
-    if (!deploymentId) {
-      toast.error('Deploy the tool first to add connections');
-      return;
-    }
-
-    setConnectionCreating(true);
-    setConnectionError(undefined);
-
-    try {
-      const response = await fetch(`/api/tools/${deploymentId}/connections`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          source: data.source,
-          target: data.target,
-          transform: data.transform,
-          label: data.label,
-        }),
-      });
-
-      if (response.ok) {
-        toast.success('Connection created');
-        setConnectionBuilderOpen(false);
-        setPreSelectedConnectionSource(undefined);
-      } else {
-        const result = await response.json();
-        setConnectionError(result.error || 'Failed to create connection');
-        toast.error(result.error || 'Failed to create connection');
-      }
-    } catch (error) {
-      console.error('Failed to create connection:', error);
-      setConnectionError('Failed to create connection');
-      toast.error('Failed to create connection');
-    } finally {
-      setConnectionCreating(false);
-    }
-  }, [deploymentId]);
-
-  // Keyboard shortcuts
+  // ---- Keyboard shortcuts ----
   useIDEKeyboard({
     actions: {
-      deleteElements,
-      duplicateElements,
-      copyElements,
-      pasteElements,
-      cutElements,
-      selectAll,
-      clearSelection,
+      deleteElements: canvas.deleteElements,
+      duplicateElements: canvas.duplicateElements,
+      copyElements: canvas.copyElements,
+      pasteElements: canvas.pasteElements,
+      cutElements: canvas.cutElements,
+      selectAll: canvas.selectAll,
+      clearSelection: canvas.clearSelection,
       undo,
       redo,
-      save,
-      toggleGrid: () => setShowGrid((prev) => !prev),
-      setZoom,
+      save: saveHook.save,
+      toggleGrid: canvas.toggleGrid,
+      setZoom: canvas.setZoom,
       openAIPanel: () => {
         floatingBarRef.current?.focusInput();
         aiChatPillRef.current?.focusInput();
       },
       closeAIPanel: () => {
         aiChatPillRef.current?.collapse();
-      }
+      },
     },
     mode,
     setMode,
     enabled: true,
-    zoom,
+    zoom: canvas.zoom,
   });
 
-  // Show mobile gate on small screens
+  // ---- Mobile gate ----
   if (isMobile) {
     return <MobileGate onBack={onCancel} />;
   }
 
-  // Wrap with HiveLabProvider for context-based state management
-  // Components can progressively migrate to using useHiveLab() hook
   return (
     <HiveLabProvider
       initialDocument={{
         id: toolId,
         name: toolName,
         description: toolDescription,
-        elements,
-        connections,
+        elements: canvas.elements,
+        connections: canvas.connections,
       }}
     >
-    <div
-      className="h-full w-full flex overflow-hidden bg-[var(--hivelab-bg)]"
-    >
+    <div className="h-full w-full flex overflow-hidden bg-[var(--hivelab-bg)]">
         {/* Element Rail (Left) */}
         <ElementRail
           state={elementRailState}
           onStateChange={setElementRailState}
           activeTab={elementRailTab}
           onTabChange={setElementRailTab}
-          elements={elements}
-          connections={connections}
-          selectedIds={selectedIds}
-          onDragStart={(id) => {
-            draggingElementId.current = id;
-          }}
-          onDragEnd={() => {
-            draggingElementId.current = null;
-          }}
-          onSelect={selectElements}
-          onUpdateElement={updateElement}
-          onDeleteElement={(id) => deleteElements([id])}
-          onDuplicateElement={(id) => duplicateElements([id])}
-          onReorder={setElements}
+          elements={canvas.elements}
+          connections={canvas.connections}
+          selectedIds={canvas.selectedIds}
+          onDragStart={(id) => { draggingElementId.current = id; }}
+          onDragEnd={() => { draggingElementId.current = null; }}
+          onSelect={canvas.selectElements}
+          onUpdateElement={canvas.updateElement}
+          onDeleteElement={(id) => canvas.deleteElements([id])}
+          onDuplicateElement={(id) => canvas.duplicateElements([id])}
+          onReorder={canvas.setElements}
           onOpenAI={() => floatingBarRef.current?.focusInput()}
           onOpenTemplates={openTemplates}
           userContext={userContext}
           userTools={userTools}
           onToolSelect={onToolSelect}
           onNewTool={onNewTool}
-          // Sprint 3: Cross-tool Connections
-          spaceTools={otherTools}
-          spaceToolsLoading={otherToolsLoading}
+          spaceTools={spaceToolsHook.otherTools}
+          spaceToolsLoading={spaceToolsHook.otherToolsLoading}
           currentDeploymentId={deploymentId}
           onCreateConnection={(sourceDeploymentId, outputPath, outputType) => {
-            handleOpenConnectionBuilder({
+            spaceToolsHook.handleOpenConnectionBuilder({
               deploymentId: sourceDeploymentId,
               path: outputPath,
               type: outputType,
             });
           }}
-          // Sprint 4: Automations
-          automations={automations}
-          automationsLoading={automationsLoading}
-          onCreateAutomation={handleCreateAutomation}
-          onEditAutomation={handleEditAutomation}
-          onDeleteAutomation={handleDeleteAutomation}
-          onToggleAutomation={handleToggleAutomation}
-          onViewAutomationLogs={handleViewAutomationLogs}
-          onRunAutomationNow={handleRunAutomationNow}
+          automations={automationHook.automations}
+          automationsLoading={automationHook.automationsLoading}
+          onCreateAutomation={automationHook.handleCreateAutomation}
+          onEditAutomation={automationHook.handleEditAutomation}
+          onDeleteAutomation={automationHook.handleDeleteAutomation}
+          onToggleAutomation={automationHook.handleToggleAutomation}
+          onViewAutomationLogs={automationHook.handleViewAutomationLogs}
+          onRunAutomationNow={automationHook.handleRunAutomationNow}
         />
 
         {/* Canvas Area */}
         <div ref={canvasContainerRef} className="flex-1 flex flex-col relative">
-          {/* Template Overlay - shown when canvas is empty */}
           <AnimatePresence>
-            {isCanvasEmpty && !aiState.isGenerating && (
+            {canvas.isCanvasEmpty && !aiHook.aiState.isGenerating && (
               <TemplateOverlay
                 onSelectTemplate={loadTemplateComposition}
                 onStartFromScratch={openElements}
@@ -1593,71 +575,68 @@ export function HiveLabIDE({
             )}
           </AnimatePresence>
 
-          {/* Canvas */}
           <IDECanvas
-            elements={elements}
-            connections={connections}
-            selectedIds={selectedIds}
-            selectedConnectionId={selectedConnectionId}
-            zoom={zoom}
-            pan={pan}
-            showGrid={showGrid}
+            elements={canvas.elements}
+            connections={canvas.connections}
+            selectedIds={canvas.selectedIds}
+            selectedConnectionId={canvas.selectedConnectionId}
+            zoom={canvas.zoom}
+            pan={canvas.pan}
+            showGrid={canvas.showGrid}
             gridSize={gridSize}
-            snapToGrid={snapToGrid}
+            snapToGrid={canvas.snapToGrid}
             mode={mode}
-            flowingConnections={flowingConnections}
-            onSelect={selectElements}
-            onUpdateElement={updateElement}
-            onDeleteElements={deleteElements}
-            onAddConnection={addConnection}
-            onUpdateConnection={updateConnection}
-            onDeleteConnection={deleteConnection}
-            onSelectConnection={selectConnection}
-            onZoomChange={setZoom}
-            onPanChange={setPan}
-            onDrop={addElement}
+            flowingConnections={canvas.flowingConnections}
+            onSelect={canvas.selectElements}
+            onUpdateElement={canvas.updateElement}
+            onDeleteElements={canvas.deleteElements}
+            onAddConnection={canvas.addConnection}
+            onUpdateConnection={canvas.updateConnection}
+            onDeleteConnection={canvas.deleteConnection}
+            onSelectConnection={canvas.selectConnection}
+            onZoomChange={canvas.setZoom}
+            onPanChange={canvas.setPan}
+            onDrop={canvas.addElement}
             onTransformEnd={() => pushHistory('Transform element')}
           />
-
-          {/* Minimap deferred */}
         </div>
 
-        {/* Context Rail (Right) - only shows when elements are selected */}
-        {selectedElements.length > 0 && (
+        {/* Context Rail (Right) */}
+        {canvas.selectedElements.length > 0 && (
           <ContextRail
-            selectedElements={selectedElements}
-            allElements={elements}
-            connections={connections}
-            selectedConnectionId={selectedConnectionId}
-            onUpdateElement={updateElement}
-            onDeleteElements={deleteElements}
-            onDuplicateElements={duplicateElements}
-            onAlignElements={alignElements}
-            onDistributeElements={distributeElements}
-            onUpdateConnection={updateConnection}
-            onDeleteConnection={deleteConnection}
+            selectedElements={canvas.selectedElements}
+            allElements={canvas.elements}
+            connections={canvas.connections}
+            selectedConnectionId={canvas.selectedConnectionId}
+            onUpdateElement={canvas.updateElement}
+            onDeleteElements={canvas.deleteElements}
+            onDuplicateElements={canvas.duplicateElements}
+            onAlignElements={canvas.alignElements}
+            onDistributeElements={canvas.distributeElements}
+            onUpdateConnection={canvas.updateConnection}
+            onDeleteConnection={canvas.deleteConnection}
           />
         )}
 
-      {/* Unified Floating Action Bar with AI Input */}
+      {/* Floating Action Bar */}
       <FloatingActionBar
         ref={floatingBarRef}
-        zoom={zoom}
-        onZoomChange={setZoom}
-        showGrid={showGrid}
-        onToggleGrid={() => setShowGrid(prev => !prev)}
-        onFitToScreen={fitToScreen}
-        snapToGrid={snapToGrid}
-        onToggleSnap={() => setSnapToGrid(prev => !prev)}
+        zoom={canvas.zoom}
+        onZoomChange={canvas.setZoom}
+        showGrid={canvas.showGrid}
+        onToggleGrid={canvas.toggleGrid}
+        onFitToScreen={canvas.fitToScreen}
+        snapToGrid={canvas.snapToGrid}
+        onToggleSnap={canvas.toggleSnap}
         onUndo={undo}
         onRedo={redo}
-        canUndo={historyIndex > 0}
-        canRedo={historyIndex < history.length - 1}
-        onAISubmit={handleAISubmit}
-        aiLoading={aiState.isGenerating}
-        aiStreamingText={aiState.currentStatus}
-        selectedCount={selectedIds.length}
-        onAICancel={cancelGeneration}
+        canUndo={historyHook.canUndo}
+        canRedo={historyHook.canRedo}
+        onAISubmit={aiHook.handleAISubmit}
+        aiLoading={aiHook.aiState.isGenerating}
+        aiStreamingText={aiHook.aiState.currentStatus}
+        selectedCount={canvas.selectedIds.length}
+        onAICancel={aiHook.cancelGeneration}
         initialPrompt={initialPrompt}
       />
 
@@ -1668,31 +647,26 @@ export function HiveLabIDE({
         onSelectTemplate={loadTemplateComposition}
       />
 
-      {/* Sprint 4: Automation Builder Modal */}
+      {/* Automation Builder Modal */}
       <AutomationBuilderModal
-        isOpen={automationBuilderOpen}
-        onClose={() => {
-          setAutomationBuilderOpen(false);
-          setEditingAutomation(null);
-        }}
-        onSave={handleSaveAutomation}
-        initialData={editingAutomation || undefined}
-        elements={elements}
-        mode={editingAutomation ? 'edit' : 'create'}
+        isOpen={automationHook.automationBuilderOpen}
+        onClose={automationHook.closeAutomationBuilder}
+        onSave={automationHook.handleSaveAutomation}
+        initialData={automationHook.editingAutomation || undefined}
+        elements={canvas.elements}
+        mode={automationHook.editingAutomation ? 'edit' : 'create'}
         deploymentId={deploymentId}
       />
 
-      {/* Automation Logs deferred */}
-{/* Connection Builder deferred */}
-{/* AI Chat Pill - Floating/Dockable */}
-      {!isCanvasEmpty && (
+      {/* AI Chat Pill */}
+      {!canvas.isCanvasEmpty && (
         <AIChatPill
           ref={aiChatPillRef}
-          onSubmit={handleAISubmit}
-          isLoading={aiState.isGenerating}
-          streamingStatus={aiState.currentStatus}
-          selectedCount={selectedIds.length}
-          onCancel={cancelGeneration}
+          onSubmit={aiHook.handleAISubmit}
+          isLoading={aiHook.aiState.isGenerating}
+          streamingStatus={aiHook.aiState.currentStatus}
+          selectedCount={canvas.selectedIds.length}
+          onCancel={aiHook.cancelGeneration}
           initialPrompt={initialPrompt}
           dockPosition={aiChatDock}
           onDockChange={setAIChatDock}
@@ -1701,112 +675,15 @@ export function HiveLabIDE({
 
       {/* Deploy Success Celebration */}
       <AnimatePresence>
-        {showDeploySuccess && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          >
-            {/* Confetti particles */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              {confettiParticles.map((particle) => (
-                <motion.div
-                  key={particle.id}
-                  initial={{
-                    x: '50%',
-                    y: '50%',
-                    scale: 0,
-                    opacity: 1,
-                  }}
-                  animate={{
-                    x: `${particle.targetX}%`,
-                    y: `${particle.targetY}%`,
-                    scale: [0, 1, 0.5],
-                    opacity: [1, 1, 0],
-                    rotate: particle.rotation,
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    delay: particle.delay,
-                    ease: 'easeOut',
-                  }}
-                  className="absolute"
-                  style={{
-                    width: particle.size,
-                    height: particle.size,
-                    backgroundColor: particle.color,
-                    borderRadius: particle.isCircle ? '50%' : '2px',
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Celebration card */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              className="relative z-10 flex flex-col items-center gap-4 p-8 bg-[var(--hivelab-panel)] backdrop-blur-xl rounded-3xl border border-[var(--life-gold)]/20 shadow-2xl"
-            >
-              {/* Gold glow pulse */}
-              <motion.div
-                animate={{
-                  boxShadow: [
-                    '0 0 0 0 rgba(212,175,55,0)',
-                    '0 0 40px 20px rgba(212,175,55,0.15)',
-                    '0 0 0 0 rgba(212,175,55,0)',
-                  ],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute inset-0 rounded-3xl"
-              />
-
-              {/* Success icon */}
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
-                className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[var(--life-gold)] to-[#B8860B]"
-              >
-                <svg className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </motion.div>
-
-              {/* Message */}
-              <div className="text-center">
-                <h3 className="text-xl font-bold text-[var(--hivelab-text-primary)] mb-1">
-                  Tool Deployed!
-                </h3>
-                <p className="text-sm text-[var(--hivelab-text-secondary)]">
-                  Your tool is now live in the space
-                </p>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex gap-3 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowDeploySuccess(false)}
-                  className="px-4 py-2 text-sm font-medium text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] transition-colors"
-                >
-                  Continue Editing
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDeploySuccess(false);
-                    onCancel();
-                  }}
-                  className="px-4 py-2 text-sm font-semibold bg-[var(--life-gold)] text-black rounded-lg hover:bg-[var(--life-gold)]/90 transition-colors"
-                >
-                  View in Space
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
+        {deployHook.showDeploySuccess && (
+          <DeploySuccessOverlay
+            confettiParticles={deployHook.confettiParticles}
+            onContinue={() => deployHook.setShowDeploySuccess(false)}
+            onViewInSpace={() => {
+              deployHook.setShowDeploySuccess(false);
+              onCancel();
+            }}
+          />
         )}
       </AnimatePresence>
     </div>

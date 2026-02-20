@@ -452,7 +452,7 @@ export default function ToolStudioPage({ params }: Props) {
           label: 'View',
           onClick: () => {
             const handle = targetSpace?.handle || config.targetId;
-            router.push(`/s/${handle}/tools/${toolId}`);
+            router.push(`/s/${handle}`);
           },
         } : undefined,
       });
@@ -465,9 +465,9 @@ export default function ToolStudioPage({ params }: Props) {
     (spaceId: string) => {
       const space = userSpaces.find((s) => s.id === spaceId);
       const handle = space?.handle || spaceId;
-      router.push(`/s/${handle}/tools/${toolId}`);
+      router.push(`/s/${handle}`);
     },
-    [router, userSpaces, toolId]
+    [router, userSpaces]
   );
 
   // Loading state

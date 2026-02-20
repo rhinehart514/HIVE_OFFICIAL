@@ -226,7 +226,7 @@ async function searchSpaces(
         description: data.description,
         type: 'space',
         category: 'spaces',
-        url: data.slug ? `/spaces/s/${data.slug}` : `/spaces/${doc.id}`,
+        url: data.slug ? `/s/${data.slug}` : `/spaces/${doc.id}`,
         metadata: {
           memberCount,
           category: data.category,
@@ -279,7 +279,7 @@ async function searchSpaces(
           description: data.description,
           type: 'space',
           category: 'spaces',
-          url: data.slug ? `/spaces/s/${data.slug}` : `/spaces/${doc.id}`,
+          url: data.slug ? `/s/${data.slug}` : `/spaces/${doc.id}`,
           metadata: {
             memberCount,
             category: data.category,

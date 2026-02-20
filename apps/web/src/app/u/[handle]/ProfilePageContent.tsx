@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 
-import { ArrowRight, Wrench } from 'lucide-react';
+import { ArrowRight, Check, Clock, UserMinus, UserPlus, Wrench } from 'lucide-react';
 import {
   ProfileToolModal,
   ReportContentModal,
@@ -92,50 +92,15 @@ export default function ProfilePageContent() {
     handleSpaceClick,
     handleToolClick,
     interests,
+    connectionState,
+    isConnectionLoading,
+    handleConnect,
+    handleAcceptRequest,
+    handleUnfriend,
+    handleMessage,
   } = state;
 
-  // Follow/unfollow state
-  const [isFollowing, setIsFollowing] = React.useState(false);
-  const [isFollowLoading, setIsFollowLoading] = React.useState(false);
-  const [followChecked, setFollowChecked] = React.useState(false);
-
-  // Check follow status on load
-  React.useEffect(() => {
-    if (!profileId || isOwnProfile || followChecked) return;
-    (async () => {
-      try {
-        const res = await fetch(`/api/profile/${profileId}/follow`, { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          setIsFollowing(data.data?.isFollowing ?? data.isFollowing ?? false);
-        }
-      } catch { /* ignore */ }
-      setFollowChecked(true);
-    })();
-  }, [profileId, isOwnProfile, followChecked]);
-
-  const handleToggleFollow = React.useCallback(async () => {
-    if (!profileId || isFollowLoading) return;
-    setIsFollowLoading(true);
-    try {
-      const method = isFollowing ? 'DELETE' : 'POST';
-      const res = await fetch(`/api/profile/${profileId}/follow`, {
-        method,
-        credentials: 'include',
-      });
-      if (res.ok) {
-        setIsFollowing(!isFollowing);
-        toast.success(isFollowing ? 'Unfollowed' : 'Following');
-      } else {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data.error?.message || 'Failed');
-      }
-    } catch {
-      toast.error('Something went wrong');
-    } finally {
-      setIsFollowLoading(false);
-    }
-  }, [profileId, isFollowing, isFollowLoading]);
+  const [showUnfriendMenu, setShowUnfriendMenu] = React.useState(false);
 
   const handleSubmitReport = async (data: ReportContentInput) => {
     const response = await fetch('/api/content/reports', {
@@ -186,20 +151,86 @@ export default function ProfilePageContent() {
           </div>
         )}
 
-        {/* Follow + Report buttons (other profiles) */}
+        {/* Social actions (other profiles) */}
         {!isOwnProfile && (
           <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={handleToggleFollow}
-              disabled={isFollowLoading}
-              className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150 ${
-                isFollowing
-                  ? 'bg-white/[0.06] text-white/50 hover:bg-white/[0.08] hover:text-white/40'
-                  : 'bg-[#FFD700] text-black hover:opacity-90'
-              } ${isFollowLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {isFollowLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Connect / Connection state button */}
+              {connectionState === 'none' && (
+                <button
+                  onClick={handleConnect}
+                  disabled={isConnectionLoading}
+                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150 bg-[#FFD700] text-black hover:opacity-90 ${
+                    isConnectionLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  {isConnectionLoading ? '...' : 'Connect'}
+                </button>
+              )}
+
+              {connectionState === 'pending_outgoing' && (
+                <button
+                  disabled
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-white/50 cursor-default"
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  Request Sent
+                </button>
+              )}
+
+              {connectionState === 'pending_incoming' && (
+                <button
+                  onClick={() => handleAcceptRequest('')}
+                  disabled={isConnectionLoading}
+                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150 bg-[#FFD700] text-black hover:opacity-90 ${
+                    isConnectionLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  {isConnectionLoading ? '...' : 'Accept'}
+                </button>
+              )}
+
+              {connectionState === 'friends' && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUnfriendMenu(!showUnfriendMenu)}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-white/50 hover:bg-white/[0.08] transition-colors"
+                  >
+                    <Check className="w-3.5 h-3.5 text-[#FFD700]" />
+                    Friends
+                  </button>
+                  {showUnfriendMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowUnfriendMenu(false)} />
+                      <div className="absolute top-full mt-1 left-0 z-50 min-w-[120px] rounded-xl bg-[#1a1a1a] border border-white/[0.06] shadow-xl overflow-hidden">
+                        <button
+                          onClick={() => {
+                            handleUnfriend();
+                            setShowUnfriendMenu(false);
+                          }}
+                          disabled={isConnectionLoading}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-red-400 hover:bg-white/[0.06] transition-colors"
+                        >
+                          <UserMinus className="w-3.5 h-3.5" />
+                          Unfriend
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Message button */}
+              <button
+                onClick={handleMessage}
+                className="px-4 py-1.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-white/50 hover:bg-white/[0.08] hover:text-white/40 transition-all duration-150"
+              >
+                Message
+              </button>
+            </div>
+
             <button
               onClick={() => setShowReportModal(true)}
               className="text-[13px] text-white/50 hover:text-white transition-colors"

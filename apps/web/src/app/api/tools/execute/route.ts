@@ -157,26 +157,37 @@ async function handleCounterAction(
     };
   }
 
-  // Apply bounds if configured — read current value first
-  if ((min !== undefined || max !== undefined) && delta !== 0) {
-    const sharedState = await getSharedState(toolId, deploymentId);
-    const counters = (sharedState.counters ?? {}) as Record<string, number>;
-    const current = counters[`${elementId}:value`] ?? 0;
-    const next = current + delta;
-    if (min !== undefined && next < min) throw new Error(`Counter minimum is ${min}`);
-    if (max !== undefined && next > max) throw new Error(`Counter maximum is ${max}`);
-  }
-
   const db = dbAdmin;
   const now = new Date().toISOString();
-  await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
-    {
-      [`counters.${elementId}:value`]: admin.firestore.FieldValue.increment(delta),
-      version: admin.firestore.FieldValue.increment(1),
-      lastModified: now,
-    },
-    { merge: true }
-  );
+
+  // Atomic bounds check + increment inside a transaction
+  if ((min !== undefined || max !== undefined) && delta !== 0) {
+    const sharedRef = db.collection("tool_states").doc(sharedDocId(toolId, deploymentId));
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(sharedRef);
+      const docData = doc.data() || {};
+      const counters = (docData.counters ?? {}) as Record<string, number>;
+      const current = counters[`${elementId}:value`] ?? 0;
+      const next = current + delta;
+      if (min !== undefined && next < min) throw new Error(`Counter minimum is ${min}`);
+      if (max !== undefined && next > max) throw new Error(`Counter maximum is ${max}`);
+
+      transaction.set(sharedRef, {
+        [`counters.${elementId}:value`]: admin.firestore.FieldValue.increment(delta),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      }, { merge: true });
+    });
+  } else {
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:value`]: admin.firestore.FieldValue.increment(delta),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+  }
 
   return {
     sharedStateUpdate: { counterDeltas: { [`${elementId}:value`]: delta } },
@@ -202,20 +213,21 @@ async function handleRsvpAction(
     const participation = (userState.participation ?? {}) as Record<string, boolean>;
     if (participation[`${elementId}:rsvped`]) throw new Error("Already RSVPed");
 
-    // Check capacity
-    const sharedState = await getSharedState(toolId, deploymentId);
-    const counters = (sharedState.counters ?? {}) as Record<string, number>;
-    const currentCount = counters[`${elementId}:attendees`] ?? 0;
-    if (currentCount >= maxCapacity) throw new Error("Event is at capacity");
+    // Atomic capacity check + increment inside a transaction
+    const sharedRef = db.collection("tool_states").doc(sharedDocId(toolId, deploymentId));
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(sharedRef);
+      const docData = doc.data() || {};
+      const counters = (docData.counters ?? {}) as Record<string, number>;
+      const currentCount = counters[`${elementId}:attendees`] ?? 0;
+      if (currentCount >= maxCapacity) throw new Error("Event is at capacity");
 
-    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
-      {
+      transaction.set(sharedRef, {
         [`counters.${elementId}:attendees`]: admin.firestore.FieldValue.increment(1),
         version: admin.firestore.FieldValue.increment(1),
         lastModified: now,
-      },
-      { merge: true }
-    );
+      }, { merge: true });
+    });
 
     await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
       {
@@ -356,27 +368,44 @@ async function handleSignupAction(
     const slot = slots.find((s) => s.id === slotId);
     const capacity = slot?.capacity ?? Infinity;
 
+    // Atomic capacity check + signup inside a transaction
+    const sharedRef = db.collection("tool_states").doc(sharedDocId(toolId, deploymentId));
     if (isFinite(capacity)) {
-      const sharedState = await getSharedState(toolId, deploymentId);
-      const counters = (sharedState.counters ?? {}) as Record<string, number>;
-      const current = counters[`${elementId}:slot:${slotId}`] ?? 0;
-      if (current >= capacity) throw new Error("This slot is full");
-    }
+      await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(sharedRef);
+        const docData = doc.data() || {};
+        const counters = (docData.counters ?? {}) as Record<string, number>;
+        const current = counters[`${elementId}:slot:${slotId}`] ?? 0;
+        if (current >= capacity) throw new Error("This slot is full");
 
-    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
-      {
-        [`collections.${collectionKey}.${entryId}`]: {
-          id: entryId,
-          createdAt: now,
-          createdBy: userId,
-          data: { slotId, userId },
+        transaction.set(sharedRef, {
+          [`collections.${collectionKey}.${entryId}`]: {
+            id: entryId,
+            createdAt: now,
+            createdBy: userId,
+            data: { slotId, userId },
+          },
+          [`counters.${elementId}:slot:${slotId}`]: admin.firestore.FieldValue.increment(1),
+          version: admin.firestore.FieldValue.increment(1),
+          lastModified: now,
+        }, { merge: true });
+      });
+    } else {
+      await sharedRef.set(
+        {
+          [`collections.${collectionKey}.${entryId}`]: {
+            id: entryId,
+            createdAt: now,
+            createdBy: userId,
+            data: { slotId, userId },
+          },
+          [`counters.${elementId}:slot:${slotId}`]: admin.firestore.FieldValue.increment(1),
+          version: admin.firestore.FieldValue.increment(1),
+          lastModified: now,
         },
-        [`counters.${elementId}:slot:${slotId}`]: admin.firestore.FieldValue.increment(1),
-        version: admin.firestore.FieldValue.increment(1),
-        lastModified: now,
-      },
-      { merge: true }
-    );
+        { merge: true }
+      );
+    }
 
     await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
       {
@@ -508,22 +537,24 @@ async function handleProgressAction(
   const now = new Date().toISOString();
 
   if (action === "set_progress") {
-    const value = Math.max(0, Math.min((data.value as number) ?? 0, max));
+    const targetValue = Math.max(0, Math.min((data.value as number) ?? 0, max));
 
-    // Get current value to compute delta
-    const sharedState = await getSharedState(toolId, deploymentId);
-    const counters = (sharedState.counters ?? {}) as Record<string, number>;
-    const current = counters[`${elementId}:value`] ?? 0;
-    const delta = value - current;
+    // Atomic read-compute-write inside a transaction
+    const sharedRef = db.collection("tool_states").doc(sharedDocId(toolId, deploymentId));
+    let delta = 0;
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(sharedRef);
+      const docData = doc.data() || {};
+      const counters = (docData.counters ?? {}) as Record<string, number>;
+      const current = counters[`${elementId}:value`] ?? 0;
+      delta = targetValue - current;
 
-    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
-      {
+      transaction.set(sharedRef, {
         [`counters.${elementId}:value`]: admin.firestore.FieldValue.increment(delta),
         version: admin.firestore.FieldValue.increment(1),
         lastModified: now,
-      },
-      { merge: true }
-    );
+      }, { merge: true });
+    });
 
     return {
       sharedStateUpdate: { counterDeltas: { [`${elementId}:value`]: delta } },
@@ -533,21 +564,23 @@ async function handleProgressAction(
   if (action === "increment_progress") {
     const step = (data.step as number) ?? 1;
 
-    // Check bounds
-    const sharedState = await getSharedState(toolId, deploymentId);
-    const counters = (sharedState.counters ?? {}) as Record<string, number>;
-    const current = counters[`${elementId}:value`] ?? 0;
-    const effectiveDelta = Math.min(step, max - current);
-    if (effectiveDelta <= 0) throw new Error("Progress is already at maximum");
+    // Atomic bounds check + increment inside a transaction
+    const sharedRef = db.collection("tool_states").doc(sharedDocId(toolId, deploymentId));
+    let effectiveDelta = 0;
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(sharedRef);
+      const docData = doc.data() || {};
+      const counters = (docData.counters ?? {}) as Record<string, number>;
+      const current = counters[`${elementId}:value`] ?? 0;
+      effectiveDelta = Math.min(step, max - current);
+      if (effectiveDelta <= 0) throw new Error("Progress is already at maximum");
 
-    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
-      {
+      transaction.set(sharedRef, {
         [`counters.${elementId}:value`]: admin.firestore.FieldValue.increment(effectiveDelta),
         version: admin.firestore.FieldValue.increment(1),
         lastModified: now,
-      },
-      { merge: true }
-    );
+      }, { merge: true });
+    });
 
     return {
       sharedStateUpdate: { counterDeltas: { [`${elementId}:value`]: effectiveDelta } },
@@ -555,19 +588,22 @@ async function handleProgressAction(
   }
 
   if (action === "reset_progress") {
-    const sharedState = await getSharedState(toolId, deploymentId);
-    const counters = (sharedState.counters ?? {}) as Record<string, number>;
-    const current = counters[`${elementId}:value`] ?? 0;
-    const delta = -current;
+    // Atomic read-compute-write inside a transaction
+    const sharedRef = db.collection("tool_states").doc(sharedDocId(toolId, deploymentId));
+    let delta = 0;
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(sharedRef);
+      const docData = doc.data() || {};
+      const counters = (docData.counters ?? {}) as Record<string, number>;
+      const current = counters[`${elementId}:value`] ?? 0;
+      delta = -current;
 
-    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
-      {
+      transaction.set(sharedRef, {
         [`counters.${elementId}:value`]: admin.firestore.FieldValue.increment(delta),
         version: admin.firestore.FieldValue.increment(1),
         lastModified: now,
-      },
-      { merge: true }
-    );
+      }, { merge: true });
+    });
 
     return {
       sharedStateUpdate: { counterDeltas: { [`${elementId}:value`]: delta } },
@@ -1131,13 +1167,18 @@ export const POST = withAuthAndErrors(async (
         break;
 
       // Registry ID: announcement
-      case "announcement":
+      case "announcement": {
+        const toolCreatorId = (tool.createdBy || tool.ownerId) as string | undefined;
+        if (!toolCreatorId) {
+          throw new Error("Only the tool creator can manage announcements");
+        }
         result = await handleAnnouncementAction(
           toolId, effectiveDeploymentId, elementId,
           action, data as Record<string, unknown>, userId,
-          tool.createdBy as string
+          toolCreatorId
         );
         break;
+      }
 
       default:
         // Generic fallback: record action in timeline
