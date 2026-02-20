@@ -221,12 +221,44 @@ function resolveCampusId(
  * - Production: Rejects users without determinable campus
  * - Development: Warns and falls back to 'ub-buffalo'
  *
- * NO DEVELOPMENT BYPASSES - Use real Firebase Auth with test accounts
+ * DEV BYPASS: Set HIVE_DEV_BYPASS=true in .env.local to skip auth in development.
+ * Double-gated: only works when NODE_ENV=development AND HIVE_DEV_BYPASS=true.
  */
 export function withAuth<T extends RouteParams>(
   handler: AuthenticatedHandler<T>
 ): NextRouteHandler<T> {
   return async (request: NextRequest, context: T): Promise<Response> => {
+    // ── Dev bypass ─────────────────────────────────────────────────────────
+    // ONLY active when NODE_ENV=development AND HIVE_DEV_BYPASS=true.
+    // Never runs in production.
+    if (
+      process.env.NODE_ENV === 'development' &&
+      process.env.HIVE_DEV_BYPASS === 'true'
+    ) {
+      const devUser: UserContext = {
+        uid: 'dev-user-001',
+        email: 'rhinehart514@gmail.com',
+        campusId: 'ub-buffalo',
+        decodedToken: {
+          uid: 'dev-user-001',
+          email: 'rhinehart514@gmail.com',
+          email_verified: true,
+          aud: 'hive-9265c',
+          auth_time: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + 86400,
+          iat: Math.floor(Date.now() / 1000),
+          iss: 'https://securetoken.google.com/hive-9265c',
+          sub: 'dev-user-001',
+          firebase: { identities: {}, sign_in_provider: 'custom' },
+        } as DecodedIdToken,
+      };
+      attachUser(request, devUser);
+      const devReq = request as AuthenticatedRequest;
+      devReq.user = devUser;
+      return handler(devReq, context);
+    }
+    // ── End dev bypass ─────────────────────────────────────────────────────
+
     try {
       // Check for session cookie (primary auth method for web app)
       const sessionCookie = request.cookies.get('hive_session');
