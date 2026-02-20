@@ -17,7 +17,7 @@
 import * as React from 'react';
 import { useEffect, useRef, type ReactNode, type HTMLAttributes } from 'react';
 import autoAnimate, { type AutoAnimateOptions, type AutoAnimationPlugin } from '@formkit/auto-animate';
-import { motion as motionTokens } from '@hive/tokens';
+import { motionTokens } from '@hive/tokens';
 
 export interface AutoAnimatedProps extends HTMLAttributes<HTMLDivElement> {
   /** Child elements to auto-animate */

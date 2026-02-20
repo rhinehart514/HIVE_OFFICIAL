@@ -126,7 +126,7 @@ export type {
 // Motion tokens
 export {
   MOTION,
-  motion,
+  motion as motionCSS,
   motion as motionTokens,
   easingArrays,
   durationSeconds,

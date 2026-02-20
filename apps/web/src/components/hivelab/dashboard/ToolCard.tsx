@@ -22,7 +22,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/hivelab/create-tool';
-import { } from '@hive/tokens';
 
 export interface ToolData {
   id: string;

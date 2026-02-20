@@ -1,5 +1,13 @@
 import type { Config } from 'tailwindcss';
+import colors from 'tailwindcss/colors';
 import { hiveTailwindConfig, breakpointValues } from '@hive/tokens';
+
+// Suppress Tailwind v3 deprecated color alias warnings
+delete (colors as Record<string, unknown>)['lightBlue'];
+delete (colors as Record<string, unknown>)['warmGray'];
+delete (colors as Record<string, unknown>)['trueGray'];
+delete (colors as Record<string, unknown>)['coolGray'];
+delete (colors as Record<string, unknown>)['blueGray'];
 
 const config: Config = {
   content: [

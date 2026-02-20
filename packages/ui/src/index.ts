@@ -1713,6 +1713,7 @@ export type {
   ProfileStatsWidgetProps,
   ProfileFeaturedToolCardProps,
   FeaturedTool,
+  ActivityContribution,
 } from "./design-system/components/profile";
 
 // ============================================

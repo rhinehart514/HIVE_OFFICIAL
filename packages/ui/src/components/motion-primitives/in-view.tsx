@@ -24,7 +24,7 @@
 import { motion, type Transition, type Variants, type HTMLMotionProps } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { type ReactNode, forwardRef } from 'react';
-import { motion as motionTokens } from '@hive/tokens';
+import { motionTokens } from '@hive/tokens';
 
 export interface InViewProps extends Omit<HTMLMotionProps<'div'>, 'variants' | 'transition' | 'initial' | 'animate'> {
   /** Child elements to animate */

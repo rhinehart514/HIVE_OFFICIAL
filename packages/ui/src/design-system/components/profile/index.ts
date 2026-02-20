@@ -161,3 +161,9 @@ export {
   type ProfileFeaturedToolCardProps,
   type FeaturedTool,
 } from './ProfileFeaturedToolCard';
+
+export {
+  ProfileActivityHeatmap,
+  type ActivityContribution,
+  type ProfileActivityHeatmapProps,
+} from './ProfileActivityHeatmap';

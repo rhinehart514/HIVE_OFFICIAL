@@ -117,7 +117,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
 
   // Tools state
   const [showAddToolModal, setShowAddToolModal] = React.useState(false);
-  const [spaceTools, setSpaceTools] = React.useState<Array<{ id: string; name: string }>>([]);
+  const [spaceTools, setSpaceTools] = React.useState<Array<{ id: string; name: string; icon?: string; description?: string }>>([]);
   const [spaceToolsLoading, setSpaceToolsLoading] = React.useState(false);
 
   // Join requests state

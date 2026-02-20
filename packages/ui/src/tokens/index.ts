@@ -23,7 +23,8 @@ export {
   springPresets,
   staggerPresets,
   tinderSprings,
-  motion,
+  motionCSS,
+  motionTokens,
   performance,
   // HIVE signature motion
   SPRING_SNAP_NAV,
