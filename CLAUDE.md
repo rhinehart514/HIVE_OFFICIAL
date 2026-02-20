@@ -1,198 +1,319 @@
-# HIVE
+# CLAUDE.md — HIVE Codebase Guide
 
-## Why This Exists
-
-Student orgs run on chaos. GroupMe threads, Google Forms nobody checks, flyers nobody reads. Leaders burn out coordinating. Members disengage. The tools that exist weren't built for how campus actually works — fast, social, ephemeral.
-
-HIVE gives every student org leader the ability to build real tools (polls, sign-ups, countdowns, leaderboards) in seconds and deploy them directly into the spaces where their members already are. No code. No app downloads. No friction.
-
-## Value Propositions
-
-| Who | What they get | Why it matters |
-|-----|---------------|----------------|
-| **Org leaders** | Build and deploy tools in seconds, not hours | They stop being IT admins and start being leaders again |
-| **Members** | Interactive tools inside the spaces they already check | Participation goes from 5% to 50% because the friction disappears |
-| **Campuses** | Every org gets infrastructure that used to require a dev team | The playing field levels — small clubs get the same tools as funded orgs |
-
-The core loop: **Leader creates tool → deploys to space → members engage → data flows back → leader makes better decisions → creates more tools.**
-
-Every feature we build should make this loop faster, easier, or more valuable.
-
-## Decision Filter
-
-Every decision runs through one question:
-
-**Does this make the create-deploy-engage loop faster or more valuable?**
-
-If no → kill it, ignore it, or defer it.
-
-Secondary filters:
-- Does it strengthen the network effect? (More users = more valuable for everyone)
-- Does it reduce time-to-first-tool for a new leader?
-- Does it increase engagement rate for deployed tools?
-- Does it make HIVE the obvious choice over "just use Google Forms"?
+HIVE is a campus social platform where students create tools for their communities.
+Spaces (orgs, greek life, dorms) are the core unit. HiveLab is the creation runtime
+that lets org leaders build interactive tools (polls, RSVPs, leaderboards, forms)
+deployed directly into their space — no separate hosting, no cold start.
 
 ---
 
-## Constraints
+## Monorepo Structure
 
-Non-negotiable. Every PR.
-
-| Rule | Implementation |
-|------|----------------|
-| Campus isolation | Every query filters by `campusId` from session. Never accept from client. |
-| Real identity | Campus email verification required. No anonymous users. |
-| Validation | Zod schemas on all API inputs. Never trust client data. |
-| Design tokens | All visual values from `@hive/tokens`. No hardcoded colors/spacing/radii. |
-| Real handlers | Every button does real work. No console.log placeholders. |
-| No dead ends | Every state shows next action. Empty states guide, never "Nothing here". |
-| Motion | All transitions use `@hive/ui/motion` or `@hive/ui/tokens/motion`. Subtle, <300ms. |
+```
+HIVE/
+├── apps/web/                    Next.js 15 app (main product)
+│   ├── src/app/                 Routes + API routes
+│   ├── src/components/          Shared app components
+│   ├── src/hooks/               React Query hooks
+│   └── src/lib/                 Utilities, middleware, feature flags
+├── packages/core/               Domain logic (DDD)
+│   └── src/domain/              Aggregates, entities, repositories, DTOs
+└── packages/ui/                 Shared UI components + HiveLab elements
+    └── src/components/hivelab/  Element registry, canvas, IDE, templates
+```
 
 ---
 
-## Patterns
+## Architecture: Domain-Driven Design
 
-**Adding an API route:**
-```
-apps/web/src/app/api/[domain]/route.ts
-```
-- Use `withAuthAndErrors` wrapper from `@/lib/middleware`
-- Get user info: `getUserId(req)`, `getUserEmail(req)`, `getCampusId(req)`
-- Validate with Zod: `const body = schema.parse(await req.json())`
-- Return via `respond.success({ data })` or `respond.error('msg', 'CODE')`
-- For admin routes: use `withAdminAuthAndErrors`
-- For public routes: use `withErrors`
-- For routes with body validation: use `withAuthValidationAndErrors(schema, handler)`
-- **Approved alternatives** (do NOT migrate to standard):
-  - `withSecureAuth` (`@/lib/api-auth-secure`) — Redis rate limiting, cookie auth fallback, campus isolation. Used by feed/posts routes.
-  - `withValidation` (`@/lib/validation-middleware`) — Threat scanning (SQL injection, XSS detection). Used by pre-auth routes (send-code, verify-code).
+The codebase uses DDD. API routes should use repositories, not raw Firestore.
+
+### Aggregates (packages/core/src/domain/)
+
+| Aggregate | File | What it owns |
+|-----------|------|--------------|
+| **Space** | `spaces/aggregates/enhanced-space.ts` | Members, tools, boards, events, tabs |
+| **Profile** | `profile/profile.aggregate.ts` | User identity, interests, builder level |
+| **Connection** | `connections/connection.ts` | Friend graph, follow relationships |
+| **Feed** | `feed/enhanced-feed.ts` | Campus activity feed logic |
+| **Ritual** | `rituals/enhanced-ritual.ts` | Streaks, recurring behaviors |
+
+### Repositories
 
 ```typescript
-// Example: most common pattern
-import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
+// Always use repositories in API routes — not raw dbAdmin queries
+import { getServerSpaceRepository } from '@hive/core/server';
+const spaceRepo = getServerSpaceRepository();
+const result = await spaceRepo.findById(spaceId);
+```
 
-export const GET = withAuthAndErrors(async (request, context, respond) => {
-  const req = request as AuthenticatedRequest;
-  const userId = getUserId(req);
-  const campusId = getCampusId(req);
-  // ... query filtered by campusId
-  return respond.success({ data });
+| Repository | Method |
+|-----------|--------|
+| `SpaceRepository` | `getServerSpaceRepository()` from `@hive/core/server` |
+| `TemplateRepository` | `getServerTemplateRepository()` from `@hive/core/domain/hivelab/templates/template.repository` |
+
+### DTOs — CRITICAL GOTCHA
+
+**There are two `PlacedToolDTO` types. Use the right one.**
+
+| Import | Use when |
+|--------|----------|
+| `import type { PlacedToolDTO } from '@/hooks/use-space-tools'` | App components (has `name`, `description`, `version`) |
+| `import { PlacedToolDTO } from '@hive/core'` | Core domain layer only (has `titleOverride`, no `name`) |
+
+The hook version is the enriched UI type. Never use the core DTO in `apps/web/src/`.
+
+---
+
+## ERD — Firestore Collections
+
+### Core Collections
+
+```
+campuses/{campusId}
+  └─ id, name, domain (e.g. buffalo.edu)
+
+users/{userId}
+  └─ uid, email, campusId, displayName, createdAt
+
+profiles/{userId}
+  └─ interests[], yearOfStudy, housing, builderLevel, xp, avatarUrl
+
+spaces/{spaceId}
+  └─ name, handle, campusId, category, visibility, isLeader(userId),
+     memberCount, description, iconURL, bannerImage
+
+spaceMembers/{spaceId_userId}   ← composite key
+  └─ spaceId, userId, role (member|leader|admin|moderator), joinedAt
+
+events/{eventId}
+  └─ spaceId, campusId, title, startDate|startAt|startTime (use all 3 in queries),
+     location, rsvpCount, createdAt
+
+rsvps/{rsvpId}                  ← canonical
+  └─ eventId, userId, status (going|maybe|not_going), createdAt
+eventRsvps/{id}                 ← legacy, check both in queries
+
+tools/{toolId}
+  └─ campusId, createdBy, name, description, status (draft|published|archived),
+     composition (elements[], connections[]), remixedFrom, remixCount
+
+placedTools/{placementId}       ← canonical deployment record
+  └─ spaceId, toolId, placement, order, isActive, visibility, titleOverride, placedAt
+deployedTools/{id}              ← legacy overlap, prefer placedTools
+
+tool_states/{toolId}            ← HiveLab element runtime state (NOT toolStates)
+  └─ sharedState: { counters{}, collections{}, timeline[], computed{} }
+     userState/{userId}: { selections{}, participation{}, personal{}, ui{} }
+
+posts/{postId}
+  └─ spaceId, authorId, content, createdAt, likes, comments
+
+boards/{boardId}
+  └─ spaceId, title, linkedEventId (optional)
+
+messages / spaceMessages        ← both exist, prefer spaceMessages for new queries
+  └─ spaceId, authorId, content, createdAt, reactions{}
+
+notifications/{notifId}
+  └─ userId, type, category, title, body, read, createdAt
+
+analytics_events/{id}           ← feeds global feed, NOT Firestore analytics
+  └─ eventType (tool_created|tool_deployed|event_created|...), userId, spaceId,
+     campusId, timestamp, metadata{}
+
+fcmTokens/{userId}
+  └─ token, platform, updatedAt
+
+connections/{connectionId}
+  └─ userId, connectedUserId, status, createdAt
+
+friends/{id}
+  └─ userId, friendId, status
+
+featureFlags/{flagId}
+  └─ key, enabled, description
+
+campusData/{campusId}/dining/{id}   ← subcollection
+  └─ hall, menu, hours
+```
+
+### Key Relationships
+
+```
+Campus → Spaces (1:many, via spaces.campusId)
+Space → SpaceMembers (1:many, composite key spaceId_userId)
+Space → Events (1:many, via events.spaceId)
+Space → PlacedTools (1:many, via placedTools.spaceId)
+Tool → PlacedTools (1:many, a tool can be deployed to multiple spaces)
+Tool → tool_states (1:1, runtime state keyed by toolId)
+Event → RSVPs (1:many, via rsvps.eventId)
+User → Profiles (1:1, same userId)
+User → Connections (many:many, via connections collection)
+```
+
+---
+
+## HiveLab Architecture
+
+### Three Tiers
+
+| Tier | What | Elements |
+|------|------|---------|
+| **T1** | Standalone tools — work anywhere | Poll, RSVP, Form, Counter, Leaderboard, Timer, SignupSheet, ChecklistTracker |
+| **T2** | Space-deployed — need spaceId context | MemberList, SpaceEvents, Announcement, ConnectionList, EventPicker |
+| **T3** | Agents + campus data (future) | CustomBlock (iframe sandbox, spec'd not fully live) |
+
+### Element Execute Handlers
+
+Only these element types have server-side execute handlers in `/api/tools/execute/route.ts`:
+`poll-element`, `counter`, `rsvp-button`, `checklist-tracker`, `signup-sheet`,
+`form-builder`, `leaderboard`, `progress-indicator`, `timer`, `announcement`
+
+Everything else is display-only (no state write on interaction).
+
+### Generation
+
+Controlled by env var `GOOSE_BACKEND`:
+- `GOOSE_BACKEND=groq` → uses Groq (llama-3.3-70b-versatile) as primary
+- Default → rules-based regex generator
+
+Quick templates (no AI): `getQuickTemplate(id)` from `@hive/ui`
+AI generation: `POST /api/tools/generate` streams NDJSON
+
+### State Architecture
+
+```typescript
+// sharedState — visible to all users, in tool_states/{toolId}
+sharedState.counters["poll-1:option-a"] = 12      // vote counts
+sharedState.collections["form-1:submissions"]      // form responses
+sharedState.timeline                               // last 100 events
+
+// userState — per user, in tool_states/{toolId}/userState/{userId}
+userState.participation["poll-1:hasVoted"] = true
+userState.selections["poll-1:choice"] = "option-a"
+```
+
+Real-time sync: Firebase RTDB (not Firestore) via SSE at `/api/tools/[toolId]/state/stream`
+
+---
+
+## Key Gotchas
+
+### 1. Event time fields — use all three
+Events store time in `startDate`, `startAt`, OR `startTime` depending on how they were created.
+Always query with fallback: `getEventStartDate()` from `@/lib/events/event-time`.
+
+### 2. Collection name drift
+| Wrong | Right |
+|-------|-------|
+| `toolStates` | `tool_states` |
+| `spaceTools` | `placedTools` |
+| `eventRsvps` | `rsvps` (canonical, but check both) |
+| `toolDeployments` | `placedTools` |
+
+### 3. Auth middleware
+All authenticated API routes use `withAuthAndErrors` or `withAuthValidationAndErrors`:
+```typescript
+import { withAuthAndErrors, getUserId, getCampusId } from '@/lib/middleware';
+export const POST = withAuthAndErrors(async (req, { params }, respond) => {
+  const userId = getUserId(req as AuthenticatedRequest);
+  const campusId = getCampusId(req as AuthenticatedRequest);
+  // ...
+  return respond.success(data);
 });
 ```
 
-**Adding a component:**
-```
-packages/ui/src/design-system/primitives/ComponentName.tsx       # Base primitives (Button, Input, Card, etc.)
-packages/ui/src/design-system/components/[domain]/Component.tsx  # Domain components (spaces/, profile/, campus/, hivelab/)
-packages/ui/src/design-system/templates/TemplateName.tsx         # Page shells (AppShell, SpaceShell, PageTransition)
-apps/web/src/components/[feature]/ComponentName.tsx              # Feature-specific (landing/, spaces/, profile/, etc.)
-```
-- Check `packages/ui` first — don't duplicate
-- Use design tokens for all values
-- Import motion from `@hive/ui/motion` or `@hive/ui/tokens/motion`
+### 4. Dev auth bypass
+`HIVE_DEV_BYPASS=true` in `.env.local` → skips JWT validation.
+Dev user: `dev-user-001` / `rhinehart514@gmail.com` / campus `ub-buffalo`.
 
-**Adding a hook:**
-```
-apps/web/src/hooks/use-[name].ts       # Feature hooks (use-session, use-feed, use-spaces-browse, etc.)
-packages/hooks/src/use-[name].ts       # Shared hooks (use-hive-query, use-realtime-document, etc.)
-```
+### 5. Feed architecture — two separate feeds
+| Feed | Route | What it shows |
+|------|-------|---------------|
+| Space feed | `/api/spaces/[spaceId]/feed` | Activity within one space (posts, events, tool_deploy, member_join) |
+| Global feed | `/api/feed/global` | Campus-wide activity (reads `analytics_events` collection) |
+| Personalized events | `/api/events/personalized` | Ranked events for a user (interest match + social + space + time) |
 
-**Adding a page:**
-```
-apps/web/src/app/[route]/page.tsx
-```
+Writing to global feed = write to `analytics_events` collection.
+Writing to space feed = write to `space_feed` collection with `spaceId`.
 
-**Adding a Zod schema:**
-```
-packages/validation/src/[domain].schema.ts
-```
+### 6. Feature flags
+Check `apps/web/src/lib/feature-flags.ts`. Key flags:
+- `NEXT_PUBLIC_HIVELAB_PUBLIC=true` → HiveLab visible to all users (not just leaders)
+- `NEXT_PUBLIC_ACCESS_GATE_ENABLED=true` → waitlist/invite gate on signup
 
-**Using feature flags:**
+### 7. Error responses — always use `respond`
 ```typescript
-import { useFeatureFlags } from '@/hooks/use-feature-flags';
-const { dmsEnabled } = useFeatureFlags();
-if (!dmsEnabled) return null;
+return respond.error('Message', 'ERROR_CODE', { status: 400 });
+return respond.success({ data });
+// Never: return NextResponse.json(...)  ← bypasses middleware
 ```
 
 ---
 
-## Monorepo Packages
+## Design System
 
-| Package | Name | Purpose |
-|---------|------|---------|
-| `apps/web` | `@hive/web` | Main Next.js 15 app |
-| `apps/admin` | `@hive/admin` | Admin dashboard (port 3001) |
-| `packages/ui` | `@hive/ui` | Design system: primitives, components, templates, motion |
-| `packages/tokens` | `@hive/tokens` | Design tokens: colors, spacing, typography, motion, layout |
-| `packages/core` | `@hive/core` | Domain logic, types, services (DDD structure) |
-| `packages/hooks` | `@hive/hooks` | Shared React hooks (queries, realtime, analytics) |
-| `packages/firebase` | `@hive/firebase` | Firebase client config, App Check |
-| `packages/validation` | `@hive/validation` | Zod schemas for all domains |
-| `packages/auth-logic` | `@hive/auth-logic` | Auth flow logic |
-| `packages/config/*` | `@hive/config-*` | Shared TypeScript and ESLint configs |
-| `infrastructure/firebase` | — | Firebase cloud functions |
+Design tokens from `@hive/tokens`. Never hardcode colors.
 
----
+```typescript
+// Background
+bg-black          // void (#000000)
+bg-[#080808]      // surface
 
-## File Map
+// Borders (always hairline)
+border-white/[0.06]   // default
+border-white/[0.1]    // hover
 
-| Need | Location |
-|------|----------|
-| API routes | `apps/web/src/app/api/` |
-| Pages | `apps/web/src/app/` |
-| Middleware (edge) | `apps/web/src/middleware.ts` |
-| API middleware | `apps/web/src/lib/middleware/` (`withAuthAndErrors`, etc.) |
-| Server libs | `apps/web/src/lib/` (session, firebase-admin, rate-limit, etc.) |
-| Feature components | `apps/web/src/components/` (landing/, spaces/, profile/, hivelab/, etc.) |
-| Context providers | `apps/web/src/contexts/` (space/, tool/) |
-| App hooks | `apps/web/src/hooks/` |
-| Shared hooks | `packages/hooks/src/` |
-| Primitives | `packages/ui/src/design-system/primitives/` |
-| Domain components | `packages/ui/src/design-system/components/` (spaces/, profile/, campus/, hivelab/) |
-| Templates/shells | `packages/ui/src/design-system/templates/` (AppShell, SpaceShell) |
-| Motion variants | `packages/ui/src/motion/` and `packages/ui/src/tokens/motion.ts` |
-| Design tokens | `packages/tokens/src/` (colors, spacing, typography, motion, layout, radius, effects) |
-| Core domain logic | `packages/core/src/domain/` (spaces/, profile/, feed/, rituals/, creation/, campus/, identity/) |
-| Core server exports | `packages/core/src/server.ts` |
-| Zod schemas | `packages/validation/src/` |
-| Firebase client | `packages/firebase/src/` |
-| Firebase admin | `apps/web/src/lib/firebase-admin.ts` |
+// Text
+text-white            // primary
+text-white/50         // secondary
+text-white/30         // tertiary
 
----
+// Accent (use sparingly)
+text-[#FFD700]    // gold — only for CTA, active states, brand marks
+bg-[#FFD700]
 
-## Commands
+// Radius
+rounded-2xl       // cards (16px)
+rounded-xl        // inputs, buttons (12px)
 
-```bash
-pnpm dev                        # Start all (turbo)
-pnpm --filter=@hive/web dev     # Web only
-pnpm --filter=@hive/admin dev   # Admin only (port 3001)
-pnpm build && pnpm typecheck    # Before merge
-pnpm lint                       # Lint all packages
-pnpm test                       # Run tests (vitest)
-pnpm storybook:dev              # Storybook on port 6006
-pnpm seed:production            # Seed production data
-pnpm seed:production:dry        # Dry run seed
-pnpm launch:verify              # Verify launch readiness
-pnpm migration:run              # Run migrations
-pnpm migration:status           # Check migration status
+// Mono labels
+font-mono text-[11px] uppercase tracking-[0.14em]   // section headers
 ```
 
----
-
-## Stack
-
-Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS 3 · Firebase (Firestore, Auth, Storage) · Radix UI · Framer Motion · Zod · TanStack Query · Zustand · jose (JWT) · Vercel
+Motion: use `MOTION.ease.premium` from `@hive/tokens` for all animations.
 
 ---
 
-## Reference
+## Navigation
 
-| Topic | Location |
-|-------|----------|
-| Current priorities | `TODO.md` |
-| System architecture | `docs/ARCHITECTURE.md` |
-| API routes reference | `docs/API.md` |
-| All pages/routes | `docs/PAGES.md` |
-| Design system guide | `docs/DESIGN_SYSTEM.md` |
-| Data model (Firebase) | `docs/DATA_MODEL.md` |
-| Hooks reference | `docs/HOOKS.md` |
+Nav items defined in `apps/web/src/lib/navigation.ts`.
+Mobile bottom bar: Home → Events → [Create] → Spaces → You
+Desktop top bar: same items, text labels, no create button (lab link in sidebar)
+
+Routes:
+- `/discover` — campus feed (home)
+- `/events` — campus events (personalized)
+- `/spaces` — browse spaces
+- `/s/[handle]` — individual space
+- `/lab` — creator dashboard
+- `/lab/templates` — template-first creation (8 core templates)
+- `/lab/new` — AI prompt creation
+- `/t/[toolId]` — standalone tool view
+- `/me` — profile
+- `/notifications` — notifications
+
+---
+
+## What NOT To Do
+
+- **Never create new Firestore collections** without checking the ERD above — it probably already exists
+- **Never use `NextResponse.json()` directly** in API routes — use `respond.*`
+- **Never import core `PlacedToolDTO` in `apps/web/src/`** — use the hook version
+- **Never hardcode colors** — use design tokens
+- **Never query events by `startDate` only** — use `getEventStartDate()` helper
+- **Never write to `toolStates`** — the collection is `tool_states`
+- **Never await non-critical side effects** (feed writes, analytics) — fire and forget with try/catch
+- **Never modify `/lab/new`** flow — it's the AI path; template path is `/lab/templates`
+- **Never delete routes under `/api/spaces/[spaceId]/`** without checking for legacy redirects
