@@ -42,7 +42,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Text, Button, toast, ConfirmDialog, Avatar, AvatarImage, AvatarFallback, getInitials, AddWidgetModal, type ExistingTool } from '@hive/ui';
+import { Text, Button, toast, ConfirmDialog, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 import { InviteLinkModal } from '@/components/spaces/invite-link-modal';
 import { MemberManagement } from './member-management';
@@ -117,7 +117,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
 
   // Tools state
   const [showAddToolModal, setShowAddToolModal] = React.useState(false);
-  const [spaceTools, setSpaceTools] = React.useState<ExistingTool[]>([]);
+  const [spaceTools, setSpaceTools] = React.useState<Array<{ id: string; name: string }>>([]);
   const [spaceToolsLoading, setSpaceToolsLoading] = React.useState(false);
 
   // Join requests state
@@ -1780,20 +1780,12 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
         spaceId={space.id}
       />
 
-      {/* Add Tool Modal */}
-      <AddWidgetModal
-        open={showAddToolModal}
-        onClose={() => setShowAddToolModal(false)}
-        onOpenChange={setShowAddToolModal}
-        onQuickDeploy={handleQuickDeploy}
-        userTools={spaceTools}
-        isLoadingTools={spaceToolsLoading}
-        onDeployExistingTool={handleDeployExistingTool}
-        onOpenHiveLab={() => {
-          setShowAddToolModal(false);
-          window.location.href = `/lab/new?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`;
-        }}
-      />
+      {/* Add Tool — redirects to lab templates */}
+      {showAddToolModal && (() => {
+        setShowAddToolModal(false);
+        window.location.href = `/lab/templates?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`;
+        return null;
+      })()}
 
       {/* Automation Templates Picker */}
       {showTemplates && (
