@@ -56,9 +56,8 @@ export function getProfileRepository(): IProfileRepository {
  * Get the Feed Repository instance
  */
 export function getFeedRepository(): IFeedRepository {
-  if (!feedRepositoryInstance) {
-  }
-  return feedRepositoryInstance;
+  // TODO: implement FirebaseFeedRepository
+  return feedRepositoryInstance!;
 }
 
 /**
