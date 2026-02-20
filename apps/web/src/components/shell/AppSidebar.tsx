@@ -59,7 +59,7 @@ export function TopBar() {
   const { data: unreadCount = 0 } = useUnreadCount();
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 hidden h-14 border-b border-white/[0.06] bg-black md:flex">
+    <header className="fixed inset-x-0 top-0 z-40 hidden h-14 border-b border-white/[0.06] md:flex" style={{ background: 'rgba(8,8,15,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
       <div className="mx-auto flex h-full w-full max-w-[1200px] items-center gap-8 px-6">
         <HiveMark />
 
@@ -180,9 +180,9 @@ export function MobileBottomBar() {
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch border-t border-white/[0.06] md:hidden"
       style={{
-        background: 'rgba(0,0,0,0.85)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(8,8,15,0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >

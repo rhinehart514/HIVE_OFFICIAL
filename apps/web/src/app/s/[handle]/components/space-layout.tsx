@@ -61,7 +61,8 @@ export function SpaceLayout({
       {/* Desktop Sidebar — 200px, hidden on mobile */}
       {!isMobile && !sidebarCollapsed && (
         <aside
-          className="w-[200px] flex-shrink-0 overflow-y-auto overflow-x-hidden border-r border-white/[0.06] p-3"
+          className="w-[200px] flex-shrink-0 overflow-y-auto overflow-x-hidden border-r border-white/[0.08] p-3"
+          style={{ background: 'rgba(8, 8, 20, 0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
         >
           {sidebar}
         </aside>
@@ -103,7 +104,8 @@ export function SpaceLayout({
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                className="fixed bottom-0 left-0 right-0 z-50 bg-[#080808] border-t border-white/[0.06] rounded-t-2xl max-h-[75vh] overflow-y-auto"
+                className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] rounded-t-2xl max-h-[75vh] overflow-y-auto"
+                style={{ background: 'rgba(8, 8, 20, 0.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
               >
                 <div className="flex justify-center pt-3 pb-1">
                   <div className="w-8 h-1 rounded-full bg-white/[0.12]" />

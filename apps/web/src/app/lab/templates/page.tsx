@@ -97,14 +97,16 @@ const CORE_TEMPLATES: CoreTemplate[] = [
 const EASE = MOTION.ease.premium;
 
 const COLORS = {
-  bg: '#000000',
+  bg: '#08080F',
   text: '#FAF9F7',
   textSecondary: '#8A8A8A',
   textTertiary: '#5A5A5A',
-  surface: '#080808',
+  surface: '#0D0D14',
   border: 'rgba(255, 255, 255, 0.06)',
-  borderHover: 'rgba(255, 255, 255, 0.12)',
+  borderHover: 'rgba(255, 255, 255, 0.14)',
   accent: '#FFD700',
+  shadowBase: '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 8px rgba(0,0,0,0.4)',
+  shadowHover: '0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 20px rgba(0,0,0,0.5), 0 0 24px rgba(255,215,0,0.06)',
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -140,18 +142,23 @@ function TemplateTile({
       whileTap={!disabled ? { scale: 0.98 } : undefined}
       onClick={() => !disabled && onSelect(template)}
       disabled={disabled}
-      className="text-left p-5 rounded-2xl border transition-colors duration-150 group relative overflow-hidden"
+      className="text-left p-5 rounded-2xl border transition-all duration-150 group relative overflow-hidden"
       style={{
         backgroundColor: COLORS.surface,
         borderColor: COLORS.border,
+        boxShadow: COLORS.shadowBase,
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
       onMouseEnter={(e) => {
-        if (!disabled) e.currentTarget.style.borderColor = COLORS.borderHover;
+        if (!disabled) {
+          e.currentTarget.style.borderColor = COLORS.borderHover;
+          e.currentTarget.style.boxShadow = COLORS.shadowHover;
+        }
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = COLORS.border;
+        e.currentTarget.style.boxShadow = COLORS.shadowBase;
       }}
     >
       <div className="text-2xl mb-3">{template.emoji}</div>
@@ -214,6 +221,7 @@ function NameDialog({
         style={{
           backgroundColor: COLORS.surface,
           borderColor: COLORS.border,
+          boxShadow: COLORS.shadowBase,
         }}
       >
         {/* Header */}

@@ -47,7 +47,7 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen text-white" style={{ background: '#08080F' }}>
       <TopBar />
       <MobileBottomBar />
 
