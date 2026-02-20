@@ -7,7 +7,7 @@
   "crons": [
     {
       "path": "/api/cron/sync-events",
-      "schedule": "0 */4 * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/cron/automations",
@@ -27,7 +27,7 @@
     },
     {
       "path": "/api/cron/event-reminders",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 4 * * *"
     }
   ],
   "headers": [
