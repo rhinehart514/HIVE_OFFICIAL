@@ -1,8 +1,15 @@
 /**
  * Shared Navigation Config
+ *
+ * 4-tab model: Feed · Spaces · Lab · Profile
+ *
+ * Feed   — campus discover, events, activity
+ * Spaces — your communities, browse, /s/[handle]
+ * Lab    — creation home, your tools, templates
+ * Profile — you, settings, account
  */
 
-import { CompassIcon, SpacesIcon, UserIcon, CalendarIcon, BeakerIcon } from '@hive/ui';
+import { CompassIcon, SpacesIcon, UserIcon, BeakerIcon } from '@hive/ui';
 
 export interface NavItem {
   id: string;
@@ -10,32 +17,16 @@ export interface NavItem {
   href: string;
   icon: React.ElementType;
   matchPattern?: RegExp;
-  /** Hide this item from the mobile bottom bar (shown only on desktop top bar). */
-  desktopOnly?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
   {
-    id: 'home',
-    label: 'Home',
+    id: 'feed',
+    label: 'Feed',
     href: '/discover',
     icon: CompassIcon,
-    matchPattern: /^\/discover(\/|$)|^\/feed(\/|$)/,
-  },
-  {
-    id: 'events',
-    label: 'Events',
-    href: '/events',
-    icon: CalendarIcon,
-    matchPattern: /^\/events(\/|$)/,
-  },
-  {
-    id: 'lab',
-    label: 'Lab',
-    href: '/lab',
-    icon: BeakerIcon,
-    matchPattern: /^\/lab(\/|$)/,
-    desktopOnly: true,
+    // Events and feed both live under this tab
+    matchPattern: /^\/discover(\/|$)|^\/feed(\/|$)|^\/events(\/|$)/,
   },
   {
     id: 'spaces',
@@ -45,22 +36,27 @@ export const NAV_ITEMS: NavItem[] = [
     matchPattern: /^\/spaces(\/|$)|^\/s\//,
   },
   {
-    id: 'you',
-    label: 'You',
+    id: 'lab',
+    label: 'Lab',
+    href: '/lab',
+    icon: BeakerIcon,
+    matchPattern: /^\/lab(\/|$)/,
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
     href: '/me',
     icon: UserIcon,
     matchPattern: /^\/me(\/|$)|^\/profile(\/|$)|^\/settings(\/|$)|^\/u\//,
   },
 ];
 
-export function getNavItems(hasCampus: boolean): NavItem[] {
-  void hasCampus;
+export function getNavItems(_hasCampus: boolean): NavItem[] {
   return NAV_ITEMS;
 }
 
-/** Return only the items suitable for the mobile bottom bar (excludes desktopOnly). */
 export function getMobileNavItems(hasCampus: boolean): NavItem[] {
-  return getNavItems(hasCampus).filter((item) => !item.desktopOnly);
+  return getNavItems(hasCampus);
 }
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {

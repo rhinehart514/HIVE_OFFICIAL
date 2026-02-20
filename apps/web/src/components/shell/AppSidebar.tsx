@@ -2,11 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, Search, Sparkles, User } from 'lucide-react';
+import { Bell, Search, User } from 'lucide-react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, getMobileNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/queries/use-unread-count';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HIVE wordmark
+// ─────────────────────────────────────────────────────────────────────────────
 
 function HiveMark() {
   return (
@@ -22,6 +26,10 @@ function HiveMark() {
     </Link>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Desktop top bar
+// ─────────────────────────────────────────────────────────────────────────────
 
 function TopBarNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
   return (
@@ -43,7 +51,7 @@ function TopBarNavItem({ item, isActive }: { item: NavItem; isActive: boolean })
   );
 }
 
-function TopBar() {
+export function TopBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { hasCampus } = useCampusMode();
@@ -66,23 +74,24 @@ function TopBar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          {/* Search */}
           <button
             type="button"
+            onClick={() => router.push('/search')}
             className="flex h-9 items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.04] px-3 text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
             aria-label="Search"
           >
             <Search className="h-4 w-4" />
             <span className="hidden text-sm font-medium lg:inline">Search</span>
-            <span className="font-mono text-[11px] uppercase tracking-[0.18em]">
-              cmd+K
-            </span>
+            <kbd className="font-mono text-[11px] uppercase tracking-[0.18em] opacity-60">⌘K</kbd>
           </button>
 
+          {/* Notifications */}
           <button
             type="button"
             onClick={() => router.push('/notifications')}
             className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
-            aria-label="Notifications"
+            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
           >
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
@@ -92,11 +101,12 @@ function TopBar() {
             )}
           </button>
 
+          {/* Avatar */}
           <button
             type="button"
             onClick={() => router.push('/me')}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.08] text-white/60"
-            aria-label="Account"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.08] text-white/60 transition-colors hover:bg-white/[0.12]"
+            aria-label="Profile"
           >
             <User className="h-4 w-4" />
           </button>
@@ -106,101 +116,86 @@ function TopBar() {
   );
 }
 
-function MobileNavItem({ item, isActive, badge }: { item: NavItem; isActive: boolean; badge?: number }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Mobile bottom bar — 4 equal tabs
+// ─────────────────────────────────────────────────────────────────────────────
+
+function MobileNavItem({
+  item,
+  isActive,
+  badge,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  badge?: number;
+}) {
   const Icon = item.icon;
 
   return (
     <Link
       href={item.href}
       className={cn(
-        'flex flex-1 flex-col items-center gap-1 py-2 transition-colors',
-        isActive ? 'text-white' : 'text-white/50'
+        'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
+        isActive ? 'text-white' : 'text-white/40'
       )}
     >
       <div className="relative">
-        <Icon className="h-5 w-5" />
+        <Icon className="h-[22px] w-[22px]" />
+
+        {/* Active dot */}
         {isActive && (
           <span
             className="absolute -bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#FFD700]"
             aria-hidden
           />
         )}
+
+        {/* Unread badge */}
         {!isActive && badge && badge > 0 ? (
-          <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#FFD700] px-0.5 text-[9px] font-bold text-black leading-none">
+          <span className="absolute -top-1 -right-2 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#FFD700] px-0.5 text-[9px] font-bold text-black leading-none">
             {badge > 9 ? '9+' : badge}
           </span>
         ) : null}
       </div>
-      <span className="font-mono text-[10px] uppercase tracking-[0.12em]">
+
+      <span
+        className={cn(
+          'font-mono text-[10px] uppercase tracking-[0.1em] transition-colors',
+          isActive ? 'text-white' : 'text-white/40'
+        )}
+      >
         {item.label}
       </span>
     </Link>
   );
 }
 
-function MobileCreateItem({ isActive }: { isActive: boolean }) {
-  return (
-    <Link
-      href="/lab/templates"
-      className="flex flex-1 flex-col items-center gap-1 py-1.5 text-white"
-      aria-label="Create"
-    >
-      <span
-        className={cn(
-          'flex h-11 w-11 items-center justify-center rounded-full border bg-white/[0.04] transition-colors',
-          isActive
-            ? 'border-[#FFD700] ring-2 ring-[#FFD700]/35'
-            : 'border-[#FFD700]/70 ring-1 ring-[#FFD700]/20'
-        )}
-      >
-        <Sparkles className="h-5 w-5 text-[#FFD700]" />
-      </span>
-      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-white/80">
-        Create
-      </span>
-    </Link>
-  );
-}
-
-function MobileBottomBar() {
+export function MobileBottomBar() {
   const pathname = usePathname();
   const { hasCampus } = useCampusMode();
   const navItems = getMobileNavItems(hasCampus);
-  const leadingItems = navItems.slice(0, 2);
-  const trailingItems = navItems.slice(2);
-  const isCreateActive = /^\/lab(\/|$)/.test(pathname) || /^\/lab\/templates(\/|$)/.test(pathname);
   const { data: unreadCount = 0 } = useUnreadCount();
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-center border-t border-white/[0.06] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch border-t border-white/[0.06] md:hidden"
       style={{
-        background: 'rgba(0,0,0,0.8)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'rgba(0,0,0,0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      {leadingItems.map((item) => (
+      {navItems.map((item) => (
         <MobileNavItem
           key={item.id}
           item={item}
           isActive={isNavItemActive(item, pathname)}
-        />
-      ))}
-
-      <MobileCreateItem isActive={isCreateActive} />
-
-      {trailingItems.map((item) => (
-        <MobileNavItem
-          key={item.id}
-          item={item}
-          isActive={isNavItemActive(item, pathname)}
-          badge={item.id === 'you' ? unreadCount : undefined}
+          badge={item.id === 'profile' ? unreadCount : undefined}
         />
       ))}
     </nav>
   );
 }
 
-export { TopBar, MobileBottomBar };
 export default TopBar;
