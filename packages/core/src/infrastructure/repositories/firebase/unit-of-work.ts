@@ -13,7 +13,7 @@ export class FirebaseUnitOfWork implements IUnitOfWork {
   private _profiles: IProfileRepository;
   private _connections: IConnectionRepository;
   private _spaces: ISpaceRepository;
-  private _feeds: IFeedRepository;
+  private _feeds!: IFeedRepository;
   private _rituals: IRitualRepository;
 
   private transactionStarted: boolean = false;

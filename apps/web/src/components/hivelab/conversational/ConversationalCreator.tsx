@@ -285,7 +285,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
             transition={{ duration: durationSeconds.quick }}
             className="min-h-[60vh] flex flex-col items-center justify-center"
           >
-            <BrandSpinner size="md" variant="default" />
+            <BrandSpinner size="md" variant="gold" />
             <p className="mt-4 text-white/50 text-sm">Setting up your workspace...</p>
           </motion.div>
         )}

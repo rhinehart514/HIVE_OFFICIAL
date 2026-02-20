@@ -39,7 +39,7 @@ function NewToolPageInner() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
-        <BrandSpinner size="md" variant="default" />
+        <BrandSpinner size="md" variant="gold" />
       </div>
     );
   }
@@ -50,7 +50,7 @@ function NewToolPageInner() {
     router.push(`/enter?redirect=${encodeURIComponent(returnUrl)}`);
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
-        <BrandSpinner size="md" variant="default" />
+        <BrandSpinner size="md" variant="gold" />
       </div>
     );
   }
@@ -68,7 +68,7 @@ export default function NewToolPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-black">
-          <BrandSpinner size="md" variant="default" />
+          <BrandSpinner size="md" variant="gold" />
         </div>
       }
     >

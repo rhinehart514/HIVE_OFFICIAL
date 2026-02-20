@@ -54,6 +54,8 @@ import {
   type FeedItem,
 } from '@/components/spaces';
 import type { CreateEventData } from '@/components/events/create-event-modal';
+import { useToolRuntime } from '@/hooks/use-tool-runtime';
+import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 
 // Dynamic imports — conditionally rendered components (modals, drawers, panels, overlays)
 const MembersList = dynamic(() =>
@@ -96,6 +98,10 @@ const ReportContentModal = dynamic(() =>
   import('@hive/ui').then(m => ({ default: m.ReportContentModal })),
   { ssr: false }
 );
+const ToolRuntimeModal = dynamic(() =>
+  import('@hive/ui').then(m => ({ default: m.ToolRuntimeModal })),
+  { ssr: false }
+);
 
 export default function SpacePageUnified() {
   const params = useParams();
@@ -124,6 +130,14 @@ export default function SpacePageUnified() {
     content: string;
   } | null>(null);
   const [chatPrefill, setChatPrefill] = React.useState<string | null>(null);
+
+  // Tool runtime modal state
+  const [activeTool, setActiveTool] = React.useState<{
+    toolId: string;
+    placementId?: string;
+    name: string;
+    description?: string;
+  } | null>(null);
 
   // Thread panel state - driven by URL param
   const [activeThreadId, setActiveThreadId] = React.useState<string | null>(null);
@@ -258,6 +272,91 @@ export default function SpacePageUnified() {
   // Typing indicator hook - contextId is spaceId for space-wide tracking
   const typingContextId = space?.id || '';
   const { typingUsers, setTyping } = useTypingIndicator(typingContextId);
+
+  // Tool runtime hook - only active when a tool modal is open
+  const toolRuntime = useToolRuntime({
+    toolId: activeTool?.toolId || '',
+    spaceId: space?.id,
+    placementId: activeTool?.placementId,
+    enabled: !!activeTool?.toolId && !!space?.id,
+    enableRealtime: true,
+  });
+
+  // Adapt tool runtime to ToolRuntimeModal's expected runtime prop shape
+  const toolRuntimeForModal = React.useMemo(() => {
+    if (!activeTool) return undefined;
+    return {
+      tool: toolRuntime.tool ? {
+        id: toolRuntime.tool.id,
+        name: toolRuntime.tool.name,
+        description: toolRuntime.tool.description,
+        status: toolRuntime.tool.status || 'published',
+        elements: toolRuntime.tool.elements?.map(el => ({
+          elementId: el.elementId,
+          instanceId: el.instanceId,
+          config: el.config,
+          position: el.position,
+          size: el.size,
+        })),
+        connections: toolRuntime.tool.connections?.map(conn => ({
+          from: { instanceId: conn.from.instanceId, output: conn.from.output, port: conn.from.port },
+          to: { instanceId: conn.to.instanceId, input: conn.to.input, port: conn.to.port },
+        })),
+        config: toolRuntime.tool.config,
+      } : null,
+      state: toolRuntime.state,
+      sharedState: toolRuntime.sharedState ? {
+        counters: toolRuntime.sharedState.counters,
+        collections: toolRuntime.sharedState.collections as Record<string, Record<string, { id: string; createdAt: string; createdBy: string; data: Record<string, unknown> }>>,
+        timeline: toolRuntime.sharedState.timeline.map(t => ({
+          id: t.id,
+          type: t.type,
+          timestamp: t.timestamp,
+          userId: t.userId,
+          action: t.action || t.type,
+          data: undefined,
+        })),
+        computed: toolRuntime.sharedState.computed,
+        version: toolRuntime.sharedState.version,
+        lastModified: toolRuntime.sharedState.lastModified,
+      } : undefined,
+      userState: toolRuntime.userState as Record<string, unknown> | undefined,
+      isLoading: toolRuntime.isLoading,
+      isExecuting: toolRuntime.isExecuting,
+      isSaving: toolRuntime.isSaving,
+      isSynced: toolRuntime.isSynced,
+      lastSaved: toolRuntime.lastSaved,
+      error: toolRuntime.error?.message || null,
+      // Modal calls executeAction(action, elementId, data) — hook expects (elementId, action, data)
+      executeAction: async (action: string, elementId?: string, data?: Record<string, unknown>) => {
+        const result = await toolRuntime.executeAction(elementId || '', action, data);
+        return {
+          success: result.success,
+          data: result.result as Record<string, unknown> | undefined,
+          error: result.error,
+        };
+      },
+      // Modal calls updateState(elementId, data) — hook expects (updates: Partial)
+      updateState: (elementId: string, data: unknown) => {
+        toolRuntime.updateState({ [elementId]: data });
+      },
+    };
+  }, [activeTool, toolRuntime]);
+
+  // Handle opening tool in modal from sidebar
+  const handleToolRun = React.useCallback((tool: PlacedToolDTO) => {
+    setActiveTool({
+      toolId: tool.toolId,
+      placementId: tool.placementId,
+      name: tool.titleOverride || tool.name,
+      description: tool.description,
+    });
+  }, []);
+
+  // Handle navigating to full page tool view
+  const handleToolViewFull = React.useCallback((tool: PlacedToolDTO) => {
+    router.push(`/t/${tool.toolId}`);
+  }, [router]);
 
   // Sync thread state with URL on mount and URL changes
   React.useEffect(() => {
@@ -646,7 +745,7 @@ export default function SpacePageUnified() {
                     spaceId: space.id,
                     spaceName: space.name,
                   });
-                  router.push(`/lab/new?${params.toString()}`);
+                  router.push(`/lab/templates?${params.toString()}`);
                 }}
                 onCreateEventClick={() => setShowEventModal(true)}
                 onModerationClick={() => setShowModerationPanel(true)}
@@ -660,7 +759,7 @@ export default function SpacePageUnified() {
                     spaceId: space.id,
                     spaceName: space.name,
                   });
-                  router.push(`/lab/new?${params.toString()}`);
+                  router.push(`/lab/templates?${params.toString()}`);
                 }}
                 canModerate={space.isLeader || space.userRole === 'moderator' || space.userRole === 'admin'}
                 isMuted={isSpaceMuted}
@@ -689,11 +788,18 @@ export default function SpacePageUnified() {
                     tools: sidebarTools,
                     spaceId: space.id,
                     isLoading: isLoadingTools,
+                    activeToolId: activeTool?.toolId,
                     isLeader: space.isLeader,
-                    onToolClick: () => {},
-                    onToolRun: () => {},
-                    onViewFull: () => {},
-                    onAddTool: () => {},
+                    onToolClick: handleToolRun,
+                    onToolRun: handleToolRun,
+                    onViewFull: handleToolViewFull,
+                    onAddTool: () => {
+                      const params = new URLSearchParams({
+                        spaceId: space.id,
+                        spaceName: space.name,
+                      });
+                      router.push(`/lab/templates?${params.toString()}`);
+                    },
                   }}
                   events={{
                     events: upcomingEvents.map(event => {
@@ -750,8 +856,57 @@ export default function SpacePageUnified() {
               >
                 {activeTab === 'chat' ? (
                   feedMessages.length === 0 && !isLoadingMessages ? (
-                    <div className="flex-1 flex items-center justify-center text-hive-text-tertiary">
-                      <p>No messages yet. Start the conversation!</p>
+                    <div className="flex-1 flex flex-col gap-5 px-4 py-8 max-w-lg mx-auto w-full">
+                      {/* Space description */}
+                      {space.description && (
+                        <p className="text-[14px] text-white/50 leading-relaxed">
+                          {space.description}
+                        </p>
+                      )}
+
+                      {/* Upcoming events */}
+                      {upcomingEvents.length > 0 && (
+                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                          <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-white/30 mb-3">Upcoming</p>
+                          <div className="flex flex-col gap-2">
+                            {upcomingEvents.slice(0, 2).map((event) => (
+                              <div key={event.id} className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-[14px] font-medium text-white truncate">{event.title}</p>
+                                  <p className="text-[12px] text-white/40">
+                                    {new Date(event.time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tools */}
+                      {sidebarTools.length > 0 && (
+                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                          <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-white/30 mb-3">Tools</p>
+                          <div className="flex flex-wrap gap-2">
+                            {sidebarTools.slice(0, 3).map((tool) => (
+                              <span
+                                key={tool.toolId}
+                                className="px-3 py-1 rounded-full border border-white/[0.06] text-[13px] text-white/60 bg-white/[0.03]"
+                              >
+                                {tool.titleOverride || tool.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* CTA */}
+                      <div className="text-center pt-2">
+                        <p className="text-[13px] text-white/30 mb-1">
+                          {space.isLeader ? 'Set the tone for your space.' : `${space.memberCount ?? ''} members are here.`}
+                        </p>
+                        <p className="text-[13px] text-white/20">Send the first message ↓</p>
+                      </div>
                     </div>
                   ) : (
                     <MessageFeed
@@ -928,7 +1083,7 @@ export default function SpacePageUnified() {
                       spaceId: space.id,
                       spaceName: space.name,
                     });
-                    router.push(`/lab/new?${params.toString()}`);
+                    router.push(`/lab/templates?${params.toString()}`);
                   }}
                   onOpenSettings={() => {
                     setShowDashboardPanel(false);
@@ -1151,6 +1306,27 @@ export default function SpacePageUnified() {
           onSubmit={handleSubmitReport}
         />
 
+        {/* Tool Runtime Modal - Inline tool execution */}
+        {activeTool && (
+          <ToolRuntimeModal
+            open={!!activeTool}
+            onOpenChange={(open) => {
+              if (!open) setActiveTool(null);
+            }}
+            toolId={activeTool.toolId}
+            spaceId={space.id}
+            placementId={activeTool.placementId}
+            toolName={activeTool.name}
+            toolDescription={activeTool.description}
+            onExpandToFullPage={() => {
+              const toolId = activeTool.toolId;
+              setActiveTool(null);
+              router.push(`/t/${toolId}`);
+            }}
+            runtime={toolRuntimeForModal}
+          />
+        )}
+
         {/* Leader Create FAB */}
         {space.isLeader && (
           <LeaderCreateFAB
@@ -1161,7 +1337,7 @@ export default function SpacePageUnified() {
                 spaceId: space.id,
                 spaceName: space.name,
               });
-              router.push(`/lab/new?${params.toString()}`);
+              router.push(`/lab/templates?${params.toString()}`);
             }}
             onCreateAnnouncement={() => setShowDashboardPanel(true)}
           />

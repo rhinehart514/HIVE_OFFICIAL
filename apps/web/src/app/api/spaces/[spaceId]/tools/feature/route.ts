@@ -114,7 +114,10 @@ export const POST = withAuthValidationAndErrors(
       deploymentId = ref.id;
     } else {
       deploymentId = existingDeployments.docs[0].id;
-      await existingDeployments.docs[0].ref.set({ isFeatured: true }, { merge: true });
+      await existingDeployments.docs[0].ref.set(
+        { isFeatured: true, deployedAt: admin.firestore.FieldValue.serverTimestamp() },
+        { merge: true }
+      );
     }
 
     // Update space featured tools metadata
@@ -132,6 +135,35 @@ export const POST = withAuthValidationAndErrors(
     );
 
     logger.info('Tool featured via API', { spaceId, toolId, userId, deploymentId });
+
+    // Fire-and-forget: write tool_deployed analytics event for global feed
+    try {
+      const spaceName = validation.space?.name?.value || '';
+      dbAdmin.collection('analytics_events').add({
+        eventType: 'tool_deployed',
+        toolId,
+        userId,
+        spaceId,
+        campusId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        metadata: {
+          toolName: toolData.name || '',
+          spaceName,
+        },
+      }).catch((err: unknown) => {
+        logger.warn('Failed to write tool_deployed analytics event', {
+          error: err instanceof Error ? err.message : String(err),
+          toolId,
+          spaceId,
+        });
+      });
+    } catch (err) {
+      logger.warn('Failed to write tool_deployed analytics event', {
+        error: err instanceof Error ? err.message : String(err),
+        toolId,
+        spaceId,
+      });
+    }
 
     return respond.success({
       message: 'Tool featured successfully',

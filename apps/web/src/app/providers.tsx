@@ -119,7 +119,7 @@ export function Providers({ children }: ProvidersProps) {
         disableTransitionOnChange
       >
         <AtmosphereProvider defaultAtmosphere="spaces">
-          <PageTransitionProvider defaultMode="fade">
+          <PageTransitionProvider>
             <AdminToolbarProvider>
               {children}
             </AdminToolbarProvider>

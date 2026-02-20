@@ -40,6 +40,7 @@ import {
 
 import { ToolCard, NewToolCard } from '@/components/hivelab/dashboard/ToolCard';
 import { StatsBar } from '@/components/hivelab/dashboard/StatsBar';
+import { BuilderLevel } from '@/components/hivelab/dashboard/BuilderLevel';
 import { QuickStartChips } from '@/components/hivelab/dashboard/QuickStartChips';
 import { useMyTools } from '@/hooks/use-my-tools';
 import { useCurrentProfile } from '@/hooks/queries';
@@ -338,7 +339,7 @@ export default function BuilderDashboard() {
   if (authLoading || creatingFromTemplate) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-black">
-        <BrandSpinner size="md" variant="default" />
+        <BrandSpinner size="md" variant="gold" />
         {creatingFromTemplate && (
           <motion.p
             initial={{ opacity: 0 }}
@@ -412,6 +413,7 @@ export default function BuilderDashboard() {
                 totalUsers={stats.totalUsers}
                 weeklyInteractions={stats.weeklyInteractions}
               />
+              <BuilderLevel />
             </motion.div>
 
             {/* Your Tools Grid */}
@@ -520,7 +522,7 @@ export default function BuilderDashboard() {
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.1 }}
                       >
-                        <BrandSpinner size="sm" variant="default" />
+                        <BrandSpinner size="md" variant="gold" />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -635,7 +637,7 @@ export default function BuilderDashboard() {
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.1 }}
                       >
-                        <BrandSpinner size="sm" variant="default" />
+                        <BrandSpinner size="md" variant="gold" />
                       </motion.div>
                     ) : (
                       <motion.div

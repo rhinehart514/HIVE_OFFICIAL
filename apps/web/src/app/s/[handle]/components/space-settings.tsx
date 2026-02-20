@@ -42,7 +42,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Text, Button, toast, ConfirmDialog, AutomationsPanel, AutomationBuilderModal, Avatar, AvatarImage, AvatarFallback, getInitials, AddWidgetModal, type AutomationItem, type AutomationData, type QuickTemplateUI, type ExistingTool } from '@hive/ui';
+import { Text, Button, toast, ConfirmDialog, Avatar, AvatarImage, AvatarFallback, getInitials, AddWidgetModal, type ExistingTool } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 import { InviteLinkModal } from '@/components/spaces/invite-link-modal';
 import { MemberManagement } from './member-management';
@@ -103,11 +103,11 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
   const [boardEdits, setBoardEdits] = React.useState<Record<string, { name: string; description: string }>>({});
 
   // Automations state
-  const [automations, setAutomations] = React.useState<AutomationItem[]>([]);
+  const [automations, setAutomations] = React.useState<any[]>([]);
   const [automationsLoading, setAutomationsLoading] = React.useState(false);
   const [showAutomationBuilder, setShowAutomationBuilder] = React.useState(false);
   const [showTemplates, setShowTemplates] = React.useState(false);
-  const [editingAutomation, setEditingAutomation] = React.useState<AutomationData | null>(null);
+  const [editingAutomation, setEditingAutomation] = React.useState<any | null>(null);
 
   // Moderation panel state
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
@@ -291,7 +291,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
     }
   }, [activeSection, isLeader, space.id, spaceTools.length]);
 
-  const handleQuickDeploy = async (template: QuickTemplateUI) => {
+  const handleQuickDeploy = async (template: any) => {
     try {
       const response = await fetch(`/api/spaces/${space.id}/tools`, {
         method: 'POST',
@@ -340,7 +340,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
   }, [activeSection, isLeader, space.id, automations.length]);
 
   // Handle automation save
-  const handleAutomationSave = async (automation: AutomationData) => {
+  const handleAutomationSave = async (automation: any) => {
     try {
       const isEdit = !!automation.id;
       const response = await fetch(
@@ -1459,47 +1459,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       Add
                     </Button>
                   </div>
-                  <AutomationsPanel
-                    automations={automations}
-                    isLeader={isLeader}
-                    isLoading={automationsLoading}
-                    onToggle={async (id) => {
-                      try {
-                        const response = await fetch(`/api/spaces/${space.id}/automations/${id}/toggle`, {
-                          method: 'POST',
-                          credentials: 'include',
-                        });
-                        if (response.ok) {
-                          setAutomations(prev =>
-                            prev.map(a => a.id === id ? { ...a, enabled: !a.enabled } : a)
-                          );
-                          return true;
-                        }
-                        return false;
-                      } catch {
-                        toast.error('Failed to toggle automation');
-                        return false;
-                      }
-                    }}
-                    onDelete={async (id) => {
-                      try {
-                        const response = await fetch(`/api/spaces/${space.id}/automations/${id}`, {
-                          method: 'DELETE',
-                          credentials: 'include',
-                        });
-                        if (response.ok) {
-                          setAutomations(prev => prev.filter(a => a.id !== id));
-                          toast.success('Automation deleted');
-                          return true;
-                        }
-                        return false;
-                      } catch {
-                        toast.error('Failed to delete automation');
-                        return false;
-                      }
-                    }}
-                    onAdd={() => setShowTemplates(true)}
-                  />
+                  {/* Automations deferred */}
                 </div>
               )}
             </>
@@ -1803,19 +1763,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
         loading={isTransferring}
       />
 
-      {/* Automation Builder Modal */}
-      {showAutomationBuilder && (
-        <AutomationBuilderModal
-          isOpen={showAutomationBuilder}
-          onClose={() => {
-            setShowAutomationBuilder(false);
-            setEditingAutomation(null);
-          }}
-          onSave={handleAutomationSave}
-          initialData={editingAutomation || undefined}
-          mode={editingAutomation ? 'edit' : 'create'}
-        />
-      )}
+      {/* Automation Builder Modal — deferred */}
 
       {/* Moderation Panel Overlay */}
       <ModerationPanel

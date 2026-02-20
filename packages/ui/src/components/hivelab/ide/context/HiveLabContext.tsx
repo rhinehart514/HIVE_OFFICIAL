@@ -19,8 +19,8 @@ import type { RailState, RailTab } from '../element-rail';
 import type { OtherToolData } from '../other-tools-panel';
 
 // Stub types for removed automation system
-type AutomationSummary = Record<string, unknown>;
-type AutomationData = Record<string, unknown>;
+import type { AutomationSummary } from "../automations-panel";
+import type { AutomationData } from '../automation-builder-modal';
 type AutomationRun = Record<string, unknown>;
 
 // ============================================

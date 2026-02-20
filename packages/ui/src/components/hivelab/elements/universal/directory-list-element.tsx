@@ -10,12 +10,13 @@
  */
 
 import * as React from 'react';
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   MagnifyingGlassIcon,
   UserGroupIcon,
   EnvelopeIcon,
   PhoneIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { springPresets } from '@hive/tokens';
@@ -61,6 +62,72 @@ interface DirectoryListConfig {
 interface DirectoryListElementProps extends ElementProps {
   config: DirectoryListConfig;
   mode?: ElementMode;
+}
+
+// ============================================================
+// API member shape (from GET /api/spaces/[spaceId]/members)
+// ============================================================
+
+interface SpaceMemberResponse {
+  id: string;
+  name: string;
+  username: string;
+  avatar?: string;
+  bio?: string;
+  role: string;
+  status: string;
+  joinedAt: string;
+  major?: string;
+  graduationYear?: string;
+}
+
+// ============================================================
+// Hook: fetch space members
+// ============================================================
+
+function useSpaceMembersData(
+  enabled: boolean,
+  spaceId: string | undefined,
+) {
+  const [members, setMembers] = useState<Array<Record<string, string>>>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMembers = useCallback(async (sid: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/spaces/${sid}/members?limit=100`);
+      if (!res.ok) {
+        throw new Error(res.status === 403 ? 'Permission denied' : `Failed to load members`);
+      }
+
+      const json = await res.json();
+      const apiMembers: SpaceMemberResponse[] = json.data?.members ?? json.members ?? [];
+
+      const mapped = apiMembers.map((m) => ({
+        name: m.name || 'Unknown',
+        role: m.role || 'member',
+        email: '', // email not exposed by the members API for privacy
+        username: m.username || '',
+        status: m.status || 'offline',
+      }));
+
+      setMembers(mapped);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load members');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !spaceId) return;
+    fetchMembers(spaceId);
+  }, [enabled, spaceId, fetchMembers]);
+
+  return { members, isLoading, error };
 }
 
 // ============================================================
@@ -118,13 +185,25 @@ export function DirectoryListElement({
   const prefersReducedMotion = useReducedMotion();
   const [searchQuery, setSearchQuery] = useState('');
 
+  const shouldFetchMembers = Boolean(config.useSpaceMembers && context?.spaceId);
+  const {
+    members: fetchedMembers,
+    isLoading,
+    error: fetchError,
+  } = useSpaceMembersData(shouldFetchMembers, context?.spaceId);
+
   const fields: DirectoryField[] = config.fields || [
     { key: 'name', label: 'Name', type: 'text' },
     { key: 'role', label: 'Role', type: 'role' },
-    { key: 'email', label: 'Email', type: 'email' },
+    ...(shouldFetchMembers
+      ? [{ key: 'username', label: 'Username', type: 'text' as const }]
+      : [{ key: 'email', label: 'Email', type: 'email' as const }]),
   ];
 
-  const entries: Array<Record<string, string>> = config.entries || [];
+  // Use fetched members when useSpaceMembers is enabled and fetch succeeded;
+  // fall back to config.entries on error or when the flag is off.
+  const entries: Array<Record<string, string>> =
+    shouldFetchMembers && !fetchError ? fetchedMembers : (config.entries || []);
 
   // Filter entries by search query
   const filteredEntries = useMemo(() => {
@@ -154,7 +233,7 @@ export function DirectoryListElement({
               <span className="font-semibold">{config.title || 'Directory'}</span>
             </div>
             <span className="text-sm text-muted-foreground">
-              {filteredEntries.length} {filteredEntries.length === 1 ? 'entry' : 'entries'}
+              {isLoading ? '...' : `${filteredEntries.length} ${filteredEntries.length === 1 ? 'member' : 'members'}`}
             </span>
           </div>
 
@@ -173,7 +252,31 @@ export function DirectoryListElement({
             </div>
           )}
 
+          {/* Loading state */}
+          {isLoading && (
+            <div className="space-y-2" aria-label="Loading members">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="border border-border rounded-lg p-3 animate-pulse">
+                  <div className="h-4 w-32 bg-muted rounded mb-2" />
+                  <div className="flex gap-4">
+                    <div className="h-3 w-20 bg-muted/60 rounded" />
+                    <div className="h-3 w-24 bg-muted/60 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Error banner — subtle, still shows fallback data below */}
+          {fetchError && shouldFetchMembers && (
+            <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+              <ExclamationTriangleIcon className="h-4 w-4 flex-shrink-0" />
+              <span>Could not load members — showing saved entries</span>
+            </div>
+          )}
+
           {/* Entries */}
+          {!isLoading && (
           <div className="space-y-2">
             <AnimatePresence mode="popLayout">
               {filteredEntries.map((entry, index) => (
@@ -208,10 +311,11 @@ export function DirectoryListElement({
 
             {filteredEntries.length === 0 && (
               <div className="text-center py-8 text-sm text-muted-foreground">
-                {searchQuery ? 'No results found' : 'No entries yet'}
+                {searchQuery ? 'No results found' : (shouldFetchMembers ? 'No members found' : 'No entries yet')}
               </div>
             )}
           </div>
+          )}
         </CardContent>
       </Card>
     </>

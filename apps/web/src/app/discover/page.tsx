@@ -1,20 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import {
-  Bookmark,
   Calendar,
   Check,
-  ChevronRight,
   Clock,
-  Flame,
+  GitFork,
   MapPin,
   MessageSquare,
+  Play,
   RefreshCw,
-  Share2,
   TrendingUp,
   Users,
   Video,
@@ -26,7 +24,7 @@ import { useAuth } from '@hive/auth-logic';
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type EventCategory = 'all' | 'social' | 'academic' | 'professional' | 'recreation' | 'official';
+type FeedFilter = 'all' | 'events' | 'spaces' | 'creations' | 'posts';
 
 interface FeedEvent {
   id: string;
@@ -36,7 +34,6 @@ interface FeedEvent {
   endDate?: string;
   location?: string;
   isOnline?: boolean;
-  eventType?: string;
   rsvpCount: number;
   isUserRsvped?: boolean;
   userRsvp?: 'going' | 'maybe' | 'not_going' | null;
@@ -44,63 +41,63 @@ interface FeedEvent {
   spaceHandle?: string;
   spaceId?: string;
   spaceAvatarUrl?: string;
-  organizerName?: string;
-  relevanceScore?: number;
-  matchReasons?: string[];
   friendsAttending?: number;
-  friendsAttendingNames?: string[];
-  interestMatch?: string[];
+  matchReasons?: string[];
 }
 
-interface TrendingSpace {
+interface FeedSpace {
   id: string;
   name: string;
+  description?: string;
   avatarUrl?: string;
-  bannerUrl?: string;
   memberCount: number;
   isVerified?: boolean;
   isJoined?: boolean;
-  lastActivityAt?: string;
+  category?: string;
+  mutualCount?: number;
   upcomingEventCount?: number;
   nextEventTitle?: string;
-  mutualCount?: number;
-  description?: string;
-  category?: string;
+  lastActivityAt?: string;
 }
+
+interface FeedCreation {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  creatorName?: string;
+  creatorId?: string;
+  spaceOriginName?: string;
+  forkCount: number;
+  useCount: number;
+  category?: string;
+  createdAt: string;
+}
+
+type FeedItem =
+  | { type: 'event'; data: FeedEvent; sortKey: number }
+  | { type: 'space'; data: FeedSpace; sortKey: number }
+  | { type: 'creation'; data: FeedCreation; sortKey: number };
 
 /* ------------------------------------------------------------------ */
 /*  Data fetching                                                      */
 /* ------------------------------------------------------------------ */
 
-async function fetchEvents(
-  sort: 'relevance' | 'newest' | 'soonest',
-  page: number,
-  category?: string,
-  timeRange: string = 'this-month'
-): Promise<{ events: FeedEvent[]; hasMore: boolean }> {
+async function fetchFeedEvents(): Promise<FeedEvent[]> {
   const params = new URLSearchParams({
-    timeRange,
-    maxItems: '20',
-    page: String(page),
+    timeRange: 'this-week',
+    maxItems: '30',
+    sort: 'soonest',
   });
-  if (sort === 'newest') params.set('sort', 'newest');
-  if (sort === 'soonest') params.set('sort', 'soonest');
-  if (category && category !== 'all') params.set('eventTypes', category);
-
   const res = await fetch(`/api/events/personalized?${params}`, { credentials: 'include' });
-  if (!res.ok) return { events: [], hasMore: false };
+  if (!res.ok) return [];
   const payload = await res.json();
   const data = payload.data || payload;
-  const events: FeedEvent[] = data.events || [];
-  return { events, hasMore: data.meta?.hasMoreEvents || events.length >= 20 };
+  return data.events || [];
 }
 
-async function fetchTrendingSpaces(): Promise<TrendingSpace[]> {
-  const params = new URLSearchParams({
-    category: 'all',
-    sort: 'trending',
-    limit: '8',
-  });
+async function fetchFeedSpaces(): Promise<FeedSpace[]> {
+  const params = new URLSearchParams({ category: 'all', sort: 'trending', limit: '15' });
   const res = await fetch(`/api/spaces/browse-v2?${params}`, { credentials: 'include' });
   if (!res.ok) return [];
   const data = await res.json();
@@ -108,17 +105,37 @@ async function fetchTrendingSpaces(): Promise<TrendingSpace[]> {
   return spaces.map((s: Record<string, unknown>) => ({
     id: s.id as string,
     name: s.name as string,
+    description: s.description as string | undefined,
     avatarUrl: (s.iconURL || s.bannerImage) as string | undefined,
-    bannerUrl: (s.coverImageURL || s.bannerImage) as string | undefined,
     memberCount: (s.memberCount as number) || 0,
     isVerified: s.isVerified as boolean | undefined,
     isJoined: s.isJoined as boolean | undefined,
-    lastActivityAt: s.lastActivityAt as string | undefined,
+    category: s.category as string | undefined,
+    mutualCount: s.mutualCount as number | undefined,
     upcomingEventCount: s.upcomingEventCount as number | undefined,
     nextEventTitle: s.nextEventTitle as string | undefined,
-    mutualCount: s.mutualCount as number | undefined,
-    description: s.description as string | undefined,
-    category: s.category as string | undefined,
+    lastActivityAt: s.lastActivityAt as string | undefined,
+  }));
+}
+
+async function fetchFeedCreations(): Promise<FeedCreation[]> {
+  const params = new URLSearchParams({ sort: 'trending', limit: '15' });
+  const res = await fetch(`/api/tools/discover?${params}`, { credentials: 'include' });
+  if (!res.ok) return [];
+  const data = await res.json();
+  const tools = data?.data?.tools || data?.tools || [];
+  return tools.map((t: Record<string, unknown>) => ({
+    id: t.id as string,
+    title: (t.title || t.name) as string,
+    description: t.description as string | undefined,
+    thumbnail: t.thumbnail as string | undefined,
+    creatorName: (t.creator as Record<string, unknown>)?.name as string | undefined,
+    creatorId: (t.creator as Record<string, unknown>)?.id as string | undefined,
+    spaceOriginName: (t.spaceOrigin as Record<string, unknown>)?.name as string | undefined,
+    forkCount: (t.forkCount as number) || 0,
+    useCount: (t.useCount as number) || 0,
+    category: t.category as string | undefined,
+    createdAt: t.createdAt as string,
   }));
 }
 
@@ -146,30 +163,8 @@ function eventTimeLabel(startDate: string): string {
   if (diffMin <= 15) return 'Starting soon';
   if (diffMin < 60) return `In ${diffMin}m`;
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) {
-    return start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  }
-  return start.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
-function shortDay(date: Date): string {
-  return date.toLocaleDateString('en-US', { weekday: 'short' });
-}
-
-function shortDate(date: Date): string {
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function isToday(dateStr: string): boolean {
-  const d = new Date(dateStr);
-  const now = new Date();
-  return d.toDateString() === now.toDateString();
+  if (diffH < 24) return start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 function isHappeningNow(startDate: string, endDate?: string): boolean {
@@ -179,151 +174,134 @@ function isHappeningNow(startDate: string, endDate?: string): boolean {
   return now >= start && now <= end;
 }
 
-function isUpcomingToday(startDate: string): boolean {
-  const start = new Date(startDate);
-  const now = new Date();
-  return start.toDateString() === now.toDateString() && start.getTime() > now.getTime();
-}
-
 function isUrgent(startDate: string): boolean {
   const diffMs = new Date(startDate).getTime() - Date.now();
   return diffMs >= 0 && diffMs <= 15 * 60 * 1000;
 }
 
-function getDaysOfWeek(): Date[] {
-  const days: Date[] = [];
-  const today = new Date();
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push(d);
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Feed builder                                                       */
+/* ------------------------------------------------------------------ */
+
+function buildFeed(events: FeedEvent[], spaces: FeedSpace[], creations: FeedCreation[], filter: FeedFilter): FeedItem[] {
+  const items: FeedItem[] = [];
+  const now = Date.now();
+
+  if (filter === 'all' || filter === 'events') {
+    for (const e of events) {
+      const start = new Date(e.startDate).getTime();
+      const live = isHappeningNow(e.startDate, e.endDate);
+      // Live events get highest priority, upcoming events scored by proximity
+      const urgency = live ? 10000 : Math.max(0, 5000 - (start - now) / 60000);
+      const social = (e.rsvpCount || 0) * 2 + (e.friendsAttending || 0) * 20;
+      items.push({ type: 'event', data: e, sortKey: urgency + social });
+    }
   }
-  return days;
-}
 
-function isSameDay(d1: Date, d2: Date): boolean {
-  return d1.toDateString() === d2.toDateString();
+  if (filter === 'all' || filter === 'spaces') {
+    for (const s of spaces) {
+      if (s.isJoined) continue; // Don't suggest already-joined spaces
+      const recency = s.lastActivityAt ? Math.max(0, 2000 - (now - new Date(s.lastActivityAt).getTime()) / 60000) : 500;
+      const social = (s.mutualCount || 0) * 50 + (s.memberCount || 0) * 0.1;
+      items.push({ type: 'space', data: s, sortKey: recency + social });
+    }
+  }
+
+  if (filter === 'all' || filter === 'creations') {
+    for (const c of creations) {
+      const recency = c.createdAt ? Math.max(0, 1500 - (now - new Date(c.createdAt).getTime()) / 60000) : 300;
+      const popularity = (c.forkCount || 0) * 10 + (c.useCount || 0) * 3;
+      items.push({ type: 'creation', data: c, sortKey: recency + popularity });
+    }
+  }
+
+  // Sort by composite score descending
+  items.sort((a, b) => b.sortKey - a.sortKey);
+  return items;
 }
 
 /* ------------------------------------------------------------------ */
-/*  Shared Components                                                  */
+/*  Card Components                                                    */
 /* ------------------------------------------------------------------ */
 
-function Avatar({ name, url, size = 36 }: { name?: string; url?: string; size?: number }) {
+function Avatar({ name, url, size = 32 }: { name?: string; url?: string; size?: number }) {
   if (url) {
-    return (
-      <img
-        src={url}
-        alt={name || ''}
-        className="rounded-full object-cover flex-shrink-0"
-        style={{ width: size, height: size }}
-      />
-    );
+    return <img src={url} alt={name || ''} className="rounded-full object-cover flex-shrink-0" style={{ width: size, height: size }} />;
   }
   const letter = (name || '?')[0].toUpperCase();
   return (
-    <div
-      className="rounded-full bg-white/[0.08] flex items-center justify-center flex-shrink-0 text-white/60 text-sm font-medium"
-      style={{ width: size, height: size }}
-    >
+    <div className="rounded-full bg-white/[0.08] flex items-center justify-center flex-shrink-0 text-white/60 text-xs font-medium" style={{ width: size, height: size }}>
       {letter}
     </div>
   );
 }
 
-function SectionHeader({ icon: Icon, title, count, action }: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  count?: number;
-  action?: { label: string; href: string };
-}) {
-  return (
-    <div className="flex items-center justify-between px-4 pt-6 pb-3">
-      <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 text-[#FFD700]" />
-        <h2 className="text-[15px] font-semibold text-white">{title}</h2>
-        {count !== undefined && count > 0 && (
-          <span className="text-[12px] text-white/30 bg-white/[0.06] px-2 py-0.5 rounded-full">
-            {count}
-          </span>
-        )}
-      </div>
-      {action && (
-        <Link
-          href={action.href}
-          className="flex items-center gap-1 text-[13px] text-white/40 hover:text-white/60 transition-colors"
-        >
-          {action.label}
-          <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
-      )}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Happening Now / Today                                              */
-/* ------------------------------------------------------------------ */
-
-function HappeningNowCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (eventId: string, spaceId: string) => void }) {
+function EventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (eventId: string, spaceId: string) => void }) {
   const live = isHappeningNow(event.startDate, event.endDate);
   const urgent = isUrgent(event.startDate);
   const isGoing = event.isUserRsvped || event.userRsvp === 'going';
 
   return (
-    <div className="min-w-[280px] max-w-[300px] rounded-2xl bg-[#080808] border border-white/[0.06] p-4 flex flex-col gap-3 snap-start">
-      {/* Status badge */}
+    <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-4 space-y-3">
+      {/* Top row: badge + space */}
       <div className="flex items-center justify-between">
-        <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-          live
-            ? 'bg-red-500/15 text-red-400'
-            : urgent
-              ? 'bg-[#FFD700]/15 text-[#FFD700]'
-              : 'bg-white/[0.06] text-white/50'
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+          live ? 'bg-red-500/15 text-red-400' : urgent ? 'bg-[#FFD700]/15 text-[#FFD700]' : 'bg-white/[0.06] text-white/40'
         }`}>
           {live ? (
-            <><span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" /> Live now</>
+            <><span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />Live</>
           ) : urgent ? (
-            <><Zap className="w-3 h-3" /> Starting soon</>
+            <><Zap className="w-3 h-3" />Starting soon</>
           ) : (
-            <><Clock className="w-3 h-3" /> {eventTimeLabel(event.startDate)}</>
+            <><Clock className="w-3 h-3" />{eventTimeLabel(event.startDate)}</>
           )}
         </span>
-        {event.rsvpCount > 0 && (
-          <span className="text-[12px] text-white/30">
-            {event.rsvpCount} going
-          </span>
-        )}
-      </div>
-
-      {/* Title & space */}
-      <div>
-        <h3 className="text-[15px] font-medium text-white leading-snug line-clamp-2">{event.title}</h3>
         {event.spaceName && (
-          <Link
-            href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'}
-            className="text-[13px] text-white/40 hover:text-white/60 mt-1 block truncate"
-          >
-            {event.spaceName}
+          <Link href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'} className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors">
+            <Avatar name={event.spaceName} url={event.spaceAvatarUrl} size={16} />
+            <span className="truncate max-w-[120px]">{event.spaceName}</span>
           </Link>
         )}
       </div>
 
-      {/* Location */}
-      {event.location && (
-        <div className="flex items-center gap-1.5 text-[12px] text-white/30">
-          {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-          <span className="truncate">{event.isOnline ? 'Online' : event.location}</span>
-        </div>
-      )}
+      {/* Title */}
+      <h3 className="text-[15px] font-medium text-white leading-snug">{event.title}</h3>
+      {event.description && <p className="text-[13px] text-white/30 line-clamp-2 leading-relaxed">{event.description}</p>}
+
+      {/* Meta row */}
+      <div className="flex items-center gap-4 text-[12px] text-white/25">
+        {event.location && (
+          <span className="flex items-center gap-1">
+            {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+            <span className="truncate max-w-[140px]">{event.isOnline ? 'Online' : event.location}</span>
+          </span>
+        )}
+        {event.rsvpCount > 0 && (
+          <span className="flex items-center gap-1">
+            <Users className="w-3 h-3" />{event.rsvpCount} going
+          </span>
+        )}
+        {event.friendsAttending && event.friendsAttending > 0 && (
+          <span className="text-[#FFD700]/60">{event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
+        )}
+      </div>
 
       {/* Match reasons */}
       {event.matchReasons && event.matchReasons.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1.5">
           {event.matchReasons.slice(0, 2).map((reason, i) => (
-            <span key={i} className="text-[11px] text-[#FFD700]/70 bg-[#FFD700]/10 px-2 py-0.5 rounded-full">
-              ✦ {reason}
-            </span>
+            <span key={i} className="text-[11px] text-[#FFD700]/60 bg-[#FFD700]/[0.08] px-2 py-0.5 rounded-full">✦ {reason}</span>
           ))}
         </div>
       )}
@@ -332,10 +310,10 @@ function HappeningNowCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (eventI
       {event.spaceId && (
         <button
           onClick={() => onRsvp(event.id, event.spaceId!)}
-          className={`mt-auto flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[13px] font-medium transition-colors ${
+          className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-medium transition-all ${
             isGoing
               ? 'bg-[#FFD700]/15 text-[#FFD700]'
-              : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.08] hover:text-white/70'
+              : 'bg-white/[0.06] text-white/40 hover:bg-white/[0.08] hover:text-white/60 active:scale-[0.98]'
           }`}
         >
           {isGoing ? <Check className="w-3.5 h-3.5" /> : <Calendar className="w-3.5 h-3.5" />}
@@ -346,259 +324,79 @@ function HappeningNowCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (eventI
   );
 }
 
-function HappeningNowSection({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (eventId: string, spaceId: string) => void }) {
-  // Filter: live + upcoming today
-  const nowEvents = useMemo(() => {
-    return events.filter(e =>
-      isHappeningNow(e.startDate, e.endDate) || isUpcomingToday(e.startDate)
-    ).sort((a, b) => {
-      // Live first, then by start time
-      const aLive = isHappeningNow(a.startDate, a.endDate);
-      const bLive = isHappeningNow(b.startDate, b.endDate);
-      if (aLive && !bLive) return -1;
-      if (!aLive && bLive) return 1;
-      return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
-    });
-  }, [events]);
-
-  if (nowEvents.length === 0) return null;
-
-  const liveCount = nowEvents.filter(e => isHappeningNow(e.startDate, e.endDate)).length;
-
+function SpaceCard({ space }: { space: FeedSpace }) {
   return (
-    <div>
-      <SectionHeader
-        icon={Zap}
-        title={liveCount > 0 ? 'Happening Now' : "Today's Events"}
-        count={nowEvents.length}
-      />
-      <div className="flex gap-3 px-4 pb-2 overflow-x-auto no-scrollbar snap-x snap-mandatory">
-        {nowEvents.slice(0, 10).map((event) => (
-          <HappeningNowCard key={event.id} event={event} onRsvp={onRsvp} />
-        ))}
-      </div>
-    </div>
-  );
-}
+    <Link href={`/s/${space.id}`} className="block rounded-2xl bg-[#080808] border border-white/[0.06] p-4 hover:border-white/[0.1] transition-colors group">
+      <div className="flex items-start gap-3">
+        <Avatar name={space.name} url={space.avatarUrl} size={40} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-[15px] font-medium text-white truncate group-hover:text-white/90">{space.name}</h3>
+            {space.isVerified && <span className="text-[#FFD700] text-[12px]">✓</span>}
+          </div>
+          {space.description && <p className="text-[13px] text-white/30 line-clamp-2 mt-1 leading-relaxed">{space.description}</p>}
 
-/* ------------------------------------------------------------------ */
-/*  Trending Spaces                                                    */
-/* ------------------------------------------------------------------ */
+          <div className="flex items-center gap-3 mt-2.5 text-[12px] text-white/25">
+            <span className="flex items-center gap-1"><Users className="w-3 h-3" />{space.memberCount}</span>
+            {space.upcomingEventCount && space.upcomingEventCount > 0 && (
+              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{space.upcomingEventCount} event{space.upcomingEventCount > 1 ? 's' : ''}</span>
+            )}
+            {space.mutualCount && space.mutualCount > 0 && (
+              <span className="text-[#FFD700]/50">{space.mutualCount} mutual{space.mutualCount > 1 ? 's' : ''}</span>
+            )}
+          </div>
 
-function TrendingSpaceCard({ space }: { space: TrendingSpace }) {
-  return (
-    <Link
-      href={`/s/${space.id}`}
-      className="min-w-[200px] max-w-[220px] rounded-2xl bg-[#080808] border border-white/[0.06] overflow-hidden snap-start hover:border-white/[0.12] transition-colors group"
-    >
-      {/* Banner */}
-      <div className="h-16 bg-gradient-to-br from-white/[0.04] to-white/[0.02] relative overflow-hidden">
-        {space.bannerUrl && (
-          <img src={space.bannerUrl} alt="" className="w-full h-full object-cover opacity-60" />
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-3 -mt-5 relative">
-        <Avatar name={space.name} url={space.avatarUrl} size={32} />
-        <h3 className="text-[14px] font-medium text-white mt-2 truncate group-hover:text-white/90">
-          {space.name}
-          {space.isVerified && (
-            <span className="inline-block ml-1 text-[#FFD700]" title="Verified">✓</span>
-          )}
-        </h3>
-
-        <div className="flex items-center gap-3 mt-1.5 text-[12px] text-white/30">
-          <span className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            {space.memberCount}
-          </span>
-          {space.upcomingEventCount && space.upcomingEventCount > 0 && (
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {space.upcomingEventCount}
-            </span>
-          )}
-          {space.mutualCount && space.mutualCount > 0 && (
-            <span className="text-[#FFD700]/60">
-              {space.mutualCount} mutual{space.mutualCount > 1 ? 's' : ''}
-            </span>
+          {space.nextEventTitle && (
+            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-white/20">
+              <Zap className="w-3 h-3" />
+              <span className="truncate">Next: {space.nextEventTitle}</span>
+            </div>
           )}
         </div>
-
-        {space.nextEventTitle && (
-          <p className="text-[11px] text-white/25 mt-1.5 truncate">
-            Next: {space.nextEventTitle}
-          </p>
-        )}
       </div>
     </Link>
   );
 }
 
-function TrendingSpacesSection({ spaces }: { spaces: TrendingSpace[] }) {
-  if (spaces.length === 0) return null;
-
+function CreationCard({ creation }: { creation: FeedCreation }) {
   return (
-    <div>
-      <SectionHeader
-        icon={TrendingUp}
-        title="Trending Spaces"
-        count={spaces.length}
-        action={{ label: 'Browse all', href: '/spaces' }}
-      />
-      <div className="flex gap-3 px-4 pb-2 overflow-x-auto no-scrollbar snap-x snap-mandatory">
-        {spaces.map((space) => (
-          <TrendingSpaceCard key={space.id} space={space} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Upcoming This Week - Calendar View                                 */
-/* ------------------------------------------------------------------ */
-
-function WeekCalendarView({ events, selectedDay, onSelectDay, onRsvp }: {
-  events: FeedEvent[];
-  selectedDay: Date;
-  onSelectDay: (d: Date) => void;
-  onRsvp: (eventId: string, spaceId: string) => void;
-}) {
-  const days = useMemo(() => getDaysOfWeek(), []);
-  const today = new Date();
-
-  const dayEvents = useMemo(() => {
-    return events.filter(e => isSameDay(new Date(e.startDate), selectedDay))
-      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-  }, [events, selectedDay]);
-
-  // Count events per day for dots
-  const eventCountByDay = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const e of events) {
-      const key = new Date(e.startDate).toDateString();
-      counts.set(key, (counts.get(key) || 0) + 1);
-    }
-    return counts;
-  }, [events]);
-
-  return (
-    <div>
-      {/* Day selector */}
-      <div className="flex gap-1 px-4 pb-3">
-        {days.map((day) => {
-          const isSelected = isSameDay(day, selectedDay);
-          const isCurrentDay = isSameDay(day, today);
-          const eventCount = eventCountByDay.get(day.toDateString()) || 0;
-
-          return (
-            <button
-              key={day.toISOString()}
-              onClick={() => onSelectDay(day)}
-              className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl transition-colors ${
-                isSelected
-                  ? 'bg-white/[0.08] border border-white/[0.12]'
-                  : 'border border-transparent hover:bg-white/[0.04]'
-              }`}
-            >
-              <span className={`text-[11px] font-medium ${
-                isSelected ? 'text-white/70' : 'text-white/30'
-              }`}>
-                {shortDay(day)}
-              </span>
-              <span className={`text-[15px] font-semibold ${
-                isSelected
-                  ? 'text-white'
-                  : isCurrentDay
-                    ? 'text-[#FFD700]'
-                    : 'text-white/50'
-              }`}>
-                {day.getDate()}
-              </span>
-              {/* Event dots */}
-              {eventCount > 0 && (
-                <div className="flex gap-0.5">
-                  {Array.from({ length: Math.min(eventCount, 3) }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={`w-1 h-1 rounded-full ${
-                        isSelected ? 'bg-[#FFD700]' : 'bg-white/20'
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Events for selected day */}
-      <div className="px-4 space-y-2">
-        {dayEvents.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-[13px] text-white/30">No events on {shortDate(selectedDay)}</p>
-          </div>
-        ) : (
-          dayEvents.map((event) => (
-            <CalendarEventRow key={event.id} event={event} onRsvp={onRsvp} />
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-function CalendarEventRow({ event, onRsvp }: { event: FeedEvent; onRsvp: (eventId: string, spaceId: string) => void }) {
-  const start = new Date(event.startDate);
-  const isGoing = event.isUserRsvped || event.userRsvp === 'going';
-  const live = isHappeningNow(event.startDate, event.endDate);
-
-  return (
-    <div className="flex gap-3 p-3 rounded-2xl bg-[#080808] border border-white/[0.06]">
-      {/* Time column */}
-      <div className="flex flex-col items-center justify-start pt-0.5 min-w-[48px]">
-        <span className={`text-[13px] font-semibold ${live ? 'text-red-400' : 'text-white/60'}`}>
-          {live ? 'NOW' : start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-        </span>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <h4 className="text-[14px] font-medium text-white leading-snug truncate">{event.title}</h4>
-        <div className="flex items-center gap-3 mt-1 text-[12px] text-white/30">
-          {event.spaceName && (
-            <span className="truncate max-w-[120px]">{event.spaceName}</span>
-          )}
-          {event.location && (
-            <span className="flex items-center gap-1 truncate">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{event.isOnline ? 'Online' : event.location}</span>
-            </span>
-          )}
-          {event.rsvpCount > 0 && (
-            <span>{event.rsvpCount} going</span>
-          )}
+    <Link href={`/tools/${creation.id}`} className="block rounded-2xl bg-[#080808] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors group">
+      {creation.thumbnail && (
+        <div className="h-32 bg-white/[0.02] overflow-hidden">
+          <img src={creation.thumbnail} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity" />
+        </div>
+      )}
+      <div className="p-4 space-y-2">
+        <div className="flex items-center gap-2 text-[11px] text-white/25">
+          <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/40 font-medium">Creation</span>
+          {creation.spaceOriginName && <span className="truncate">from {creation.spaceOriginName}</span>}
+        </div>
+        <h3 className="text-[15px] font-medium text-white leading-snug group-hover:text-white/90">{creation.title}</h3>
+        {creation.description && <p className="text-[13px] text-white/30 line-clamp-2 leading-relaxed">{creation.description}</p>}
+        <div className="flex items-center gap-4 text-[12px] text-white/25 pt-1">
+          {creation.creatorName && <span>by {creation.creatorName}</span>}
+          {creation.forkCount > 0 && <span className="flex items-center gap-1"><GitFork className="w-3 h-3" />{creation.forkCount}</span>}
+          {creation.useCount > 0 && <span className="flex items-center gap-1"><Play className="w-3 h-3" />{creation.useCount}</span>}
+          {creation.createdAt && <span>{relativeTime(creation.createdAt)}</span>}
         </div>
       </div>
+    </Link>
+  );
+}
 
-      {/* RSVP button */}
-      {event.spaceId && (
-        <button
-          onClick={() => onRsvp(event.id, event.spaceId!)}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-[12px] font-medium self-center transition-colors ${
-            isGoing
-              ? 'bg-[#FFD700]/15 text-[#FFD700]'
-              : 'bg-white/[0.06] text-white/40 hover:text-white/60'
-          }`}
-        >
-          {isGoing ? <Check className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
-          {isGoing ? 'Going' : 'RSVP'}
-        </button>
-      )}
-    </div>
+/* ------------------------------------------------------------------ */
+/*  Pulse Indicator                                                    */
+/* ------------------------------------------------------------------ */
+
+function PulseIndicator({ count }: { count: number }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFD700] opacity-40" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FFD700]" />
+      </span>
+      {count > 0 && <span className="text-[13px] text-white/40">{count} happening now</span>}
+    </span>
   );
 }
 
@@ -610,8 +408,7 @@ export default function DiscoverPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
-  const [category, setCategory] = useState<EventCategory>('all');
-  const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+  const [filter, setFilter] = useState<FeedFilter>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
@@ -620,26 +417,23 @@ export default function DiscoverPage() {
     }
   }, [authLoading, user, router]);
 
-  // Fetch today/tonight events for "Happening Now"
-  const todayEventsQuery = useQuery({
-    queryKey: ['discover-today-events', category],
-    queryFn: () => fetchEvents('soonest', 1, category, 'today'),
+  const eventsQuery = useQuery({
+    queryKey: ['feed-events'],
+    queryFn: fetchFeedEvents,
     staleTime: 60_000,
     enabled: !authLoading && !!user,
   });
 
-  // Fetch this week events for calendar
-  const weekEventsQuery = useQuery({
-    queryKey: ['discover-week-events', category],
-    queryFn: () => fetchEvents('soonest', 1, category, 'this-week'),
-    staleTime: 60_000,
-    enabled: !authLoading && !!user,
-  });
-
-  // Fetch trending spaces
   const spacesQuery = useQuery({
-    queryKey: ['discover-trending-spaces'],
-    queryFn: fetchTrendingSpaces,
+    queryKey: ['feed-spaces'],
+    queryFn: fetchFeedSpaces,
+    staleTime: 5 * 60_000,
+    enabled: !authLoading && !!user,
+  });
+
+  const creationsQuery = useQuery({
+    queryKey: ['feed-creations'],
+    queryFn: fetchFeedCreations,
     staleTime: 5 * 60_000,
     enabled: !authLoading && !!user,
   });
@@ -648,8 +442,7 @@ export default function DiscoverPage() {
     mutationFn: ({ eventId, spaceId }: { eventId: string; spaceId: string }) =>
       rsvpToEvent(spaceId, eventId, 'going'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['discover-today-events'] });
-      queryClient.invalidateQueries({ queryKey: ['discover-week-events'] });
+      queryClient.invalidateQueries({ queryKey: ['feed-events'] });
     },
   });
 
@@ -660,32 +453,34 @@ export default function DiscoverPage() {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['discover-today-events'] }),
-      queryClient.invalidateQueries({ queryKey: ['discover-week-events'] }),
-      queryClient.invalidateQueries({ queryKey: ['discover-trending-spaces'] }),
+      queryClient.invalidateQueries({ queryKey: ['feed-events'] }),
+      queryClient.invalidateQueries({ queryKey: ['feed-spaces'] }),
+      queryClient.invalidateQueries({ queryKey: ['feed-creations'] }),
     ]);
-    setIsRefreshing(false);
+    setTimeout(() => setIsRefreshing(false), 600);
   }, [queryClient]);
 
-  const todayEvents = todayEventsQuery.data?.events || [];
-  const weekEvents = weekEventsQuery.data?.events || [];
-  const trendingSpaces = spacesQuery.data || [];
+  const events = eventsQuery.data || [];
+  const spaces = spacesQuery.data || [];
+  const creations = creationsQuery.data || [];
 
-  const categories: { key: EventCategory; label: string }[] = [
+  const feed = useMemo(() => buildFeed(events, spaces, creations, filter), [events, spaces, creations, filter]);
+
+  const liveCount = useMemo(() => events.filter(e => isHappeningNow(e.startDate, e.endDate)).length, [events]);
+
+  const isLoading = eventsQuery.isLoading && spacesQuery.isLoading && creationsQuery.isLoading;
+
+  const filters: { key: FeedFilter; label: string }[] = [
     { key: 'all', label: 'All' },
-    { key: 'social', label: 'Social' },
-    { key: 'academic', label: 'Academic' },
-    { key: 'professional', label: 'Professional' },
-    { key: 'recreation', label: 'Recreation' },
-    { key: 'official', label: 'Official' },
+    { key: 'events', label: 'Events' },
+    { key: 'spaces', label: 'Spaces' },
+    { key: 'creations', label: 'Creations' },
   ];
-
-  const isLoading = todayEventsQuery.isLoading && weekEventsQuery.isLoading && spacesQuery.isLoading;
 
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-white/[0.06] border-t-white/40 animate-spin" />
       </div>
     );
   }
@@ -693,97 +488,71 @@ export default function DiscoverPage() {
   return (
     <div className="min-h-screen w-full bg-black">
       <div className="mx-auto w-full max-w-[600px]">
-        {/* Header */}
+        {/* Sticky header */}
         <div className="sticky top-0 z-20 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]">
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-4 pt-4 pb-2">
             <div>
-              <h1 className="text-[18px] font-bold text-white">Discover</h1>
-              <p className="text-[13px] text-white/30">What&apos;s happening at UB right now</p>
+              <h1 className="text-[17px] font-semibold text-white tracking-tight">What&apos;s happening at UB</h1>
+              <div className="mt-1">
+                <PulseIndicator count={liveCount} />
+              </div>
             </div>
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-2 rounded-full text-white/40 hover:text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors"
+              className="p-2 -mr-1 rounded-full text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
 
-          {/* Category filters */}
+          {/* Filter chips */}
           <div className="flex items-center gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
-            {categories.map((c) => (
+            {filters.map((f) => (
               <button
-                key={c.key}
-                onClick={() => setCategory(c.key)}
-                className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors ${
-                  category === c.key
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
+                  filter === f.key
                     ? 'bg-white text-black'
-                    : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1]'
+                    : 'bg-white/[0.06] text-white/40 hover:bg-white/[0.08] hover:text-white/50'
                 }`}
               >
-                {c.label}
+                {f.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Loading state */}
+        {/* Feed */}
         {isLoading ? (
-          <div className="space-y-6 py-4">
-            {/* Happening Now skeleton */}
-            <div className="px-4">
-              <div className="h-5 w-40 bg-white/[0.06] rounded animate-pulse mb-3" />
-              <div className="flex gap-3 overflow-hidden">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="min-w-[280px] h-[180px] rounded-2xl bg-white/[0.04] animate-pulse" />
-                ))}
-              </div>
+          <div className="space-y-3 p-4">
+            {[0, 1, 2, 3, 4].map(i => (
+              <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/[0.04] animate-pulse" style={{ height: 140 + (i % 3) * 40 }} />
+            ))}
+          </div>
+        ) : feed.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mb-4">
+              <TrendingUp className="w-5 h-5 text-white/20" />
             </div>
-            {/* Trending skeleton */}
-            <div className="px-4">
-              <div className="h-5 w-36 bg-white/[0.06] rounded animate-pulse mb-3" />
-              <div className="flex gap-3 overflow-hidden">
-                {[0, 1, 2, 3].map(i => (
-                  <div key={i} className="min-w-[200px] h-[140px] rounded-2xl bg-white/[0.04] animate-pulse" />
-                ))}
-              </div>
-            </div>
+            <p className="text-[15px] text-white/50 font-medium">Nothing here yet</p>
+            <p className="text-[13px] text-white/25 mt-1 max-w-[260px]">
+              Events, spaces, and creations from your campus will show up here
+            </p>
           </div>
         ) : (
-          <div className="pb-20">
-            {/* 1. Happening Now */}
-            <HappeningNowSection events={todayEvents} onRsvp={handleRsvp} />
-
-            {/* 2. Trending Spaces */}
-            <TrendingSpacesSection spaces={trendingSpaces} />
-
-            {/* 3. Upcoming This Week */}
-            <div>
-              <SectionHeader
-                icon={Calendar}
-                title="Upcoming This Week"
-                count={weekEvents.length}
-              />
-              <WeekCalendarView
-                events={weekEvents}
-                selectedDay={selectedDay}
-                onSelectDay={setSelectedDay}
-                onRsvp={handleRsvp}
-              />
-            </div>
-
-            {/* Empty state if nothing at all */}
-            {todayEvents.length === 0 && trendingSpaces.length === 0 && weekEvents.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-                <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mb-4">
-                  <Flame className="w-6 h-6 text-white/20" />
-                </div>
-                <p className="text-[15px] text-white/50">Nothing happening yet</p>
-                <p className="text-[13px] text-white/30 mt-1">
-                  Events and spaces from your campus will show up here
-                </p>
-              </div>
-            )}
+          <div className="space-y-3 p-4 pb-24">
+            {feed.map((item) => {
+              switch (item.type) {
+                case 'event':
+                  return <EventCard key={`e-${item.data.id}`} event={item.data} onRsvp={handleRsvp} />;
+                case 'space':
+                  return <SpaceCard key={`s-${item.data.id}`} space={item.data} />;
+                case 'creation':
+                  return <CreationCard key={`c-${item.data.id}`} creation={item.data} />;
+              }
+            })}
           </div>
         )}
       </div>

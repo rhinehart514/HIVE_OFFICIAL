@@ -22,3 +22,6 @@ export function CampusDock({ className, children }: CampusDockProps) {
 }
 
 CampusDock.displayName = 'CampusDock';
+
+export type DockSpaceItem = Record<string, unknown>;
+export type DockToolItem = Record<string, unknown>;

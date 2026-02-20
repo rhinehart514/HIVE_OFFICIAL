@@ -628,17 +628,7 @@ function ElementNode({
       let y = e.clientY - dragOffset.y;
 
       // First, snap to elements if enabled (higher priority)
-      if (snapToElements) {
-        const snapped = snapToGuides(
-          { x, y },
-          element.size,
-          allElements,
-          element.id,
-          8 // threshold
-        );
-        x = snapped.x;
-        y = snapped.y;
-      }
+      // Smart guides deferred - using grid snap only
 
       // Then apply grid snap if enabled and not already snapped to element
       if (snapToGrid) {
@@ -1803,15 +1793,8 @@ export function IDECanvas({
           </ElementErrorBoundary>
         ))}
 
-        {/* Smart Guides - show during drag */}
-        <SmartGuides
-          elements={elements}
-          draggingElement={draggingElementId ? elements.find(el => el.id === draggingElementId) || null : null}
-          threshold={8}
-          zoom={zoom}
-        />
-
-        {/* Selection Rectangle - Make.com green */}
+        {/* Smart Guides deferred */}
+{/* Selection Rectangle - Make.com green */}
         {selectionRect && (
           <motion.div
             initial={{ opacity: 0 }}

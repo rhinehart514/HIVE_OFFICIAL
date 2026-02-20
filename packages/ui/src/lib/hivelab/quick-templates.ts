@@ -722,6 +722,9 @@ export const UPCOMING_EVENTS_TEMPLATE: QuickTemplate = {
  * Feedback Form Template
  * Simple feedback collection for events or initiatives
  */
+const feedbackFormId = generateId();
+const feedbackResultId = generateId();
+
 export const FEEDBACK_FORM_TEMPLATE: QuickTemplate = {
   id: 'feedback-form',
   name: 'Feedback Form',
@@ -742,7 +745,7 @@ export const FEEDBACK_FORM_TEMPLATE: QuickTemplate = {
     elements: [
       {
         elementId: 'form-builder',
-        instanceId: generateId(),
+        instanceId: feedbackFormId,
         config: {
           fields: [
             { name: 'rating', label: 'Overall Rating (1-5)', type: 'number', required: true },
@@ -756,8 +759,23 @@ export const FEEDBACK_FORM_TEMPLATE: QuickTemplate = {
         position: { x: 0, y: 0 },
         size: { width: 300, height: 350 },
       },
+      {
+        elementId: 'result-list',
+        instanceId: feedbackResultId,
+        config: {
+          itemsPerPage: 10,
+          showPagination: false,
+        },
+        position: { x: 0, y: 380 },
+        size: { width: 300, height: 300 },
+      },
     ],
-    connections: [],
+    connections: [
+      {
+        from: { instanceId: feedbackFormId, output: 'submittedData' },
+        to: { instanceId: feedbackResultId, input: 'items' },
+      },
+    ],
     layout: 'flow',
   },
 };

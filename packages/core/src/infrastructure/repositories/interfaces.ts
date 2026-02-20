@@ -114,3 +114,8 @@ export interface IEventDispatcher {
   subscribe(eventType: string, handler: (event: any) => Promise<void>): void;
   unsubscribe(eventType: string, handler: (event: any) => Promise<void>): void;
 }
+
+// Feed repository interface (deferred — using direct Firestore queries)
+export interface IFeedRepository {
+  [key: string]: any;
+}

@@ -284,7 +284,7 @@ export function MessageItem({
               }
               onRsvp={
                 onComponentRsvp
-                  ? (response) => onComponentRsvp(message.inlineComponent!.id, response)
+                  ? (response: string) => onComponentRsvp(message.inlineComponent!.id, response as "yes" | "no" | "maybe")
                   : undefined
               }
             />

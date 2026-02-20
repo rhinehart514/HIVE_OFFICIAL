@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AutomationsPanel, type AutomationSummary } from './automations-panel';
 import { SparklesIcon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, RectangleGroupIcon, Square3Stack3DIcon } from '@heroicons/react/24/outline';
 
 // Aliases for lucide compatibility
@@ -11,7 +12,6 @@ import { cn } from '../../../lib/utils';
 import { ElementPalette } from './element-palette';
 import { LayersPanel } from './layers-panel';
 import { OtherToolsPanel, type OtherToolData } from './other-tools-panel';
-type AutomationSummary = Record<string, unknown>;
 import type { CanvasElement, Connection } from './types';
 
 const AUTOMATIONS_ENABLED = true;

@@ -317,11 +317,11 @@ function ToolContent({
     if (remixing) return;
     setRemixing(true);
     try {
-      const response = await fetch('/api/tools/remix', {
+      const response = await fetch(`/api/tools/${toolId}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ sourceToolId: toolId }),
+        body: JSON.stringify({ mode: 'remix' }),
       });
 
       if (!response.ok) {

@@ -340,19 +340,6 @@ export {
   setValueAtPath,
 } from "./domain/hivelab/tool-connection.types";
 
-// Sprint 3: Connection Resolver Service
-export {
-  ConnectionResolverService,
-  getConnectionResolver,
-  initializeConnectionResolver,
-  createConnectionResolver,
-  resetConnectionResolver,
-} from "./application/hivelab/connection-resolver.service";
-export type {
-  ConnectionRepository,
-  ResolveOptions,
-} from "./application/hivelab/connection-resolver.service";
-
 // Sprint 4: Tool Automation Types
 export type {
   ToolEventTrigger,
@@ -792,9 +779,6 @@ export { ErrorCategory, ErrorSeverity } from "./types/error.types";
 export { type HiveError } from "./types/error.types";
 
 // Utilities
-export * from "./utils/activity-tracker";
-export * from "./utils/privacy-utils";
-export * from "./utils/profile-aggregator";
 
 // Analytics convenience functions (for backwards compatibility)
 export * from "./analytics-temp-exports";

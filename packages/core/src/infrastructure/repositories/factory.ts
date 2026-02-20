@@ -103,3 +103,8 @@ export function resetRepositories(): void {
   ritualConfigRepo = null;
   connectionRepo = null;
 }
+
+// Feed repository stub (deferred - was using DDD pattern, now using direct Firestore queries)
+export function getFeedRepository(): any {
+  return null;
+}

@@ -83,9 +83,11 @@ export function ResultListElement({
                         <Badge variant="outline">{item.badge}</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {item.description || 'Campus tool description placeholder text'}
-                    </p>
+                    {item.description && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {item.description}
+                      </p>
+                    )}
                     {item.meta && (
                       <div className="text-xs text-muted-foreground mt-2 flex gap-4">
                         {item.meta.map((meta: string, metaIndex: number) => (

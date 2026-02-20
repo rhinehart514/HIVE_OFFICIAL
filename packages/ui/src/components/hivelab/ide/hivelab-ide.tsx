@@ -2,6 +2,9 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { AutomationBuilderModal } from './automation-builder-modal';
+import type { AutomationSummary } from "./automations-panel";
+import type { AutomationData } from "./automation-builder-modal";
 import { useStreamingGeneration } from '@hive/hooks';
 import { cn } from '../../../lib/utils';
 import type {
@@ -28,8 +31,6 @@ import { toast } from 'sonner';
 import type { OtherToolData } from './other-tools-panel';
 
 // Stub types for removed systems
-type AutomationSummary = Record<string, unknown>;
-type AutomationData = Record<string, unknown> & { id?: string; name?: string; enabled?: boolean; trigger?: { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number }; conditions?: unknown[]; actions?: unknown[]; limits?: unknown };
 type AutomationRun = Record<string, unknown>;
 type ConnectionCreateData = { source: unknown; target: unknown; transform?: unknown; label?: string };
 
@@ -346,11 +347,11 @@ export function HiveLabIDE({
 
   // Helper to generate trigger summary from API trigger data
   function getTriggerSummaryFromTrigger(trigger: { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number }): string {
-    switch (trigger.type) {
+    switch (trigger?.type) {
       case 'event':
-        return `When ${trigger.event || 'event'} occurs`;
+        return `When ${trigger?.event || 'event'} occurs`;
       case 'schedule':
-        return `Scheduled: ${trigger.cron || 'custom'}`;
+        return `Scheduled: ${trigger?.cron || 'custom'}`;
       case 'threshold':
         return `When ${trigger.path || 'value'} ${trigger.operator || '>'} ${trigger.value || 0}`;
       default:
@@ -1407,11 +1408,11 @@ export function HiveLabIDE({
 
   // Helper to generate trigger summary text
   function getTriggerSummary(trigger: AutomationData['trigger'] | { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number }): string {
-    switch (trigger.type) {
+    switch (trigger?.type) {
       case 'event':
-        return `When ${trigger.event || 'event'} occurs`;
+        return `When ${trigger?.event || 'event'} occurs`;
       case 'schedule':
-        return `Scheduled: ${trigger.cron || 'custom'}`;
+        return `Scheduled: ${trigger?.cron || 'custom'}`;
       case 'threshold':
         return `When ${trigger.path || 'value'} ${trigger.operator || '>'} ${trigger.value || 0}`;
       default:
@@ -1618,19 +1619,7 @@ export function HiveLabIDE({
             onTransformEnd={() => pushHistory('Transform element')}
           />
 
-          {/* Minimap - shows overview of canvas for large tools */}
-          {!isCanvasEmpty && (
-            <CanvasMinimap
-              elements={elements}
-              connections={connections}
-              selectedIds={selectedIds}
-              zoom={zoom}
-              pan={pan}
-              containerWidth={canvasSize.width}
-              containerHeight={canvasSize.height}
-              onPanChange={setPan}
-            />
-          )}
+          {/* Minimap deferred */}
         </div>
 
         {/* Context Rail (Right) - only shows when elements are selected */}
@@ -1693,43 +1682,9 @@ export function HiveLabIDE({
         deploymentId={deploymentId}
       />
 
-      {/* Sprint 4: Automation Logs Viewer */}
-      <AutomationLogsViewer
-        isOpen={automationLogsOpen}
-        onClose={() => {
-          setAutomationLogsOpen(false);
-          setViewingAutomationId(null);
-        }}
-        automationName={automations.find(a => a.id === viewingAutomationId)?.name || 'Automation'}
-        runs={automationRuns}
-        loading={automationRunsLoading}
-        onRefresh={() => {
-          if (viewingAutomationId) {
-            handleViewAutomationLogs(viewingAutomationId);
-          }
-        }}
-        onLoadMore={() => {}}
-        hasMore={false}
-      />
-
-      {/* Sprint 3: Connection Builder Modal */}
-      <ConnectionBuilderModal
-        isOpen={connectionBuilderOpen}
-        onClose={() => {
-          setConnectionBuilderOpen(false);
-          setPreSelectedConnectionSource(undefined);
-          setConnectionError(undefined);
-        }}
-        onCreate={handleCreateConnection}
-        sourceTools={otherTools}
-        targetElements={elements}
-        preSelectedSource={preSelectedConnectionSource}
-        currentDeploymentId={deploymentId || ''}
-        creating={connectionCreating}
-        error={connectionError}
-      />
-
-      {/* AI Chat Pill - Floating/Dockable */}
+      {/* Automation Logs deferred */}
+{/* Connection Builder deferred */}
+{/* AI Chat Pill - Floating/Dockable */}
       {!isCanvasEmpty && (
         <AIChatPill
           ref={aiChatPillRef}

@@ -494,6 +494,397 @@ async function handleFormSubmit(
   };
 }
 
+// --- Progress Indicator: set_progress / increment_progress / reset_progress ---
+async function handleProgressAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  toolConfig: Record<string, unknown>,
+): Promise<ExecuteResult> {
+  const max = (toolConfig?.max as number) ?? 100;
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+
+  if (action === "set_progress") {
+    const value = Math.max(0, Math.min((data.value as number) ?? 0, max));
+
+    // Get current value to compute delta
+    const sharedState = await getSharedState(toolId, deploymentId);
+    const counters = (sharedState.counters ?? {}) as Record<string, number>;
+    const current = counters[`${elementId}:value`] ?? 0;
+    const delta = value - current;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:value`]: admin.firestore.FieldValue.increment(delta),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: { counterDeltas: { [`${elementId}:value`]: delta } },
+    };
+  }
+
+  if (action === "increment_progress") {
+    const step = (data.step as number) ?? 1;
+
+    // Check bounds
+    const sharedState = await getSharedState(toolId, deploymentId);
+    const counters = (sharedState.counters ?? {}) as Record<string, number>;
+    const current = counters[`${elementId}:value`] ?? 0;
+    const effectiveDelta = Math.min(step, max - current);
+    if (effectiveDelta <= 0) throw new Error("Progress is already at maximum");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:value`]: admin.firestore.FieldValue.increment(effectiveDelta),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: { counterDeltas: { [`${elementId}:value`]: effectiveDelta } },
+    };
+  }
+
+  if (action === "reset_progress") {
+    const sharedState = await getSharedState(toolId, deploymentId);
+    const counters = (sharedState.counters ?? {}) as Record<string, number>;
+    const current = counters[`${elementId}:value`] ?? 0;
+    const delta = -current;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:value`]: admin.firestore.FieldValue.increment(delta),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: { counterDeltas: { [`${elementId}:value`]: delta } },
+    };
+  }
+
+  throw new Error(`Unknown progress action: ${action}`);
+}
+
+// --- Timer: start / stop / reset / lap ---
+async function handleTimerAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+  const collectionKey = `${elementId}:laps`;
+
+  if (action === "start") {
+    const startedAt = (data.startedAt as string) ?? now;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:isRunning`]: 1,
+        [`collections.${elementId}:meta.startedAt`]: {
+          id: "startedAt",
+          createdAt: now,
+          createdBy: userId,
+          data: { startedAt, elapsed: 0 },
+        },
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        counterDeltas: { [`${elementId}:isRunning`]: 1 },
+        collectionUpserts: {
+          [`${elementId}:meta`]: {
+            startedAt: {
+              id: "startedAt",
+              createdAt: now,
+              createdBy: userId,
+              data: { startedAt, elapsed: 0 },
+            },
+          },
+        },
+      },
+    };
+  }
+
+  if (action === "stop") {
+    const elapsed = (data.elapsed as number) ?? 0;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:isRunning`]: 0,
+        [`counters.${elementId}:elapsed`]: elapsed,
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    // Use absolute set for isRunning (not delta) — compute delta from current
+    const sharedState = await getSharedState(toolId, deploymentId);
+    const counters = (sharedState.counters ?? {}) as Record<string, number>;
+    const currentRunning = counters[`${elementId}:isRunning`] ?? 0;
+    const currentElapsed = counters[`${elementId}:elapsed`] ?? 0;
+
+    return {
+      sharedStateUpdate: {
+        counterDeltas: {
+          [`${elementId}:isRunning`]: -currentRunning,
+          [`${elementId}:elapsed`]: elapsed - currentElapsed,
+        },
+      },
+    };
+  }
+
+  if (action === "reset") {
+    const sharedState = await getSharedState(toolId, deploymentId);
+    const counters = (sharedState.counters ?? {}) as Record<string, number>;
+    const currentRunning = counters[`${elementId}:isRunning`] ?? 0;
+    const currentElapsed = counters[`${elementId}:elapsed`] ?? 0;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:isRunning`]: 0,
+        [`counters.${elementId}:elapsed`]: 0,
+        [`collections.${collectionKey}`]: {},
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        counterDeltas: {
+          [`${elementId}:isRunning`]: -currentRunning,
+          [`${elementId}:elapsed`]: -currentElapsed,
+        },
+        collectionDeletes: { [collectionKey]: [] },
+      },
+    };
+  }
+
+  if (action === "lap") {
+    const lapTime = (data.lapTime as number) ?? 0;
+    const lapNumber = (data.lapNumber as number) ?? 1;
+    const entryId = `lap-${lapNumber}`;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${entryId}`]: {
+          id: entryId,
+          createdAt: now,
+          createdBy: userId,
+          data: { lapTime, lapNumber },
+        },
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [collectionKey]: {
+            [entryId]: {
+              id: entryId,
+              createdAt: now,
+              createdBy: userId,
+              data: { lapTime, lapNumber },
+            },
+          },
+        },
+      },
+    };
+  }
+
+  throw new Error(`Unknown timer action: ${action}`);
+}
+
+// --- Announcement: create / pin / unpin / delete ---
+async function handleAnnouncementAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+  toolCreatorId: string,
+): Promise<ExecuteResult> {
+  // Permission: only the tool creator can manage announcements
+  if (userId !== toolCreatorId) {
+    throw new Error("Only the tool creator can manage announcements");
+  }
+
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+  const collectionKey = `${elementId}:announcements`;
+
+  if (action === "create") {
+    const content = data.content as string;
+    if (!content) throw new Error("content is required for create action");
+
+    const expiresAt = (data.expiresAt as string) ?? null;
+    const pinned = (data.pinned as boolean) ?? false;
+    const entryId = `${userId}:${Date.now()}`;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${entryId}`]: {
+          id: entryId,
+          createdAt: now,
+          createdBy: userId,
+          data: { content, pinned, expiresAt },
+        },
+        [`counters.${elementId}:count`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [collectionKey]: {
+            [entryId]: {
+              id: entryId,
+              createdAt: now,
+              createdBy: userId,
+              data: { content, pinned, expiresAt },
+            },
+          },
+        },
+        counterDeltas: { [`${elementId}:count`]: 1 },
+      },
+    };
+  }
+
+  if (action === "pin") {
+    const announcementId = data.announcementId as string;
+    if (!announcementId) throw new Error("announcementId is required for pin action");
+
+    // Verify announcement exists
+    const sharedState = await getSharedState(toolId, deploymentId);
+    const collections = (sharedState.collections ?? {}) as Record<string, Record<string, unknown>>;
+    const announcements = collections[collectionKey] ?? {};
+    const existing = announcements[announcementId] as { id: string; createdAt: string; createdBy: string; data: Record<string, unknown> } | undefined;
+    if (!existing) throw new Error("Announcement not found");
+
+    const updatedData = { ...existing.data, pinned: true };
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${announcementId}`]: {
+          ...existing,
+          updatedAt: now,
+          data: updatedData,
+        },
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [collectionKey]: {
+            [announcementId]: {
+              ...existing,
+              updatedAt: now,
+              data: updatedData,
+            },
+          },
+        },
+      },
+    };
+  }
+
+  if (action === "unpin") {
+    const announcementId = data.announcementId as string;
+    if (!announcementId) throw new Error("announcementId is required for unpin action");
+
+    const sharedState = await getSharedState(toolId, deploymentId);
+    const collections = (sharedState.collections ?? {}) as Record<string, Record<string, unknown>>;
+    const announcements = collections[collectionKey] ?? {};
+    const existing = announcements[announcementId] as { id: string; createdAt: string; createdBy: string; data: Record<string, unknown> } | undefined;
+    if (!existing) throw new Error("Announcement not found");
+
+    const updatedData = { ...existing.data, pinned: false };
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${announcementId}`]: {
+          ...existing,
+          updatedAt: now,
+          data: updatedData,
+        },
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [collectionKey]: {
+            [announcementId]: {
+              ...existing,
+              updatedAt: now,
+              data: updatedData,
+            },
+          },
+        },
+      },
+    };
+  }
+
+  if (action === "delete") {
+    const announcementId = data.announcementId as string;
+    if (!announcementId) throw new Error("announcementId is required for delete action");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${announcementId}`]: admin.firestore.FieldValue.delete(),
+        [`counters.${elementId}:count`]: admin.firestore.FieldValue.increment(-1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionDeletes: { [collectionKey]: [announcementId] },
+        counterDeltas: { [`${elementId}:count`]: -1 },
+      },
+    };
+  }
+
+  throw new Error(`Unknown announcement action: ${action}`);
+}
+
 // --- Leaderboard: update_score / increment ---
 async function handleLeaderboardAction(
   toolId: string,
@@ -719,6 +1110,32 @@ export const POST = withAuthAndErrors(async (
         result = await handleLeaderboardAction(
           toolId, effectiveDeploymentId, elementId,
           action, data as Record<string, unknown>, userId
+        );
+        break;
+
+      // Registry ID: progress-indicator
+      case "progress-indicator":
+      case "progress_indicator":
+        result = await handleProgressAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, elementConfig
+        );
+        break;
+
+      // Registry ID: timer
+      case "timer":
+        result = await handleTimerAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId
+        );
+        break;
+
+      // Registry ID: announcement
+      case "announcement":
+        result = await handleAnnouncementAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId,
+          tool.createdBy as string
         );
         break;
 

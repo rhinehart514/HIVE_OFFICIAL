@@ -13,7 +13,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Calendar, Wrench, LayoutDashboard, X } from 'lucide-react';
+import { Plus, Calendar, Wrench, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MOTION, durationSeconds } from '@hive/tokens';
 
@@ -98,6 +98,16 @@ export function LeaderCreateFAB({
     return actions.length === 1 ? actions[0] : null;
   }, [context, actions, onCreateEvent, onAddTool]);
 
+  // Close on Escape key
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen]);
+
   const handleMainButtonClick = () => {
     if (primaryAction) {
       // Direct action mode
@@ -117,36 +127,44 @@ export function LeaderCreateFAB({
   if (actions.length === 0) return null;
 
   return (
-    <div className={cn('fixed bottom-6 right-6 z-50', className)}>
+    <div className={cn('fixed bottom-6 right-6 z-40', className)}>
       {/* Action Menu Items */}
       <AnimatePresence>
         {isOpen && !primaryAction && (
           <motion.div
-            className="absolute bottom-20 right-0 flex flex-col gap-3"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: durationSeconds.quick, ease: MOTION.ease.premium }}
+            className="absolute bottom-16 right-0 flex flex-col items-end gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: durationSeconds.quick }}
           >
-            {actions.map((action, _index) => {
+            {actions.map((action, index) => {
               const Icon = action.icon;
               return (
-                <button
+                <motion.button
                   key={action.id}
                   onClick={() => handleActionClick(action)}
                   className={cn(
-                    'group flex items-center gap-3 px-4 py-3 rounded-full',
-                    'border border-white/[0.06]',
+                    'flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-full',
+                    'bg-[var(--bg-ground)] border border-white/[0.08]',
+                    'text-white/80 hover:text-white text-sm font-medium',
+                    'shadow-lg shadow-black/30',
+                    'transition-colors duration-150',
                     'hover:bg-white/[0.06]',
-                    'transition-colors',
-                    action.color
                   )}
+                  initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                  transition={{
+                    duration: durationSeconds.quick,
+                    delay: index * 0.04,
+                    ease: MOTION.ease.premium,
+                  }}
+                  whileTap={{ scale: 0.96 }}
                 >
-                  <Icon className="w-5 h-5 text-white" />
-                  <span className="text-sm font-medium text-white pr-2">
-                    {action.label}
-                  </span>
-                </button>
+                  <Icon className="w-5 h-5" />
+                  <span className="pr-1">{action.label}</span>
+                </motion.button>
               );
             })}
           </motion.div>
@@ -154,25 +172,30 @@ export function LeaderCreateFAB({
       </AnimatePresence>
 
       {/* Main FAB Button */}
-      <button
+      <motion.button
         onClick={handleMainButtonClick}
         className={cn(
-          'w-14 h-14 rounded-full',
-          'bg-[var(--color-gold)]',
-          'hover:bg-[var(--color-gold)]/90',
+          'w-12 h-12 rounded-full',
+          'bg-gold-500 hover:bg-gold-400',
           'flex items-center justify-center',
-          'transition-colors',
-          'group'
+          'shadow-lg shadow-black/40',
+          'transition-shadow duration-200',
+          'hover:shadow-[0_0_24px_rgba(255,215,0,0.25)]',
         )}
+        whileTap={{ scale: 0.92 }}
+        aria-label={isOpen ? 'Close create menu' : 'Create'}
       >
-        {isOpen && !primaryAction ? (
-          <X className="w-6 h-6 text-black" />
-        ) : primaryAction ? (
-          <primaryAction.icon className="w-6 h-6 text-black" />
-        ) : (
-          <Plus className="w-6 h-6 text-black" />
-        )}
-      </button>
+        <motion.div
+          animate={{ rotate: isOpen && !primaryAction ? 45 : 0 }}
+          transition={{ duration: durationSeconds.quick, ease: MOTION.ease.premium }}
+        >
+          {primaryAction ? (
+            <primaryAction.icon className="w-6 h-6 text-black" />
+          ) : (
+            <Plus className="w-6 h-6 text-black" strokeWidth={2.5} />
+          )}
+        </motion.div>
+      </motion.button>
 
       {/* Backdrop (closes menu when clicking outside) */}
       <AnimatePresence>

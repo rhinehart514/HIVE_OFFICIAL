@@ -684,6 +684,8 @@ export default function ToolStudioPage({ params }: Props) {
                       userDisplayName: user?.displayName || user?.fullName || undefined,
                       userRole: isSpaceLeader ? 'admin' : user ? 'member' : 'guest',
                       isSpaceLeader,
+                      // Wire spaceId from URL param so T2 elements fetch real data
+                      spaceId: preselectedSpaceId || undefined,
                     }}
                   />
                 ) : (

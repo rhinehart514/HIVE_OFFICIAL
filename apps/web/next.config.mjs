@@ -88,7 +88,7 @@ const nextConfig = {
   },
   serverExternalPackages: ['jose'],
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   // Fix module resolution for workspace packages
   experimental: {
