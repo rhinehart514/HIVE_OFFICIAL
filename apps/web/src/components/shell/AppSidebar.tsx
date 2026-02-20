@@ -6,6 +6,7 @@ import { Bell, Search, Sparkles, User } from 'lucide-react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, getMobileNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
+import { useUnreadCount } from '@/hooks/queries/use-unread-count';
 
 function HiveMark() {
   return (
@@ -47,6 +48,7 @@ function TopBar() {
   const router = useRouter();
   const { hasCampus } = useCampusMode();
   const navItems = getNavItems(hasCampus);
+  const { data: unreadCount = 0 } = useUnreadCount();
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 hidden h-14 border-b border-white/[0.06] bg-black md:flex">
@@ -79,10 +81,15 @@ function TopBar() {
           <button
             type="button"
             onClick={() => router.push('/notifications')}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
             aria-label="Notifications"
           >
             <Bell className="h-4 w-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#FFD700] px-1 text-[10px] font-semibold text-black leading-none">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -99,7 +106,7 @@ function TopBar() {
   );
 }
 
-function MobileNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
+function MobileNavItem({ item, isActive, badge }: { item: NavItem; isActive: boolean; badge?: number }) {
   const Icon = item.icon;
 
   return (
@@ -118,6 +125,11 @@ function MobileNavItem({ item, isActive }: { item: NavItem; isActive: boolean })
             aria-hidden
           />
         )}
+        {!isActive && badge && badge > 0 ? (
+          <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#FFD700] px-0.5 text-[9px] font-bold text-black leading-none">
+            {badge > 9 ? '9+' : badge}
+          </span>
+        ) : null}
       </div>
       <span className="font-mono text-[10px] uppercase tracking-[0.12em]">
         {item.label}
@@ -129,7 +141,7 @@ function MobileNavItem({ item, isActive }: { item: NavItem; isActive: boolean })
 function MobileCreateItem({ isActive }: { isActive: boolean }) {
   return (
     <Link
-      href="/lab/new"
+      href="/lab/templates"
       className="flex flex-1 flex-col items-center gap-1 py-1.5 text-white"
       aria-label="Create"
     >
@@ -156,7 +168,8 @@ function MobileBottomBar() {
   const navItems = getMobileNavItems(hasCampus);
   const leadingItems = navItems.slice(0, 2);
   const trailingItems = navItems.slice(2);
-  const isCreateActive = /^\/lab(\/|$)/.test(pathname);
+  const isCreateActive = /^\/lab(\/|$)/.test(pathname) || /^\/lab\/templates(\/|$)/.test(pathname);
+  const { data: unreadCount = 0 } = useUnreadCount();
 
   return (
     <nav
@@ -182,6 +195,7 @@ function MobileBottomBar() {
           key={item.id}
           item={item}
           isActive={isNavItemActive(item, pathname)}
+          badge={item.id === 'you' ? unreadCount : undefined}
         />
       ))}
     </nav>
