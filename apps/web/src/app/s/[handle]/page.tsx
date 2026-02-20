@@ -744,6 +744,7 @@ export default function SpacePageUnified() {
                   const params = new URLSearchParams({
                     spaceId: space.id,
                     spaceName: space.name,
+                    spaceHandle: space.handle,
                   });
                   router.push(`/lab/templates?${params.toString()}`);
                 }}
@@ -758,6 +759,7 @@ export default function SpacePageUnified() {
                   const params = new URLSearchParams({
                     spaceId: space.id,
                     spaceName: space.name,
+                    spaceHandle: space.handle,
                   });
                   router.push(`/lab/templates?${params.toString()}`);
                 }}
@@ -797,6 +799,7 @@ export default function SpacePageUnified() {
                       const params = new URLSearchParams({
                         spaceId: space.id,
                         spaceName: space.name,
+                        spaceHandle: space.handle,
                       });
                       router.push(`/lab/templates?${params.toString()}`);
                     },
@@ -1082,6 +1085,7 @@ export default function SpacePageUnified() {
                     const params = new URLSearchParams({
                       spaceId: space.id,
                       spaceName: space.name,
+                      spaceHandle: space.handle,
                     });
                     router.push(`/lab/templates?${params.toString()}`);
                   }}
@@ -1336,6 +1340,7 @@ export default function SpacePageUnified() {
               const params = new URLSearchParams({
                 spaceId: space.id,
                 spaceName: space.name,
+                spaceHandle: space.handle,
               });
               router.push(`/lab/templates?${params.toString()}`);
             }}

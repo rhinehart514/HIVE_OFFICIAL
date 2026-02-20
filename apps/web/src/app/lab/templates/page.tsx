@@ -316,6 +316,7 @@ export default function TemplatesPage() {
   // Space context from query params (when launched from a space)
   const originSpaceId = searchParams.get('spaceId');
   const originSpaceName = searchParams.get('spaceName');
+  const originSpaceHandle = searchParams.get('spaceHandle');
 
   const [state, setState] = React.useState<PageState>('grid');
   const [selected, setSelected] = React.useState<CoreTemplate | null>(null);
@@ -360,8 +361,13 @@ export default function TemplatesPage() {
             });
 
             if (deployRes.ok) {
-              toast.success(`${toolName} deployed to ${originSpaceName ? decodeURIComponent(originSpaceName) : 'space'}`);
-              router.push(`/lab/${toolId}`);
+              toast.success(`${toolName} added to ${originSpaceName ? decodeURIComponent(originSpaceName) : 'your space'}`);
+              // Return to the space — the tool is already deployed there
+              if (originSpaceHandle) {
+                router.push(`/s/${decodeURIComponent(originSpaceHandle)}`);
+              } else {
+                router.push(`/lab/${toolId}`);
+              }
               return;
             }
             // Deploy failed — still redirect to tool, user can deploy manually

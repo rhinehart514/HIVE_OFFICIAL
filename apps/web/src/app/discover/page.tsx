@@ -47,6 +47,7 @@ interface FeedEvent {
 
 interface FeedSpace {
   id: string;
+  handle?: string;
   name: string;
   description?: string;
   avatarUrl?: string;
@@ -104,6 +105,7 @@ async function fetchFeedSpaces(): Promise<FeedSpace[]> {
   const spaces = data?.data?.spaces || data?.spaces || [];
   return spaces.map((s: Record<string, unknown>) => ({
     id: s.id as string,
+    handle: (s.handle || s.slug) as string | undefined,
     name: s.name as string,
     description: s.description as string | undefined,
     avatarUrl: (s.iconURL || s.bannerImage) as string | undefined,
@@ -326,7 +328,7 @@ function EventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (eventId: stri
 
 function SpaceCard({ space }: { space: FeedSpace }) {
   return (
-    <Link href={`/s/${space.id}`} className="block rounded-2xl bg-[#080808] border border-white/[0.06] p-4 hover:border-white/[0.1] transition-colors group">
+    <Link href={`/s/${space.handle || space.id}`} className="block rounded-2xl bg-[#080808] border border-white/[0.06] p-4 hover:border-white/[0.1] transition-colors group">
       <div className="flex items-start gap-3">
         <Avatar name={space.name} url={space.avatarUrl} size={40} />
         <div className="flex-1 min-w-0">
