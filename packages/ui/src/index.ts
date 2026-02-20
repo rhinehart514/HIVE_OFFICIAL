@@ -1446,10 +1446,6 @@ export type {
 export { ProfileHero as ProfileIdentityWidget } from "./design-system/components/profile";
 export type { ProfileHeroProps as ProfileIdentityWidgetProps } from "./design-system/components/profile";
 
-// ProfileActivityWidget → ProfileActivityHeatmap
-export { ProfileActivityHeatmap as ProfileActivityWidget } from "./design-system/components/profile";
-export type { ProfileActivityHeatmapProps as ProfileActivityWidgetProps } from "./design-system/components/profile";
-export type { ActivityContribution as ProfileActivityItem } from "./design-system/components/profile";
 
 // ProfileSpacesWidget → ProfileSpacesCard
 export { ProfileSpacesCard as ProfileSpacesWidget } from "./design-system/components/profile";
@@ -1676,11 +1672,8 @@ export {
   ProfileToolsCard,
   ProfileConnectionsCard,
   ProfileInterestsCard,
-  ProfileActivityHeatmap,
   ProfileStatsWidget,
   ProfileFeaturedToolCard,
-  // Discovery Components
-  PeopleYouMayKnow,
 } from "./design-system/components/profile";
 
 export type {
@@ -1717,15 +1710,9 @@ export type {
   ProfileConnectionsCardProps,
   ProfileConnection,
   ProfileInterestsCardProps,
-  ProfileActivityHeatmapProps,
-  ActivityContribution,
   ProfileStatsWidgetProps,
   ProfileFeaturedToolCardProps,
   FeaturedTool,
-  // Discovery Types
-  PeopleYouMayKnowProps,
-  UserSuggestion,
-  SuggestedUser,
 } from "./design-system/components/profile";
 
 // ============================================
@@ -1755,15 +1742,12 @@ export type {
 // ============================================
 
 export {
-  AddTabModal,
-  AddWidgetModal,
   MemberInviteModal,
   EventCreateModal,
   EventDetailsModal,
   SpaceLeaderOnboardingModal,
   SpaceWelcomeModal,
   SpaceEntryAnimation,
-  IntentConfirmationInline,
   MobileActionBar,
   MobileDrawer,
   PinnedMessagesWidget,
@@ -1771,11 +1755,6 @@ export {
 } from "./design-system/components/spaces";
 
 export type {
-  AddTabInput,
-  AddTabModalProps,
-  AddWidgetInputUI,
-  ExistingTool,
-  AddWidgetModalProps,
   MemberInviteInput,
   InviteableUser,
   MemberInviteModalProps,
@@ -1793,8 +1772,6 @@ export type {
   SpaceLeaderOnboardingModalProps,
   SpaceWelcomeModalProps,
   SpaceEntryAnimationProps,
-  IntentType,
-  IntentConfirmationInlineProps,
 } from "./design-system/components/spaces";
 
 export { ProfileToolModal } from "./design-system/components/profile";
