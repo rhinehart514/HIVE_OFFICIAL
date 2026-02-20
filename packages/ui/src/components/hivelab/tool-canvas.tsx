@@ -10,6 +10,7 @@ const BoxSelect = ViewfinderCircleIcon;
 import { renderElementSafe } from './element-renderers';
 import { cn } from '../../lib/utils';
 import type { ElementProps, ElementSharedState, ElementUserState } from '../../lib/hivelab/element-system';
+import { useConnectionResolver, type ResolvedInputs } from '../../lib/hivelab/use-connection-resolver';
 import type {
   ResolvedToolTheme,
   ToolError,
@@ -159,10 +160,12 @@ interface LayoutProps {
   sharedState?: ElementSharedState;
   userState?: ElementUserState;
   connections?: ElementProps['connections'];
+  /** Resolved connection inputs — keyed by targetInstanceId → { port → value } */
+  resolvedInputs?: ResolvedInputs;
 }
 
 // Grid layout: position-based rendering with 12-column grid
-function GridLayout({ elements, state, onElementChange, onElementAction, onElementOutput, context, sharedState, userState, connections }: LayoutProps) {
+function GridLayout({ elements, state, onElementChange, onElementAction, onElementOutput, context, sharedState, userState, connections, resolvedInputs }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   // Sort by position (top to bottom, left to right)
@@ -218,6 +221,7 @@ function GridLayout({ elements, state, onElementChange, onElementAction, onEleme
                     sharedState={sharedState}
                     userState={userState}
                     connections={connections}
+                    resolvedInputs={resolvedInputs}
                     elementDefinitions={elements.map((item) => ({
                       instanceId: item.instanceId,
                       elementId: item.elementId,
@@ -233,7 +237,7 @@ function GridLayout({ elements, state, onElementChange, onElementAction, onEleme
 }
 
 // Flow layout: flex wrap for responsive horizontal flow
-function FlowLayout({ elements, state, onElementChange, onElementAction, onElementOutput, context, sharedState, userState, connections }: LayoutProps) {
+function FlowLayout({ elements, state, onElementChange, onElementAction, onElementOutput, context, sharedState, userState, connections, resolvedInputs }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -259,6 +263,7 @@ function FlowLayout({ elements, state, onElementChange, onElementAction, onEleme
             sharedState={sharedState}
             userState={userState}
             connections={connections}
+            resolvedInputs={resolvedInputs}
             elementDefinitions={elements.map((item) => ({
               instanceId: item.instanceId,
               elementId: item.elementId,
@@ -271,7 +276,7 @@ function FlowLayout({ elements, state, onElementChange, onElementAction, onEleme
 }
 
 // Stack layout: vertical stack (default, mobile-friendly)
-function StackLayout({ elements, state, onElementChange, onElementAction, onElementOutput, context, sharedState, userState, connections }: LayoutProps) {
+function StackLayout({ elements, state, onElementChange, onElementAction, onElementOutput, context, sharedState, userState, connections, resolvedInputs }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -296,6 +301,7 @@ function StackLayout({ elements, state, onElementChange, onElementAction, onElem
             sharedState={sharedState}
             userState={userState}
             connections={connections}
+            resolvedInputs={resolvedInputs}
             elementDefinitions={elements.map((item) => ({
               instanceId: item.instanceId,
               elementId: item.elementId,
@@ -321,6 +327,7 @@ function ElementWrapper({
   sharedState,
   userState,
   connections,
+  resolvedInputs,
   elementDefinitions,
 }: {
   element: ToolElement;
@@ -333,6 +340,8 @@ function ElementWrapper({
   sharedState?: ElementSharedState;
   userState?: ElementUserState;
   connections?: ElementProps['connections'];
+  /** Pre-resolved connection inputs for this element */
+  resolvedInputs?: ResolvedInputs;
   elementDefinitions?: ElementProps['elementDefinitions'];
 }) {
   // Evaluate visibility conditions if present
@@ -407,10 +416,19 @@ function ElementWrapper({
     capabilities: runtimeCtx?.capabilities,
   } : undefined;
 
+  // Merge resolved connection inputs into the element's data prop.
+  // Resolved inputs override element state for connected ports.
+  const thisResolvedInputs = resolvedInputs?.[element.instanceId];
+  const resolvedData = thisResolvedInputs
+    ? Object.values(thisResolvedInputs).length === 1
+      ? Object.values(thisResolvedInputs)[0] // single input → pass value directly
+      : { ...(typeof elementState === 'object' && elementState !== null ? (elementState as Record<string, unknown>) : {}), ...thisResolvedInputs }
+    : elementState;
+
   const props: ElementProps = {
     id: element.instanceId,
     config: element.config as Record<string, unknown>,
-    data: elementState,
+    data: resolvedData,
     onChange: handleChange,
     onAction: handleAction,
     onOutput: handleOutput,
@@ -646,6 +664,18 @@ export function ToolCanvas({
     return theme.cssVariables as React.CSSProperties;
   }, [theme]);
 
+  // Resolve element-to-element connections so source outputs flow into target inputs.
+  const elementDefinitions = React.useMemo(
+    () => elements.map((el) => ({ instanceId: el.instanceId, elementId: el.elementId })),
+    [elements]
+  );
+  const resolvedInputs = useConnectionResolver(
+    connections,
+    sharedState,
+    state,
+    elementDefinitions
+  );
+
   if (isLoading) {
     return <CanvasSkeleton />;
   }
@@ -669,6 +699,8 @@ export function ToolCanvas({
     sharedState,
     userState,
     connections,
+    // Connection resolver output — injects source data into target elements
+    resolvedInputs,
   };
 
   return (

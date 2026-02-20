@@ -630,11 +630,12 @@ export async function generateTool(
   let rawOutput: string;
   let composition: ToolComposition | null = null;
 
-  // Rules-first execution; Groq is optional enhancement fallback.
-  const backends: GooseBackend[] = ['rules'];
+  // When Groq is configured, use it as primary; rules is the free fallback.
+  const backends: GooseBackend[] = [];
   if (config.backend === 'groq' && config.groqApiKey) {
     backends.push('groq');
   }
+  backends.push('rules'); // always last — free fallback
 
   for (const backend of backends) {
     try {
