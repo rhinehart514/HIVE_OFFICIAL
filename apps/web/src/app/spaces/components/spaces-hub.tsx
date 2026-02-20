@@ -3,63 +3,172 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, Plus, RefreshCw } from 'lucide-react';
-import { Button } from '@hive/ui/design-system/primitives';
+import { Plus, RefreshCw } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
 import { useSpacesHQ, type Space } from '../hooks/useSpacesHQ';
 import { SpaceCreationModal, SpaceClaimModal, SpaceJoinModal } from '@/components/spaces';
+import { secureApiFetch } from '@/lib/secure-auth-utils';
+import { cn } from '@/lib/utils';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface SpacesHubProps {
   isOnboarding?: boolean;
 }
 
-/* ── Space Row ─────────────────────────────────────────── */
+interface BrowseSpace {
+  id: string;
+  name: string;
+  handle?: string;
+  description?: string;
+  avatarUrl?: string;
+  iconURL?: string;
+  category?: string;
+  memberCount: number;
+  isVerified?: boolean;
+  isJoined?: boolean;
+  upcomingEventCount?: number;
+}
 
-function SpaceRow({ space }: { space: Space }) {
+const CATEGORIES = [
+  { key: 'all', label: 'All' },
+  { key: 'student_org', label: 'Orgs' },
+  { key: 'greek_life', label: 'Greek Life' },
+  { key: 'campus_living', label: 'Housing' },
+  { key: 'university_org', label: 'University' },
+  { key: 'hive_exclusive', label: 'HIVE' },
+] as const;
+
+type CategoryKey = (typeof CATEGORIES)[number]['key'];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Your Space Pill (horizontal strip)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function YourSpacePill({ space }: { space: Space }) {
   const hasUnread = (space.unreadCount ?? 0) > 0;
+  const href = `/s/${encodeURIComponent(space.handle ?? space.id)}`;
+  const initial = space.name.charAt(0).toUpperCase();
 
   return (
     <Link
-      href={`/s/${encodeURIComponent(space.handle ?? space.id)}`}
-      className="flex items-center gap-3 border-b border-white/[0.04] px-4 py-3 transition-colors hover:bg-white/[0.03]"
+      href={href}
+      className="flex flex-col items-center gap-2 flex-shrink-0 w-[72px]"
     >
-      {/* Unread dot */}
-      <span
-        className={`h-1.5 w-1.5 shrink-0 rounded-full ${hasUnread ? 'bg-[#FFD700]' : 'bg-transparent'}`}
-        aria-hidden
-      />
-
-      {/* Avatar */}
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/[0.06]">
-        {space.avatarUrl ? (
-          <img src={space.avatarUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="text-xs font-medium text-white/50">
-            {space.name.charAt(0).toUpperCase()}
-          </span>
+      <div className="relative">
+        <div className={cn(
+          'h-14 w-14 rounded-2xl overflow-hidden flex items-center justify-center',
+          'bg-white/[0.06] border transition-colors',
+          hasUnread ? 'border-[#FFD700]/40' : 'border-white/[0.06]'
+        )}>
+          {space.avatarUrl ? (
+            <img src={space.avatarUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-[18px] font-medium text-white/60">{initial}</span>
+          )}
+        </div>
+        {hasUnread && (
+          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#FFD700] border-2 border-black" />
         )}
       </div>
-
-      {/* Name + preview */}
-      <div className="min-w-0 flex-1">
-        <p className={`truncate text-[15px] font-medium ${hasUnread ? 'text-white' : 'text-white/50'}`}>
-          {space.name}
-        </p>
-        <p className="truncate text-[13px] text-white/50">
-          {space.memberCount > 0
-            ? `${space.memberCount} member${space.memberCount !== 1 ? 's' : ''}`
-            : 'Be the first to join'}
-          {space.category ? ` · ${space.category}` : ''}
-        </p>
-      </div>
-
-      {/* Arrow */}
-      <ArrowRight className="h-4 w-4 shrink-0 text-white/25" />
+      <span className="text-[11px] text-white/50 text-center leading-tight line-clamp-2 w-full">
+        {space.name}
+      </span>
     </Link>
   );
 }
 
-/* ── Main Component ────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// Discover Space Card (grid)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DiscoverSpaceCard({ space }: { space: BrowseSpace }) {
+  const href = `/s/${encodeURIComponent(space.handle ?? space.id)}`;
+  const avatarUrl = space.avatarUrl || space.iconURL;
+  const initial = space.name.charAt(0).toUpperCase();
+
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'group flex flex-col gap-3 p-4 rounded-2xl',
+        'bg-[#0D0D14] border border-white/[0.06]',
+        'hover:border-white/[0.1] transition-all duration-150',
+        'active:scale-[0.98]'
+      )}
+    >
+      {/* Avatar */}
+      <div className="h-12 w-12 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-white/[0.06]">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-[20px] font-medium text-white/50">{initial}</span>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-1 mb-1">
+          <p className="text-[14px] font-medium text-white leading-snug line-clamp-1">
+            {space.name}
+          </p>
+          {space.isJoined && (
+            <span className="flex-shrink-0 text-[10px] font-mono uppercase tracking-[0.1em] text-[#FFD700]/70 mt-0.5">
+              Joined
+            </span>
+          )}
+        </div>
+        <p className="text-[12px] text-white/35 line-clamp-2 leading-relaxed">
+          {space.description || `${space.memberCount} member${space.memberCount !== 1 ? 's' : ''}`}
+        </p>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] text-white/30 font-mono">
+          {space.memberCount > 0 ? `${space.memberCount.toLocaleString()} members` : 'New space'}
+        </span>
+        {space.upcomingEventCount && space.upcomingEventCount > 0 ? (
+          <span className="text-[11px] text-[#FFD700]/60">
+            {space.upcomingEventCount} event{space.upcomingEventCount !== 1 ? 's' : ''}
+          </span>
+        ) : null}
+      </div>
+    </Link>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Skeletons
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PillSkeleton() {
+  return (
+    <div className="flex flex-col items-center gap-2 flex-shrink-0 w-[72px]">
+      <div className="h-14 w-14 rounded-2xl bg-white/[0.06] animate-pulse" />
+      <div className="h-2.5 w-12 rounded bg-white/[0.04] animate-pulse" />
+    </div>
+  );
+}
+
+function CardSkeleton() {
+  return (
+    <div className="flex flex-col gap-3 p-4 rounded-2xl bg-[#0D0D14] border border-white/[0.06]">
+      <div className="h-12 w-12 rounded-xl bg-white/[0.06] animate-pulse" />
+      <div className="space-y-2">
+        <div className="h-4 w-28 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-3 w-20 rounded bg-white/[0.04] animate-pulse" />
+      </div>
+      <div className="h-3 w-16 rounded bg-white/[0.04] animate-pulse" />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProps) {
   const router = useRouter();
@@ -71,18 +180,20 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
   const [showJoinModal, setShowJoinModal] = React.useState(false);
   const [joinCode, setJoinCode] = React.useState<string | null>(null);
   const [claimDefaultQuery, setClaimDefaultQuery] = React.useState('');
+  const [activeCategory, setActiveCategory] = React.useState<CategoryKey>('all');
+  const [discoverSpaces, setDiscoverSpaces] = React.useState<BrowseSpace[]>([]);
+  const [discoverLoading, setDiscoverLoading] = React.useState(true);
 
+  // Auth redirect
   React.useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace('/enter?redirect=/spaces');
-    }
+    if (!authLoading && !user) router.replace('/enter?redirect=/spaces');
   }, [authLoading, user, router]);
 
+  // URL param modals
   React.useEffect(() => {
     const create = searchParams.get('create');
     const claim = searchParams.get('claim');
     const join = searchParams.get('join');
-
     if (create === 'true') {
       setShowCreateModal(true);
       router.replace('/spaces', { scroll: false });
@@ -98,136 +209,121 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
     }
   }, [searchParams, router]);
 
-  const { loading, error, organizations, refresh } = useSpacesHQ();
+  // Fetch discover spaces
+  React.useEffect(() => {
+    async function fetchDiscover() {
+      setDiscoverLoading(true);
+      try {
+        const params = new URLSearchParams({
+          sort: 'recommended',
+          limit: '48',
+          ...(activeCategory !== 'all' ? { category: activeCategory } : {}),
+        });
+        const res = await secureApiFetch(`/api/spaces/browse-v2?${params}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setDiscoverSpaces((data.spaces || data.data || []) as BrowseSpace[]);
+      } catch {
+        // fail silently
+      } finally {
+        setDiscoverLoading(false);
+      }
+    }
+    if (user) fetchDiscover();
+  }, [user, activeCategory]);
+
+  const { loading: yourLoading, organizations, refresh } = useSpacesHQ();
 
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full bg-black">
-      <div className="mx-auto max-w-[640px] px-0 md:px-4">
-        {/* Header */}
-        <header className="flex items-center justify-between px-4 py-5 md:px-0">
-          <h1 className="text-xl font-medium tracking-tight text-white">Spaces</h1>
-          <Button
-            variant="ghost"
-            size="sm"
+    <div className="min-h-screen bg-black pb-24">
+      {/* ── Header ── */}
+      <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
+          <h1 className="text-[18px] font-medium text-white">Spaces</h1>
+          <button
             onClick={() => setShowCreateModal(true)}
-            className="rounded-full text-white/50 hover:bg-white/[0.06] hover:text-white"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] text-[13px] text-white/60 hover:text-white hover:bg-white/[0.1] transition-colors"
           >
-            <Plus size={16} className="mr-1.5" />
+            <Plus className="w-3.5 h-3.5" />
             New
-          </Button>
-        </header>
+          </button>
+        </div>
+      </div>
 
-        {/* Error state */}
-        {!loading && error && (
-          <div className="flex flex-col items-center px-6 py-16 text-center">
-            <p className="mb-4 text-sm text-white/50">{error}</p>
-            <Button
-              onClick={refresh}
-              variant="ghost"
-              className="text-white/50 hover:bg-white/[0.06] hover:text-white"
-            >
-              <RefreshCw size={14} className="mr-2" />
-              Try again
-            </Button>
-          </div>
+      <div className="mx-auto max-w-2xl px-4">
+
+        {/* ── Your Spaces ── */}
+        {(yourLoading || organizations.length > 0) && (
+          <section className="pt-5 pb-4">
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/30 mb-4">
+              Your spaces
+            </p>
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+              {yourLoading
+                ? Array.from({ length: 4 }).map((_, i) => <PillSkeleton key={i} />)
+                : organizations.map((space) => (
+                    <YourSpacePill key={space.id} space={space} />
+                  ))}
+            </div>
+          </section>
         )}
 
-        {/* Loading skeleton */}
-        {loading && (
-          <div className="space-y-0">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3 border-b border-white/[0.04] px-4 py-3">
-                <span className="h-1.5 w-1.5 rounded-full bg-transparent" />
-                <div className="h-10 w-10 rounded-lg bg-white/[0.06]" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-32 rounded bg-white/[0.06]" />
-                  <div className="h-3 w-24 rounded bg-white/[0.04]" />
-                </div>
-              </div>
+        {/* ── Discover ── */}
+        <section className="pt-4">
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/30 mb-4">
+            Discover
+          </p>
+
+          {/* Category filter chips */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-1">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => setActiveCategory(cat.key)}
+                className={cn(
+                  'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all',
+                  activeCategory === cat.key
+                    ? 'bg-white text-black'
+                    : 'bg-white/[0.06] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
+                )}
+              >
+                {cat.label}
+              </button>
             ))}
           </div>
-        )}
 
-        {/* Space list */}
-        {!loading && !error && (
-          <>
-            {organizations.length === 0 ? (
-              <div className="px-4 py-16 text-center">
-                <p className="mb-4 text-sm text-white/50">
-                  No spaces yet. Join a community or create your own.
-                </p>
-                <div className="flex justify-center gap-3">
-                  <Button
-                    onClick={() => setShowCreateModal(true)}
-                    className="rounded-full bg-[#FFD700] text-black hover:bg-[#FFD700]/90"
-                  >
-                    Create space
-                  </Button>
-                  <Link
-                    href="/discover"
-                    className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-4 py-2 text-sm text-white/50 transition-colors hover:text-white"
-                  >
-                    Browse spaces
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div>
-                {organizations.map((space) => (
-                  <SpaceRow key={space.id} space={space} />
-                ))}
-              </div>
-            )}
-
-            {/* Footer */}
-            <div className="px-4 py-6">
-              <Link
-                href="/discover"
-                className="group flex items-center gap-1.5 text-sm text-white/50 transition-colors hover:text-white"
-              >
-                Browse all spaces
-                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-              </Link>
+          {/* Grid */}
+          {discoverLoading ? (
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
-          </>
-        )}
+          ) : discoverSpaces.length === 0 ? (
+            <div className="py-16 text-center">
+              <p className="text-[14px] text-white/30">No spaces in this category yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {discoverSpaces.map((space) => (
+                <DiscoverSpaceCard key={space.id} space={space} />
+              ))}
+            </div>
+          )}
+        </section>
+
       </div>
 
       {/* Modals */}
-      <SpaceCreationModal
-        isOpen={showCreateModal}
-        onClose={() => {
-          setShowCreateModal(false);
-          refresh();
-        }}
-      />
-
-      <SpaceClaimModal
-        isOpen={showClaimModal}
-        onClose={() => {
-          setShowClaimModal(false);
-          setClaimDefaultQuery('');
-          refresh();
-        }}
-        defaultQuery={claimDefaultQuery}
-      />
-
-      <SpaceJoinModal
-        isOpen={showJoinModal}
-        onClose={() => {
-          setShowJoinModal(false);
-          refresh();
-        }}
-        code={joinCode}
-      />
+      <SpaceCreationModal isOpen={showCreateModal} onClose={() => { setShowCreateModal(false); refresh(); }} />
+      <SpaceClaimModal isOpen={showClaimModal} onClose={() => { setShowClaimModal(false); setClaimDefaultQuery(''); refresh(); }} defaultQuery={claimDefaultQuery} />
+      <SpaceJoinModal isOpen={showJoinModal} onClose={() => { setShowJoinModal(false); refresh(); }} code={joinCode} />
     </div>
   );
 }
