@@ -474,6 +474,33 @@ function SpaceDiscoveryCard({ space }: { space: FeedSpace }) {
 /*  Empty State                                                        */
 /* ─────────────────────────────────────────────────────────────────── */
 
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Feed Tease — end of feed, hints at what's coming                  */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function FeedTease() {
+  const coming = [
+    { icon: '🏆', label: 'Club leaderboards' },
+    { icon: '📍', label: 'Live campus map' },
+    { icon: '🎙', label: 'Space announcements' },
+  ];
+
+  return (
+    <div className="mt-6 rounded-2xl border border-white/[0.04] bg-white/[0.01] p-5">
+      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/20 mb-3">More coming to your feed</p>
+      <div className="flex flex-col gap-2">
+        {coming.map((item) => (
+          <div key={item.label} className="flex items-center gap-3 opacity-40">
+            <span className="text-base leading-none">{item.icon}</span>
+            <span className="text-[13px] text-white/50">{item.label}</span>
+            <span className="ml-auto text-[10px] font-mono text-white/20 uppercase tracking-wider">Soon</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
@@ -617,6 +644,9 @@ export default function DiscoverPage() {
           {/* Today strip */}
           {todayEvents.length > 0 && <TodayStrip events={todayEvents} onRsvp={handleRsvp} />}
 
+          {/* Feed tease when body is empty but hero exists */}
+          {feed.length === 0 && heroEvent && <FeedTease />}
+
           {/* Feed body */}
           {feed.length > 0 && (
             <div className="space-y-3 pt-2">
@@ -632,6 +662,7 @@ export default function DiscoverPage() {
                   {item.type === 'space' && <SpaceDiscoveryCard space={item.data} />}
                 </motion.div>
               ))}
+              <FeedTease />
             </div>
           )}
         </div>

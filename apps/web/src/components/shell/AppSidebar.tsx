@@ -40,10 +40,10 @@ function SidebarNavItem({ item, isActive }: { item: NavItem; isActive: boolean }
     <Link
       href={item.href}
       className={cn(
-        'group relative flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150',
+        'group relative flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150 rounded-lg mx-1',
         isActive
-          ? 'text-white'
-          : 'text-white/40 hover:text-white/70'
+          ? 'text-white bg-white/[0.04]'
+          : 'text-white/55 hover:text-white/80 hover:bg-white/[0.03]'
       )}
     >
       {/* Gold left-border active indicator */}
@@ -57,7 +57,7 @@ function SidebarNavItem({ item, isActive }: { item: NavItem; isActive: boolean }
       <Icon
         className={cn(
           'h-4 w-4 shrink-0 transition-colors duration-150',
-          isActive ? 'text-white' : 'text-white/40 group-hover:text-white/70'
+          isActive ? 'text-white' : 'text-white/55 group-hover:text-white/80'
         )}
         strokeWidth={1.5}
       />
@@ -90,13 +90,13 @@ export function LeftSidebar() {
         aria-label="HIVE home"
       >
         <HiveLogoGold size={22} />
-        <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/50">
+        <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/70">
           HIVE
         </span>
       </Link>
 
       {/* Nav items */}
-      <nav className="mt-2 flex flex-col gap-0.5 px-1" aria-label="Main navigation">
+      <nav className="mt-2 flex flex-col gap-0.5" aria-label="Main navigation">
         {navItems.map((item) => (
           <SidebarNavItem
             key={item.id}
@@ -110,14 +110,14 @@ export function LeftSidebar() {
       <div className="flex-1" />
 
       {/* Bottom utilities */}
-      <div className="flex flex-col gap-0.5 border-t border-white/[0.06] px-1 py-3">
+      <div className="flex flex-col gap-0.5 border-t border-white/[0.06] py-3">
         {/* Search */}
         <button
           type="button"
           onClick={() => {
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
           }}
-          className="group flex items-center gap-3 px-4 py-2.5 text-sm text-white/40 transition-colors duration-150 hover:text-white/70"
+          className="group flex items-center gap-3 mx-1 px-4 py-2.5 text-sm text-white/55 rounded-lg transition-colors duration-150 hover:text-white/80 hover:bg-white/[0.03]"
           aria-label="Search (⌘K)"
         >
           <Search className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -129,7 +129,7 @@ export function LeftSidebar() {
         <button
           type="button"
           onClick={() => router.push('/notifications')}
-          className="group relative flex items-center gap-3 px-4 py-2.5 text-sm text-white/40 transition-colors duration-150 hover:text-white/70"
+          className="group relative flex items-center gap-3 mx-1 px-4 py-2.5 text-sm text-white/55 rounded-lg transition-colors duration-150 hover:text-white/80 hover:bg-white/[0.03]"
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
         >
           <div className="relative">
