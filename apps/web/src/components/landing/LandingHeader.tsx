@@ -14,7 +14,7 @@ export function LandingHeader() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2" aria-label="HIVE home">
           <span className="h-5 w-5 rounded-full bg-[#FFD700]" aria-hidden />
-          <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/50">
+          <span className="font-sans text-[11px] font-medium uppercase tracking-[0.18em] text-white/50">
             HIVE
           </span>
         </Link>

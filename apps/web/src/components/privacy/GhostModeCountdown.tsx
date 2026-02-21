@@ -56,7 +56,7 @@ export function GhostModeCountdown({
     return (
       <span
         className={cn(
-          'font-mono text-sm',
+          'font-sans text-sm',
           isExpiringSoon ? 'text-amber-400' : 'text-white/50',
           className
         )}

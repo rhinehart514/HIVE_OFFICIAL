@@ -308,7 +308,7 @@ function MemberRow({
           </Text>
           {getRoleIcon()}
         </div>
-        <Text size="xs" tone="muted" className="font-mono truncate">
+        <Text size="xs" tone="muted" className="font-sans truncate">
           @{member.username}
         </Text>
       </div>

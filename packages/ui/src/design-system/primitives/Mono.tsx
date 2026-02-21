@@ -14,7 +14,7 @@ import { cn } from '../../lib/utils';
 const monoVariants = cva(
   // Base: Geist Mono font, primary text
   [
-    'font-[var(--font-mono)]',
+    'font-[var(--font-sans)]',
     'text-[var(--color-text-primary)]',
   ].join(' '),
   {

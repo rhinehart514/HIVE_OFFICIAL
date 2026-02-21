@@ -529,7 +529,7 @@ export function SetupDashboard({
                 No shared data yet
               </p>
             ) : (
-              <div className="space-y-2 font-mono text-xs">
+              <div className="space-y-2 font-sans text-xs">
                 {Object.entries(deployment.sharedData).map(([key, value]) => (
                   <div key={key} className="flex justify-between p-2 rounded bg-[var(--hive-background-secondary)]">
                     <span className="text-[var(--hive-text-secondary)]">{key}</span>

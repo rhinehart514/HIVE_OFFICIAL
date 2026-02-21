@@ -572,7 +572,7 @@ function ContextFieldRow({
             {field.label}
           </span>
           <span
-            className="text-label-xs font-mono px-1 rounded"
+            className="text-label-xs font-sans px-1 rounded"
             style={{
               backgroundColor: PANEL_COLORS.bgActive,
               color: PANEL_COLORS.textTertiary,
@@ -587,7 +587,7 @@ function ContextFieldRow({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-label-xs font-mono mt-0.5 truncate"
+            className="text-label-xs font-sans mt-0.5 truncate"
             style={{ color: PANEL_COLORS.textTertiary }}
           >
             = {JSON.stringify(previewValue)}
@@ -621,7 +621,7 @@ function ContextFieldRow({
                 {field.description}
               </p>
               <p
-                className="text-label-xs font-mono"
+                className="text-label-xs font-sans"
                 style={{ color: PANEL_COLORS.textTertiary }}
               >
                 Example: {field.example}

@@ -273,7 +273,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
           {['02', '14', '32'].map((n, i) => (
             <div key={i} className="flex flex-col items-center">
               <div
-                className="px-2 py-1 rounded text-sm font-mono font-bold"
+                className="px-2 py-1 rounded text-sm font-sans font-bold"
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.1)',
                   color: 'var(--hivelab-text-primary)'
@@ -1832,7 +1832,7 @@ export function IDECanvas({
             <p className="text-sm" style={{ color: 'var(--hivelab-text-secondary)' }}>
               Drag elements from the left panel onto the canvas, or press{' '}
               <kbd
-                className="px-1.5 py-0.5 rounded text-xs font-mono"
+                className="px-1.5 py-0.5 rounded text-xs font-sans"
                 style={{
                   backgroundColor: 'var(--hivelab-panel)',
                   border: `1px solid ${'var(--hivelab-border)'}`,

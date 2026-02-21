@@ -108,7 +108,7 @@ export const WhiteGlowFocusStates: Story = {
           <Button variant="secondary">Secondary Button</Button>
         </div>
         <div className="p-4 bg-[var(--hive-background-secondary)] rounded-lg border border-[var(--hive-border-default)]">
-          <p className="text-xs text-[var(--hive-text-muted)] mb-2 font-mono">
+          <p className="text-xs text-[var(--hive-text-muted)] mb-2 font-sans">
             focus-visible:ring-[var(--hive-interactive-focus)]
           </p>
           <p className="text-xs text-[var(--hive-text-secondary)]">
@@ -163,13 +163,13 @@ export const WhiteGlowFocusStates: Story = {
           </div>
         </div>
         <div className="p-4 bg-[var(--hive-background-secondary)] rounded-lg border border-[var(--hive-border-default)]">
-          <p className="text-xs text-[var(--hive-text-muted)] mb-2 font-mono">
+          <p className="text-xs text-[var(--hive-text-muted)] mb-2 font-sans">
             focus-visible:border-[var(--hive-border-focus)]
           </p>
-          <p className="text-xs text-[var(--hive-text-muted)] mb-2 font-mono">
+          <p className="text-xs text-[var(--hive-text-muted)] mb-2 font-sans">
             focus-visible:ring-[var(--hive-interactive-focus)]
           </p>
-          <p className="text-xs text-[var(--hive-text-muted)] font-mono">
+          <p className="text-xs text-[var(--hive-text-muted)] font-sans">
             focus-visible:shadow-[0_0_28px_rgba(255,255,255,0.15)]
           </p>
           <p className="text-xs text-[var(--hive-text-secondary)] mt-3">
@@ -255,7 +255,7 @@ export const WhiteGlowFocusStates: Story = {
           <Link href="#" tone="muted">Muted Link</Link>
         </div>
         <div className="p-4 bg-[var(--hive-background-secondary)] rounded-lg border border-[var(--hive-border-default)]">
-          <p className="text-xs text-[var(--hive-text-muted)] font-mono">
+          <p className="text-xs text-[var(--hive-text-muted)] font-sans">
             focus-visible:ring-[var(--hive-interactive-focus)]
           </p>
         </div>
@@ -277,15 +277,15 @@ export const WhiteGlowFocusStates: Story = {
             <div className="space-y-3 text-sm text-[var(--hive-text-secondary)]">
               <div>
                 <p className="text-xs text-[var(--hive-text-muted)] mb-1">Focus Rings:</p>
-                <p className="font-mono text-xs text-yellow-400">Gold (#FFD700)</p>
+                <p className="font-sans text-xs text-yellow-400">Gold (#FFD700)</p>
               </div>
               <div>
                 <p className="text-xs text-[var(--hive-text-muted)] mb-1">Hover States:</p>
-                <p className="font-mono text-xs text-yellow-400">Gold backgrounds</p>
+                <p className="font-sans text-xs text-yellow-400">Gold backgrounds</p>
               </div>
               <div>
                 <p className="text-xs text-[var(--hive-text-muted)] mb-1">Border Focus:</p>
-                <p className="font-mono text-xs text-yellow-400">Gold borders</p>
+                <p className="font-sans text-xs text-yellow-400">Gold borders</p>
               </div>
               <p className="text-xs text-red-400 mt-4">
                 ⚠️ Problem: Visual noise, gold fatigue
@@ -301,15 +301,15 @@ export const WhiteGlowFocusStates: Story = {
             <div className="space-y-3 text-sm text-[var(--hive-text-secondary)]">
               <div>
                 <p className="text-xs text-[var(--hive-text-muted)] mb-1">Focus Rings:</p>
-                <p className="font-mono text-xs text-white">White glow (rgba(255,255,255,0.20))</p>
+                <p className="font-sans text-xs text-white">White glow (rgba(255,255,255,0.20))</p>
               </div>
               <div>
                 <p className="text-xs text-[var(--hive-text-muted)] mb-1">Hover States:</p>
-                <p className="font-mono text-xs text-white">Subtle white (rgba(255,255,255,0.04))</p>
+                <p className="font-sans text-xs text-white">Subtle white (rgba(255,255,255,0.04))</p>
               </div>
               <div>
                 <p className="text-xs text-[var(--hive-text-muted)] mb-1">Border Focus:</p>
-                <p className="font-mono text-xs text-white">White (rgba(255,255,255,0.40))</p>
+                <p className="font-sans text-xs text-white">White (rgba(255,255,255,0.40))</p>
               </div>
               <p className="text-xs text-green-400 mt-4">
                 ✅ Result: ChatGPT/Vercel aesthetic
@@ -326,7 +326,7 @@ export const WhiteGlowFocusStates: Story = {
             CSS Variables Reference
           </h2>
         </div>
-        <div className="p-6 bg-[var(--hive-background-secondary)] rounded-lg border border-[var(--hive-border-default)] font-mono text-xs space-y-2">
+        <div className="p-6 bg-[var(--hive-background-secondary)] rounded-lg border border-[var(--hive-border-default)] font-sans text-xs space-y-2">
           <div className="flex justify-between">
             <span className="text-[var(--hive-text-muted)]">--hive-interactive-focus</span>
             <span className="text-[var(--hive-text-primary)]">rgba(255, 255, 255, 0.20)</span>

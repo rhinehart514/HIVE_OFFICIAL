@@ -320,7 +320,7 @@ export function TimerElement({
                         className="flex justify-between text-sm bg-muted/30 rounded px-2 py-1"
                       >
                         <span className="text-muted-foreground">Lap {index + 1}</span>
-                        <span className="font-mono tabular-nums">
+                        <span className="font-sans tabular-nums">
                           {formatted.showHours && `${formatted.hrs}:`}
                           {formatted.mins.toString().padStart(2, '0')}:
                           {formatted.secs.toString().padStart(2, '0')}

@@ -102,7 +102,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
         <div className="space-y-2">
           {/* Handle + Name */}
           <div>
-            <Text size="sm" weight="medium" className="font-mono text-muted-foreground">
+            <Text size="sm" weight="medium" className="font-sans text-muted-foreground">
               @{handle}
             </Text>
             <Text size="sm" className="truncate">
@@ -255,7 +255,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
       {/* Content */}
       <div className="pt-12 pb-4 px-5">
         {/* Handle */}
-        <Text size="xs" className="font-mono text-muted-foreground mb-0.5">
+        <Text size="xs" className="font-sans text-muted-foreground mb-0.5">
           @{handle}
         </Text>
 

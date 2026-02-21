@@ -242,7 +242,7 @@ function LogEntry({ run }: { run: AutomationRun }) {
                     Trigger Data
                   </span>
                   <pre
-                    className="mt-1 p-2 rounded text-label-xs font-mono overflow-x-auto"
+                    className="mt-1 p-2 rounded text-label-xs font-sans overflow-x-auto"
                     style={{ backgroundColor: PANEL_COLORS.bg, color: PANEL_COLORS.textSecondary }}
                   >
                     {JSON.stringify(run.triggerData, null, 2)}

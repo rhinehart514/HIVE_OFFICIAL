@@ -227,7 +227,7 @@ function EventGroup({ label, events, onRsvp }: {
   return (
     <section>
       <div className="flex items-center gap-3 mb-3">
-        <h2 className="text-[11px] font-mono uppercase tracking-[0.14em] text-white/40">{label}</h2>
+        <h2 className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/40">{label}</h2>
         {label === 'Tonight' && (
           <span className="h-1.5 w-1.5 rounded-full bg-[#FFD700] animate-pulse" />
         )}

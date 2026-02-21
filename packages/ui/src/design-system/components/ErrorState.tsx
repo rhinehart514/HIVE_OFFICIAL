@@ -315,12 +315,12 @@ const ErrorState: React.FC<ErrorStateProps> = ({
           {detailsExpanded && (
             <div className="mt-2 p-3 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-left">
               {code && (
-                <Text size="xs" tone="muted" className="font-mono">
+                <Text size="xs" tone="muted" className="font-sans">
                   Error code: {code}
                 </Text>
               )}
               {details && (
-                <Text size="xs" tone="muted" className="font-mono mt-1 break-all">
+                <Text size="xs" tone="muted" className="font-sans mt-1 break-all">
                   {details}
                 </Text>
               )}

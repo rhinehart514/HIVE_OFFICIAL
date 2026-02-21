@@ -155,7 +155,7 @@ const WelcomePage = () => (
               <div className="h-24" style={{ backgroundColor: item.color }} />
               <div className="p-3 bg-gray-900/50">
                 <div className="text-sm font-medium">{item.name}</div>
-                <div className="text-xs text-gray-500 font-mono">{item.color}</div>
+                <div className="text-xs text-gray-500 font-sans">{item.color}</div>
               </div>
             </div>
           ))}

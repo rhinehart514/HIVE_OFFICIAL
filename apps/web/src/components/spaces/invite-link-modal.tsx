@@ -127,7 +127,7 @@ function InviteLinkRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <LinkIcon className="w-4 h-4 text-white/50 flex-shrink-0" />
-          <Text size="sm" className="text-white font-mono truncate">
+          <Text size="sm" className="text-white font-sans truncate">
             .../{invite.code.slice(0, 8)}
           </Text>
         </div>

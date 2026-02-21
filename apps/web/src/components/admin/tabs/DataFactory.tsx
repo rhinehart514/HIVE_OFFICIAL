@@ -135,7 +135,7 @@ export function DataFactory() {
             <div key={space.id} className="flex items-center justify-between px-3 py-2 bg-white/[0.06] rounded-lg">
               <div className="min-w-0">
                 <p className="text-sm text-white truncate">{space.handle}</p>
-                <p className="text-[11px] text-white/50 font-mono">{space.id.slice(0, 12)}...</p>
+                <p className="text-[11px] text-white/50 font-sans">{space.id.slice(0, 12)}...</p>
               </div>
               <a
                 href={space.url}

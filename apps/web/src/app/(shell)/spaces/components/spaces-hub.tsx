@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, RefreshCw } from 'lucide-react';
+import { Plus, ChevronRight } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
 import { useSpacesHQ, type Space } from '../hooks/useSpacesHQ';
 import { SpaceCreationModal, SpaceClaimModal, SpaceJoinModal } from '@/components/spaces';
@@ -53,27 +53,24 @@ function YourSpacePill({ space }: { space: Space }) {
   const initial = space.name.charAt(0).toUpperCase();
 
   return (
-    <Link
-      href={href}
-      className="flex flex-col items-center gap-2 flex-shrink-0 w-[72px]"
-    >
+    <Link href={href} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px]">
       <div className="relative">
         <div className={cn(
-          'h-14 w-14 rounded-2xl overflow-hidden flex items-center justify-center',
+          'h-12 w-12 rounded-xl overflow-hidden flex items-center justify-center',
           'bg-white/[0.06] border transition-colors',
           hasUnread ? 'border-[#FFD700]/40' : 'border-white/[0.06]'
         )}>
           {space.avatarUrl ? (
             <img src={space.avatarUrl} alt="" className="h-full w-full object-cover" />
           ) : (
-            <span className="text-[18px] font-medium text-white/60">{initial}</span>
+            <span className="text-[16px] font-medium text-white/50">{initial}</span>
           )}
         </div>
         {hasUnread && (
-          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#FFD700] border-2 border-black" />
+          <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#FFD700] border-2 border-black" />
         )}
       </div>
-      <span className="text-[11px] text-white/50 text-center leading-tight line-clamp-2 w-full">
+      <span className="text-[11px] text-white/40 text-center leading-tight line-clamp-2 w-full">
         {space.name}
       </span>
     </Link>
@@ -81,7 +78,7 @@ function YourSpacePill({ space }: { space: Space }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Discover Space Card (grid)
+// Discover Space Card — compact grid card
 // ─────────────────────────────────────────────────────────────────────────────
 
 function DiscoverSpaceCard({ space }: { space: BrowseSpace }) {
@@ -93,45 +90,47 @@ function DiscoverSpaceCard({ space }: { space: BrowseSpace }) {
     <Link
       href={href}
       className={cn(
-        'group flex flex-col gap-3 p-4 rounded-2xl',
-        'bg-[#0D0D14] border border-white/[0.06]',
-        'hover:border-white/[0.1] transition-all duration-150',
-        'active:scale-[0.98]'
+        'group flex flex-col gap-3 p-3.5 rounded-xl',
+        'bg-[#0a0a0a] border border-white/[0.06]',
+        'hover:border-white/[0.12] hover:bg-white/[0.02] transition-all duration-150',
+        'active:scale-[0.99]'
       )}
     >
-      {/* Avatar */}
-      <div className="h-12 w-12 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-white/[0.06]">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="text-[20px] font-medium text-white/50">{initial}</span>
+      {/* Avatar row */}
+      <div className="flex items-start justify-between">
+        <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center bg-white/[0.06]">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-[16px] font-medium text-white/40">{initial}</span>
+          )}
+        </div>
+        {space.isJoined && (
+          <span className="text-[10px] text-[#FFD700]/60 mt-0.5">Joined</span>
         )}
       </div>
 
-      {/* Info */}
+      {/* Name + description */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-1 mb-1">
-          <p className="text-[14px] font-medium text-white leading-snug line-clamp-1">
-            {space.name}
-          </p>
-          {space.isJoined && (
-            <span className="flex-shrink-0 text-[10px] font-mono uppercase tracking-[0.1em] text-[#FFD700]/70 mt-0.5">
-              Joined
-            </span>
-          )}
-        </div>
-        <p className="text-[12px] text-white/35 line-clamp-2 leading-relaxed">
-          {space.description || `${space.memberCount} member${space.memberCount !== 1 ? 's' : ''}`}
+        <p className="text-[13px] font-medium text-white leading-snug line-clamp-1 mb-1">
+          {space.name}
+        </p>
+        <p className="text-[12px] text-white/30 line-clamp-2 leading-relaxed">
+          {space.description || '\u00a0'}
         </p>
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <span className="text-[11px] text-white/30 font-mono">
-          {space.memberCount > 0 ? `${space.memberCount.toLocaleString()} members` : 'New space'}
-        </span>
+        {space.memberCount > 0 ? (
+          <span className="text-[11px] text-white/25">
+            {space.memberCount.toLocaleString()} members
+          </span>
+        ) : (
+          <span className="text-[11px] text-white/15">New</span>
+        )}
         {space.upcomingEventCount && space.upcomingEventCount > 0 ? (
-          <span className="text-[11px] text-[#FFD700]/60">
+          <span className="text-[11px] text-[#FFD700]/50">
             {space.upcomingEventCount} event{space.upcomingEventCount !== 1 ? 's' : ''}
           </span>
         ) : null}
@@ -146,22 +145,23 @@ function DiscoverSpaceCard({ space }: { space: BrowseSpace }) {
 
 function PillSkeleton() {
   return (
-    <div className="flex flex-col items-center gap-2 flex-shrink-0 w-[72px]">
-      <div className="h-14 w-14 rounded-2xl bg-white/[0.06] animate-pulse" />
-      <div className="h-2.5 w-12 rounded bg-white/[0.04] animate-pulse" />
+    <div className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[64px]">
+      <div className="h-12 w-12 rounded-xl bg-white/[0.06] animate-pulse" />
+      <div className="h-2.5 w-10 rounded bg-white/[0.04] animate-pulse" />
     </div>
   );
 }
 
 function CardSkeleton() {
   return (
-    <div className="flex flex-col gap-3 p-4 rounded-2xl bg-[#0D0D14] border border-white/[0.06]">
-      <div className="h-12 w-12 rounded-xl bg-white/[0.06] animate-pulse" />
-      <div className="space-y-2">
-        <div className="h-4 w-28 rounded bg-white/[0.06] animate-pulse" />
+    <div className="flex flex-col gap-3 p-3.5 rounded-xl bg-[#0a0a0a] border border-white/[0.06]">
+      <div className="h-10 w-10 rounded-lg bg-white/[0.06] animate-pulse" />
+      <div className="space-y-1.5">
+        <div className="h-3.5 w-24 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-3 w-32 rounded bg-white/[0.04] animate-pulse" />
         <div className="h-3 w-20 rounded bg-white/[0.04] animate-pulse" />
       </div>
-      <div className="h-3 w-16 rounded bg-white/[0.04] animate-pulse" />
+      <div className="h-2.5 w-16 rounded bg-white/[0.04] animate-pulse" />
     </div>
   );
 }
@@ -239,24 +239,46 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="min-h-screen bg-black pb-24 md:pb-10">
+
       {/* ── Header ── */}
-      <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
-          <h1 className="text-[18px] font-medium text-white">Spaces</h1>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] text-[13px] text-white/60 hover:text-white hover:bg-white/[0.1] transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New
-          </button>
+      <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/90 backdrop-blur-xl">
+        <div className="mx-auto max-w-5xl px-6">
+          {/* Title row */}
+          <div className="flex items-center justify-between py-4">
+            <h1 className="text-[17px] font-semibold text-white">Spaces</h1>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-1.5 text-[13px] text-white/40 hover:text-white/70 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              New
+            </button>
+          </div>
+
+          {/* Tab filters — no pill backgrounds */}
+          <div className="flex gap-6 overflow-x-auto no-scrollbar">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => setActiveCategory(cat.key)}
+                className={cn(
+                  'flex-shrink-0 pb-3 text-[13px] font-medium transition-colors border-b-[1.5px]',
+                  activeCategory === cat.key
+                    ? 'text-white border-[#FFD700]'
+                    : 'text-white/35 border-transparent hover:text-white/60'
+                )}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -264,13 +286,13 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
 
         {/* ── Your Spaces ── */}
         {(yourLoading || organizations.length > 0) && (
-          <section className="pt-5 pb-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/30 mb-4">
+          <section className="pt-5 pb-4 border-b border-white/[0.04]">
+            <p className="text-[11px] uppercase tracking-[0.12em] text-white/25 mb-4">
               Your spaces
             </p>
-            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1">
               {yourLoading
-                ? Array.from({ length: 4 }).map((_, i) => <PillSkeleton key={i} />)
+                ? Array.from({ length: 5 }).map((_, i) => <PillSkeleton key={i} />)
                 : organizations.map((space) => (
                     <YourSpacePill key={space.id} space={space} />
                   ))}
@@ -278,41 +300,18 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
           </section>
         )}
 
-        {/* ── Discover ── */}
-        <section className="pt-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/30 mb-4">
-            Discover
-          </p>
-
-          {/* Category filter chips */}
-          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-1">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => setActiveCategory(cat.key)}
-                className={cn(
-                  'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all',
-                  activeCategory === cat.key
-                    ? 'bg-white text-black'
-                    : 'bg-white/[0.06] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
-                )}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Grid */}
+        {/* ── Discover Grid ── */}
+        <section className="pt-5">
           {discoverLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+              {Array.from({ length: 12 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           ) : discoverSpaces.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-[14px] text-white/30">No spaces in this category yet</p>
+            <div className="py-20 text-center">
+              <p className="text-[14px] text-white/25">No spaces in this category</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
               {discoverSpaces.map((space) => (
                 <DiscoverSpaceCard key={space.id} space={space} />
               ))}

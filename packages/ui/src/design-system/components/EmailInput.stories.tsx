@@ -360,7 +360,7 @@ export const HelperFunctionsDemo: Story = {
             domainSuffix={domain}
             onSubmit={() => {}}
           />
-          <div className="p-4 rounded-xl bg-white/5 text-body-sm font-mono space-y-2">
+          <div className="p-4 rounded-xl bg-white/5 text-body-sm font-sans space-y-2">
             <p className="text-white/60">
               <span className="text-white/40">getFullEmail({`'${value}', '${domain}'`})</span>
             </p>

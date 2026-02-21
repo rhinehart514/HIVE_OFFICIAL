@@ -172,7 +172,7 @@ function PollOptionButton({
         </div>
         {showResults && (
           <motion.span
-            className="text-sm font-mono text-muted-foreground tabular-nums"
+            className="text-sm font-sans text-muted-foreground tabular-nums"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}

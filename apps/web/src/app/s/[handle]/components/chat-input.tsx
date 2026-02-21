@@ -252,7 +252,7 @@ export function ChatInput({
             'py-2 max-h-[200px] overflow-y-auto'
           )}
         >
-          <div className="px-3 py-1.5 text-xs text-white/50 flex items-center gap-1.5 font-mono uppercase tracking-wider">
+          <div className="px-3 py-1.5 text-xs text-white/50 flex items-center gap-1.5 font-sans uppercase tracking-wider">
             <Command className="w-3 h-3" />
             Quick Actions
           </div>

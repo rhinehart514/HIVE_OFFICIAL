@@ -281,7 +281,7 @@ export function StreamingPreview({
       >
         {elements.length === 0 && phase !== 'error' && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-white/30 text-sm font-mono">Building...</p>
+            <p className="text-white/30 text-sm font-sans">Building...</p>
           </div>
         )}
 

@@ -95,12 +95,12 @@ export const Enclosed: StoryObj = {
           </div>
         </TabsContent>
         <TabsContent value="code" className="p-4 m-0 bg-[var(--color-bg-page)]">
-          <code className="text-sm font-mono text-[#4A9EFF]">
+          <code className="text-sm font-sans text-[#4A9EFF]">
             const greeting = &quot;Hello, HIVE!&quot;;
           </code>
         </TabsContent>
         <TabsContent value="console" className="p-4 m-0 bg-[var(--color-bg-page)]">
-          <div className="font-mono text-sm text-[#22C55E]">
+          <div className="font-sans text-sm text-[#22C55E]">
             &gt; Ready
           </div>
         </TabsContent>

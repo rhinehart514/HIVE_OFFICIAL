@@ -109,7 +109,7 @@ export function ToolPreviewPage({
                 <div className="h-full">
                   <h3 className="text-sm font-medium text-white mb-4">Generated Code</h3>
                   <div className="h-[calc(100%-2rem)] bg-[rgba(0,0,0,0.5)] border border-[rgba(255,255,255,0.1)] rounded-lg p-4 overflow-auto">
-                    <pre className="text-sm text-hive-text-tertiary whitespace-pre-wrap font-mono">{generatedCode}</pre>
+                    <pre className="text-sm text-hive-text-tertiary whitespace-pre-wrap font-sans">{generatedCode}</pre>
                   </div>
                 </div>
               ) : (
@@ -136,7 +136,7 @@ export function ToolPreviewPage({
                 </div>
                 <div>
                   <span className="text-hive-text-tertiary">ID:</span>
-                  <span className="text-white ml-2 font-mono">{composition.id}</span>
+                  <span className="text-white ml-2 font-sans">{composition.id}</span>
                 </div>
                 <div>
                   <span className="text-hive-text-tertiary">Elements:</span>

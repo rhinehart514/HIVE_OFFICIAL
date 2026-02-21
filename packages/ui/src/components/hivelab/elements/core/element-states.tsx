@@ -196,7 +196,7 @@ export function ElementError({
       <div className="space-y-1">
         <p className="text-sm font-medium text-foreground">{message}</p>
         {details && process.env.NODE_ENV === 'development' && (
-          <p className="text-xs text-muted-foreground font-mono">{details}</p>
+          <p className="text-xs text-muted-foreground font-sans">{details}</p>
         )}
       </div>
       {onRetry && (

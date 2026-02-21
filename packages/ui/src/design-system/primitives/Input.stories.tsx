@@ -217,7 +217,7 @@ export const SearchHeaderContext: Story = {
         placeholder="Search spaces..."
         className="flex-1 bg-transparent text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] outline-none"
       />
-      <kbd className="px-2 py-1 rounded bg-[var(--color-bg-page)] text-[var(--color-text-muted)] text-xs font-mono">
+      <kbd className="px-2 py-1 rounded bg-[var(--color-bg-page)] text-[var(--color-text-muted)] text-xs font-sans">
         ⌘K
       </kbd>
     </div>

@@ -81,7 +81,7 @@ export function SpaceThreshold({
               {space.name}
             </h2>
 
-            <span className="text-[13px] font-mono text-white/40 mb-3">
+            <span className="text-[13px] font-sans text-white/40 mb-3">
               @{space.handle}
             </span>
 

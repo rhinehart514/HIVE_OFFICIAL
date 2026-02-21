@@ -179,12 +179,12 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           className="flex items-center gap-2 rounded-full px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
         >
           <span className="h-4 w-4 rounded-full bg-[#FFD700]" aria-hidden />
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
+          <span className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
             HIVE
           </span>
         </Link>
         {tool.ownerName && (
-          <span className="text-[12px] text-white/25 font-mono tracking-wide">
+          <span className="text-[12px] text-white/25 font-sans tracking-wide">
             by {tool.ownerName}
           </span>
         )}
@@ -258,7 +258,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             className="h-[6px] w-[6px] rounded-full bg-[#FFD700]"
             style={{ animation: 'pulse-breathe 3s ease-in-out infinite' }}
           />
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 group-hover:text-white/50 transition-colors">
+          <span className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 group-hover:text-white/50 transition-colors">
             HIVE
           </span>
         </Link>

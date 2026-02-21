@@ -95,7 +95,7 @@ export function DebugPanel() {
 
             return (
               <div key={flagId} className="flex items-center justify-between py-0.5">
-                <span className="text-[11px] text-white/50 font-mono">{flagId}</span>
+                <span className="text-[11px] text-white/50 font-sans">{flagId}</span>
                 <div className="flex items-center gap-1.5">
                   {hasOverride && (
                     <span className="text-[9px] text-blue-400 font-medium uppercase">override</span>
@@ -150,7 +150,7 @@ function Row({ label, value, mono }: { label: string; value?: string | null; mon
     <div className="flex items-center justify-between py-0.5">
       <span className="text-[11px] text-white/50">{label}</span>
       <span
-        className={`text-[11px] text-white/50 max-w-[200px] truncate ${mono ? 'font-mono' : ''}`}
+        className={`text-[11px] text-white/50 max-w-[200px] truncate ${mono ? 'font-sans' : ''}`}
         title={value || undefined}
       >
         {value || '—'}

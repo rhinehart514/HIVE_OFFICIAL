@@ -406,7 +406,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             aria-valuemin={schema.min}
             aria-valuemax={schema.max}
             className={cn(
-              'w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200',
+              'w-full rounded-lg px-3 py-2 text-sm font-sans outline-none transition-all duration-200',
               focusRing
             )}
             style={{
@@ -981,7 +981,7 @@ export function PropertiesPanel({
           initial={prefersReducedMotion ? {} : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="text-xs mt-1 font-mono"
+          className="text-xs mt-1 font-sans"
           style={{ color: 'var(--hivelab-text-tertiary)' }}
         >
           ID: {selectedElement.id.slice(0, 20)}...
@@ -1058,7 +1058,7 @@ export function PropertiesPanel({
                     position: { ...selectedElement.position, x: Number(e.target.value) },
                   })
                 }
-                className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+                className={cn('w-full rounded-lg px-3 py-2 text-sm font-sans outline-none transition-all duration-200', focusRing)}
                 style={{
                   backgroundColor: 'var(--hivelab-surface-hover)',
                   border: `1px solid ${'var(--hivelab-border)'}`,
@@ -1076,7 +1076,7 @@ export function PropertiesPanel({
                     position: { ...selectedElement.position, y: Number(e.target.value) },
                   })
                 }
-                className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+                className={cn('w-full rounded-lg px-3 py-2 text-sm font-sans outline-none transition-all duration-200', focusRing)}
                 style={{
                   backgroundColor: 'var(--hivelab-surface-hover)',
                   border: `1px solid ${'var(--hivelab-border)'}`,
@@ -1097,7 +1097,7 @@ export function PropertiesPanel({
                     size: { ...selectedElement.size, width: value },
                   });
                 }}
-                className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+                className={cn('w-full rounded-lg px-3 py-2 text-sm font-sans outline-none transition-all duration-200', focusRing)}
                 style={{
                   backgroundColor: 'var(--hivelab-surface-hover)',
                   border: `1px solid ${'var(--hivelab-border)'}`,
@@ -1118,7 +1118,7 @@ export function PropertiesPanel({
                     size: { ...selectedElement.size, height: value },
                   });
                 }}
-                className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+                className={cn('w-full rounded-lg px-3 py-2 text-sm font-sans outline-none transition-all duration-200', focusRing)}
                 style={{
                   backgroundColor: 'var(--hivelab-surface-hover)',
                   border: `1px solid ${'var(--hivelab-border)'}`,
@@ -1158,7 +1158,7 @@ export function PropertiesPanel({
                 const value = Math.max(1, Math.min(999, Number(e.target.value) || 1));
                 onUpdateElement(selectedElement.id, { zIndex: value });
               }}
-              className={cn('w-16 rounded-md px-2 py-1 text-sm font-mono text-right outline-none transition-all duration-200', focusRing)}
+              className={cn('w-16 rounded-md px-2 py-1 text-sm font-sans text-right outline-none transition-all duration-200', focusRing)}
               style={{
                 backgroundColor: 'var(--hivelab-surface-hover)',
                 border: `1px solid var(--hivelab-border)`,

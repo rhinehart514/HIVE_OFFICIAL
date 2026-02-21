@@ -870,7 +870,7 @@ export default function SpacePageUnified() {
                       {/* Upcoming events */}
                       {upcomingEvents.length > 0 && (
                         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                          <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-white/30 mb-3">Upcoming</p>
+                          <p className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30 mb-3">Upcoming</p>
                           <div className="flex flex-col gap-2">
                             {upcomingEvents.slice(0, 2).map((event) => (
                               <div key={event.id} className="flex items-center justify-between gap-3">
@@ -889,7 +889,7 @@ export default function SpacePageUnified() {
                       {/* Tools */}
                       {sidebarTools.length > 0 && (
                         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                          <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-white/30 mb-3">Tools</p>
+                          <p className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30 mb-3">Tools</p>
                           <div className="flex flex-wrap gap-2">
                             {sidebarTools.slice(0, 3).map((tool) => (
                               <span

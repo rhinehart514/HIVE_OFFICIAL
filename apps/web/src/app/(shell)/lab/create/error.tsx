@@ -56,7 +56,7 @@ export default function CreateToolError({
 
         {process.env.NODE_ENV === 'development' && error.message && (
           <div className="mt-6 rounded-md bg-[var(--hivelab-surface)] border border-[var(--hivelab-border)] p-3 text-left">
-            <p className="text-xs font-mono text-[var(--hivelab-text-tertiary)] break-all">
+            <p className="text-xs font-sans text-[var(--hivelab-text-tertiary)] break-all">
               {error.message}
             </p>
           </div>

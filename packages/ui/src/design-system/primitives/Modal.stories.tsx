@@ -289,7 +289,7 @@ export const InviteMembersContext: Story = {
             <Input
               readOnly
               value="https://hive.college/s/ub-coders"
-              className="font-mono text-sm"
+              className="font-sans text-sm"
             />
             <Button variant="secondary">Copy</Button>
           </div>

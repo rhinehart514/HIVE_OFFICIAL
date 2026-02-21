@@ -113,7 +113,7 @@ export const AllVariants: StoryObj = {
   render: () => (
     <div className="space-y-8 p-8">
       <div>
-        <p className="text-[11px] font-mono text-white/30 uppercase tracking-wider mb-3">Checkbox</p>
+        <p className="text-[11px] font-sans text-white/30 uppercase tracking-wider mb-3">Checkbox</p>
         <div className="flex items-center gap-4">
           <Checkbox />
           <Checkbox defaultChecked />
@@ -124,7 +124,7 @@ export const AllVariants: StoryObj = {
       </div>
 
       <div>
-        <p className="text-[11px] font-mono text-white/30 uppercase tracking-wider mb-3">Radio</p>
+        <p className="text-[11px] font-sans text-white/30 uppercase tracking-wider mb-3">Radio</p>
         <RadioGroup defaultValue="a" className="flex items-center gap-4">
           <RadioGroupItem value="a" />
           <RadioGroupItem value="b" />
@@ -133,7 +133,7 @@ export const AllVariants: StoryObj = {
       </div>
 
       <div>
-        <p className="text-[11px] font-mono text-white/30 uppercase tracking-wider mb-3">Switch</p>
+        <p className="text-[11px] font-sans text-white/30 uppercase tracking-wider mb-3">Switch</p>
         <div className="flex items-center gap-4">
           <Switch />
           <Switch defaultChecked />

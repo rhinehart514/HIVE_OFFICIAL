@@ -290,7 +290,7 @@ export function QRCodeGeneratorElement({
 
           {/* URL display */}
           <div className="w-full text-center">
-            <div className="text-xs text-muted-foreground break-all px-2 py-1.5 rounded bg-muted/50 font-mono">
+            <div className="text-xs text-muted-foreground break-all px-2 py-1.5 rounded bg-muted/50 font-sans">
               {url}
             </div>
           </div>

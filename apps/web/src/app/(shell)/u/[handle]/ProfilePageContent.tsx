@@ -128,7 +128,7 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connection
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-12"
           style={{ background: 'linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.7) 60%, transparent 100%)' }}>
           <h1 className="font-clash text-[24px] font-semibold text-white leading-tight">{heroUser.fullName}</h1>
-          <p className="font-mono text-[12px] text-white/50 mt-0.5">@{heroUser.handle}</p>
+          <p className="font-sans text-[12px] text-white/50 mt-0.5">@{heroUser.handle}</p>
           {heroUser.bio && <p className="text-[13px] text-white/50 mt-1.5 leading-relaxed line-clamp-2">{heroUser.bio}</p>}
           {infoLine && <p className="text-[11px] text-white/30 mt-1">{infoLine}</p>}
         </div>
@@ -198,7 +198,7 @@ function StatsCard({ toolCount, spaceCount, isOwnProfile, fullWidth }: { toolCou
 
   return (
     <Card className={`flex flex-col justify-between p-5 gap-4${fullWidth ? ' col-span-2' : ''}`}>
-      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Activity</p>
+      <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Activity</p>
       <div className="flex items-end gap-6">
         {stats.map(s => (
           <div key={s.label}>
@@ -227,7 +227,7 @@ function InterestsCard({ interests, isOwnProfile }: { interests: string[]; isOwn
 
   return (
     <Card className="flex flex-col p-5 gap-3">
-      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Interests</p>
+      <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Interests</p>
       <div className="flex flex-wrap gap-1.5">
         {interests.slice(0, 8).map(interest => (
           <span key={interest} className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/50">
@@ -254,7 +254,7 @@ function SpacesCard({ spaces, suggestedSpaces, isOwnProfile, onSpaceClick }: {
   return (
     <Card className="col-span-2 p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Spaces</p>
+        <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Spaces</p>
         {hasSpaces && isOwnProfile && (
           <Link href="/spaces" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
             Browse <ArrowRight className="w-3 h-3" />
@@ -270,7 +270,7 @@ function SpacesCard({ spaces, suggestedSpaces, isOwnProfile, onSpaceClick }: {
             >
               {space.emoji && <span className="text-base">{space.emoji}</span>}
               <span className="text-[13px] text-white/60 group-hover:text-white/80 transition-colors truncate flex-1">{space.name}</span>
-              {space.isLeader && <span className="text-[9px] font-mono text-[#FFD700]/60 uppercase shrink-0">Lead</span>}
+              {space.isLeader && <span className="text-[9px] font-sans text-[#FFD700]/60 uppercase shrink-0">Lead</span>}
               <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-white/35 shrink-0" />
             </button>
           ))}
@@ -309,7 +309,7 @@ function TopToolCard({ tool, isOwnProfile, onToolClick }: {
     return (
       <Link href="/lab">
         <Card className="p-4 flex flex-col gap-2 min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer">
-          <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Top tool</p>
+          <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Top tool</p>
           <div className="flex-1 flex flex-col items-start justify-center py-3">
             <span className="text-2xl mb-2">⚡</span>
             <p className="text-[14px] font-medium text-white/50">Build something</p>
@@ -323,7 +323,7 @@ function TopToolCard({ tool, isOwnProfile, onToolClick }: {
 
   return (
     <Card className="p-5 flex flex-col justify-between min-h-[140px]" onClick={() => onToolClick(tool.id)}>
-      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Top tool</p>
+      <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Top tool</p>
       <div>
         <p className="font-clash text-[18px] font-semibold text-white leading-snug">{tool.name}</p>
         {tool.runs > 0 && <p className="text-[12px] text-white/35 mt-0.5">{tool.runs} uses</p>}
@@ -342,7 +342,7 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
     return (
       <Link href="/discover">
         <Card className="p-4 flex flex-col justify-between min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer">
-          <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Upcoming event</p>
+          <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Upcoming event</p>
           <div>
             <p className="text-[14px] text-white/40 mb-3">No upcoming events</p>
             <span className="text-[12px] text-[#FFD700]/60 flex items-center gap-1">Browse feed <ArrowRight className="w-3.5 h-3.5" /></span>
@@ -356,7 +356,7 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
     <Card className="p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25 mb-1.5">Upcoming event</p>
+          <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 mb-1.5">Upcoming event</p>
           <p className="text-[16px] font-semibold text-white leading-snug truncate">{event.title}</p>
           <div className="flex items-center gap-3 mt-2 text-[12px] text-white/35">
             <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{timeLabel(event.startDate)}</span>
@@ -405,7 +405,7 @@ function ProfileNotFoundState({ handle }: { handle: string }) {
     <div className="flex items-center justify-center py-32 px-6">
       <div className="text-center max-w-sm">
         <h1 className="text-2xl font-semibold text-white mb-3">Not found</h1>
-        <p className="text-sm text-white/50 mb-6">No one with handle <span className="font-mono">@{handle}</span> exists.</p>
+        <p className="text-sm text-white/50 mb-6">No one with handle <span className="font-sans">@{handle}</span> exists.</p>
         <Link href="/discover" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/[0.06] text-white/50 text-sm font-medium hover:bg-white/[0.09]">
           Go home
         </Link>
@@ -536,7 +536,7 @@ export default function ProfilePageContent() {
       {sortedTools.length > 0 && (
         <div className="mt-3">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Tools</p>
+            <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Tools</p>
             {isOwnProfile && (
               <Link href="/lab" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
                 Open Lab <ArrowRight className="w-3 h-3" />
@@ -553,7 +553,7 @@ export default function ProfilePageContent() {
                   <span className="text-[14px] font-medium text-white/80 group-hover:text-white transition-colors truncate">{tool.name}</span>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  {tool.runs > 0 && <span className="text-[12px] font-mono text-white/25">{tool.runs} uses</span>}
+                  {tool.runs > 0 && <span className="text-[12px] font-sans text-white/25">{tool.runs} uses</span>}
                   <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-white/40 transition-colors" />
                 </div>
               </button>

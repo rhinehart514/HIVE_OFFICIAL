@@ -27,7 +27,7 @@ function ProfileShell({ user }: { user: { id: string; email?: string | null; dis
           </div>
           <h1 className="text-xl font-semibold text-white mb-1">{displayName}</h1>
           {user.email && (
-            <p className="text-sm text-white/30 font-mono">{user.email}</p>
+            <p className="text-sm text-white/30 font-sans">{user.email}</p>
           )}
           <div className="mt-8 p-6 rounded-2xl bg-white/[0.03] border border-white/[0.06] max-w-sm w-full">
             <p className="text-sm text-white/50 mb-4">

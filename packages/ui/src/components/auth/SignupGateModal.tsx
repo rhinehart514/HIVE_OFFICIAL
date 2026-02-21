@@ -158,7 +158,7 @@ export function SignupGateModal({
                   <CheckCircleIcon className="h-4 w-4 text-green-500" />
                   <span className="font-medium">Tool ready to deploy:</span>
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground font-mono">
+                <p className="mt-1 text-sm text-muted-foreground font-sans">
                   {toolName}
                 </p>
               </div>

@@ -269,7 +269,7 @@ function ConnectionCard({
         {connection.resolvedValue?.status === 'connected' &&
           connection.resolvedValue.value !== undefined && (
             <div
-              className="mt-2 px-2 py-1.5 rounded text-label-xs font-mono overflow-hidden"
+              className="mt-2 px-2 py-1.5 rounded text-label-xs font-sans overflow-hidden"
               style={{ backgroundColor: COLORS.bg, color: COLORS.textTertiary }}
             >
               {formatValue(connection.resolvedValue.value)}

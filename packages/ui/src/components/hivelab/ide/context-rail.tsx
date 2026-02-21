@@ -559,7 +559,7 @@ function ShortcutHint({ shortcut, label }: { shortcut: string; label: string }) 
     <div className="flex items-center justify-between text-xs">
       <span style={{ color: PANEL_COLORS.textTertiary }}>{label}</span>
       <kbd
-        className="px-1.5 py-0.5 rounded font-mono text-label-xs"
+        className="px-1.5 py-0.5 rounded font-sans text-label-xs"
         style={{
           backgroundColor: PANEL_COLORS.bgHover,
           color: PANEL_COLORS.textSecondary,

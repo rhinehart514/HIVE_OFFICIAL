@@ -14,7 +14,7 @@ import { cn } from '../../lib/utils';
 const labelVariants = cva(
   // Base: Geist Mono uppercase pattern
   [
-    'font-[var(--font-mono)]',
+    'font-[var(--font-sans)]',
     'font-medium',
     'uppercase',
     'tracking-[0.08em]',

@@ -243,7 +243,7 @@ function SpaceShellHeader({
           <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <Text size="xs" className="font-mono text-muted-foreground truncate">
+          <Text size="xs" className="font-sans text-muted-foreground truncate">
             @{space.handle}
           </Text>
           <Text size="sm" weight="medium" className="truncate">

@@ -176,7 +176,7 @@ export const WithKeyboardShortcut: Story = {
         <TooltipContent>
           <div className="flex items-center gap-2">
             <span>Save changes</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-[var(--color-bg-card)] text-xs font-mono">
+            <kbd className="px-1.5 py-0.5 rounded bg-[var(--color-bg-card)] text-xs font-sans">
               ⌘S
             </kbd>
           </div>

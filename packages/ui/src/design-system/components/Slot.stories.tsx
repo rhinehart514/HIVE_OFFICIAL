@@ -245,7 +245,7 @@ export const NextLinkPattern: Story = {
       <p className="text-sm text-[var(--color-text-muted)]">
         Pattern for Next.js Link (simulated):
       </p>
-      <pre className="p-4 rounded-lg bg-[var(--color-bg-elevated)] text-xs text-white font-mono overflow-x-auto">
+      <pre className="p-4 rounded-lg bg-[var(--color-bg-elevated)] text-xs text-white font-sans overflow-x-auto">
 {`<Button asChild>
   <Link href="/dashboard">
     Go to Dashboard
@@ -377,7 +377,7 @@ export const DOMComparison: Story = {
     <div className="space-y-6">
       <div className="space-y-2">
         <p className="text-sm text-white">Without asChild (extra wrapper):</p>
-        <pre className="p-4 rounded-lg bg-[#1a1a1a] text-xs font-mono text-green-400 overflow-x-auto">
+        <pre className="p-4 rounded-lg bg-[#1a1a1a] text-xs font-sans text-green-400 overflow-x-auto">
 {`<div class="button-wrapper">
   <a href="/">Link</a>
 </div>`}
@@ -386,7 +386,7 @@ export const DOMComparison: Story = {
 
       <div className="space-y-2">
         <p className="text-sm text-white">With asChild (no wrapper):</p>
-        <pre className="p-4 rounded-lg bg-[#1a1a1a] text-xs font-mono text-green-400 overflow-x-auto">
+        <pre className="p-4 rounded-lg bg-[#1a1a1a] text-xs font-sans text-green-400 overflow-x-auto">
 {`<a class="button-styles" href="/">Link</a>`}
         </pre>
       </div>

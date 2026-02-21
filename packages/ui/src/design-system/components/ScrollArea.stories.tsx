@@ -531,7 +531,7 @@ console.log(numbers.map(isPrime));`;
           <span className="text-xs text-[var(--color-text-muted)]">fibonacci.js</span>
         </div>
         <ScrollArea className="h-64" showHorizontal>
-          <pre className="p-4 text-sm text-white font-mono whitespace-pre">
+          <pre className="p-4 text-sm text-white font-sans whitespace-pre">
             {code}
           </pre>
         </ScrollArea>

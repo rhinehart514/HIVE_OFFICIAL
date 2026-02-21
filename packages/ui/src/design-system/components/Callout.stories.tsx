@@ -170,7 +170,7 @@ export const WithCode: Story = {
     children: (
       <>
         <p>Use the following command to install:</p>
-        <code className="mt-2 block px-3 py-2 rounded-lg bg-black/30 text-white text-sm font-mono">
+        <code className="mt-2 block px-3 py-2 rounded-lg bg-black/30 text-white text-sm font-sans">
           pnpm add @hive/ui
         </code>
       </>
@@ -285,7 +285,7 @@ export const InContext: StoryObj = {
         Use pnpm for faster installation and better disk space usage.
       </Callout>
 
-      <code className="block px-4 py-3 rounded-lg bg-black/50 text-sm font-mono">
+      <code className="block px-4 py-3 rounded-lg bg-black/50 text-sm font-sans">
         pnpm create hive-app my-project
       </code>
 
@@ -296,7 +296,7 @@ export const InContext: StoryObj = {
       <h2 className="text-lg font-semibold mt-6">Step 2: Configuration</h2>
 
       <CollapsibleCallout variant="note" title="Environment Variables">
-        <code className="block px-3 py-2 rounded bg-black/30 text-sm font-mono">
+        <code className="block px-3 py-2 rounded bg-black/30 text-sm font-sans">
           HIVE_API_KEY=your_key_here<br />
           HIVE_ENV=development
         </code>

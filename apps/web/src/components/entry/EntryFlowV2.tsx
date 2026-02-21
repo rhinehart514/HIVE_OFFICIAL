@@ -68,7 +68,7 @@ function SpaceCard({
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium text-white truncate">{space.name}</div>
           {space.memberCount != null && (
-            <div className="text-[11px] text-white/20 font-mono">
+            <div className="text-[11px] text-white/20 font-sans">
               {space.memberCount > 0 ? `${space.memberCount} members` : 'Be the first to join'}
             </div>
           )}
@@ -581,7 +581,7 @@ export function EntryFlowV2() {
                 </Button>
               </div>
 
-              <p className="text-[11px] text-white/20 uppercase tracking-[0.15em] font-mono text-center mt-4">
+              <p className="text-[11px] text-white/20 uppercase tracking-[0.15em] font-sans text-center mt-4">
                 @buffalo.edu required
               </p>
             </motion.div>
@@ -678,7 +678,7 @@ export function EntryFlowV2() {
                 )}
 
                 {!isCodeVerified && resendCountdown > 0 && (
-                  <p className="text-[13px] text-white/20 font-mono">
+                  <p className="text-[13px] text-white/20 font-sans">
                     Resend in {resendCountdown}s
                   </p>
                 )}

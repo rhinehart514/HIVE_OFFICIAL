@@ -872,7 +872,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                               {request.user?.displayName || 'Unknown User'}
                             </Text>
                             {request.user?.handle && (
-                              <Text size="xs" tone="muted" className="font-mono truncate">
+                              <Text size="xs" tone="muted" className="font-sans truncate">
                                 @{request.user.handle}
                               </Text>
                             )}
@@ -1635,7 +1635,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                                     <div className="flex-1 min-w-0">
                                       <Text size="sm" weight="medium" className="truncate">{candidate.name}</Text>
                                       {candidate.username && (
-                                        <Text size="xs" tone="muted" className="font-mono truncate">@{candidate.username}</Text>
+                                        <Text size="xs" tone="muted" className="font-sans truncate">@{candidate.username}</Text>
                                       )}
                                     </div>
                                     <span className={cn(

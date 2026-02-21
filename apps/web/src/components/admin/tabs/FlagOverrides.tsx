@@ -57,7 +57,7 @@ export function FlagOverrides() {
               className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               <div className="min-w-0">
-                <p className="text-[12px] text-white/50 font-mono truncate">{flagId}</p>
+                <p className="text-[12px] text-white/50 font-sans truncate">{flagId}</p>
                 <p className="text-[10px] text-white/50">
                   Server: {serverValue ? 'ON' : 'OFF'}
                   {hasOverride && ' → Overridden'}

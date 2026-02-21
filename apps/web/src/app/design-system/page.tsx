@@ -37,7 +37,7 @@ export default function DesignSystemPage() {
             {colorVars.map((v) => (
               <div key={v} className="rounded-lg p-4" style={{ borderColor: "var(--hive-border-primary)" }}>
                 <div className="h-16 rounded-lg mb-3" style={{ background: `var(${v})` }} />
-                <div className="text-sm font-mono text-white/80">{v}</div>
+                <div className="text-sm font-sans text-white/80">{v}</div>
               </div>
             ))}
           </div>

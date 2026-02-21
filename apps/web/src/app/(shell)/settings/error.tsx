@@ -71,7 +71,7 @@ export default function SettingsError({
         {process.env.NODE_ENV === 'development' && error.message && (
           <div className="mt-6 rounded-md bg-white/[0.06] border border-white/[0.06] p-3 text-left">
             <p className="text-xs text-white/50 mb-1">Error details:</p>
-            <p className="text-xs font-mono text-white/50 break-all">
+            <p className="text-xs font-sans text-white/50 break-all">
               {error.message}
             </p>
           </div>

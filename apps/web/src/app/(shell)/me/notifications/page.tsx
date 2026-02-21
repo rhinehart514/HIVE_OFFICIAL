@@ -233,7 +233,7 @@ export default function NotificationsPage() {
             </h1>
             {unreadCount > 0 && (
               <span
-                className="px-2.5 py-0.5 text-[11px] font-mono uppercase tracking-wider bg-[#FFD700]/15 text-[#FFD700] rounded-full"
+                className="px-2.5 py-0.5 text-[11px] font-sans uppercase tracking-wider bg-[#FFD700]/15 text-[#FFD700] rounded-full"
                 aria-label={`${unreadCount} new notifications`}
               >
                 {unreadCount} new
@@ -314,7 +314,7 @@ export default function NotificationsPage() {
                         {notification.body}
                       </p>
                     )}
-                    <p className="text-white/50 text-[11px] font-mono uppercase tracking-wider mt-2">
+                    <p className="text-white/50 text-[11px] font-sans uppercase tracking-wider mt-2">
                       <time dateTime={notification.timestamp}>{formatTimestamp(notification.timestamp)}</time>
                     </p>
                   </div>

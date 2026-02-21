@@ -85,7 +85,7 @@ export function SpaceHeader({
         {onMembersClick && (
           <button
             onClick={onMembersClick}
-            className="rounded-full px-3 py-1.5 text-[12px] font-mono text-white/50 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+            className="rounded-full px-3 py-1.5 text-[12px] font-sans text-white/50 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
           >
             {space.memberCount} members
           </button>

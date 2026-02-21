@@ -341,7 +341,7 @@ const ShellTemplate: React.FC<ShellTemplateProps> = ({
                       ))}
                     </div>
                     <span
-                      className="text-sm font-mono"
+                      className="text-sm font-sans"
                       style={{ color: tokens.colors.lifeGold }}
                     >
                       5
@@ -533,7 +533,7 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
           >
             <LifeDot size="md" />
             <span
-              className="text-xs font-mono uppercase tracking-[0.2em]"
+              className="text-xs font-sans uppercase tracking-[0.2em]"
               style={{ color: tokens.colors.textTertiary }}
             >
               Design Architecture
@@ -641,7 +641,7 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
                   >
                     <div className="flex items-baseline gap-4 mb-1">
                       <span
-                        className="text-xs font-mono"
+                        className="text-xs font-sans"
                         style={{ color: tokens.colors.textMuted }}
                       >
                         {String(level.id).padStart(2, "0")}
@@ -674,7 +674,7 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
                             {level.details.map((detail, i) => (
                               <span
                                 key={i}
-                                className="px-3 py-1.5 text-xs font-mono rounded-full"
+                                className="px-3 py-1.5 text-xs font-sans rounded-full"
                                 style={{
                                   backgroundColor: tokens.colors.surfaceHover,
                                   color: tokens.colors.textSecondary,
@@ -736,7 +736,7 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
             {/* Atmosphere Selector */}
             <div>
               <label
-                className="block text-xs font-mono uppercase tracking-wider mb-3"
+                className="block text-xs font-sans uppercase tracking-wider mb-3"
                 style={{ color: tokens.colors.textTertiary }}
               >
                 Atmosphere
@@ -767,7 +767,7 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
             {/* Shell Mode Selector */}
             <div>
               <label
-                className="block text-xs font-mono uppercase tracking-wider mb-3"
+                className="block text-xs font-sans uppercase tracking-wider mb-3"
                 style={{ color: tokens.colors.textTertiary }}
               >
                 Shell Mode
@@ -803,13 +803,13 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
           >
             <div>
               <div
-                className="text-xs font-mono uppercase mb-1"
+                className="text-xs font-sans uppercase mb-1"
                 style={{ color: tokens.colors.textMuted }}
               >
                 Gap
               </div>
               <div
-                className="font-mono"
+                className="font-sans"
                 style={{ color: tokens.colors.textPrimary }}
               >
                 {atmosphereConfig[atmosphere].gap}px
@@ -817,13 +817,13 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
             </div>
             <div>
               <div
-                className="text-xs font-mono uppercase mb-1"
+                className="text-xs font-sans uppercase mb-1"
                 style={{ color: tokens.colors.textMuted }}
               >
                 Motion
               </div>
               <div
-                className="font-mono"
+                className="font-sans"
                 style={{ color: tokens.colors.textPrimary }}
               >
                 {atmosphereConfig[atmosphere].motionDuration}ms
@@ -831,13 +831,13 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
             </div>
             <div>
               <div
-                className="text-xs font-mono uppercase mb-1"
+                className="text-xs font-sans uppercase mb-1"
                 style={{ color: tokens.colors.textMuted }}
               >
                 Gold Budget
               </div>
               <div
-                className="font-mono text-sm"
+                className="font-sans text-sm"
                 style={{ color: tokens.colors.lifeGold }}
               >
                 {atmosphereConfig[atmosphere].goldBudget}
@@ -845,13 +845,13 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
             </div>
             <div>
               <div
-                className="text-xs font-mono uppercase mb-1"
+                className="text-xs font-sans uppercase mb-1"
                 style={{ color: tokens.colors.textMuted }}
               >
                 Sidebar
               </div>
               <div
-                className="font-mono"
+                className="font-sans"
                 style={{ color: tokens.colors.textPrimary }}
               >
                 {shellConfig[shellMode].width}px
@@ -949,7 +949,7 @@ export const CoherenceStream: React.FC<CoherenceStreamProps> = ({ className }) =
           <div className="flex items-center gap-3">
             <LifeDot />
             <span
-              className="font-mono text-sm"
+              className="font-sans text-sm"
               style={{ color: tokens.colors.textTertiary }}
             >
               HIVE Design System

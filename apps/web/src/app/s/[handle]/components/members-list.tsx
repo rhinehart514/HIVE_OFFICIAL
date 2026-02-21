@@ -294,7 +294,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
           </Text>
           {getRoleBadge()}
         </div>
-        <Text size="xs" tone="muted" className="font-mono truncate">
+        <Text size="xs" tone="muted" className="font-sans truncate">
           @{member.handle}
         </Text>
       </div>

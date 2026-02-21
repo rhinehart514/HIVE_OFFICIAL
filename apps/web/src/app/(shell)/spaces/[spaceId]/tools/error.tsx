@@ -53,7 +53,7 @@ export default function SpaceToolsError({
 
         {process.env.NODE_ENV === 'development' && error.message && (
           <div className="mt-6 rounded-md bg-muted p-3 text-left">
-            <p className="text-xs font-mono text-muted-foreground break-all">
+            <p className="text-xs font-sans text-muted-foreground break-all">
               {error.message}
             </p>
           </div>

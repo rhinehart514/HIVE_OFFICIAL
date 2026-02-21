@@ -156,7 +156,7 @@ export function SpaceInfoDrawer({
                   >
                     {space.name}
                   </h2>
-                  <Text size="sm" tone="muted" className="font-mono">
+                  <Text size="sm" tone="muted" className="font-sans">
                     @{space.handle}
                   </Text>
                   <div className="flex items-center gap-2 mt-2">

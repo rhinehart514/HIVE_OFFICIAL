@@ -247,7 +247,7 @@ function AppShellHeader({
         >
           <Search className="h-4 w-4" />
           <span className="text-sm flex-1 text-left">Navigate...</span>
-          <span className="flex items-center gap-0.5 text-label-xs font-mono bg-white/[0.06] px-1.5 py-0.5 rounded">
+          <span className="flex items-center gap-0.5 text-label-xs font-sans bg-white/[0.06] px-1.5 py-0.5 rounded">
             <Command className="h-3 w-3" />K
           </span>
         </button>

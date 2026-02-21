@@ -58,7 +58,7 @@ export function HeroSection() {
               </Link>
             </div>
 
-            <p className="font-mono text-[11px] uppercase tracking-widest text-white/20">
+            <p className="font-sans text-[11px] uppercase tracking-widest text-white/20">
               @buffalo.edu · free · web-based
             </p>
           </motion.div>
@@ -92,7 +92,7 @@ function ProductMockup() {
           <span className="h-2.5 w-2.5 rounded-full bg-white/[0.06]" />
         </div>
         <div className="flex-1 flex justify-center">
-          <div className="rounded-md bg-white/[0.04] px-4 py-1 font-mono text-[10px] text-white/30">
+          <div className="rounded-md bg-white/[0.04] px-4 py-1 font-sans text-[10px] text-white/30">
             hive.college/s/ub-photo-club
           </div>
         </div>
@@ -109,7 +109,7 @@ function ProductMockup() {
             </div>
             <div>
               <div className="text-[13px] font-semibold text-white">UB Photography Club</div>
-              <div className="text-[10px] text-white/30 font-mono mt-0.5">47 members</div>
+              <div className="text-[10px] text-white/30 font-sans mt-0.5">47 members</div>
             </div>
             <div className="ml-auto">
               <div className="px-3 py-1.5 rounded-full bg-[#FFD700] text-black text-[10px] font-semibold">
@@ -150,7 +150,7 @@ function MockPollCard() {
       <div className="flex items-center gap-2 mb-3">
         <span className="text-[10px]">📊</span>
         <span className="text-[11px] font-medium text-white/70">Next Shoot Location</span>
-        <span className="ml-auto text-[9px] font-mono text-white/20">38 votes</span>
+        <span className="ml-auto text-[9px] font-sans text-white/20">38 votes</span>
       </div>
       <div className="space-y-1.5">
         {options.map((opt) => (
@@ -161,7 +161,7 @@ function MockPollCard() {
             />
             <div className="relative flex items-center justify-between px-3 py-2">
               <span className="text-[11px] text-white/60">{opt.label}</span>
-              <span className="text-[10px] font-mono text-[#FFD700]/70">{opt.pct}%</span>
+              <span className="text-[10px] font-sans text-[#FFD700]/70">{opt.pct}%</span>
             </div>
           </div>
         ))}
@@ -183,7 +183,7 @@ function MockRsvpCard() {
             <div key={i} className={`h-4 w-4 rounded-full border border-black ${bg}`} />
           ))}
         </div>
-        <span className="text-[9px] font-mono text-white/30">23 going</span>
+        <span className="text-[9px] font-sans text-white/30">23 going</span>
       </div>
     </div>
   );
@@ -201,7 +201,7 @@ function MockCountdownCard() {
           { val: '22', unit: 'm' },
         ].map((t) => (
           <div key={t.unit} className="flex items-baseline gap-0.5">
-            <span className="text-[15px] font-mono font-semibold text-white/80 tabular-nums">{t.val}</span>
+            <span className="text-[15px] font-sans font-semibold text-white/80 tabular-nums">{t.val}</span>
             <span className="text-[8px] text-white/25">{t.unit}</span>
           </div>
         ))}
@@ -226,10 +226,10 @@ function MockLeaderboardCard() {
       <div className="space-y-1.5">
         {entries.map((e, i) => (
           <div key={e.name} className="flex items-center gap-2.5">
-            <span className="text-[10px] font-mono text-white/20 w-3">{i + 1}</span>
+            <span className="text-[10px] font-sans text-white/20 w-3">{i + 1}</span>
             <div className={`w-4 h-4 rounded-full ${e.color} opacity-60`} />
             <span className="text-[11px] text-white/50 flex-1">{e.name}</span>
-            <span className="text-[10px] font-mono text-white/30">{e.pts} pts</span>
+            <span className="text-[10px] font-sans text-white/30">{e.pts} pts</span>
           </div>
         ))}
       </div>

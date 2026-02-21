@@ -81,7 +81,7 @@ function WorkflowCard({
       <p className="text-[var(--hivelab-text-secondary)] text-sm mb-3 transition-colors group-hover:text-[var(--hivelab-text-primary)]">{subtitle}</p>
 
       {/* Shortcut */}
-      <kbd className="px-2 py-1 text-xs bg-[var(--hivelab-bg)] rounded-md text-[var(--hivelab-text-tertiary)] font-mono transition-colors group-hover:text-[var(--hivelab-text-secondary)] group-hover:bg-[var(--hivelab-surface)]">
+      <kbd className="px-2 py-1 text-xs bg-[var(--hivelab-bg)] rounded-md text-[var(--hivelab-text-tertiary)] font-sans transition-colors group-hover:text-[var(--hivelab-text-secondary)] group-hover:bg-[var(--hivelab-surface)]">
         {shortcut}
       </kbd>
 

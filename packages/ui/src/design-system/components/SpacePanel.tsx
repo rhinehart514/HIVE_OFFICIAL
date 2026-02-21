@@ -452,7 +452,7 @@ const SpacePanel = React.forwardRef<HTMLDivElement, SpacePanelProps>(
         {/* Footer with keyboard hint */}
         <div className="px-4 py-2 border-t border-white/[0.06]">
           <Text size="xs" tone="muted" className="text-center">
-            <span className="font-mono">⌘⇧P</span> to toggle
+            <span className="font-sans">⌘⇧P</span> to toggle
           </Text>
         </div>
       </div>

@@ -651,7 +651,7 @@ function ActionsBuilder({
                   }}
                   placeholder='{"config.value": 0}'
                   rows={3}
-                  className={cn('w-full px-3 py-2 rounded-lg text-sm font-mono resize-none', focusRing)}
+                  className={cn('w-full px-3 py-2 rounded-lg text-sm font-sans resize-none', focusRing)}
                   style={{
                     backgroundColor: PANEL_COLORS.bgHover,
                     border: `1px solid ${PANEL_COLORS.border}`,

@@ -290,7 +290,7 @@ function TodayStrip({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (id: stri
   return (
     <div className="mt-6">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[12px] font-mono uppercase tracking-[0.15em] text-white/30">Today</span>
+        <span className="text-[12px] font-sans uppercase tracking-[0.15em] text-white/30">Today</span>
         <span className="text-[12px] text-white/20">{events.length} event{events.length !== 1 ? 's' : ''}</span>
       </div>
       <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
@@ -406,7 +406,7 @@ function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
       <div className="flex items-center justify-between mb-3">
         <span className="flex items-center gap-1.5 text-[11px] text-[#FFD700]/60 font-medium">
           <span className="text-base leading-none">{categoryIcon(tool.category)}</span>
-          <span className="font-mono uppercase tracking-[0.12em]">Tool</span>
+          <span className="font-sans uppercase tracking-[0.12em]">Tool</span>
           {tool.spaceOriginName && (
             <span className="text-white/20 font-normal normal-case tracking-normal">· {tool.spaceOriginName}</span>
           )}
@@ -487,13 +487,13 @@ function FeedTease() {
 
   return (
     <div className="mt-6 rounded-2xl border border-white/[0.04] bg-white/[0.01] p-5">
-      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/20 mb-3">More coming to your feed</p>
+      <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/20 mb-3">More coming to your feed</p>
       <div className="flex flex-col gap-2">
         {coming.map((item) => (
           <div key={item.label} className="flex items-center gap-3 opacity-40">
             <span className="text-base leading-none">{item.icon}</span>
             <span className="text-[13px] text-white/50">{item.label}</span>
-            <span className="ml-auto text-[10px] font-mono text-white/20 uppercase tracking-wider">Soon</span>
+            <span className="ml-auto text-[10px] font-sans text-white/20 uppercase tracking-wider">Soon</span>
           </div>
         ))}
       </div>
@@ -629,7 +629,7 @@ export default function DiscoverPage() {
     <div className="w-full max-w-[680px] px-4 py-6 md:px-8">
       {/* Header */}
       <div className="mb-5">
-        <h1 className="text-[13px] font-mono uppercase tracking-[0.15em] text-white/30">What&apos;s happening at UB</h1>
+        <h1 className="text-[13px] font-sans uppercase tracking-[0.15em] text-white/30">What&apos;s happening at UB</h1>
       </div>
 
       {isLoading ? (

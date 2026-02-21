@@ -90,7 +90,7 @@ export function LeftSidebar() {
         aria-label="HIVE home"
       >
         <HiveLogoGold size={22} />
-        <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/70">
+        <span className="font-sans text-[11px] font-medium uppercase tracking-[0.18em] text-white/70">
           HIVE
         </span>
       </Link>
@@ -122,7 +122,7 @@ export function LeftSidebar() {
         >
           <Search className="h-4 w-4 shrink-0" strokeWidth={1.5} />
           <span className="font-medium tracking-wide">Search</span>
-          <kbd className="ml-auto font-mono text-[10px] tracking-[0.12em] text-white/20">⌘K</kbd>
+          <kbd className="ml-auto font-sans text-[10px] tracking-[0.12em] text-white/20">⌘K</kbd>
         </button>
 
         {/* Notifications */}
@@ -192,7 +192,7 @@ function MobileNavItem({
 
       <span
         className={cn(
-          'font-mono text-[10px] uppercase tracking-[0.1em] transition-colors',
+          'font-sans text-[10px] uppercase tracking-[0.1em] transition-colors',
           isActive ? 'text-white' : 'text-white/40'
         )}
       >
