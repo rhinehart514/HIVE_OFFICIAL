@@ -2,8 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-
-import { ArrowRight, Check, Clock, UserMinus, UserPlus, Wrench } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  ArrowRight, Check, Clock, UserMinus, UserPlus,
+  Wrench, Calendar, MapPin, Video, Users, ChevronRight, Zap,
+} from 'lucide-react';
 import {
   ProfileToolModal,
   ReportContentModal,
@@ -13,33 +16,394 @@ import {
 } from '@hive/ui';
 import { useProfileByHandle } from './hooks';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function nameGradient(name: string): string {
+  const gradients = [
+    'from-amber-900/50 to-orange-950',
+    'from-violet-900/50 to-purple-950',
+    'from-blue-900/50 to-cyan-950',
+    'from-emerald-900/50 to-green-950',
+    'from-rose-900/50 to-pink-950',
+  ];
+  const idx = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % gradients.length;
+  return gradients[idx];
+}
+
+function timeLabel(startDate: string): string {
+  const start = new Date(startDate);
+  const now = new Date();
+  const diffMs = start.getTime() - now.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMs < 0) return 'Happening now';
+  if (diffMin < 60) return `In ${diffMin}m`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Data fetches
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function fetchNextEvent() {
+  const res = await fetch('/api/events/personalized?timeRange=this-week&maxItems=5&sort=soonest', { credentials: 'include' });
+  if (!res.ok) return null;
+  const payload = await res.json();
+  const events = (payload.data || payload).events || [];
+  return events[0] || null;
+}
+
+async function fetchSuggestedSpaces() {
+  const res = await fetch('/api/spaces/browse-v2?category=all&sort=trending&limit=3', { credentials: 'include' });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data?.data?.spaces || data?.spaces || []).slice(0, 3);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bento Card base
+// ─────────────────────────────────────────────────────────────────────────────
+
+function Card({ children, className = '', onClick }: {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const base = 'rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden';
+  if (onClick) {
+    return (
+      <button onClick={onClick} className={`${base} w-full text-left transition-colors hover:border-white/[0.1] hover:bg-white/[0.02] ${className}`}>
+        {children}
+      </button>
+    );
+  }
+  return <div className={`${base} ${className}`}>{children}</div>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Portrait card — identity hero
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connectionState, isConnectionLoading, onConnect, onAcceptRequest, onUnfriend, onMessage }: {
+  heroUser: { fullName: string; handle: string; avatarUrl?: string; bio?: string; major?: string; classYear?: string; campusName?: string };
+  heroPresence: { isOnline: boolean };
+  isOwnProfile: boolean;
+  onEdit: () => void;
+  connectionState: string;
+  isConnectionLoading: boolean;
+  onConnect: () => void;
+  onAcceptRequest: (id: string) => void;
+  onUnfriend: () => void;
+  onMessage: () => void;
+}) {
+  const [showUnfriendMenu, setShowUnfriendMenu] = React.useState(false);
+  const gradient = nameGradient(heroUser.fullName);
+  const initial = heroUser.fullName.charAt(0).toUpperCase();
+  const infoLine = [heroUser.major, heroUser.classYear, heroUser.campusName].filter(Boolean).join(' · ');
+
+  return (
+    <Card className="row-span-2 flex flex-col">
+      {/* Avatar area — portrait */}
+      <div className={`relative flex-1 min-h-[200px] bg-gradient-to-b ${gradient} flex items-center justify-center`}>
+        {heroUser.avatarUrl ? (
+          <img src={heroUser.avatarUrl} alt={heroUser.fullName} className="absolute inset-0 w-full h-full object-cover object-top" />
+        ) : (
+          <span className="text-[80px] font-semibold text-white/20 select-none leading-none">{initial}</span>
+        )}
+        {/* Online pulse */}
+        {heroPresence.isOnline && (
+          <span className="absolute bottom-3 right-3 flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#FFD700]" />
+          </span>
+        )}
+      </div>
+
+      {/* Identity */}
+      <div className="p-4">
+        <h1 className="text-[20px] font-semibold text-white leading-tight">{heroUser.fullName}</h1>
+        <p className="font-mono text-[12px] text-white/40 mt-0.5">@{heroUser.handle}</p>
+        {heroUser.bio && <p className="text-[13px] text-white/50 mt-2 leading-relaxed line-clamp-2">{heroUser.bio}</p>}
+        {infoLine && <p className="text-[12px] text-white/30 mt-1">{infoLine}</p>}
+
+        {/* Actions */}
+        <div className="mt-3 flex items-center gap-2">
+          {isOwnProfile ? (
+            <button onClick={onEdit} className="flex-1 py-2 rounded-xl bg-white/[0.06] text-[13px] font-medium text-white/60 hover:bg-white/[0.09] hover:text-white/80 transition-colors">
+              Edit profile
+            </button>
+          ) : (
+            <>
+              {connectionState === 'none' && (
+                <button onClick={onConnect} disabled={isConnectionLoading} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FFD700] text-black text-[13px] font-semibold hover:bg-[#FFD700]/90 transition-colors">
+                  <UserPlus className="w-3.5 h-3.5" />{isConnectionLoading ? '…' : 'Connect'}
+                </button>
+              )}
+              {connectionState === 'pending_outgoing' && (
+                <button disabled className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.06] text-white/40 text-[13px]">
+                  <Clock className="w-3.5 h-3.5" />Sent
+                </button>
+              )}
+              {connectionState === 'pending_incoming' && (
+                <button onClick={() => onAcceptRequest('')} disabled={isConnectionLoading} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FFD700] text-black text-[13px] font-semibold">
+                  <Check className="w-3.5 h-3.5" />{isConnectionLoading ? '…' : 'Accept'}
+                </button>
+              )}
+              {connectionState === 'friends' && (
+                <div className="relative flex-1">
+                  <button onClick={() => setShowUnfriendMenu(v => !v)} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.06] text-white/50 text-[13px]">
+                    <Check className="w-3.5 h-3.5 text-[#FFD700]" />Friends
+                  </button>
+                  {showUnfriendMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowUnfriendMenu(false)} />
+                      <div className="absolute bottom-full mb-1 left-0 z-50 min-w-[120px] rounded-xl bg-[#1a1a1a] border border-white/[0.06] shadow-xl">
+                        <button onClick={() => { onUnfriend(); setShowUnfriendMenu(false); }} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-red-400 hover:bg-white/[0.06]">
+                          <UserMinus className="w-3.5 h-3.5" />Unfriend
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              <button onClick={onMessage} className="py-2 px-3 rounded-xl bg-white/[0.06] text-white/50 text-[13px] hover:bg-white/[0.09] transition-colors">
+                Message
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stats card
+// ─────────────────────────────────────────────────────────────────────────────
+
+function StatsCard({ toolCount, spaceCount, isOwnProfile }: { toolCount: number; spaceCount: number; isOwnProfile: boolean }) {
+  const stats = [
+    { label: 'Tools built', value: toolCount },
+    { label: 'Spaces', value: spaceCount },
+  ];
+
+  return (
+    <Card className="flex flex-col p-4 gap-3">
+      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Activity</p>
+      <div className="flex gap-4">
+        {stats.map(s => (
+          <div key={s.label}>
+            <p className="text-[28px] font-semibold text-white leading-none">{s.value}</p>
+            <p className="text-[11px] text-white/35 mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      {isOwnProfile && toolCount === 0 && (
+        <Link href="/lab" className="flex items-center gap-1.5 text-[12px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors mt-auto">
+          <Zap className="w-3 h-3" />Build your first tool <ArrowRight className="w-3 h-3" />
+        </Link>
+      )}
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Interests card
+// ─────────────────────────────────────────────────────────────────────────────
+
+function InterestsCard({ interests, isOwnProfile }: { interests: string[]; isOwnProfile: boolean }) {
+  return (
+    <Card className="flex flex-col p-4">
+      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25 mb-3">Interests</p>
+      {interests.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {interests.slice(0, 8).map(interest => (
+            <span key={interest} className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/50">
+              {interest}
+            </span>
+          ))}
+        </div>
+      ) : isOwnProfile ? (
+        <Link href="/me/edit" className="flex items-center gap-1.5 text-[13px] text-white/40 hover:text-white/70 transition-colors mt-auto">
+          Add interests <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      ) : (
+        <p className="text-[13px] text-white/25">No interests listed</p>
+      )}
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Spaces card
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SpacesCard({ spaces, suggestedSpaces, isOwnProfile, onSpaceClick }: {
+  spaces: { id: string; name: string; emoji?: string; isLeader?: boolean }[];
+  suggestedSpaces: { id: string; name: string; handle?: string; slug?: string; memberCount?: number }[];
+  isOwnProfile: boolean;
+  onSpaceClick: (id: string) => void;
+}) {
+  const hasSpaces = spaces.length > 0;
+
+  return (
+    <Card className="col-span-2 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Spaces</p>
+        {hasSpaces && isOwnProfile && (
+          <Link href="/spaces" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
+            Browse <ArrowRight className="w-3 h-3" />
+          </Link>
+        )}
+      </div>
+
+      {hasSpaces ? (
+        <div className="grid grid-cols-2 gap-2">
+          {spaces.slice(0, 4).map(space => (
+            <button key={space.id} onClick={() => onSpaceClick(space.id)}
+              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-left group"
+            >
+              {space.emoji && <span className="text-base">{space.emoji}</span>}
+              <span className="text-[13px] text-white/60 group-hover:text-white/80 transition-colors truncate flex-1">{space.name}</span>
+              {space.isLeader && <span className="text-[9px] font-mono text-[#FFD700]/60 uppercase shrink-0">Lead</span>}
+              <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-white/35 shrink-0" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div>
+          <p className="text-[12px] text-white/25 mb-3">Not in any spaces yet</p>
+          {suggestedSpaces.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              {suggestedSpaces.map((s: { id: string; name: string; handle?: string; slug?: string; memberCount?: number }) => (
+                <Link key={s.id} href={`/s/${s.handle || s.slug || s.id}`}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.04] transition-colors group"
+                >
+                  <span className="text-[13px] text-white/50 group-hover:text-white/70">{s.name}</span>
+                  <span className="text-[11px] text-[#FFD700]/60 font-medium">Join →</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Top tool card
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TopToolCard({ tool, isOwnProfile, onToolClick }: {
+  tool: ProfileActivityTool | null;
+  isOwnProfile: boolean;
+  onToolClick: (id: string) => void;
+}) {
+  if (!tool) {
+    return (
+      <Link href="/lab">
+        <Card className="p-4 flex flex-col gap-2 hover:border-white/[0.1] transition-colors cursor-pointer">
+          <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Top tool</p>
+          <div className="flex-1 flex flex-col items-start justify-center py-3">
+            <span className="text-2xl mb-2">⚡</span>
+            <p className="text-[14px] font-medium text-white/50">Build something</p>
+            <p className="text-[12px] text-white/25 mt-0.5">Your best tool lives here</p>
+          </div>
+          <span className="text-[12px] text-[#FFD700]/60 flex items-center gap-1">Open Lab <ArrowRight className="w-3 h-3" /></span>
+        </Card>
+      </Link>
+    );
+  }
+
+  return (
+    <Card className="p-4 flex flex-col gap-2" onClick={() => onToolClick(tool.id)}>
+      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Top tool</p>
+      <div className="flex-1 py-2">
+        <span className="text-2xl block mb-2">{tool.emoji || '🔧'}</span>
+        <p className="text-[15px] font-semibold text-white leading-snug">{tool.name}</p>
+        <p className="text-[12px] text-white/35 mt-1">{tool.runs} uses</p>
+      </div>
+      <span className="text-[12px] text-white/30 flex items-center gap-1">View tool <ChevronRight className="w-3 h-3" /></span>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Event card
+// ─────────────────────────────────────────────────────────────────────────────
+
+function EventCard({ event }: { event: { id: string; title: string; startDate: string; location?: string; isOnline?: boolean; rsvpCount: number; spaceName?: string; spaceHandle?: string; spaceId?: string } | null }) {
+  if (!event) {
+    return (
+      <Link href="/discover">
+        <Card className="col-span-2 p-4 flex items-center justify-between hover:border-white/[0.1] transition-colors cursor-pointer">
+          <div>
+            <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25 mb-1">Upcoming event</p>
+            <p className="text-[14px] text-white/40">No upcoming events</p>
+          </div>
+          <span className="text-[12px] text-[#FFD700]/60 flex items-center gap-1 shrink-0">Browse feed <ArrowRight className="w-3.5 h-3.5" /></span>
+        </Card>
+      </Link>
+    );
+  }
+
+  return (
+    <Card className="col-span-2 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25 mb-1.5">Upcoming event</p>
+          <p className="text-[16px] font-semibold text-white leading-snug truncate">{event.title}</p>
+          <div className="flex items-center gap-3 mt-2 text-[12px] text-white/35">
+            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{timeLabel(event.startDate)}</span>
+            {event.location && (
+              <span className="flex items-center gap-1">
+                {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+                {event.isOnline ? 'Online' : event.location}
+              </span>
+            )}
+            {event.rsvpCount > 0 && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount}</span>}
+          </div>
+        </div>
+        {event.spaceHandle && (
+          <Link href={`/s/${event.spaceHandle}`} onClick={e => e.stopPropagation()}
+            className="shrink-0 px-3 py-1.5 rounded-full bg-white/[0.05] text-[12px] text-white/40 hover:bg-white/[0.09] hover:text-white/60 transition-colors"
+          >
+            View
+          </Link>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Loading / error states
+// ─────────────────────────────────────────────────────────────────────────────
 
 function ProfileLoadingState() {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-16 h-16 rounded-full bg-white/[0.06] mx-auto mb-4" />
-        <p className="text-white/50 text-sm">Loading profile...</p>
-      </div>
+    <div className="p-6 grid grid-cols-3 gap-3 animate-pulse">
+      <div className="rounded-2xl bg-white/[0.04] row-span-2 min-h-[400px]" />
+      <div className="rounded-2xl bg-white/[0.04] h-[180px]" />
+      <div className="rounded-2xl bg-white/[0.04] h-[180px]" />
+      <div className="rounded-2xl bg-white/[0.04] col-span-2 h-[180px]" />
+      <div className="col-span-2 rounded-2xl bg-white/[0.04] h-[100px]" />
+      <div className="rounded-2xl bg-white/[0.04] h-[100px]" />
     </div>
   );
 }
 
 function ProfileNotFoundState({ handle }: { handle: string }) {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-6">
+    <div className="flex items-center justify-center py-32 px-6">
       <div className="text-center max-w-sm">
-        <h1 className={`${clashDisplay} text-2xl font-semibold text-white mb-3`}>
-          Not Found
-        </h1>
-        <p className="text-sm text-white/50 mb-6">
-          No one with the handle <span className="font-mono text-white/50">@{handle}</span> exists.
-        </p>
-        <Link
-          href="/discover"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/[0.06] text-white/50 text-sm font-medium hover:bg-white/[0.06] transition-colors"
-        >
+        <h1 className="text-2xl font-semibold text-white mb-3">Not found</h1>
+        <p className="text-sm text-white/50 mb-6">No one with handle <span className="font-mono">@{handle}</span> exists.</p>
+        <Link href="/discover" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/[0.06] text-white/50 text-sm font-medium hover:bg-white/[0.09]">
           Go home
         </Link>
       </div>
@@ -49,18 +413,10 @@ function ProfileNotFoundState({ handle }: { handle: string }) {
 
 function ProfileErrorState({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-6">
-      <div className="text-center max-w-sm">
-        <h1 className={`${clashDisplay} text-2xl font-semibold text-white mb-3`}>
-          Something broke
-        </h1>
-        <p className="text-sm text-white/50 mb-6">
-          Couldn&apos;t load this profile.
-        </p>
-        <button
-          onClick={onRetry}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FFD700] text-black text-sm font-medium hover:opacity-90 transition-opacity"
-        >
+    <div className="flex items-center justify-center py-32">
+      <div className="text-center">
+        <p className="text-white/50 mb-4">Couldn't load this profile.</p>
+        <button onClick={onRetry} className="px-5 py-2.5 rounded-full bg-[#FFD700] text-black text-sm font-medium">
           Try again
         </button>
       </div>
@@ -68,334 +424,136 @@ function ProfileErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Main
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function ProfilePageContent() {
   const state = useProfileByHandle();
   const [showReportModal, setShowReportModal] = React.useState(false);
 
   const {
-    handle,
-    handleError,
-    profileId,
-    isOwnProfile,
-    isLoading,
-    error,
-    profileData,
-    heroUser,
-    heroPresence,
-    profileSpaces,
-    profileTools,
-    selectedTool,
-    handleEditProfile,
-    handleToolModalClose,
-    handleToolUpdateVisibility,
-    handleToolRemove,
-    handleSpaceClick,
-    handleToolClick,
-    interests,
-    connectionState,
-    isConnectionLoading,
-    handleConnect,
-    handleAcceptRequest,
-    handleUnfriend,
-    handleMessage,
+    handle, handleError, profileId, isOwnProfile, isLoading, error,
+    profileData, heroUser, heroPresence, profileSpaces, profileTools,
+    selectedTool, handleEditProfile, handleToolModalClose,
+    handleToolUpdateVisibility, handleToolRemove,
+    handleSpaceClick, handleToolClick, interests,
+    connectionState, isConnectionLoading,
+    handleConnect, handleAcceptRequest, handleUnfriend, handleMessage,
   } = state;
 
-  const [showUnfriendMenu, setShowUnfriendMenu] = React.useState(false);
+  const { data: nextEvent = null } = useQuery({
+    queryKey: ['profile-next-event'],
+    queryFn: fetchNextEvent,
+    staleTime: 5 * 60_000,
+    enabled: isOwnProfile,
+  });
+
+  const { data: suggestedSpaces = [] } = useQuery({
+    queryKey: ['profile-suggested-spaces'],
+    queryFn: fetchSuggestedSpaces,
+    staleTime: 10 * 60_000,
+    enabled: profileSpaces.length === 0,
+  });
 
   const handleSubmitReport = async (data: ReportContentInput) => {
-    const response = await fetch('/api/content/reports', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch('/api/content/reports', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || 'Failed to submit report');
-    }
+    if (!res.ok) throw new Error('Failed to submit report');
     toast.success('Report submitted');
   };
 
   if (isLoading) return <ProfileLoadingState />;
-  if (handleError === 'not_found') return <ProfileNotFoundState handle={handle} />;
-  if (handleError === 'private' && !isOwnProfile) return <ProfileNotFoundState handle={handle} />;
+  if (handleError === 'not_found' || (handleError === 'private' && !isOwnProfile)) return <ProfileNotFoundState handle={handle} />;
   if (handleError === 'error' || error) return <ProfileErrorState onRetry={() => window.location.reload()} />;
   if (!profileData || !heroUser) return <ProfileNotFoundState handle={handle} />;
 
-  const activityTools: ProfileActivityTool[] = profileTools
-    .sort((a, b) => (b.runs || 0) - (a.runs || 0))
-    .map((tool) => ({
-      id: tool.id,
-      name: tool.name,
-      emoji: tool.emoji,
-      runs: tool.runs || 0,
-    }));
-
-  const hasTools = activityTools.length > 0;
-  const hasSpaces = profileSpaces.length > 0;
-  const infoLine = [heroUser.major, heroUser.classYear, heroUser.campusName]
-    .filter(Boolean)
-    .join(' · ');
+  const sortedTools = [...profileTools].sort((a, b) => (b.runs || 0) - (a.runs || 0));
+  const topTool = sortedTools[0] ? {
+    id: sortedTools[0].id,
+    name: sortedTools[0].name,
+    emoji: sortedTools[0].emoji,
+    runs: sortedTools[0].runs || 0,
+  } : null;
 
   return (
-    <div className="min-h-full w-full bg-black">
-      <div className="max-w-[480px] mx-auto px-6 py-12">
-        {/* Edit button (own profile) */}
-        {isOwnProfile && (
-          <div className="flex justify-end mb-6">
-            <button
-              onClick={handleEditProfile}
-              className="text-[13px] text-white/50 hover:text-white transition-colors"
-            >
-              Edit
-            </button>
-          </div>
-        )}
+    <div className="w-full px-6 py-6">
+      {/* Bento grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 auto-rows-auto">
 
-        {/* Social actions (other profiles) */}
-        {!isOwnProfile && (
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              {/* Connect / Connection state button */}
-              {connectionState === 'none' && (
-                <button
-                  onClick={handleConnect}
-                  disabled={isConnectionLoading}
-                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150 bg-[#FFD700] text-black hover:opacity-90 ${
-                    isConnectionLoading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  {isConnectionLoading ? '...' : 'Connect'}
-                </button>
-              )}
+        {/* Portrait — spans 2 rows */}
+        <PortraitCard
+          heroUser={heroUser}
+          heroPresence={heroPresence}
+          isOwnProfile={isOwnProfile}
+          onEdit={handleEditProfile}
+          connectionState={connectionState}
+          isConnectionLoading={isConnectionLoading}
+          onConnect={handleConnect}
+          onAcceptRequest={handleAcceptRequest}
+          onUnfriend={handleUnfriend}
+          onMessage={handleMessage}
+        />
 
-              {connectionState === 'pending_outgoing' && (
-                <button
-                  disabled
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-white/50 cursor-default"
-                >
-                  <Clock className="w-3.5 h-3.5" />
-                  Request Sent
-                </button>
-              )}
-
-              {connectionState === 'pending_incoming' && (
-                <button
-                  onClick={() => handleAcceptRequest('')}
-                  disabled={isConnectionLoading}
-                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150 bg-[#FFD700] text-black hover:opacity-90 ${
-                    isConnectionLoading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  {isConnectionLoading ? '...' : 'Accept'}
-                </button>
-              )}
-
-              {connectionState === 'friends' && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowUnfriendMenu(!showUnfriendMenu)}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-white/50 hover:bg-white/[0.08] transition-colors"
-                  >
-                    <Check className="w-3.5 h-3.5 text-[#FFD700]" />
-                    Friends
-                  </button>
-                  {showUnfriendMenu && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowUnfriendMenu(false)} />
-                      <div className="absolute top-full mt-1 left-0 z-50 min-w-[120px] rounded-xl bg-[#1a1a1a] border border-white/[0.06] shadow-xl overflow-hidden">
-                        <button
-                          onClick={() => {
-                            handleUnfriend();
-                            setShowUnfriendMenu(false);
-                          }}
-                          disabled={isConnectionLoading}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-red-400 hover:bg-white/[0.06] transition-colors"
-                        >
-                          <UserMinus className="w-3.5 h-3.5" />
-                          Unfriend
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Message button */}
-              <button
-                onClick={handleMessage}
-                className="px-4 py-1.5 rounded-full text-[13px] font-medium bg-white/[0.06] text-white/50 hover:bg-white/[0.08] hover:text-white/40 transition-all duration-150"
-              >
-                Message
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowReportModal(true)}
-              className="text-[13px] text-white/50 hover:text-white transition-colors"
-            >
-              Report
-            </button>
-          </div>
-        )}
-
-        {/* Identity */}
-        <div className="text-center mb-8">
-          {/* Avatar */}
-          {heroUser.avatarUrl ? (
-            <img
-              src={heroUser.avatarUrl}
-              alt=""
-              className="w-20 h-20 rounded-full mx-auto mb-4 object-cover"
-            />
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-white/[0.06] mx-auto mb-4 flex items-center justify-center">
-              <span className="text-xl font-medium text-white/50">
-                {heroUser.fullName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
-
-          {/* Name */}
-          <h1 className={`${clashDisplay} text-[40px] font-semibold leading-tight text-white mb-1`}>
-            {heroUser.fullName}
-          </h1>
-
-          {/* Handle */}
-          <p className="font-mono text-[14px] text-white/50 mb-2">
-            @{heroUser.handle}
-          </p>
-
-          {/* Online status */}
-          {heroPresence.isOnline && (
-            <div className="flex items-center justify-center gap-1.5 mb-2">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FFD700]" />
-              </span>
-              <span className="text-[12px] text-white/50">Online</span>
-            </div>
-          )}
-
-          {/* Bio / info line */}
-          {heroUser.bio && (
-            <p className="text-[14px] text-white/50 max-w-sm mx-auto mb-1">
-              {heroUser.bio}
-            </p>
-          )}
-          {infoLine && (
-            <p className="text-[13px] text-white/50">{infoLine}</p>
-          )}
-        </div>
+        {/* Stats */}
+        <StatsCard
+          toolCount={profileTools.length}
+          spaceCount={profileSpaces.length}
+          isOwnProfile={isOwnProfile}
+        />
 
         {/* Interests */}
-        {interests.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            {interests.map((interest) => (
-              <span
-                key={interest}
-                className="px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[12px] text-white/40"
-              >
-                {interest}
-              </span>
-            ))}
-          </div>
-        )}
+        <InterestsCard interests={interests} isOwnProfile={isOwnProfile} />
 
-        {/* Divider */}
-        <div className="h-px bg-white/[0.06] mb-8" />
+        {/* Spaces — col-span-2 */}
+        <SpacesCard
+          spaces={profileSpaces}
+          suggestedSpaces={suggestedSpaces}
+          isOwnProfile={isOwnProfile}
+          onSpaceClick={handleSpaceClick}
+        />
 
-        {/* Tools Built */}
-        {hasTools && (
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[11px] uppercase tracking-[0.15em] font-mono text-white/50">
-                Tools Built
-              </h2>
+        {/* Row 3: Event (col-span-2) + Top Tool */}
+        <EventCard event={nextEvent} />
+        <TopToolCard tool={topTool} isOwnProfile={isOwnProfile} onToolClick={handleToolClick} />
+
+        {/* All tools grid — full width, only if more than 1 */}
+        {sortedTools.length > 1 && (
+          <div className="col-span-1 md:col-span-3">
+            <div className="flex items-center justify-between mb-3 px-0.5">
+              <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">All tools</p>
               {isOwnProfile && (
-                <Link
-                  href="/lab"
-                  className="text-[11px] text-white/50 hover:text-white transition-colors flex items-center gap-1"
-                >
+                <Link href="/lab" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
                   View all <ArrowRight className="w-3 h-3" />
                 </Link>
               )}
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {activityTools.slice(0, 6).map((tool) => (
-                <button
-                  key={tool.id}
-                  onClick={() => handleToolClick(tool.id)}
-                  className="rounded-2xl bg-[#080808] border border-white/[0.06] p-4 text-left hover:bg-white/[0.03] transition-colors"
-                >
-                  <span className="text-lg block mb-2">{tool.emoji || '🔧'}</span>
-                  <p className="text-[13px] font-medium text-white truncate">
-                    {tool.name}
-                  </p>
-                  <p className="text-[11px] font-mono text-white/30 mt-1">
-                    {tool.runs} uses
-                  </p>
-                </button>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {sortedTools.map(tool => (
+                <Card key={tool.id} onClick={() => handleToolClick(tool.id)} className="p-4">
+                  <span className="text-lg block mb-2">{tool.emoji || <Wrench className="w-4 h-4 text-white/30" />}</span>
+                  <p className="text-[13px] font-medium text-white truncate">{tool.name}</p>
+                  {(tool.runs || 0) > 0 && (
+                    <p className="text-[11px] font-mono text-white/30 mt-1">{tool.runs} uses</p>
+                  )}
+                </Card>
               ))}
             </div>
-          </section>
-        )}
-
-        {/* Build something prompt (own profile, no tools) */}
-        {isOwnProfile && !hasTools && (
-          <section className="mb-8">
-            <Link
-              href="/lab"
-              className="flex items-center gap-3 rounded-2xl bg-[#080808] border border-white/[0.06] p-5 hover:bg-white/[0.03] transition-colors"
-            >
-              <Wrench className="w-5 h-5 text-white/30" />
-              <div className="flex-1">
-                <p className="text-[14px] font-medium text-white">Build a tool</p>
-                <p className="text-[12px] text-white/50">Polls, sign-ups, countdowns, and more</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-white/30" />
-            </Link>
-          </section>
-        )}
-
-        {/* Spaces */}
-        {hasSpaces && (
-          <section className="mb-8">
-            <h2 className="text-[11px] uppercase tracking-[0.15em] font-mono text-white/50 mb-4">
-              Spaces
-            </h2>
-
-            <div className="space-y-0">
-              {profileSpaces.map((space) => (
-                <button
-                  key={space.id}
-                  onClick={() => handleSpaceClick(space.id)}
-                  className="flex items-center justify-between w-full py-2.5 text-left group"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {space.emoji && (
-                      <span className="text-sm">{space.emoji}</span>
-                    )}
-                    <span className="text-[14px] text-white/50 group-hover:text-white transition-colors truncate">
-                      {space.name}
-                    </span>
-                    {space.isLeader && (
-                      <span className="text-[10px] font-mono text-[#FFD700]/60 uppercase">
-                        Lead
-                      </span>
-                    )}
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" />
-                </button>
-              ))}
-            </div>
-          </section>
+          </div>
         )}
       </div>
 
-      {/* Tool Modal */}
+      {/* Report (non-own profiles) */}
+      {!isOwnProfile && (
+        <div className="flex justify-end mt-4">
+          <button onClick={() => setShowReportModal(true)} className="text-[12px] text-white/20 hover:text-white/40 transition-colors">
+            Report profile
+          </button>
+        </div>
+      )}
+
       <ProfileToolModal
         tool={selectedTool}
         isOpen={!!selectedTool}
@@ -405,7 +563,6 @@ export default function ProfilePageContent() {
         isOwner={isOwnProfile}
       />
 
-      {/* Report Modal */}
       <ReportContentModal
         open={showReportModal}
         onOpenChange={setShowReportModal}
