@@ -1,5 +1,6 @@
 import { withOptionalAuth, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { logger } from "@/lib/logger";
+import { dbAdmin } from "@/lib/firebase-admin";
 import { getServerProfileRepository } from '@hive/core/server';
 import { withCache } from '../../../../../lib/cache-headers';
 
@@ -8,6 +9,11 @@ import { withCache } from '../../../../../lib/cache-headers';
  *
  * Used by /u/[handle] pages to resolve the canonical handle to a profile ID
  * before fetching full profile data.
+ *
+ * Resolution strategy:
+ * 1. Try repository.findByHandle (queries users.handle field)
+ * 2. Fallback: check handles/{handle} collection for userId mapping
+ * 3. Fallback: case-insensitive scan (handles may have been stored with mixed case)
  *
  * Returns the basic profile shape expected by useProfileByHandle:
  * { profile: { id, handle, fullName, avatarUrl, isPrivate?, ... }, viewerType }
@@ -21,7 +27,18 @@ const _GET = withOptionalAuth(
 
     try {
       const profileRepository = getServerProfileRepository();
-      const profileResult = await profileRepository.findByHandle(rawHandle);
+      let profileResult = await profileRepository.findByHandle(rawHandle);
+
+      // Fallback: check handles collection for userId mapping
+      if (profileResult.isFailure) {
+        const handleDoc = await dbAdmin.collection('handles').doc(rawHandle).get();
+        if (handleDoc.exists) {
+          const handleData = handleDoc.data();
+          if (handleData?.userId) {
+            profileResult = await profileRepository.findById(handleData.userId);
+          }
+        }
+      }
 
       if (profileResult.isFailure) {
         return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
