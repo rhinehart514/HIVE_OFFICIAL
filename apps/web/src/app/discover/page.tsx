@@ -1,30 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
   Check,
   Clock,
   GitFork,
   MapPin,
-  MessageSquare,
   Play,
-  RefreshCw,
-  TrendingUp,
   Users,
   Video,
   Zap,
+  ArrowRight,
+  ChevronRight,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 
-/* ------------------------------------------------------------------ */
+/* ─────────────────────────────────────────────────────────────────── */
 /*  Types                                                              */
-/* ------------------------------------------------------------------ */
-
-type FeedFilter = 'all' | 'events' | 'spaces' | 'creations' | 'posts';
+/* ─────────────────────────────────────────────────────────────────── */
 
 interface FeedEvent {
   id: string;
@@ -58,16 +56,13 @@ interface FeedSpace {
   mutualCount?: number;
   upcomingEventCount?: number;
   nextEventTitle?: string;
-  lastActivityAt?: string;
 }
 
-interface FeedCreation {
+interface FeedTool {
   id: string;
   title: string;
   description?: string;
-  thumbnail?: string;
   creatorName?: string;
-  creatorId?: string;
   spaceOriginName?: string;
   forkCount: number;
   useCount: number;
@@ -75,489 +70,572 @@ interface FeedCreation {
   createdAt: string;
 }
 
-type FeedItem =
-  | { type: 'event'; data: FeedEvent; sortKey: number }
-  | { type: 'space'; data: FeedSpace; sortKey: number }
-  | { type: 'creation'; data: FeedCreation; sortKey: number };
-
-/* ------------------------------------------------------------------ */
+/* ─────────────────────────────────────────────────────────────────── */
 /*  Data fetching                                                      */
-/* ------------------------------------------------------------------ */
+/* ─────────────────────────────────────────────────────────────────── */
 
 async function fetchFeedEvents(): Promise<FeedEvent[]> {
-  const params = new URLSearchParams({
-    timeRange: 'this-week',
-    maxItems: '30',
-    sort: 'soonest',
-  });
+  const params = new URLSearchParams({ timeRange: 'this-week', maxItems: '30', sort: 'soonest' });
   const res = await fetch(`/api/events/personalized?${params}`, { credentials: 'include' });
   if (!res.ok) return [];
   const payload = await res.json();
-  const data = payload.data || payload;
-  return data.events || [];
+  return (payload.data || payload).events || [];
 }
 
 async function fetchFeedSpaces(): Promise<FeedSpace[]> {
-  const params = new URLSearchParams({ category: 'all', sort: 'trending', limit: '15' });
+  const params = new URLSearchParams({ category: 'all', sort: 'trending', limit: '10' });
   const res = await fetch(`/api/spaces/browse-v2?${params}`, { credentials: 'include' });
   if (!res.ok) return [];
   const data = await res.json();
   const spaces = data?.data?.spaces || data?.spaces || [];
-  return spaces.map((s: Record<string, unknown>) => ({
-    id: s.id as string,
-    handle: (s.handle || s.slug) as string | undefined,
-    name: s.name as string,
-    description: s.description as string | undefined,
-    avatarUrl: (s.iconURL || s.bannerImage) as string | undefined,
-    memberCount: (s.memberCount as number) || 0,
-    isVerified: s.isVerified as boolean | undefined,
-    isJoined: s.isJoined as boolean | undefined,
-    category: s.category as string | undefined,
-    mutualCount: s.mutualCount as number | undefined,
-    upcomingEventCount: s.upcomingEventCount as number | undefined,
-    nextEventTitle: s.nextEventTitle as string | undefined,
-    lastActivityAt: s.lastActivityAt as string | undefined,
-  }));
+  return spaces
+    .filter((s: Record<string, unknown>) => !s.isJoined)
+    .map((s: Record<string, unknown>) => ({
+      id: s.id,
+      handle: s.handle || s.slug,
+      name: s.name,
+      description: s.description,
+      avatarUrl: s.iconURL || s.bannerImage,
+      memberCount: (s.memberCount as number) || 0,
+      isVerified: s.isVerified,
+      isJoined: s.isJoined,
+      category: s.category,
+      mutualCount: s.mutualCount,
+      upcomingEventCount: s.upcomingEventCount,
+      nextEventTitle: s.nextEventTitle,
+    }));
 }
 
-async function fetchFeedCreations(): Promise<FeedCreation[]> {
-  const params = new URLSearchParams({ sort: 'trending', limit: '15' });
+async function fetchFeedTools(): Promise<FeedTool[]> {
+  const params = new URLSearchParams({ sort: 'trending', limit: '8' });
   const res = await fetch(`/api/tools/discover?${params}`, { credentials: 'include' });
   if (!res.ok) return [];
   const data = await res.json();
   const tools = data?.data?.tools || data?.tools || [];
   return tools.map((t: Record<string, unknown>) => ({
-    id: t.id as string,
-    title: (t.title || t.name) as string,
-    description: t.description as string | undefined,
-    thumbnail: t.thumbnail as string | undefined,
-    creatorName: (t.creator as Record<string, unknown>)?.name as string | undefined,
-    creatorId: (t.creator as Record<string, unknown>)?.id as string | undefined,
-    spaceOriginName: (t.spaceOrigin as Record<string, unknown>)?.name as string | undefined,
+    id: t.id,
+    title: t.title || t.name,
+    description: t.description,
+    creatorName: (t.creator as Record<string, unknown>)?.name,
+    spaceOriginName: (t.spaceOrigin as Record<string, unknown>)?.name,
     forkCount: (t.forkCount as number) || 0,
     useCount: (t.useCount as number) || 0,
-    category: t.category as string | undefined,
+    category: t.category,
     createdAt: t.createdAt as string,
   }));
 }
 
-async function rsvpToEvent(spaceId: string, eventId: string, status: 'going' | 'maybe' | 'not_going'): Promise<void> {
+async function rsvpToEvent(spaceId: string, eventId: string): Promise<void> {
   const res = await fetch(`/api/spaces/${spaceId}/events/${eventId}/rsvp`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status: 'going' }),
   });
   if (!res.ok) throw new Error('RSVP failed');
 }
 
-/* ------------------------------------------------------------------ */
+/* ─────────────────────────────────────────────────────────────────── */
 /*  Helpers                                                            */
-/* ------------------------------------------------------------------ */
+/* ─────────────────────────────────────────────────────────────────── */
 
-function eventTimeLabel(startDate: string): string {
+function isHappeningNow(startDate: string, endDate?: string): boolean {
+  const now = Date.now();
+  const start = new Date(startDate).getTime();
+  const end = endDate ? new Date(endDate).getTime() : start + 2 * 3600 * 1000;
+  return now >= start && now <= end;
+}
+
+function isToday(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+}
+
+function timeLabel(startDate: string): string {
   const start = new Date(startDate);
   const now = new Date();
   const diffMs = start.getTime() - now.getTime();
   const diffMin = Math.floor(diffMs / 60000);
 
-  if (diffMs < 0) return 'Happening now';
-  if (diffMin <= 15) return 'Starting soon';
-  if (diffMin < 60) return `In ${diffMin}m`;
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  return start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  if (diffMs < 0 && Math.abs(diffMs) < 2 * 3600 * 1000) return 'Happening now';
+  if (diffMin <= 15 && diffMin >= 0) return 'Starting soon';
+  if (diffMin < 60 && diffMin >= 0) return `In ${diffMin}m`;
+  return start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
-function isHappeningNow(startDate: string, endDate?: string): boolean {
-  const now = Date.now();
-  const start = new Date(startDate).getTime();
-  const end = endDate ? new Date(endDate).getTime() : start + 2 * 60 * 60 * 1000;
-  return now >= start && now <= end;
+function dayLabel(startDate: string): string {
+  const start = new Date(startDate);
+  const now = new Date();
+  const diffDays = Math.floor((start.getTime() - now.getTime()) / 86400000);
+  if (diffDays <= 0) return 'Today';
+  if (diffDays === 1) return 'Tomorrow';
+  return start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-function isUrgent(startDate: string): boolean {
-  const diffMs = new Date(startDate).getTime() - Date.now();
-  return diffMs >= 0 && diffMs <= 15 * 60 * 1000;
+function categoryIcon(cat?: string): string {
+  const map: Record<string, string> = {
+    governance: '🗳', scheduling: '📅', commerce: '🛒',
+    content: '📝', social: '💬', events: '🎉',
+    'org-management': '🏛', 'campus-life': '🎓',
+  };
+  return cat ? (map[cat] || '⚡') : '⚡';
 }
 
-function relativeTime(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Shared Avatar                                                      */
+/* ─────────────────────────────────────────────────────────────────── */
 
-/* ------------------------------------------------------------------ */
-/*  Feed builder                                                       */
-/* ------------------------------------------------------------------ */
-
-function buildFeed(events: FeedEvent[], spaces: FeedSpace[], creations: FeedCreation[], filter: FeedFilter): FeedItem[] {
-  const items: FeedItem[] = [];
-  const now = Date.now();
-
-  if (filter === 'all' || filter === 'events') {
-    for (const e of events) {
-      const start = new Date(e.startDate).getTime();
-      const live = isHappeningNow(e.startDate, e.endDate);
-      // Live events get highest priority, upcoming events scored by proximity
-      const urgency = live ? 10000 : Math.max(0, 5000 - (start - now) / 60000);
-      const social = (e.rsvpCount || 0) * 2 + (e.friendsAttending || 0) * 20;
-      items.push({ type: 'event', data: e, sortKey: urgency + social });
-    }
-  }
-
-  if (filter === 'all' || filter === 'spaces') {
-    for (const s of spaces) {
-      if (s.isJoined) continue; // Don't suggest already-joined spaces
-      const recency = s.lastActivityAt ? Math.max(0, 2000 - (now - new Date(s.lastActivityAt).getTime()) / 60000) : 500;
-      const social = (s.mutualCount || 0) * 50 + (s.memberCount || 0) * 0.1;
-      items.push({ type: 'space', data: s, sortKey: recency + social });
-    }
-  }
-
-  if (filter === 'all' || filter === 'creations') {
-    for (const c of creations) {
-      const recency = c.createdAt ? Math.max(0, 1500 - (now - new Date(c.createdAt).getTime()) / 60000) : 300;
-      const popularity = (c.forkCount || 0) * 10 + (c.useCount || 0) * 3;
-      items.push({ type: 'creation', data: c, sortKey: recency + popularity });
-    }
-  }
-
-  // Sort by composite score descending
-  items.sort((a, b) => b.sortKey - a.sortKey);
-  return items;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Card Components                                                    */
-/* ------------------------------------------------------------------ */
-
-function Avatar({ name, url, size = 32 }: { name?: string; url?: string; size?: number }) {
-  if (url) {
-    return <img src={url} alt={name || ''} className="rounded-full object-cover flex-shrink-0" style={{ width: size, height: size }} />;
-  }
+function SpaceAvatar({ name, url, size = 32 }: { name?: string; url?: string; size?: number }) {
+  if (url) return <img src={url} alt={name || ''} className="rounded-full object-cover shrink-0" style={{ width: size, height: size }} />;
   const letter = (name || '?')[0].toUpperCase();
   return (
-    <div className="rounded-full bg-white/[0.08] flex items-center justify-center flex-shrink-0 text-white/60 text-xs font-medium" style={{ width: size, height: size }}>
+    <div className="rounded-full bg-white/[0.08] flex items-center justify-center shrink-0 text-white/50 font-medium" style={{ width: size, height: size, fontSize: size * 0.38 }}>
       {letter}
     </div>
   );
 }
 
-function EventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (eventId: string, spaceId: string) => void }) {
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Hero Event                                                         */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, spaceId: string) => void }) {
   const live = isHappeningNow(event.startDate, event.endDate);
-  const urgent = isUrgent(event.startDate);
   const isGoing = event.isUserRsvped || event.userRsvp === 'going';
 
   return (
-    <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-4 space-y-3">
-      {/* Top row: badge + space */}
-      <div className="flex items-center justify-between">
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-          live ? 'bg-red-500/15 text-red-400' : urgent ? 'bg-[#FFD700]/15 text-[#FFD700]' : 'bg-white/[0.06] text-white/40'
-        }`}>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="relative overflow-hidden rounded-2xl border border-white/[0.08]"
+      style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.07) 0%, rgba(255,255,255,0.02) 60%, rgba(0,0,0,0) 100%)' }}
+    >
+      {/* Top row */}
+      <div className="flex items-start justify-between gap-3 px-5 pt-5">
+        <div className="flex items-center gap-2">
           {live ? (
-            <><span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />Live</>
-          ) : urgent ? (
-            <><Zap className="w-3 h-3" />Starting soon</>
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 text-[11px] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+              Live now
+            </span>
           ) : (
-            <><Clock className="w-3 h-3" />{eventTimeLabel(event.startDate)}</>
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.06] text-white/50 text-[11px] font-medium">
+              <Clock className="w-3 h-3" />
+              {dayLabel(event.startDate)} · {timeLabel(event.startDate)}
+            </span>
           )}
-        </span>
+        </div>
         {event.spaceName && (
-          <Link href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'} className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors">
-            <Avatar name={event.spaceName} url={event.spaceAvatarUrl} size={16} />
-            <span className="truncate max-w-[120px]">{event.spaceName}</span>
+          <Link href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'} className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors shrink-0">
+            <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={16} />
+            <span>{event.spaceName}</span>
           </Link>
         )}
       </div>
 
       {/* Title */}
-      <h3 className="text-[15px] font-medium text-white leading-snug">{event.title}</h3>
-      {event.description && <p className="text-[13px] text-white/30 line-clamp-2 leading-relaxed">{event.description}</p>}
+      <div className="px-5 pt-3 pb-4">
+        <h2 className="text-[22px] font-semibold text-white leading-tight tracking-tight">{event.title}</h2>
+        {event.description && (
+          <p className="mt-2 text-[13px] text-white/40 line-clamp-2 leading-relaxed">{event.description}</p>
+        )}
 
-      {/* Meta row */}
-      <div className="flex items-center gap-4 text-[12px] text-white/25">
-        {event.location && (
-          <span className="flex items-center gap-1">
-            {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-            <span className="truncate max-w-[140px]">{event.isOnline ? 'Online' : event.location}</span>
-          </span>
-        )}
-        {event.rsvpCount > 0 && (
-          <span className="flex items-center gap-1">
-            <Users className="w-3 h-3" />{event.rsvpCount} going
-          </span>
-        )}
-        {event.friendsAttending && event.friendsAttending > 0 && (
-          <span className="text-[#FFD700]/60">{event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
-        )}
-      </div>
-
-      {/* Match reasons */}
-      {event.matchReasons && event.matchReasons.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {event.matchReasons.slice(0, 2).map((reason, i) => (
-            <span key={i} className="text-[11px] text-[#FFD700]/60 bg-[#FFD700]/[0.08] px-2 py-0.5 rounded-full">✦ {reason}</span>
-          ))}
+        {/* Meta */}
+        <div className="flex items-center gap-4 mt-3 text-[12px] text-white/30">
+          {event.location && (
+            <span className="flex items-center gap-1">
+              {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+              {event.isOnline ? 'Online' : event.location}
+            </span>
+          )}
+          {event.rsvpCount > 0 && (
+            <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount} going</span>
+          )}
+          {!!event.friendsAttending && event.friendsAttending > 0 && (
+            <span className="text-[#FFD700]/60">{event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
+          )}
         </div>
-      )}
+      </div>
 
       {/* RSVP */}
       {event.spaceId && (
-        <button
-          onClick={() => onRsvp(event.id, event.spaceId!)}
-          className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-medium transition-all ${
-            isGoing
-              ? 'bg-[#FFD700]/15 text-[#FFD700]'
-              : 'bg-white/[0.06] text-white/40 hover:bg-white/[0.08] hover:text-white/60 active:scale-[0.98]'
-          }`}
-        >
-          {isGoing ? <Check className="w-3.5 h-3.5" /> : <Calendar className="w-3.5 h-3.5" />}
-          {isGoing ? 'Going' : 'RSVP'}
-        </button>
+        <div className="px-5 pb-5">
+          <button
+            onClick={() => onRsvp(event.id, event.spaceId!)}
+            className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[13px] font-semibold transition-all ${
+              isGoing
+                ? 'bg-[#FFD700]/15 text-[#FFD700]'
+                : 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90 active:scale-[0.98]'
+            }`}
+          >
+            {isGoing ? <><Check className="w-3.5 h-3.5" /> Going</> : <><Calendar className="w-3.5 h-3.5" /> RSVP</>}
+          </button>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Today Strip                                                        */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function TodayStrip({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (id: string, spaceId: string) => void }) {
+  if (events.length === 0) return null;
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[12px] font-mono uppercase tracking-[0.15em] text-white/30">Today</span>
+        <span className="text-[12px] text-white/20">{events.length} event{events.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+        {events.map((event, i) => {
+          const live = isHappeningNow(event.startDate, event.endDate);
+          const isGoing = event.isUserRsvped || event.userRsvp === 'going';
+          return (
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+              className="shrink-0 w-[190px] rounded-xl border border-white/[0.06] bg-[#080808] p-3 flex flex-col gap-2"
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-[10px] font-semibold ${live ? 'text-red-400' : 'text-white/30'}`}>
+                  {live ? '● LIVE' : timeLabel(event.startDate)}
+                </span>
+                {isGoing && <Check className="w-3 h-3 text-[#FFD700]" />}
+              </div>
+              <p className="text-[13px] font-medium text-white leading-snug line-clamp-2">{event.title}</p>
+              {event.rsvpCount > 0 && (
+                <span className="text-[11px] text-white/25">{event.rsvpCount} going</span>
+              )}
+              {event.spaceId && !isGoing && (
+                <button
+                  onClick={() => onRsvp(event.id, event.spaceId!)}
+                  className="mt-auto text-[11px] font-medium text-white/40 hover:text-white/70 transition-colors text-left"
+                >
+                  RSVP →
+                </button>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Feed Event Card                                                    */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function FeedEventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, spaceId: string) => void }) {
+  const live = isHappeningNow(event.startDate, event.endDate);
+  const isGoing = event.isUserRsvped || event.userRsvp === 'going';
+
+  return (
+    <div className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden">
+      <div className="p-4 space-y-2.5">
+        {/* Space + time */}
+        <div className="flex items-center justify-between">
+          {event.spaceName && (
+            <Link href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'} className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors">
+              <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={16} />
+              {event.spaceName}
+            </Link>
+          )}
+          <span className={`text-[11px] font-medium ${live ? 'text-red-400' : 'text-white/30'}`}>
+            {live ? '● Live' : dayLabel(event.startDate) + ' · ' + timeLabel(event.startDate)}
+          </span>
+        </div>
+
+        <h3 className="text-[16px] font-semibold text-white leading-snug">{event.title}</h3>
+
+        {event.description && (
+          <p className="text-[13px] text-white/35 line-clamp-2 leading-relaxed">{event.description}</p>
+        )}
+
+        <div className="flex items-center gap-4 text-[12px] text-white/25">
+          {event.location && (
+            <span className="flex items-center gap-1">
+              {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+              {event.isOnline ? 'Online' : event.location}
+            </span>
+          )}
+          {event.rsvpCount > 0 && (
+            <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount} going</span>
+          )}
+          {!!event.friendsAttending && event.friendsAttending > 0 && (
+            <span className="text-[#FFD700]/60">{event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
+          )}
+        </div>
+      </div>
+
+      {event.spaceId && (
+        <div className="px-4 pb-4">
+          <button
+            onClick={() => onRsvp(event.id, event.spaceId!)}
+            className={`flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[13px] font-medium transition-all ${
+              isGoing
+                ? 'bg-[#FFD700]/10 text-[#FFD700]'
+                : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60 active:scale-[0.98]'
+            }`}
+          >
+            {isGoing ? <><Check className="w-3.5 h-3.5" />Going</> : <><Calendar className="w-3.5 h-3.5" />RSVP</>}
+          </button>
+        </div>
       )}
     </div>
   );
 }
 
-function SpaceCard({ space }: { space: FeedSpace }) {
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Embedded Tool Card                                                 */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
   return (
-    <Link href={`/s/${space.handle || space.id}`} className="block rounded-2xl bg-[#080808] border border-white/[0.06] p-4 hover:border-white/[0.1] transition-colors group">
-      <div className="flex items-start gap-3">
-        <Avatar name={space.name} url={space.avatarUrl} size={40} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h3 className="text-[15px] font-medium text-white truncate group-hover:text-white/90">{space.name}</h3>
-            {space.isVerified && <span className="text-[#FFD700] text-[12px]">✓</span>}
-          </div>
-          {space.description && <p className="text-[13px] text-white/30 line-clamp-2 mt-1 leading-relaxed">{space.description}</p>}
+    <Link href={`/t/${tool.id}`} className="group block rounded-2xl border border-white/[0.06] bg-[#080808] p-4 hover:border-white/[0.1] transition-all">
+      {/* Label */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="flex items-center gap-1.5 text-[11px] text-[#FFD700]/60 font-medium">
+          <span className="text-base leading-none">{categoryIcon(tool.category)}</span>
+          <span className="font-mono uppercase tracking-[0.12em]">Tool</span>
+          {tool.spaceOriginName && (
+            <span className="text-white/20 font-normal normal-case tracking-normal">· {tool.spaceOriginName}</span>
+          )}
+        </span>
+        <ArrowRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+      </div>
 
-          <div className="flex items-center gap-3 mt-2.5 text-[12px] text-white/25">
-            <span className="flex items-center gap-1"><Users className="w-3 h-3" />{space.memberCount}</span>
-            {space.upcomingEventCount && space.upcomingEventCount > 0 && (
-              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{space.upcomingEventCount} event{space.upcomingEventCount > 1 ? 's' : ''}</span>
-            )}
-            {space.mutualCount && space.mutualCount > 0 && (
-              <span className="text-[#FFD700]/50">{space.mutualCount} mutual{space.mutualCount > 1 ? 's' : ''}</span>
-            )}
-          </div>
+      <h3 className="text-[15px] font-semibold text-white leading-snug group-hover:text-white/90">{tool.title}</h3>
+      {tool.description && (
+        <p className="mt-1.5 text-[13px] text-white/30 line-clamp-2 leading-relaxed">{tool.description}</p>
+      )}
 
-          {space.nextEventTitle && (
-            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-white/20">
-              <Zap className="w-3 h-3" />
-              <span className="truncate">Next: {space.nextEventTitle}</span>
-            </div>
+      {/* Stats */}
+      <div className="flex items-center gap-4 mt-3 text-[12px] text-white/20">
+        {tool.useCount > 0 && (
+          <span className="flex items-center gap-1"><Play className="w-3 h-3" />{tool.useCount} uses</span>
+        )}
+        {tool.forkCount > 0 && (
+          <span className="flex items-center gap-1"><GitFork className="w-3 h-3" />{tool.forkCount} forks</span>
+        )}
+      </div>
+
+      {/* Use CTA */}
+      <div className="mt-3 flex items-center gap-2 text-[13px] font-medium text-[#FFD700]/70 group-hover:text-[#FFD700] transition-colors">
+        <Zap className="w-3.5 h-3.5" />
+        Open tool
+        <ChevronRight className="w-3.5 h-3.5" />
+      </div>
+    </Link>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Space Discovery Card                                              */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function SpaceDiscoveryCard({ space }: { space: FeedSpace }) {
+  return (
+    <Link href={`/s/${space.handle || space.id}`} className="group flex items-start gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-3.5 hover:border-white/[0.08] hover:bg-white/[0.03] transition-all">
+      <SpaceAvatar name={space.name} url={space.avatarUrl} size={36} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1">
+          <span className="text-[14px] font-medium text-white truncate">{space.name}</span>
+          {space.isVerified && <span className="text-[#FFD700] text-[11px]">✓</span>}
+        </div>
+        {space.description && (
+          <p className="text-[12px] text-white/30 line-clamp-1 mt-0.5">{space.description}</p>
+        )}
+        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-white/20">
+          <span className="flex items-center gap-1"><Users className="w-3 h-3" />{space.memberCount}</span>
+          {!!space.upcomingEventCount && space.upcomingEventCount > 0 && (
+            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{space.upcomingEventCount} upcoming</span>
+          )}
+          {!!space.mutualCount && space.mutualCount > 0 && (
+            <span className="text-[#FFD700]/50">{space.mutualCount} mutual{space.mutualCount > 1 ? 's' : ''}</span>
           )}
         </div>
       </div>
+      <ChevronRight className="w-4 h-4 text-white/15 group-hover:text-white/30 transition-colors shrink-0 mt-0.5" />
     </Link>
   );
 }
 
-function CreationCard({ creation }: { creation: FeedCreation }) {
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Empty State                                                        */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function EmptyState() {
   return (
-    <Link href={`/t/${creation.id}`} className="block rounded-2xl bg-[#080808] border border-white/[0.06] overflow-hidden hover:border-white/[0.1] transition-colors group">
-      {creation.thumbnail && (
-        <div className="h-32 bg-white/[0.02] overflow-hidden">
-          <img src={creation.thumbnail} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity" />
-        </div>
-      )}
-      <div className="p-4 space-y-2">
-        <div className="flex items-center gap-2 text-[11px] text-white/25">
-          <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-white/40 font-medium">Creation</span>
-          {creation.spaceOriginName && <span className="truncate">from {creation.spaceOriginName}</span>}
-        </div>
-        <h3 className="text-[15px] font-medium text-white leading-snug group-hover:text-white/90">{creation.title}</h3>
-        {creation.description && <p className="text-[13px] text-white/30 line-clamp-2 leading-relaxed">{creation.description}</p>}
-        <div className="flex items-center gap-4 text-[12px] text-white/25 pt-1">
-          {creation.creatorName && <span>by {creation.creatorName}</span>}
-          {creation.forkCount > 0 && <span className="flex items-center gap-1"><GitFork className="w-3 h-3" />{creation.forkCount}</span>}
-          {creation.useCount > 0 && <span className="flex items-center gap-1"><Play className="w-3 h-3" />{creation.useCount}</span>}
-          {creation.createdAt && <span>{relativeTime(creation.createdAt)}</span>}
-        </div>
+    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+      <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-4 text-xl">🌱</div>
+      <p className="text-[15px] text-white/50 font-medium">Nothing yet</p>
+      <p className="text-[13px] text-white/25 mt-1 max-w-[240px]">
+        Events, tools, and spaces from your campus will show up here
+      </p>
+      <Link href="/spaces" className="mt-5 flex items-center gap-1.5 text-[13px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors font-medium">
+        Browse spaces <ArrowRight className="w-3.5 h-3.5" />
+      </Link>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Skeleton                                                           */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function FeedSkeleton() {
+  return (
+    <div className="space-y-3 animate-pulse">
+      <div className="rounded-2xl bg-white/[0.03] border border-white/[0.04] h-[200px]" />
+      <div className="flex gap-3 overflow-hidden">
+        {[0, 1, 2].map(i => <div key={i} className="shrink-0 w-[190px] h-[110px] rounded-xl bg-white/[0.03] border border-white/[0.04]" />)}
       </div>
-    </Link>
+      {[0, 1, 2].map(i => (
+        <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/[0.04]" style={{ height: 130 + i * 20 }} />
+      ))}
+    </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Pulse Indicator                                                    */
-/* ------------------------------------------------------------------ */
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Feed interleaver                                                   */
+/* ─────────────────────────────────────────────────────────────────── */
 
-function PulseIndicator({ count }: { count: number }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="relative flex h-2 w-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFD700] opacity-40" />
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FFD700]" />
-      </span>
-      {count > 0 && <span className="text-[13px] text-white/40">{count} happening now</span>}
-    </span>
-  );
+type FeedItem =
+  | { type: 'event'; data: FeedEvent }
+  | { type: 'tool'; data: FeedTool }
+  | { type: 'space'; data: FeedSpace };
+
+function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], heroId: string): FeedItem[] {
+  // Remaining events (not hero, not today)
+  const remaining = events.filter(e => e.id !== heroId && !isToday(e.startDate));
+
+  const items: FeedItem[] = [];
+  let toolIdx = 0;
+  let spaceIdx = 0;
+
+  for (let i = 0; i < remaining.length; i++) {
+    items.push({ type: 'event', data: remaining[i] });
+
+    // Every 3 events, drop a tool
+    if ((i + 1) % 3 === 0 && toolIdx < tools.length) {
+      items.push({ type: 'tool', data: tools[toolIdx++] });
+    }
+
+    // Every 5 events, drop a space suggestion
+    if ((i + 1) % 5 === 0 && spaceIdx < spaces.length) {
+      items.push({ type: 'space', data: spaces[spaceIdx++] });
+    }
+  }
+
+  // Append remaining tools / spaces at end
+  while (toolIdx < tools.length) items.push({ type: 'tool', data: tools[toolIdx++] });
+
+  return items;
 }
 
-/* ------------------------------------------------------------------ */
+/* ─────────────────────────────────────────────────────────────────── */
 /*  Page                                                               */
-/* ------------------------------------------------------------------ */
+/* ─────────────────────────────────────────────────────────────────── */
 
 export default function DiscoverPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<FeedFilter>('all');
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace('/enter?redirect=/discover');
-    }
+    if (!authLoading && !user) router.replace('/enter?redirect=/discover');
   }, [authLoading, user, router]);
 
-  const eventsQuery = useQuery({
-    queryKey: ['feed-events'],
-    queryFn: fetchFeedEvents,
-    staleTime: 60_000,
-    enabled: !authLoading && !!user,
-  });
-
-  const spacesQuery = useQuery({
-    queryKey: ['feed-spaces'],
-    queryFn: fetchFeedSpaces,
-    staleTime: 5 * 60_000,
-    enabled: !authLoading && !!user,
-  });
-
-  const creationsQuery = useQuery({
-    queryKey: ['feed-creations'],
-    queryFn: fetchFeedCreations,
-    staleTime: 5 * 60_000,
-    enabled: !authLoading && !!user,
-  });
+  const eventsQuery = useQuery({ queryKey: ['feed-events'], queryFn: fetchFeedEvents, staleTime: 60_000, enabled: !authLoading && !!user });
+  const spacesQuery = useQuery({ queryKey: ['feed-spaces'], queryFn: fetchFeedSpaces, staleTime: 5 * 60_000, enabled: !authLoading && !!user });
+  const toolsQuery = useQuery({ queryKey: ['feed-tools'], queryFn: fetchFeedTools, staleTime: 5 * 60_000, enabled: !authLoading && !!user });
 
   const rsvpMutation = useMutation({
-    mutationFn: ({ eventId, spaceId }: { eventId: string; spaceId: string }) =>
-      rsvpToEvent(spaceId, eventId, 'going'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feed-events'] });
-    },
+    mutationFn: ({ eventId, spaceId }: { eventId: string; spaceId: string }) => rsvpToEvent(spaceId, eventId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['feed-events'] }),
   });
 
   const handleRsvp = useCallback((eventId: string, spaceId: string) => {
     rsvpMutation.mutate({ eventId, spaceId });
   }, [rsvpMutation]);
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['feed-events'] }),
-      queryClient.invalidateQueries({ queryKey: ['feed-spaces'] }),
-      queryClient.invalidateQueries({ queryKey: ['feed-creations'] }),
-    ]);
-    setTimeout(() => setIsRefreshing(false), 600);
-  }, [queryClient]);
-
   const events = eventsQuery.data || [];
   const spaces = spacesQuery.data || [];
-  const creations = creationsQuery.data || [];
+  const tools = toolsQuery.data || [];
 
-  const feed = useMemo(() => buildFeed(events, spaces, creations, filter), [events, spaces, creations, filter]);
+  // Pick hero: live first, then earliest upcoming
+  const heroEvent = useMemo(() => {
+    const live = events.find(e => isHappeningNow(e.startDate, e.endDate));
+    return live || events[0] || null;
+  }, [events]);
 
-  const liveCount = useMemo(() => events.filter(e => isHappeningNow(e.startDate, e.endDate)).length, [events]);
+  const todayEvents = useMemo(() =>
+    events.filter(e => isToday(e.startDate) && e.id !== heroEvent?.id)
+  , [events, heroEvent]);
 
-  const isLoading = eventsQuery.isLoading && spacesQuery.isLoading && creationsQuery.isLoading;
+  const feed = useMemo(() =>
+    buildFeed(events, tools, spaces, heroEvent?.id || '')
+  , [events, tools, spaces, heroEvent]);
 
-  const filters: { key: FeedFilter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'events', label: 'Events' },
-    { key: 'spaces', label: 'Spaces' },
-    { key: 'creations', label: 'Creations' },
-  ];
+  const isLoading = eventsQuery.isLoading || spacesQuery.isLoading;
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-white/[0.06] border-t-white/40 animate-spin" />
+      <div className="flex items-center justify-center py-24">
+        <div className="w-6 h-6 rounded-full border-2 border-white/[0.06] border-t-white/40 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full bg-black">
-      <div className="mx-auto w-full max-w-[600px]">
-        {/* Sticky header */}
-        <div className="sticky top-0 z-20 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]">
-          <div className="flex items-center justify-between px-4 pt-4 pb-2">
-            <div>
-              <h1 className="text-[17px] font-semibold text-white tracking-tight">What&apos;s happening at UB</h1>
-              <div className="mt-1">
-                <PulseIndicator count={liveCount} />
-              </div>
-            </div>
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="p-2 -mr-1 rounded-full text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
-
-          {/* Filter chips */}
-          <div className="flex items-center gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
-            {filters.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
-                  filter === f.key
-                    ? 'bg-white text-black'
-                    : 'bg-white/[0.06] text-white/40 hover:bg-white/[0.08] hover:text-white/50'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Feed */}
-        {isLoading ? (
-          <div className="space-y-3 p-4">
-            {[0, 1, 2, 3, 4].map(i => (
-              <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/[0.04] animate-pulse" style={{ height: 140 + (i % 3) * 40 }} />
-            ))}
-          </div>
-        ) : feed.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mb-4">
-              <TrendingUp className="w-5 h-5 text-white/20" />
-            </div>
-            <p className="text-[15px] text-white/50 font-medium">Nothing here yet</p>
-            <p className="text-[13px] text-white/25 mt-1 max-w-[260px]">
-              Events, spaces, and creations from your campus will show up here
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3 p-4 pb-24">
-            {feed.map((item) => {
-              switch (item.type) {
-                case 'event':
-                  return <EventCard key={`e-${item.data.id}`} event={item.data} onRsvp={handleRsvp} />;
-                case 'space':
-                  return <SpaceCard key={`s-${item.data.id}`} space={item.data} />;
-                case 'creation':
-                  return <CreationCard key={`c-${item.data.id}`} creation={item.data} />;
-              }
-            })}
-          </div>
-        )}
+    <div className="w-full max-w-[680px]">
+      {/* Header */}
+      <div className="mb-5">
+        <h1 className="text-[13px] font-mono uppercase tracking-[0.15em] text-white/30">What&apos;s happening at UB</h1>
       </div>
+
+      {isLoading ? (
+        <FeedSkeleton />
+      ) : !heroEvent && feed.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="space-y-3">
+          {/* Hero */}
+          {heroEvent && <HeroEvent event={heroEvent} onRsvp={handleRsvp} />}
+
+          {/* Today strip */}
+          {todayEvents.length > 0 && <TodayStrip events={todayEvents} onRsvp={handleRsvp} />}
+
+          {/* Feed body */}
+          {feed.length > 0 && (
+            <div className="space-y-3 pt-2">
+              {feed.map((item, i) => (
+                <motion.div
+                  key={`${item.type}-${item.data.id}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {item.type === 'event' && <FeedEventCard event={item.data} onRsvp={handleRsvp} />}
+                  {item.type === 'tool' && <EmbeddedToolCard tool={item.data} />}
+                  {item.type === 'space' && <SpaceDiscoveryCard space={item.data} />}
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
