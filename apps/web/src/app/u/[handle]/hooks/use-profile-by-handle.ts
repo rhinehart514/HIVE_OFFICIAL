@@ -294,7 +294,7 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/profile/v2?id=${profileId}`, {
+        const response = await fetch(`/api/profile/${profileId}`, {
           credentials: 'include',
         });
 
@@ -311,15 +311,65 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
 
         const json = await response.json();
         if (!json.success) {
-          throw new Error(json.error || 'Failed to load profile');
+          throw new Error(json.error?.message || json.error || 'Failed to load profile');
         }
 
         if (cancelled) return;
 
-        const payload = json.data as ProfileV2ApiResponse;
+        // Map /api/profile/[userId] response → ProfileV2ApiResponse shape
+        const apiProfile = json.data?.profile || {};
+        const payload: ProfileV2ApiResponse = {
+          profile: {
+            id: apiProfile.id || profileId,
+            handle: apiProfile.handle || handle,
+            fullName: apiProfile.fullName || apiProfile.firstName || 'User',
+            firstName: apiProfile.firstName || '',
+            lastName: apiProfile.lastName || '',
+            campusId: apiProfile.campusId || '',
+            avatarUrl: apiProfile.avatarUrl ?? null,
+            bio: apiProfile.bio || '',
+            major: apiProfile.major || '',
+            graduationYear: apiProfile.graduationYear ?? null,
+            interests: apiProfile.interests || [],
+            badges: apiProfile.achievements || [],
+            presence: apiProfile.presence,
+            stats: apiProfile.stats,
+          },
+          grid: { cards: [], mobileLayout: [] },
+          stats: apiProfile.stats || {},
+          spaces: (apiProfile.spaces || []).map((s: Record<string, unknown>) => ({
+            id: s.id || s.spaceId || '',
+            name: s.name || '',
+            role: s.role || 'member',
+            memberCount: (s.memberCount as number) || 0,
+          })),
+          connections: (apiProfile.connections || []).map((c: Record<string, unknown>) => ({
+            id: c.id || c.userId || '',
+            name: c.name || c.fullName || '',
+            avatarUrl: c.avatarUrl ?? null,
+            isFriend: c.isFriend ?? false,
+            mutualConnections: (c.mutualConnections as number) || 0,
+          })),
+          activities: [],
+          viewer: {
+            relationship: json.data?.viewerType === 'connection' ? 'connection' : json.data?.viewerType === 'campus' ? 'campus' : 'self',
+            isOwnProfile: json.data?.viewerType === 'self' || false,
+            isConnection: json.data?.viewerType === 'connection' || false,
+            isFriend: false,
+          },
+          privacy: {
+            profileLevel: apiProfile.privacy?.level || 'public',
+            widgets: {},
+          },
+        };
+
         setProfileData(payload);
-        const system = profileApiResponseToProfileSystem(payload);
-        setProfileSystem(system);
+        try {
+          const system = profileApiResponseToProfileSystem(payload);
+          setProfileSystem(system);
+        } catch {
+          // Non-critical — profile page works without the system object
+        }
         setIsLoading(false);
       } catch (err) {
         if (cancelled) return;
@@ -331,7 +381,7 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
 
     loadProfile();
     return () => { cancelled = true; };
-  }, [profileId]);
+  }, [profileId, handle]);
 
   // ============================================================================
   // Subscribe to presence updates
@@ -453,29 +503,7 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
     fetchDeployedTools();
   }, [profileId, isOwnProfile]);
 
-  // ============================================================================
-  // Fetch notified features
-  // ============================================================================
-
-  React.useEffect(() => {
-    if (!isOwnProfile || !currentUser?.id) return;
-
-    const fetchNotifications = async () => {
-      try {
-        const response = await fetch('/api/profile/notify', {
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setNotifiedFeatures(data.subscribedFeatures || []);
-        }
-      } catch (err) {
-        logger.error('Failed to fetch notifications', { component: 'ProfileByHandle' }, err instanceof Error ? err : undefined);
-      }
-    };
-
-    fetchNotifications();
-  }, [isOwnProfile, currentUser?.id]);
+  // Notified features — no dedicated endpoint exists, skip fetch
 
   // ============================================================================
   // Fetch organizing events
@@ -840,28 +868,9 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
     }
   }, [isOwnProfile, currentUser?.id]);
 
-  const handleNotifyFeature = React.useCallback(async (feature: FeatureKey) => {
-    if (!currentUser?.id) return;
-
-    setIsNotifySaving(true);
-    try {
-      const response = await fetch('/api/profile/notify', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feature, subscribe: true }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setNotifiedFeatures(data.subscribedFeatures || []);
-      }
-    } catch (err) {
-      logger.error('Failed to update notification', { component: 'ProfileByHandle' }, err instanceof Error ? err : undefined);
-    } finally {
-      setIsNotifySaving(false);
-    }
-  }, [currentUser?.id]);
+  const handleNotifyFeature = React.useCallback(async (_feature: FeatureKey) => {
+    // No-op — /api/profile/notify endpoint doesn't exist yet
+  }, []);
 
   const handleSpaceClick = React.useCallback((spaceId: string) => {
     router.push(`/s/${spaceId}`);
