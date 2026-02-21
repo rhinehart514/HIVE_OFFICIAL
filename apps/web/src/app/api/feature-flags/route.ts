@@ -180,27 +180,23 @@ function applySoftLaunchOverrides(results: Record<string, FlagResult>): Record<s
  * Allows users to check which features are enabled for them
  */
 
-// GET - Get feature flags for the current user
+// GET - Get feature flags for the current user (public: returns defaults for anon users)
 async function _GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(
-        ApiResponseHelper.error('Unauthorized', 'UNAUTHORIZED'), 
-        { status: HttpStatus.UNAUTHORIZED }
-      );
-    }
 
     const { searchParams } = new URL(request.url);
     const flagIds = searchParams.get('flags')?.split(',') || [];
     const category = searchParams.get('category');
     const includeConfig = searchParams.get('includeConfig') === 'true';
 
-    // Campus is optional in non-campus mode.
-    const campusId = user.email ? deriveCampusFromEmail(user.email) : undefined;
+    // For unauthenticated users, return all flags evaluated with anonymous context
+    const campusId = user?.email ? deriveCampusFromEmail(user.email) : undefined;
 
-    // Build user context
-    const userContext = await buildUserContext(user.uid, campusId);
+    // Build user context (anonymous gets minimal context)
+    const userContext = user
+      ? await buildUserContext(user.uid, campusId)
+      : { userId: 'anonymous', userRole: 'guest' as const, spaceIds: [] };
 
     let results: Record<string, FlagResult> = {};
 

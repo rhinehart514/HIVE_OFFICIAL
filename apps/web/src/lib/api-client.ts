@@ -43,13 +43,25 @@ class ApiClient {
       try {
         const status = response.status;
         const title = status >= 500
-          ? 'Server error'
-          : status === 401
-            ? 'Please sign in'
-            : status === 403
-              ? 'Permission denied'
-              : 'Request failed';
-        const description = `${status} ${response.statusText}`;
+          ? 'Something went wrong'
+          : status === 429
+            ? 'Slow down'
+            : status === 401
+              ? 'Please sign in'
+              : status === 403
+                ? 'Permission denied'
+                : 'Request failed';
+        const description = status >= 500
+          ? "We're on it — try again in a moment"
+          : status === 429
+            ? 'Too many requests — wait a moment and try again'
+            : status === 404
+              ? "Couldn't find what you're looking for"
+              : status === 401
+                ? 'Your session may have expired'
+                : status === 403
+                  ? "You don't have access to this"
+                  : 'Please try again';
 
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('hive:toast', {
@@ -57,11 +69,13 @@ class ApiClient {
           }));
         }
 
+        // Technical details go to console only — never to the toast
         logger.warn('API request failed', {
           component: 'api-client',
           action: 'api_error',
           url,
           status,
+          statusText: response.statusText,
           duration: Math.round(duration)
         });
       } catch {

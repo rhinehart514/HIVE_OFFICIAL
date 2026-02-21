@@ -85,6 +85,48 @@ let sessionCache: { user: AuthUser | null; sessionInfo: SessionInfo | null; time
 const CACHE_TTL = 30000; // 30 seconds
 
 export function useAuth(): UseAuthReturn {
+  // Dev bypass for Playwright / headless testing
+  if (
+    typeof process !== "undefined" &&
+    process.env.NEXT_PUBLIC_DEV_BYPASS === "true" &&
+    process.env.NODE_ENV === "development"
+  ) {
+    return {
+      user: {
+        uid: "dev-user-001",
+        id: "dev-user-001",
+        email: "rhinehart514@gmail.com",
+        fullName: "Dev User",
+        displayName: "Dev User",
+        handle: "dev-user",
+        bio: null,
+        major: "Computer Science",
+        graduationYear: 2026,
+        avatarUrl: null,
+        photoURL: null,
+        isBuilder: true,
+        builderOptIn: true,
+        schoolId: "ub-buffalo",
+        campusId: "ub-buffalo",
+        onboardingCompleted: true,
+        isAdmin: false,
+        getIdToken: async () => "dev-token",
+      },
+      isLoading: false,
+      isAuthenticated: true,
+      error: null,
+      clearError: () => {},
+      refreshUser: async () => {},
+      refreshToken: async () => true,
+      logout: async () => {},
+      logoutAll: async () => {},
+      canAccessFeature: () => true,
+      hasValidSession: () => true,
+      session: { issuedAt: new Date().toISOString(), canRefresh: false },
+      isRefreshing: false,
+    };
+  }
+
   const [user, setUser] = useState<AuthUser | null>(null);
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);

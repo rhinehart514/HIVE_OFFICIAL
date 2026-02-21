@@ -25,6 +25,7 @@ import {
   accessCodeRateLimit,
   signinCodeRateLimit,
   signinVerifyRateLimit,
+  sessionCheckRateLimit,
 } from './rate-limit-simple';
 import { logSecurityEvent } from './logger';
 
@@ -32,6 +33,7 @@ import { logSecurityEvent } from './logger';
 const RATE_LIMIT_CONFIGS = {
   auth: { limit: 5, windowMs: 60000 },
   authStrict: { limit: 10, windowMs: 60000 },
+  sessionCheck: { limit: 600, windowMs: 60000 },
   apiGeneral: { limit: 100, windowMs: 60000 },
   api: { limit: 100, windowMs: 60000 },
   strict: { limit: 10, windowMs: 60000 },
@@ -47,6 +49,7 @@ const RATE_LIMIT_CONFIGS = {
 const MEMORY_RATE_LIMITERS = {
   auth: authRateLimit,
   authStrict: strictRateLimit,
+  sessionCheck: sessionCheckRateLimit,
   apiGeneral: apiRateLimit,
   api: apiRateLimit,
   strict: strictRateLimit,

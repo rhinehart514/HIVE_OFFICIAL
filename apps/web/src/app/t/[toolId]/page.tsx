@@ -6,7 +6,7 @@
  */
 
 import { Metadata } from 'next';
-import { StandaloneToolClient } from './StandaloneToolClient';
+import { StandaloneToolLoader } from './StandaloneToolLoader';
 
 interface Props {
   params: Promise<{ toolId: string }>;
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!tool) {
     return {
-      title: 'Tool | HIVE',
+      title: 'Tool',
       description: 'Create and share interactive tools on HIVE',
       openGraph: {
         title: 'Tool | HIVE',
@@ -95,5 +95,5 @@ export default async function StandaloneToolPage({ params }: Props) {
   const { toolId } = await params;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.college';
 
-  return <StandaloneToolClient toolId={toolId} baseUrl={baseUrl} />;
+  return <StandaloneToolLoader toolId={toolId} baseUrl={baseUrl} />;
 }

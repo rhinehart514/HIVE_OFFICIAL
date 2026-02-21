@@ -459,6 +459,18 @@ export const signinVerifyRateLimit = rateLimit({
 });
 
 /**
+ * Session check rate limiter — very generous (600 requests per minute)
+ * /api/auth/me is called on every page navigation, so it needs headroom
+ * Already protected by JWT cookie — rate limit is just a safety net
+ */
+export const sessionCheckRateLimit = rateLimit({
+  maxRequests: 600,
+  windowMs: 60000,
+  identifier: 'session_check',
+  blockOnError: false
+});
+
+/**
  * Get overall rate limiter health
  */
 export function getRateLimiterHealth(): {

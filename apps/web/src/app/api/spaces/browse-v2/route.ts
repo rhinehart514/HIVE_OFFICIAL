@@ -324,13 +324,19 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
     });
   }
 
-  // Featured filter: when not searching and not showAll, only show curated spaces
+  // Featured filter: when not searching and not showAll, prefer curated spaces
+  // Falls back to showing all spaces if fewer than 4 featured spaces exist
   // Search always shows all matching spaces (so users can find anything)
   if (!showAll && !search) {
-    visibleSpaces = visibleSpaces.filter(space => {
+    const featuredSpaces = visibleSpaces.filter(space => {
       const slug = space.slug?.value;
       return isFeaturedSpace(slug);
     });
+    // Only apply featured filter if we have enough curated content
+    // Otherwise show all spaces so the page isn't empty
+    if (featuredSpaces.length >= 4) {
+      visibleSpaces = featuredSpaces;
+    }
   }
 
   // Extract visible space IDs for enrichment queries

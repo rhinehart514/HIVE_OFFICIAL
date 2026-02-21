@@ -17,16 +17,15 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
 
   try {
     // Fetch all tools owned by this user (check both ownerId and createdBy for compat)
+    // Avoid orderBy to prevent composite index requirements — sort in memory instead
     const [byOwner, byCreator] = await Promise.all([
       dbAdmin
         .collection("tools")
         .where("ownerId", "==", userId)
-        .orderBy("updatedAt", "desc")
         .get(),
       dbAdmin
         .collection("tools")
         .where("createdBy", "==", userId)
-        .orderBy("updatedAt", "desc")
         .get(),
     ]);
 
@@ -38,6 +37,15 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
     }
 
     const toolDocs = Array.from(toolMap.values());
+
+    // Early return for users with zero tools — no need to query placements
+    if (toolDocs.length === 0) {
+      return respond.success({
+        tools: [],
+        stats: { totalTools: 0, totalUsers: 0, weeklyInteractions: 0 },
+      });
+    }
+
     const toolIds = toolDocs.map((d) => d.id);
 
     // Batch-fetch placement counts from placedTools (canonical) collection
@@ -122,6 +130,9 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
         templateId: (data.metadata as Record<string, unknown>)?.templateId as string | null ?? null,
       };
     });
+
+    // Sort by updatedAt descending (we skip Firestore orderBy to avoid index requirements)
+    tools.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     const stats = {
       totalTools: tools.length,

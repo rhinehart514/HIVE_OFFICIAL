@@ -217,12 +217,14 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
         const params = new URLSearchParams({
           sort: 'recommended',
           limit: '48',
+          showAll: 'true',
           ...(activeCategory !== 'all' ? { category: activeCategory } : {}),
         });
         const res = await secureApiFetch(`/api/spaces/browse-v2?${params}`);
         if (!res.ok) return;
         const data = await res.json();
-        setDiscoverSpaces((data.spaces || data.data || []) as BrowseSpace[]);
+        const spaces = data?.data?.spaces ?? data?.spaces ?? [];
+        setDiscoverSpaces(Array.isArray(spaces) ? spaces : []);
       } catch {
         // fail silently
       } finally {

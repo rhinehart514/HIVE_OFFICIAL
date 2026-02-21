@@ -163,6 +163,33 @@ const _GET = withAuthAndErrors(
         const userSnapshot = await dbAdmin.collection('users').doc(targetUserId).get();
 
         if (!userSnapshot.exists) {
+          // For own profile: return a minimal shell so callers don't 404.
+          // The needsOnboarding flag tells the client to redirect to onboarding.
+          if (isOwnProfile) {
+            logger.info('Own profile not found — returning shell', {
+              userId: targetUserId,
+              endpoint: '/api/profile'
+            });
+            return NextResponse.json({
+              success: true,
+              needsOnboarding: true,
+              data: {
+                id: targetUserId,
+                uid: targetUserId,
+                email: '',
+                fullName: '',
+                handle: null,
+                bio: '',
+                major: '',
+                interests: [],
+                campusId: campusId || '',
+                userType: 'explorer',
+                isOnboarded: false,
+                createdAt: new Date().toISOString(),
+              },
+            });
+          }
+
           logger.warn('Profile not found', {
             userId: targetUserId,
             endpoint: '/api/profile'
@@ -171,7 +198,6 @@ const _GET = withAuthAndErrors(
           return NextResponse.json({
             success: false,
             error: 'Profile not found',
-            needsOnboarding: isOwnProfile
           }, { status: 404 });
         }
 

@@ -223,21 +223,33 @@ async function handler(
     const { start, end } = getTimeRange(params.timeRange);
 
     // Step 1: Get user data (interests, connections, space memberships)
+    // Fetch user data, connections, and space memberships in parallel.
+    // Each query is wrapped so one failure doesn't crash the whole request.
     const [userDoc, connectionsSnapshot, membershipsSnapshot] = await Promise.all([
       dbAdmin.collection('users').doc(userId).get(),
-      dbAdmin.collection('users').doc(userId).collection('connections')
+      // connections live in the top-level 'connections' collection, not a subcollection
+      dbAdmin.collection('connections')
+        .where('userId', '==', userId)
         .where('status', '==', 'connected')
         .limit(100)
-        .get(),
+        .get()
+        .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+      // spaceMembers has no campusId field — filter by userId only
       dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
-        .where('campusId', '==', campusId)
-        .get(),
+        .get()
+        .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
     ]);
 
     const userData = userDoc.data() || {};
     const userInterests: string[] = userData.interests || [];
-    const friendIds = new Set(connectionsSnapshot.docs.map(doc => doc.id));
+    // connections collection stores connectedUserId — extract that for friend matching
+    const friendIds = new Set(
+      connectionsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return (data.connectedUserId || data.friendId || doc.id) as string;
+      })
+    );
     const userSpaceIds = new Set(membershipsSnapshot.docs.map(doc => doc.data().spaceId));
 
     // Step 2: Fetch events in time range (supports both startDate + startAt schemas)

@@ -43,7 +43,7 @@ function getTokenExpirationInfo(token: string): { expiresAt: number; expiresIn: 
 
 async function _GET(request: NextRequest) {
   // Rate limit: 100 requests per minute for session checks
-  const rateLimitResult = await enforceRateLimit('apiGeneral', request);
+  const rateLimitResult = await enforceRateLimit('sessionCheck', request);
   if (!rateLimitResult.allowed) {
     return NextResponse.json(
       { authenticated: false, user: null, error: rateLimitResult.error },
@@ -181,7 +181,7 @@ async function fetchUserProfile(session: SessionData) {
  */
 export async function POST(request: NextRequest) {
   // Rate limit: 100 requests per minute for session checks
-  const rateLimitResult = await enforceRateLimit('apiGeneral', request);
+  const rateLimitResult = await enforceRateLimit('sessionCheck', request);
   if (!rateLimitResult.allowed) {
     return NextResponse.json(
       { authenticated: false, user: null, error: rateLimitResult.error },
