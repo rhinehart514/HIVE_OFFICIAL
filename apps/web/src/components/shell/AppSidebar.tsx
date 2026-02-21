@@ -31,38 +31,72 @@ function HiveLogoGold({ size = 22 }: { size?: number }) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Left Sidebar — desktop only
+// Linear-inspired: hierarchy through opacity, Lab elevated with gold accent
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SidebarNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
+function StandardNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
   const Icon = item.icon;
 
   return (
     <Link
       href={item.href}
       className={cn(
-        'group relative flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150 rounded-lg mx-1',
+        'group relative flex items-center gap-3 px-4 py-2 text-[13px] transition-all duration-150 mx-1 rounded-lg',
         isActive
-          ? 'text-white bg-white/[0.04]'
-          : 'text-white/40 hover:text-white/60 hover:bg-white/[0.03]'
+          ? 'text-white'
+          : 'text-white/35 hover:text-white/60'
       )}
     >
-      {/* Active indicator — white, not gold */}
-      {isActive && (
-        <span
-          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-white"
-          aria-hidden
-        />
-      )}
-
       <Icon
         className={cn(
-          'h-4 w-4 shrink-0 transition-colors duration-150',
-          isActive ? 'text-white' : 'text-white/40 group-hover:text-white/60'
+          'h-[18px] w-[18px] shrink-0 transition-all duration-150',
+          isActive ? 'text-white' : 'text-white/35 group-hover:text-white/60'
         )}
         strokeWidth={1.5}
       />
-
       <span className="font-medium tracking-wide">{item.label}</span>
+    </Link>
+  );
+}
+
+function LabNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
+  const Icon = item.icon;
+
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        'group relative flex items-center gap-3 px-4 py-2.5 text-[13px] transition-all duration-150 mx-1 rounded-lg',
+        isActive
+          ? 'text-[#FFD700]'
+          : 'text-[#FFD700]/50 hover:text-[#FFD700]/80'
+      )}
+    >
+      {/* Gold left accent — always visible, brighter when active */}
+      <span
+        className={cn(
+          'absolute left-0 top-1/2 h-5 w-[1px] -translate-y-1/2 rounded-r-full transition-all duration-150',
+          isActive ? 'bg-[#FFD700]' : 'bg-[#FFD700]/20 group-hover:bg-[#FFD700]/40'
+        )}
+        aria-hidden
+      />
+
+      <Icon
+        className={cn(
+          'h-[20px] w-[20px] shrink-0 transition-all duration-150',
+          isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/50 group-hover:text-[#FFD700]/80'
+        )}
+        strokeWidth={1.5}
+      />
+      <span className="font-medium tracking-wide">{item.label}</span>
+
+      {/* Subtle gold glow when active */}
+      {isActive && (
+        <span
+          className="absolute inset-0 rounded-lg bg-[#FFD700]/[0.04]"
+          aria-hidden
+        />
+      )}
     </Link>
   );
 }
@@ -73,6 +107,11 @@ export function LeftSidebar() {
   const { hasCampus } = useCampusMode();
   const navItems = getNavItems(hasCampus);
   const { data: unreadCount = 0 } = useUnreadCount();
+
+  // Split items into zones: consume (feed, spaces) | create (lab) | personal (profile)
+  const consumeItems = navItems.filter(i => i.id === 'feed' || i.id === 'spaces');
+  const labItem = navItems.find(i => i.id === 'lab');
+  const profileItem = navItems.find(i => i.id === 'profile');
 
   return (
     <aside
@@ -95,16 +134,38 @@ export function LeftSidebar() {
         </span>
       </Link>
 
-      {/* Nav items */}
-      <nav className="mt-2 flex flex-col gap-0.5" aria-label="Main navigation">
-        {navItems.map((item) => (
-          <SidebarNavItem
+      {/* Zone 1: Consume — Feed, Spaces */}
+      <nav className="mt-1 flex flex-col gap-0.5" aria-label="Main navigation">
+        {consumeItems.map((item) => (
+          <StandardNavItem
             key={item.id}
             item={item}
             isActive={isNavItemActive(item, pathname)}
           />
         ))}
       </nav>
+
+      {/* Hairline */}
+      <div className="mx-4 my-2 h-px bg-white/[0.06]" />
+
+      {/* Zone 2: Create — Lab (elevated) */}
+      {labItem && (
+        <LabNavItem
+          item={labItem}
+          isActive={isNavItemActive(labItem, pathname)}
+        />
+      )}
+
+      {/* Hairline */}
+      <div className="mx-4 my-2 h-px bg-white/[0.06]" />
+
+      {/* Zone 3: Personal — Profile */}
+      {profileItem && (
+        <StandardNavItem
+          item={profileItem}
+          isActive={isNavItemActive(profileItem, pathname)}
+        />
+      )}
 
       {/* Push utilities to bottom */}
       <div className="flex-1" />
@@ -117,23 +178,23 @@ export function LeftSidebar() {
           onClick={() => {
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
           }}
-          className="group flex items-center gap-3 mx-1 px-4 py-2.5 text-sm text-white/40 rounded-lg transition-colors duration-150 hover:text-white/60 hover:bg-white/[0.03]"
+          className="group flex items-center gap-3 mx-1 px-4 py-2 text-[13px] text-white/35 rounded-lg transition-all duration-150 hover:text-white/60"
           aria-label="Search (⌘K)"
         >
-          <Search className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+          <Search className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
           <span className="font-medium tracking-wide">Search</span>
-          <kbd className="ml-auto font-sans text-[10px] tracking-[0.12em] text-white/20">⌘K</kbd>
+          <kbd className="ml-auto font-sans text-[10px] tracking-[0.12em] text-white/15">⌘K</kbd>
         </button>
 
         {/* Notifications */}
         <button
           type="button"
           onClick={() => router.push('/notifications')}
-          className="group relative flex items-center gap-3 mx-1 px-4 py-2.5 text-sm text-white/40 rounded-lg transition-colors duration-150 hover:text-white/60 hover:bg-white/[0.03]"
+          className="group relative flex items-center gap-3 mx-1 px-4 py-2 text-[13px] text-white/35 rounded-lg transition-all duration-150 hover:text-white/60"
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
         >
           <div className="relative">
-            <Bell className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+            <Bell className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#FFD700] px-0.5 text-[9px] font-bold text-black leading-none">
                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -149,7 +210,7 @@ export function LeftSidebar() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mobile bottom bar — unchanged
+// Mobile bottom bar — same hierarchy: Lab gets gold accent
 // ─────────────────────────────────────────────────────────────────────────────
 
 function MobileNavItem({
@@ -162,22 +223,28 @@ function MobileNavItem({
   badge?: number;
 }) {
   const Icon = item.icon;
+  const isLab = item.id === 'lab';
 
   return (
     <Link
       href={item.href}
       className={cn(
         'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
-        isActive ? 'text-white' : 'text-white/40'
+        isLab
+          ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/40'
+          : isActive ? 'text-white' : 'text-white/35'
       )}
     >
       <div className="relative">
-        <Icon className="h-[22px] w-[22px]" />
+        <Icon className={cn('h-[22px] w-[22px]', isLab && 'h-[24px] w-[24px]')} />
 
-        {/* Active dot — white */}
+        {/* Active dot */}
         {isActive && (
           <span
-            className="absolute -bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-white"
+            className={cn(
+              'absolute -bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full',
+              isLab ? 'bg-[#FFD700]' : 'bg-white'
+            )}
             aria-hidden
           />
         )}
@@ -193,7 +260,9 @@ function MobileNavItem({
       <span
         className={cn(
           'font-sans text-[10px] uppercase tracking-[0.1em] transition-colors',
-          isActive ? 'text-white' : 'text-white/40'
+          isLab
+            ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/40'
+            : isActive ? 'text-white' : 'text-white/35'
         )}
       >
         {item.label}
