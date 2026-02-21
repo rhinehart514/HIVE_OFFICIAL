@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
+import { cn } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────────────── */
 /*  Types                                                              */
@@ -39,6 +40,7 @@ interface FeedEvent {
   spaceHandle?: string;
   spaceId?: string;
   spaceAvatarUrl?: string;
+  coverImageUrl?: string;
   friendsAttending?: number;
   matchReasons?: string[];
 }
@@ -205,77 +207,93 @@ function SpaceAvatar({ name, url, size = 32 }: { name?: string; url?: string; si
 function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, spaceId: string) => void }) {
   const live = isHappeningNow(event.startDate, event.endDate);
   const isGoing = event.isUserRsvped || event.userRsvp === 'going';
+  const hasImage = !!event.coverImageUrl;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-2xl border border-white/[0.08]"
-      style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.07) 0%, rgba(255,255,255,0.02) 60%, rgba(0,0,0,0) 100%)' }}
+      className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0a]"
     >
-      {/* Top row */}
-      <div className="flex items-start justify-between gap-3 px-5 pt-5">
-        <div className="flex items-center gap-2">
-          {live ? (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 text-[11px] font-semibold">
+      {/* Cover image */}
+      {hasImage && (
+        <div className="relative h-48 w-full overflow-hidden">
+          <img
+            src={event.coverImageUrl!}
+            alt={event.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(10,10,10,0.1) 0%, rgba(10,10,10,0.85) 100%)' }} />
+          {/* Live badge over image */}
+          {live && (
+            <span className="absolute top-3 left-3 flex items-center gap-1.5 text-[11px] font-semibold text-red-400">
               <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
               Live now
             </span>
-          ) : (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.06] text-white/50 text-[11px] font-medium">
-              <Clock className="w-3 h-3" />
-              {dayLabel(event.startDate)} · {timeLabel(event.startDate)}
-            </span>
           )}
         </div>
-        {event.spaceName && (
-          <Link href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'} className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors shrink-0">
-            <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={16} />
-            <span>{event.spaceName}</span>
-          </Link>
-        )}
-      </div>
+      )}
 
-      {/* Title */}
-      <div className="px-5 pt-3 pb-4">
-        <h2 className="text-[22px] font-semibold text-white leading-tight tracking-tight">{event.title}</h2>
+      {/* Content */}
+      <div className="px-5 pt-4 pb-5">
+        {/* Time + space row */}
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <span className={`text-[12px] font-medium ${live && !hasImage ? 'text-red-400' : 'text-white/35'}`}>
+            {live && !hasImage
+              ? '● Live now'
+              : `${dayLabel(event.startDate)} · ${timeLabel(event.startDate)}`}
+          </span>
+          {event.spaceName && (
+            <Link
+              href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'}
+              className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors shrink-0"
+            >
+              <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={14} />
+              <span className="truncate max-w-[120px]">{event.spaceName}</span>
+            </Link>
+          )}
+        </div>
+
+        {/* Title */}
+        <h2 className="text-[20px] font-semibold text-white leading-tight tracking-[-0.01em] mb-2">
+          {event.title}
+        </h2>
+
         {event.description && (
-          <p className="mt-2 text-[13px] text-white/40 line-clamp-2 leading-relaxed">{event.description}</p>
+          <p className="text-[13px] text-white/40 line-clamp-2 leading-relaxed mb-3">{event.description}</p>
         )}
 
-        {/* Meta */}
-        <div className="flex items-center gap-4 mt-3 text-[12px] text-white/30">
+        {/* Meta row */}
+        <div className="flex items-center gap-3 text-[12px] text-white/30 mb-4">
           {event.location && (
             <span className="flex items-center gap-1">
               {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-              {event.isOnline ? 'Online' : event.location}
+              <span className="truncate max-w-[140px]">{event.isOnline ? 'Online' : event.location}</span>
             </span>
           )}
           {event.rsvpCount > 0 && (
             <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount} going</span>
           )}
-          {!!event.friendsAttending && event.friendsAttending > 0 && (
-            <span className="text-[#FFD700]/60">{event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
-          )}
         </div>
-      </div>
 
-      {/* RSVP */}
-      {event.spaceId && (
-        <div className="px-5 pb-5">
+        {/* RSVP */}
+        {event.spaceId && (
           <button
             onClick={() => onRsvp(event.id, event.spaceId!)}
-            className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[13px] font-semibold transition-all ${
+            className={cn(
+              'flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98]',
               isGoing
-                ? 'bg-[#FFD700]/15 text-[#FFD700]'
-                : 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90 active:scale-[0.98]'
-            }`}
+                ? 'bg-white/[0.07] border border-white/[0.10] text-white/60'
+                : 'bg-white text-black hover:bg-white/90'
+            )}
           >
-            {isGoing ? <><Check className="w-3.5 h-3.5" /> Going</> : <><Calendar className="w-3.5 h-3.5" /> RSVP</>}
+            {isGoing
+              ? <><Check className="w-4 h-4" />Going</>
+              : 'Attend'}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -338,59 +356,69 @@ function TodayStrip({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (id: stri
 function FeedEventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, spaceId: string) => void }) {
   const live = isHappeningNow(event.startDate, event.endDate);
   const isGoing = event.isUserRsvped || event.userRsvp === 'going';
+  const hasImage = !!event.coverImageUrl;
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden">
-      <div className="p-4 space-y-2.5">
+    <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
+      {/* Cover image — full width when present */}
+      {hasImage && (
+        <div className="h-36 w-full overflow-hidden">
+          <img
+            src={event.coverImageUrl!}
+            alt={event.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      <div className="p-4">
         {/* Space + time */}
-        <div className="flex items-center justify-between">
-          {event.spaceName && (
-            <Link href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'} className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors">
-              <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={16} />
-              {event.spaceName}
+        <div className="flex items-center justify-between mb-2.5">
+          {event.spaceName ? (
+            <Link
+              href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'}
+              className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors"
+            >
+              <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={14} />
+              <span className="truncate max-w-[160px]">{event.spaceName}</span>
             </Link>
-          )}
-          <span className={`text-[11px] font-medium ${live ? 'text-red-400' : 'text-white/30'}`}>
-            {live ? '● Live' : dayLabel(event.startDate) + ' · ' + timeLabel(event.startDate)}
+          ) : <span />}
+          <span className={`text-[11px] font-medium shrink-0 ${live ? 'text-red-400' : 'text-white/30'}`}>
+            {live ? '● Live' : `${dayLabel(event.startDate)} · ${timeLabel(event.startDate)}`}
           </span>
         </div>
 
-        <h3 className="text-[16px] font-semibold text-white leading-snug">{event.title}</h3>
+        {/* Title */}
+        <h3 className="text-[15px] font-semibold text-white leading-snug mb-1.5">{event.title}</h3>
 
-        {event.description && (
-          <p className="text-[13px] text-white/35 line-clamp-2 leading-relaxed">{event.description}</p>
-        )}
-
-        <div className="flex items-center gap-4 text-[12px] text-white/25">
+        {/* Meta */}
+        <div className="flex items-center gap-3 text-[12px] text-white/25 mb-3">
           {event.location && (
             <span className="flex items-center gap-1">
               {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-              {event.isOnline ? 'Online' : event.location}
+              <span className="truncate max-w-[140px]">{event.isOnline ? 'Online' : event.location}</span>
             </span>
           )}
           {event.rsvpCount > 0 && (
             <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount} going</span>
           )}
-          {!!event.friendsAttending && event.friendsAttending > 0 && (
-            <span className="text-[#FFD700]/60">{event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
-          )}
         </div>
-      </div>
 
-      {event.spaceId && (
-        <div className="px-4 pb-4">
+        {/* Check-in button */}
+        {event.spaceId && (
           <button
             onClick={() => onRsvp(event.id, event.spaceId!)}
-            className={`flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[13px] font-medium transition-all ${
+            className={cn(
+              'flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[13px] font-semibold transition-all active:scale-[0.98]',
               isGoing
-                ? 'bg-[#FFD700]/10 text-[#FFD700]'
-                : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60 active:scale-[0.98]'
-            }`}
+                ? 'bg-white/[0.06] border border-white/[0.08] text-white/50'
+                : 'bg-white text-black hover:bg-white/90'
+            )}
           >
-            {isGoing ? <><Check className="w-3.5 h-3.5" />Going</> : <><Calendar className="w-3.5 h-3.5" />RSVP</>}
+            {isGoing ? <><Check className="w-3.5 h-3.5" />Going</> : 'Attend'}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
