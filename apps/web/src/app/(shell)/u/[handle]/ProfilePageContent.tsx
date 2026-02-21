@@ -190,25 +190,25 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connection
 // Stats card
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StatsCard({ toolCount, spaceCount, isOwnProfile }: { toolCount: number; spaceCount: number; isOwnProfile: boolean }) {
+function StatsCard({ toolCount, spaceCount, isOwnProfile, fullWidth }: { toolCount: number; spaceCount: number; isOwnProfile: boolean; fullWidth?: boolean }) {
   const stats = [
     { label: 'Tools built', value: toolCount },
     { label: 'Spaces', value: spaceCount },
   ];
 
   return (
-    <Card className="flex flex-col p-4 gap-3">
+    <Card className={`flex flex-col justify-between p-5 gap-4${fullWidth ? ' col-span-2' : ''}`}>
       <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Activity</p>
-      <div className="flex gap-4">
+      <div className="flex items-end gap-6">
         {stats.map(s => (
           <div key={s.label}>
-            <p className="text-[28px] font-semibold text-white leading-none">{s.value}</p>
-            <p className="text-[11px] text-white/35 mt-0.5">{s.label}</p>
+            <p className="font-clash text-[48px] font-semibold text-white leading-none">{s.value}</p>
+            <p className="text-[11px] text-white/35 mt-1">{s.label}</p>
           </div>
         ))}
       </div>
       {isOwnProfile && toolCount === 0 && (
-        <Link href="/lab" className="flex items-center gap-1.5 text-[12px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors mt-auto">
+        <Link href="/lab" className="flex items-center gap-1.5 text-[12px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors">
           <Zap className="w-3 h-3" />Build your first tool <ArrowRight className="w-3 h-3" />
         </Link>
       )}
@@ -221,24 +221,20 @@ function StatsCard({ toolCount, spaceCount, isOwnProfile }: { toolCount: number;
 // ─────────────────────────────────────────────────────────────────────────────
 
 function InterestsCard({ interests, isOwnProfile }: { interests: string[]; isOwnProfile: boolean }) {
+  // Don't render an empty card — wastes real estate
+  if (interests.length === 0 && !isOwnProfile) return null;
+  if (interests.length === 0) return null; // Even own profile: skip empty card, prompt elsewhere
+
   return (
-    <Card className="flex flex-col p-4">
-      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25 mb-3">Interests</p>
-      {interests.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {interests.slice(0, 8).map(interest => (
-            <span key={interest} className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/50">
-              {interest}
-            </span>
-          ))}
-        </div>
-      ) : isOwnProfile ? (
-        <Link href="/me/edit" className="flex items-center gap-1.5 text-[13px] text-white/40 hover:text-white/70 transition-colors mt-auto">
-          Add interests <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      ) : (
-        <p className="text-[13px] text-white/25">No interests listed</p>
-      )}
+    <Card className="flex flex-col p-5 gap-3">
+      <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Interests</p>
+      <div className="flex flex-wrap gap-1.5">
+        {interests.slice(0, 8).map(interest => (
+          <span key={interest} className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/50">
+            {interest}
+          </span>
+        ))}
+      </div>
     </Card>
   );
 }
@@ -326,12 +322,11 @@ function TopToolCard({ tool, isOwnProfile, onToolClick }: {
   }
 
   return (
-    <Card className="p-4 flex flex-col gap-2 min-h-[140px]" onClick={() => onToolClick(tool.id)}>
+    <Card className="p-5 flex flex-col justify-between min-h-[140px]" onClick={() => onToolClick(tool.id)}>
       <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Top tool</p>
-      <div className="flex-1 py-2">
-        <span className="text-2xl block mb-2">{tool.emoji || '🔧'}</span>
-        <p className="text-[15px] font-semibold text-white leading-snug">{tool.name}</p>
-        {tool.runs > 0 && <p className="text-[12px] text-white/35 mt-1">{tool.runs} uses</p>}
+      <div>
+        <p className="font-clash text-[18px] font-semibold text-white leading-snug">{tool.name}</p>
+        {tool.runs > 0 && <p className="text-[12px] text-white/35 mt-0.5">{tool.runs} uses</p>}
       </div>
       <span className="text-[12px] text-white/30 flex items-center gap-1">View tool <ChevronRight className="w-3 h-3" /></span>
     </Card>
@@ -519,8 +514,13 @@ export default function ProfilePageContent() {
 
         {/* Right: 2-col grid, fills remaining width */}
         <div className="flex-1 grid grid-cols-2 gap-3 content-start">
-          <StatsCard toolCount={dedupedTools.length} spaceCount={profileSpaces.length} isOwnProfile={isOwnProfile} />
-          <InterestsCard interests={interests} isOwnProfile={isOwnProfile} />
+          <StatsCard
+            toolCount={dedupedTools.length}
+            spaceCount={profileSpaces.length}
+            isOwnProfile={isOwnProfile}
+            fullWidth={interests.length === 0}
+          />
+          {interests.length > 0 && <InterestsCard interests={interests} isOwnProfile={isOwnProfile} />}
           <SpacesCard
             spaces={profileSpaces}
             suggestedSpaces={suggestedSpaces}
@@ -532,10 +532,10 @@ export default function ProfilePageContent() {
         </div>
       </div>
 
-      {/* Tools — only show top 6, deduplicated, below the bento */}
+      {/* Tools — clean list, top 6, no icons */}
       {sortedTools.length > 0 && (
         <div className="mt-3">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Tools</p>
             {isOwnProfile && (
               <Link href="/lab" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
@@ -543,15 +543,22 @@ export default function ProfilePageContent() {
               </Link>
             )}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <Card className="divide-y divide-white/[0.04]">
             {sortedTools.slice(0, 6).map(tool => (
-              <Card key={tool.id} onClick={() => handleToolClick(tool.id)} className="p-4">
-                  <span className="text-2xl leading-none">{tool.emoji || '⚡'}</span>
-                <p className="text-[14px] font-medium text-white truncate">{tool.name}</p>
-                {tool.runs > 0 && <p className="text-[11px] font-mono text-white/30 mt-1">{tool.runs} uses</p>}
-              </Card>
+              <button key={tool.id} onClick={() => handleToolClick(tool.id)}
+                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-white/[0.02] transition-colors group text-left"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="w-1 h-5 rounded-full bg-[#FFD700]/40 shrink-0" />
+                  <span className="text-[14px] font-medium text-white/80 group-hover:text-white transition-colors truncate">{tool.name}</span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {tool.runs > 0 && <span className="text-[12px] font-mono text-white/25">{tool.runs} uses</span>}
+                  <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-white/40 transition-colors" />
+                </div>
+              </button>
             ))}
-          </div>
+          </Card>
         </div>
       )}
 
