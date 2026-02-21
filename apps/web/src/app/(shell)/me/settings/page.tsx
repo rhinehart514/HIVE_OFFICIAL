@@ -19,17 +19,17 @@ import { logger } from '@/lib/structured-logger';
 import { toast } from '@hive/ui';
 import { Card, Button, Text } from '@hive/ui/design-system/primitives';
 import { ProfileContextProvider, useProfileContext } from '@/components/profile/ProfileContextProvider';
-import { ProfileSection } from '@/app/settings/components/profile-section';
-import { InterestsSection } from '@/app/settings/components/interests-section';
-import { NotificationSections } from '@/app/settings/components/notification-sections';
-import { PrivacySection } from '@/app/settings/components/privacy-section';
-import { AccountSection } from '@/app/settings/components/account-section';
-import { ConfirmModal } from '@/app/settings/components/ui-primitives';
-import { CompletionCard } from '@/app/settings/components/completion-card';
-import { useSettingsState } from '@/app/settings/hooks/use-settings-state';
-import { useProfileForm } from '@/app/settings/hooks/use-profile-form';
-import { useDataExport } from '@/app/settings/hooks/use-data-export';
-import type { UserSpace } from '@/app/settings/types';
+import { ProfileSection } from '@/app/(shell)/settings/components/profile-section';
+import { InterestsSection } from '@/app/(shell)/settings/components/interests-section';
+import { NotificationSections } from '@/app/(shell)/settings/components/notification-sections';
+import { PrivacySection } from '@/app/(shell)/settings/components/privacy-section';
+import { AccountSection } from '@/app/(shell)/settings/components/account-section';
+import { ConfirmModal } from '@/app/(shell)/settings/components/ui-primitives';
+import { CompletionCard } from '@/app/(shell)/settings/components/completion-card';
+import { useSettingsState } from '@/app/(shell)/settings/hooks/use-settings-state';
+import { useProfileForm } from '@/app/(shell)/settings/hooks/use-profile-form';
+import { useDataExport } from '@/app/(shell)/settings/hooks/use-data-export';
+import type { UserSpace } from '@/app/(shell)/settings/types';
 
 const fadeInUpVariants = {
   initial: { opacity: 0, y: 10 },

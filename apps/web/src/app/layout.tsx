@@ -3,7 +3,6 @@ import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Providers } from './providers';
-import { AppShell } from '@/components/shell';
 
 export const metadata: Metadata = {
   title: {
@@ -83,7 +82,7 @@ export default function RootLayout({
       <head />
       <body className="bg-[var(--bg-ground)] text-[var(--text-primary)] min-h-screen">
         <Providers>
-          <AppShell>{children}</AppShell>
+          {children}
         </Providers>
       </body>
     </html>

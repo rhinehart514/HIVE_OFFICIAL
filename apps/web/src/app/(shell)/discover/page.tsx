@@ -599,7 +599,7 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="w-full max-w-[680px]">
+    <div className="w-full max-w-[680px] px-4 py-6 md:px-8">
       {/* Header */}
       <div className="mb-5">
         <h1 className="text-[13px] font-mono uppercase tracking-[0.15em] text-white/30">What&apos;s happening at UB</h1>

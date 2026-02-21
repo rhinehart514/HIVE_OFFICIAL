@@ -54,10 +54,8 @@ export function AppShell({ children }: AppShellProps) {
       {/* Main content — offset right on desktop, full-width on mobile */}
       <div className="min-h-screen md:ml-[220px]">
         <ImpersonationBanner />
-        <main className="min-h-screen pb-20 md:pb-6">
-          <div className="mx-auto max-w-[1200px] px-4 py-6 md:px-6">
-            <PageTransition>{children}</PageTransition>
-          </div>
+        <main className="min-h-screen pb-20 md:pb-0">
+          <PageTransition>{children}</PageTransition>
         </main>
       </div>
 
