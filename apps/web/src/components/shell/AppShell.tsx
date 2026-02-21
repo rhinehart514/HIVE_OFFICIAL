@@ -4,7 +4,7 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
-import { MobileBottomBar, TopBar } from './AppSidebar';
+import { LeftSidebar, MobileBottomBar } from './AppSidebar';
 
 const AdminToolbar = dynamic(() => import('@/components/admin/AdminToolbar'), {
   ssr: false,
@@ -22,12 +22,6 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
-function extractActiveSpaceHandle(pathname: string): string | null {
-  if (!pathname.startsWith('/s/')) return null;
-  const segment = pathname.split('/')[2];
-  return segment || null;
-}
-
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
 
@@ -38,11 +32,6 @@ export function AppShell({ children }: AppShellProps) {
     if (LAB_TOOL_ROUTE.test(pathname) && pathname !== '/lab/templates' && pathname !== '/lab/new') return true;
     return false;
   }, [pathname]);
-
-  const activeSpaceHandle = React.useMemo(
-    () => extractActiveSpaceHandle(pathname),
-    [pathname]
-  );
 
   if (isNoShellRoute) {
     return (
@@ -55,13 +44,17 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="min-h-screen text-white bg-black">
-      <TopBar />
+      {/* Desktop sidebar */}
+      <LeftSidebar />
+
+      {/* Mobile bottom bar */}
       <MobileBottomBar />
 
-      <div className="min-h-screen">
+      {/* Main content — offset right on desktop, full-width on mobile */}
+      <div className="min-h-screen md:ml-[220px]">
         <ImpersonationBanner />
         <main className="min-h-screen pb-20 md:pb-6">
-          <div className="mx-auto max-w-[1200px] px-4 pt-14 md:px-6">
+          <div className="mx-auto max-w-[1200px] px-4 py-6 md:px-6">
             {children}
           </div>
         </main>

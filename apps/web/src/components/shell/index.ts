@@ -1,2 +1,2 @@
 export { AppShell } from './AppShell';
-export { TopBar, MobileBottomBar } from './AppSidebar';
+export { LeftSidebar, MobileBottomBar } from './AppSidebar';

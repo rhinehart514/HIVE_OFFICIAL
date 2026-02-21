@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search, User } from 'lucide-react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
@@ -9,49 +10,44 @@ import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/queries/use-unread-count';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HIVE wordmark
+// Left Sidebar — desktop only
 // ─────────────────────────────────────────────────────────────────────────────
 
-function HiveMark() {
-  return (
-    <Link
-      href="/discover"
-      className="flex items-center gap-2 rounded-full px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
-      aria-label="HIVE home"
-    >
-      <span className="h-5 w-5 rounded-full bg-[#FFD700]" aria-hidden />
-      <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/50">
-        HIVE
-      </span>
-    </Link>
-  );
-}
+function SidebarNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
+  const Icon = item.icon;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Desktop top bar
-// ─────────────────────────────────────────────────────────────────────────────
-
-function TopBarNavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
   return (
     <Link
       href={item.href}
       className={cn(
-        'relative flex h-14 items-center px-2 text-sm font-medium transition-colors',
-        isActive ? 'text-white' : 'text-white/50 hover:text-white'
+        'group relative flex items-center gap-3 px-4 py-2.5 text-sm transition-colors',
+        isActive
+          ? 'text-white'
+          : 'text-white/40 hover:text-white/70'
       )}
     >
-      <span>{item.label}</span>
+      {/* Gold left-border active indicator */}
       {isActive && (
         <span
-          className="absolute bottom-2 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#FFD700]"
+          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#FFD700]"
           aria-hidden
         />
       )}
+
+      <Icon
+        className={cn(
+          'h-4 w-4 shrink-0 transition-colors',
+          isActive ? 'text-white' : 'text-white/40 group-hover:text-white/70'
+        )}
+        strokeWidth={1.5}
+      />
+
+      <span className="font-medium tracking-wide">{item.label}</span>
     </Link>
   );
 }
 
-export function TopBar() {
+export function LeftSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { hasCampus } = useCampusMode();
@@ -59,68 +55,93 @@ export function TopBar() {
   const { data: unreadCount = 0 } = useUnreadCount();
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 hidden h-14 border-b border-white/[0.06] md:flex" style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-      <div className="mx-auto flex h-full w-full max-w-[1200px] items-center gap-8 px-6">
-        <HiveMark />
+    <aside
+      className="fixed left-0 top-0 z-40 hidden h-screen w-[220px] flex-col border-r border-white/[0.06] md:flex"
+      style={{
+        background: 'rgba(0,0,0,0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
+    >
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 px-4 py-5">
+        <Image
+          src="/assets/hive-logo-gold.svg"
+          alt="HIVE"
+          width={22}
+          height={22}
+          priority
+        />
+        <span className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/50">
+          HIVE
+        </span>
+      </div>
 
-        <nav className="flex h-full items-center gap-4">
-          {navItems.map((item) => (
-            <TopBarNavItem
-              key={item.id}
-              item={item}
-              isActive={isNavItemActive(item, pathname)}
-            />
-          ))}
-        </nav>
+      {/* Nav items */}
+      <nav className="mt-2 flex flex-col gap-0.5 px-1" aria-label="Main navigation">
+        {navItems.map((item) => (
+          <SidebarNavItem
+            key={item.id}
+            item={item}
+            isActive={isNavItemActive(item, pathname)}
+          />
+        ))}
+      </nav>
 
-        <div className="ml-auto flex items-center gap-2">
-          {/* Search — TODO: wire to Cmd+K overlay when /search route exists */}
-          <button
-            type="button"
-            onClick={() => {
-              // Dispatch Cmd+K event to open search overlay if available
-              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
-            }}
-            className="flex h-9 items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.04] px-3 text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
-            aria-label="Search"
-          >
-            <Search className="h-4 w-4" />
-            <span className="hidden text-sm font-medium lg:inline">Search</span>
-            <kbd className="font-mono text-[11px] uppercase tracking-[0.18em] opacity-60">⌘K</kbd>
-          </button>
+      {/* Push utilities to bottom */}
+      <div className="flex-1" />
 
-          {/* Notifications */}
-          <button
-            type="button"
-            onClick={() => router.push('/notifications')}
-            className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
-            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-          >
-            <Bell className="h-4 w-4" />
+      {/* Bottom utilities */}
+      <div className="flex flex-col gap-0.5 border-t border-white/[0.06] px-1 py-3">
+        {/* Search */}
+        <button
+          type="button"
+          onClick={() => {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+          }}
+          className="group flex items-center gap-3 px-4 py-2.5 text-sm text-white/40 transition-colors hover:text-white/70"
+          aria-label="Search (⌘K)"
+        >
+          <Search className="h-4 w-4 shrink-0 transition-colors group-hover:text-white/70" strokeWidth={1.5} />
+          <span className="font-medium tracking-wide">Search</span>
+          <kbd className="ml-auto font-mono text-[10px] tracking-[0.12em] text-white/20">⌘K</kbd>
+        </button>
+
+        {/* Notifications */}
+        <button
+          type="button"
+          onClick={() => router.push('/notifications')}
+          className="group relative flex items-center gap-3 px-4 py-2.5 text-sm text-white/40 transition-colors hover:text-white/70"
+          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+        >
+          <div className="relative">
+            <Bell className="h-4 w-4 shrink-0 transition-colors group-hover:text-white/70" strokeWidth={1.5} />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#FFD700] px-1 text-[10px] font-semibold text-black leading-none">
-                {unreadCount > 99 ? '99+' : unreadCount}
+              <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[#FFD700] px-0.5 text-[9px] font-bold text-black leading-none">
+                {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
-          </button>
+          </div>
+          <span className="font-medium tracking-wide">Notifications</span>
+        </button>
 
-          {/* Avatar */}
-          <button
-            type="button"
-            onClick={() => router.push('/me')}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.08] text-white/60 transition-colors hover:bg-white/[0.12]"
-            aria-label="Profile"
-          >
-            <User className="h-4 w-4" />
-          </button>
-        </div>
+        {/* Profile */}
+        <button
+          type="button"
+          onClick={() => router.push('/me')}
+          className="group flex items-center gap-3 px-4 py-2.5 text-sm text-white/40 transition-colors hover:text-white/70"
+          aria-label="Profile"
+        >
+          <User className="h-4 w-4 shrink-0 transition-colors group-hover:text-white/70" strokeWidth={1.5} />
+          <span className="font-medium tracking-wide">Profile</span>
+        </button>
       </div>
-    </header>
+    </aside>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mobile bottom bar — 4 equal tabs
+// Mobile bottom bar — unchanged
 // ─────────────────────────────────────────────────────────────────────────────
 
 function MobileNavItem({
@@ -201,4 +222,4 @@ export function MobileBottomBar() {
   );
 }
 
-export default TopBar;
+export default LeftSidebar;
