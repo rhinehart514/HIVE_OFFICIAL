@@ -387,14 +387,87 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
 
 function ProfileLoadingState() {
   return (
-    <div className="p-6 flex gap-3 animate-pulse">
-      <div className="w-[280px] shrink-0 rounded-2xl bg-white/[0.04] min-h-[460px]" />
-      <div className="flex-1 grid grid-cols-2 gap-3 content-start">
-        <div className="rounded-2xl bg-white/[0.04] h-[160px]" />
-        <div className="rounded-2xl bg-white/[0.04] h-[160px]" />
-        <div className="col-span-2 rounded-2xl bg-white/[0.04] h-[140px]" />
-        <div className="rounded-2xl bg-white/[0.04] h-[120px]" />
-        <div className="rounded-2xl bg-white/[0.04] h-[120px]" />
+    <div className="w-full max-w-5xl mx-auto px-6 py-6 pb-24 md:pb-8 animate-pulse">
+      {/* Bento skeleton — matches real layout exactly */}
+      <div className="flex flex-col md:flex-row gap-3 items-stretch">
+        {/* Left: Portrait skeleton */}
+        <div className="md:w-[280px] shrink-0">
+          <div className="rounded-2xl bg-white/[0.04] min-h-[460px] flex flex-col overflow-hidden">
+            {/* Image area */}
+            <div className="flex-1 min-h-[360px]" />
+            {/* Action bar */}
+            <div className="px-4 py-3 border-t border-white/[0.04]">
+              <div className="h-9 rounded-xl bg-white/[0.04]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Right: 2-col grid skeleton */}
+        <div className="flex-1 grid grid-cols-2 gap-3 content-start">
+          {/* Stats */}
+          <div className="rounded-2xl bg-white/[0.04] p-5 flex flex-col justify-between h-[160px]">
+            <div className="h-3 w-16 rounded bg-white/[0.04]" />
+            <div className="flex gap-6">
+              <div>
+                <div className="h-12 w-10 rounded bg-white/[0.04] mb-1" />
+                <div className="h-2.5 w-16 rounded bg-white/[0.04]" />
+              </div>
+              <div>
+                <div className="h-12 w-10 rounded bg-white/[0.04] mb-1" />
+                <div className="h-2.5 w-12 rounded bg-white/[0.04]" />
+              </div>
+            </div>
+          </div>
+          {/* Interests */}
+          <div className="rounded-2xl bg-white/[0.04] p-5 flex flex-col gap-3 h-[160px]">
+            <div className="h-3 w-16 rounded bg-white/[0.04]" />
+            <div className="flex flex-wrap gap-1.5">
+              {[56, 44, 64, 48, 52, 40].map((w, i) => (
+                <div key={i} className="h-6 rounded-full bg-white/[0.04]" style={{ width: w }} />
+              ))}
+            </div>
+          </div>
+          {/* Spaces — full width */}
+          <div className="col-span-2 rounded-2xl bg-white/[0.04] p-4 h-[140px]">
+            <div className="h-3 w-14 rounded bg-white/[0.04] mb-3" />
+            <div className="grid grid-cols-2 gap-2">
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className="h-10 rounded-xl bg-white/[0.04]" />
+              ))}
+            </div>
+          </div>
+          {/* Event */}
+          <div className="rounded-2xl bg-white/[0.04] p-4 h-[140px]">
+            <div className="h-3 w-24 rounded bg-white/[0.04] mb-3" />
+            <div className="h-4 w-3/4 rounded bg-white/[0.04] mb-2" />
+            <div className="h-3 w-1/2 rounded bg-white/[0.04]" />
+          </div>
+          {/* Top tool */}
+          <div className="rounded-2xl bg-white/[0.04] p-5 h-[140px] flex flex-col justify-between">
+            <div className="h-3 w-16 rounded bg-white/[0.04]" />
+            <div>
+              <div className="h-5 w-2/3 rounded bg-white/[0.04] mb-1" />
+              <div className="h-3 w-16 rounded bg-white/[0.04]" />
+            </div>
+            <div className="h-3 w-20 rounded bg-white/[0.04]" />
+          </div>
+        </div>
+      </div>
+
+      {/* Tools list skeleton */}
+      <div className="mt-3">
+        <div className="h-3 w-12 rounded bg-white/[0.04] mb-2" />
+        <div className="rounded-2xl bg-white/[0.04] divide-y divide-white/[0.02]">
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="flex items-center justify-between px-5 py-3.5">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-5 rounded-full bg-white/[0.04]" />
+                <div className="h-3.5 rounded bg-white/[0.04]" style={{ width: 80 + i * 20 }} />
+              </div>
+              <div className="h-3 w-12 rounded bg-white/[0.04]" />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

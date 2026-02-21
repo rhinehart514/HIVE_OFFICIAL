@@ -109,7 +109,7 @@ export interface ToolRuntimeModalProps {
 
 const glass = {
   overlay: 'bg-black/60 backdrop-blur-sm',
-  modal: 'bg-gray-950/95 backdrop-blur-xl border border-white/[0.06]',
+  modal: 'bg-black/80 backdrop-blur-2xl border border-white/[0.08]',
 };
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40';

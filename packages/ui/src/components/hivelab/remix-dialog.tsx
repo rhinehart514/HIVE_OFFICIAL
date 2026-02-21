@@ -126,7 +126,7 @@ export function RemixDialog({
           exit={{ opacity: 0, scale: 0.95 }}
           className={cn(
             'relative w-full max-w-md mx-4',
-            'bg-gray-900 rounded-2xl border border-white/[0.06]',
+            'bg-black/80 backdrop-blur-2xl rounded-2xl border border-white/[0.08]',
             'shadow-2xl shadow-black/40'
           )}
         >

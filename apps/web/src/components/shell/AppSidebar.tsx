@@ -43,13 +43,13 @@ function SidebarNavItem({ item, isActive }: { item: NavItem; isActive: boolean }
         'group relative flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150 rounded-lg mx-1',
         isActive
           ? 'text-white bg-white/[0.04]'
-          : 'text-white/55 hover:text-white/80 hover:bg-white/[0.03]'
+          : 'text-white/40 hover:text-white/60 hover:bg-white/[0.03]'
       )}
     >
-      {/* Gold left-border active indicator */}
+      {/* Active indicator — white, not gold */}
       {isActive && (
         <span
-          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#FFD700]"
+          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-white"
           aria-hidden
         />
       )}
@@ -57,7 +57,7 @@ function SidebarNavItem({ item, isActive }: { item: NavItem; isActive: boolean }
       <Icon
         className={cn(
           'h-4 w-4 shrink-0 transition-colors duration-150',
-          isActive ? 'text-white' : 'text-white/55 group-hover:text-white/80'
+          isActive ? 'text-white' : 'text-white/40 group-hover:text-white/60'
         )}
         strokeWidth={1.5}
       />
@@ -117,7 +117,7 @@ export function LeftSidebar() {
           onClick={() => {
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
           }}
-          className="group flex items-center gap-3 mx-1 px-4 py-2.5 text-sm text-white/55 rounded-lg transition-colors duration-150 hover:text-white/80 hover:bg-white/[0.03]"
+          className="group flex items-center gap-3 mx-1 px-4 py-2.5 text-sm text-white/40 rounded-lg transition-colors duration-150 hover:text-white/60 hover:bg-white/[0.03]"
           aria-label="Search (⌘K)"
         >
           <Search className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -129,7 +129,7 @@ export function LeftSidebar() {
         <button
           type="button"
           onClick={() => router.push('/notifications')}
-          className="group relative flex items-center gap-3 mx-1 px-4 py-2.5 text-sm text-white/55 rounded-lg transition-colors duration-150 hover:text-white/80 hover:bg-white/[0.03]"
+          className="group relative flex items-center gap-3 mx-1 px-4 py-2.5 text-sm text-white/40 rounded-lg transition-colors duration-150 hover:text-white/60 hover:bg-white/[0.03]"
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
         >
           <div className="relative">
@@ -174,10 +174,10 @@ function MobileNavItem({
       <div className="relative">
         <Icon className="h-[22px] w-[22px]" />
 
-        {/* Active dot */}
+        {/* Active dot — white */}
         {isActive && (
           <span
-            className="absolute -bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#FFD700]"
+            className="absolute -bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-white"
             aria-hidden
           />
         )}

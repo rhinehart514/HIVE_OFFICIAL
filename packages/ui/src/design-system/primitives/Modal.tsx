@@ -26,8 +26,8 @@ const modalOverlayStyles = cn(
 const modalContentVariants = cva(
   [
     'fixed z-50',
-    'bg-[#080808]',
-    'border border-white/[0.06]',
+    'bg-black/80 backdrop-blur-2xl',
+    'border border-white/[0.08]',
     'data-[state=open]:animate-in data-[state=closed]:animate-out',
     'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
     'data-[state=closed]:zoom-out-[0.98] data-[state=open]:zoom-in-[0.98]',

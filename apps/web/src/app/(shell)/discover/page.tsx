@@ -41,6 +41,7 @@ interface FeedEvent {
   spaceId?: string;
   spaceAvatarUrl?: string;
   coverImageUrl?: string;
+  eventType?: string;
   friendsAttending?: number;
   matchReasons?: string[];
 }
@@ -186,6 +187,24 @@ function categoryIcon(cat?: string): string {
   return cat ? (map[cat] || '⚡') : '⚡';
 }
 
+// Category → subtle warm gradient for imageless event cards
+function eventGradient(category?: string, eventType?: string): string {
+  const key = (category || eventType || '').toLowerCase();
+  if (key.includes('social') || key.includes('party') || key.includes('networking'))
+    return 'from-amber-950/80 to-stone-950/60';
+  if (key.includes('academic') || key.includes('lecture') || key.includes('class') || key.includes('study'))
+    return 'from-indigo-950/80 to-slate-950/60';
+  if (key.includes('sport') || key.includes('game') || key.includes('athletic') || key.includes('fitness'))
+    return 'from-emerald-950/80 to-teal-950/60';
+  if (key.includes('art') || key.includes('music') || key.includes('perform') || key.includes('creat'))
+    return 'from-violet-950/80 to-purple-950/60';
+  if (key.includes('greek') || key.includes('fraternity') || key.includes('sorority'))
+    return 'from-rose-950/80 to-red-950/60';
+  if (key.includes('food') || key.includes('dining') || key.includes('cook'))
+    return 'from-orange-950/80 to-amber-950/60';
+  return 'from-zinc-900/80 to-zinc-950/60';
+}
+
 /* ─────────────────────────────────────────────────────────────────── */
 /*  Shared Avatar                                                      */
 /* ─────────────────────────────────────────────────────────────────── */
@@ -216,24 +235,21 @@ function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, s
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0a]"
     >
-      {/* Cover image */}
-      {hasImage && (
-        <div className="relative h-48 w-full overflow-hidden">
-          <img
-            src={event.coverImageUrl!}
-            alt={event.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(10,10,10,0.1) 0%, rgba(10,10,10,0.85) 100%)' }} />
-          {/* Live badge over image */}
-          {live && (
-            <span className="absolute top-3 left-3 flex items-center gap-1.5 text-[11px] font-semibold text-red-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-              Live now
-            </span>
-          )}
-        </div>
-      )}
+      {/* Cover image or category gradient */}
+      <div className="relative h-40 w-full overflow-hidden">
+        {hasImage ? (
+          <img src={event.coverImageUrl!} alt={event.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
+        )}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 30%, rgba(10,10,10,0.95) 100%)' }} />
+        {live && (
+          <span className="absolute top-3 left-3 flex items-center gap-1.5 text-[11px] font-semibold text-red-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+            Live now
+          </span>
+        )}
+      </div>
 
       {/* Content */}
       <div className="px-5 pt-4 pb-5">
@@ -356,20 +372,17 @@ function TodayStrip({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (id: stri
 function FeedEventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, spaceId: string) => void }) {
   const live = isHappeningNow(event.startDate, event.endDate);
   const isGoing = event.isUserRsvped || event.userRsvp === 'going';
-  const hasImage = !!event.coverImageUrl;
 
   return (
     <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
-      {/* Cover image — full width when present */}
-      {hasImage && (
-        <div className="h-36 w-full overflow-hidden">
-          <img
-            src={event.coverImageUrl!}
-            alt={event.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )}
+      {/* Cover strip — image if available, category gradient otherwise */}
+      <div className="h-24 w-full overflow-hidden flex-shrink-0">
+        {event.coverImageUrl ? (
+          <img src={event.coverImageUrl} alt={event.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
+        )}
+      </div>
 
       <div className="p-4">
         {/* Space + time */}
@@ -502,33 +515,6 @@ function SpaceDiscoveryCard({ space }: { space: FeedSpace }) {
 /*  Empty State                                                        */
 /* ─────────────────────────────────────────────────────────────────── */
 
-/* ─────────────────────────────────────────────────────────────────── */
-/*  Feed Tease — end of feed, hints at what's coming                  */
-/* ─────────────────────────────────────────────────────────────────── */
-
-function FeedTease() {
-  const coming = [
-    { icon: '🏆', label: 'Club leaderboards' },
-    { icon: '📍', label: 'Live campus map' },
-    { icon: '🎙', label: 'Space announcements' },
-  ];
-
-  return (
-    <div className="mt-6 rounded-2xl border border-white/[0.04] bg-white/[0.01] p-5">
-      <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/20 mb-3">More coming to your feed</p>
-      <div className="flex flex-col gap-2">
-        {coming.map((item) => (
-          <div key={item.label} className="flex items-center gap-3 opacity-40">
-            <span className="text-base leading-none">{item.icon}</span>
-            <span className="text-[13px] text-white/50">{item.label}</span>
-            <span className="ml-auto text-[10px] font-sans text-white/20 uppercase tracking-wider">Soon</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
@@ -660,8 +646,75 @@ export default function DiscoverPage() {
     );
   }
 
+  const todayCount = events.filter(e => isToday(e.startDate)).length;
+  const upcomingThree = events.filter(e => !isToday(e.startDate) && e.id !== heroEvent?.id).slice(0, 3);
+
   return (
-    <div className="w-full max-w-[680px] px-4 py-6 md:px-8">
+    <div className="flex gap-8 w-full px-4 py-6 md:px-8">
+
+    {/* ── Right panel: desktop ambient layer ── */}
+    <aside className="hidden lg:flex flex-col w-[280px] flex-shrink-0 sticky top-6 self-start order-2">
+
+      {/* Next up */}
+      <div>
+        <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25 mb-3">Next up</p>
+        {upcomingThree.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {upcomingThree.map(ev => (
+              <Link key={ev.id} href={ev.spaceHandle ? `/s/${ev.spaceHandle}` : '/discover'} className="flex items-baseline gap-2 group">
+                <span className="text-[12px] text-white/35 shrink-0 tabular-nums w-12">{timeLabel(ev.startDate)}</span>
+                <span className="text-[12px] text-white/70 group-hover:text-white transition-colors truncate">{ev.title}</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[12px] text-white/20">Nothing coming up</p>
+        )}
+      </div>
+
+      {/* Hairline */}
+      <div className="h-px bg-white/[0.06] my-5" />
+
+      {/* Active spaces */}
+      <div>
+        <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25 mb-3">Active spaces</p>
+        {spaces.length > 0 ? (
+          <div className="flex flex-col gap-2.5">
+            {spaces.slice(0, 4).map(sp => (
+              <Link key={sp.id} href={`/s/${sp.handle || sp.id}`} className="flex items-center gap-2 group">
+                <div className="h-5 w-5 rounded-full overflow-hidden flex-shrink-0 bg-white/[0.08] flex items-center justify-center">
+                  {sp.avatarUrl
+                    ? <img src={sp.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    : <span className="text-[9px] text-white/40 font-medium">{sp.name?.[0]}</span>
+                  }
+                </div>
+                <span className="text-[12px] text-white/70 group-hover:text-white transition-colors line-clamp-1 flex-1 min-w-0">{sp.name}</span>
+                <span className="text-[12px] text-white/25">{sp.memberCount}</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[12px] text-white/20">No active spaces</p>
+        )}
+      </div>
+
+      {/* Hairline */}
+      <div className="h-px bg-white/[0.06] my-5" />
+
+      {/* On campus */}
+      <div>
+        <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25 mb-2">On campus</p>
+        <p className="text-[12px] text-white/50">
+          {todayCount > 0
+            ? `${todayCount} event${todayCount !== 1 ? 's' : ''} today`
+            : 'No events today'}
+        </p>
+      </div>
+
+    </aside>
+
+    {/* ── Main feed ── */}
+    <div className="flex-1 min-w-0 max-w-[680px] order-1">
       {/* Header */}
       <div className="mb-5">
         <h1 className="text-[13px] font-sans uppercase tracking-[0.15em] text-white/30">What&apos;s happening at UB</h1>
@@ -679,8 +732,7 @@ export default function DiscoverPage() {
           {/* Today strip */}
           {todayEvents.length > 0 && <TodayStrip events={todayEvents} onRsvp={handleRsvp} />}
 
-          {/* Feed tease when body is empty but hero exists */}
-          {feed.length === 0 && heroEvent && <FeedTease />}
+          {/* Feed tease removed — no empty promises */}
 
           {/* Feed body */}
           {feed.length > 0 && (
@@ -718,11 +770,12 @@ export default function DiscoverPage() {
                   );
                 });
               })()}
-              <FeedTease />
+              {/* FeedTease removed */}
             </div>
           )}
         </div>
       )}
+    </div>
     </div>
   );
 }

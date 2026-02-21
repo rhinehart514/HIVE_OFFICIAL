@@ -199,7 +199,7 @@ const ModalRenderer: React.FC<{
 
       {/* Modal */}
       <div className={cn(
-        'relative w-full bg-black border border-white/10 rounded-xl shadow-2xl',
+        'relative w-full bg-black/80 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl',
         'animate-in fade-in zoom-in-95 duration-200',
         sizes[modal.size || 'md']
       )}>

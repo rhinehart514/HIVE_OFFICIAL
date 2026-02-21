@@ -54,7 +54,7 @@ const sizeClasses = {
 
 const glass = {
   backdrop: "bg-black/60 backdrop-blur-sm",
-  surface: "bg-[var(--hivelab-canvas)] border border-white/[0.06] shadow-2xl shadow-black/40",
+  surface: "bg-black/80 backdrop-blur-2xl border border-white/[0.08] shadow-2xl shadow-black/40",
 };
 
 const backdropVariants = {
