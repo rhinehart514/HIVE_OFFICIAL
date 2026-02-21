@@ -117,7 +117,7 @@ export default function ProfilePageContent() {
 
   if (isLoading) return <ProfileLoadingState />;
   if (handleError === 'not_found') return <ProfileNotFoundState handle={handle} />;
-  if (handleError === 'private') return <ProfileNotFoundState handle={handle} />;
+  if (handleError === 'private' && !isOwnProfile) return <ProfileNotFoundState handle={handle} />;
   if (handleError === 'error' || error) return <ProfileErrorState onRetry={() => window.location.reload()} />;
   if (!profileData || !heroUser) return <ProfileNotFoundState handle={handle} />;
 

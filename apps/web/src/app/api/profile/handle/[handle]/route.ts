@@ -1,7 +1,9 @@
-import { withOptionalAuth, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { type NextRequest, NextResponse } from 'next/server';
 import { logger } from "@/lib/logger";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { getServerProfileRepository } from '@hive/core/server';
+import { verifySession } from '@/lib/session';
+import { deriveCampusFromEmail } from '@/lib/middleware';
 import { withCache } from '../../../../../lib/cache-headers';
 
 /**
@@ -13,68 +15,80 @@ import { withCache } from '../../../../../lib/cache-headers';
  * Resolution strategy:
  * 1. Try repository.findByHandle (queries users.handle field)
  * 2. Fallback: check handles/{handle} collection for userId mapping
- * 3. Fallback: case-insensitive scan (handles may have been stored with mixed case)
  *
- * Returns the basic profile shape expected by useProfileByHandle:
- * { profile: { id, handle, fullName, avatarUrl, isPrivate?, ... }, viewerType }
+ * Auth: reads hive_session cookie directly (withOptionalAuth doesn't support cookies)
  */
-const _GET = withOptionalAuth(
-  async (request, context: { params: { handle: string } }, respond) => {
-    const rawHandle = (context.params?.handle || '').toString().trim().toLowerCase();
-    if (!rawHandle) {
-      return respond.error('Missing handle', 'INVALID_INPUT', { status: 400 });
-    }
+async function _GET(request: NextRequest, context: { params: Promise<{ handle: string }> }) {
+  const { handle: handleParam } = await context.params;
+  const rawHandle = (handleParam || '').toString().trim().toLowerCase();
+  if (!rawHandle) {
+    return NextResponse.json(
+      { success: false, error: { code: 'INVALID_INPUT', message: 'Missing handle' } },
+      { status: 400 }
+    );
+  }
 
-    try {
-      const profileRepository = getServerProfileRepository();
-      let profileResult = await profileRepository.findByHandle(rawHandle);
+  try {
+    const profileRepository = getServerProfileRepository();
+    let profileResult = await profileRepository.findByHandle(rawHandle);
 
-      // Fallback: check handles collection for userId mapping
-      if (profileResult.isFailure) {
-        const handleDoc = await dbAdmin.collection('handles').doc(rawHandle).get();
-        if (handleDoc.exists) {
-          const handleData = handleDoc.data();
-          if (handleData?.userId) {
-            profileResult = await profileRepository.findById(handleData.userId);
-          }
+    // Fallback: check handles collection for userId mapping
+    if (profileResult.isFailure) {
+      const handleDoc = await dbAdmin.collection('handles').doc(rawHandle).get();
+      if (handleDoc.exists) {
+        const handleData = handleDoc.data();
+        if (handleData?.userId) {
+          profileResult = await profileRepository.findById(handleData.userId);
         }
       }
+    }
 
-      if (profileResult.isFailure) {
-        return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
-      }
-
-      const profile = profileResult.getValue();
-      const privacy = profile.privacy;
-
-      // Determine viewer context
-      let viewerId: string | null = null;
-      let viewerCampusId: string | null = null;
-      let viewerType: 'public' | 'campus' | 'connection' | 'self' = 'public';
-
-      try {
-        viewerId = getUserId(request as AuthenticatedRequest);
-        viewerCampusId = getCampusId(request as AuthenticatedRequest);
-      } catch {
-        // Not authenticated
-      }
-
-      const profileId = profile.profileId.value;
-      const isOwnProfile = viewerId === profileId;
-
-      if (isOwnProfile) {
-        viewerType = 'self';
-      } else if (viewerCampusId && profile.campusId.id === viewerCampusId) {
-        viewerType = 'campus';
-      }
-
-      // Check privacy — if restricted, signal it without leaking data
-      const canView = isOwnProfile || privacy.canViewProfile(
-        viewerType === 'self' ? 'connection' : viewerType
+    if (profileResult.isFailure) {
+      return NextResponse.json(
+        { success: false, error: { code: 'RESOURCE_NOT_FOUND', message: 'Profile not found' } },
+        { status: 404 }
       );
+    }
 
-      if (!canView) {
-        return respond.success({
+    const profile = profileResult.getValue();
+    const privacy = profile.privacy;
+
+    // Read auth from session cookie (same as withAuth)
+    let viewerId: string | null = null;
+    let viewerCampusId: string | null = null;
+    let viewerType: 'public' | 'campus' | 'connection' | 'self' = 'public';
+
+    try {
+      const sessionCookie = request.cookies.get('hive_session');
+      if (sessionCookie?.value) {
+        const session = await verifySession(sessionCookie.value);
+        if (session?.userId) {
+          viewerId = session.userId;
+          viewerCampusId = session.email ? deriveCampusFromEmail(session.email) ?? null : null;
+        }
+      }
+    } catch {
+      // Not authenticated — continue as public
+    }
+
+    const profileId = profile.profileId.value;
+    const isOwnProfile = viewerId === profileId;
+
+    if (isOwnProfile) {
+      viewerType = 'self';
+    } else if (viewerCampusId && profile.campusId.id === viewerCampusId) {
+      viewerType = 'campus';
+    }
+
+    // Check privacy — if restricted, return minimal data with privacy flag
+    const canView = isOwnProfile || privacy.canViewProfile(
+      viewerType === 'self' ? 'connection' : viewerType
+    );
+
+    if (!canView) {
+      return NextResponse.json({
+        success: true,
+        data: {
           profile: {
             id: profileId,
             handle: profile.handle.value,
@@ -83,16 +97,19 @@ const _GET = withOptionalAuth(
             isPrivate: true,
           },
           viewerType: 'restricted',
-        });
-      }
-
-      logger.info('Handle resolved', {
-        handle: rawHandle,
-        profileId,
-        viewerType,
+        },
       });
+    }
 
-      return respond.success({
+    logger.info('Handle resolved', {
+      handle: rawHandle,
+      profileId,
+      viewerType,
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
         profile: {
           id: profileId,
           handle: profile.handle.value,
@@ -106,15 +123,18 @@ const _GET = withOptionalAuth(
           isVerified: profile.isVerified,
         },
         viewerType,
-      });
-    } catch (error) {
-      logger.error('Failed to resolve handle', {
-        handle: rawHandle,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return respond.error('Failed to resolve handle', 'INTERNAL_ERROR', { status: 500 });
-    }
+      },
+    });
+  } catch (error) {
+    logger.error('Failed to resolve handle', {
+      handle: rawHandle,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json(
+      { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to resolve handle' } },
+      { status: 500 }
+    );
   }
-);
+}
 
 export const GET = withCache(_GET, 'SHORT');

@@ -258,15 +258,16 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
           return;
         }
 
-        // Check for private profile
+        // Always resolve the profile ID — even for private profiles.
+        // This lets us check isOwnProfile before deciding what to show.
+        setResolvedProfileId(result.profile.id);
+
+        // Flag private profiles, but don't stop loading — the profile
+        // data fetch will handle privacy properly for the owner.
         if (result.profile.isPrivate && result.viewerType === 'restricted') {
           setHandleError('private');
-          setIsResolvingHandle(false);
-          setIsLoading(false);
-          return;
         }
 
-        setResolvedProfileId(result.profile.id);
         setIsResolvingHandle(false);
       } catch {
         if (cancelled) return;
