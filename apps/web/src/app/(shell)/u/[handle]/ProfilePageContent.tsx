@@ -111,7 +111,7 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connection
         {heroUser.avatarUrl ? (
           <img src={heroUser.avatarUrl} alt={heroUser.fullName} className="absolute inset-0 w-full h-full object-cover object-top" />
         ) : (
-          <span className="text-[80px] font-semibold text-white/20 select-none leading-none">{initial}</span>
+          <span className="font-clash text-[120px] font-semibold text-white/15 select-none leading-none">{initial}</span>
         )}
         {/* Online pulse */}
         {heroPresence.isOnline && (
@@ -124,7 +124,7 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connection
 
       {/* Identity */}
       <div className="p-4">
-        <h1 className="text-[20px] font-semibold text-white leading-tight">{heroUser.fullName}</h1>
+        <h1 className="font-clash text-[22px] font-semibold text-white leading-tight">{heroUser.fullName}</h1>
         <p className="font-mono text-[12px] text-white/40 mt-0.5">@{heroUser.handle}</p>
         {heroUser.bio && <p className="text-[13px] text-white/50 mt-2 leading-relaxed line-clamp-2">{heroUser.bio}</p>}
         {infoLine && <p className="text-[12px] text-white/30 mt-1">{infoLine}</p>}
@@ -325,7 +325,7 @@ function TopToolCard({ tool, isOwnProfile, onToolClick }: {
       <div className="flex-1 py-2">
         <span className="text-2xl block mb-2">{tool.emoji || '🔧'}</span>
         <p className="text-[15px] font-semibold text-white leading-snug">{tool.name}</p>
-        <p className="text-[12px] text-white/35 mt-1">{tool.runs} uses</p>
+        {tool.runs > 0 && <p className="text-[12px] text-white/35 mt-1">{tool.runs} uses</p>}
       </div>
       <span className="text-[12px] text-white/30 flex items-center gap-1">View tool <ChevronRight className="w-3 h-3" /></span>
     </Card>
@@ -470,7 +470,9 @@ export default function ProfilePageContent() {
   if (handleError === 'error' || error) return <ProfileErrorState onRetry={() => window.location.reload()} />;
   if (!profileData || !heroUser) return <ProfileNotFoundState handle={handle} />;
 
-  const sortedTools = [...profileTools].sort((a, b) => (b.runs || 0) - (a.runs || 0));
+  // Deduplicate by ID (backend can return dupes from seeded data)
+  const uniqueTools = profileTools.filter((t, i, arr) => arr.findIndex(x => x.id === t.id) === i);
+  const sortedTools = [...uniqueTools].sort((a, b) => (b.runs || 0) - (a.runs || 0));
   const topTool = sortedTools[0] ? {
     id: sortedTools[0].id,
     name: sortedTools[0].name,
@@ -499,7 +501,7 @@ export default function ProfilePageContent() {
 
         {/* Stats */}
         <StatsCard
-          toolCount={profileTools.length}
+          toolCount={uniqueTools.length}
           spaceCount={profileSpaces.length}
           isOwnProfile={isOwnProfile}
         />
@@ -535,7 +537,7 @@ export default function ProfilePageContent() {
                 <Card key={tool.id} onClick={() => handleToolClick(tool.id)} className="p-4">
                   <span className="text-lg block mb-2">{tool.emoji || <Wrench className="w-4 h-4 text-white/30" />}</span>
                   <p className="text-[13px] font-medium text-white truncate">{tool.name}</p>
-                  {(tool.runs || 0) > 0 && (
+                  {tool.runs > 0 && (
                     <p className="text-[11px] font-mono text-white/30 mt-1">{tool.runs} uses</p>
                   )}
                 </Card>
