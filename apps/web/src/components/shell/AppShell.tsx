@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { LeftSidebar, MobileBottomBar } from './AppSidebar';
+import { PageTransition } from './PageTransition';
 
 const AdminToolbar = dynamic(() => import('@/components/admin/AdminToolbar'), {
   ssr: false,
@@ -55,7 +56,7 @@ export function AppShell({ children }: AppShellProps) {
         <ImpersonationBanner />
         <main className="min-h-screen pb-20 md:pb-6">
           <div className="mx-auto max-w-[1200px] px-4 py-6 md:px-6">
-            {children}
+            <PageTransition>{children}</PageTransition>
           </div>
         </main>
       </div>
