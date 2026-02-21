@@ -248,7 +248,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
     <div className="min-h-screen bg-black pb-24">
       {/* ── Header ── */}
       <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
+        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
           <h1 className="text-[18px] font-medium text-white">Spaces</h1>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -260,7 +260,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
         </div>
       </div>
 
-      <div className="mx-auto max-w-2xl px-4">
+      <div className="mx-auto max-w-5xl px-6">
 
         {/* ── Your Spaces ── */}
         {(yourLoading || organizations.length > 0) && (
@@ -304,7 +304,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
 
           {/* Grid */}
           {discoverLoading ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           ) : discoverSpaces.length === 0 ? (
@@ -312,7 +312,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
               <p className="text-[14px] text-white/30">No spaces in this category yet</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {discoverSpaces.map((space) => (
                 <DiscoverSpaceCard key={space.id} space={space} />
               ))}
