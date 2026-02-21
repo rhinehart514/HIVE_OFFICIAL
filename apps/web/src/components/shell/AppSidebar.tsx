@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, Search, User } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, getMobileNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
@@ -143,16 +143,6 @@ export function LeftSidebar() {
           <span className="font-medium tracking-wide">Notifications</span>
         </button>
 
-        {/* Profile */}
-        <button
-          type="button"
-          onClick={() => router.push('/me')}
-          className="group flex items-center gap-3 px-4 py-2.5 text-sm text-white/40 transition-colors duration-150 hover:text-white/70"
-          aria-label="Profile"
-        >
-          <User className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-          <span className="font-medium tracking-wide">Profile</span>
-        </button>
       </div>
     </aside>
   );
