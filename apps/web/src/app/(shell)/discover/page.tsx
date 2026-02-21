@@ -75,7 +75,7 @@ interface FeedTool {
 /* ─────────────────────────────────────────────────────────────────── */
 
 async function fetchFeedEvents(): Promise<FeedEvent[]> {
-  const params = new URLSearchParams({ timeRange: 'this-week', maxItems: '30', sort: 'soonest' });
+  const params = new URLSearchParams({ timeRange: 'upcoming', maxItems: '50', sort: 'soonest' });
   const res = await fetch(`/api/events/personalized?${params}`, { credentials: 'include' });
   if (!res.ok) return [];
   const payload = await res.json();
@@ -543,9 +543,16 @@ type FeedItem =
   | { type: 'tool'; data: FeedTool }
   | { type: 'space'; data: FeedSpace };
 
-function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], heroId: string): FeedItem[] {
-  // Remaining events (not hero, not today)
-  const remaining = events.filter(e => e.id !== heroId && !isToday(e.startDate));
+const TODAY_STRIP_MAX = 5;
+
+function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], heroId: string, todayStripCount: number = 0): FeedItem[] {
+  // Remaining events: exclude hero + the first N today events shown in the strip
+  const todayIds = events
+    .filter(e => isToday(e.startDate) && e.id !== heroId)
+    .slice(0, todayStripCount)
+    .map(e => e.id);
+  const stripIdSet = new Set([heroId, ...todayIds]);
+  const remaining = events.filter(e => !stripIdSet.has(e.id));
 
   const items: FeedItem[] = [];
   let toolIdx = 0;
@@ -608,12 +615,12 @@ export default function DiscoverPage() {
   }, [events]);
 
   const todayEvents = useMemo(() =>
-    events.filter(e => isToday(e.startDate) && e.id !== heroEvent?.id)
+    events.filter(e => isToday(e.startDate) && e.id !== heroEvent?.id).slice(0, TODAY_STRIP_MAX)
   , [events, heroEvent]);
 
   const feed = useMemo(() =>
-    buildFeed(events, tools, spaces, heroEvent?.id || '')
-  , [events, tools, spaces, heroEvent]);
+    buildFeed(events, tools, spaces, heroEvent?.id || '', todayEvents.length)
+  , [events, tools, spaces, heroEvent, todayEvents.length]);
 
   const isLoading = eventsQuery.isLoading || spacesQuery.isLoading;
 
@@ -650,18 +657,39 @@ export default function DiscoverPage() {
           {/* Feed body */}
           {feed.length > 0 && (
             <div className="space-y-3 pt-2">
-              {feed.map((item, i) => (
-                <motion.div
-                  key={`${item.type}-${item.data.id}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {item.type === 'event' && <FeedEventCard event={item.data} onRsvp={handleRsvp} />}
-                  {item.type === 'tool' && <EmbeddedToolCard tool={item.data} />}
-                  {item.type === 'space' && <SpaceDiscoveryCard space={item.data} />}
-                </motion.div>
-              ))}
+              {(() => {
+                let lastDay = '';
+                return feed.map((item, i) => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  let dayDivider: any = null;
+                  if (item.type === 'event') {
+                    const day = dayLabel(item.data.startDate);
+                    if (day !== lastDay && day !== 'Today') {
+                      lastDay = day;
+                      dayDivider = (
+                        <div key={`divider-${day}`} className="flex items-center gap-3 pt-2">
+                          <span className="text-[11px] uppercase tracking-[0.12em] text-white/25">{day}</span>
+                          <div className="flex-1 h-px bg-white/[0.04]" />
+                        </div>
+                      );
+                    }
+                  }
+                  return (
+                    <div key={`${item.type}-${item.data.id}`}>
+                      {dayDivider}
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        {item.type === 'event' && <FeedEventCard event={item.data} onRsvp={handleRsvp} />}
+                        {item.type === 'tool' && <EmbeddedToolCard tool={item.data} />}
+                        {item.type === 'space' && <SpaceDiscoveryCard space={item.data} />}
+                      </motion.div>
+                    </div>
+                  );
+                });
+              })()}
               <FeedTease />
             </div>
           )}
