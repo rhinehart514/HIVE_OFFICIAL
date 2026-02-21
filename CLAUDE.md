@@ -12,6 +12,8 @@ deployed directly into their space — no separate hosting, no cold start.
 - **HiveLab Elements:** `docs/HIVELAB_ELEMENTS.md` — 33 elements, execute handlers, status
 - **Package Exports:** `docs/PACKAGE_EXPORTS.md` — import reference for all @hive packages
 - **Known State:** `docs/KNOWN_STATE.md` — stubs, gaps, and implementation status
+- **Design Rules:** `docs/DESIGN_RULES.md` — **read before building any UI.** Custom vs. library decisions, approved packages, token rules, anti-patterns.
+- **Design System:** `docs/DESIGN_SYSTEM.md` — full token reference, component API, motion patterns
 
 ---
 
