@@ -105,32 +105,38 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connection
   const infoLine = [heroUser.major, heroUser.classYear, heroUser.campusName].filter(Boolean).join(' · ');
 
   return (
-    <Card className="row-span-2 flex flex-col">
-      {/* Avatar area — portrait */}
-      <div className={`relative flex-1 min-h-[200px] bg-gradient-to-b ${gradient} flex items-center justify-center`}>
+    <Card className="flex flex-col overflow-hidden">
+      {/* Portrait — tall image area, identity overlays bottom */}
+      <div className={`relative min-h-[360px] flex-1 bg-gradient-to-b ${gradient}`}>
         {heroUser.avatarUrl ? (
           <img src={heroUser.avatarUrl} alt={heroUser.fullName} className="absolute inset-0 w-full h-full object-cover object-top" />
         ) : (
-          <span className="font-clash text-[120px] font-semibold text-white/15 select-none leading-none">{initial}</span>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="font-clash text-[140px] font-semibold text-white/10 select-none leading-none">{initial}</span>
+          </div>
         )}
+
         {/* Online pulse */}
         {heroPresence.isOnline && (
-          <span className="absolute bottom-3 right-3 flex h-2.5 w-2.5">
+          <span className="absolute top-3 right-3 flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-60" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#FFD700]" />
           </span>
         )}
+
+        {/* Identity overlay — fades up from bottom of image */}
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-12"
+          style={{ background: 'linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.7) 60%, transparent 100%)' }}>
+          <h1 className="font-clash text-[24px] font-semibold text-white leading-tight">{heroUser.fullName}</h1>
+          <p className="font-mono text-[12px] text-white/50 mt-0.5">@{heroUser.handle}</p>
+          {heroUser.bio && <p className="text-[13px] text-white/50 mt-1.5 leading-relaxed line-clamp-2">{heroUser.bio}</p>}
+          {infoLine && <p className="text-[11px] text-white/30 mt-1">{infoLine}</p>}
+        </div>
       </div>
 
-      {/* Identity */}
-      <div className="p-4">
-        <h1 className="font-clash text-[22px] font-semibold text-white leading-tight">{heroUser.fullName}</h1>
-        <p className="font-mono text-[12px] text-white/40 mt-0.5">@{heroUser.handle}</p>
-        {heroUser.bio && <p className="text-[13px] text-white/50 mt-2 leading-relaxed line-clamp-2">{heroUser.bio}</p>}
-        {infoLine && <p className="text-[12px] text-white/30 mt-1">{infoLine}</p>}
-
-        {/* Actions */}
-        <div className="mt-3 flex items-center gap-2">
+      {/* Actions — below portrait */}
+      <div className="px-4 py-3 border-t border-white/[0.06]">
+        <div className="flex items-center gap-2">
           {isOwnProfile ? (
             <button onClick={onEdit} className="flex-1 py-2 rounded-xl bg-white/[0.06] text-[13px] font-medium text-white/60 hover:bg-white/[0.09] hover:text-white/80 transition-colors">
               Edit profile
@@ -306,7 +312,7 @@ function TopToolCard({ tool, isOwnProfile, onToolClick }: {
   if (!tool) {
     return (
       <Link href="/lab">
-        <Card className="p-4 flex flex-col gap-2 hover:border-white/[0.1] transition-colors cursor-pointer">
+        <Card className="p-4 flex flex-col gap-2 min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer">
           <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Top tool</p>
           <div className="flex-1 flex flex-col items-start justify-center py-3">
             <span className="text-2xl mb-2">⚡</span>
@@ -320,7 +326,7 @@ function TopToolCard({ tool, isOwnProfile, onToolClick }: {
   }
 
   return (
-    <Card className="p-4 flex flex-col gap-2" onClick={() => onToolClick(tool.id)}>
+    <Card className="p-4 flex flex-col gap-2 min-h-[140px]" onClick={() => onToolClick(tool.id)}>
       <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Top tool</p>
       <div className="flex-1 py-2">
         <span className="text-2xl block mb-2">{tool.emoji || '🔧'}</span>
@@ -340,12 +346,12 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
   if (!event) {
     return (
       <Link href="/discover">
-        <Card className="p-4 flex items-center justify-between hover:border-white/[0.1] transition-colors cursor-pointer">
+        <Card className="p-4 flex flex-col justify-between min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer">
+          <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Upcoming event</p>
           <div>
-            <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25 mb-1">Upcoming event</p>
-            <p className="text-[14px] text-white/40">No upcoming events</p>
+            <p className="text-[14px] text-white/40 mb-3">No upcoming events</p>
+            <span className="text-[12px] text-[#FFD700]/60 flex items-center gap-1">Browse feed <ArrowRight className="w-3.5 h-3.5" /></span>
           </div>
-          <span className="text-[12px] text-[#FFD700]/60 flex items-center gap-1 shrink-0">Browse feed <ArrowRight className="w-3.5 h-3.5" /></span>
         </Card>
       </Link>
     );
@@ -540,7 +546,7 @@ export default function ProfilePageContent() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {sortedTools.slice(0, 6).map(tool => (
               <Card key={tool.id} onClick={() => handleToolClick(tool.id)} className="p-4">
-                <span className="text-xl block mb-2">{tool.emoji || '🔧'}</span>
+                  <span className="text-2xl leading-none">{tool.emoji || '⚡'}</span>
                 <p className="text-[14px] font-medium text-white truncate">{tool.name}</p>
                 {tool.runs > 0 && <p className="text-[11px] font-mono text-white/30 mt-1">{tool.runs} uses</p>}
               </Card>
