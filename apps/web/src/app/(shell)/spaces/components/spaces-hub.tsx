@@ -3,12 +3,13 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, ChevronRight } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
 import { useSpacesHQ, type Space } from '../hooks/useSpacesHQ';
 import { SpaceCreationModal, SpaceClaimModal, SpaceJoinModal } from '@/components/spaces';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { cn } from '@/lib/utils';
+import { SpacesFirstEntry } from './spaces-first-entry';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -183,6 +184,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
   const [activeCategory, setActiveCategory] = React.useState<CategoryKey>('all');
   const [discoverSpaces, setDiscoverSpaces] = React.useState<BrowseSpace[]>([]);
   const [discoverLoading, setDiscoverLoading] = React.useState(true);
+  const [firstEntryDone, setFirstEntryDone] = React.useState(false);
 
   // Auth redirect
   React.useEffect(() => {
@@ -241,6 +243,18 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-6 h-6 rounded-full border-2 border-white/[0.06] border-t-[#FFD700] animate-spin" />
       </div>
+    );
+  }
+
+  // First-entry: no spaces joined yet — show smart match reveal
+  if (!yourLoading && organizations.length === 0 && !firstEntryDone) {
+    return (
+      <SpacesFirstEntry
+        onComplete={() => {
+          setFirstEntryDone(true);
+          refresh();
+        }}
+      />
     );
   }
 
