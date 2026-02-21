@@ -340,7 +340,7 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
   if (!event) {
     return (
       <Link href="/discover">
-        <Card className="col-span-2 p-4 flex items-center justify-between hover:border-white/[0.1] transition-colors cursor-pointer">
+        <Card className="p-4 flex items-center justify-between hover:border-white/[0.1] transition-colors cursor-pointer">
           <div>
             <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25 mb-1">Upcoming event</p>
             <p className="text-[14px] text-white/40">No upcoming events</p>
@@ -352,7 +352,7 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
   }
 
   return (
-    <Card className="col-span-2 p-4">
+    <Card className="p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25 mb-1.5">Upcoming event</p>
@@ -386,13 +386,15 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
 
 function ProfileLoadingState() {
   return (
-    <div className="p-6 grid grid-cols-3 gap-3 animate-pulse">
-      <div className="rounded-2xl bg-white/[0.04] row-span-2 min-h-[400px]" />
-      <div className="rounded-2xl bg-white/[0.04] h-[180px]" />
-      <div className="rounded-2xl bg-white/[0.04] h-[180px]" />
-      <div className="rounded-2xl bg-white/[0.04] col-span-2 h-[180px]" />
-      <div className="col-span-2 rounded-2xl bg-white/[0.04] h-[100px]" />
-      <div className="rounded-2xl bg-white/[0.04] h-[100px]" />
+    <div className="p-6 flex gap-3 animate-pulse">
+      <div className="w-[280px] shrink-0 rounded-2xl bg-white/[0.04] min-h-[460px]" />
+      <div className="flex-1 grid grid-cols-2 gap-3 content-start">
+        <div className="rounded-2xl bg-white/[0.04] h-[160px]" />
+        <div className="rounded-2xl bg-white/[0.04] h-[160px]" />
+        <div className="col-span-2 rounded-2xl bg-white/[0.04] h-[140px]" />
+        <div className="rounded-2xl bg-white/[0.04] h-[120px]" />
+        <div className="rounded-2xl bg-white/[0.04] h-[120px]" />
+      </div>
     </div>
   );
 }
@@ -472,7 +474,15 @@ export default function ProfilePageContent() {
 
   // Deduplicate by ID (backend can return dupes from seeded data)
   const uniqueTools = profileTools.filter((t, i, arr) => arr.findIndex(x => x.id === t.id) === i);
-  const sortedTools = [...uniqueTools].sort((a, b) => (b.runs || 0) - (a.runs || 0));
+  // Also dedup by name — backend seeding can return same-name tools with different IDs
+  const seenNames = new Set<string>();
+  const dedupedTools = uniqueTools.filter(t => {
+    const key = t.name.toLowerCase().trim();
+    if (seenNames.has(key)) return false;
+    seenNames.add(key);
+    return true;
+  });
+  const sortedTools = [...dedupedTools].sort((a, b) => (b.runs || 0) - (a.runs || 0));
   const topTool = sortedTools[0] ? {
     id: sortedTools[0].id,
     name: sortedTools[0].name,
@@ -482,70 +492,62 @@ export default function ProfilePageContent() {
 
   return (
     <div className="w-full px-6 py-6">
-      {/* Bento grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 auto-rows-auto">
+      {/* Bento — flex row: fixed portrait + fluid right grid */}
+      <div className="flex flex-col md:flex-row gap-3 items-stretch">
 
-        {/* Portrait — spans 2 rows */}
-        <PortraitCard
-          heroUser={heroUser}
-          heroPresence={heroPresence}
-          isOwnProfile={isOwnProfile}
-          onEdit={handleEditProfile}
-          connectionState={connectionState}
-          isConnectionLoading={isConnectionLoading}
-          onConnect={handleConnect}
-          onAcceptRequest={handleAcceptRequest}
-          onUnfriend={handleUnfriend}
-          onMessage={handleMessage}
-        />
+        {/* Left: Portrait — fixed width, stretches to right column height */}
+        <div className="md:w-[280px] shrink-0">
+          <PortraitCard
+            heroUser={heroUser}
+            heroPresence={heroPresence}
+            isOwnProfile={isOwnProfile}
+            onEdit={handleEditProfile}
+            connectionState={connectionState}
+            isConnectionLoading={isConnectionLoading}
+            onConnect={handleConnect}
+            onAcceptRequest={handleAcceptRequest}
+            onUnfriend={handleUnfriend}
+            onMessage={handleMessage}
+          />
+        </div>
 
-        {/* Stats */}
-        <StatsCard
-          toolCount={uniqueTools.length}
-          spaceCount={profileSpaces.length}
-          isOwnProfile={isOwnProfile}
-        />
-
-        {/* Interests */}
-        <InterestsCard interests={interests} isOwnProfile={isOwnProfile} />
-
-        {/* Spaces — col-span-2 */}
-        <SpacesCard
-          spaces={profileSpaces}
-          suggestedSpaces={suggestedSpaces}
-          isOwnProfile={isOwnProfile}
-          onSpaceClick={handleSpaceClick}
-        />
-
-        {/* Row 3: Event (col-span-2) + Top Tool */}
-        <EventCard event={nextEvent} />
-        <TopToolCard tool={topTool} isOwnProfile={isOwnProfile} onToolClick={handleToolClick} />
-
-        {/* All tools grid — full width, only if more than 1 */}
-        {sortedTools.length > 1 && (
-          <div className="col-span-1 md:col-span-3">
-            <div className="flex items-center justify-between mb-3 px-0.5">
-              <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">All tools</p>
-              {isOwnProfile && (
-                <Link href="/lab" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
-                  View all <ArrowRight className="w-3 h-3" />
-                </Link>
-              )}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {sortedTools.map(tool => (
-                <Card key={tool.id} onClick={() => handleToolClick(tool.id)} className="p-4">
-                  <span className="text-lg block mb-2">{tool.emoji || <Wrench className="w-4 h-4 text-white/30" />}</span>
-                  <p className="text-[13px] font-medium text-white truncate">{tool.name}</p>
-                  {tool.runs > 0 && (
-                    <p className="text-[11px] font-mono text-white/30 mt-1">{tool.runs} uses</p>
-                  )}
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Right: 2-col grid, fills remaining width */}
+        <div className="flex-1 grid grid-cols-2 gap-3 content-start">
+          <StatsCard toolCount={dedupedTools.length} spaceCount={profileSpaces.length} isOwnProfile={isOwnProfile} />
+          <InterestsCard interests={interests} isOwnProfile={isOwnProfile} />
+          <SpacesCard
+            spaces={profileSpaces}
+            suggestedSpaces={suggestedSpaces}
+            isOwnProfile={isOwnProfile}
+            onSpaceClick={handleSpaceClick}
+          />
+          <EventCard event={nextEvent} />
+          <TopToolCard tool={topTool} isOwnProfile={isOwnProfile} onToolClick={handleToolClick} />
+        </div>
       </div>
+
+      {/* Tools — only show top 6, deduplicated, below the bento */}
+      {sortedTools.length > 0 && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-white/25">Tools</p>
+            {isOwnProfile && (
+              <Link href="/lab" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
+                Open Lab <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {sortedTools.slice(0, 6).map(tool => (
+              <Card key={tool.id} onClick={() => handleToolClick(tool.id)} className="p-4">
+                <span className="text-xl block mb-2">{tool.emoji || '🔧'}</span>
+                <p className="text-[14px] font-medium text-white truncate">{tool.name}</p>
+                {tool.runs > 0 && <p className="text-[11px] font-mono text-white/30 mt-1">{tool.runs} uses</p>}
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Report (non-own profiles) */}
       {!isOwnProfile && (
