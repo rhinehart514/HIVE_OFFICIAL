@@ -1,191 +1,242 @@
-# UI-TODO.md — Foundations, Components, Patterns
+# UI-TODO.md — Full Audit: Foundations, Components, Patterns
 **Last updated:** 2026-02-21
-**Scope:** Design system refinement. Build what's missing. Fix what's wrong. Define what's ambiguous.
-**Rules:** Before touching any UI, read `docs/DESIGN_RULES.md`.
+**Rules:** Read `docs/DESIGN_RULES.md` before touching anything.
+
+Status key:
+- ✅ **LOCKED** — decisions made, do not change
+- ✅ **OK** — built correctly, no action needed
+- ⚠️ **AUDIT** — needs token compliance check (hex values, gold usage, focus rings)
+- 🔨 **FIX** — specific known fix required
+- ❌ **DELETE** — legacy, remove
+- 🏗️ **BUILD** — missing, create from scratch
 
 ---
 
 ## FOUNDATIONS
 
-These define everything. Fix these first — every component inherits them.
+| Item | Status | Action |
+|------|--------|--------|
+| Color tokens | ✅ OK | Defined in `tokens.css` and `@hive/tokens`. Do not add new color values — use what exists. |
+| Typography tokens | ✅ OK | Clash Display + Geist + Geist Mono. Scale defined. |
+| Spacing tokens | ✅ OK | 4px base scale. Complete. |
+| Motion tokens | ✅ OK | Durations, easings, spring presets, Framer variants all in `@hive/tokens`. |
+| Shadows | ✅ OK | Black-only. Glow shadows defined and wired to `--life-pulse`. |
+| Radius tokens | 🔨 **FIX** | `--radius-md` and `--radius-lg` are both 12px. Set `--radius-md: 10px`. Audit consumers. |
+| Icon standard | 🔨 **FIX** | `Icon.tsx` is LOCKED with stroke-width 1.5px, sizes 16/20/24px. **Document this in `DESIGN_RULES.md`** — currently missing from rules. |
+| App grid system | 🏗️ **BUILD** | No 12-col grid token. Pages do freehand spacing. Define: 12-col, 24px gutter, 4 breakpoints. Add to tokens. |
+| Gold budget audit | 🔨 **FIX** | Search codebase for `focus:ring-yellow`, `focus:ring-gold`, `focus-visible:ring-[#FFD700]`. Replace all with `focus-visible:ring-white/50`. |
+| Foundations Storybook | 🏗️ **BUILD** | `Foundations.Checklist.mdx` all unchecked. Write token docs story, typography reference, spacing reference. |
 
-### Tokens
-- [ ] **Fix radius token collision** — `--radius-md` and `--radius-lg` are both 12px. Resolve: set `--radius-md: 10px`, keep `--radius-lg: 12px`. Update all consuming components.
-- [ ] **Declare icon standard** — Document in `DESIGN_RULES.md`: Heroicons, stroke-width 1.5, 20px default size, 16px compact, 24px large. No other icon library.
-- [ ] **Define app grid** — 12-column, 24px gutter, 4 breakpoints (sm/md/lg/xl). Add to tokens as CSS vars. Consuming pages currently freehand their spacing.
-- [ ] **Enable glow shadows** — `--shadow-glow-sm/md/lg` are defined but all set to `none`. Wire to `--life-pulse`. Enable only for: featured tool cards, active space cards, Lab entry button.
-- [ ] **Audit `--duration-breathe` and `--duration-drift`** — Both set to `0ms`. Intentional? If killing breathe/drift animations, document why. If not, set real values.
-- [ ] **Document foundations in Storybook** — Foundations checklist in `src/foundations/Foundations.Checklist.mdx` is all unchecked. Fill it out. Token docs story, typography reference, spacing reference, motion reference.
+---
+
+## PRIMITIVES
 
 ### Typography
-- [ ] **Verify Clash Display loads everywhere** — Confirm `--font-clash` is available in production builds. Check web font loading strategy (local vs CDN).
-- [ ] **Cap Display usage** — Clash Display is for h1, h2, hero text, and DisplayText component ONLY. h3 and below use Geist. Audit pages for violations.
+| Primitive | Status | Action |
+|-----------|--------|--------|
+| `Text` | ✅ LOCKED | — |
+| `Heading` | ✅ LOCKED | — |
+| `DisplayText` | ✅ LOCKED | Clash Display. Hero/h1/h2 only. |
+| `Mono` | ✅ LOCKED | Geist Mono. Stats and code. |
+| `Label` | ⚠️ AUDIT | Not locked. Check token compliance. |
+| `Link` | ✅ LOCKED | — |
 
-### Gold Budget
-- [ ] **Audit gold usage across the app** — Find all instances of `--life-gold`, `#FFD700`, `text-yellow-*` in components. Flag anything that violates the rules in `DESIGN_RULES.md §3`.
-- [ ] **Remove gold from focus rings** — Search for `focus:ring-yellow`, `focus:ring-gold`, `focus-visible:ring-[#FFD700]`. Replace all with `focus-visible:ring-white/50`.
+### Interactive Controls
+| Primitive | Status | Action |
+|-----------|--------|--------|
+| `Button` | 🔨 **FIX** | Refined Feb 9, not locked. Core is correct (pill, no scale, white focus). **Add shimmer variant** for Lab/Create CTA only — use `shimmer-button` from motion-primitives. Then lock it. |
+| `Input` | 🔨 **FIX** | Not locked. Audit: focus border = `--border-focus` (white 50%), input text = 15px (HIVE decision), placeholder = `--text-tertiary`. Fix violations then lock. |
+| `Textarea` | ⚠️ AUDIT | Same audit as Input — focus, text size, placeholder. |
+| `Checkbox` | ✅ LOCKED | — |
+| `Radio` | ✅ LOCKED | — |
+| `Switch` | ✅ LOCKED | — |
+| `Select` | ⚠️ AUDIT | Not locked. Check token compliance: focus ring, active state color, dropdown surface. |
+| `Toggle` | ⚠️ AUDIT | Not locked. Check token compliance. |
+| `Tabs` | ⚠️ AUDIT | Not locked. Check active tab treatment — should use white, not gold. |
+| `Slider` | ✅ LOCKED (Jan 2026) | — |
+
+### Display & Feedback
+| Primitive | Status | Action |
+|-----------|--------|--------|
+| `Badge` | ⚠️ AUDIT | Not locked but used widely. Verify: gold variant = featured/trending only, no gold on decorative badges. Lock after audit. |
+| `Avatar` | ✅ LOCKED | Rounded-square (never circle). Ring on presence. |
+| `AvatarGroup` | ✅ LOCKED | 🔨 **Define max rule**: max 3 visible + "+N" chip in `--bg-elevated`. Add to lock comment. |
+| `PresenceDot` | ✅ LOCKED | Audit colors: online=success, away=warning, dnd=error, offline=ghost. |
+| `SpaceHealthBadge` | ✅ OK | Best primitive in the system. `dormant→quiet→active→thriving`. Do not touch. |
+| `StatAtom` | 🔨 **FIX** | Not locked. **Add Number Ticker animation on mount** using `animated-number.tsx` from motion-primitives. Respect `prefers-reduced-motion`. Then lock. |
+| `Skeleton` | ✅ LOCKED | — |
+| `Progress` | ✅ LOCKED | — |
+| `Toast` | ✅ LOCKED | — |
+| `EmptyState` | ✅ LOCKED (Jan 2026) | — |
+| `Separator` | ✅ LOCKED | — |
+| `Tooltip` | ✅ LOCKED (Jan 2026) | — |
+| `TypingIndicator` | ✅ LOCKED | — |
+
+### Layout & Navigation
+| Primitive | Status | Action |
+|-----------|--------|--------|
+| `Card` | ⚠️ AUDIT | Not locked. Core is excellent (warmth system, elevation, interactive). **Add JSDoc with warmth API examples.** Then lock. |
+| `Icon` | ✅ LOCKED | Stroke 1.5px, sizes 16/20/24px. **Add to `DESIGN_RULES.md`** — currently undocumented in rules. |
+| `TopBar` | ⚠️ AUDIT | Page-level bar (post-sidebar), 48px. Not locked. Verify token compliance then lock. |
+| `BottomNav` | ✅ LOCKED | Mobile nav. — |
+| `Breadcrumb` | ⚠️ AUDIT | Not locked. Low-use. Check token compliance. |
+| `Tag` | ✅ LOCKED | — |
+
+### Utility
+| Primitive | Status | Action |
+|-----------|--------|--------|
+| `Logo` | ✅ OK | HIVE logo asset. Fine. |
+| `Modal` | ⚠️ AUDIT | Not locked. Is this different from Dialog in components? Clarify role, check token compliance. |
+| `LoadingState` | ⚠️ AUDIT | Not locked. Check token compliance. |
+| `CategoryScroller` | ✅ LOCKED | Horizontal filter scroller. |
+| `DeploymentTarget` | ✅ LOCKED | HiveLab-specific. Fine. |
+| `ActivityEdge` | ✅ LOCKED | Edge warmth animation. Used in SpaceCard. |
+| `EmailInput` | ✅ LOCKED (Jan 2026) | — |
+| `HandleInput` | ✅ LOCKED (Jan 2026) | — |
+| **`ToolCardAtom`** | ❌ **DELETE** | Legacy. Migrate any consumers to `ToolCard` (compact variant) then delete. |
 
 ---
 
 ## COMPONENTS
 
-Ordered by impact. Each item has a clear action.
+### Cards (Core identity)
+| Component | Status | Action |
+|-----------|--------|--------|
+| `ToolCard` | 🔨 **FIX** | LOCKED but two fixes needed: (1) Replace `hover:opacity-90` with `glow-effect` from motion-primitives, tuned subtle. (2) Add `lastUsedAt` prop + `getWarmthFromToolActivity()` for recency-based warmth. |
+| `SpaceCard` | ✅ LOCKED | Best component. Territory gradients, warmth, "X you know". Do not touch. |
+| `ProfileCard` (5 variants) | 🔨 **FIX** | LOCKED but `ProfileCardFull` needs redesign. New: slim header (48px avatar, name, handle, bio), horizontal stat row, action buttons. All other variants fine. |
+| `EventCard` | ✅ LOCKED (Jan 2026) | — |
+| `StatCard` | ✅ OK | Sparklines, trend indicators, size variants. Fine. |
+| `PostCard` | ⚠️ AUDIT | Not locked. Feed post with author, content, reactions. Check token compliance — gold usage, focus rings. |
+| `GhostSpaceCard` | ⚠️ AUDIT | Placeholder/loading card. Check token compliance. |
+| `FileCard` | ⚠️ AUDIT | File attachment display. Low-use. Check token compliance. |
 
-### 🔴 Critical — Fix or Build Now
+### Navigation
+| Component | Status | Action |
+|-----------|--------|--------|
+| `TopNavBar` | ⚠️ AUDIT | Global header (56px). Not locked. Verify: search trigger, notification icon, user avatar. Token compliance check. |
+| `TabNav` | ⚠️ AUDIT | Horizontal tab nav. Not locked. Active tab = white, not gold. Check. |
+| `BoardTabs` | ⚠️ AUDIT | LOCKED but purpose unclear from name. Check what it does, verify token compliance. |
+| `SpaceSwitcher` | ⚠️ AUDIT | Space selector. Not locked. Check token compliance. |
+| `Stepper` | ⚠️ AUDIT | Multi-step wizard. Not locked. Check active step treatment — white not gold. |
+| `CommandBar` | ✅ LOCKED | ⌘K command palette. |
+| `CommandPalette` | ⚠️ AUDIT | Is this different from CommandBar? Clarify role. May be duplicate. |
+| `UniversalNav` | 🔨 **FIX** | In `navigation/` dir. Active state ad-hoc, not token-driven. Lab item not differentiated. See rebuild spec in patterns section. |
 
-**ToolCard — replace hover state**
-- [ ] Current: `hover:opacity-90` — too passive for the hero component
-- [ ] Replace with `glow-effect` from `packages/ui/src/components/motion-primitives/glow-effect.tsx`
-- [ ] Tune to subtle (not the full Magic UI default intensity)
-- [ ] Keep `hover:opacity-90` as fallback for `prefers-reduced-motion`
-- [ ] File: `packages/ui/src/design-system/components/ToolCard.tsx`
+### Overlays & Dialogs
+| Component | Status | Action |
+|-----------|--------|--------|
+| `Dialog` | ✅ OK | shadcn-based. Fine. |
+| `Sheet` | ✅ LOCKED (Jan 2026) | — |
+| `Drawer` | ✅ LOCKED (Jan 2026) | — |
+| `Popover` | ✅ LOCKED (Jan 2026) | — |
+| `ConfirmDialog` | ✅ OK | Standard confirm pattern. Fine. |
+| `ThreadDrawer` | ⚠️ AUDIT | Thread sidebar. Not locked. Check token compliance. |
+| `Portal` | ✅ OK | DOM portal utility. Fine. |
 
-**ToolCard — wire warmth to useCount recency**
-- [ ] SpaceCard has warmth from online users. ToolCard only has warmth for `featured`/`trending` status badges.
-- [ ] Add: calculate warmth from `useCount` + `lastUsedAt`. Tool used today = `warmth="medium"`. Tool used this week = `warmth="low"`. Tool unused >30 days = `warmth="none"`.
-- [ ] Add `lastUsedAt?: Date` to `ToolCardProps`
-- [ ] Add `getWarmthFromToolActivity(useCount, lastUsedAt)` helper (parallel to `getWarmthFromActiveUsers`)
-- [ ] File: `packages/ui/src/design-system/components/ToolCard.tsx`
+### Forms
+| Component | Status | Action |
+|-----------|--------|--------|
+| `FormField` | ✅ OK | Wrapper with label, description, error, counter. Fine. |
+| `RadioGroup` | ⚠️ AUDIT | Not locked. Token compliance check. |
+| `ToggleGroup` | ✅ LOCKED (Jan 2026) | — |
+| `Combobox` | ✅ LOCKED (Jan 2026) | — |
+| `TagInput` | ⚠️ AUDIT | Multi-tag input. Check token compliance. |
+| `DatePicker` | ⚠️ AUDIT | Not locked. Check focus states, active day treatment (white not gold). |
+| `NumberInput` | ⚠️ AUDIT | Numeric stepper. Check token compliance. |
+| `ImageUploader` | ⚠️ AUDIT | File upload. Check token compliance. |
+| `OTPInput` | ✅ LOCKED (Jan 2026) | — |
+| `SearchInput` | ⚠️ AUDIT | Search field. Not locked. Check token compliance. |
 
-**ToolCardAtom — kill it**
-- [ ] `ToolCardAtom.tsx` is a legacy duplicate. Audit its usages.
-- [ ] Migrate any consumers to `ToolCard` (compact variant)
-- [ ] Delete `ToolCardAtom.tsx`
+### Feedback & Status
+| Component | Status | Action |
+|-----------|--------|--------|
+| `Alert` | ✅ LOCKED (Jan 2026) | — |
+| `Callout` | ⚠️ AUDIT | Info callout box. Not locked. Check: no gold on informational callouts. |
+| `NotificationBanner` | ⚠️ AUDIT | Top banner. Not locked. Check: gold reserved for achievement banners only. |
+| `LoadingOverlay` | ⚠️ AUDIT | Full-screen loader. Not locked. Check token compliance. |
+| `ProgressBar` | ⚠️ AUDIT | Linear progress. Not locked. Check: progress fill color = white not gold (unless achievement). |
+| `ErrorState` | ✅ LOCKED (Jan 2026) | — |
+| `AuthSuccessState` | ✅ OK | Auth context only. Fine. |
 
-**ProfileCardFull — redesign**
-- [ ] Current: portrait card (`w-36 h-48`) with large avatar = maroon gradient card. Wrong direction.
-- [ ] New direction: slim horizontal header — avatar 48px circle, name + handle + bio one-liner, stat row, action buttons
-- [ ] Keep all existing `ProfileUser` type fields — no data changes needed
-- [ ] Keep Connect (gold text) + Message buttons — just in a horizontal bar, not stacked
-- [ ] File: `packages/ui/src/design-system/components/ProfileCard.tsx` → `ProfileCardFull`
+### Social & Messaging
+| Component | Status | Action |
+|-----------|--------|--------|
+| `ChatMessage` | ✅ LOCKED | — |
+| `ChatComposer` | ⚠️ AUDIT | Message input. Not locked. Check: focus ring, send button treatment. |
+| `MessageGroup` | ⚠️ AUDIT | Message grouping. Not locked. Token compliance check. |
+| `MentionAutocomplete` | ⚠️ AUDIT | @mention dropdown. Not locked. Check: selected item = white bg, not gold. |
+| `ReactionBadge` | ⚠️ AUDIT | Emoji reaction count chip. Not locked. Check token compliance. |
+| `ReactionPicker` | ⚠️ AUDIT | Emoji picker overlay. Not locked. Token compliance check. |
+| `PresenceIndicator` | ⚠️ AUDIT | Online count display. Not locked. Check: online count display uses `--life-gold` only when > 0 users active. |
 
-**StatAtom — add Number Ticker animation**
-- [ ] Current: static number renders instantly
-- [ ] Add count-up animation on mount using `animated-number.tsx` (already in `packages/ui/src/components/motion-primitives/animated-number.tsx`)
-- [ ] Animation only fires once on mount, not on every re-render
-- [ ] Respect `prefers-reduced-motion` — skip animation if reduced motion
-- [ ] File: `packages/ui/src/design-system/primitives/StatAtom.tsx`
+### Space & Campus
+| Component | Status | Action |
+|-----------|--------|--------|
+| `SpaceHeader` | ⚠️ AUDIT | Space top header. Not locked. Check: verified badge treatment, online count gold, join button. |
+| `SpacePanel` | ⚠️ AUDIT | Space layout panel. Not locked. Token compliance check. |
+| `MemberList` | ⚠️ AUDIT | Member list organism. Not locked. Uses `ProfileCardMemberRow` — verify correctly. |
+| `AttendeeList` | ⚠️ AUDIT | Event attendees. Not locked. Token compliance check. |
+| `RSVPButton` | ⚠️ AUDIT | Event RSVP toggle. Not locked. Verify: "Going" state uses white not gold. |
+| `EventCalendar` | ⚠️ AUDIT | Full calendar view. Not locked. Check: selected day = white, today indicator = subtle. |
 
-### 🟠 High — Define and Build
-
-**UniversalNav — token-compliant rebuild**
-- [ ] Current: active state uses ad-hoc classnames, not token system. Lab item looks identical to Feed.
-- [ ] New active state: full-opacity icon + text (`--text-primary`). Inactive: `--text-muted` (40% opacity). No pill backgrounds except on Lab item.
-- [ ] Lab item: `--life-gold` left-border accent (1px), icon in `--life-gold`, slightly larger icon (22px vs 20px)
-- [ ] Add visual separator above Lab item and below it (hairline `--border-subtle`)
-- [ ] Wire active detection to token system — `isActive` → set CSS vars, not hardcoded classes
-- [ ] File: `packages/ui/src/navigation/UniversalNav.tsx`
-
-**ProfileActivityHeatmap — verify and wire**
-- [ ] Component exists at `packages/ui/src/design-system/components/profile/ProfileActivityHeatmap.tsx` — built and real
-- [ ] Verify: gold at intensity 3-4, warm grayscale at 1-2, subtle grid at 0 ✓ (already correct)
-- [ ] Verify: is it wired to real activity data on the profile page?
-- [ ] If not wired: connect to user's tool creation + execute events from Firestore
-- [ ] Add to ProfilePage organism (see Patterns below)
-
-**SpaceCard — surface mutual spaces label**
-- [ ] `mutualCount` prop exists and renders "X you know" in gold when > 0
-- [ ] Verify: is `mutualCount` being calculated and passed from the profile page?
-- [ ] If not: implement mutual spaces query — `currentUser.spaces ∩ profileUser.spaces`
-- [ ] This is the entire social layer before follows exist — highest social ROI
-
-**AvatarGroup — define max display rule**
-- [ ] Current: no enforced cap on how many avatars show
-- [ ] Rule: max 3 avatars visible, then "+N" overflow chip in `--bg-elevated`
-- [ ] File: `packages/ui/src/design-system/primitives/AvatarGroup.tsx`
-
-### 🟡 Medium — Refine Existing
-
-**Badge — SpaceHealthBadge audit**
-- [ ] `SpaceHealthBadge` is the best component in the system. Verify `dormant→quiet→active→thriving` thresholds are correct.
-- [ ] Should ToolCard have a parallel `ToolHealthBadge`? (usage velocity instead of online count)
-- [ ] If yes: build `ToolHealthBadge` with levels: `unused → occasional → active → viral`
-
-**Button — shimmer variant for Lab CTA**
-- [ ] `border-beam` and `shimmer-button` exist in motion-primitives
-- [ ] Apply `shimmer-button` treatment to the primary "Create Tool" / "Open Lab" CTA only
-- [ ] This is the one place Magic UI shimmer is approved outside of achievement moments
-- [ ] Do not apply to any other buttons
-
-**Card — document warmth API**
-- [ ] The warmth system is HIVE's fingerprint — inset gold edge glow from `getWarmthFromActiveUsers()`
-- [ ] Add JSDoc to `Card` primitive with warmth usage examples
-- [ ] Ensure `warmth` prop is correctly typed and documented
-- [ ] File: `packages/ui/src/design-system/primitives/Card.tsx`
-
-**Switch, Checkbox, Radio — token audit**
-- [ ] These use Radix UI underneath but may have drifted from HIVE token system
-- [ ] Audit: focus rings white? Active states use `--interactive-active`? No gold on form controls?
-- [ ] Fix any violations found
-
-**Input / Textarea — audit focus state**
-- [ ] Focus border should be `--border-focus` (white 50%), not gold
-- [ ] Check `15px` input text size is honored (LOCKED design decision)
-- [ ] Verify placeholder opacity is `--text-tertiary`
-
-### 🟢 Low — When Time Allows
-
-**sparkles-text — restrict deployment**
-- [ ] `sparkles-text.tsx` exists in motion-primitives
-- [ ] Currently: unknown how widely deployed
-- [ ] Audit: should only appear on first tool creation + milestone achievements
-- [ ] Remove from any nav items, headers, or section labels if present
-
-**border-beam — restrict deployment**
-- [ ] `border-beam.tsx` exists in motion-primitives
-- [ ] Approved uses: Lab entry button, featured ToolCard only
-- [ ] Audit and remove from any other usage
-
-**PresenceDot — verify all status colors**
-- [ ] `online`: `--status-success` (green)
-- [ ] `away`: `--status-warning` (amber)
-- [ ] `dnd`: `--status-error` (red)
-- [ ] `offline`: `--text-ghost` (near-invisible)
-- [ ] Confirm ring treatment uses correct background color token
+### Data & Utility
+| Component | Status | Action |
+|-----------|--------|--------|
+| `Accordion` | ✅ LOCKED (Jan 2026) | — |
+| `ScrollArea` | ✅ LOCKED (Jan 2026) | — |
+| `Collapsible` | ⚠️ AUDIT | Expand/collapse. Not locked. Token compliance check. |
+| `DataTable` | ⚠️ AUDIT | Table. Admin-focused. Check token compliance. |
+| `Pagination` | ⚠️ AUDIT | Page nav. Not locked. Active page = white not gold. |
+| `Slot` | ✅ OK | Cognitive budget slot. Fine. |
+| `AspectRatio` | ✅ OK | Utility ratio container. Fine. |
+| `OrientationLayout` | ✅ LOCKED | — |
+| `VisuallyHidden` | ✅ OK | A11y utility. Fine. |
+| `CampusProvider` | ✅ OK | Context provider, not UI. Fine. |
 
 ---
 
 ## PATTERNS (Organisms)
 
-These compose components into screens. Build after components are stable.
+### 🔴 Build
+| Pattern | Action |
+|---------|--------|
+| **ProfilePage organism** | Slim header (48px avatar + name + handle + bio + action buttons) → stat row (StatAtom with Number Ticker) → Spaces row (SpaceCard compact + mutual spaces count) → ToolGrid → ProfileActivityHeatmap |
+| **ToolGrid** | 2-col bento of ToolCards. First 2 slots pinned (visually elevated). Rest sorted by `useCount` desc. "Open Lab →" header link. Empty state with shimmer CTA. |
 
-### 🔴 Build: ProfilePage organism
-- [ ] Replace current `ProfileCardFull` portrait layout with:
-  - Slim header: 48px avatar + name + handle + one-line bio + action buttons
-  - Stat row: `StatAtom` with Number Ticker for Tools Built, Views, Spaces
-  - Spaces row: horizontal scroll of `SpaceCard` compact variant with "3 mutual spaces" indicator
-  - ToolGrid: 2-col bento (see below)
-  - `ProfileActivityHeatmap`: gold squares, 90-day window (component already built)
-- [ ] Hide zero stats — don't show "0 Spaces" or "0 Connections"
-- [ ] "Mutual spaces" under avatar when viewing someone else's profile
+### 🔨 Fix
+| Pattern | Action |
+|---------|--------|
+| **UniversalNav** | Token-correct active states. Lab item: gold 1px left-border, gold icon, 22px icon. Separator above/below Lab. Inactive items: `--text-muted`. Active: `--text-primary`. No pill backgrounds except Lab. |
 
-### 🔴 Build: ToolGrid pattern
-- [ ] No pattern exists for composing ToolCards into a grid
-- [ ] 2-column bento layout
-- [ ] First 2 slots are "pinned" — visually elevated, larger
-- [ ] Remaining tools sorted by `useCount` desc
-- [ ] "Open Lab →" link in header of section
-- [ ] Empty state: "No tools yet — open Lab to build your first" with shimmer CTA
-
-### 🟠 Refine: UniversalNav (see Components above)
-
-### 🟠 Verify: SpacePanel token compliance
-- [ ] `SpacePanel.tsx` exists in design-system/components
-- [ ] Audit for token violations (hex values, focus ring colors, gold usage)
-- [ ] Verify warmth system is wired to online count
+### ⚠️ Audit
+| Pattern | Action |
+|---------|--------|
+| **SpacePanel** | Token compliance — hex values, focus rings, gold usage |
+| **SpaceHeader** | Token compliance — verified badge, online count |
 
 ---
 
-## DONE — Do Not Redo
-- ✅ ToolCard — built and locked (Jan 2026)
-- ✅ ProfileCard — 5 context variants built (Jan 2026)
-- ✅ SpaceCard — territory system + warmth + "X you know" (Jan 2026)
-- ✅ StatCard — sparklines, trend indicators (Jan 2026)
-- ✅ ProfileActivityHeatmap — gold squares, real implementation
-- ✅ border-beam, shine-border, glow-effect, sparkles-text — pulled into motion-primitives
-- ✅ All motion variants + spring presets — in `@hive/tokens`
-- ✅ Glass surface primitives — GlassSurface, GlassPanel, GlassOverlay
-- ✅ Arrival transitions — ArrivalTransition + ArrivalZone
-- ✅ Auth flow — EmailInput, OTPInput, AuthShell
-- ✅ Design system documentation — DESIGN_SYSTEM.md (comprehensive)
-- ✅ Agent build rules — DESIGN_RULES.md (added 2026-02-21)
+## SUMMARY — Actions by Priority
+
+### Do first (blockers or highest-impact):
+1. 🔨 Fix radius token collision (`--radius-md` vs `--radius-lg`)
+2. 🔨 Fix ToolCard hover → glow-effect + recency warmth
+3. 🔨 Fix ProfileCardFull → slim header
+4. 🔨 Fix StatAtom → Number Ticker animation
+5. 🔨 Fix Button → add shimmer variant for Lab CTA, then lock
+6. 🔨 Fix Input / Textarea → audit focus + 15px text, then lock
+7. ❌ Delete ToolCardAtom
+8. 🏗️ Build UniversalNav rebuild
+9. 🏗️ Build ToolGrid pattern
+10. 🏗️ Build ProfilePage organism
+
+### Audit pass (token compliance sweep):
+11. ⚠️ All ⚠️ AUDIT items above — focus rings white, gold only where approved, no hardcoded hex
+    Priority order: Badge → Card → TopBar → PostCard → SpaceHeader → ChatComposer → all others
+
+### Documentation:
+12. 🔨 Add Icon standard to `DESIGN_RULES.md`
+13. 🔨 Add Card warmth API JSDoc
+14. 🏗️ App grid tokens
+15. 🏗️ Foundations Storybook docs
