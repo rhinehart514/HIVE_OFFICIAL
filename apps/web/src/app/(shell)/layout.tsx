@@ -1,8 +1,6 @@
-import dynamic from 'next/dynamic';
 import { LeftSidebar, MobileBottomBar, PageTransition } from '@/components/shell';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
-
-const AdminToolbar = dynamic(() => import('@/components/admin/AdminToolbar'), { ssr: false });
+import { AdminToolbarLazy } from '@/components/admin/AdminToolbarLazy';
 
 export default function ShellLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,7 +11,7 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
         <ImpersonationBanner />
         <PageTransition>{children}</PageTransition>
       </div>
-      <AdminToolbar />
+      <AdminToolbarLazy />
     </div>
   );
 }
