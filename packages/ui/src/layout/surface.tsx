@@ -11,13 +11,13 @@ const surfaceVariants = cva(
         // Canonical 3-tier surface set
         standard: "bg-[#080808] border-white/[0.06] text-white",
         subtle: "bg-[#0D0D0D] border-white/[0.06] text-white",
-        overlay: "bg-[#0D0D0D] border-white/[0.08] text-white",
+        overlay: "bg-black/80 backdrop-blur-2xl border-white/[0.08] text-white",
 
         // Compatibility aliases
         default: "bg-[#080808] border-white/[0.06] text-white",
         contrast: "bg-[#0D0D0D] border-white/[0.08] text-white",
         inverted: "bg-[#0D0D0D] border-white/[0.08] text-white",
-        glass: "bg-[#0D0D0D] border-white/[0.08] text-white",
+        glass: "bg-black/80 backdrop-blur-2xl border-white/[0.08] text-white",
       },
       elevation: {
         flat: "shadow-none",

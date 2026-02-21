@@ -37,7 +37,6 @@ export const HIVE_FEATURE_FLAGS = {
 // Soft-launch overrides: intentionally hidden until core collaboration is stable.
 const SOFT_LAUNCH_DISABLED_FLAGS = new Set<string>([
   HIVE_FEATURE_FLAGS.ENABLE_DMS,
-  HIVE_FEATURE_FLAGS.ENABLE_CONNECTIONS,
 ]);
 
 // Simple feature flag service (inlined)

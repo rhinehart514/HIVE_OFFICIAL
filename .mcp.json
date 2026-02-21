@@ -1,20 +1,3 @@
 {
-  "mcpServers": {
-    "playwright": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "/Users/laneyfraass/.nvm/versions/node/v20.20.0/lib/node_modules/@playwright/mcp/cli.js"
-      ],
-      "env": {}
-    },
-    "projectboard": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "/Users/laneyfraass/projectboard/packages/mcp-server/dist/index.js"
-      ],
-      "env": {}
-    }
-  }
+  "mcpServers": {}
 }

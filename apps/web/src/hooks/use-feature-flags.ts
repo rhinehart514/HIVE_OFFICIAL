@@ -29,7 +29,6 @@ export type FeatureFlagId = typeof FEATURE_FLAGS[keyof typeof FEATURE_FLAGS];
 // Keep these hidden during soft launch regardless of remote flag config.
 const SOFT_LAUNCH_DISABLED_FLAGS = new Set<string>([
   FEATURE_FLAGS.ENABLE_DMS,
-  FEATURE_FLAGS.ENABLE_CONNECTIONS,
   FEATURE_FLAGS.RITUALS,
 ]);
 

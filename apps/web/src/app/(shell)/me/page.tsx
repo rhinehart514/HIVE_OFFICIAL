@@ -14,6 +14,30 @@ import { useAuth } from '@hive/auth-logic';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 
+// Bento-shaped skeleton — matches the profile grid layout exactly
+function ProfilePageSkeleton() {
+  return (
+    <div className="w-full max-w-5xl mx-auto px-6 py-6 pb-24 md:pb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Portrait — tall left card */}
+        <div className="md:row-span-2 h-[320px] md:h-full rounded-2xl bg-white/[0.04] animate-pulse" />
+        {/* Stats */}
+        <div className="h-28 rounded-2xl bg-white/[0.04] animate-pulse" />
+        {/* Interests */}
+        <div className="h-28 rounded-2xl bg-white/[0.04] animate-pulse" />
+        {/* Spaces */}
+        <div className="h-28 rounded-2xl bg-white/[0.04] animate-pulse md:col-span-2" />
+        {/* Tools row */}
+        <div className="h-24 rounded-2xl bg-white/[0.04] animate-pulse" />
+        <div className="h-24 rounded-2xl bg-white/[0.04] animate-pulse" />
+        <div className="h-24 rounded-2xl bg-white/[0.04] animate-pulse" />
+        {/* Event */}
+        <div className="h-32 rounded-2xl bg-white/[0.04] animate-pulse md:col-span-3" />
+      </div>
+    </div>
+  );
+}
+
 function ProfileShell({ user }: { user: { id: string; email?: string | null; displayName?: string | null; fullName?: string | null } }) {
   const displayName = user.displayName || user.fullName || user.email?.split('@')[0] || 'User';
   const initial = displayName.charAt(0).toUpperCase();
@@ -77,7 +101,7 @@ export default function MePage() {
   }, [user, user?.handle, profile?.handle, isLoading, router]);
 
   if (isLoading || profileLoading) {
-    return <div className="min-h-screen bg-black" />;
+    return <ProfilePageSkeleton />;
   }
 
   // User exists but no handle — show inline profile shell
@@ -85,6 +109,6 @@ export default function MePage() {
     return <ProfileShell user={user} />;
   }
 
-  // Redirect in progress
-  return <div className="min-h-screen bg-black" />;
+  // Redirect in progress — show skeleton instead of black flash
+  return <ProfilePageSkeleton />;
 }

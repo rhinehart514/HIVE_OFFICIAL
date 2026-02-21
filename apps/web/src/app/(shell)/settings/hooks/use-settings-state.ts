@@ -174,19 +174,10 @@ export function useSettingsState(profile: unknown) {
     }));
   }, [profile]);
 
-  // Load calendar status
+  // Calendar sync not yet available — skip network call
   const loadCalendarStatus = useCallback(async () => {
-    try {
-      const response = await fetch('/api/calendar/status', { credentials: 'include' });
-      if (response.ok) {
-        const data = await response.json();
-        setCalendarStatus(data);
-      }
-    } catch (error) {
-      logger.error('Failed to load calendar status', { component: 'SettingsPage' }, error instanceof Error ? error : undefined);
-    } finally {
-      setIsCalendarLoading(false);
-    }
+    setCalendarStatus({ available: false, connected: false });
+    setIsCalendarLoading(false);
   }, []);
 
   const handleNotificationChange = useCallback(

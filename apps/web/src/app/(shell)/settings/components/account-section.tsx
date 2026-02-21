@@ -63,85 +63,18 @@ export function AccountSection({
           <CalendarClock className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Connected Calendars
         </h3>
-        {isCalendarLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <ArrowPathIcon className="h-6 w-6  text-white/50" />
+        <div className="space-y-3">
+          <p className="text-white/50 text-sm">
+            Connect your calendar to help space leaders find the best times for events. Only your free/busy times are shared.
+          </p>
+          <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+            <CalendarClock className="h-5 w-5 text-white/30 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white/60 font-medium">Google Calendar</p>
+              <p className="text-xs text-white/30">Coming this spring</p>
+            </div>
           </div>
-        ) : !calendarStatus?.available ? (
-          <div className="py-4 text-center">
-            <p className="text-white/50 text-sm">Calendar integration is not available at this time.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-white/50 text-sm">
-              Connect your calendar to help space leaders find the best times for events. Only your free/busy times are shared.
-            </p>
-            {calendarStatus.connected ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <CheckIcon className="h-5 w-5 text-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-medium">Google Calendar Connected</p>
-                      <p className="text-emerald-400/80 text-xs">
-                        {calendarStatus.lastSyncedAt
-                          ? `Last synced ${new Date(calendarStatus.lastSyncedAt).toLocaleDateString()}`
-                          : 'Syncing...'}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    onClick={onCalendarDisconnect}
-                    disabled={isDisconnecting}
-                    aria-label={isDisconnecting ? 'Disconnecting calendar' : 'Disconnect Google Calendar'}
-                    className="border-red-500/20 text-red-400 hover:bg-red-500/10"
-                  >
-                    {isDisconnecting ? (
-                      <ArrowPathIcon className="h-4 w-4 " aria-hidden="true" />
-                    ) : (
-                      <>
-                        <Unlink className="h-4 w-4 mr-2" aria-hidden="true" />
-                        Disconnect
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <SettingRow
-                  label="Share availability with spaces"
-                  description="Space leaders can see when you're free to schedule better events"
-                  checked={calendarStatus.sharing?.enabled ?? true}
-                  onCheckedChange={async (v) => {
-                    try {
-                      await fetch('/api/calendar/status', {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                          sharing: { enabled: v, spaceIds: calendarStatus.sharing?.spaceIds || [] },
-                        }),
-                      });
-                      await loadCalendarStatus();
-                    } catch (err) {
-                      logger.error('Failed to update sharing', { component: 'SettingsPage' }, err instanceof Error ? err : undefined);
-                    }
-                  }}
-                />
-              </div>
-            ) : (
-              <Button
-                onClick={onCalendarConnect}
-                aria-label="Connect your Google Calendar account"
-                className="bg-white/[0.06] text-white hover:bg-white/[0.06] border border-white/[0.06]"
-              >
-                <LinkIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-                Connect Google Calendar
-              </Button>
-            )}
-          </div>
-        )}
+        </div>
       </Card>
 
       <Card className="p-6 bg-white/[0.06] border-white/[0.06]">

@@ -42,6 +42,7 @@ interface FeedEvent {
   spaceAvatarUrl?: string;
   coverImageUrl?: string;
   eventType?: string;
+  category?: string;
   friendsAttending?: number;
   matchReasons?: string[];
 }
