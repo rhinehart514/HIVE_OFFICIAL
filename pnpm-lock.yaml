@@ -630,6 +630,9 @@ importers:
       use-immer:
         specifier: ^0.10.0
         version: 0.10.0(immer@10.2.0)(react@19.2.0)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
     devDependencies:
       '@hive/config-typescript':
         specifier: workspace:*
