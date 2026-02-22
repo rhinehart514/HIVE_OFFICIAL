@@ -3,9 +3,11 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Clock, UserMinus, UserPlus,
   Wrench, Calendar, MapPin, Video, Users, ChevronRight, Zap,
+  Share2, Camera, Hammer, Compass, Link2,
 } from 'lucide-react';
 import {
   ProfileToolModal,
@@ -14,7 +16,14 @@ import {
   type ProfileActivityTool,
   type ReportContentInput,
 } from '@hive/ui';
+import type { ActivityContribution, ProfileConnection } from '@hive/ui';
 import { useProfileByHandle } from './hooks';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+const EASE_PREMIUM: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -64,7 +73,7 @@ async function fetchSuggestedSpaces() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Bento Card base
+// Bento Card base — #1 Card Hover Lift
 // ─────────────────────────────────────────────────────────────────────────────
 
 function Card({ children, className = '', onClick }: {
@@ -75,29 +84,146 @@ function Card({ children, className = '', onClick }: {
   const base = 'rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden';
   if (onClick) {
     return (
-      <button onClick={onClick} className={`${base} w-full text-left transition-colors hover:border-white/[0.1] hover:bg-white/[0.02] ${className}`}>
+      <motion.button
+        onClick={onClick}
+        className={`${base} w-full text-left transition-colors hover:border-white/[0.1] hover:bg-white/[0.02] ${className}`}
+        whileHover={{ opacity: 0.97 }}
+        whileTap={{ opacity: 0.92 }}
+        transition={{ duration: 0.15, ease: EASE_PREMIUM }}
+      >
         {children}
-      </button>
+      </motion.button>
     );
   }
-  return <div className={`${base} ${className}`}>{children}</div>;
+  return (
+    <motion.div
+      className={`${base} ${className}`}
+      whileHover={{ opacity: 0.97 }}
+      transition={{ duration: 0.15, ease: EASE_PREMIUM }}
+    >
+      {children}
+    </motion.div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Portrait card — identity hero
+// #8 Reusable Empty State
 // ─────────────────────────────────────────────────────────────────────────────
 
-function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connectionState, isConnectionLoading, onConnect, onAcceptRequest, onUnfriend, onMessage }: {
+function EmptyState({ icon: Icon, title, subtitle, ctaLabel, ctaHref }: {
+  icon: React.ElementType;
+  title: string;
+  subtitle: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+}) {
+  return (
+    <motion.div
+      className="flex flex-col items-center justify-center py-6 px-4 text-center"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: EASE_PREMIUM }}
+    >
+      <motion.div
+        className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center mb-3"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.2, delay: 0.1 }}
+      >
+        <Icon className="w-4.5 h-4.5 text-white/40" />
+      </motion.div>
+      <motion.p
+        className="text-[13px] font-medium text-white/50 mb-0.5"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15 }}
+      >
+        {title}
+      </motion.p>
+      <motion.p
+        className="text-[11px] text-white/25 mb-3"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        {subtitle}
+      </motion.p>
+      {ctaLabel && ctaHref && (
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <Link href={ctaHref} className="text-[11px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors flex items-center gap-1">
+            {ctaLabel} <ArrowRight className="w-3 h-3" />
+          </Link>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// #3 Profile Completeness Ring
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CompletenessRing({ heroUser, interests, spaceCount, toolCount }: {
+  heroUser: { avatarUrl?: string; bio?: string };
+  interests: string[];
+  spaceCount: number;
+  toolCount: number;
+}) {
+  const score = (heroUser.avatarUrl ? 20 : 0)
+    + (heroUser.bio ? 20 : 0)
+    + (interests.length > 0 ? 20 : 0)
+    + (spaceCount > 0 ? 20 : 0)
+    + (toolCount > 0 ? 20 : 0);
+
+  if (score >= 100) return null;
+
+  const radius = 14;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const isGold = score >= 100;
+
+  return (
+    <div className="absolute top-3 left-3 flex items-center gap-1.5">
+      <svg width="36" height="36" viewBox="0 0 36 36" className="rotate-[-90deg]">
+        <circle cx="18" cy="18" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2.5" />
+        <motion.circle
+          cx="18" cy="18" r={radius} fill="none"
+          stroke={isGold ? '#FFD700' : 'rgba(255,255,255,0.3)'}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 0.8, ease: EASE_PREMIUM, delay: 0.3 }}
+        />
+      </svg>
+      <span className="text-[10px] text-white/30 font-medium">{score}%</span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Portrait card — identity hero (#2 Share, #3 Ring, #4 Photo Nudge, #5 Builder Badge)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, onShare, connectionState, isConnectionLoading, onConnect, onAcceptRequest, onUnfriend, onMessage, isBuilder, completenessProps }: {
   heroUser: { fullName: string; handle: string; avatarUrl?: string; bio?: string; major?: string; classYear?: string; campusName?: string };
   heroPresence: { isOnline: boolean };
   isOwnProfile: boolean;
   onEdit: () => void;
+  onShare: () => void;
   connectionState: string;
   isConnectionLoading: boolean;
   onConnect: () => void;
   onAcceptRequest: (id: string) => void;
   onUnfriend: () => void;
   onMessage: () => void;
+  isBuilder: boolean;
+  completenessProps?: { interests: string[]; spaceCount: number; toolCount: number };
 }) {
   const [showUnfriendMenu, setShowUnfriendMenu] = React.useState(false);
   const gradient = nameGradient(heroUser.fullName);
@@ -111,9 +237,26 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connection
         {heroUser.avatarUrl ? (
           <img src={heroUser.avatarUrl} alt={heroUser.fullName} className="absolute inset-0 w-full h-full object-cover object-top" />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center flex-col gap-3">
             <span className="font-clash text-[140px] font-semibold text-white/10 select-none leading-none">{initial}</span>
+            {/* #4 Photo Upload Nudge */}
+            {isOwnProfile && (
+              <motion.button
+                onClick={onEdit}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.08] border border-white/[0.1] text-[11px] text-white/50 hover:bg-white/[0.12] hover:text-white/70 transition-colors"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.3, ease: EASE_PREMIUM }}
+              >
+                <Camera className="w-3 h-3" />Add photo
+              </motion.button>
+            )}
           </div>
+        )}
+
+        {/* #3 Completeness Ring — own profile only */}
+        {isOwnProfile && completenessProps && (
+          <CompletenessRing heroUser={heroUser} {...completenessProps} />
         )}
 
         {/* Online pulse */}
@@ -129,18 +272,29 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connection
           style={{ background: 'linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.7) 60%, transparent 100%)' }}>
           <h1 className="font-clash text-[24px] font-semibold text-white leading-tight">{heroUser.fullName}</h1>
           <p className="font-sans text-[12px] text-white/50 mt-0.5">@{heroUser.handle}</p>
+          {/* #5 Builder Badge */}
+          {isBuilder && (
+            <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-[10px] font-medium text-amber-400">
+              <Hammer className="w-2.5 h-2.5" />Builder
+            </span>
+          )}
           {heroUser.bio && <p className="text-[13px] text-white/50 mt-1.5 leading-relaxed line-clamp-2">{heroUser.bio}</p>}
           {infoLine && <p className="text-[11px] text-white/30 mt-1">{infoLine}</p>}
         </div>
       </div>
 
-      {/* Actions — below portrait */}
+      {/* Actions — below portrait (#2 Share Button) */}
       <div className="px-4 py-3 border-t border-white/[0.06]">
         <div className="flex items-center gap-2">
           {isOwnProfile ? (
-            <button onClick={onEdit} className="flex-1 py-2 rounded-xl bg-white/[0.06] text-[13px] font-medium text-white/60 hover:bg-white/[0.09] hover:text-white/80 transition-colors">
-              Edit profile
-            </button>
+            <>
+              <button onClick={onEdit} className="flex-1 py-2 rounded-xl bg-white/[0.06] text-[13px] font-medium text-white/60 hover:bg-white/[0.09] hover:text-white/80 transition-colors">
+                Edit profile
+              </button>
+              <button onClick={onShare} className="py-2 px-2.5 rounded-xl bg-white/[0.06] text-white/40 hover:bg-white/[0.09] hover:text-white/60 transition-colors" aria-label="Share profile">
+                <Share2 className="w-3.5 h-3.5" />
+              </button>
+            </>
           ) : (
             <>
               {connectionState === 'none' && (
@@ -177,6 +331,9 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, connection
               )}
               <button onClick={onMessage} className="py-2 px-3 rounded-xl bg-white/[0.06] text-white/50 text-[13px] hover:bg-white/[0.09] transition-colors">
                 Message
+              </button>
+              <button onClick={onShare} className="py-2 px-2.5 rounded-xl bg-white/[0.06] text-white/40 hover:bg-white/[0.09] hover:text-white/60 transition-colors" aria-label="Share profile">
+                <Share2 className="w-3.5 h-3.5" />
               </button>
             </>
           )}
@@ -221,9 +378,8 @@ function StatsCard({ toolCount, spaceCount, isOwnProfile, fullWidth }: { toolCou
 // ─────────────────────────────────────────────────────────────────────────────
 
 function InterestsCard({ interests, isOwnProfile }: { interests: string[]; isOwnProfile: boolean }) {
-  // Don't render an empty card — wastes real estate
   if (interests.length === 0 && !isOwnProfile) return null;
-  if (interests.length === 0) return null; // Even own profile: skip empty card, prompt elsewhere
+  if (interests.length === 0) return null;
 
   return (
     <Card className="flex flex-col p-5 gap-3">
@@ -240,7 +396,70 @@ function InterestsCard({ interests, isOwnProfile }: { interests: string[]; isOwn
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Spaces card
+// #6 Connections Card
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ConnectionsCard({ connections, totalConnections, mutualFriendsCount, isOwnProfile }: {
+  connections: ProfileConnection[];
+  totalConnections: number;
+  mutualFriendsCount: number;
+  isOwnProfile: boolean;
+}) {
+  if (totalConnections === 0 && !isOwnProfile) return null;
+
+  if (totalConnections === 0 && isOwnProfile) {
+    return (
+      <Card className="p-4">
+        <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 mb-2">Connections</p>
+        <EmptyState
+          icon={Users}
+          title="Connect with people"
+          subtitle="Find classmates and friends on campus"
+          ctaLabel="Discover"
+          ctaHref="/discover"
+        />
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Connections</p>
+        <Link href={isOwnProfile ? '/me/connections' : '#'} className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-0.5">
+          See all <ChevronRight className="w-3 h-3" />
+        </Link>
+      </div>
+
+      <div className="flex items-center gap-3">
+        {/* Stacked avatars */}
+        <div className="flex -space-x-2">
+          {connections.slice(0, 4).map((conn, i) => (
+            <div key={conn.id} className="w-8 h-8 rounded-full border-2 border-[#080808] overflow-hidden bg-white/[0.06]" style={{ zIndex: 4 - i }}>
+              {conn.avatarUrl ? (
+                <img src={conn.avatarUrl} alt={conn.fullName} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[10px] font-medium text-white/40">
+                  {conn.fullName.charAt(0)}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="text-[14px] font-medium text-white/70">{totalConnections}</p>
+          <p className="text-[11px] text-white/30">
+            {mutualFriendsCount > 0 ? `${mutualFriendsCount} mutual` : 'connections'}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Spaces card (#8 Better Empty State)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function SpacesCard({ spaces, suggestedSpaces, isOwnProfile, onSpaceClick }: {
@@ -275,6 +494,14 @@ function SpacesCard({ spaces, suggestedSpaces, isOwnProfile, onSpaceClick }: {
             </button>
           ))}
         </div>
+      ) : isOwnProfile ? (
+        <EmptyState
+          icon={Compass}
+          title="Join your first space"
+          subtitle="Spaces are where your campus community lives"
+          ctaLabel="Browse spaces"
+          ctaHref="/spaces"
+        />
       ) : (
         <div>
           <p className="text-[12px] text-white/25 mb-3">Not in any spaces yet</p>
@@ -297,6 +524,75 @@ function SpacesCard({ spaces, suggestedSpaces, isOwnProfile, onSpaceClick }: {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// #7 Activity Timeline Strip
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ActivityStrip({ contributions, currentStreak }: {
+  contributions: ActivityContribution[];
+  currentStreak: number;
+}) {
+  if (contributions.length === 0) return null;
+
+  // Build 12-week (84 day) grid from most recent data
+  const now = new Date();
+  const dayMap = new Map<string, number>();
+  for (const c of contributions) {
+    dayMap.set(c.date, c.count);
+  }
+
+  const cells: { date: string; count: number }[] = [];
+  for (let i = 83; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    cells.push({ date: key, count: dayMap.get(key) || 0 });
+  }
+
+  function intensityClass(count: number): string {
+    if (count === 0) return 'bg-white/[0.04]';
+    if (count <= 2) return 'bg-white/[0.12]';
+    if (count <= 5) return 'bg-white/[0.25]';
+    if (count <= 10) return 'bg-[#FFD700]/35';
+    return 'bg-[#FFD700]/80';
+  }
+
+  return (
+    <Card className="col-span-2 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Activity</p>
+        {currentStreak > 0 && (
+          <span className="flex items-center gap-1 text-[11px] text-[#FFD700]/70">
+            <Zap className="w-3 h-3" />{currentStreak} day streak
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-12 gap-[3px]">
+        {/* 12 columns × 7 rows = 84 cells */}
+        {Array.from({ length: 12 }, (_, col) => (
+          <div key={col} className="flex flex-col gap-[3px]">
+            {Array.from({ length: 7 }, (_, row) => {
+              const idx = col * 7 + row;
+              const cell = cells[idx];
+              if (!cell) return <div key={row} className="w-full aspect-square rounded-[2px]" />;
+              return (
+                <motion.div
+                  key={row}
+                  className={`w-full aspect-square rounded-[2px] ${intensityClass(cell.count)}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: idx * 0.003, duration: 0.2 }}
+                  title={`${cell.date}: ${cell.count} contributions`}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Top tool card
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -306,16 +602,18 @@ function TopToolCard({ tool, isOwnProfile, onToolClick }: {
   onToolClick: (id: string) => void;
 }) {
   if (!tool) {
+    if (!isOwnProfile) return null;
     return (
       <Link href="/lab">
         <Card className="p-4 flex flex-col gap-2 min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer">
           <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Top tool</p>
-          <div className="flex-1 flex flex-col items-start justify-center py-3">
-            <span className="text-2xl mb-2">⚡</span>
-            <p className="text-[14px] font-medium text-white/50">Build something</p>
-            <p className="text-[12px] text-white/25 mt-0.5">Your best tool lives here</p>
-          </div>
-          <span className="text-[12px] text-[#FFD700]/60 flex items-center gap-1">Open Lab <ArrowRight className="w-3 h-3" /></span>
+          <EmptyState
+            icon={Wrench}
+            title="Create your first tool"
+            subtitle="Build interactive tools for your community"
+            ctaLabel="Open Lab"
+            ctaHref="/lab"
+          />
         </Card>
       </Link>
     );
@@ -378,6 +676,74 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
         )}
       </div>
     </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// #9 Tool Row with Hover Preview
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ToolRow({ tool, onClick }: {
+  tool: { id: string; name: string; emoji?: string; description?: string; runs: number };
+  onClick: () => void;
+}) {
+  const [showPreview, setShowPreview] = React.useState(false);
+  const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isTouchDevice] = React.useState(() =>
+    typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  );
+
+  const handleMouseEnter = () => {
+    if (isTouchDevice) return;
+    hoverTimerRef.current = setTimeout(() => setShowPreview(true), 300);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    setShowPreview(false);
+  };
+
+  return (
+    <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <button
+        onClick={onClick}
+        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-white/[0.02] transition-colors group text-left"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="w-1 h-5 rounded-full bg-[#FFD700]/40 shrink-0" />
+          <span className="text-[14px] font-medium text-white/80 group-hover:text-white transition-colors truncate">{tool.name}</span>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {tool.runs > 0 && <span className="text-[12px] font-sans text-white/25">{tool.runs} uses</span>}
+          <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-white/40 transition-colors" />
+        </div>
+      </button>
+
+      {/* Hover preview popover */}
+      <AnimatePresence>
+        {showPreview && (tool.description || tool.emoji) && (
+          <motion.div
+            className="absolute right-0 top-0 z-30 w-56 p-3 rounded-xl bg-[#141414] border border-white/[0.08] shadow-2xl pointer-events-none hidden md:block"
+            style={{ transform: 'translateX(calc(100% + 8px))' }}
+            initial={{ opacity: 0, x: -4 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -4 }}
+            transition={{ duration: 0.15, ease: EASE_PREMIUM }}
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              {tool.emoji && <span className="text-base">{tool.emoji}</span>}
+              <p className="text-[13px] font-medium text-white/80 truncate">{tool.name}</p>
+            </div>
+            {tool.description && (
+              <p className="text-[11px] text-white/40 leading-relaxed line-clamp-3">{tool.description}</p>
+            )}
+            {tool.runs > 0 && (
+              <p className="text-[10px] text-white/25 mt-2">{tool.runs} total uses</p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -510,7 +876,9 @@ export default function ProfilePageContent() {
 
   const {
     handle, handleError, profileId, isOwnProfile, isLoading, error,
-    profileData, heroUser, heroPresence, profileSpaces, profileTools,
+    profileData, heroUser, heroPresence, heroBadges, profileSpaces, profileTools,
+    profileConnections, totalConnections, mutualFriendsCount,
+    activityContributions, currentStreak,
     selectedTool, handleEditProfile, handleToolModalClose,
     handleToolUpdateVisibility, handleToolRemove,
     handleSpaceClick, handleToolClick, interests,
@@ -531,6 +899,16 @@ export default function ProfilePageContent() {
     staleTime: 10 * 60_000,
     enabled: profileSpaces.length === 0,
   });
+
+  // #2 Share handler
+  const handleShare = React.useCallback(() => {
+    const url = `${window.location.origin}/u/${handle}`;
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success('Copied!', 'Profile link copied to clipboard');
+    }).catch(() => {
+      toast.error('Failed to copy link');
+    });
+  }, [handle]);
 
   const handleSubmitReport = async (data: ReportContentInput) => {
     const res = await fetch('/api/content/reports', {
@@ -576,12 +954,19 @@ export default function ProfilePageContent() {
             heroPresence={heroPresence}
             isOwnProfile={isOwnProfile}
             onEdit={handleEditProfile}
+            onShare={handleShare}
             connectionState={connectionState}
             isConnectionLoading={isConnectionLoading}
             onConnect={handleConnect}
             onAcceptRequest={handleAcceptRequest}
             onUnfriend={handleUnfriend}
             onMessage={handleMessage}
+            isBuilder={heroBadges.isBuilder ?? false}
+            completenessProps={isOwnProfile ? {
+              interests,
+              spaceCount: profileSpaces.length,
+              toolCount: dedupedTools.length,
+            } : undefined}
           />
         </div>
 
@@ -594,18 +979,27 @@ export default function ProfilePageContent() {
             fullWidth={interests.length === 0}
           />
           {interests.length > 0 && <InterestsCard interests={interests} isOwnProfile={isOwnProfile} />}
+          {/* #6 Connections Card */}
+          <ConnectionsCard
+            connections={profileConnections}
+            totalConnections={totalConnections}
+            mutualFriendsCount={mutualFriendsCount}
+            isOwnProfile={isOwnProfile}
+          />
           <SpacesCard
             spaces={profileSpaces}
             suggestedSpaces={suggestedSpaces}
             isOwnProfile={isOwnProfile}
             onSpaceClick={handleSpaceClick}
           />
+          {/* #7 Activity Timeline */}
+          <ActivityStrip contributions={activityContributions} currentStreak={currentStreak} />
           <EventCard event={nextEvent} />
           <TopToolCard tool={topTool} isOwnProfile={isOwnProfile} onToolClick={handleToolClick} />
         </div>
       </div>
 
-      {/* Tools — clean list, top 6, no icons */}
+      {/* Tools — clean list with hover previews (#9) */}
       {sortedTools.length > 0 && (
         <div className="mt-3">
           <div className="flex items-center justify-between mb-2">
@@ -618,19 +1012,24 @@ export default function ProfilePageContent() {
           </div>
           <Card className="divide-y divide-white/[0.04]">
             {sortedTools.slice(0, 6).map(tool => (
-              <button key={tool.id} onClick={() => handleToolClick(tool.id)}
-                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-white/[0.02] transition-colors group text-left"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="w-1 h-5 rounded-full bg-[#FFD700]/40 shrink-0" />
-                  <span className="text-[14px] font-medium text-white/80 group-hover:text-white transition-colors truncate">{tool.name}</span>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  {tool.runs > 0 && <span className="text-[12px] font-sans text-white/25">{tool.runs} uses</span>}
-                  <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-white/40 transition-colors" />
-                </div>
-              </button>
+              <ToolRow key={tool.id} tool={tool} onClick={() => handleToolClick(tool.id)} />
             ))}
+          </Card>
+        </div>
+      )}
+
+      {/* #8 Empty tools state for own profile */}
+      {sortedTools.length === 0 && isOwnProfile && (
+        <div className="mt-3">
+          <Card className="p-4">
+            <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 mb-1">Tools</p>
+            <EmptyState
+              icon={Wrench}
+              title="Create your first tool"
+              subtitle="Build polls, forms, and more for your spaces"
+              ctaLabel="Open Lab"
+              ctaHref="/lab"
+            />
           </Card>
         </div>
       )}
