@@ -217,7 +217,7 @@ function SpacesQuickAccess({ spaces, expanded }: { spaces: MySpace[]; expanded: 
             <div key={type}>
               {/* Group label */}
               <div className="flex items-center h-6 pl-4 pr-3">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-white/20">
+                <span className="font-sans text-[10px] uppercase tracking-[0.12em] text-white/20 font-medium">
                   {spaceTypeLabel(type)}
                 </span>
               </div>
@@ -457,24 +457,36 @@ export function LeftSidebar() {
           </span>
         </Link>
 
-        {/* Nav items + spaces quick-access */}
-        <nav className="flex flex-col overflow-y-auto overflow-x-hidden flex-1 scrollbar-none" aria-label="Main navigation">
+        {/* Nav items */}
+        <nav className="flex flex-col shrink-0" aria-label="Main navigation">
           {navItems.map((item) => (
-            <div key={item.id}>
-              <NavRailItem
-                item={item}
-                isActive={isNavItemActive(item, pathname)}
-                isLab={item.id === 'lab'}
-                expanded={expanded}
-              />
-
-              {/* Spaces quick-access sits right under the Spaces nav item */}
-              {item.id === 'spaces' && mySpaces.length > 0 && (
-                <SpacesQuickAccess spaces={mySpaces} expanded={expanded} />
-              )}
-            </div>
+            <NavRailItem
+              key={item.id}
+              item={item}
+              isActive={isNavItemActive(item, pathname)}
+              isLab={item.id === 'lab'}
+              expanded={expanded}
+            />
           ))}
         </nav>
+
+        {/* Divider + Spaces quick-access */}
+        {mySpaces.length > 0 && (
+          <>
+            <div
+              className={cn(
+                'mx-3 my-2 h-px bg-white/[0.06] shrink-0 transition-opacity duration-150',
+                expanded ? 'mx-3' : 'mx-4',
+              )}
+            />
+            <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none">
+              <SpacesQuickAccess spaces={mySpaces} expanded={expanded} />
+            </div>
+          </>
+        )}
+
+        {/* Spacer when no spaces */}
+        {mySpaces.length === 0 && <div className="flex-1" />}
 
         {/* Bottom utilities */}
         <div className="flex flex-col shrink-0 pb-3 border-t border-white/[0.04]">
