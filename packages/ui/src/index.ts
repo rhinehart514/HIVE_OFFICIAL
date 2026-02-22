@@ -1717,6 +1717,19 @@ export type {
 } from "./design-system/components/profile";
 
 // ============================================
+// ATOMS (Feb 2026)
+// Canonical atoms — one treatment everywhere
+// ============================================
+
+export {
+  StatAtom,
+} from "./design-system/primitives";
+
+export type {
+  StatAtomProps,
+} from "./design-system/primitives";
+
+// ============================================
 // HIVELAB PAGE COMPONENTS (Jan 2026)
 // Tool analytics and preview pages for HiveLab app
 // ============================================

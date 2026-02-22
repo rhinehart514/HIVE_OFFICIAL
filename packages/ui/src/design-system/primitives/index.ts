@@ -288,6 +288,11 @@ export {
 // WORKSHOP PRIMITIVES (Phase 8)
 // ============================================
 
+export {
+  StatAtom,
+  type StatAtomProps,
+} from './StatAtom';
+
 // ============================================
 // GLOBAL NAV PRIMITIVES (Top + Sidebar)
 // ============================================

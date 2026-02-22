@@ -1,15 +1,17 @@
 'use client';
 
 /**
- * ToolCard Component — LOCKED 2026-01-11
+ * ToolCard Component — LOCKED 2026-02-21
  *
- * Workshop Card: Category icon in corner, space origin, edge warmth
+ * The canonical tool card. Category icon in corner, space origin, edge warmth.
+ * Cursor-spotlight glow on hover (replaces opacity-90). Recency warmth via lastUsedAt.
  *
  * LOCKED DECISIONS:
  * 1. Visual Identity: Category Icon (Heroicons, not emojis)
  * 2. Status Indicators: Badge for status (Draft, Featured), edge warmth for featured/trending
  * 3. Action Treatment: Click-through only (entire card is clickable)
- * 4. Info Density: Standard (name + description + use count)
+ * 4. Hover: Cursor-following spotlight glow — subtle, not decorative
+ * 5. NO scale on hover (LOCKED)
  */
 
 import * as React from 'react';
@@ -81,6 +83,42 @@ function CategoryIcon({ category, className }: { category?: string; className?: 
 }
 
 // ============================================
+// RECENCY WARMTH
+// ============================================
+
+/**
+ * Convert lastUsedAt timestamp to warmth level based on recency.
+ * Tools used recently feel warmer.
+ */
+function getWarmthFromRecency(lastUsedAt?: string): 'none' | 'low' | 'medium' | 'high' {
+  if (!lastUsedAt) return 'none';
+  const hoursAgo = (Date.now() - new Date(lastUsedAt).getTime()) / 3_600_000;
+  if (hoursAgo < 1) return 'high';
+  if (hoursAgo < 24) return 'medium';
+  if (hoursAgo < 168) return 'low'; // 7 days
+  return 'none';
+}
+
+// ============================================
+// CURSOR SPOTLIGHT HOOK
+// ============================================
+
+function useCursorSpotlight() {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [pos, setPos] = React.useState({ x: 0, y: 0 });
+  const [hovered, setHovered] = React.useState(false);
+
+  const onMouseMove = React.useCallback((e: React.MouseEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  }, []);
+
+  return { ref, pos, hovered, onMouseMove, setHovered };
+}
+
+// ============================================
 // TYPES
 // ============================================
 
@@ -92,6 +130,8 @@ export interface ToolCardProps {
     category?: string;
     useCount: number;
     status?: 'draft' | 'published' | 'featured' | 'trending';
+    /** ISO timestamp of last use — drives recency warmth */
+    lastUsedAt?: string;
     /** Space this tool belongs to */
     space?: {
       id: string;
@@ -122,7 +162,8 @@ export interface ToolCardProps {
  * - Category icon in corner
  * - Category label uppercase above title
  * - Space logo + origin in footer
- * - Edge warmth for featured/trending
+ * - Edge warmth for featured/trending OR recency
+ * - Cursor-spotlight glow on hover
  */
 const ToolCard: React.FC<ToolCardProps> = ({
   tool,
@@ -136,36 +177,51 @@ const ToolCard: React.FC<ToolCardProps> = ({
     category,
     useCount,
     status,
+    lastUsedAt,
     space,
     author,
   } = tool;
 
-  // LOCKED: Edge warmth for featured/trending
+  const spotlight = useCursorSpotlight();
+
+  // LOCKED: Edge warmth — featured/trending takes priority, then recency
   const isFeaturedOrTrending = status === 'featured' || status === 'trending';
-  const warmthLevel = isFeaturedOrTrending ? 'high' : 'none';
+  const warmthLevel = isFeaturedOrTrending ? 'high' : getWarmthFromRecency(lastUsedAt);
 
   // Get origin info (space or author)
   const originName = space?.name || author?.name || 'Unknown';
   const originAvatar = space?.avatar || author?.avatar;
   const originInitials = getInitials(originName);
 
+  const spotlightOverlay = spotlight.hovered ? (
+    <div
+      className="pointer-events-none absolute inset-0 z-0 rounded-[var(--radius-xl)] transition-opacity duration-300"
+      style={{
+        background: `radial-gradient(300px circle at ${spotlight.pos.x}px ${spotlight.pos.y}px, rgba(255,255,255,0.03), transparent 60%)`,
+      }}
+    />
+  ) : null;
+
   // Compact variant
   if (variant === 'compact') {
     return (
       <Card
+        ref={spotlight.ref}
         elevation="resting"
         interactive
         warmth={warmthLevel}
         className={cn(
-          'p-3 cursor-pointer',
+          'p-3 cursor-pointer relative',
           'transition-all duration-[var(--duration-smooth)]',
-          // LOCKED: NO scale on hover, use opacity-90
-          'hover:opacity-90',
           className
         )}
         onClick={onClick}
+        onMouseMove={spotlight.onMouseMove}
+        onMouseEnter={() => spotlight.setHovered(true)}
+        onMouseLeave={() => spotlight.setHovered(false)}
       >
-        <div className="flex items-center gap-3">
+        {spotlightOverlay}
+        <div className="relative z-10 flex items-center gap-3">
           {/* LOCKED: Category icon */}
           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/[0.06] flex-shrink-0">
             <CategoryIcon category={category} className="w-5 h-5 text-white/60" />
@@ -198,20 +254,23 @@ const ToolCard: React.FC<ToolCardProps> = ({
   // LOCKED: Workshop Card Layout (default)
   return (
     <Card
+      ref={spotlight.ref}
       elevation="raised"
       interactive
       warmth={warmthLevel}
       noPadding
       className={cn(
-        'overflow-hidden cursor-pointer',
+        'overflow-hidden cursor-pointer relative',
         'transition-all duration-[var(--duration-smooth)]',
-        // LOCKED: NO scale on hover, use opacity-90
-        'hover:opacity-90',
         className
       )}
       onClick={onClick}
+      onMouseMove={spotlight.onMouseMove}
+      onMouseEnter={() => spotlight.setHovered(true)}
+      onMouseLeave={() => spotlight.setHovered(false)}
     >
-      <div className="p-5">
+      {spotlightOverlay}
+      <div className="relative z-10 p-5">
         {/* LOCKED: Header - category label + title + category icon */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1 min-w-0">
@@ -348,4 +407,4 @@ ToolCardSkeleton.displayName = 'ToolCardSkeleton';
 // EXPORTS
 // ============================================
 
-export { ToolCard, ToolCardSkeleton, CategoryIcon };
+export { ToolCard, ToolCardSkeleton, CategoryIcon, getWarmthFromRecency };

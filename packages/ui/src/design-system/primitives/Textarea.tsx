@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * Textarea Primitive
- * REFINED: Feb 14, 2026 - Premium minimal, matches Input exactly
+ * Textarea Primitive — LOCKED 2026-02-21
+ *
+ * Matches Input: focus white/50, text 15px, placeholder white/35.
  */
 
 import * as React from 'react';
@@ -14,13 +15,13 @@ const textareaVariants = cva(
     'w-full',
     'bg-[#080808]',
     'text-white',
-    'placeholder:text-white/40',
+    'placeholder:text-white/[0.35]',
     'border border-white/[0.06]',
     'rounded-[12px]',
     'resize-none',
     'outline-none',
     'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
-    'focus:border-white/[0.15] focus:bg-[#0D0D0D]',
+    'focus:border-white/50 focus:bg-[#0D0D0D]',
     'disabled:cursor-not-allowed disabled:opacity-40',
   ].join(' '),
   {

@@ -152,7 +152,7 @@ export function CreatePromptBar({
                   type="button"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => navigateToCreate(`Create a ${option.label.toLowerCase()}`)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.06] px-3 py-1 text-xs text-white/70 transition-colors duration-150 hover:bg-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.06] px-3 py-1 text-xs text-white/70 transition-colors duration-150 hover:bg-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
@@ -206,7 +206,7 @@ export function CreatePromptBar({
 
         <button
           type="submit"
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-black transition-all duration-150 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-black transition-all duration-150 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           aria-label="Submit create prompt"
         >
           <ArrowRight className="h-4 w-4" />
@@ -257,7 +257,7 @@ export function CreatePromptBar({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.06] text-white/70 transition-colors duration-150 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.06] text-white/70 transition-colors duration-150 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
                     aria-label="Dismiss create bar"
                   >
                     <X className="h-4 w-4" />

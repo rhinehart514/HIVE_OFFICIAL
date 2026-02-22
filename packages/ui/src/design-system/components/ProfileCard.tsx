@@ -446,14 +446,10 @@ export interface ProfileCardFullProps {
 }
 
 /**
- * LOCKED: Full Card Context (Profile Page)
- * - Left-aligned layout (avatar left, content right), gap-6
- * - Portrait Card avatar (w-36 h-48, elevation="raised", initials)
- * - Presence: Subtle dot (w-3 h-3, 80% opacity green, inside portrait corner)
- * - Name + badge + @handle + major + bio + stats (connections/spaces)
- * - Card-as-button actions with elevation="raised", rounded-full, interactive
- * - Connect: Gold text (text-[var(--color-accent-gold)])
- * - Message: Default white text
+ * LOCKED 2026-02-21 — Slim header redesign
+ * - 48px avatar + name + handle + bio (compact header)
+ * - Horizontal stat row
+ * - Action buttons (Connect gold, Message white)
  */
 const ProfileCardFull: React.FC<ProfileCardFullProps> = ({
   user,
@@ -475,56 +471,34 @@ const ProfileCardFull: React.FC<ProfileCardFullProps> = ({
   } = user;
   const initials = getInitials(name);
 
-  const presenceColor = {
-    online: 'bg-green-500',
-    away: 'bg-amber-500',
-    offline: 'bg-white/40',
-    dnd: 'bg-red-500',
-  }[status];
-
   return (
     <Card
       elevation="raised"
       interactive={!!onClick}
       className={cn(
-        'p-6',
+        'p-5',
         onClick && 'cursor-pointer',
         className
       )}
       onClick={onClick}
     >
-      {/* LOCKED: Left-aligned layout, gap-6 */}
-      <div className="flex gap-6">
-        {/* LOCKED: Portrait Card avatar (w-36 h-48) */}
+      <div className="flex items-start gap-4">
         <div className="relative flex-shrink-0">
-          <Card
-            elevation="raised"
-            noPadding
-            className="w-36 h-48 flex items-center justify-center overflow-hidden"
-          >
+          <Avatar className="h-12 w-12 rounded-xl">
             {avatar ? (
-              <Image src={avatar} alt={name} width={144} height={192} className="object-cover" sizes="144px" />
+              <AvatarImage src={avatar} alt={name} />
             ) : (
-              <Text size="lg" className="text-4xl text-white/40">
+              <AvatarFallback className="rounded-xl bg-white/[0.06] text-white/40 text-sm">
                 {initials}
-              </Text>
+              </AvatarFallback>
             )}
-          </Card>
-          {/* LOCKED: Subtle presence dot inside portrait corner */}
-          <div
-            className={cn(
-              'absolute bottom-3 right-3 w-3 h-3 rounded-full',
-              presenceColor,
-              'opacity-80'
-            )}
-          />
+          </Avatar>
+          <PresenceDot status={status} size="sm" className="absolute -bottom-0.5 -right-0.5" />
         </div>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
-          {/* LOCKED: Name + badge */}
-          <div className="flex items-center gap-2 mb-1">
-            <Text size="lg" weight="semibold" className="text-xl">
+          <div className="flex items-center gap-2">
+            <Text size="default" weight="semibold" className="truncate">
               {name}
             </Text>
             {badges.length > 0 && (
@@ -536,75 +510,52 @@ const ProfileCardFull: React.FC<ProfileCardFullProps> = ({
               </Badge>
             )}
           </div>
+          <Text size="sm" tone="muted">@{handle}</Text>
+        </div>
 
-          {/* LOCKED: @handle */}
-          <Text size="sm" tone="muted" className="mb-2">
-            @{handle}
-          </Text>
-
-          {/* LOCKED: Major */}
-          {major && (
-            <Text size="sm" tone="secondary" className="mb-3">
-              {major}
-            </Text>
-          )}
-
-          {/* LOCKED: Bio */}
-          {bio && (
-            <Text size="sm" tone="secondary" className="mb-4 line-clamp-3">
-              {bio}
-            </Text>
-          )}
-
-          {/* LOCKED: Stats (connections/spaces) */}
-          <div className="flex items-center gap-4 mb-4">
-            <div>
-              <Text weight="medium">{connectionCount}</Text>
-              <Text size="xs" tone="muted"> connections</Text>
-            </div>
-            <div>
-              <Text weight="medium">{spaceCount}</Text>
-              <Text size="xs" tone="muted"> spaces</Text>
-            </div>
+        {(onConnect || onMessage) && (
+          <div className="flex gap-2 flex-shrink-0">
+            {onConnect && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); onConnect(); }}
+              >
+                Connect
+              </Button>
+            )}
+            {onMessage && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); onMessage(); }}
+              >
+                Message
+              </Button>
+            )}
           </div>
+        )}
+      </div>
 
-          {/* LOCKED: Card-as-button actions */}
-          {(onConnect || onMessage) && (
-            <div className="flex gap-2">
-              {onConnect && (
-                <Card
-                  elevation="raised"
-                  interactive
-                  className={cn(
-                    'px-5 py-2.5 rounded-full cursor-pointer',
-                    // LOCKED: Connect with gold text
-                    'text-[var(--color-accent-gold)]'
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onConnect();
-                  }}
-                >
-                  <Text weight="medium" className="text-inherit">
-                    Connect
-                  </Text>
-                </Card>
-              )}
-              {onMessage && (
-                <Card
-                  elevation="raised"
-                  interactive
-                  className="px-5 py-2.5 rounded-full cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMessage();
-                  }}
-                >
-                  <Text weight="medium">Message</Text>
-                </Card>
-              )}
-            </div>
+      {(major || bio) && (
+        <div className="mt-3 pl-16">
+          {major && (
+            <Text size="sm" tone="secondary" className="mb-1">{major}</Text>
           )}
+          {bio && (
+            <Text size="sm" tone="secondary" className="line-clamp-2">{bio}</Text>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-6 mt-4 pl-16">
+        <div className="flex items-baseline gap-1.5">
+          <Text size="default" weight="semibold">{connectionCount.toLocaleString()}</Text>
+          <Text size="xs" tone="muted">connections</Text>
+        </div>
+        <div className="flex items-baseline gap-1.5">
+          <Text size="default" weight="semibold">{spaceCount.toLocaleString()}</Text>
+          <Text size="xs" tone="muted">spaces</Text>
         </div>
       </div>
     </Card>
@@ -687,29 +638,25 @@ interface ProfileCardFullSkeletonProps {
 const ProfileCardFullSkeleton: React.FC<ProfileCardFullSkeletonProps> = ({
   className,
 }) => (
-  <Card elevation="raised" className={cn('p-6', className)}>
-    <div className="flex gap-6">
-      <div className="w-36 h-48 rounded-xl bg-white/[0.06] animate-pulse" />
-      <div className="flex-1 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-32 rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-5 w-16 rounded-full bg-white/[0.06] animate-pulse" />
-        </div>
-        <div className="h-4 w-20 rounded bg-white/[0.06] animate-pulse" />
-        <div className="h-4 w-32 rounded bg-white/[0.06] animate-pulse" />
-        <div className="space-y-2 mt-2">
-          <div className="h-4 w-full rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-4 w-3/4 rounded bg-white/[0.06] animate-pulse" />
-        </div>
-        <div className="flex gap-4 mt-2">
-          <div className="h-4 w-20 rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-4 w-16 rounded bg-white/[0.06] animate-pulse" />
-        </div>
-        <div className="flex gap-2 mt-3">
-          <div className="h-10 w-24 rounded-full bg-white/[0.06] animate-pulse" />
-          <div className="h-10 w-24 rounded-full bg-white/[0.06] animate-pulse" />
-        </div>
+  <Card elevation="raised" className={cn('p-5', className)}>
+    <div className="flex items-start gap-4">
+      <div className="w-12 h-12 rounded-xl bg-white/[0.06] animate-pulse flex-shrink-0" />
+      <div className="flex-1 space-y-2">
+        <div className="h-5 w-28 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-3.5 w-20 rounded bg-white/[0.06] animate-pulse" />
       </div>
+      <div className="flex gap-2 flex-shrink-0">
+        <div className="h-9 w-20 rounded-full bg-white/[0.06] animate-pulse" />
+        <div className="h-9 w-20 rounded-full bg-white/[0.06] animate-pulse" />
+      </div>
+    </div>
+    <div className="mt-3 pl-16 space-y-1.5">
+      <div className="h-3.5 w-32 rounded bg-white/[0.06] animate-pulse" />
+      <div className="h-3.5 w-full rounded bg-white/[0.06] animate-pulse" />
+    </div>
+    <div className="flex gap-6 mt-4 pl-16">
+      <div className="h-4 w-24 rounded bg-white/[0.06] animate-pulse" />
+      <div className="h-4 w-16 rounded bg-white/[0.06] animate-pulse" />
     </div>
   </Card>
 );

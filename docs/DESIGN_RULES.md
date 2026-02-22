@@ -110,6 +110,25 @@ Black-only. No colored shadows except through the warmth system.
 <Card elevation="floating"> // --shadow-xl
 ```
 
+### Icons
+All icons use Lucide (`lucide-react`). The `Icon` primitive from `@hive/ui` is the canonical wrapper.
+
+| Property | Value |
+|----------|-------|
+| Stroke width | `1.5px` (always — never 1 or 2) |
+| Sizes | `16px` (inline/tight), `20px` (default), `24px` (hero/large) |
+| Color | `currentColor` — inherits from parent text opacity |
+
+```tsx
+// ✅ Correct
+<Icon className="h-5 w-5" strokeWidth={1.5} />
+<Search className="h-4 w-4" strokeWidth={1.5} />
+
+// ❌ Wrong — mixing stroke widths or using non-standard sizes
+<Icon className="h-6 w-6" strokeWidth={2} />
+<Icon className="h-[18px] w-[18px]" />
+```
+
 ---
 
 ## 4. COMPONENTS — What to Use

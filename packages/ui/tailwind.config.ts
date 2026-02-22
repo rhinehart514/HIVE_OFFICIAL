@@ -229,6 +229,10 @@ const config: Config = {
           '0%': { offsetDistance: '0%' },
           '100%': { offsetDistance: '100%' },
         },
+        'shimmer-sweep': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(200%)' },
+        },
       },
       animation: {
         // Error feedback

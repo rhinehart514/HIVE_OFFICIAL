@@ -120,7 +120,7 @@ export default function ImpersonatePage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search users by name or email..."
-                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#FFD700]/50"
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/50"
                 />
               </div>
 

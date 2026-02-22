@@ -1,14 +1,11 @@
 'use client';
 
 /**
- * Button Primitive
- * REFINED: Feb 9, 2026 - Cold, minimal spec
+ * Button Primitive — LOCKED 2026-02-21
  *
- * Design principles:
- * - Pill radius for all button forms
- * - Primary action is flat yellow (#FFD700), no gradient/glow
- * - No scale transforms on interaction
- * - Cold black focus offset
+ * - Pill radius, no scale transforms
+ * - Primary = flat gold, shimmer = gold + sweeping light (Lab CTA only)
+ * - White focus ring with black offset
  */
 
 import * as React from 'react';
@@ -72,6 +69,14 @@ const buttonVariants = cva(
           'underline underline-offset-4',
           'hover:text-white',
           'p-0 h-auto',
+        ].join(' '),
+        shimmer: [
+          'bg-[#FFD700]',
+          'text-black',
+          'border border-[#FFD700]',
+          'hover:bg-[#F2CC00]',
+          'active:bg-[#E6BF00]',
+          'overflow-hidden',
         ].join(' '),
         // Legacy aliases for backwards compatibility
         solid: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
@@ -140,6 +145,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <span className={cn('flex-shrink-0', iconSizeClass)}>{icon}</span>
     );
 
+    const shimmerOverlay = variant === 'shimmer' && !loading && (
+      <span
+        className="pointer-events-none absolute inset-0 -translate-x-full motion-safe:animate-[shimmer-sweep_3s_ease-in-out_infinite]"
+        style={{
+          background: 'linear-gradient(120deg, transparent 10%, rgba(255,255,255,0.3) 45%, rgba(255,255,255,0.05) 55%, transparent 90%)',
+        }}
+        aria-hidden
+      />
+    );
+
     if (asChild) {
       return (
         <Comp
@@ -183,6 +198,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             {trailingIcon && <IconWrapper>{trailingIcon}</IconWrapper>}
           </>
         )}
+        {shimmerOverlay}
       </Comp>
     );
   }

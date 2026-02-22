@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * Select Primitive
- * REFINED: Feb 14, 2026 - Premium minimal, no gradients
+ * Select Primitive — LOCKED 2026-02-21
+ *
+ * Focus: white/50 border. Active item: white text + bg. No gold.
  */
 
 import * as React from 'react';
@@ -20,7 +21,7 @@ const selectTriggerVariants = cva(
     'text-white',
     'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
     'hover:border-white/[0.08]',
-    'focus:outline-none focus:border-white/[0.15]',
+    'focus:outline-none focus:border-white/50',
     'disabled:cursor-not-allowed disabled:opacity-40',
     '[&>span]:line-clamp-1',
   ].join(' '),

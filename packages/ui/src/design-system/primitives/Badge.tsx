@@ -1,13 +1,9 @@
 'use client';
 
 /**
- * Badge Primitive
- * REFINED: Jan 29, 2026 - Matches /about aesthetic
+ * Badge Primitive — LOCKED 2026-02-21
  *
- * Design principles:
- * - Simple backgrounds with subtle opacity
- * - No heavy gradients or shadows
- * - Gold as accent text color only
+ * Gold variant = featured/trending/verified ONLY. No decorative gold.
  */
 
 import * as React from 'react';

@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * Tabs Primitive
- * REFINED: Feb 14, 2026 - Premium minimal, no glass/gradients
+ * Tabs Primitive — LOCKED 2026-02-21
+ *
+ * Active = white text + white/8 bg. No gold. White focus ring.
  */
 
 import * as React from 'react';
@@ -38,7 +39,7 @@ const tabsTriggerVariants = cva(
     'transition-colors duration-150',
     'text-white/50 hover:text-white/70',
     'data-[state=active]:text-white data-[state=active]:bg-white/[0.08]',
-    'focus-visible:outline-none focus-visible:border-white/[0.15]',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-1 focus-visible:ring-offset-black',
     'disabled:pointer-events-none disabled:opacity-40',
   ].join(' '),
   {

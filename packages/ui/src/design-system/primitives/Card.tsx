@@ -1,13 +1,27 @@
 'use client';
 
 /**
- * Card Primitive
- * REFINED: Feb 9, 2026 - Cold, minimal spec
+ * Card Primitive — LOCKED 2026-02-21
  *
- * Design principles:
- * - Flat dark surfaces (no gradients, no glow)
- * - 12px radius card system
- * - Three practical tiers via elevation: standard, subtle, overlay
+ * Flat dark surfaces, 16px default radius, white/50 focus ring.
+ *
+ * ## Elevation
+ * - `subtle`   — bg-white/2, no border (section containers)
+ * - `resting`  — bg-white/2, hairline border (default cards)
+ * - `raised`   — bg-white/4, hairline border (interactive cards, profiles)
+ * - `floating` — bg-#0D0D0D, stronger border + shadow (modals, popovers)
+ *
+ * ## Warmth API
+ * Controls ambient glow via `data-warmth` attribute:
+ * - `none`   — no glow (default)
+ * - `low`    — subtle white glow (dormant spaces, old tools)
+ * - `medium` — warm gold glow (active spaces, recently used tools)
+ * - `high`   — strong gold pulse (trending, featured, live events)
+ *
+ * ```tsx
+ * <Card warmth="high" elevation="raised">Featured</Card>
+ * <Card warmth={getWarmthFromRecency(tool.lastUsedAt)} interactive>Tool</Card>
+ * ```
  */
 
 import * as React from 'react';
