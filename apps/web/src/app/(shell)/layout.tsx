@@ -7,7 +7,7 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen text-white bg-black">
       <LeftSidebar />
       <MobileBottomBar />
-      <div className="md:ml-[220px]">
+      <div className="md:ml-[56px]">
         <ImpersonationBanner />
         <PageTransition>{children}</PageTransition>
       </div>
