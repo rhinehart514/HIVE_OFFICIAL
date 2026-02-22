@@ -216,3 +216,7 @@ Key env: `HIVE_DEV_BYPASS=true` (skip auth), `GOOSE_BACKEND=groq` (AI gen)
 - **Never await non-critical side effects** — fire and forget with try/catch
 - **Never modify `/lab/new` flow** — it's the AI path; templates are `/lab/templates`
 - **Never call repository factories repeatedly** — they're singletons
+- **Never filter Firestore by `campusId`** — the single-field index is exempted; queries will throw `FAILED_PRECONDITION`. See `docs/FIRESTORE_SCHEMA.md` → Critical Data Gotchas.
+- **Never pass a `Date` object to `where('startDate', '>=', ...)`** — `startDate` is stored as ISO string on CampusLabs events. Use `now.toISOString()`. The `startAt` Timestamp field accepts `Date` objects.
+- **Never trust `event.spaceHandle`** — it doesn't exist on event documents. Resolve via `db.collection('spaces').doc(event.spaceId).get()`.
+- **Before writing any Firestore query**, read `docs/FIRESTORE_SCHEMA.md` → Critical Data Gotchas and `docs/KNOWN_STATE.md` → Broken.
