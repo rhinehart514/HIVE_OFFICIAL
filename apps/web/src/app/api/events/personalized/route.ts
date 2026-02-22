@@ -269,13 +269,21 @@ async function handler(
     }
 
     // Fallback: pull recent campus events and filter in memory if both indexed queries failed.
+    // Note: campusId single-field index is exempted; use startDate string comparison instead.
     if (rawEventDocs.size === 0) {
-      const fallbackSnapshot = await dbAdmin
-        .collection('events')
-        .where('campusId', '==', campusId)
-        .limit(fetchLimit)
-        .get();
-      for (const doc of fallbackSnapshot.docs) rawEventDocs.set(doc.id, doc);
+      try {
+        const fallbackSnapshot = await dbAdmin
+          .collection('events')
+          .where('startDate', '>=', start.toISOString())
+          .orderBy('startDate', 'asc')
+          .limit(fetchLimit)
+          .get();
+        for (const doc of fallbackSnapshot.docs) rawEventDocs.set(doc.id, doc);
+      } catch (fallbackError) {
+        logger.warn('Fallback events query also failed', {
+          error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+        });
+      }
     }
 
     const events = Array.from(rawEventDocs.values())

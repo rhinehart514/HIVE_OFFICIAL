@@ -2,6 +2,11 @@
 
 > Make one student able to sign up, create a space, build a tool, deploy it, and use it — in one session.
 
+> **Status — Feb 22 2026:**
+> P0 #1 (7-day gate) — **STILL LIVE** in `apps/web/src/app/api/spaces/route.ts:167`. Any new user cannot create a space. Launch blocker.
+> P0 #3 (Spaces nav dead redirect) — **FIXED**. Spaces nav now works.
+> Other P0 items: unknown — not audited Feb 22. Treat all as potentially open.
+
 ---
 
 ## Current Blockers (from codebase audit)

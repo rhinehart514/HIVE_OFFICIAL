@@ -65,6 +65,7 @@ That doc targets Feb 14 launch. Most checklist items are still relevant but trea
 2. **Auth flow** — needs end-to-end validation as a new user
 3. **Profile black screen** — blocks identity layer
 4. **Space events returning 0** — same fix as #1
+5. **7-day account age gate on space creation** — `apps/web/src/app/api/spaces/route.ts:167`. New users cannot create a space until their account is 7 days old. Kills first-session activation. Remove or reduce to 0 for first space only.
 
 ---
 

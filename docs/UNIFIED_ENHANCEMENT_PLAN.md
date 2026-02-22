@@ -1,5 +1,7 @@
 # HIVE Unified Enhancement Plan
 
+> ⚠️ **Stale numbers — Feb 22 2026.** System grades and cross-dependency map are still directionally accurate. Specific counts are off (spaces: 1,174 not 698, routes: 268+ not 228). "Feed C+" verdict still holds — events API is currently broken. For current blockers, see `docs/KNOWN_STATE.md` → Launch Blockers.
+
 > Synthesis of 8 deep system audits. Every recommendation connects to one outcome: **a student signs up, finds their people, builds something, and comes back tomorrow.**
 
 ---

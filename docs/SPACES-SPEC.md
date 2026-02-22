@@ -1,4 +1,6 @@
-# HIVE — IA + System Spec
+# HIVE — Spaces System Spec
+
+> ⚠️ **Partially stale — Feb 22 2026.** "What Exists Today" section accurately describes built features. Numbers are off: spaces are now 1,174 (not 698), API routes are 268+ (not 337). "No cold start" / "RSS pre-populated" is aspirational — not current state. `campuses: 0`, `memberCount: 0` on all spaces. For current reality, see `docs/KNOWN_STATE.md`.
 
 > Campus operating system. Discord-style sidebar IA.
 > Pre-populated from UB RSS data. No cold start. Launching to all of UB.
