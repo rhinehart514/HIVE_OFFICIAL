@@ -118,48 +118,20 @@ function EmptyState({ icon: Icon, title, subtitle, ctaLabel, ctaHref }: {
   ctaHref?: string;
 }) {
   return (
-    <motion.div
-      className="flex flex-col items-center justify-center py-6 px-4 text-center"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: EASE_PREMIUM }}
-    >
-      <motion.div
-        className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center mb-3"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.2, delay: 0.1 }}
-      >
-        <Icon className="w-4.5 h-4.5 text-white/40" />
-      </motion.div>
-      <motion.p
-        className="text-[13px] font-medium text-white/50 mb-0.5"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.15 }}
-      >
-        {title}
-      </motion.p>
-      <motion.p
-        className="text-[11px] text-white/25 mb-3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        {subtitle}
-      </motion.p>
+    <div className="flex items-center gap-3 py-1">
+      <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
+        <Icon className="w-3.5 h-3.5 text-white/30" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] text-white/40">{title}</p>
+        <p className="text-[11px] text-white/20">{subtitle}</p>
+      </div>
       {ctaLabel && ctaHref && (
-        <motion.div
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-        >
-          <Link href={ctaHref} className="text-[11px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors flex items-center gap-1">
-            {ctaLabel} <ArrowRight className="w-3 h-3" />
-          </Link>
-        </motion.div>
+        <Link href={ctaHref} className="text-[11px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors shrink-0 flex items-center gap-0.5">
+          {ctaLabel} <ArrowRight className="w-3 h-3" />
+        </Link>
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -347,14 +319,14 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, onShare, c
 // Stats card
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StatsCard({ toolCount, spaceCount, isOwnProfile, fullWidth }: { toolCount: number; spaceCount: number; isOwnProfile: boolean; fullWidth?: boolean }) {
+function StatsCard({ toolCount, spaceCount, isOwnProfile }: { toolCount: number; spaceCount: number; isOwnProfile: boolean }) {
   const stats = [
     { label: 'Tools built', value: toolCount },
     { label: 'Spaces', value: spaceCount },
   ];
 
   return (
-    <Card className={`flex flex-col justify-between p-5 gap-4${fullWidth ? ' col-span-2' : ''}`}>
+    <Card className="flex flex-col justify-between p-5 gap-4">
       <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Activity</p>
       <div className="flex items-end gap-6">
         {stats.map(s => (
@@ -409,12 +381,12 @@ function ConnectionsCard({ connections, totalConnections, mutualFriendsCount, is
 
   if (totalConnections === 0 && isOwnProfile) {
     return (
-      <Card className="p-4">
+      <Card className="p-4 flex flex-col justify-between">
         <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 mb-2">Connections</p>
         <EmptyState
           icon={Users}
           title="Connect with people"
-          subtitle="Find classmates and friends on campus"
+          subtitle="Find classmates on campus"
           ctaLabel="Discover"
           ctaHref="/discover"
         />
@@ -498,8 +470,8 @@ function SpacesCard({ spaces, suggestedSpaces, isOwnProfile, onSpaceClick }: {
         <EmptyState
           icon={Compass}
           title="Join your first space"
-          subtitle="Spaces are where your campus community lives"
-          ctaLabel="Browse spaces"
+          subtitle="Where your campus community lives"
+          ctaLabel="Browse"
           ctaHref="/spaces"
         />
       ) : (
@@ -605,15 +577,13 @@ function TopToolCard({ tool, isOwnProfile, onToolClick }: {
     if (!isOwnProfile) return null;
     return (
       <Link href="/lab">
-        <Card className="p-4 flex flex-col gap-2 min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer">
+        <Card className="p-4 flex flex-col justify-between min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer">
           <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Top tool</p>
-          <EmptyState
-            icon={Wrench}
-            title="Create your first tool"
-            subtitle="Build interactive tools for your community"
-            ctaLabel="Open Lab"
-            ctaHref="/lab"
-          />
+          <div className="flex-1 flex flex-col justify-center">
+            <p className="text-[13px] text-white/40">Build something</p>
+            <p className="text-[11px] text-white/20 mt-0.5">Your best tool lives here</p>
+          </div>
+          <span className="text-[11px] text-[#FFD700]/60 flex items-center gap-1">Open Lab <ArrowRight className="w-3 h-3" /></span>
         </Card>
       </Link>
     );
@@ -976,22 +946,32 @@ export default function ProfilePageContent() {
             toolCount={dedupedTools.length}
             spaceCount={profileSpaces.length}
             isOwnProfile={isOwnProfile}
-            fullWidth={interests.length === 0}
           />
-          {interests.length > 0 && <InterestsCard interests={interests} isOwnProfile={isOwnProfile} />}
-          {/* #6 Connections Card */}
-          <ConnectionsCard
-            connections={profileConnections}
-            totalConnections={totalConnections}
-            mutualFriendsCount={mutualFriendsCount}
-            isOwnProfile={isOwnProfile}
-          />
+          {interests.length > 0 ? (
+            <InterestsCard interests={interests} isOwnProfile={isOwnProfile} />
+          ) : (
+            <ConnectionsCard
+              connections={profileConnections}
+              totalConnections={totalConnections}
+              mutualFriendsCount={mutualFriendsCount}
+              isOwnProfile={isOwnProfile}
+            />
+          )}
           <SpacesCard
             spaces={profileSpaces}
             suggestedSpaces={suggestedSpaces}
             isOwnProfile={isOwnProfile}
             onSpaceClick={handleSpaceClick}
           />
+          {/* Connections card below spaces when interests exist (already shown above otherwise) */}
+          {interests.length > 0 && (
+            <ConnectionsCard
+              connections={profileConnections}
+              totalConnections={totalConnections}
+              mutualFriendsCount={mutualFriendsCount}
+              isOwnProfile={isOwnProfile}
+            />
+          )}
           {/* #7 Activity Timeline */}
           <ActivityStrip contributions={activityContributions} currentStreak={currentStreak} />
           <EventCard event={nextEvent} />
