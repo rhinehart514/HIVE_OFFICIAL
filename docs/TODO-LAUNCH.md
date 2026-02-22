@@ -32,6 +32,11 @@ _As of Feb 22 2026. Fix these before shipping to real users._
 - New users cannot create a space until account is 7 days old. Kills first-session activation.
 - Fix: remove the age check. Keep email verification + daily limit of 3.
 
+### #7 Gathering threshold blocks all chat
+**File:** `packages/core/src/domain/spaces/aggregates/enhanced-space.ts:100`
+- `DEFAULT_ACTIVATION_THRESHOLD = 10` → change to `1`
+- With 0 members across all spaces, every space is in "gathering" state. Chat never opens. One-liner.
+
 ### #6 Events nav tab in sidebar
 **Files:** `apps/web/src/lib/navigation.ts` + `apps/web/src/components/shell/AppSidebar.tsx`
 - Events is not a nav tab. It's content inside Feed. Remove the Events entry from both files.

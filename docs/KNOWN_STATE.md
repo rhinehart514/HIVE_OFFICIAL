@@ -64,6 +64,7 @@ _Verified against live Firestore + local dev server. This is what actually exist
 4. **Profile black screen** — blocks identity layer. Cause not yet diagnosed.
 5. **7-day account age gate on space creation** — `apps/web/src/app/api/spaces/route.ts:167`. New users cannot create a space until account is 7 days old. Kills first-session activation for any user who wants to create. Remove or reduce to 0 for first space only.
 6. **Events nav tab in sidebar** — contradicts LAUNCH-IA.md locked decision ("no dedicated events nav tab"). Needs to be removed from `navigation.ts` + `AppSidebar.tsx`.
+7. **Gathering threshold set to 10** — `packages/core/src/domain/spaces/aggregates/enhanced-space.ts:100`. `DEFAULT_ACTIVATION_THRESHOLD = 10` means no space opens chat until 10 members join. With 0 members across 1,174 spaces, every space is locked. Change to `1`. One-liner fix.
 
 ---
 
