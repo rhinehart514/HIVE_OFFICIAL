@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search } from 'lucide-react';
-import { motion, AnimatePresence, LayoutGroup, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, getMobileNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
@@ -74,6 +74,8 @@ function SpaceAvatar({ name, size = 26 }: { name: string; size?: number }) {
 // Nav item — icon in 56px slot, label slides in on expand
 // ─────────────────────────────────────────────────────────────────────────────
 
+const NAV_ITEM_H = 40; // h-10 = 40px
+
 function NavRailItem({
   item,
   isActive,
@@ -100,19 +102,8 @@ function NavRailItem({
     ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/45 group-hover:text-[#FFD700]/75'
     : isActive ? 'text-white' : 'text-white/35 group-hover:text-white/60';
 
-  const indicatorColor = isLab ? '#FFD700' : '#FFFFFF';
-
   return (
     <Link href={item.href} className="group relative w-full flex items-center h-10">
-      {isActive && (
-        <motion.span
-          layoutId="nav-active-indicator"
-          className="absolute left-0 top-1/2 w-[2px] h-5 -translate-y-1/2 rounded-r-full"
-          style={{ backgroundColor: indicatorColor }}
-          transition={prefersReduced ? { duration: 0 } : SPRING_SNAP_NAV}
-        />
-      )}
-
       <motion.span
         className="absolute inset-0 pointer-events-none"
         style={{ background: glowGradient }}
@@ -435,7 +426,6 @@ export function LeftSidebar() {
   }, []);
 
   return (
-    <LayoutGroup>
       <motion.aside
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
@@ -466,8 +456,25 @@ export function LeftSidebar() {
           </span>
         </Link>
 
-        {/* Nav items */}
-        <nav className="flex flex-col shrink-0" aria-label="Main navigation">
+        {/* Nav items with single absolute indicator */}
+        <nav className="relative flex flex-col shrink-0" aria-label="Main navigation">
+          {/* Active indicator — single element, positioned by index */}
+          {(() => {
+            const activeIdx = navItems.findIndex(item => isNavItemActive(item, pathname));
+            if (activeIdx === -1) return null;
+            const isLabActive = navItems[activeIdx]?.id === 'lab';
+            return (
+              <motion.span
+                className="absolute left-0 w-[2px] h-5 rounded-r-full z-20"
+                animate={{
+                  top: activeIdx * NAV_ITEM_H + (NAV_ITEM_H - 20) / 2,
+                  backgroundColor: isLabActive ? '#FFD700' : '#FFFFFF',
+                }}
+                transition={SPRING_SNAP_NAV}
+              />
+            );
+          })()}
+
           {navItems.map((item) => (
             <NavRailItem
               key={item.id}
@@ -507,7 +514,6 @@ export function LeftSidebar() {
           <NotificationBell unreadCount={unreadCount} expanded={expanded} />
         </div>
       </motion.aside>
-    </LayoutGroup>
   );
 }
 
