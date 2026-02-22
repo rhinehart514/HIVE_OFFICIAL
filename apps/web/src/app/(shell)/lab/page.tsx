@@ -359,7 +359,7 @@ export default function BuilderDashboard() {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="px-6 py-8">
         {/* ============================================================ */}
         {/* ACTIVE BUILDER STATE (1+ tools)                              */}
         {/* ============================================================ */}

@@ -328,7 +328,7 @@ export default function EventsPage() {
     <div className="min-h-screen bg-black">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 backdrop-blur-md">
-        <div className="mx-auto max-w-xl px-4 py-4">
+        <div className="max-w-xl px-6 py-4">
           <div className="flex items-baseline gap-3">
             <h1 className="text-[18px] font-medium text-white">Events</h1>
             {!isLoading && hasEvents && (
@@ -341,7 +341,7 @@ export default function EventsPage() {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-xl px-4 py-5 pb-24">
+      <div className="max-w-xl px-6 py-5 pb-24">
         {isLoading ? (
           <div className="flex flex-col gap-2">
             {[...Array(4)].map((_, i) => (

@@ -263,7 +263,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
 
       {/* ── Header ── */}
       <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/90 backdrop-blur-xl">
-        <div className="mx-auto max-w-5xl px-6">
+        <div className="px-6">
           {/* Title row */}
           <div className="flex items-center justify-between py-4">
             <h1 className="text-[17px] font-semibold text-white">Spaces</h1>
@@ -296,7 +296,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-6">
+      <div className="px-6">
 
         {/* ── Your Spaces ── */}
         {(yourLoading || organizations.length > 0) && (

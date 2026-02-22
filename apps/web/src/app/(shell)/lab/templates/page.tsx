@@ -413,7 +413,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: COLORS.bg }}>
-      <div className="max-w-2xl mx-auto px-5 py-8">
+      <div className="max-w-2xl px-6 py-8">
         {/* Back link */}
         <motion.div
           initial={{ opacity: 0, x: -8 }}

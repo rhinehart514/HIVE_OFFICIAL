@@ -292,7 +292,7 @@ function SettingsContent() {
   if (activeSection) {
     return (
       <div className="min-h-screen w-full overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-8 md:py-10">
+        <div className="max-w-3xl px-6 py-8 md:py-10">
           <motion.div className="mb-8" variants={fadeInUpVariants} initial="initial" animate="animate">
             <button
               onClick={() => setActiveSection(null)}
@@ -378,7 +378,7 @@ function SettingsContent() {
 
   return (
     <div className="min-h-screen w-full overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-6 py-8 md:py-10">
+      <div className="max-w-3xl px-6 py-8 md:py-10">
         <motion.section className="mb-8" variants={fadeInUpVariants} initial="initial" animate="animate">
           <h1
             className="text-heading-sm md:text-heading font-semibold text-white mb-1"

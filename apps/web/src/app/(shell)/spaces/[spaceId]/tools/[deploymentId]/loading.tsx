@@ -2,7 +2,7 @@ import { Skeleton } from '@hive/ui';
 
 export default function ToolDeploymentLoading() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
+    <div className="px-6 py-8 max-w-3xl">
       {/* Header */}
       <div className="flex items-start gap-4 mb-8">
         <Skeleton className="h-14 w-14 rounded-lg" />

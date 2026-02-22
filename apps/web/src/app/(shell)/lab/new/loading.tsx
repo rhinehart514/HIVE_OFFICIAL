@@ -3,7 +3,7 @@ import { Skeleton } from '@hive/ui';
 export default function NewToolLoading() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-ground, #0A0A09)' }}>
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="max-w-2xl px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <Skeleton className="h-8 w-32 mx-auto mb-3" />

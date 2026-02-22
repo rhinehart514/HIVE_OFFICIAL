@@ -221,7 +221,7 @@ export default function NotificationsPage() {
 
   return (
     <main className="min-h-screen bg-black" aria-label="Notifications">
-      <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="max-w-2xl px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">

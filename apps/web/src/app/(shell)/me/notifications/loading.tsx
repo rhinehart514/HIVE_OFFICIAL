@@ -2,7 +2,7 @@ import { Skeleton } from '@hive/ui';
 
 export default function NotificationsLoading() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="px-6 py-8 max-w-2xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <Skeleton className="h-8 w-40" />

@@ -243,7 +243,7 @@ export function SpacesFirstEntry({ onComplete }: SpacesFirstEntryProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3 }}
-          className="w-full max-w-xl mx-auto px-6 py-10 pb-32"
+          className="w-full max-w-xl px-6 py-10 pb-32"
         >
           {/* Headline */}
           <motion.div

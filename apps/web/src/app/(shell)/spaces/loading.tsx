@@ -173,7 +173,7 @@ export default function SpacesLoading() {
     <div className="min-h-screen bg-black">
       {/* Sticky Header Skeleton */}
       <header className="sticky top-0 z-30 bg-black/80  border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6 pt-6 pb-4">
+        <div className="px-6 pt-6 pb-4">
           {/* Title Row */}
           <div className="flex items-start justify-between mb-6">
             <div>
@@ -212,7 +212,7 @@ export default function SpacesLoading() {
       </header>
 
       {/* Main Content Skeleton */}
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-12">
+      <main className="px-6 py-8 space-y-12">
         {/* Featured Section */}
         <section>
           <SectionHeaderSkeleton delay={0.3} />
