@@ -1,5 +1,8 @@
 # HIVE — Build Plan
 
+> ⚠️ **STALE — Feb 22 2026.** Most Phase 1 items are built. `AppSidebar.tsx` exists (438 lines). Shell layout exists. Bottom nav replaced. Use this as historical context only.
+> Current launch checklist is in `docs/KNOWN_STATE.md` → Launch Blockers.
+
 > Reference: `IA-SPEC.md` for architecture, `DESIGN-2026.md` for design system.
 > Goal: Ship to all of UB. No cold start. Campus alive on arrival.
 

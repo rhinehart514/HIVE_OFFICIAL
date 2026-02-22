@@ -390,6 +390,11 @@ Some Cloud Functions use the nested path. Same shape as `spaceMembers` but witho
 
 Events associated with spaces.
 
+> ⚠️ **Schema diverges for CampusLabs imports.** The schema below is the ideal/user-created shape.
+> The 2,772 real events in production (CampusLabs imports) use `startDate: string` (ISO 8601),
+> `imageUrl` (not `coverImageUrl`), flat `location: string`, and have no `spaceHandle` field.
+> See `docs/FIRESTORE_SCHEMA.md` → Critical Data Gotchas before writing any event queries.
+
 ```typescript
 // Collection: events (flat) or spaces/{spaceId}/events (nested)
 // Validation: packages/validation/src/event.schema.ts
@@ -403,7 +408,7 @@ Events associated with spaces.
   status: 'draft' | 'published' | 'cancelled' | 'completed';
   visibility: 'public' | 'members' | 'private';
 
-  // Timing
+  // Timing — USER-CREATED events only. CampusLabs imports use startDate: string instead.
   startAt: Timestamp;
   endAt: Timestamp;
 

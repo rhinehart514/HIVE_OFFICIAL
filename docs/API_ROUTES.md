@@ -134,8 +134,8 @@
 
 | Route | Methods | Auth | Status |
 |-------|---------|------|--------|
-| `/api/events` | GET, POST | withAuth | Complete |
-| `/api/events/personalized` | GET | withAuth | Complete |
+| `/api/events` | GET, POST | withAuth | ⚠️ Broken (space-scoped GET returns 0 — startDate type mismatch. See KNOWN_STATE.md) |
+| `/api/events/personalized` | GET | withAuth | ⚠️ Broken (500 — campusId index exempted in fallback. See KNOWN_STATE.md) |
 | `/api/feed/global` | GET | None | Complete |
 | `/api/feed/search` | POST | withAuth | Complete |
 | `/api/templates` | GET, POST | withAuth | Complete |

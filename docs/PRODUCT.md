@@ -5,6 +5,20 @@
 
 ---
 
+> ⚠️ **IMPLEMENTATION NOTE — Feb 22 2026**
+> This doc describes the product vision. The built codebase diverges in these specific ways:
+>
+> - **Spaces have tabs (posts, events, tools)** — not chat-only as described below. `space-posts-tab.tsx`, `space-events-tab.tsx` exist and are wired.
+> - **Onboarding has 5 screens including interests** — not "email → code → name → done". Interests selection + space recommendations are live.
+> - **Discover is a personalized event feed** — not a campus dashboard. Scoring engine is real. Dining data not yet wired. Events feed is the primary surface.
+> - **Non-campus mode is current reality** — `campuses` collection is empty (0 docs), so `useCampusMode()` returns false for all users. The app runs in this mode today. Discover still shows events.
+>
+> Use `docs/KNOWN_STATE.md` for what actually exists. Use this doc for product intent.
+
+---
+
+---
+
 ## What HIVE Is
 
 HIVE is a campus operating system built by students. Not a social network. Not a chat app. An OS.

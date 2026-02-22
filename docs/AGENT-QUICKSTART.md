@@ -34,6 +34,10 @@ pnpm dev                        # Next.js on http://localhost:3000
 
 5. **HiveLab connections don't actually work** between standard elements. Templates define `connections[]` but only `custom-block` can consume connected inputs. Don't build features that assume form output flows into result-list.
 
+6. **`startDate` is an ISO string — never pass a Date object to Firestore.** CampusLabs events store `startDate` as `"2026-02-24T14:00:00.000Z"`. Passing `new Date()` to `where('startDate', '>=', ...)` returns 0 results silently. Use `new Date().toISOString()`. Also: **never filter by `campusId`** — that index is exempted and throws `FAILED_PRECONDITION`. Full details: `docs/FIRESTORE_SCHEMA.md` → Critical Data Gotchas.
+
+7. **Two routes are currently broken** — `/api/events/personalized` (500) and `/api/events` space-scoped (returns 0). Root cause: Date object vs. ISO string mismatch described above. Don't work around these — fix the root cause. See `docs/KNOWN_STATE.md` → Broken.
+
 ---
 
 ## Common Task Patterns
