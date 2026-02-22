@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search } from 'lucide-react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence, LayoutGroup, useReducedMotion } from 'framer-motion';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, getMobileNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/queries/use-unread-count';
+import { useMySpaces, type MySpace } from '@/hooks/queries/use-my-spaces';
 import { SPRING_SNAP_NAV, MOTION, durationSeconds } from '@hive/tokens';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -16,8 +17,22 @@ import { SPRING_SNAP_NAV, MOTION, durationSeconds } from '@hive/tokens';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const RAIL_W = 56;
-const EXPANDED_W = 192;
-const ICON_SLOT = 56; // icon always sits in a 56px left-aligned slot
+const EXPANDED_W = 208;
+const ICON_SLOT = 56; // icon always centered in this slot
+
+// Space type → short label for nav grouping
+const SPACE_TYPE_LABEL: Record<string, string> = {
+  greek_life: 'Greek',
+  campus_living: 'Residential',
+  student_organizations: 'Clubs',
+  university_organizations: 'Campus',
+  hive_exclusive: 'Community',
+  general: 'Spaces',
+};
+
+function spaceTypeLabel(type: string): string {
+  return SPACE_TYPE_LABEL[type] || 'Spaces';
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Gold HIVE logo — inlined SVG, no flash, no request
@@ -41,6 +56,22 @@ function HiveLogoGold({ size = 20 }: { size?: number }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Space initial avatar — first letter in a circle
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SpaceAvatar({ name, size = 20 }: { name: string; size?: number }) {
+  const letter = (name[0] || '?').toUpperCase();
+  return (
+    <span
+      className="flex items-center justify-center rounded-md bg-white/[0.06] text-white/50 font-medium shrink-0"
+      style={{ width: size, height: size, fontSize: size * 0.48 }}
+    >
+      {letter}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Nav item — icon always in 56px slot, label slides in on expand
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -59,8 +90,8 @@ function NavRailItem({
   const prefersReduced = useReducedMotion();
 
   const glowGradient = isLab
-    ? 'radial-gradient(circle at 28px center, rgba(255,215,0,0.06) 0%, transparent 70%)'
-    : 'radial-gradient(circle at 28px center, rgba(255,255,255,0.05) 0%, transparent 70%)';
+    ? 'radial-gradient(circle, rgba(255,215,0,0.06) 0%, transparent 70%)'
+    : 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)';
 
   const iconColor = isLab
     ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/45 group-hover:text-[#FFD700]/75'
@@ -117,7 +148,7 @@ function NavRailItem({
         />
       </motion.span>
 
-      {/* Label — clips when collapsed, reveals on expand */}
+      {/* Label */}
       <span
         className={cn(
           'text-[13px] font-medium tracking-wide whitespace-nowrap transition-opacity duration-150',
@@ -128,6 +159,96 @@ function NavRailItem({
         {item.label}
       </span>
     </Link>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Spaces quick-access — grouped by type, shown below Spaces nav item
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SpacesQuickAccess({ spaces, expanded }: { spaces: MySpace[]; expanded: boolean }) {
+  // Group by type
+  const grouped = useMemo(() => {
+    const map = new Map<string, MySpace[]>();
+    for (const s of spaces) {
+      const type = s.type || 'general';
+      if (!map.has(type)) map.set(type, []);
+      map.get(type)!.push(s);
+    }
+    // Sort groups: greek > residential > clubs > campus > community
+    const order = ['greek_life', 'campus_living', 'student_organizations', 'university_organizations', 'hive_exclusive', 'general'];
+    return Array.from(map.entries()).sort(
+      (a, b) => order.indexOf(a[0]) - order.indexOf(b[0])
+    );
+  }, [spaces]);
+
+  if (spaces.length === 0) return null;
+
+  return (
+    <div className="flex flex-col">
+      {/* Collapsed: show stacked dots */}
+      {!expanded && (
+        <div className="flex items-center justify-center h-8 gap-[3px]">
+          {spaces.slice(0, 3).map((s) => (
+            <Link
+              key={s.id}
+              href={`/s/${s.handle}`}
+              className="relative"
+              title={s.name}
+            >
+              <SpaceAvatar name={s.name} size={14} />
+              {s.unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-[5px] w-[5px] rounded-full bg-[#FFD700]" />
+              )}
+            </Link>
+          ))}
+          {spaces.length > 3 && (
+            <span className="text-[9px] text-white/20 font-medium ml-0.5">
+              +{spaces.length - 3}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Expanded: grouped list */}
+      {expanded && (
+        <div className="flex flex-col mt-1 mb-1">
+          {grouped.map(([type, typeSpaces]) => (
+            <div key={type}>
+              {/* Group label */}
+              <div className="flex items-center h-6 pl-4 pr-3">
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-white/20">
+                  {spaceTypeLabel(type)}
+                </span>
+              </div>
+
+              {/* Space links */}
+              {typeSpaces.map((space) => (
+                <Link
+                  key={space.id}
+                  href={`/s/${space.handle}`}
+                  className="group relative flex items-center gap-2.5 h-8 pl-4 pr-3 transition-colors"
+                >
+                  {/* Hover bg */}
+                  <span className="absolute inset-0 bg-white/0 group-hover:bg-white/[0.03] transition-colors duration-150" />
+
+                  <SpaceAvatar name={space.name} size={18} />
+
+                  <span className="relative z-10 text-[12px] text-white/40 group-hover:text-white/60 truncate transition-colors duration-150 flex-1">
+                    {space.name}
+                  </span>
+
+                  {/* Unread dot */}
+                  {space.unreadCount > 0 && (
+                    <span className="relative z-10 h-[6px] w-[6px] rounded-full bg-[#FFD700] shrink-0" />
+                  )}
+                </Link>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -177,13 +298,13 @@ function UtilityButton({
       </motion.span>
       <span
         className={cn(
-          'flex items-center gap-2 text-[13px] font-medium tracking-wide whitespace-nowrap text-white/35 group-hover:text-white/60 transition-opacity duration-150',
+          'text-[13px] font-medium tracking-wide whitespace-nowrap text-white/35 group-hover:text-white/60 transition-opacity duration-150',
           expanded ? 'opacity-100' : 'opacity-0',
         )}
       >
         {displayLabel}
         {kbdHint && (
-          <kbd className="ml-auto font-sans text-[10px] tracking-[0.12em] text-white/15">{kbdHint}</kbd>
+          <kbd className="ml-2 font-sans text-[10px] tracking-[0.12em] text-white/15">{kbdHint}</kbd>
         )}
       </span>
     </button>
@@ -269,7 +390,7 @@ function NotificationBell({ unreadCount, expanded }: { unreadCount: number; expa
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Left Sidebar — 56px rail, expands to 192px on hover
+// Left Sidebar — 56px rail, expands to 208px on hover
 // Content margin stays at 56px; sidebar overlays on expand.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -278,6 +399,7 @@ export function LeftSidebar() {
   const { hasCampus } = useCampusMode();
   const navItems = getNavItems(hasCampus);
   const { data: unreadCount = 0 } = useUnreadCount();
+  const { data: mySpaces = [] } = useMySpaces();
   const [expanded, setExpanded] = useState(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -295,68 +417,83 @@ export function LeftSidebar() {
   }, []);
 
   return (
-    <motion.aside
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
-      className="fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-white/[0.06] md:flex overflow-hidden"
-      style={{
-        background: 'rgba(0,0,0,0.92)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-      }}
-      animate={{ width: expanded ? EXPANDED_W : RAIL_W }}
-      transition={{
-        type: 'spring',
-        stiffness: 500,
-        damping: 32,
-        mass: 0.5,
-      }}
-    >
-      {/* HIVE mark — left-aligned in 56px slot, perfectly still */}
-      <Link
-        href="/discover"
-        className="flex items-center shrink-0 h-12"
-        style={{ width: ICON_SLOT, minWidth: ICON_SLOT }}
-        aria-label="HIVE home"
+    <LayoutGroup>
+      <motion.aside
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+        className="fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-white/[0.06] md:flex overflow-hidden"
+        style={{
+          background: 'rgba(0,0,0,0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
+        animate={{ width: expanded ? EXPANDED_W : RAIL_W }}
+        transition={{
+          type: 'spring',
+          stiffness: 500,
+          damping: 32,
+          mass: 0.5,
+        }}
       >
-        <span className="flex items-center justify-center w-full">
-          <HiveLogoGold size={20} />
-        </span>
-      </Link>
-
-      {/* Nav items */}
-      <nav className="flex flex-col" aria-label="Main navigation">
-        {navItems.map((item) => (
-          <NavRailItem
-            key={item.id}
-            item={item}
-            isActive={isNavItemActive(item, pathname)}
-            isLab={item.id === 'lab'}
-            expanded={expanded}
-          />
-        ))}
-      </nav>
-
-      {/* Push utilities to bottom */}
-      <div className="flex-1" />
-
-      {/* Bottom utilities */}
-      <div className="flex flex-col pb-3">
-        <UtilityButton
-          onClick={() => {
-            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
-          }}
-          label="Search (⌘K)"
-          displayLabel="Search"
-          kbd={expanded ? '⌘K' : undefined}
-          expanded={expanded}
+        {/* HIVE mark — centered in 56px slot, perfectly still */}
+        <Link
+          href="/discover"
+          className="flex items-center h-12 shrink-0"
+          aria-label="HIVE home"
         >
-          <Search className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
-        </UtilityButton>
+          <span
+            className="flex items-center justify-center shrink-0"
+            style={{ width: ICON_SLOT, minWidth: ICON_SLOT }}
+          >
+            <HiveLogoGold size={20} />
+          </span>
+          <span
+            className={cn(
+              'font-sans text-[11px] font-medium uppercase tracking-[0.18em] text-white/50 whitespace-nowrap transition-opacity duration-150',
+              expanded ? 'opacity-100' : 'opacity-0',
+            )}
+          >
+            HIVE
+          </span>
+        </Link>
 
-        <NotificationBell unreadCount={unreadCount} expanded={expanded} />
-      </div>
-    </motion.aside>
+        {/* Nav items + spaces quick-access */}
+        <nav className="flex flex-col overflow-y-auto overflow-x-hidden flex-1 scrollbar-none" aria-label="Main navigation">
+          {navItems.map((item) => (
+            <div key={item.id}>
+              <NavRailItem
+                item={item}
+                isActive={isNavItemActive(item, pathname)}
+                isLab={item.id === 'lab'}
+                expanded={expanded}
+              />
+
+              {/* Spaces quick-access sits right under the Spaces nav item */}
+              {item.id === 'spaces' && mySpaces.length > 0 && (
+                <SpacesQuickAccess spaces={mySpaces} expanded={expanded} />
+              )}
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom utilities */}
+        <div className="flex flex-col shrink-0 pb-3 border-t border-white/[0.04]">
+          <UtilityButton
+            onClick={() => {
+              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+            }}
+            label="Search (⌘K)"
+            displayLabel="Search"
+            kbd={expanded ? '⌘K' : undefined}
+            expanded={expanded}
+          >
+            <Search className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
+          </UtilityButton>
+
+          <NotificationBell unreadCount={unreadCount} expanded={expanded} />
+        </div>
+      </motion.aside>
+    </LayoutGroup>
   );
 }
 
