@@ -60,12 +60,13 @@ _Verified against live Firestore + local dev server. This is what actually exist
 ### TODO-LAUNCH.md is stale
 That doc targets Feb 14 launch. Most checklist items are still relevant but treat it as a backlog, not a current plan. The design violation items (703 opacity instances, 359 radius instances) are real debt but not launch blockers. The functional items in section 5 are still valid.
 
-### Launch Blockers (Feb 22 assessment)
-1. **Events API 500** — fix the date type mismatch (see Broken section)
-2. **Auth flow** — needs end-to-end validation as a new user
-3. **Profile black screen** — blocks identity layer
-4. **Space events returning 0** — same fix as #1
-5. **7-day account age gate on space creation** — `apps/web/src/app/api/spaces/route.ts:167`. New users cannot create a space until their account is 7 days old. Kills first-session activation. Remove or reduce to 0 for first space only.
+### Launch Blockers (Feb 22 — updated)
+1. **Events feed missing images + space links** — `/api/events/personalized` no longer 500s (fallback fixed) but `coverImageUrl` reads wrong field and `spaceHandle` is always null. Fix both field mappings. See Broken section.
+2. **Space events returning 0** — `/api/events?spaceId=...` — Date object vs ISO string mismatch in `fetchDocsForTimeField`. Fix: use `toISOString()` when `dateField === 'startDate'`. See Broken section.
+3. **Auth flow** — needs end-to-end validation as a new user. Last validated ~Feb 14.
+4. **Profile black screen** — blocks identity layer. Cause not yet diagnosed.
+5. **7-day account age gate on space creation** — `apps/web/src/app/api/spaces/route.ts:167`. New users cannot create a space until account is 7 days old. Kills first-session activation for any user who wants to create. Remove or reduce to 0 for first space only.
+6. **Events nav tab in sidebar** — contradicts LAUNCH-IA.md locked decision ("no dedicated events nav tab"). Needs to be removed from `navigation.ts` + `AppSidebar.tsx`.
 
 ---
 
@@ -113,19 +114,66 @@ That doc targets Feb 14 launch. Most checklist items are still relevant but trea
 ## Broken — Feb 22 2026
 _Confirmed broken via live testing. Read before touching these routes._
 
-### `/api/events/personalized` — 500 on every request
-**Root cause:** Fallback query uses `where('campusId', '==', campusId)` which throws
-`FAILED_PRECONDITION` because the `campusId` single-field index is exempted.
-The indexed queries (`startDate`/`startAt`) return 0 results because real CampusLabs
-events store `startDate` as ISO string but the query passes a `Date` object (type mismatch).
-**Fix:** Replace fallback with `where('startDate', '>=', start.toISOString()).orderBy('startDate')`.
-See FIRESTORE_SCHEMA.md → Critical Data Gotchas for the correct query pattern.
+### `/api/events/personalized` — 500 resolved; field mappings still wrong
+**Status (Feb 22 updated):** The 500 is gone. The fallback query was fixed to use
+`start.toISOString()` (committed). Events are now returned. BUT two field mapping bugs remain:
+
+**Bug 1 — `coverImageUrl` always null:**
+API maps `event.coverImageUrl` but Firestore stores it as `event.imageUrl`.
+```ts
+// ❌ current (wrong)
+coverImageUrl: event.coverImageUrl as string | undefined,
+// ✅ fix
+coverImageUrl: (event.imageUrl || event.coverImageUrl) as string | undefined,
+```
+
+**Bug 2 — `spaceHandle` always undefined:**
+`spaceHandle` doesn't exist on event documents. Current code passes `event.spaceHandle` which is always `undefined`.
+```ts
+// ❌ current (wrong)
+spaceHandle: event.spaceHandle as string | undefined,
+// ✅ fix — batch-resolve from spaces collection before the .map()
+// Build spaceHandleMap: Map<spaceId, handle> using Promise.allSettled + individual .doc(id).get()
+// Then in the map: spaceHandle: spaceHandleMap.get(eventSpaceId)
+```
+Use `Promise.allSettled` with individual `.doc(id).get()` calls. Do NOT use `getAll()` or
+`where('__name__', 'in', batch)` — both have reliability issues in this route's context.
+
+**Note:** The primary `fetchEventsForTimeField()` still uses `where('campusId', '==', campusId)`
+which throws `FAILED_PRECONDITION`. That error is caught/swallowed. The fallback carries all the load.
 
 ### `/api/events` (space-scoped) — returns 0 events
-**Root cause:** Same type mismatch — passes `new Date()` to `where('startDate', '>=', now)`
-but `startDate` is an ISO string. Firestore type comparison returns 0 results.
-**Fix:** Use `now.toISOString()` when filtering on `startDate` field specifically.
-The `startAt` Timestamp field can continue using a `Date` object.
+**Root cause (still broken Feb 22):** Two-stage failure:
+1. Primary queries include `where('campusId', '==', campusId)` — throws `FAILED_PRECONDITION`, caught, ignored.
+2. Space fallback (`includeCampusFilter: false`) triggers correctly, but inside `fetchDocsForTimeField`,
+   the upcoming filter is `query.where(dateField, '>=', now)` where `now` is a `Date` object.
+   For `dateField === 'startDate'`, this is a Date-vs-string mismatch → 0 results silently.
+   For `dateField === 'startAt'`, the `Date` object works (Timestamp field) but CampusLabs events
+   use `startDate` not `startAt`, so these return 0 too.
+
+**Fix:** In `fetchDocsForTimeField`, when `dateField === 'startDate'`, use ISO strings:
+```ts
+// In fetchDocsForTimeField, replace:
+if (fromDate) {
+  query = query.where(dateField, ">=", fromDate);
+} else if (queryParams.upcoming) {
+  query = query.where(dateField, ">=", now);
+}
+// With:
+if (fromDate) {
+  query = query.where(dateField, ">=", dateField === 'startDate' ? fromDate.toISOString() : fromDate);
+} else if (queryParams.upcoming) {
+  query = query.where(dateField, ">=", dateField === 'startDate' ? now.toISOString() : now);
+}
+// Apply same pattern to the toDate filter.
+```
+
+### `/events` nav tab — exists in code, conflicts with LAUNCH-IA.md locked decision
+**Root cause:** LAUNCH-IA.md LOCKED DECISION is "no dedicated events nav tab — events surface
+through Feed + Spaces." But `navigation.ts` and `AppSidebar.tsx` still include an Events tab.
+**Impact:** Confuses agents working on nav. Creates UX inconsistency.
+**Fix:** Remove Events from `apps/web/src/lib/navigation.ts` and `AppSidebar.tsx`.
+The `/events` page can remain (redirect target) but should not be a sidebar nav item.
 
 ### `coverImageUrl` missing from personalized events response
 **Root cause:** API maps `event.coverImageUrl` but Firestore stores it as `event.imageUrl`.

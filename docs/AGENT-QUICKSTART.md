@@ -36,7 +36,10 @@ pnpm dev                        # Next.js on http://localhost:3000
 
 6. **`startDate` is an ISO string — never pass a Date object to Firestore.** CampusLabs events store `startDate` as `"2026-02-24T14:00:00.000Z"`. Passing `new Date()` to `where('startDate', '>=', ...)` returns 0 results silently. Use `new Date().toISOString()`. Also: **never filter by `campusId`** — that index is exempted and throws `FAILED_PRECONDITION`. Full details: `docs/FIRESTORE_SCHEMA.md` → Critical Data Gotchas.
 
-7. **Two routes are currently broken** — `/api/events/personalized` (500) and `/api/events` space-scoped (returns 0). Root cause: Date object vs. ISO string mismatch described above. Don't work around these — fix the root cause. See `docs/KNOWN_STATE.md` → Broken.
+7. **Events routes are partially broken (Feb 22):**
+   - `/api/events/personalized` — no longer 500s, but returns events with null `coverImageUrl` (wrong field: use `event.imageUrl || event.coverImageUrl`) and null `spaceHandle` (field doesn't exist on events — must batch-resolve from `spaces` collection).
+   - `/api/events?spaceId=...` — returns 0 events. Root cause: `fetchDocsForTimeField` passes `Date` objects to `where('startDate', '>=', now)`. Fix: use `now.toISOString()` when `dateField === 'startDate'`.
+   See `docs/KNOWN_STATE.md` → Broken for full specs.
 
 ---
 

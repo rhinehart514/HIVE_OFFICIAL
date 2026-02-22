@@ -182,7 +182,10 @@ Motion: `MOTION.ease.premium` from `@hive/tokens` for all animations.
 
 ## Navigation
 
-4-tab layout: Feed -> Spaces -> Lab -> Profile. Nav in `apps/web/src/lib/navigation.ts`.
+**4-tab layout: Feed → Spaces → Lab → Profile.** Nav in `apps/web/src/lib/navigation.ts`.
+**Events is NOT a nav tab.** It is content inside Feed. The `/events` route exists but should
+not appear in the sidebar. LAUNCH-IA.md LOCKED DECISION: "Events surface through Feed + Spaces —
+no dedicated nav tab." The Events entry in `navigation.ts` / `AppSidebar.tsx` is a bug — remove it.
 
 Key routes: `/discover` (home), `/spaces`, `/s/[handle]` (space), `/lab` (creator), `/lab/templates` (template creation), `/lab/new` (AI creation), `/t/[toolId]` (standalone tool), `/me` (profile), `/u/[handle]` (public profile), `/settings`, `/notifications`
 
@@ -220,3 +223,6 @@ Key env: `HIVE_DEV_BYPASS=true` (skip auth), `GOOSE_BACKEND=groq` (AI gen)
 - **Never pass a `Date` object to `where('startDate', '>=', ...)`** — `startDate` is stored as ISO string on CampusLabs events. Use `now.toISOString()`. The `startAt` Timestamp field accepts `Date` objects.
 - **Never trust `event.spaceHandle`** — it doesn't exist on event documents. Resolve via `db.collection('spaces').doc(event.spaceId).get()`.
 - **Before writing any Firestore query**, read `docs/FIRESTORE_SCHEMA.md` → Critical Data Gotchas and `docs/KNOWN_STATE.md` → Broken.
+- **Never add an Events tab to the sidebar nav** — events are Feed content, not a nav destination. See LAUNCH-IA.md → Locked Decisions.
+- **Never read `event.coverImageUrl` directly** — the Firestore field is `imageUrl`. Use `(event.imageUrl || event.coverImageUrl)`.
+- **Never pass `Date` objects to `where(dateField, '>=', ...)` when `dateField === 'startDate'`** — that field is ISO string on CampusLabs events. Always check: if the field is `startDate`, use `.toISOString()`. If it's `startAt`, a `Date` object is fine.
