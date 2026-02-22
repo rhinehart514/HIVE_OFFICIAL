@@ -1674,6 +1674,8 @@ export {
   ProfileInterestsCard,
   ProfileStatsWidget,
   ProfileFeaturedToolCard,
+  ProfileActivityHeatmap,
+  ProfileIdentityHeroSkeleton,
 } from "./design-system/components/profile";
 
 export type {
@@ -1714,6 +1716,7 @@ export type {
   ProfileFeaturedToolCardProps,
   FeaturedTool,
   ActivityContribution,
+  ProfileActivityHeatmapProps,
 } from "./design-system/components/profile";
 
 // ============================================
