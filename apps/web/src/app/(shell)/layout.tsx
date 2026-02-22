@@ -1,4 +1,4 @@
-import { LeftSidebar, MobileBottomBar, PageTransition } from '@/components/shell';
+import { LeftSidebar, MobileBottomBar, PageTransition, RightRail } from '@/components/shell';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { AdminToolbarLazy } from '@/components/admin/AdminToolbarLazy';
 
@@ -7,10 +7,16 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen text-white bg-black">
       <LeftSidebar />
       <MobileBottomBar />
-      <div className="md:ml-[56px]">
-        <ImpersonationBanner />
-        <PageTransition>{children}</PageTransition>
+
+      {/* App grid: content pane is left-anchored, right rail fills remaining space on xl+ */}
+      <div className="md:ml-[56px] xl:flex xl:min-h-screen">
+        <main className="flex-1 min-w-0">
+          <ImpersonationBanner />
+          <PageTransition>{children}</PageTransition>
+        </main>
+        <RightRail />
       </div>
+
       <AdminToolbarLazy />
     </div>
   );

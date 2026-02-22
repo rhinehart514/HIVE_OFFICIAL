@@ -82,7 +82,7 @@ function ZoneHeader({ children }: { children: React.ReactNode }) {
 
 function ProfileLoadingState() {
   return (
-    <div className="w-full max-w-7xl mx-auto px-6 lg:px-10 py-6 pb-24 md:pb-8 space-y-8">
+    <div className="w-full px-6 lg:px-8 py-6 pb-24 md:pb-8 space-y-8">
       {/* Zone 1: Hero skeleton */}
       <ProfileIdentityHeroSkeleton />
 
@@ -277,7 +277,7 @@ export default function ProfilePageContent() {
   const hasActivity = activityContributions.length > 0;
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-6 lg:px-10 py-6 pb-24 md:pb-8 space-y-8">
+    <div className="w-full px-6 lg:px-8 py-6 pb-24 md:pb-8 space-y-8">
 
       {/* ════════════════════════════════════════════════════════════════════════
           Zone 1: Identity Hero
