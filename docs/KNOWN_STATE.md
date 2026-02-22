@@ -38,3 +38,39 @@
 - Calendar sync routes not yet built (UI shows "coming soon" placeholder)
 - DMs: feature flag only, zero routes, zero UI (intentionally deferred)
 - Rituals: domain model exists, no UI (intentionally deferred)
+
+---
+
+## Broken — Feb 22 2026
+_Confirmed broken via live testing. Read before touching these routes._
+
+### `/api/events/personalized` — 500 on every request
+**Root cause:** Fallback query uses `where('campusId', '==', campusId)` which throws
+`FAILED_PRECONDITION` because the `campusId` single-field index is exempted.
+The indexed queries (`startDate`/`startAt`) return 0 results because real CampusLabs
+events store `startDate` as ISO string but the query passes a `Date` object (type mismatch).
+**Fix:** Replace fallback with `where('startDate', '>=', start.toISOString()).orderBy('startDate')`.
+See FIRESTORE_SCHEMA.md → Critical Data Gotchas for the correct query pattern.
+
+### `/api/events` (space-scoped) — returns 0 events
+**Root cause:** Same type mismatch — passes `new Date()` to `where('startDate', '>=', now)`
+but `startDate` is an ISO string. Firestore type comparison returns 0 results.
+**Fix:** Use `now.toISOString()` when filtering on `startDate` field specifically.
+The `startAt` Timestamp field can continue using a `Date` object.
+
+### `coverImageUrl` missing from personalized events response
+**Root cause:** API maps `event.coverImageUrl` but Firestore stores it as `event.imageUrl`.
+**Fix:** `coverImageUrl: (event.imageUrl || event.coverImageUrl) as string | undefined`
+
+### `spaceHandle` missing from personalized events response
+**Root cause:** `spaceHandle` doesn't exist on event documents. API was passing through
+`event.spaceHandle` which is always `undefined`.
+**Fix:** Batch-fetch space handles from spaces collection using `spaceId` as doc ID.
+Use `Promise.allSettled` with individual `.doc(id).get()` calls — `getAll()` and
+`where('__name__', 'in', batch)` both have issues in this route's context.
+
+### `campuses` collection is empty
+**Root cause:** Campus documents were never created.
+**Impact:** `useCampusMode()` returns `false` everywhere. Any UI gated on `hasCampus`
+is invisible to all users. `getCampusId(request)` falls back to hardcoded `'ub-buffalo'`.
+**Status:** Intentional for now — hardcoded campus works for UB single-tenant launch.

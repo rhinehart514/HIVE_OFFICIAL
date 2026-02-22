@@ -126,3 +126,80 @@ Event → RSVPs (1:many, via rsvps.eventId)
 User → Profiles (1:1, same userId)
 User → Connections (many:many, via connections collection)
 ```
+
+---
+
+## Critical Data Gotchas
+_Discovered Feb 22 2026 — read before writing any Firestore query_
+
+### events collection — field reality vs. assumptions
+
+**`startDate` is an ISO string, NOT a Firestore Timestamp.**
+CampusLabs-imported events store `startDate` as `"2026-02-24T14:00:00.000Z"` (string).
+Older/demo events may use `startAt` (Timestamp). Always handle both.
+
+```ts
+// ✅ CORRECT — string comparison for startDate
+.where('startDate', '>=', now.toISOString())
+
+// ❌ WRONG — Date object compared to string field returns 0 results
+.where('startDate', '>=', new Date())
+```
+
+**Cover image is `imageUrl`, not `coverImageUrl`.**
+The Firestore field is `event.imageUrl`. The personalized API historically mapped it
+to `coverImageUrl` in responses — the field mismatch silently dropped all images.
+When reading raw event docs, use `event.imageUrl || event.coverImageUrl`.
+
+**`spaceHandle` does NOT exist on event documents.**
+Events only store `spaceId` (which IS the Firestore doc ID of the space).
+To get a space's handle for linking, batch-fetch from the `spaces` collection:
+`db.collection('spaces').doc(event.spaceId).get()` → `data.handle || data.slug`
+
+**`upcomingEventCount` on space docs is stale.**
+It's a denormalized counter that isn't being updated. Don't trust it.
+Always do a live query: `where('spaceId', '==', id).where('startDate', '>=', now.toISOString())`
+
+### spaces collection — two ID formats
+
+**`org-*` spaces** (e.g. `org-swim-club`): have `handle` and `slug` fields. Full data.
+
+**`campuslabs-*` spaces** (e.g. `campuslabs-103556`): imported directly from CampusLabs.
+`handle` and `slug` are `undefined`. The `resolve-slug` API handles these via legacy ID
+fallback — `/s/campuslabs-103556` works but is an ugly URL.
+
+**0 members on almost all spaces.** `memberCount` is 0 for ~1173/1174 spaces.
+This is correct — no real users yet. Don't filter by memberCount > 0 for discovery.
+
+**Category schema inconsistency.** Old import used `student_org`; new schema uses
+`student_organizations`. Both exist in production. Handle both in category filters.
+
+### campusId — INDEX IS EXEMPTED
+
+**`campusId` single-field index has been explicitly exempted in Firestore.**
+This means `where('campusId', '==', 'ub-buffalo')` WILL throw `FAILED_PRECONDITION`.
+
+```ts
+// ❌ NEVER — will throw FAILED_PRECONDITION
+db.collection('events').where('campusId', '==', campusId).limit(n)
+
+// ❌ NEVER — compound query with campusId also fails
+db.collection('events').where('campusId', '==', campusId).where('spaceId', '==', id)
+
+// ✅ CORRECT fallback — filter by date string instead
+db.collection('events').where('startDate', '>=', now.toISOString()).orderBy('startDate').limit(n)
+
+// ✅ CORRECT for space-scoped events
+db.collection('events').where('spaceId', '==', spaceId).where('startDate', '>=', now.toISOString()).orderBy('startDate').limit(n)
+```
+
+### Live data counts (as of Feb 22 2026)
+
+| Collection | Count | Notes |
+|---|---|---|
+| events | ~2,772 | All real CampusLabs imports. 100 demo-seed docs deleted. |
+| spaces | 1,174 | 199 live, 0 claimed, ~975 org-* with handles, ~199 campuslabs-* without |
+| users | 4 | Jacob + test accounts only |
+| tools | 19 | All created by Jacob |
+| posts | 0 | No user-generated content yet |
+| campuses | 0 | Campus documents not created — `useCampusMode()` returns false everywhere |
