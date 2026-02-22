@@ -4,12 +4,20 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, getMobileNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/queries/use-unread-count';
 import { SPRING_SNAP_NAV, MOTION, durationSeconds } from '@hive/tokens';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RAIL_W = 56;
+const EXPANDED_W = 192;
+const ICON_SLOT = 56; // icon always sits in a 56px left-aligned slot
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Gold HIVE logo — inlined SVG, no flash, no request
@@ -33,34 +41,42 @@ function HiveLogoGold({ size = 20 }: { size?: number }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Nav item with micro-interactions: glow bloom, press compression, active indicator
+// Nav item — icon always in 56px slot, label slides in on expand
 // ─────────────────────────────────────────────────────────────────────────────
 
 function NavRailItem({
   item,
   isActive,
   isLab,
+  expanded,
 }: {
   item: NavItem;
   isActive: boolean;
   isLab: boolean;
+  expanded: boolean;
 }) {
   const Icon = item.icon;
   const prefersReduced = useReducedMotion();
 
   const glowGradient = isLab
-    ? 'radial-gradient(circle, rgba(255,215,0,0.06) 0%, transparent 70%)'
-    : 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)';
+    ? 'radial-gradient(circle at 28px center, rgba(255,215,0,0.06) 0%, transparent 70%)'
+    : 'radial-gradient(circle at 28px center, rgba(255,255,255,0.05) 0%, transparent 70%)';
 
-  // Resting / hover / active color classes
   const iconColor = isLab
     ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/45 group-hover:text-[#FFD700]/75'
     : isActive ? 'text-white' : 'text-white/30 group-hover:text-white/55';
 
+  const labelColor = isLab
+    ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/45 group-hover:text-[#FFD700]/75'
+    : isActive ? 'text-white' : 'text-white/35 group-hover:text-white/60';
+
   const indicatorColor = isLab ? '#FFD700' : '#FFFFFF';
 
   return (
-    <Link href={item.href} className="group relative w-full flex items-center justify-center h-10">
+    <Link
+      href={item.href}
+      className="group relative w-full flex items-center h-10"
+    >
       {/* Active indicator — layoutId sliding border */}
       {isActive && (
         <motion.span
@@ -81,9 +97,13 @@ function NavRailItem({
         aria-hidden
       />
 
-      {/* Icon with press compression */}
+      {/* Icon — fixed in 56px slot */}
       <motion.span
-        className={cn('relative z-10 flex items-center justify-center', iconColor)}
+        className={cn(
+          'relative z-10 flex items-center justify-center shrink-0',
+          iconColor,
+        )}
+        style={{ width: ICON_SLOT, minWidth: ICON_SLOT }}
         whileTap={prefersReduced ? undefined : { y: 1 }}
         transition={SPRING_SNAP_NAV}
       >
@@ -96,7 +116,77 @@ function NavRailItem({
           style={{ transitionDuration: `${MOTION.duration.quick}ms` }}
         />
       </motion.span>
+
+      {/* Label — clips when collapsed, reveals on expand */}
+      <span
+        className={cn(
+          'text-[13px] font-medium tracking-wide whitespace-nowrap transition-opacity duration-150',
+          labelColor,
+          expanded ? 'opacity-100' : 'opacity-0',
+        )}
+      >
+        {item.label}
+      </span>
     </Link>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Utility item (search / bell) — same 56px icon slot pattern
+// ─────────────────────────────────────────────────────────────────────────────
+
+function UtilityButton({
+  onClick,
+  label,
+  expanded,
+  displayLabel,
+  kbd: kbdHint,
+  children,
+}: {
+  onClick: () => void;
+  label: string;
+  expanded: boolean;
+  displayLabel: string;
+  kbd?: string;
+  children: React.ReactNode;
+}) {
+  const prefersReduced = useReducedMotion();
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative w-full flex items-center h-10"
+      aria-label={label}
+    >
+      <motion.span
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)' }}
+        initial={{ opacity: 0 }}
+        whileHover={{ opacity: 1 }}
+        transition={{ duration: durationSeconds.quick, ease: MOTION.ease.premium }}
+        aria-hidden
+      />
+      <motion.span
+        className="relative z-10 flex items-center justify-center shrink-0 text-white/30 group-hover:text-white/55 transition-colors"
+        style={{ width: ICON_SLOT, minWidth: ICON_SLOT, transitionDuration: `${MOTION.duration.quick}ms` }}
+        whileTap={prefersReduced ? undefined : { y: 1 }}
+        transition={SPRING_SNAP_NAV}
+      >
+        {children}
+      </motion.span>
+      <span
+        className={cn(
+          'flex items-center gap-2 text-[13px] font-medium tracking-wide whitespace-nowrap text-white/35 group-hover:text-white/60 transition-opacity duration-150',
+          expanded ? 'opacity-100' : 'opacity-0',
+        )}
+      >
+        {displayLabel}
+        {kbdHint && (
+          <kbd className="ml-auto font-sans text-[10px] tracking-[0.12em] text-white/15">{kbdHint}</kbd>
+        )}
+      </span>
+    </button>
   );
 }
 
@@ -104,7 +194,7 @@ function NavRailItem({
 // Notification bell with unread animation
 // ─────────────────────────────────────────────────────────────────────────────
 
-function NotificationBell({ unreadCount }: { unreadCount: number }) {
+function NotificationBell({ unreadCount, expanded }: { unreadCount: number; expanded: boolean }) {
   const router = useRouter();
   const prefersReduced = useReducedMotion();
   const prevCountRef = useRef(unreadCount);
@@ -123,7 +213,7 @@ function NotificationBell({ unreadCount }: { unreadCount: number }) {
     <button
       type="button"
       onClick={() => router.push('/notifications')}
-      className="group relative w-full flex items-center justify-center h-10"
+      className="group relative w-full flex items-center h-10"
       aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
     >
       {/* Hover glow */}
@@ -137,8 +227,8 @@ function NotificationBell({ unreadCount }: { unreadCount: number }) {
       />
 
       <motion.span
-        className="relative z-10 flex items-center justify-center text-white/30 group-hover:text-white/55 transition-colors"
-        style={{ transitionDuration: `${MOTION.duration.quick}ms` }}
+        className="relative z-10 flex items-center justify-center shrink-0 text-white/30 group-hover:text-white/55 transition-colors"
+        style={{ width: ICON_SLOT, minWidth: ICON_SLOT, transitionDuration: `${MOTION.duration.quick}ms` }}
         whileTap={prefersReduced ? undefined : { y: 1 }}
         animate={
           shouldShake && !prefersReduced
@@ -165,12 +255,22 @@ function NotificationBell({ unreadCount }: { unreadCount: number }) {
           </AnimatePresence>
         </div>
       </motion.span>
+
+      <span
+        className={cn(
+          'text-[13px] font-medium tracking-wide whitespace-nowrap text-white/35 group-hover:text-white/60 transition-opacity duration-150',
+          expanded ? 'opacity-100' : 'opacity-0',
+        )}
+      >
+        Notifications
+      </span>
     </button>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Left Sidebar — 56px icon rail, desktop only
+// Left Sidebar — 56px rail, expands to 192px on hover
+// Content margin stays at 56px; sidebar overlays on expand.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function LeftSidebar() {
@@ -178,33 +278,61 @@ export function LeftSidebar() {
   const { hasCampus } = useCampusMode();
   const navItems = getNavItems(hasCampus);
   const { data: unreadCount = 0 } = useUnreadCount();
+  const [expanded, setExpanded] = useState(false);
+  const collapseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const handleEnter = useCallback(() => {
+    if (collapseTimer.current) clearTimeout(collapseTimer.current);
+    setExpanded(true);
+  }, []);
+
+  const handleLeave = useCallback(() => {
+    collapseTimer.current = setTimeout(() => setExpanded(false), 200);
+  }, []);
+
+  useEffect(() => () => {
+    if (collapseTimer.current) clearTimeout(collapseTimer.current);
+  }, []);
 
   return (
-    <aside
-      className="fixed left-0 top-0 z-40 hidden h-screen w-[56px] flex-col border-r border-white/[0.06] md:flex"
+    <motion.aside
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+      className="fixed left-0 top-0 z-40 hidden h-screen flex-col border-r border-white/[0.06] md:flex overflow-hidden"
       style={{
         background: 'rgba(0,0,0,0.92)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
+      animate={{ width: expanded ? EXPANDED_W : RAIL_W }}
+      transition={{
+        type: 'spring',
+        stiffness: 500,
+        damping: 32,
+        mass: 0.5,
+      }}
     >
-      {/* HIVE mark — perfectly still, centered */}
+      {/* HIVE mark — left-aligned in 56px slot, perfectly still */}
       <Link
         href="/discover"
-        className="flex items-center justify-center h-12"
+        className="flex items-center shrink-0 h-12"
+        style={{ width: ICON_SLOT, minWidth: ICON_SLOT }}
         aria-label="HIVE home"
       >
-        <HiveLogoGold size={20} />
+        <span className="flex items-center justify-center w-full">
+          <HiveLogoGold size={20} />
+        </span>
       </Link>
 
-      {/* 8px gap then nav items */}
-      <nav className="flex flex-col gap-0" aria-label="Main navigation">
+      {/* Nav items */}
+      <nav className="flex flex-col" aria-label="Main navigation">
         {navItems.map((item) => (
           <NavRailItem
             key={item.id}
             item={item}
             isActive={isNavItemActive(item, pathname)}
             isLab={item.id === 'lab'}
+            expanded={expanded}
           />
         ))}
       </nav>
@@ -213,38 +341,22 @@ export function LeftSidebar() {
       <div className="flex-1" />
 
       {/* Bottom utilities */}
-      <div className="flex flex-col gap-0 pb-3">
-        {/* Search */}
-        <button
-          type="button"
+      <div className="flex flex-col pb-3">
+        <UtilityButton
           onClick={() => {
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
           }}
-          className="group relative w-full flex items-center justify-center h-10"
-          aria-label="Search (⌘K)"
+          label="Search (⌘K)"
+          displayLabel="Search"
+          kbd={expanded ? '⌘K' : undefined}
+          expanded={expanded}
         >
-          <motion.span
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)' }}
-            initial={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            transition={{ duration: durationSeconds.quick, ease: MOTION.ease.premium }}
-            aria-hidden
-          />
-          <motion.span
-            className="relative z-10 text-white/30 group-hover:text-white/55 transition-colors"
-            style={{ transitionDuration: `${MOTION.duration.quick}ms` }}
-            whileTap={{ y: 1 }}
-            transition={SPRING_SNAP_NAV}
-          >
-            <Search className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
-          </motion.span>
-        </button>
+          <Search className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
+        </UtilityButton>
 
-        {/* Notifications */}
-        <NotificationBell unreadCount={unreadCount} />
+        <NotificationBell unreadCount={unreadCount} expanded={expanded} />
       </div>
-    </aside>
+    </motion.aside>
   );
 }
 
