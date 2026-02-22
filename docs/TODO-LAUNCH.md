@@ -1,5 +1,8 @@
 # HIVE Launch TODO — Full Platform
 
+> ⚠️ **STALE AS OF FEB 22 2026** — Original target was Feb 14. Use as a backlog, not a current plan.
+> For current state, launch blockers, and live data: see `docs/KNOWN_STATE.md` → Ground Truth section.
+
 > Target: Friday Feb 14, 2026 — 5 real users
 > Design spec: cold/minimal, Linear meets Vercel
 > Rules: #000 base, #FFD700 action-only, white + white/50 text, rounded-full pills, no AI-ish

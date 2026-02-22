@@ -1,5 +1,73 @@
 # Known State — HIVE (Feb 2026)
 
+---
+
+## Ground Truth — Feb 22 2026
+_Verified against live Firestore + local dev server. This is what actually exists._
+
+### Live Data
+| Collection | Count | Reality |
+|---|---|---|
+| events | ~2,772 | All real CampusLabs imports. 100 demo-seed docs deleted Feb 22. 76% have images. 100% have location + description. All `campusId: ub-buffalo`. |
+| spaces | 1,174 | 199 live, 0 claimed, 0 with members (except 1). ~975 `org-*` with handles, ~199 `campuslabs-*` without. |
+| users | 4 | Jacob + test accounts only. No real students. |
+| tools | 19 | All created by Jacob. 0 use count, 0 fork count. |
+| posts | 0 | Zero user-generated content. Feed is events-only. |
+| campuses | 0 | Campus docs never created. `useCampusMode()` returns false everywhere. |
+
+### System Status (PMF features)
+
+**Feed (`/discover`)**
+- Page renders ✓
+- Events API (`/api/events/personalized`) — **BROKEN, 500** (see Broken section)
+- Real events exist and are good quality once API is fixed — 371 in next 7 days, 76% have images
+- Tool cards and space discovery cards render in feed body ✓
+- Right panel: Next Up, Active Spaces, On Campus sections exist ✓
+
+**Spaces (`/spaces` + `/s/[handle]`)**
+- Browse page renders, returns real spaces with live event enrichment ✓
+- Space URLs: `org-*` spaces resolve via handle. `campuslabs-*` spaces resolve via legacy ID fallback (URL is `/s/campuslabs-103556` — functional but ugly)
+- Space events tab (`/api/events?spaceId=...`) — **BROKEN, returns 0** (same date type issue as personalized API)
+- Join flow (`/api/spaces/join-v2`) — works ✓. Threshold doesn't block joining, only sets activationStatus.
+- Space chat — wired ✓ but no messages yet
+- Space posts tab — renders ✓ but 0 posts exist
+
+**Auth (`/enter`)**
+- OTP → JWT cookie flow exists ✓
+- Dev bypass: `HIVE_DEV_BYPASS=true` in `.env.local`, user `dev-user-001` / `rhinehart514@gmail.com` ✓
+- **Status: Not validated end-to-end as new user on Feb 22.** Last known good: ~Feb 14.
+
+**Profile (`/u/[handle]` + `/me`)**
+- **Black screen on load** — known bug, cause not yet diagnosed
+- Profile page exists (731 lines in ProfilePageContent.tsx)
+- Mutual spaces query missing
+
+**HiveLab (`/lab`)**
+- 33 elements registered, ~8 work standalone
+- AI generation: Groq (`llama-3.3-70b-versatile`) is primary. Rules-based regex is fallback.
+- `/api/tools/execute` — built Feb 19, handles 8 self-contained element types ✓
+- Connection resolver built Feb 19 ✓
+
+**Onboarding (5-screen flow)**
+- Backend shipped Feb 13 ✓ — analytics wired, interest matching, reveal API, year/housing weighting
+- Screen 5 (space recommendations) partially solves cold start
+- **Frontend: not validated end-to-end Feb 22**
+
+**Push Notifications**
+- 18 types defined, FCM wired ✓
+- **Not active** — needs env var flip (`NEXT_PUBLIC_FCM_VAPID_KEY` or similar). One-line enablement.
+
+### TODO-LAUNCH.md is stale
+That doc targets Feb 14 launch. Most checklist items are still relevant but treat it as a backlog, not a current plan. The design violation items (703 opacity instances, 359 radius instances) are real debt but not launch blockers. The functional items in section 5 are still valid.
+
+### Launch Blockers (Feb 22 assessment)
+1. **Events API 500** — fix the date type mismatch (see Broken section)
+2. **Auth flow** — needs end-to-end validation as a new user
+3. **Profile black screen** — blocks identity layer
+4. **Space events returning 0** — same fix as #1
+
+---
+
 ## Recently Fixed
 - Vercel build errors and warnings (dead imports, stale exports)
 - Crons downgraded to daily for Hobby plan
