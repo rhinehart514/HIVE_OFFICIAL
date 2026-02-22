@@ -913,7 +913,7 @@ export default function ProfilePageContent() {
   } : null;
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-6 py-6 pb-24 md:pb-8">
+    <div className="w-full max-w-6xl mx-auto px-6 py-6 pb-24 md:pb-8">
       {/* Bento — flex row: fixed portrait + fluid right grid */}
       <div className="flex flex-col md:flex-row gap-3 items-stretch">
 
