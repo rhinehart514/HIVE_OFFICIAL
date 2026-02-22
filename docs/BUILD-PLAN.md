@@ -1,10 +1,26 @@
 # HIVE — Build Plan
 
-> ⚠️ **STALE — Feb 22 2026.** Most Phase 1 items are built. `AppSidebar.tsx` exists (438 lines). Shell layout exists. Bottom nav replaced. Use this as historical context only.
-> Current launch checklist is in `docs/KNOWN_STATE.md` → Launch Blockers.
-
-> Reference: `IA-SPEC.md` for architecture, `DESIGN-2026.md` for design system.
-> Goal: Ship to all of UB. No cold start. Campus alive on arrival.
+> ⚠️ **ARCHIVED — Feb 22 2026.** This was the pre-launch build plan targeting Feb 14.
+>
+> **What to read instead:**
+> - **`docs/KNOWN_STATE.md` → Launch Blockers** — 6 things to fix before real users
+> - **`docs/LAUNCH-IA.md`** — source of truth for launch UX: every screen, every system, priority build order
+> - **`docs/KNOWN_STATE.md` → System Status** — what's working, what's broken, what's a stub
+>
+> **What got built from this plan:**
+> - ✅ AppSidebar.tsx (438 lines) — 4-tab nav (Feed, Spaces, Lab, Profile)
+> - ✅ AppShell layout — shell with left sidebar + right rail slot
+> - ✅ Bottom nav replaced with sidebar
+> - ✅ GlobalFAB / LeaderCreateFAB
+> - ✅ Discover feed with personalized scoring
+> - ✅ Space view with chat, tools, events, members
+> - ✅ HiveLab with 33 elements, 10 execute handlers
+> - ✅ ~248/268 API routes
+>
+> **What's still in the backlog:** The design system violation sweep (703 opacity instances, 359 radius, 199 animations) is in `docs/TODO-LAUNCH.md` Part B.
+>
+> _The rest of this document is the original Feb 9 build plan. Historical context only._
+---
 
 ---
 

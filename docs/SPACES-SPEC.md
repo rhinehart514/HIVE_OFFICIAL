@@ -350,27 +350,27 @@ Not a separate page. A panel or overlay within the space.
 
 ## What to Kill
 
-| Component | Why |
-|-----------|-----|
-| `glass-barrier.tsx` | Frosted glass effect |
-| `join-ceremony.tsx` | Ceremonial animation, AI-ish |
-| `gathering-threshold.tsx` | Over-engineered, complex state |
-| `SpaceHealthBadge` | Gamification, AI-ish animated dots |
-| `boards-list.tsx` | Simplify to single board (chat) |
-| `board-item.tsx` | Goes with boards removal |
-| `board-creation-modal.tsx` | Goes with boards removal |
-| Online pulse animation | Static dot instead |
-| `activity-preview.tsx` | Part of threshold overhaul |
-| `familiar-faces.tsx` | Part of threshold overhaul |
+| Component | Why | Status |
+|-----------|-----|--------|
+| `glass-barrier.tsx` | Frosted glass effect | Open |
+| `join-ceremony.tsx` | Ceremonial animation, AI-ish | Open |
+| `gathering-threshold.tsx` | Over-engineered, complex state | Open |
+| `SpaceHealthBadge` | Gamification, AI-ish animated dots | Open |
+| `boards-list.tsx` | Simplify to single board (chat) | ✅ Boards killed (Feb 14) |
+| `board-item.tsx` | Goes with boards removal | ✅ Done |
+| `board-creation-modal.tsx` | Goes with boards removal | ✅ Done |
+| Online pulse animation | Static dot instead | Open |
+| `activity-preview.tsx` | Part of threshold overhaul | Open |
+| `familiar-faces.tsx` | Part of threshold overhaul | Open |
 
 ## What to Wire (exists but broken/disconnected)
 
-| Fix | Priority | Complexity |
-|-----|----------|------------|
-| Wire `_sidebarTools` → sidebar `tools` prop (currently `[]`) | P0 | Trivial |
-| Wire claiming flow (backend `claim/route.ts` exists, need UI) | P0 | Low |
-| Wire events from Firebase into sidebar (data exists, not surfaced) | P0 | Low |
-| Wire `transfer-ownership` API to UI (API exists, UI has dropdown) | P0 | Trivial |
+| Fix | Priority | Complexity | Status (Feb 22) |
+|-----|----------|------------|----------------|
+| Wire `_sidebarTools` → sidebar `tools` prop (currently `[]`) | P0 | Trivial | Unknown |
+| Wire claiming flow (backend `claim/route.ts` exists, need UI) | P0 | Low | Unknown |
+| Wire events from Firebase into sidebar (data exists) | P0 | Low | **Blocked** — space events API returns 0 (date type bug, see KNOWN_STATE.md) |
+| Wire `transfer-ownership` API to UI (API exists, UI has dropdown) | P0 | Trivial | Unknown |
 
 ## What to Build
 

@@ -29,7 +29,7 @@
 | 7 | Mobile nav drawer has no trigger | Mobile header shows logo only, no hamburger | Settings/sign-out unreachable on mobile (except via /me). |
 | 8 | Preview state is ephemeral | IDE Use mode has no `deploymentId` | User can't test a poll end-to-end until they deploy. |
 | 9 | No link from Space → HiveLab | `apps/web/src/app/s/[handle]/components/` | Space leader has no "Build a tool" entry point in-context. |
-| 10 | DMs, Notifications, Connections all OFF | Feature flags: `enable_dms`, `enable_connections` | Solo user has zero social signals. Space feels dead. |
+| 10 | DMs still OFF | `enable_dms` flag | DMs off by design at launch. `enable_connections` IS on — social graph is live. |
 
 ---
 
@@ -200,11 +200,10 @@ Start with space activity notifications: new members, new messages in spaces you
 - Firestore `featureFlags` collection
 - Notification, DM, and connection infrastructure
 
-**Change:** Flip feature flags ON for the core set:
-- `enable_dms` → ON (at minimum for space leaders)
-- Notifications → wire the bell (Fix 6) to real events
-
-Connections can stay OFF for now — they require more UI work.
+**Status (Feb 22 2026):**
+- `enable_connections` → **ALREADY ON** — social graph is live
+- `enable_dms` → **OFF by design** — deferred to post-launch
+- Notifications → bell exists, wiring to real events is an open item
 
 **Phased approach:**
 1. **Now:** Notifications bell + basic activity notifications (new members, RSVPs, messages)

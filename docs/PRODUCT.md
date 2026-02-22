@@ -92,18 +92,9 @@ That same poll has a standalone URL. Someone copies it, drops it in GroupMe. Peo
 When campus data exists for a user's school, an additional layer activates:
 
 ### Discover (`/discover`)
-The campus dashboard. What's happening right now:
-- **Dining** — what's open, what's closing soon (campus data)
-- **Events** — what's happening today/tonight (campus data + space events)
-- **Spaces** — active spaces at this campus
-- **Tools** — trending tools (most votes, most signups)
+The campus feed. Events + space activity + tools, personalized by relevance.
 
-Discover is NOT:
-- A feed
-- A social timeline
-- A recommendation engine
-
-It's a dashboard. Information-dense. Utility-first.
+Reality (Feb 22 2026): a ranked events feed is the primary surface. A personalized scoring engine ranks events by interest match, friend attendance, space membership, and time proximity. Dining data not yet wired. Three card types: EventCard, SpaceCard, ToolCard.
 
 ### Campus Data Sources
 - Dining hours and locations
@@ -127,25 +118,21 @@ No Discover page (nothing to discover without campus data). The product still wo
 
 ## Navigation
 
-### Campus Mode
-- **Discover** — campus dashboard
-- **Spaces** — your spaces list
-- **You** — profile + settings
-- **Create** (FAB/button) — build a tool or create a space
+**Current (Feb 22 2026) — 4-tab layout:**
+- **Feed** (`/discover`) — personalized campus stream
+- **Spaces** (`/spaces`) — browse + your communities
+- **Lab** (`/lab`) — creation engine (conversation-first)
+- **Profile** (`/me`) — identity, tools portfolio
 
-### Non-Campus Mode
-- **Spaces** — your spaces list
-- **Create** — build a tool or create a space
-- **You** — profile + settings
+Events are NOT a nav tab. They are content inside Feed. See `docs/LAUNCH-IA.md` → Locked Decisions.
 
 ---
 
 ## User Journey
 
 ### Entry
-1. Email → verification code → first + last name → done.
-2. Handle auto-generated from name.
-3. No year, major, interests, role selection. None.
+5-screen onboarding (built Feb 13 2026): email → OTP verify → name → interests selection → space recommendations.
+Handle auto-generated from name. Interests feed the personalization scoring engine.
 
 ### First Open (Campus Mode)
 User lands on Discover. They see what's happening at their campus. Dining, events, active spaces. They tap a space, join, start chatting.
@@ -179,16 +166,17 @@ User lands on Spaces. It's empty. They either:
 | Me | `/me` | Your own profile + settings |
 | About | `/about` | The story |
 
-### What's NOT a surface anymore:
-- `/feed` — no feed. Redirects to Discover or Spaces.
-- `/home` — no home. Redirects to Discover or Spaces.
-- `/explore` — merged into Discover.
-- `/notifications` — TBD. Not a priority for launch.
-- `/calendar` — not a surface. Events show in Discover + Space.
-- `/leaders` — no leaderboards.
-- `/connections`, `/friends` — no social graph.
+### What's NOT a nav tab at launch:
+- `/events` — Events are Feed content, not a destination. `/events` page exists but not in nav.
+- `/notifications` — Page exists but not a nav tab.
+- `/calendar` — "Coming soon" placeholder in settings.
+- `/leaders` — dead.
 - `/rituals` — dead.
 - `/resources` — dead.
+
+### Still live (routes exist + are functional):
+- `/me/connections` — social graph IS built and on (`enable_connections` flag is live).
+- `/notifications` — notification infrastructure exists, page accessible at `/notifications`.
 
 ---
 
@@ -208,24 +196,23 @@ Year/major/bio can be optional fields added later via progressive profiling. Not
 
 ## What HIVE Is NOT
 
-- **Not a social network.** No feed, no posts, no likes, no followers, no DMs (for now).
-- **Not a messaging app.** Chat exists inside Spaces as the interface for tools + coordination. It's not the product — it's the surface.
-- **Not another ed-tech tool.** There's no LMS, no gradebook, no assignments. Students build what they need.
+- **Not a posts-first social network.** The feed is events, not status updates. Creation (tools, events, signups) is the content — not text posts. Zero posts in production today.
+- **Not a messaging app.** Chat exists inside Spaces as the coordination surface. The product is the tools and the community, not the chat.
+- **Not another ed-tech tool.** No LMS, no gradebook, no assignments. Students build what they need.
 - **Not a platform for universities.** Universities don't buy HIVE. Students use HIVE. The institution is irrelevant.
+
+> **Clarification (Feb 22 2026):** A social graph IS built (connections collection, `enable_connections` flag is ON). A personalized feed IS built (scoring engine ranking events by interest + social signals). A 5-screen onboarding with interests collection IS built. These were "future" in earlier docs — they exist now.
 
 ---
 
-## What Exists in Codebase That Shouldn't
+## What Exists in Codebase That Is Dead / Deferred
 
-Based on API routes and pages that exist but don't fit this spec:
+- `/api/rituals` — dead concept, stub routes
+- `/api/dm/*` — DMs built but behind `enable_dms` flag (intentionally off at launch)
+- `/api/posts/*` — posts infrastructure exists, 0 posts in production
+- `/api/activity-feed` — wired but hollow (only member joins write to it)
 
-- `/api/rituals` — dead concept
-- `/api/friends`, `/api/connections` — no social graph
-- `/api/social/*` — no social layer
-- `/api/dm/*` — no DMs at launch
-- `/api/feed/*` — no feed
-- `/api/posts/*` — no posts
-- `/api/activity-feed` — no activity feed
+> **Was on this list, now real:** `/api/connections`, `/api/social/*` — social graph IS live. `/api/feed/*` — events feed IS live.
 - `/api/waitlist/*` — reconsider for launch
 - `/api/placements/*` — unclear purpose
 - `/api/onboarding/*` — entry flow replaces this

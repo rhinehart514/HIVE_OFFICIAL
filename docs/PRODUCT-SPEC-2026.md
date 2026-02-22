@@ -467,24 +467,37 @@ After 6 months on HIVE, a club has:
 
 ---
 
-# WHAT SHIPS FRIDAY (Feb 14)
+# LAUNCH STATUS — Feb 22 2026
 
-The full product isn't built in 5 days. What ships:
+Feb 14 target was missed. Launching as soon as 6 blockers are cleared. See `docs/KNOWN_STATE.md` → Launch Blockers for the exact list.
 
-1. **Landing page** with "Your club is already here" positioning
-2. **Entry flow** — email → code → in
-3. **Discover** — UB spaces, events from RSS, search
-4. **Spaces** — claim, join, chat with slash commands (/poll, /rsvp, /countdown)
-5. **Leader tools** — FAB, basic analytics, settings
-6. **HiveLab** — library (5-10 starter apps), AI creation (conversational)
-7. **Standalone tools** — `/t/` links that work for anyone
-8. **5 real users** running their orgs on HIVE
+## What's Actually Built (Feb 22)
 
-What ships later:
+1. ✅ **Landing page** — live
+2. ✅ **Entry flow** — email → OTP → name → interests → space recommendations (5 screens)
+3. ✅ **Discover** — personalized events feed, 2,772 real events, scoring engine live
+4. ✅ **Spaces** — browse 1,174 spaces, join flow works, chat, tools, events tabs
+5. ✅ **Leader tools** — FAB, analytics panel, full space settings
+6. ✅ **HiveLab** — 33 elements, 10 execute handlers, AI generation (Groq), 30 quick templates
+7. ✅ **Standalone tools** — `/t/[toolId]` works for anonymous users
+8. ✅ **Social graph** — connections, follows, mutual friends in feed
+9. ✅ **~248/268 API routes** — 7 stubs identified
+
+## Launch Blockers (must fix first)
+
+1. Events feed missing images + space links
+2. Space events returning 0
+3. Auth flow needs end-to-end validation
+4. Profile black screen
+5. 7-day space creation gate
+6. Events nav tab in sidebar
+
+## Ships Later (post-launch)
+
 - Verified leadership records (needs 1+ semester of data)
 - Full automation system
 - HiveLab marketplace (community-contributed apps)
-- Cross-campus expansion
+- Cross-campus expansion (scraper pipeline + <1hr per campus)
 - Employer product
 
 ---

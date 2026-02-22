@@ -1,11 +1,47 @@
-# HIVE Launch TODO — Full Platform
+# HIVE Launch TODO
 
-> ⚠️ **STALE AS OF FEB 22 2026** — Original target was Feb 14. Use as a backlog, not a current plan.
-> For current state, launch blockers, and live data: see `docs/KNOWN_STATE.md` → Ground Truth section.
+> **Source of truth for launch status:** `docs/KNOWN_STATE.md`
+> **Source of truth for launch UX:** `docs/LAUNCH-IA.md`
+>
+> This doc is split into two sections:
+> - **Part A — LAUNCH BLOCKERS:** Things that must ship before any real user touches the product. Sourced from KNOWN_STATE.md.
+> - **Part B — DESIGN DEBT BACKLOG:** The 1,400+ design system violations and dead code. Real debt, not launch blockers.
 
-> Target: Friday Feb 14, 2026 — 5 real users
-> Design spec: cold/minimal, Linear meets Vercel
-> Rules: #000 base, #FFD700 action-only, white + white/50 text, rounded-full pills, no AI-ish
+---
+
+## PART A — LAUNCH BLOCKERS
+_As of Feb 22 2026. Fix these before shipping to real users._
+
+### #1 Events feed: images + space links missing
+**Route:** `apps/web/src/app/api/events/personalized/route.ts`
+- `coverImageUrl` reads `event.coverImageUrl` but Firestore field is `event.imageUrl`. Fix: `(event.imageUrl || event.coverImageUrl)`.
+- `spaceHandle` reads `event.spaceHandle` which doesn't exist. Fix: batch-resolve from `spaces` collection via `Promise.allSettled`.
+
+### #2 Space events returning 0
+**Route:** `apps/web/src/app/api/events/route.ts` → `fetchDocsForTimeField`
+- Passes `Date` objects to `where('startDate', '>=', now)`. Fix: use `now.toISOString()` when `dateField === 'startDate'`.
+
+### #3 Auth flow — not validated end-to-end
+- Last validated ~Feb 14. Need to walk the full flow as a new UB student (email → OTP → onboarding → discover).
+
+### #4 Profile black screen
+- Page loads then goes black. Cause not yet diagnosed. See `apps/web/src/app/u/[handle]/ProfilePageContent.tsx` (731 lines).
+
+### #5 7-day account age gate on space creation
+**File:** `apps/web/src/app/api/spaces/route.ts:167`
+- New users cannot create a space until account is 7 days old. Kills first-session activation.
+- Fix: remove the age check. Keep email verification + daily limit of 3.
+
+### #6 Events nav tab in sidebar
+**Files:** `apps/web/src/lib/navigation.ts` + `apps/web/src/components/shell/AppSidebar.tsx`
+- Events is not a nav tab. It's content inside Feed. Remove the Events entry from both files.
+- LAUNCH-IA.md LOCKED DECISION: "Events surface through Feed + Spaces — no dedicated nav tab."
+
+---
+
+## PART B — DESIGN DEBT BACKLOG
+_Originally targeted Feb 14. Still valid debt but NOT launch blockers. Ship the product first._
+_Design spec: cold/minimal. #000 base, #FFD700 action-only, white + white/50 text, rounded-full pills._
 
 ---
 

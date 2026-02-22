@@ -1,6 +1,8 @@
 # HIVE Unified Enhancement Plan
 
-> ⚠️ **Stale numbers — Feb 22 2026.** System grades and cross-dependency map are still directionally accurate. Specific counts are off (spaces: 1,174 not 698, routes: 268+ not 228). "Feed C+" verdict still holds — events API is currently broken. For current blockers, see `docs/KNOWN_STATE.md` → Launch Blockers.
+> ⚠️ **Stale — Feb 22 2026.** Live numbers: spaces: 1,174 | events: 2,772 | routes: 268+ | users: 4 | posts: 0 | campuses: 0.
+> System grades and cross-dependency map are directionally accurate. Phase 1 status updated below — see each item.
+> For current blockers: `docs/KNOWN_STATE.md` → Launch Blockers.
 
 > Synthesis of 8 deep system audits. Every recommendation connects to one outcome: **a student signs up, finds their people, builds something, and comes back tomorrow.**
 
@@ -57,10 +59,10 @@ User comes back tomorrow
 
 These are the P0 blockers from the single-user spec. Nothing else matters until a new user can complete the core loop.
 
-### 1.1 Remove 7-Day Space Creation Gate
+### 1.1 Remove 7-Day Space Creation Gate — **🔴 STILL OPEN**
 **Effort:** 15 min | **Impact:** Unblocks entire flow
 
-**File:** `apps/web/src/app/api/spaces/route.ts:160-168`
+**File:** `apps/web/src/app/api/spaces/route.ts:160-168` (confirmed still there Feb 22)
 
 Remove the 7-day account age check. Keep email verification (already exists on next line) and daily limit of 3.
 
@@ -84,7 +86,7 @@ The IDE already accepts `initialPrompt` prop. The fix is ensuring `HiveLabIDE` a
 
 ---
 
-### 1.3 Fix "Spaces" Nav
+### 1.3 Fix "Spaces" Nav — **✅ FIXED**
 **Effort:** 1-2 hrs | **Impact:** Second nav pillar works
 
 **File:** `apps/web/src/app/spaces/page.tsx` — currently `router.replace('/home')`
@@ -164,10 +166,10 @@ These fixes wire existing infrastructure together. Most of this code is *built* 
 
 ---
 
-### 2.4 Enable DMs (Feature Flag Flip)
+### 2.4 Enable DMs (Feature Flag Flip) — **🟡 DEFERRED**
 **Effort:** 2-4 hrs | **Impact:** Users can actually communicate
 
-**Current state:** DM infrastructure is 100% complete — API routes, SSE streaming, context provider, read state tracking, unread counts. All hidden behind `enable_dms` feature flag.
+**Current state (Feb 22):** DMs intentionally OFF at launch. `enable_connections` flag IS on (social graph live). DMs deferred to post-launch.
 
 **What's needed:**
 1. Flip `enable_dms` flag ON
