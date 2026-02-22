@@ -1,9 +1,19 @@
 # CLAUDE.md — HIVE Codebase Guide
 
-HIVE is a campus social platform where students create tools for their communities.
-Spaces (orgs, greek life, dorms) are the core unit. HiveLab is the creation runtime
-that lets org leaders build interactive tools (polls, RSVPs, leaderboards, forms)
-deployed directly into their space — no separate hosting, no cold start.
+HIVE is a creation-led campus app. The front door is creation — any student can
+describe what they need and get a working tool in 30 seconds. The community layer
+(Spaces) is where tools live. The campus data layer (2,772 real events, 1,174 org
+spaces) makes communities feel alive before any user does anything.
+
+**The pitch:** "Build anything for your campus life. Share it anywhere."
+**The moat:** AI-native campus creation + community distribution + campus context. Unoccupied in 2026.
+
+Three systems, in dependency order:
+- **HiveLab** — creation runtime (33 elements, AI gen, /t/ standalone links). The differentiator.
+- **Spaces** — community layer (chat, members, events, deployed tools). Where creations live.
+- **Campus data** — aggregation layer (CampusLabs events, org spaces). Cold start content.
+
+Product shape locked Feb 22 2026. See `docs/WORKSESSION-2026-02-22.md` for full decision.
 
 ## Reference Docs — load only what your task needs
 

@@ -192,5 +192,37 @@ Nova handles IA + product specs. Claude Code handles API fixes simultaneously.
 
 ---
 
+---
+
+## LOCKED: Product Shape Decision — Feb 22 2026
+
+**HIVE is a creation-led campus app.**
+
+The front door is creation. The community layer is where creations live. The campus data layer makes the community feel alive before any user does anything.
+
+Not a pure social network. Not a pure tool builder. The combination is the thing — creation as the status signal, community as the distribution, campus as the context.
+
+### What this means concretely
+
+| Surface | Before this decision | After this decision |
+|---------|---------------------|---------------------|
+| Onboarding final screen | "Here are spaces to join" | "What do you want to make?" |
+| Profile | Org memberships + spaces | Creation portfolio — tools built, usage counts, then spaces |
+| Lab | One tab among four | The hero surface — first thing a new user is guided toward |
+| Feed | Primary entry | Cold start content layer — campus is alive, now go create something |
+| `/t/[toolId]` | Shareable afterthought | Acquisition engine — the viral loop |
+
+### The pitch (locked)
+
+> "Build anything for your campus life. Share it anywhere."
+
+Not "campus OS." Not "Discord for campus." Creation-first. Every student, not just org leaders.
+
+### The moat
+
+No other platform has: AI-native campus creation + community distribution + campus context (real events, real orgs, real identity). That combination is unoccupied in 2026.
+
+---
+
 *Written: Feb 22 2026. Based on product strategy session with Jacob.*
 *Reference: `docs/KNOWN_STATE.md`, `docs/LAUNCH-IA.md`, `docs/FIRESTORE_SCHEMA.md`*
