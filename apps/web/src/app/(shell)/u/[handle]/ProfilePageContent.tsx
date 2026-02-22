@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, Check, Clock, UserMinus, UserPlus,
   Wrench, Calendar, MapPin, Video, Users, ChevronRight, Zap,
-  Share2, Camera, Hammer, Compass, Link2,
+  Share2, Camera, Hammer, Compass, Sparkles,
 } from 'lucide-react';
 import {
   ProfileToolModal,
@@ -73,7 +73,7 @@ async function fetchSuggestedSpaces() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Bento Card base — #1 Card Hover Lift
+// Bento Card base
 // ─────────────────────────────────────────────────────────────────────────────
 
 function Card({ children, className = '', onClick }: {
@@ -81,7 +81,7 @@ function Card({ children, className = '', onClick }: {
   className?: string;
   onClick?: () => void;
 }) {
-  const base = 'rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden';
+  const base = 'rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden';
   if (onClick) {
     return (
       <motion.button
@@ -107,36 +107,7 @@ function Card({ children, className = '', onClick }: {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// #8 Reusable Empty State
-// ─────────────────────────────────────────────────────────────────────────────
-
-function EmptyState({ icon: Icon, title, subtitle, ctaLabel, ctaHref }: {
-  icon: React.ElementType;
-  title: string;
-  subtitle: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 py-1">
-      <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
-        <Icon className="w-3.5 h-3.5 text-white/30" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[12px] text-white/40">{title}</p>
-        <p className="text-[11px] text-white/20">{subtitle}</p>
-      </div>
-      {ctaLabel && ctaHref && (
-        <Link href={ctaHref} className="text-[11px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors shrink-0 flex items-center gap-0.5">
-          {ctaLabel} <ArrowRight className="w-3 h-3" />
-        </Link>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// #3 Profile Completeness Ring
+// Completeness Ring
 // ─────────────────────────────────────────────────────────────────────────────
 
 function CompletenessRing({ heroUser, interests, spaceCount, toolCount }: {
@@ -156,7 +127,6 @@ function CompletenessRing({ heroUser, interests, spaceCount, toolCount }: {
   const radius = 14;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
-  const isGold = score >= 100;
 
   return (
     <div className="absolute top-3 left-3 flex items-center gap-1.5">
@@ -164,7 +134,7 @@ function CompletenessRing({ heroUser, interests, spaceCount, toolCount }: {
         <circle cx="18" cy="18" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2.5" />
         <motion.circle
           cx="18" cy="18" r={radius} fill="none"
-          stroke={isGold ? '#FFD700' : 'rgba(255,255,255,0.3)'}
+          stroke="rgba(255,255,255,0.3)"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -179,7 +149,7 @@ function CompletenessRing({ heroUser, interests, spaceCount, toolCount }: {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Portrait card — identity hero (#2 Share, #3 Ring, #4 Photo Nudge, #5 Builder Badge)
+// Portrait card
 // ─────────────────────────────────────────────────────────────────────────────
 
 function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, onShare, connectionState, isConnectionLoading, onConnect, onAcceptRequest, onUnfriend, onMessage, isBuilder, completenessProps }: {
@@ -203,15 +173,13 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, onShare, c
   const infoLine = [heroUser.major, heroUser.classYear, heroUser.campusName].filter(Boolean).join(' · ');
 
   return (
-    <Card className="flex flex-col overflow-hidden">
-      {/* Portrait — tall image area, identity overlays bottom */}
+    <Card className="flex flex-col overflow-hidden h-full">
       <div className={`relative min-h-[360px] flex-1 bg-gradient-to-b ${gradient}`}>
         {heroUser.avatarUrl ? (
           <img src={heroUser.avatarUrl} alt={heroUser.fullName} className="absolute inset-0 w-full h-full object-cover object-top" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center flex-col gap-3">
             <span className="font-clash text-[140px] font-semibold text-white/10 select-none leading-none">{initial}</span>
-            {/* #4 Photo Upload Nudge */}
             {isOwnProfile && (
               <motion.button
                 onClick={onEdit}
@@ -226,12 +194,10 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, onShare, c
           </div>
         )}
 
-        {/* #3 Completeness Ring — own profile only */}
         {isOwnProfile && completenessProps && (
           <CompletenessRing heroUser={heroUser} {...completenessProps} />
         )}
 
-        {/* Online pulse */}
         {heroPresence.isOnline && (
           <span className="absolute top-3 right-3 flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-60" />
@@ -239,12 +205,10 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, onShare, c
           </span>
         )}
 
-        {/* Identity overlay — fades up from bottom of image */}
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-12"
-          style={{ background: 'linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.7) 60%, transparent 100%)' }}>
+          style={{ background: 'linear-gradient(to top, rgba(10,10,10,0.97) 0%, rgba(10,10,10,0.7) 60%, transparent 100%)' }}>
           <h1 className="font-clash text-[24px] font-semibold text-white leading-tight">{heroUser.fullName}</h1>
           <p className="font-sans text-[12px] text-white/50 mt-0.5">@{heroUser.handle}</p>
-          {/* #5 Builder Badge */}
           {isBuilder && (
             <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-[10px] font-medium text-amber-400">
               <Hammer className="w-2.5 h-2.5" />Builder
@@ -255,7 +219,6 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, onShare, c
         </div>
       </div>
 
-      {/* Actions — below portrait (#2 Share Button) */}
       <div className="px-4 py-3 border-t border-white/[0.06]">
         <div className="flex items-center gap-2">
           {isOwnProfile ? (
@@ -316,28 +279,39 @@ function PortraitCard({ heroUser, heroPresence, isOwnProfile, onEdit, onShare, c
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Stats card
+// Stats card — warm gradient bg when user has activity
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StatsCard({ toolCount, spaceCount, isOwnProfile }: { toolCount: number; spaceCount: number; isOwnProfile: boolean }) {
+function StatsCard({ toolCount, spaceCount, connectionCount, isOwnProfile }: {
+  toolCount: number;
+  spaceCount: number;
+  connectionCount: number;
+  isOwnProfile: boolean;
+}) {
+  const hasActivity = toolCount > 0 || spaceCount > 0;
   const stats = [
-    { label: 'Tools built', value: toolCount },
+    { label: 'Tools', value: toolCount },
     { label: 'Spaces', value: spaceCount },
+    { label: 'Connections', value: connectionCount },
   ];
 
   return (
-    <Card className="flex flex-col justify-between p-5 gap-4">
-      <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Activity</p>
-      <div className="flex items-end gap-6">
+    <Card className={`relative flex flex-col justify-between p-5 gap-3 ${hasActivity ? '' : ''}`}>
+      {/* Subtle warm glow when active */}
+      {hasActivity && (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/[0.03] to-transparent pointer-events-none" />
+      )}
+      <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 relative">Stats</p>
+      <div className="flex items-end gap-5 relative">
         {stats.map(s => (
           <div key={s.label}>
-            <p className="font-clash text-[48px] font-semibold text-white leading-none">{s.value}</p>
+            <p className={`font-clash text-[36px] font-semibold leading-none ${s.value > 0 ? 'text-white' : 'text-white/20'}`}>{s.value}</p>
             <p className="text-[11px] text-white/35 mt-1">{s.label}</p>
           </div>
         ))}
       </div>
       {isOwnProfile && toolCount === 0 && (
-        <Link href="/lab" className="flex items-center gap-1.5 text-[12px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors">
+        <Link href="/lab" className="flex items-center gap-1.5 text-[12px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors relative">
           <Zap className="w-3 h-3" />Build your first tool <ArrowRight className="w-3 h-3" />
         </Link>
       )}
@@ -368,7 +342,7 @@ function InterestsCard({ interests, isOwnProfile }: { interests: string[]; isOwn
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// #6 Connections Card
+// Connections Card — ghost avatars when empty
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ConnectionsCard({ connections, totalConnections, mutualFriendsCount, isOwnProfile }: {
@@ -381,15 +355,22 @@ function ConnectionsCard({ connections, totalConnections, mutualFriendsCount, is
 
   if (totalConnections === 0 && isOwnProfile) {
     return (
-      <Card className="p-4 flex flex-col justify-between">
-        <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 mb-2">Connections</p>
-        <EmptyState
-          icon={Users}
-          title="Connect with people"
-          subtitle="Find classmates on campus"
-          ctaLabel="Discover"
-          ctaHref="/discover"
-        />
+      <Card className="relative p-4 flex flex-col justify-between overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] to-transparent pointer-events-none" />
+        <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 relative mb-3">Connections</p>
+        <div className="relative">
+          {/* Ghost avatar previews — shows what this card becomes */}
+          <div className="flex -space-x-2 mb-3">
+            {[0, 1, 2, 3, 4].map(i => (
+              <div key={i} className="w-8 h-8 rounded-full border-2 border-[#0a0a0a] bg-white/[0.04]" style={{ opacity: 1 - i * 0.15 }} />
+            ))}
+          </div>
+          <p className="text-[13px] text-white/40 mb-0.5">Find your people</p>
+          <p className="text-[11px] text-white/20 mb-2">Connect with classmates on campus</p>
+          <Link href="/discover" className="inline-flex items-center gap-1 text-[11px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors">
+            Discover <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
       </Card>
     );
   }
@@ -404,10 +385,9 @@ function ConnectionsCard({ connections, totalConnections, mutualFriendsCount, is
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Stacked avatars */}
         <div className="flex -space-x-2">
           {connections.slice(0, 4).map((conn, i) => (
-            <div key={conn.id} className="w-8 h-8 rounded-full border-2 border-[#080808] overflow-hidden bg-white/[0.06]" style={{ zIndex: 4 - i }}>
+            <div key={conn.id} className="w-8 h-8 rounded-full border-2 border-[#0a0a0a] overflow-hidden bg-white/[0.06]" style={{ zIndex: 4 - i }}>
               {conn.avatarUrl ? (
                 <img src={conn.avatarUrl} alt={conn.fullName} className="w-full h-full object-cover" />
               ) : (
@@ -431,7 +411,7 @@ function ConnectionsCard({ connections, totalConnections, mutualFriendsCount, is
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Spaces card (#8 Better Empty State)
+// Spaces card — gradient warmth when empty
 // ─────────────────────────────────────────────────────────────────────────────
 
 function SpacesCard({ spaces, suggestedSpaces, isOwnProfile, onSpaceClick }: {
@@ -443,60 +423,76 @@ function SpacesCard({ spaces, suggestedSpaces, isOwnProfile, onSpaceClick }: {
   const hasSpaces = spaces.length > 0;
 
   return (
-    <Card className="col-span-2 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Spaces</p>
-        {hasSpaces && isOwnProfile && (
-          <Link href="/spaces" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
-            Browse <ArrowRight className="w-3 h-3" />
-          </Link>
-        )}
-      </div>
-
-      {hasSpaces ? (
-        <div className="grid grid-cols-2 gap-2">
-          {spaces.slice(0, 4).map(space => (
-            <button key={space.id} onClick={() => onSpaceClick(space.id)}
-              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-left group"
-            >
-              {space.emoji && <span className="text-base">{space.emoji}</span>}
-              <span className="text-[13px] text-white/60 group-hover:text-white/80 transition-colors truncate flex-1">{space.name}</span>
-              {space.isLeader && <span className="text-[9px] font-sans text-[#FFD700]/60 uppercase shrink-0">Lead</span>}
-              <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-white/35 shrink-0" />
-            </button>
-          ))}
-        </div>
-      ) : isOwnProfile ? (
-        <EmptyState
-          icon={Compass}
-          title="Join your first space"
-          subtitle="Where your campus community lives"
-          ctaLabel="Browse"
-          ctaHref="/spaces"
-        />
-      ) : (
-        <div>
-          <p className="text-[12px] text-white/25 mb-3">Not in any spaces yet</p>
-          {suggestedSpaces.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              {suggestedSpaces.map((s: { id: string; name: string; handle?: string; slug?: string; memberCount?: number }) => (
-                <Link key={s.id} href={`/s/${s.handle || s.slug || s.id}`}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.04] transition-colors group"
-                >
-                  <span className="text-[13px] text-white/50 group-hover:text-white/70">{s.name}</span>
-                  <span className="text-[11px] text-[#FFD700]/60 font-medium">Join →</span>
-                </Link>
-              ))}
-            </div>
+    <Card className="col-span-2 relative overflow-hidden">
+      {/* Warm gradient for empty own-profile */}
+      {!hasSpaces && isOwnProfile && (
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.04] to-transparent pointer-events-none" />
+      )}
+      <div className="p-4 relative">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Spaces</p>
+          {hasSpaces && isOwnProfile && (
+            <Link href="/spaces" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
+              Browse <ArrowRight className="w-3 h-3" />
+            </Link>
           )}
         </div>
-      )}
+
+        {hasSpaces ? (
+          <div className="grid grid-cols-2 gap-2">
+            {spaces.slice(0, 4).map(space => (
+              <button key={space.id} onClick={() => onSpaceClick(space.id)}
+                className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-left group"
+              >
+                {space.emoji && <span className="text-base">{space.emoji}</span>}
+                <span className="text-[13px] text-white/60 group-hover:text-white/80 transition-colors truncate flex-1">{space.name}</span>
+                {space.isLeader && <span className="text-[9px] font-sans text-[#FFD700]/60 uppercase shrink-0">Lead</span>}
+                <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-white/35 shrink-0" />
+              </button>
+            ))}
+          </div>
+        ) : isOwnProfile ? (
+          <div className="flex items-center gap-4">
+            {/* Ghost space cards preview */}
+            <div className="flex gap-2">
+              {['🎭', '📚', '⚡'].map((emoji, i) => (
+                <div key={i} className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center" style={{ opacity: 1 - i * 0.2 }}>
+                  <span className="text-sm opacity-40">{emoji}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] text-white/40">Join your first space</p>
+              <p className="text-[11px] text-white/20">Where your campus community lives</p>
+            </div>
+            <Link href="/spaces" className="inline-flex items-center gap-1 text-[11px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors shrink-0">
+              Browse <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        ) : (
+          <div>
+            <p className="text-[12px] text-white/25 mb-3">Not in any spaces yet</p>
+            {suggestedSpaces.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {suggestedSpaces.map((s: { id: string; name: string; handle?: string; slug?: string; memberCount?: number }) => (
+                  <Link key={s.id} href={`/s/${s.handle || s.slug || s.id}`}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.04] transition-colors group"
+                  >
+                    <span className="text-[13px] text-white/50 group-hover:text-white/70">{s.name}</span>
+                    <span className="text-[11px] text-[#FFD700]/60 font-medium">Join →</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// #7 Activity Timeline Strip
+// Activity Timeline Strip
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ActivityStrip({ contributions, currentStreak }: {
@@ -505,7 +501,6 @@ function ActivityStrip({ contributions, currentStreak }: {
 }) {
   if (contributions.length === 0) return null;
 
-  // Build 12-week (84 day) grid from most recent data
   const now = new Date();
   const dayMap = new Map<string, number>();
   for (const c of contributions) {
@@ -529,8 +524,9 @@ function ActivityStrip({ contributions, currentStreak }: {
   }
 
   return (
-    <Card className="col-span-2 p-4">
-      <div className="flex items-center justify-between mb-3">
+    <Card className="col-span-2 p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-r from-[#FFD700]/[0.02] to-transparent pointer-events-none" />
+      <div className="flex items-center justify-between mb-3 relative">
         <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Activity</p>
         {currentStreak > 0 && (
           <span className="flex items-center gap-1 text-[11px] text-[#FFD700]/70">
@@ -538,8 +534,7 @@ function ActivityStrip({ contributions, currentStreak }: {
           </span>
         )}
       </div>
-      <div className="grid grid-cols-12 gap-[3px]">
-        {/* 12 columns × 7 rows = 84 cells */}
+      <div className="grid grid-cols-12 gap-[3px] relative">
         {Array.from({ length: 12 }, (_, col) => (
           <div key={col} className="flex flex-col gap-[3px]">
             {Array.from({ length: 7 }, (_, row) => {
@@ -577,26 +572,30 @@ function TopToolCard({ tool, isOwnProfile, onToolClick }: {
     if (!isOwnProfile) return null;
     return (
       <Link href="/lab">
-        <Card className="p-4 flex flex-col justify-between min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer">
-          <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Top tool</p>
-          <div className="flex-1 flex flex-col justify-center">
-            <p className="text-[13px] text-white/40">Build something</p>
+        <Card className="relative p-5 flex flex-col justify-between min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.04] to-transparent pointer-events-none" />
+          <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 relative">Top tool</p>
+          <div className="relative flex-1 flex flex-col justify-center">
+            <span className="text-2xl mb-2">⚡</span>
+            <p className="text-[13px] font-medium text-white/50">Build something</p>
             <p className="text-[11px] text-white/20 mt-0.5">Your best tool lives here</p>
           </div>
-          <span className="text-[11px] text-[#FFD700]/60 flex items-center gap-1">Open Lab <ArrowRight className="w-3 h-3" /></span>
+          <span className="text-[11px] text-[#FFD700]/60 flex items-center gap-1 relative">Open Lab <ArrowRight className="w-3 h-3" /></span>
         </Card>
       </Link>
     );
   }
 
   return (
-    <Card className="p-5 flex flex-col justify-between min-h-[140px]" onClick={() => onToolClick(tool.id)}>
-      <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Top tool</p>
-      <div>
+    <Card className="relative p-5 flex flex-col justify-between min-h-[140px] overflow-hidden" onClick={() => onToolClick(tool.id)}>
+      <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/[0.03] to-transparent pointer-events-none" />
+      <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 relative">Top tool</p>
+      <div className="relative">
+        {tool.emoji && <span className="text-xl mb-1 block">{tool.emoji}</span>}
         <p className="font-clash text-[18px] font-semibold text-white leading-snug">{tool.name}</p>
-        {tool.runs > 0 && <p className="text-[12px] text-white/35 mt-0.5">{tool.runs} uses</p>}
+        {tool.runs > 0 && <p className="text-[12px] text-[#FFD700]/50 mt-0.5">{tool.runs} uses</p>}
       </div>
-      <span className="text-[12px] text-white/30 flex items-center gap-1">View tool <ChevronRight className="w-3 h-3" /></span>
+      <span className="text-[12px] text-white/30 flex items-center gap-1 relative">View tool <ChevronRight className="w-3 h-3" /></span>
     </Card>
   );
 }
@@ -609,11 +608,13 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
   if (!event) {
     return (
       <Link href="/discover">
-        <Card className="p-4 flex flex-col justify-between min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer">
-          <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25">Upcoming event</p>
-          <div>
-            <p className="text-[14px] text-white/40 mb-3">No upcoming events</p>
-            <span className="text-[12px] text-[#FFD700]/60 flex items-center gap-1">Browse feed <ArrowRight className="w-3.5 h-3.5" /></span>
+        <Card className="relative p-4 flex flex-col justify-between min-h-[140px] hover:border-white/[0.1] transition-colors cursor-pointer overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.04] to-transparent pointer-events-none" />
+          <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 relative">Upcoming event</p>
+          <div className="relative">
+            <Calendar className="w-5 h-5 text-white/15 mb-2" />
+            <p className="text-[13px] text-white/40 mb-1">No upcoming events</p>
+            <span className="text-[11px] text-[#FFD700]/60 flex items-center gap-1">Browse feed <ArrowRight className="w-3 h-3" /></span>
           </div>
         </Card>
       </Link>
@@ -621,8 +622,9 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
   }
 
   return (
-    <Card className="p-4">
-      <div className="flex items-start justify-between gap-4">
+    <Card className="relative p-4 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.03] to-transparent pointer-events-none" />
+      <div className="flex items-start justify-between gap-4 relative">
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 mb-1.5">Upcoming event</p>
           <p className="text-[16px] font-semibold text-white leading-snug truncate">{event.title}</p>
@@ -650,7 +652,7 @@ function EventCard({ event }: { event: { id: string; title: string; startDate: s
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// #9 Tool Row with Hover Preview
+// Tool Row with Hover Preview
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ToolRow({ tool, onClick }: {
@@ -689,7 +691,6 @@ function ToolRow({ tool, onClick }: {
         </div>
       </button>
 
-      {/* Hover preview popover */}
       <AnimatePresence>
         {showPreview && (tool.description || tool.emoji) && (
           <motion.div
@@ -723,74 +724,24 @@ function ToolRow({ tool, onClick }: {
 
 function ProfileLoadingState() {
   return (
-    <div className="w-full max-w-5xl mx-auto px-6 py-6 pb-24 md:pb-8 animate-pulse">
-      {/* Bento skeleton — matches real layout exactly */}
+    <div className="w-full max-w-7xl mx-auto px-6 py-6 pb-24 md:pb-8 animate-pulse">
       <div className="flex flex-col md:flex-row gap-3 items-stretch">
-        {/* Left: Portrait skeleton */}
         <div className="md:w-[280px] shrink-0">
           <div className="rounded-2xl bg-white/[0.04] min-h-[460px] flex flex-col overflow-hidden">
-            {/* Image area */}
             <div className="flex-1 min-h-[360px]" />
-            {/* Action bar */}
             <div className="px-4 py-3 border-t border-white/[0.04]">
               <div className="h-9 rounded-xl bg-white/[0.04]" />
             </div>
           </div>
         </div>
-
-        {/* Right: 2-col grid skeleton */}
         <div className="flex-1 grid grid-cols-2 gap-3 content-start">
-          {/* Stats */}
-          <div className="rounded-2xl bg-white/[0.04] p-5 flex flex-col justify-between h-[160px]">
-            <div className="h-3 w-16 rounded bg-white/[0.04]" />
-            <div className="flex gap-6">
-              <div>
-                <div className="h-12 w-10 rounded bg-white/[0.04] mb-1" />
-                <div className="h-2.5 w-16 rounded bg-white/[0.04]" />
-              </div>
-              <div>
-                <div className="h-12 w-10 rounded bg-white/[0.04] mb-1" />
-                <div className="h-2.5 w-12 rounded bg-white/[0.04]" />
-              </div>
-            </div>
-          </div>
-          {/* Interests */}
-          <div className="rounded-2xl bg-white/[0.04] p-5 flex flex-col gap-3 h-[160px]">
-            <div className="h-3 w-16 rounded bg-white/[0.04]" />
-            <div className="flex flex-wrap gap-1.5">
-              {[56, 44, 64, 48, 52, 40].map((w, i) => (
-                <div key={i} className="h-6 rounded-full bg-white/[0.04]" style={{ width: w }} />
-              ))}
-            </div>
-          </div>
-          {/* Spaces — full width */}
-          <div className="col-span-2 rounded-2xl bg-white/[0.04] p-4 h-[140px]">
-            <div className="h-3 w-14 rounded bg-white/[0.04] mb-3" />
-            <div className="grid grid-cols-2 gap-2">
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} className="h-10 rounded-xl bg-white/[0.04]" />
-              ))}
-            </div>
-          </div>
-          {/* Event */}
-          <div className="rounded-2xl bg-white/[0.04] p-4 h-[140px]">
-            <div className="h-3 w-24 rounded bg-white/[0.04] mb-3" />
-            <div className="h-4 w-3/4 rounded bg-white/[0.04] mb-2" />
-            <div className="h-3 w-1/2 rounded bg-white/[0.04]" />
-          </div>
-          {/* Top tool */}
-          <div className="rounded-2xl bg-white/[0.04] p-5 h-[140px] flex flex-col justify-between">
-            <div className="h-3 w-16 rounded bg-white/[0.04]" />
-            <div>
-              <div className="h-5 w-2/3 rounded bg-white/[0.04] mb-1" />
-              <div className="h-3 w-16 rounded bg-white/[0.04]" />
-            </div>
-            <div className="h-3 w-20 rounded bg-white/[0.04]" />
-          </div>
+          <div className="rounded-2xl bg-white/[0.04] p-5 h-[150px]" />
+          <div className="rounded-2xl bg-white/[0.04] p-5 h-[150px]" />
+          <div className="col-span-2 rounded-2xl bg-white/[0.04] p-4 h-[100px]" />
+          <div className="rounded-2xl bg-white/[0.04] p-4 h-[140px]" />
+          <div className="rounded-2xl bg-white/[0.04] p-5 h-[140px]" />
         </div>
       </div>
-
-      {/* Tools list skeleton */}
       <div className="mt-3">
         <div className="h-3 w-12 rounded bg-white/[0.04] mb-2" />
         <div className="rounded-2xl bg-white/[0.04] divide-y divide-white/[0.02]">
@@ -870,7 +821,6 @@ export default function ProfilePageContent() {
     enabled: profileSpaces.length === 0,
   });
 
-  // #2 Share handler
   const handleShare = React.useCallback(() => {
     const url = `${window.location.origin}/u/${handle}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -894,9 +844,7 @@ export default function ProfilePageContent() {
   if (handleError === 'error' || error) return <ProfileErrorState onRetry={() => window.location.reload()} />;
   if (!profileData || !heroUser) return <ProfileNotFoundState handle={handle} />;
 
-  // Deduplicate by ID (backend can return dupes from seeded data)
   const uniqueTools = profileTools.filter((t, i, arr) => arr.findIndex(x => x.id === t.id) === i);
-  // Also dedup by name — backend seeding can return same-name tools with different IDs
   const seenNames = new Set<string>();
   const dedupedTools = uniqueTools.filter(t => {
     const key = t.name.toLowerCase().trim();
@@ -913,11 +861,8 @@ export default function ProfilePageContent() {
   } : null;
 
   return (
-    <div className="w-full px-6 md:px-10 lg:px-16 py-6 pb-24 md:pb-8">
-      {/* Bento — flex row: fixed portrait + fluid right grid */}
+    <div className="w-full max-w-7xl mx-auto px-6 py-6 pb-24 md:pb-8">
       <div className="flex flex-col md:flex-row gap-3 items-stretch">
-
-        {/* Left: Portrait — fixed width, stretches to right column height */}
         <div className="md:w-[280px] shrink-0">
           <PortraitCard
             heroUser={heroUser}
@@ -940,11 +885,11 @@ export default function ProfilePageContent() {
           />
         </div>
 
-        {/* Right: 2-col grid, fills remaining width */}
         <div className="flex-1 grid grid-cols-2 gap-3 content-start">
           <StatsCard
             toolCount={dedupedTools.length}
             spaceCount={profileSpaces.length}
+            connectionCount={totalConnections}
             isOwnProfile={isOwnProfile}
           />
           {interests.length > 0 ? (
@@ -963,7 +908,6 @@ export default function ProfilePageContent() {
             isOwnProfile={isOwnProfile}
             onSpaceClick={handleSpaceClick}
           />
-          {/* Connections card below spaces when interests exist (already shown above otherwise) */}
           {interests.length > 0 && (
             <ConnectionsCard
               connections={profileConnections}
@@ -972,14 +916,12 @@ export default function ProfilePageContent() {
               isOwnProfile={isOwnProfile}
             />
           )}
-          {/* #7 Activity Timeline */}
           <ActivityStrip contributions={activityContributions} currentStreak={currentStreak} />
           <EventCard event={nextEvent} />
           <TopToolCard tool={topTool} isOwnProfile={isOwnProfile} onToolClick={handleToolClick} />
         </div>
       </div>
 
-      {/* Tools — clean list with hover previews (#9) */}
       {sortedTools.length > 0 && (
         <div className="mt-3">
           <div className="flex items-center justify-between mb-2">
@@ -998,23 +940,26 @@ export default function ProfilePageContent() {
         </div>
       )}
 
-      {/* #8 Empty tools state for own profile */}
       {sortedTools.length === 0 && isOwnProfile && (
         <div className="mt-3">
-          <Card className="p-4">
-            <p className="text-[11px] font-sans uppercase tracking-[0.15em] text-white/25 mb-1">Tools</p>
-            <EmptyState
-              icon={Wrench}
-              title="Create your first tool"
-              subtitle="Build polls, forms, and more for your spaces"
-              ctaLabel="Open Lab"
-              ctaHref="/lab"
-            />
+          <Card className="relative p-4 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.04] to-transparent pointer-events-none" />
+            <div className="relative flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#FFD700]/[0.08] flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4 text-[#FFD700]/50" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[13px] font-medium text-white/50">Create your first tool</p>
+                <p className="text-[11px] text-white/20">Build polls, forms, and more for your spaces</p>
+              </div>
+              <Link href="/lab" className="inline-flex items-center gap-1 text-[11px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors shrink-0">
+                Open Lab <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
           </Card>
         </div>
       )}
 
-      {/* Report (non-own profiles) */}
       {!isOwnProfile && (
         <div className="flex justify-end mt-4">
           <button onClick={() => setShowReportModal(true)} className="text-[12px] text-white/20 hover:text-white/40 transition-colors">
