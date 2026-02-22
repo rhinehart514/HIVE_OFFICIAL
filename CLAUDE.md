@@ -19,6 +19,7 @@ Product shape locked Feb 22 2026. See `docs/WORKSESSION-2026-02-22.md` for full 
 
 | Doc | Load when |
 |-----|-----------|
+| `docs/PRODUCT-STRATEGY.md` | Understanding what HIVE is, who it's for, why it matters — read before making product decisions |
 | `docs/KNOWN_STATE.md` | Debugging, fixing broken routes, checking what's implemented vs stubbed |
 | `docs/FIRESTORE_SCHEMA.md` | Writing Firestore queries, adding collections, anything touching data layer |
 | `docs/LAUNCH-IA.md` | Changing nav, adding pages, modifying shell layout, UX decisions |
