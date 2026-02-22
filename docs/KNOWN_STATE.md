@@ -19,7 +19,7 @@ _Verified against live Firestore + local dev server. This is what actually exist
 
 **Feed (`/discover`)**
 - Page renders ✓
-- Events API (`/api/events/personalized`) — **BROKEN, 500** (see Broken section)
+- Events API (`/api/events/personalized`) — returns events but **images + space links missing** (field mapping bugs, see Broken section)
 - Real events exist and are good quality once API is fixed — 371 in next 7 days, 76% have images
 - Tool cards and space discovery cards render in feed body ✓
 - Right panel: Next Up, Active Spaces, On Campus sections exist ✓
@@ -175,16 +175,7 @@ through Feed + Spaces." But `navigation.ts` and `AppSidebar.tsx` still include a
 **Fix:** Remove Events from `apps/web/src/lib/navigation.ts` and `AppSidebar.tsx`.
 The `/events` page can remain (redirect target) but should not be a sidebar nav item.
 
-### `coverImageUrl` missing from personalized events response
-**Root cause:** API maps `event.coverImageUrl` but Firestore stores it as `event.imageUrl`.
-**Fix:** `coverImageUrl: (event.imageUrl || event.coverImageUrl) as string | undefined`
-
-### `spaceHandle` missing from personalized events response
-**Root cause:** `spaceHandle` doesn't exist on event documents. API was passing through
-`event.spaceHandle` which is always `undefined`.
-**Fix:** Batch-fetch space handles from spaces collection using `spaceId` as doc ID.
-Use `Promise.allSettled` with individual `.doc(id).get()` calls — `getAll()` and
-`where('__name__', 'in', batch)` both have issues in this route's context.
+_(coverImageUrl and spaceHandle bugs are detailed above in the personalized API section)_
 
 ### `campuses` collection is empty
 **Root cause:** Campus documents were never created.
