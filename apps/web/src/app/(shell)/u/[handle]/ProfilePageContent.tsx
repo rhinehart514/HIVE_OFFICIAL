@@ -82,34 +82,34 @@ function ZoneHeader({ children }: { children: React.ReactNode }) {
 
 function ProfileLoadingState() {
   return (
-    <div className="w-full max-w-4xl mx-auto px-6 py-6 pb-24 md:pb-8 space-y-8">
+    <div className="w-full max-w-7xl mx-auto px-6 lg:px-10 py-6 pb-24 md:pb-8 space-y-8">
       {/* Zone 1: Hero skeleton */}
       <ProfileIdentityHeroSkeleton />
 
       {/* Zone 2: Tools skeleton */}
       <div className="space-y-4 animate-pulse">
         <div className="h-3 w-20 rounded bg-white/[0.04]" />
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-white/[0.04] h-[160px] col-span-2" />
-          <div className="rounded-2xl bg-white/[0.04] h-[120px]" />
-          <div className="rounded-2xl bg-white/[0.04] h-[120px]" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="rounded-2xl bg-white/[0.04] h-[180px]" />
+          <div className="rounded-2xl bg-white/[0.04] h-[180px]" />
         </div>
       </div>
 
       {/* Zone 3: Spaces skeleton */}
       <div className="space-y-4 animate-pulse">
         <div className="h-3 w-16 rounded bg-white/[0.04]" />
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[0, 1, 2].map(i => (
-            <div key={i} className="rounded-2xl bg-white/[0.04] h-[60px]" />
+            <div key={i} className="rounded-2xl bg-white/[0.04] h-[68px]" />
           ))}
         </div>
       </div>
 
       {/* Zone 4: Momentum skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
-        <div className="rounded-2xl bg-white/[0.04] h-[200px]" />
-        <div className="rounded-2xl bg-white/[0.04] h-[200px]" />
+        <div className="rounded-2xl bg-white/[0.04] h-[240px] md:col-span-2" />
+        <div className="rounded-2xl bg-white/[0.04] h-[160px]" />
+        <div className="rounded-2xl bg-white/[0.04] h-[160px]" />
       </div>
     </div>
   );
@@ -277,7 +277,7 @@ export default function ProfilePageContent() {
   const hasActivity = activityContributions.length > 0;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-6 py-6 pb-24 md:pb-8 space-y-8">
+    <div className="w-full max-w-7xl mx-auto px-6 lg:px-10 py-6 pb-24 md:pb-8 space-y-8">
 
       {/* ════════════════════════════════════════════════════════════════════════
           Zone 1: Identity Hero
@@ -337,12 +337,13 @@ export default function ProfilePageContent() {
           <ZoneHeader>Builder Showcase</ZoneHeader>
 
           {hasTools ? (
-            <>
-              {/* Featured tool — large card */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Featured tool — hero card */}
               <ProfileFeaturedToolCard
                 tool={featuredTool}
                 isOwnProfile={isOwnProfile}
                 onToolClick={handleToolClick}
+                className={secondaryTools.length === 0 ? 'lg:col-span-2' : ''}
               />
 
               {/* Secondary tools grid */}
@@ -352,7 +353,7 @@ export default function ProfilePageContent() {
                   onToolClick={handleToolClick}
                 />
               )}
-            </>
+            </div>
           ) : (
             /* Empty state — own profile only (hidden for others) */
             <motion.div
@@ -397,7 +398,7 @@ export default function ProfilePageContent() {
           </div>
 
           {hasSpaces ? (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {belongingSpaces.map(space => (
                 <ProfileBelongingSpaceCard
                   key={space.id}
