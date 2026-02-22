@@ -14,32 +14,28 @@ pnpm dev                        # Next.js on http://localhost:3000
 
 ---
 
-## 3 Files to Read First
+## Boot Order
 
-1. **`CLAUDE.md`** (repo root) — Full architecture, ERD, API routes, gotchas
-2. **`apps/web/src/lib/middleware.ts`** — Auth middleware pattern used by every API route
-3. **`packages/ui/src/components/hivelab/elements/registry.tsx`** — All HiveLab elements
+1. **`CLAUDE.md`** (repo root) — architecture, monorepo structure, full gotchas list, which docs to load for which task
+2. **This file** — trip-wires, task patterns, broken route status
+
+Then load only what your task needs. See CLAUDE.md → Reference Docs table for the load signal.
 
 ---
 
-## 5 Things That Will Trip You Up
+## Critical Gotchas (top 4 — full list in CLAUDE.md → What NOT To Do)
 
-1. **Two `PlacedToolDTO` types exist.** The one in `@hive/core` has `titleOverride` but no `name`. The one in `@/hooks/use-space-tools` has `name` and `description`. In `apps/web/src/`, always use the hook version.
+1. **`startDate` is an ISO string.** CampusLabs events store it as `"2026-02-24T14:00:00.000Z"`. Never pass `new Date()` to `where('startDate', '>=', ...)` — use `.toISOString()`. The `startAt` Timestamp field accepts `Date` objects.
 
-2. **Event time fields are inconsistent.** Events use `startDate`, `startAt`, or `startTime` depending on how they were created. Always use `getEventStartDate()` from `@/lib/events/event-time` — never query by one field alone.
+2. **`campusId` index is exempted.** `where('campusId', '==', campusId)` throws `FAILED_PRECONDITION`. Never filter by campusId. Use `where('startDate', '>=', now.toISOString())` instead.
 
-3. **The collection is `tool_states`, not `toolStates`.** Doc IDs follow the pattern `{toolId}_{spaceId}_shared` (shared state) or `{toolId}_{spaceId}_{userId}` (personal state). They're flat documents, not subcollections.
+3. **Two `PlacedToolDTO` types.** In `apps/web/src/`, always import from `@/hooks/use-space-tools` (has `name`/`description`). Never import from `@hive/core` in app code.
 
-4. **API routes must use `respond.success()` / `respond.error()`.** Never use `NextResponse.json()` directly — it bypasses the middleware response format.
+4. **Collection is `tool_states` not `toolStates`.** Pattern: `{toolId}_{spaceId}_shared` / `{toolId}_{spaceId}_{userId}`.
 
-5. **HiveLab connections don't actually work** between standard elements. Templates define `connections[]` but only `custom-block` can consume connected inputs. Don't build features that assume form output flows into result-list.
-
-6. **`startDate` is an ISO string — never pass a Date object to Firestore.** CampusLabs events store `startDate` as `"2026-02-24T14:00:00.000Z"`. Passing `new Date()` to `where('startDate', '>=', ...)` returns 0 results silently. Use `new Date().toISOString()`. Also: **never filter by `campusId`** — that index is exempted and throws `FAILED_PRECONDITION`. Full details: `docs/FIRESTORE_SCHEMA.md` → Critical Data Gotchas.
-
-7. **Events routes are partially broken (Feb 22):**
-   - `/api/events/personalized` — no longer 500s, but returns events with null `coverImageUrl` (wrong field: use `event.imageUrl || event.coverImageUrl`) and null `spaceHandle` (field doesn't exist on events — must batch-resolve from `spaces` collection).
-   - `/api/events?spaceId=...` — returns 0 events. Root cause: `fetchDocsForTimeField` passes `Date` objects to `where('startDate', '>=', now)`. Fix: use `now.toISOString()` when `dateField === 'startDate'`.
-   See `docs/KNOWN_STATE.md` → Broken for full specs.
+**Current broken routes (load `docs/KNOWN_STATE.md` for full specs):**
+- `/api/events/personalized` — events return but `coverImageUrl` is null (field is `imageUrl`) and `spaceHandle` is null (doesn't exist on events — batch-resolve from spaces).
+- `/api/events?spaceId=...` — returns 0 (Date vs ISO string in `fetchDocsForTimeField`).
 
 ---
 

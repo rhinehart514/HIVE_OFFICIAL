@@ -5,17 +5,22 @@ Spaces (orgs, greek life, dorms) are the core unit. HiveLab is the creation runt
 that lets org leaders build interactive tools (polls, RSVPs, leaderboards, forms)
 deployed directly into their space — no separate hosting, no cold start.
 
-## Reference Docs (read on-demand, not loaded every session)
+## Reference Docs — load only what your task needs
 
-- **Firestore Schema:** `docs/FIRESTORE_SCHEMA.md` — full ERD, all collections, relationships
-- **API Routes:** `docs/API_ROUTES.md` — all 268+ routes by category
-- **HiveLab Elements:** `docs/HIVELAB_ELEMENTS.md` — 33 elements, execute handlers, status
-- **Package Exports:** `docs/PACKAGE_EXPORTS.md` — import reference for all @hive packages
-- **Known State:** `docs/KNOWN_STATE.md` — stubs, gaps, and implementation status
-- **Design Rules:** `docs/DESIGN_RULES.md` — **read before building any UI.** Custom vs. library decisions, approved packages, token rules, anti-patterns.
-- **Design System:** `docs/DESIGN_SYSTEM.md` — full token reference, component API, motion patterns
-- **UI Todo:** `docs/UI-TODO.md` — current design system work queue: foundations, components, patterns
-- **Launch IA:** `docs/LAUNCH-IA.md` — **source of truth for launch UX.** Every screen, every system, priority build order.
+| Doc | Load when |
+|-----|-----------|
+| `docs/KNOWN_STATE.md` | Debugging, fixing broken routes, checking what's implemented vs stubbed |
+| `docs/FIRESTORE_SCHEMA.md` | Writing Firestore queries, adding collections, anything touching data layer |
+| `docs/LAUNCH-IA.md` | Changing nav, adding pages, modifying shell layout, UX decisions |
+| `docs/DESIGN_RULES.md` | Building any UI component — custom vs. library decisions, token rules |
+| `docs/DESIGN_SYSTEM.md` | Token reference, component API (only if DESIGN_RULES.md isn't enough) |
+| `docs/UI-TODO.md` | Checking component status before building something new |
+| `docs/API_ROUTES.md` | Adding API routes, checking what already exists |
+| `docs/HIVELAB_ELEMENTS.md` | Working on HiveLab elements or execute handlers |
+| `docs/PACKAGE_EXPORTS.md` | Resolving import errors from @hive packages |
+| `docs/HOOKS.md` | Writing React Query hooks, checking what hooks exist |
+
+**Do not load docs/archive/** — those are historical/vision docs, not agent-relevant.
 
 ---
 
