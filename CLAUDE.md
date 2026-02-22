@@ -15,6 +15,7 @@ deployed directly into their space — no separate hosting, no cold start.
 - **Design Rules:** `docs/DESIGN_RULES.md` — **read before building any UI.** Custom vs. library decisions, approved packages, token rules, anti-patterns.
 - **Design System:** `docs/DESIGN_SYSTEM.md` — full token reference, component API, motion patterns
 - **UI Todo:** `docs/UI-TODO.md` — current design system work queue: foundations, components, patterns
+- **Launch IA:** `docs/LAUNCH-IA.md` — **source of truth for launch UX.** Every screen, every system, priority build order.
 
 ---
 
