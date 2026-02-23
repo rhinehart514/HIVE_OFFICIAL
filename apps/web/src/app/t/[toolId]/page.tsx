@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const ogDescription = tool.description
-    || (tool.ownerName ? `Built by ${tool.ownerName} on HIVE` : 'An interactive tool on HIVE');
+    || (tool.ownerName ? `Built by ${tool.ownerName} on HIVE` : 'An interactive creation on HIVE');
 
   return {
     title: `${tool.name} | HIVE`,

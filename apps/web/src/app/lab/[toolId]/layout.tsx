@@ -47,12 +47,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!tool) {
     return {
-      title: 'Tool Not Found',
-      description: 'This tool could not be found.',
+      title: 'Not Found',
+      description: 'This creation could not be found.',
     };
   }
 
-  const name = tool.name || 'Untitled Tool';
+  const name = tool.name || 'Untitled';
   const description = tool.description || `${name} - built with HiveLab on HIVE.`;
   const category = tool.category || 'tool';
 

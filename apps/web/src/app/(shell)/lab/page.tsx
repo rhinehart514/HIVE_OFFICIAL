@@ -257,7 +257,7 @@ function InlineGenerationPreview({
                   completeName = (chunk.data.name as string) || '';
                   setToolName(completeName);
                   setPhase('complete');
-                  setStatusMessage('Your tool is ready');
+                  setStatusMessage('Your creation is ready');
                   break;
 
                 case 'error':
@@ -336,7 +336,7 @@ function InlineGenerationPreview({
               transition={{ duration: 2, repeat: Infinity }}
               className="text-white/30 text-sm"
             >
-              Building your tool...
+              Building...
             </motion.div>
           </div>
         )}
@@ -649,7 +649,7 @@ export default function BuilderDashboard() {
       setInlineToolId(id);
       setInlineGenPhase('streaming');
     } catch {
-      toast.error('Failed to create tool. Please try again.');
+      toast.error('Failed to create. Please try again.');
       setInlineGenPhase('idle');
     }
   }, [prompt, ceremonyPhase, inlineGenPhase, router, originSpaceId]);
@@ -693,7 +693,7 @@ export default function BuilderDashboard() {
       params.set('just_created', 'true');
       router.push(`/t/${toolId}?${params.toString()}`);
     } catch {
-      toast.error('Failed to create tool from template');
+      toast.error('Failed to create from template');
       setCeremonyPhase('idle');
       setCreatingFromTemplate(false);
       setStatusText('');
@@ -727,10 +727,10 @@ export default function BuilderDashboard() {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to delete tool');
       }
-      toast.success('Tool deleted');
+      toast.success('Deleted');
       queryClient.invalidateQueries({ queryKey: ['my-tools'] });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete tool');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete');
     }
   }, [queryClient]);
 

@@ -326,7 +326,7 @@ function ToolContent({
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to remix tool');
+        throw new Error(err.error || 'Failed to remix');
       }
 
       const result = await response.json();
@@ -335,7 +335,7 @@ function ToolContent({
         router.push(`/lab/${newToolId}`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to remix tool');
+      toast.error(err instanceof Error ? err.message : 'Failed to remix');
       setRemixing(false);
     }
   }, [toolId, remixing, router]);
@@ -661,7 +661,7 @@ function ToolContent({
                   <AlertTriangle className="w-6 h-6 text-white/50" />
                 </div>
                 <p className="text-white/50 font-medium mb-1">Nothing here yet</p>
-                <p className="text-white/50 text-sm mb-6">This tool hasn't been set up with any elements.</p>
+                <p className="text-white/50 text-sm mb-6">This creation hasn't been set up with any elements.</p>
                 <Button
                   variant="outline"
                   size="sm"
@@ -771,9 +771,9 @@ export default function SpaceToolPage() {
           <div className="w-14 h-14 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-5">
             <AlertTriangle className="w-7 h-7 text-white/50" />
           </div>
-          <h2 className="text-xl font-semibold text-white mb-2">Tool not found</h2>
+          <h2 className="text-xl font-semibold text-white mb-2">Not found</h2>
           <p className="text-white/50 mb-6">
-            This tool isn't deployed here or is no longer available.
+            This isn't deployed here or is no longer available.
           </p>
           <Button variant="default" onClick={handleBack}>
             Back to space

@@ -32,7 +32,7 @@ export function HeroSection() {
             transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
             className="mb-8 max-w-md text-base leading-relaxed text-white/50"
           >
-            Every UB organization. Events, chat, tools — one place.
+            Every UB organization. Events, chat, creations — one place.
           </motion.p>
 
           <motion.div

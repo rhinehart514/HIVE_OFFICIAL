@@ -180,7 +180,7 @@ export function StreamingPreview({
                 completeDescription = (chunk.data.description as string) || '';
                 setToolName(completeName);
                 setPhase('complete');
-                setStatusMessage('Your tool is ready!');
+                setStatusMessage('Your creation is ready!');
                 break;
               }
 

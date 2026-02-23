@@ -78,7 +78,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
       setToolId(id);
       setPhase('generating');
     } catch {
-      toast.error('Failed to create tool. Please try again.');
+      toast.error('Failed to create. Please try again.');
       setPhase('prompt');
     }
   }, []);
@@ -108,7 +108,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
       const id = await createToolFromTemplateApi(template);
       router.push(`/lab/${id}`);
     } catch {
-      toast.error('Failed to create tool from template');
+      toast.error('Failed to create from template');
       setPhase('prompt');
     }
   }, [router]);

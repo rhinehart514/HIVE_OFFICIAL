@@ -9,16 +9,16 @@ import {
 
 export const metadata: Metadata = {
   title: 'HIVE — Your Club Is Already Here',
-  description: 'Find and claim your UB organization on HIVE. Lead events, tools, and communication from one shared space.',
+  description: 'Find and claim your UB organization on HIVE. Events, creations, and communication — one shared space.',
   openGraph: {
     title: 'HIVE — Your Club Is Already Here',
-    description: 'Find and claim your UB organization on HIVE. Lead events, tools, and communication from one shared space.',
+    description: 'Find and claim your UB organization on HIVE. Events, creations, and communication — one shared space.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'HIVE — Your Club Is Already Here',
-    description: 'Find and claim your UB organization on HIVE. Lead events, tools, and communication from one shared space.',
+    description: 'Find and claim your UB organization on HIVE. Events, creations, and communication — one shared space.',
   },
 };
 

@@ -411,7 +411,7 @@ export default function TemplatesPage() {
           err instanceof Error ? err : undefined
         );
         setError(err instanceof Error ? err.message : 'Failed to create tool');
-        toast.error('Failed to create tool. Please try again.');
+        toast.error('Failed to create. Please try again.');
         setState('naming');
       }
     },

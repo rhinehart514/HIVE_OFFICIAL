@@ -6,7 +6,7 @@ const sections = [
   {
     label: 'SPACES',
     title: 'One place for everything.',
-    body: 'Chat, events, tools, members. Not another group chat.',
+    body: 'Chat, events, creations, members. Not another group chat.',
     reverse: false,
   },
   {
@@ -125,7 +125,7 @@ export function ProductSection() {
           <span className="text-white/10">·</span>
           <span className="text-[13px] font-sans text-white/30">Thousands of campus events</span>
           <span className="text-white/10">·</span>
-          <span className="text-[13px] font-sans text-white/30">Dozens of creation tools</span>
+          <span className="text-[13px] font-sans text-white/30">Dozens of creations</span>
         </div>
       </div>
 

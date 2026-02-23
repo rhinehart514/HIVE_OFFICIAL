@@ -38,8 +38,8 @@ export function NotificationSections({
             onCheckedChange={(v) => onNotificationChange('email', 'eventReminders', v)}
           />
           <SettingRow
-            label="Tool Updates"
-            description="New tool launches and updates from builders"
+            label="Creation Updates"
+            description="New creation launches and updates from builders"
             checked={notificationSettings.email.toolUpdates}
             onCheckedChange={(v) => onNotificationChange('email', 'toolUpdates', v)}
           />
@@ -69,7 +69,7 @@ export function NotificationSections({
           />
           <SettingRow
             label="Builder Updates"
-            description="Updates about HiveLab and tool building features"
+            description="Updates about HiveLab and creation features"
             checked={notificationSettings.email.builderUpdates}
             onCheckedChange={(v) => onNotificationChange('email', 'builderUpdates', v)}
           />
@@ -85,8 +85,8 @@ export function NotificationSections({
             onCheckedChange={(v) => onNotificationChange('push', 'spaceActivity', v)}
           />
           <SettingRow
-            label="Tool Launches"
-            description="Notifications when new tools are available"
+            label="Creation Launches"
+            description="Notifications when new creations are available"
             checked={notificationSettings.push.toolLaunches}
             onCheckedChange={(v) => onNotificationChange('push', 'toolLaunches', v)}
           />

@@ -305,9 +305,9 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
       if (newTool) {
         setSpaceTools(prev => [...prev, { id: newTool.id, name: newTool.name, description: newTool.description, icon: newTool.emoji }]);
       }
-      toast.success('Tool deployed', `"${template.name}" has been added to your space`);
+      toast.success('Deployed', `"${template.name}" has been added to your space`);
     } catch {
-      toast.error('Failed to deploy tool', 'Please try again');
+      toast.error('Failed to deploy', 'Please try again');
     }
   };
 
@@ -320,10 +320,10 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
         body: JSON.stringify({ toolId }),
       });
       if (!response.ok) throw new Error('Failed to deploy tool');
-      toast.success('Tool deployed to space');
+      toast.success('Deployed to space');
       setSpaceTools([]);
     } catch {
-      toast.error('Failed to deploy tool', 'Please try again');
+      toast.error('Failed to deploy', 'Please try again');
     }
   };
 
@@ -1331,7 +1331,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                 <div className="text-center py-12 rounded-lg bg-white/[0.06] border border-white/[0.06]">
                   <Wrench className="w-10 h-10 mx-auto mb-4 text-white/50" />
                   <Text weight="medium" className="text-white/50 mb-1">
-                    No tools deployed yet
+                    No creations deployed yet
                   </Text>
                   <Text size="sm" tone="muted" className="mb-6 max-w-sm mx-auto">
                     Add polls, sign-ups, countdowns, and more to make your space.
@@ -1343,13 +1343,13 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       onClick={() => setShowAddToolModal(true)}
                     >
                       <Wrench className="w-4 h-4 mr-2" />
-                      Add Tool
+                      Add Creation
                     </Button>
                     <a
                       href={`/lab/new?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
                       className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white/50 hover:text-white transition-colors"
                     >
-                      Build a tool
+                      Build something new
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
@@ -1358,7 +1358,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Text size="sm" weight="medium" tone="muted">
-                      {spaceTools.length} {spaceTools.length === 1 ? 'tool' : 'tools'} deployed
+                      {spaceTools.length} {spaceTools.length === 1 ? 'creation' : 'creations'} deployed
                     </Text>
                     <Button
                       variant="ghost"

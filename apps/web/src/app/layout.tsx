@@ -7,9 +7,9 @@ import { Providers } from './providers';
 export const metadata: Metadata = {
   title: {
     template: '%s | HIVE',
-    default: 'HIVE - Your Campus. Your Spaces. Your Tools.',
+    default: 'HIVE — Your Campus. Your Communities.',
   },
-  description: 'Run your campus communities with shared spaces and live tools. Build in seconds, share anywhere.',
+  description: 'Run your campus communities with shared spaces. Build anything in seconds, share anywhere.',
   keywords: ['campus', 'social', 'university', 'community', 'collaboration'],
   authors: [{ name: 'HIVE Team' }],
   creator: 'HIVE',
@@ -33,13 +33,13 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: '/',
     siteName: 'HIVE',
-    title: 'HIVE - Your Campus. Your Spaces. Your Tools.',
-    description: 'Run your campus communities with shared spaces and live tools. Build in seconds, share anywhere.',
+    title: 'HIVE — Your Campus. Your Communities.',
+    description: 'Run your campus communities with shared spaces. Build anything in seconds, share anywhere.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HIVE - Your Campus. Your Spaces. Your Tools.',
-    description: 'Run your campus communities with shared spaces and live tools. Build in seconds, share anywhere.',
+    title: 'HIVE — Your Campus. Your Communities.',
+    description: 'Run your campus communities with shared spaces. Build anything in seconds, share anywhere.',
   },
   robots: {
     index: true,
