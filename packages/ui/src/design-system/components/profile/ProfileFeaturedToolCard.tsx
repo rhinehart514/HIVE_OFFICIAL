@@ -82,7 +82,7 @@ export function ProfileFeaturedToolCard({
             className="text-xs text-center mb-4"
             style={{ color: 'var(--text-tertiary)' }}
           >
-            Feature a tool you&apos;re proud of
+            Feature a creation you&apos;re proud of
           </p>
           {isOwnProfile && (
             <motion.button
@@ -98,7 +98,7 @@ export function ProfileFeaturedToolCard({
               }}
               whileTap={{ opacity: 0.8 }}
             >
-              Pick a tool
+              Pick a creation
             </motion.button>
           )}
         </div>
@@ -136,25 +136,27 @@ export function ProfileFeaturedToolCard({
         }}
       />
 
-      {/* Featured badge */}
-      <motion.div
-        className="absolute top-4 right-4 px-2.5 py-1 rounded-full flex items-center gap-1.5"
-        style={{
-          backgroundColor: 'rgba(255, 215, 0, 0.15)',
-          border: '1px solid rgba(255, 215, 0, 0.3)',
-        }}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        <span className="text-xs">⭐</span>
-        <span
-          className="text-xs font-medium"
-          style={{ color: 'var(--life-gold)' }}
+      {/* Featured badge — only show when there's real traction */}
+      {(tool.runs > 0 || tool.deployedSpaces > 0) && (
+        <motion.div
+          className="absolute top-4 right-4 px-2.5 py-1 rounded-full flex items-center gap-1.5"
+          style={{
+            backgroundColor: 'rgba(255, 215, 0, 0.15)',
+            border: '1px solid rgba(255, 215, 0, 0.3)',
+          }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
         >
-          Featured
-        </span>
-      </motion.div>
+          <span className="text-xs">⭐</span>
+          <span
+            className="text-xs font-medium"
+            style={{ color: 'var(--life-gold)' }}
+          >
+            Featured
+          </span>
+        </motion.div>
+      )}
 
       {/* High performer glow */}
       {isHighPerformer && (
@@ -200,45 +202,53 @@ export function ProfileFeaturedToolCard({
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span
-              className="text-2xl font-bold tabular-nums"
-              style={{
-                color: isHighPerformer ? 'var(--life-gold)' : 'var(--text-primary)',
-              }}
-            >
-              {formatNumber(tool.runs)}
-            </span>
-            <span
-              className="text-xs uppercase tracking-wider"
-              style={{ color: 'var(--text-tertiary)' }}
-            >
-              runs
-            </span>
-          </div>
+        {/* Stats row — only show stats that have values */}
+        {(tool.runs > 0 || tool.deployedSpaces > 0) && (
+          <div className="flex items-center gap-4">
+            {tool.runs > 0 && (
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-2xl font-bold tabular-nums"
+                  style={{
+                    color: isHighPerformer ? 'var(--life-gold)' : 'var(--text-primary)',
+                  }}
+                >
+                  {formatNumber(tool.runs)}
+                </span>
+                <span
+                  className="text-xs uppercase tracking-wider"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  {tool.runs === 1 ? 'use' : 'uses'}
+                </span>
+              </div>
+            )}
 
-          <div
-            className="w-px h-6"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-          />
+            {tool.runs > 0 && tool.deployedSpaces > 0 && (
+              <div
+                className="w-px h-6"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+              />
+            )}
 
-          <div className="flex items-center gap-2">
-            <span
-              className="text-2xl font-bold tabular-nums"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {tool.deployedSpaces}
-            </span>
-            <span
-              className="text-xs uppercase tracking-wider"
-              style={{ color: 'var(--text-tertiary)' }}
-            >
-              space{tool.deployedSpaces !== 1 ? 's' : ''}
-            </span>
+            {tool.deployedSpaces > 0 && (
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-2xl font-bold tabular-nums"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {tool.deployedSpaces}
+                </span>
+                <span
+                  className="text-xs uppercase tracking-wider"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  space{tool.deployedSpaces !== 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </motion.div>
   );

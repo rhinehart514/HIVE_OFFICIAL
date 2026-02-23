@@ -96,6 +96,17 @@ export function ProfileStatsRow({
   onActivityClick,
   className,
 }: ProfileStatsRowProps) {
+  // Build stats list — only show items that have values or are creations (always show)
+  const items: { value: number; label: string; onClick?: () => void; accent?: boolean }[] = [];
+
+  if (spaces > 0) items.push({ value: spaces, label: 'Spaces', onClick: onSpacesClick });
+  if (friends > 0) items.push({ value: friends, label: 'Friends', onClick: onFriendsClick });
+  if (tools > 0) items.push({ value: tools, label: 'Creations', onClick: onToolsClick });
+  if (activity > 0) items.push({ value: activity, label: 'Activity', onClick: onActivityClick, accent: true });
+
+  // If nothing to show, don't render
+  if (items.length === 0) return null;
+
   return (
     <div
       className={cn(
@@ -103,31 +114,16 @@ export function ProfileStatsRow({
         className
       )}
     >
-      <StatItem
-        value={spaces}
-        label="Spaces"
-        onClick={onSpacesClick}
-        delay={0}
-      />
-      <StatItem
-        value={friends}
-        label="Friends"
-        onClick={onFriendsClick}
-        delay={1}
-      />
-      <StatItem
-        value={tools}
-        label="Tools"
-        onClick={onToolsClick}
-        delay={2}
-      />
-      <StatItem
-        value={activity}
-        label="Activity"
-        onClick={onActivityClick}
-        accent={activity > 0}
-        delay={3}
-      />
+      {items.map((item, i) => (
+        <StatItem
+          key={item.label}
+          value={item.value}
+          label={item.label}
+          onClick={item.onClick}
+          accent={item.accent}
+          delay={i}
+        />
+      ))}
     </div>
   );
 }

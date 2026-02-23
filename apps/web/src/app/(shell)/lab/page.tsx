@@ -44,9 +44,8 @@ import {
   type ToolElement,
 } from '@hive/ui';
 
-import { ToolCard, NewToolCard } from '@/components/hivelab/dashboard/ToolCard';
+import { ToolCard } from '@/components/hivelab/dashboard/ToolCard';
 import { StatsBar } from '@/components/hivelab/dashboard/StatsBar';
-import { BuilderLevel } from '@/components/hivelab/dashboard/BuilderLevel';
 import { QuickStartChips } from '@/components/hivelab/dashboard/QuickStartChips';
 import { matchTemplate } from '@/components/hivelab/conversational/template-matcher';
 import { useMyTools } from '@/hooks/use-my-tools';
@@ -873,120 +872,15 @@ export default function BuilderDashboard() {
                   <Sparkles className="w-3.5 h-3.5" />
                   Templates
                 </button>
-                <button
-                  onClick={handleNewTool}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl
-                    text-white/70 hover:text-white bg-white/[0.06] hover:bg-white/[0.08]
-                    transition-colors text-sm font-medium"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create
-                </button>
               </div>
             </motion.div>
 
-            {/* Stats Bar + Builder Level */}
+            {/* AI Prompt — HERO position, the primary CTA */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: EASE }}
-              className="mb-6 space-y-3"
-            >
-              <StatsBar
-                totalTools={stats.totalTools}
-                totalUsers={stats.totalUsers}
-                weeklyInteractions={stats.weeklyInteractions}
-              />
-              <BuilderLevel />
-            </motion.div>
-
-            {/* Your Tools Grid */}
-            <motion.div
-              variants={fadeInUpVariants}
-              initial="initial"
-              animate="animate"
-              className="mb-8"
-            >
-              <div className="text-xs font-medium text-white/50 tracking-wide mb-3">
-                Your Creations
-              </div>
-              <motion.div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
-                initial="hidden"
-                animate="visible"
-              >
-                {displayTools.map((tool) => (
-                  <motion.div key={tool.id} variants={staggerItemVariants}>
-                    <ToolCard
-                      tool={tool}
-                      onClick={handleToolClick}
-                      onDelete={handleDeleteTool}
-                      variant="full"
-                    />
-                  </motion.div>
-                ))}
-                <motion.div variants={staggerItemVariants}>
-                  <NewToolCard onClick={handleNewTool} />
-                </motion.div>
-              </motion.div>
-
-              {/* View all / collapse */}
-              {userTools.length > 8 && (
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  onClick={() => setShowAllTools(!showAllTools)}
-                  className="mt-3 text-white/50 hover:text-white/50 text-xs transition-colors"
-                >
-                  {showAllTools ? 'Show less' : `View all ${userTools.length}`}
-                </motion.button>
-              )}
-            </motion.div>
-
-            {/* Divider */}
-            <div className="h-px bg-white/[0.06] mb-6" />
-
-            {/* Quick Start Chips */}
-            {!quickCreateTemplate && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1, ease: EASE }}
-                className="mb-8"
-              >
-                <QuickStartChips
-                  templates={allTemplates}
-                  onTemplateClick={handleTemplateClick}
-                  onViewAll={() => router.push('/lab/templates')}
-                  disabled={isSubmitting}
-                  variant="secondary"
-                />
-              </motion.div>
-            )}
-
-            {/* Quick Create Inline Form */}
-            <AnimatePresence>
-              {quickCreateTemplate && (
-                <div className="mb-8">
-                  <QuickCreateForm
-                    template={quickCreateTemplate}
-                    values={quickCreateValues}
-                    onChange={(key, value) => setQuickCreateValues(prev => ({ ...prev, [key]: value }))}
-                    onSubmit={() => createFromTemplate(quickCreateTemplate, quickCreateValues)}
-                    onCancel={() => { setQuickCreateTemplate(null); setQuickCreateValues({}); }}
-                    isSubmitting={creatingFromTemplate}
-                  />
-                </div>
-              )}
-            </AnimatePresence>
-
-            {/* AI Prompt */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.15, ease: EASE }}
-              className="max-w-xl"
+              className="max-w-xl mb-6"
             >
               <div className="relative">
                 <PromptInput
@@ -997,7 +891,7 @@ export default function BuilderDashboard() {
                   onBlur={() => setIsFocused(false)}
                   disabled={isSubmitting}
                   isFocused={isFocused}
-                  placeholder="Or describe something new..."
+                  placeholder="Describe what you want to build..."
                   inputRef={inputRef}
                 />
 
@@ -1077,7 +971,7 @@ export default function BuilderDashboard() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="mt-6"
+                  className="mb-6"
                 >
                   <InlineGenerationPreview
                     prompt={inlinePrompt}
@@ -1101,6 +995,103 @@ export default function BuilderDashboard() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Quick Start Chips — right below the prompt */}
+            {!quickCreateTemplate && !isInlineActive && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1, ease: EASE }}
+                className="mb-8"
+              >
+                <QuickStartChips
+                  templates={allTemplates}
+                  onTemplateClick={handleTemplateClick}
+                  onViewAll={() => router.push('/lab/templates')}
+                  disabled={isSubmitting}
+                  variant="secondary"
+                />
+              </motion.div>
+            )}
+
+            {/* Quick Create Inline Form */}
+            <AnimatePresence>
+              {quickCreateTemplate && (
+                <div className="mb-8">
+                  <QuickCreateForm
+                    template={quickCreateTemplate}
+                    values={quickCreateValues}
+                    onChange={(key, value) => setQuickCreateValues(prev => ({ ...prev, [key]: value }))}
+                    onSubmit={() => createFromTemplate(quickCreateTemplate, quickCreateValues)}
+                    onCancel={() => { setQuickCreateTemplate(null); setQuickCreateValues({}); }}
+                    isSubmitting={creatingFromTemplate}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
+
+            {/* Divider */}
+            <div className="h-px bg-white/[0.06] mb-6" />
+
+            {/* Stats Bar — only show non-zero stats */}
+            {(stats.totalUsers > 0 || stats.weeklyInteractions > 0) && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: EASE }}
+                className="mb-6"
+              >
+                <StatsBar
+                  totalTools={stats.totalTools}
+                  totalUsers={stats.totalUsers}
+                  weeklyInteractions={stats.weeklyInteractions}
+                />
+              </motion.div>
+            )}
+
+            {/* Your Creations Grid */}
+            <motion.div
+              variants={fadeInUpVariants}
+              initial="initial"
+              animate="animate"
+              className="mb-8"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs font-medium text-white/50 tracking-wide">
+                  Your Creations
+                </div>
+                <span className="text-xs text-white/25">{stats.totalTools}</span>
+              </div>
+              <motion.div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                initial="hidden"
+                animate="visible"
+              >
+                {displayTools.map((tool) => (
+                  <motion.div key={tool.id} variants={staggerItemVariants}>
+                    <ToolCard
+                      tool={tool}
+                      onClick={handleToolClick}
+                      onDelete={handleDeleteTool}
+                      variant="full"
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              {/* View all / collapse */}
+              {userTools.length > 8 && (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  onClick={() => setShowAllTools(!showAllTools)}
+                  className="mt-3 text-white/50 hover:text-white/50 text-xs transition-colors"
+                >
+                  {showAllTools ? 'Show less' : `View all ${userTools.length}`}
+                </motion.button>
+              )}
+            </motion.div>
           </>
         )}
 

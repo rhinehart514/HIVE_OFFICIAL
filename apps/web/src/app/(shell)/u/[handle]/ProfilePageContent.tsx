@@ -324,7 +324,7 @@ export default function ProfilePageContent() {
         {totalToolRuns > 0 && (
           <p className="text-[13px] text-white/40">
             <span className="text-white/60 font-medium">{totalToolRuns.toLocaleString()}</span>
-            {' '}people participated in {isOwnProfile ? 'your' : `${heroUser.fullName.split(' ')[0]}'s`} tools
+            {' '}people participated in {isOwnProfile ? 'your' : `${heroUser.fullName.split(' ')[0]}'s`} creations
           </p>
         )}
 

@@ -115,7 +115,7 @@ export function MembersPreview({
           )}
           {onlineCount === 0 && (
             <span className="text-xs text-white/50">
-              {totalCount} members
+              {totalCount} {totalCount === 1 ? 'member' : 'members'}
             </span>
           )}
         </div>

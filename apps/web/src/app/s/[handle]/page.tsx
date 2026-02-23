@@ -906,7 +906,7 @@ export default function SpacePageUnified() {
                       {/* CTA */}
                       <div className="text-center pt-2">
                         <p className="text-[13px] text-white/30 mb-1">
-                          {space.isLeader ? 'Set the tone for your space.' : `${space.memberCount ?? ''} members are here.`}
+                          {space.isLeader ? 'Set the tone for your space.' : `${space.memberCount ?? ''} ${(space.memberCount ?? 0) === 1 ? 'member is' : 'members are'} here.`}
                         </p>
                         <p className="text-[13px] text-white/20">Send the first message ↓</p>
                       </div>

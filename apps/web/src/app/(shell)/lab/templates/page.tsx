@@ -13,7 +13,10 @@ import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft, Loader2, BarChart3, CalendarDays, ClipboardList,
+  MessageSquare, Trophy, Megaphone, CheckSquare, Users,
+} from 'lucide-react';
 import { MOTION } from '@hive/tokens';
 import { createToolFromTemplateApi } from '@/lib/hivelab/create-tool';
 import { useAnalytics } from '@/hooks/use-analytics';
@@ -35,61 +38,72 @@ interface CoreTemplate {
 const CORE_TEMPLATES: CoreTemplate[] = [
   {
     id: 'quick-poll',
-    emoji: '📊',
+    emoji: '',
     name: 'Quick Poll',
     description: 'Gather opinions in one tap',
     templateId: 'quick-poll',
   },
   {
     id: 'event-rsvp',
-    emoji: '📅',
+    emoji: '',
     name: 'Event RSVP',
     description: 'Let members RSVP instantly',
     templateId: 'event-rsvp',
   },
   {
     id: 'signup-sheet',
-    emoji: '📋',
+    emoji: '',
     name: 'Signup Sheet',
     description: 'Slot-based signups for anything',
     templateId: 'office-hours',
   },
   {
     id: 'feedback-form',
-    emoji: '💬',
+    emoji: '',
     name: 'Feedback Form',
     description: 'Collect structured feedback',
     templateId: 'feedback-form',
   },
   {
     id: 'leaderboard',
-    emoji: '🏆',
+    emoji: '',
     name: 'Leaderboard',
     description: 'Track points and rankings',
     templateId: 'member-leaderboard',
   },
   {
     id: 'announcement',
-    emoji: '📢',
+    emoji: '',
     name: 'Announcement',
     description: 'Pin important updates',
     templateId: 'announcements',
   },
   {
     id: 'checklist',
-    emoji: '✅',
+    emoji: '',
     name: 'Checklist',
     description: 'Shared progress tracking',
     templateId: 'meeting-notes',
   },
   {
     id: 'member-directory',
-    emoji: '👥',
+    emoji: '',
     name: 'Member Directory',
     description: 'Searchable contact list',
     templateId: 'study-group-signup',
   },
 ];
+
+const TEMPLATE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  'quick-poll': BarChart3,
+  'event-rsvp': CalendarDays,
+  'signup-sheet': ClipboardList,
+  'feedback-form': MessageSquare,
+  'leaderboard': Trophy,
+  'announcement': Megaphone,
+  'checklist': CheckSquare,
+  'member-directory': Users,
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // DESIGN TOKENS
@@ -162,7 +176,14 @@ function TemplateTile({
         e.currentTarget.style.boxShadow = COLORS.shadowBase;
       }}
     >
-      <div className="text-2xl mb-3">{template.emoji}</div>
+      {(() => {
+        const Icon = TEMPLATE_ICONS[template.id];
+        return Icon ? (
+          <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center mb-3">
+            <Icon className="w-4 h-4 text-white/50" />
+          </div>
+        ) : null;
+      })()}
       <div
         className="font-medium text-[15px] mb-1"
         style={{ color: COLORS.text }}
@@ -227,7 +248,14 @@ function NameDialog({
       >
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="text-2xl">{template.emoji}</div>
+          {(() => {
+            const Icon = TEMPLATE_ICONS[template.id];
+            return Icon ? (
+              <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
+                <Icon className="w-5 h-5 text-white/50" />
+              </div>
+            ) : null;
+          })()}
           <div>
             <div className="font-medium text-[15px]" style={{ color: COLORS.text }}>
               {template.name}
@@ -471,7 +499,7 @@ export default function TemplatesPage() {
           className="text-center mb-8"
         >
           <h1
-            className="text-2xl sm:text-3xl font-medium mb-2"
+            className="text-2xl sm:text-3xl font-semibold mb-2"
             style={{ color: COLORS.text }}
           >
             {state === 'grid' ? 'Pick a template' : selected?.name}

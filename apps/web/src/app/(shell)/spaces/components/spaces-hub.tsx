@@ -125,7 +125,7 @@ function DiscoverSpaceCard({ space }: { space: BrowseSpace }) {
       <div className="flex items-center justify-between">
         {space.memberCount > 0 ? (
           <span className="text-[11px] text-white/25">
-            {space.memberCount.toLocaleString()} members
+            {space.memberCount.toLocaleString()} {space.memberCount === 1 ? 'member' : 'members'}
           </span>
         ) : (
           <span className="text-[11px] text-white/15">New</span>
@@ -184,7 +184,12 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
   const [activeCategory, setActiveCategory] = React.useState<CategoryKey>('all');
   const [discoverSpaces, setDiscoverSpaces] = React.useState<BrowseSpace[]>([]);
   const [discoverLoading, setDiscoverLoading] = React.useState(true);
-  const [firstEntryDone, setFirstEntryDone] = React.useState(false);
+  const [firstEntryDone, setFirstEntryDone] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('spaces-first-entry-done') === 'true';
+    }
+    return false;
+  });
 
   // Auth redirect
   React.useEffect(() => {
@@ -252,6 +257,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
       <SpacesFirstEntry
         onComplete={() => {
           setFirstEntryDone(true);
+          sessionStorage.setItem('spaces-first-entry-done', 'true');
           refresh();
         }}
       />

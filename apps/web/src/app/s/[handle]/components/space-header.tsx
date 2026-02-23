@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { Settings } from 'lucide-react';
+import Link from 'next/link';
+import { Settings, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
@@ -57,17 +58,26 @@ export function SpaceHeader({
         className
       )}
     >
-      {/* Left: Space name */}
-      <button
-        onClick={onSpaceInfoClick}
-        className="flex items-center gap-3 min-w-0 group"
-      >
-        <h1
-          className={`${clashDisplay} text-[20px] font-semibold text-white truncate`}
+      {/* Left: Back + Space name */}
+      <div className="flex items-center gap-1 min-w-0">
+        <Link
+          href="/spaces"
+          className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors flex-shrink-0"
+          aria-label="Back to Spaces"
         >
-          {space.name}
-        </h1>
-      </button>
+          <ChevronLeft className="h-4 w-4" />
+        </Link>
+        <button
+          onClick={onSpaceInfoClick}
+          className="flex items-center gap-3 min-w-0 group"
+        >
+          <h1
+            className={`${clashDisplay} text-[20px] font-semibold text-white truncate`}
+          >
+            {space.name}
+          </h1>
+        </button>
+      </div>
 
       {/* Right: Member count pill + gear */}
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -87,7 +97,7 @@ export function SpaceHeader({
             onClick={onMembersClick}
             className="rounded-full px-3 py-1.5 text-[12px] font-sans text-white/50 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
           >
-            {space.memberCount} members
+            {space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}
           </button>
         )}
 

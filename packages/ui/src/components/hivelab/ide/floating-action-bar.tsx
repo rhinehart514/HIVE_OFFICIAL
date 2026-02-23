@@ -296,10 +296,10 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
             'hover:brightness-110 active:brightness-90',
             FOCUS_RING
           )}
-          title="Run once"
+          title="Preview"
         >
           <PlayIconSolid className="h-4 w-4" />
-          <span className="hidden sm:inline">Run once</span>
+          <span className="hidden sm:inline">Preview</span>
         </button>
 
         {/* Divider */}

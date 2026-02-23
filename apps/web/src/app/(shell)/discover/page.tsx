@@ -208,6 +208,20 @@ function categoryIcon(cat?: string): string {
   return cat ? (map[cat] || '⚡') : '⚡';
 }
 
+// Strip HTML tags and normalize whitespace from CampusLabs descriptions
+function cleanDescription(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  const stripped = raw
+    .replace(/<[^>]*>/g, ' ')       // strip HTML tags
+    .replace(/&nbsp;/gi, ' ')       // HTML entities
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\s+/g, ' ')           // collapse whitespace
+    .trim();
+  return stripped.length > 0 ? stripped : undefined;
+}
+
 // Category → subtle warm gradient for imageless event cards
 function eventGradient(category?: string, eventType?: string): string {
   const key = (category || eventType || '').toLowerCase();
@@ -297,8 +311,8 @@ function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, s
           {event.title}
         </h2>
 
-        {event.description && (
-          <p className="text-[13px] text-white/40 line-clamp-2 leading-relaxed mb-3">{event.description}</p>
+        {cleanDescription(event.description) && (
+          <p className="text-[13px] text-white/40 line-clamp-2 leading-relaxed mb-3">{cleanDescription(event.description)}</p>
         )}
 
         {/* Meta row */}
@@ -872,7 +886,9 @@ export default function DiscoverPage() {
         <p className="text-[12px] text-white/50">
           {todayCount > 0
             ? `${todayCount} event${todayCount !== 1 ? 's' : ''} today`
-            : 'No events today'}
+            : events.length > 0
+              ? `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`
+              : 'Check back soon'}
         </p>
       </div>
 

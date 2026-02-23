@@ -202,7 +202,7 @@ export function IDEToolbar({
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[var(--hivelab-surface)] transition-colors duration-[var(--workshop-duration)] group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
             <span className="text-[var(--hivelab-text-primary)] font-medium text-sm">
-              {toolName || 'Untitled Tool'}
+              {toolName || 'Untitled'}
             </span>
             <ChevronDownIcon className="h-3.5 w-3.5 text-[var(--hivelab-text-tertiary)] group-hover:text-[var(--hivelab-text-secondary)]" />
           </button>
@@ -279,7 +279,7 @@ export function IDEToolbar({
 
         <Divider />
 
-        {/* Preview & BookmarkIcon */}
+        {/* Preview & Save */}
         <button
           type="button"
           onClick={onPreview}
@@ -290,7 +290,7 @@ export function IDEToolbar({
           <span className="text-sm hidden sm:block">Preview</span>
         </button>
 
-        {/* BookmarkIcon or BookmarkIcon & Deploy */}
+        {/* Save or Save & Deploy */}
         {showDeployButton ? (
           <button
             type="button"
@@ -305,7 +305,7 @@ export function IDEToolbar({
           >
             <RocketLaunchIcon className="h-4 w-4" />
             <span className="text-sm">
-              {deploying ? 'Deploying...' : saving ? 'Saving...' : 'BookmarkIcon & Deploy'}
+              {deploying ? 'Deploying...' : saving ? 'Saving...' : 'Save & Deploy'}
             </span>
           </button>
         ) : (
@@ -321,7 +321,7 @@ export function IDEToolbar({
             )}
           >
             <BookmarkIcon className="h-4 w-4" />
-            <span className="text-sm">{saving ? 'Saving...' : 'BookmarkIcon'}</span>
+            <span className="text-sm">{saving ? 'Saving...' : 'Save'}</span>
           </button>
         )}
 

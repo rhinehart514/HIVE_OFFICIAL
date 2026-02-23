@@ -58,12 +58,11 @@ function getPortTooltip(elementId: string, direction: 'input' | 'output'): strin
 
   if (!ports || ports.length === 0) {
     return direction === 'input'
-      ? 'No inputs (receives cascade data)'
-      : 'No outputs defined';
+      ? 'Receives data automatically'
+      : 'No data shared';
   }
 
-  // Format: "Outputs: results, totalVotes" or "Inputs: entries, data"
-  const label = direction === 'input' ? 'Inputs' : 'Outputs';
+  const label = direction === 'input' ? 'Receives' : 'Shares';
   return `${label}: ${ports.join(', ')}`;
 }
 

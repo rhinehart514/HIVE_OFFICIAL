@@ -57,11 +57,19 @@ function StatCard({
 }
 
 export function StatsBar({ totalTools, totalUsers, weeklyInteractions }: StatsBarProps) {
+  const stats = [
+    { value: totalTools, label: 'Creations', icon: Wrench },
+    ...(totalUsers > 0 ? [{ value: totalUsers, label: 'Total Users', icon: Users }] : []),
+    ...(weeklyInteractions > 0 ? [{ value: weeklyInteractions, label: 'This Week', icon: Zap }] : []),
+  ];
+
+  if (stats.length === 0) return null;
+
   return (
-    <div className="grid grid-cols-3 gap-3">
-      <StatCard value={totalTools} label="Creations" icon={Wrench} index={0} />
-      <StatCard value={totalUsers} label="Total Users" icon={Users} index={1} />
-      <StatCard value={weeklyInteractions} label="This Week" icon={Zap} index={2} />
+    <div className={`grid gap-3`} style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))` }}>
+      {stats.map((stat, i) => (
+        <StatCard key={stat.label} value={stat.value} label={stat.label} icon={stat.icon} index={i} />
+      ))}
     </div>
   );
 }

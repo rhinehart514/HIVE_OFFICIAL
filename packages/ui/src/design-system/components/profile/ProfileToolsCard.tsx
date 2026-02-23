@@ -48,7 +48,7 @@ export function ProfileToolsCard({
 }: ProfileToolsCardProps) {
   if (tools.length === 0) {
     return (
-      <ProfileCard icon="🛠️" title="Tools Built" className={className}>
+      <ProfileCard icon="🛠️" title="Creations" className={className}>
         <div className="py-8 text-center">
           <p
             className="text-sm mb-1"
@@ -60,7 +60,7 @@ export function ProfileToolsCard({
             className="text-xs"
             style={{ color: 'var(--text-tertiary)' }}
           >
-            Create tools to help your campus
+            Create something for your campus
           </p>
         </div>
       </ProfileCard>
@@ -70,7 +70,7 @@ export function ProfileToolsCard({
   return (
     <ProfileCard
       icon="🛠️"
-      title="Tools Built"
+      title="Creations"
       action={{ label: 'See all', onClick: onViewAll || (() => {}) }}
       className={className}
     >
@@ -150,7 +150,7 @@ export function ProfileToolsCard({
           className="text-xs text-center mt-3"
           style={{ color: 'var(--text-tertiary)' }}
         >
-          +{tools.length - 4} more tools
+          +{tools.length - 4} more
         </p>
       )}
     </ProfileCard>

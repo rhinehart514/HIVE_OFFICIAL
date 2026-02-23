@@ -134,7 +134,7 @@ const ProfileToolModal: React.FC<ProfileToolModalProps> = ({
               {toolData.icon || '🔧'}
             </div>
             <div>
-              <ModalTitle>{toolData.name || 'Tool'}</ModalTitle>
+              <ModalTitle>{toolData.name || 'Creation'}</ModalTitle>
               {toolData.description && (
                 <ModalDescription className="mt-1">
                   {toolData.description}
