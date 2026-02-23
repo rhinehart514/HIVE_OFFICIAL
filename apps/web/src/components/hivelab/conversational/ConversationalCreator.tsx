@@ -9,7 +9,7 @@
  * and redirected to the IDE. Now the creation experience lives here.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -221,6 +221,13 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
     await handlePromptSubmit(userPrompt);
   }, [handlePromptSubmit]);
 
+  // Auto-trigger generation when initialPrompt is provided
+  useEffect(() => {
+    if (initialPrompt && phase === 'creating-tool' && !hasCreatedInitial.current) {
+      handleInitialPrompt(initialPrompt);
+    }
+  }, [initialPrompt, phase, handleInitialPrompt]);
+
   return (
     <div className="min-h-screen bg-black">
       {/* Top bar - shown after prompt phase */}
@@ -363,7 +370,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
                 <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
                 Ready
               </div>
-              <h2 className="text-xl font-semibold text-white">{toolName || 'Your Tool'}</h2>
+              <h2 className="text-xl font-semibold text-white">{toolName || 'Untitled'}</h2>
             </motion.div>
 
             {/* Preview */}
@@ -421,7 +428,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
                   </button>
                 </div>
                 <p className="text-[11px] text-white/30 mt-1.5 text-center">
-                  Anyone with this link can use your tool — no account needed
+                  Anyone with this link can use it — no account needed
                 </p>
               </motion.div>
             )}

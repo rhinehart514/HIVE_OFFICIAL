@@ -47,8 +47,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!tool) {
     return {
-      title: 'Not Found',
-      description: 'This creation could not be found.',
+      title: 'HiveLab',
+      description: 'Create anything for your campus.',
     };
   }
 

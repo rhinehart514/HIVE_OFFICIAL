@@ -152,7 +152,7 @@ const SpaceLeaderOnboardingModal: React.FC<SpaceLeaderOnboardingModalProps> = ({
         <ul className="space-y-2">
           {[
             'Moderate discussions and pin important messages',
-            'Deploy tools from your HiveLab or templates',
+            'Deploy creations from HiveLab or templates',
             'Create events and manage members',
             'Customize your space appearance',
           ].map((item, i) => (
@@ -182,10 +182,10 @@ const SpaceLeaderOnboardingModal: React.FC<SpaceLeaderOnboardingModalProps> = ({
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <Text size="lg" weight="semibold" className="text-[var(--color-text-primary)]">
-          Quick Deploy Tools
+          Quick Deploy
         </Text>
         <Text size="sm" tone="secondary">
-          Add ready-to-use tools to your space in one click
+          Add ready-to-use creations to your space in one click
         </Text>
       </div>
 
@@ -259,7 +259,7 @@ const SpaceLeaderOnboardingModal: React.FC<SpaceLeaderOnboardingModalProps> = ({
       {deployedTemplates.length > 0 && (
         <div className="text-center">
           <Text size="sm" className="text-[var(--color-life-gold)]">
-            {deployedTemplates.length} tool{deployedTemplates.length !== 1 ? 's' : ''} deployed
+            {deployedTemplates.length} deployed
           </Text>
         </div>
       )}

@@ -118,7 +118,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
       <div className="space-y-4">
         <div>
           <h3 className="text-base font-semibold text-[var(--hivelab-text-primary)]">Select Deployment Target</h3>
-          <p className="text-sm text-[var(--hivelab-text-secondary)]">Choose where you want to deploy this tool</p>
+          <p className="text-sm text-[var(--hivelab-text-secondary)]">Choose where to deploy</p>
         </div>
 
         {/* Profile targets */}
@@ -175,7 +175,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
                   You're not leading any spaces yet
                 </p>
                 <p className="text-xs text-[var(--hivelab-text-secondary)]/70 mt-1">
-                  Deploy to your profile, or claim a space to deploy tools there
+                  Deploy to your profile, or claim a space first
                 </p>
               </div>
             </div>
@@ -186,14 +186,14 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
   };
 
   const spaceSurfaces = [
-    { id: 'tools', name: 'Tools Gallery', description: 'Main tools section' },
+    { id: 'tools', name: 'Creations', description: 'Main creations section' },
     { id: 'pinned', name: 'Pinned', description: 'Pinned at top of space' },
     { id: 'posts', name: 'Posts Feed', description: 'Within the posts feed' },
     { id: 'events', name: 'Events', description: 'Events section' },
   ];
 
   const profileVisibilityOptions = [
-    { id: 'public', name: 'Public', description: 'Anyone can see this tool' },
+    { id: 'public', name: 'Public', description: 'Anyone can see this' },
     { id: 'campus', name: 'Campus', description: 'Only campus members can see' },
     { id: 'connections', name: 'Connections', description: 'Only your connections can see' },
     { id: 'private', name: 'Private', description: 'Only you can see' },
@@ -233,8 +233,8 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
       {/* Profile Privacy Settings */}
       {deploymentConfig.targetType === 'profile' && (
         <Card className="p-4">
-          <h4 className="font-semibold text-[var(--hivelab-text-primary)] mb-2 flex items-center gap-2"><ShieldCheckIcon className="h-4 w-4" /> Tool Visibility</h4>
-          <p className="text-sm text-[var(--hivelab-text-secondary)] mb-3">Choose who can see this tool on your profile</p>
+          <h4 className="font-semibold text-[var(--hivelab-text-primary)] mb-2 flex items-center gap-2"><ShieldCheckIcon className="h-4 w-4" /> Visibility</h4>
+          <p className="text-sm text-[var(--hivelab-text-secondary)] mb-3">Choose who can see this on your profile</p>
 
           {/* Inherit from profile toggle */}
           <label className="flex items-center gap-2 mb-4 p-2 rounded-lg border border-[var(--hivelab-border)] cursor-pointer hover:bg-[var(--hivelab-surface)]">
@@ -408,7 +408,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
             ) : (
               <>
                 <RocketLaunchIcon className="h-4 w-4" />
-                {error ? 'Try Again' : 'Deploy Tool'}
+                {error ? 'Try Again' : 'Deploy'}
               </>
             )}
           </Button>
@@ -491,7 +491,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Deploy Tool</DialogTitle>
+          <DialogTitle>Deploy</DialogTitle>
           <DialogDescription>Select a target and confirm deployment</DialogDescription>
         </DialogHeader>
 

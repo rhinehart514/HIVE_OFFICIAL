@@ -322,7 +322,7 @@ export default function ToolStudioPage({ params }: Props) {
       id: 'profile',
       name: 'My Profile',
       type: 'profile',
-      description: 'Add this tool to your personal profile',
+      description: 'Add to your personal profile',
     },
     ...userSpaces.map((space) => ({
       id: space.id,
@@ -530,16 +530,16 @@ export default function ToolStudioPage({ params }: Props) {
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-[var(--hivelab-text-primary)] mb-2">
-            Tool not found
+            Not found
           </h2>
           <p className="text-[var(--hivelab-text-secondary)] mb-6">
-            This tool may have been deleted or you don't have access to it.
+            This may have been deleted or you don&apos;t have access.
           </p>
           <button
             onClick={() => router.push('/lab')}
             className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-full font-medium hover:bg-[var(--life-gold)]/90 transition-colors"
           >
-            Back to Tools
+            Back to Lab
           </button>
         </div>
       </div>
@@ -700,7 +700,7 @@ export default function ToolStudioPage({ params }: Props) {
                       No elements yet
                     </h3>
                     <p className="text-sm text-[var(--hivelab-text-secondary)] mb-4">
-                      Switch to Edit mode to add elements to your tool.
+                      Switch to Edit mode to add elements.
                     </p>
                     <button
                       onClick={() => handleModeChange('edit')}

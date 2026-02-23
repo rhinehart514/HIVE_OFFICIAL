@@ -396,14 +396,14 @@ function EmptyState({ onShare }: { onShare: () => void }) {
         No Analytics Yet
       </h3>
       <p className="mb-6 max-w-sm mx-auto" style={{ color: COLORS.textSecondary }}>
-        Share your tool to start collecting usage data and feedback from your community.
+        Share to start collecting usage data and feedback from your community.
       </p>
       <Button
         onClick={onShare}
         className="bg-[var(--hive-brand-primary)] text-black hover:bg-[var(--hive-brand-hover)]"
       >
         <Share className="w-4 h-4 mr-2" />
-        Share Tool
+        Share
       </Button>
     </motion.div>
   );
@@ -629,7 +629,7 @@ export default function ToolAnalyticsPage({ params }: Props) {
               Back
             </Button>
             <h1 className="text-xl font-semibold" style={{ color: COLORS.textPrimary }}>
-              {toolName} Analytics
+              Analytics
             </h1>
           </div>
 

@@ -269,7 +269,7 @@ export function NewToolCard({ onClick, index: _index = 0 }: NewToolCardProps) {
         </span>
       </div>
       <span className="text-white/50 text-xs group-hover:text-white/50 transition-colors">
-        New Tool
+        Create New
       </span>
     </motion.button>
   );

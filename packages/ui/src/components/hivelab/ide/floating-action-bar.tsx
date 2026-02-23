@@ -92,7 +92,7 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
   // Get contextual placeholder
   const getPlaceholder = useCallback(() => {
     if (aiLoading) return 'AI is thinking...';
-    if (selectedCount === 0) return 'Create a tool that...';
+    if (selectedCount === 0) return 'Describe what you want...';
     if (selectedCount === 1) return 'Modify this element...';
     return `Modify ${selectedCount} elements...`;
   }, [aiLoading, selectedCount]);

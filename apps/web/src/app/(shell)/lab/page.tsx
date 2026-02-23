@@ -372,7 +372,7 @@ function InlineGenerationPreview({
             </button>
           </div>
           <p className="text-[11px] text-white/25 text-center">
-            Anyone with this link can use your tool
+            Anyone with this link can use it
           </p>
 
           {/* Action buttons */}
@@ -725,7 +725,7 @@ export default function BuilderDashboard() {
       const response = await apiClient.delete(`/api/tools/${toolId}`);
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to delete tool');
+        throw new Error(data.error || 'Failed to delete');
       }
       toast.success('Deleted');
       queryClient.invalidateQueries({ queryKey: ['my-tools'] });
@@ -830,7 +830,7 @@ export default function BuilderDashboard() {
             animate={{ opacity: 1 }}
             className="mt-4 text-white/50 text-sm"
           >
-            {statusText || 'Creating tool...'}
+            {statusText || 'Creating...'}
           </motion.p>
         )}
       </div>
@@ -939,7 +939,7 @@ export default function BuilderDashboard() {
                   onClick={() => setShowAllTools(!showAllTools)}
                   className="mt-3 text-white/50 hover:text-white/50 text-xs transition-colors"
                 >
-                  {showAllTools ? 'Show less' : `View all ${userTools.length} tools`}
+                  {showAllTools ? 'Show less' : `View all ${userTools.length}`}
                 </motion.button>
               )}
             </motion.div>

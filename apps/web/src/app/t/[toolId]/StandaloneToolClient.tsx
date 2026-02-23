@@ -195,7 +195,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
         <div className="text-center max-w-sm">
           <h2 className="text-xl font-semibold text-white mb-2">Not Found</h2>
           <p className="text-white/50 text-sm mb-6">
-            This tool may have been deleted or the link is incorrect.
+            This may have been deleted or the link is incorrect.
           </p>
           <button
             onClick={() => router.push('/discover')}
@@ -267,7 +267,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               />
             ) : (
               <div className="text-center py-12">
-                <p className="text-white/50 text-sm">This tool has no elements yet</p>
+                <p className="text-white/50 text-sm">Nothing here yet</p>
               </div>
             )}
           </div>

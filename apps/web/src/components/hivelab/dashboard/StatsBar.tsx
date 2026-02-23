@@ -59,7 +59,7 @@ function StatCard({
 export function StatsBar({ totalTools, totalUsers, weeklyInteractions }: StatsBarProps) {
   return (
     <div className="grid grid-cols-3 gap-3">
-      <StatCard value={totalTools} label="Tools" icon={Wrench} index={0} />
+      <StatCard value={totalTools} label="Creations" icon={Wrench} index={0} />
       <StatCard value={totalUsers} label="Total Users" icon={Users} index={1} />
       <StatCard value={weeklyInteractions} label="This Week" icon={Zap} index={2} />
     </div>

@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     || (tool.ownerName ? `Built by ${tool.ownerName} on HIVE` : 'An interactive creation on HIVE');
 
   return {
-    title: `${tool.name} | HIVE`,
+    title: tool.name,
     description: ogDescription,
     openGraph: {
       title: tool.name,

@@ -38,11 +38,11 @@ interface Command {
 const NO_SELECTION_COMMANDS: Command[] = [
   {
     id: 'generate',
-    label: 'Generate Tool',
-    description: 'Create a new tool from scratch',
+    label: 'Generate',
+    description: 'Create from scratch',
     icon: <SparklesIcon className="h-4 w-4" />,
     type: 'generate',
-    prefix: 'Create a tool that...',
+    prefix: 'Describe what you want...',
     selectionMode: 'none',
   },
   {
