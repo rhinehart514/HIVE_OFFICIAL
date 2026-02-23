@@ -426,10 +426,14 @@ export function LeftSidebar() {
   const handleEnter = useCallback(() => {
     if (collapseTimer.current) clearTimeout(collapseTimer.current);
     setExpanded(true);
+    document.documentElement.style.setProperty('--sidebar-w', `${EXPANDED_W}px`);
   }, []);
 
   const handleLeave = useCallback(() => {
-    collapseTimer.current = setTimeout(() => setExpanded(false), 200);
+    collapseTimer.current = setTimeout(() => {
+      setExpanded(false);
+      document.documentElement.style.setProperty('--sidebar-w', `${RAIL_W}px`);
+    }, 200);
   }, []);
 
   useEffect(() => () => {

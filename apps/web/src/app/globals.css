@@ -25,6 +25,7 @@
   }
 
   html {
+    --sidebar-w: 56px;
     scroll-behavior: smooth;
     color-scheme: dark;
     background-color: var(--bg-ground);

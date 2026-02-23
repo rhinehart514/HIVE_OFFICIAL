@@ -52,7 +52,7 @@ export function AppShell({ children }: AppShellProps) {
       <MobileBottomBar />
 
       {/* Main content — offset right on desktop, full-width on mobile */}
-      <div className="min-h-screen md:ml-[56px]">
+      <div className="min-h-screen md:ml-[var(--sidebar-w,56px)] transition-[margin-left] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]">
         <ImpersonationBanner />
         <main className="min-h-screen pb-20 md:pb-0">
           <PageTransition>{children}</PageTransition>
