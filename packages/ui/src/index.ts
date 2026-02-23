@@ -1385,6 +1385,20 @@ export type { PageHeaderProps, SectionHeaderProps } from "./layout/page-header";
 export { CollapsiblePageHeader } from "./layout/collapsible-page-header";
 export type { CollapsiblePageHeaderProps, TabItem as HeaderTabItem } from "./layout/collapsible-page-header";
 
+// HiveLab: Editor Level Detection
+export { detectEditorLevel, isEmbedElement } from "./lib/hivelab/detect-editor-level";
+export type { EditorLevel } from "./lib/hivelab/detect-editor-level";
+
+// HiveLab: Simple Editors (Adaptive complexity)
+export { SimpleEditor } from "./components/hivelab/editors";
+export type { SimpleEditorProps } from "./components/hivelab/editors";
+export { ElementPickerModal } from "./components/hivelab/editors";
+export type { ElementPickerModalProps } from "./components/hivelab/editors";
+
+// HiveLab: Shared Config Fields (extracted from PropertiesPanel)
+export { ELEMENT_SCHEMAS, PropertyField } from "./components/hivelab/ide/config-fields";
+export type { PropertySchema, PropertyFieldProps } from "./components/hivelab/ide/config-fields";
+
 // HiveLab: Deployment modal
 export {
   ToolDeployModal,

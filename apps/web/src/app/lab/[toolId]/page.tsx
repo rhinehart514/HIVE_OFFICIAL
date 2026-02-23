@@ -12,6 +12,8 @@ import {
   ToolDeployModal,
   ToolCanvas,
   BuilderOnboarding,
+  SimpleEditor,
+  detectEditorLevel,
   type HiveLabComposition,
   type IDECanvasElement,
   type IDEConnection,
@@ -19,6 +21,7 @@ import {
   type ToolDeploymentTarget as DeploymentTarget,
   type ToolDeploymentConfig as DeploymentConfig,
   type PageMode,
+  type EditorLevel,
 } from '@hive/ui';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import { ToolAnalyticsPanel } from './components/analytics-panel';
@@ -244,6 +247,10 @@ export default function ToolStudioPage({ params }: Props) {
   // Page mode state - edit (IDE) or use (runtime)
   const [pageMode, setPageMode] = useState<PageMode>(initialMode === 'use' ? 'use' : 'edit');
 
+  // Editor level — URL param ?editor=ide forces full IDE
+  const forceIDE = searchParams.get('editor') === 'ide';
+  const [editorLevel, setEditorLevel] = useState<EditorLevel>('flow');
+
   // State
   const [composition, setComposition] = useState<{
     id: string;
@@ -368,6 +375,19 @@ export default function ToolStudioPage({ params }: Props) {
       });
     }
   }, [tool, toolId, isNewTool]);
+
+  // Detect editor level when composition changes
+  useEffect(() => {
+    if (!composition || forceIDE) {
+      setEditorLevel('flow');
+      return;
+    }
+    const level = detectEditorLevel({
+      elements: composition.elements,
+      connections: composition.connections,
+    });
+    setEditorLevel(level);
+  }, [composition, forceIDE]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -618,20 +638,39 @@ export default function ToolStudioPage({ params }: Props) {
         </div>
       )}
 
-      {/* Main content area - IDE or Runtime based on mode */}
+      {/* Main content area - IDE, Simple Editor, or Runtime based on mode + complexity */}
       <div className="flex-1 overflow-hidden">
         {pageMode === 'edit' ? (
-          /* Edit Mode: Full HiveLab IDE */
-          <HiveLabIDE
-            initialComposition={composition}
-            showOnboarding={showOnboarding}
-            onSave={handleSave}
-            onPreview={handlePreview}
-            onCancel={handleCancel}
-            userId={user?.uid || 'anonymous'}
-            userContext={userContext}
-            initialPrompt={isNewTool ? initialPrompt : null}
-          />
+          editorLevel === 'flow' ? (
+            /* Flow: Full HiveLab IDE */
+            <HiveLabIDE
+              initialComposition={composition}
+              showOnboarding={showOnboarding}
+              onSave={handleSave}
+              onPreview={handlePreview}
+              onCancel={handleCancel}
+              userId={user?.uid || 'anonymous'}
+              userContext={userContext}
+              initialPrompt={isNewTool ? initialPrompt : null}
+            />
+          ) : (
+            /* Embed / Configure / Compose: Simple Editor */
+            <SimpleEditor
+              editorMode={editorLevel}
+              toolId={toolId}
+              composition={composition}
+              onSave={handleSave}
+              onDeploy={() => setDeployModalOpen(true)}
+              onEscalateToIDE={() => setEditorLevel('flow')}
+              onUpdateComposition={(updates) => {
+                setComposition((prev) => prev ? { ...prev, ...updates } : null);
+                setHasUnsavedChanges(true);
+              }}
+              userContext={userContext}
+              saving={saving}
+              justSaved={justSaved}
+            />
+          )
         ) : (
           /* Use Mode: Interactive ToolCanvas */
           <div className="h-full bg-[var(--hivelab-bg)] p-4 md:p-8 overflow-auto">
