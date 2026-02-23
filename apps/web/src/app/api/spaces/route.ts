@@ -158,17 +158,13 @@ export const POST = withAuthValidationAndErrors(
     return respond.error("User not found", "NOT_FOUND", { status: 404 });
   }
 
-  // CHECK 3: Account age (7 days minimum)
+  // Account age kept for audit log metadata (gate removed for launch)
   const accountCreated = userData.createdAt?.toDate() || new Date();
   const accountAge = Math.floor((Date.now() - accountCreated.getTime()) / (1000 * 60 * 60 * 24));
   // SECURITY: Use centralized admin check (checks custom claims + Firestore admins collection)
   const isAdmin = await checkIsAdmin(userId, req.user.decodedToken.email);
 
-  if (accountAge < 7 && !isAdmin) {
-    return respond.error(`Account must be at least 7 days old (current: ${accountAge} days)`, "PERMISSION_DENIED", { status: 403 });
-  }
-
-  // CHECK 4: Email verification
+  // CHECK 3: Email verification
   const emailVerified = req.user.decodedToken.email_verified || false;
   if (!emailVerified && !isAdmin) {
     return respond.error("Email verification required", "PERMISSION_DENIED", { status: 403 });

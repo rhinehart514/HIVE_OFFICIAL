@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@hive/auth-logic';
 import { useQuery } from '@tanstack/react-query';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
@@ -66,9 +66,34 @@ async function fetchTool(toolId: string): Promise<ToolData> {
 
 export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: string; baseUrl: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [showCreatedBanner, setShowCreatedBanner] = useState(false);
+  const [copied, setCopied] = useState(false);
   const interactionRef = useRef(false);
+
+  // Show share banner when arriving from creation flow
+  useEffect(() => {
+    if (searchParams.get('just_created') === 'true') {
+      setShowCreatedBanner(true);
+    }
+  }, [searchParams]);
+
+  const handleShare = useCallback(async () => {
+    const url = `${window.location.origin}/t/${toolId}`;
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: 'Check this out', url });
+      } catch {
+        // User cancelled share
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [toolId]);
 
   const {
     data: tool,
@@ -234,6 +259,32 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             )}
           </div>
 
+          {/* Just created — share banner */}
+          {showCreatedBanner && (
+            <div className="mt-4 rounded-2xl border border-[#FFD700]/20 bg-[#FFD700]/[0.04] p-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <p className="text-[15px] font-medium text-white mb-1">
+                Your tool is ready
+              </p>
+              <p className="text-[13px] text-white/50 mb-4">
+                Share this link — anyone can use it, no account needed.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleShare}
+                  className="flex-1 px-4 py-2.5 bg-[#FFD700] text-black text-sm font-medium rounded-xl hover:bg-[#FFD700]/90 transition-colors"
+                >
+                  {copied ? 'Copied!' : 'Share link'}
+                </button>
+                <button
+                  onClick={() => router.push(`/lab/${toolId}`)}
+                  className="px-4 py-2.5 bg-white/[0.06] text-white/60 text-sm font-medium rounded-xl hover:bg-white/[0.08] transition-colors"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Post-interaction CTA — appears after user engages */}
           {hasInteracted && !user && (
             <div className="mt-6 text-center animate-in fade-in duration-300">
@@ -248,32 +299,37 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
         </div>
       </main>
 
-      {/* HIVE watermark + CTA */}
-      <footer className="pb-8 pt-2 text-center">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 group"
-        >
-          <span
-            className="h-[6px] w-[6px] rounded-full bg-[#FFD700]"
-            style={{ animation: 'pulse-breathe 3s ease-in-out infinite' }}
-          />
-          <span className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 group-hover:text-white/50 transition-colors">
-            HIVE
-          </span>
-        </Link>
+      {/* Made with HIVE — acquisition surface */}
+      <footer className="pb-8 pt-4 text-center space-y-2">
+        <div className="flex items-center justify-center gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 group"
+          >
+            <span
+              className="h-[6px] w-[6px] rounded-full bg-[#FFD700]"
+              style={{ animation: 'pulse-breathe 3s ease-in-out infinite' }}
+            />
+            <span className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 group-hover:text-white/50 transition-colors">
+              Made with HIVE
+            </span>
+          </Link>
+          <span className="text-white/15">·</span>
+          <Link
+            href={`/enter?from=tool&toolType=${tool.elements[0]?.elementId || 'poll'}`}
+            className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 hover:text-[#FFD700]/60 transition-colors"
+          >
+            Create your own
+          </Link>
+        </div>
 
-        {/* Persistent subtle CTA for non-auth users */}
-        {!user && !hasInteracted && (
-          <div className="mt-3">
-            <Link
-              href="/enter"
-              className="text-[13px] text-white/30 hover:text-white/60 transition-colors"
-            >
-              Build your own &rarr;
-            </Link>
-          </div>
-        )}
+        {/* Share button — always visible */}
+        <button
+          onClick={handleShare}
+          className="text-[12px] text-white/20 hover:text-white/40 transition-colors"
+        >
+          {copied ? 'Copied!' : 'Share this tool'}
+        </button>
       </footer>
 
       {/* Breathing animation for the yellow dot */}

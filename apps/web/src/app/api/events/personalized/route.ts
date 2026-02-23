@@ -108,11 +108,13 @@ async function fetchEventsForTimeField(
   field: TimeField,
   limit: number
 ): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  // startDate is stored as ISO string on CampusLabs events; startAt is a Timestamp
+  const toValue = (d: Date): Date | string => field === 'startDate' ? d.toISOString() : d;
   const query = dbAdmin
     .collection('events')
     .where('campusId', '==', campusId)
-    .where(field, '>=', start)
-    .where(field, '<=', end)
+    .where(field, '>=', toValue(start))
+    .where(field, '<=', toValue(end))
     .orderBy(field, 'asc')
     .limit(limit);
 
@@ -384,7 +386,24 @@ async function handler(
       }
     }
 
-    // Step 5: Calculate relevance scores and build response
+    // Step 5: Batch-resolve space handles (spaceHandle doesn't exist on event docs)
+    const spaceIds = [...new Set(events.map(e => e.spaceId as string).filter(Boolean))];
+    const spaceHandleMap = new Map<string, { handle?: string; avatarUrl?: string }>();
+    if (spaceIds.length > 0) {
+      const spaceRefs = spaceIds.map(id => dbAdmin.collection('spaces').doc(id));
+      const spaceDocs = await dbAdmin.getAll(...spaceRefs);
+      for (const doc of spaceDocs) {
+        if (doc.exists) {
+          const data = doc.data()!;
+          spaceHandleMap.set(doc.id, {
+            handle: data.handle || data.slug,
+            avatarUrl: data.avatarUrl || data.bannerUrl,
+          });
+        }
+      }
+    }
+
+    // Step 6: Calculate relevance scores and build response
     const personalizedEvents: PersonalizedEvent[] = events.map(event => {
       const eventId = event.id as string;
       const rsvp = rsvpData.get(eventId) || { count: 0, userRsvped: false, friendsAttending: [] };
@@ -470,10 +489,10 @@ async function handler(
         eventType,
         spaceId: eventSpaceId,
         spaceName: event.spaceName as string | undefined,
-        spaceHandle: event.spaceHandle as string | undefined,
-        spaceAvatarUrl: event.spaceAvatarUrl as string | undefined,
+        spaceHandle: spaceHandleMap.get(eventSpaceId ?? '')?.handle ?? undefined,
+        spaceAvatarUrl: spaceHandleMap.get(eventSpaceId ?? '')?.avatarUrl ?? undefined,
         organizerName: event.organizerName as string | undefined,
-        coverImageUrl: event.coverImageUrl as string | undefined,
+        coverImageUrl: (event.imageUrl || event.coverImageUrl) as string | undefined,
         rsvpCount: rsvp.count,
         relevanceScore,
         matchReasons,

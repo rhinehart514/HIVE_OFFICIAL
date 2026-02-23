@@ -88,28 +88,28 @@ function ProfileLoadingState() {
 
       {/* Zone 2: Tools skeleton */}
       <div className="space-y-4 animate-pulse">
-        <div className="h-3 w-20 rounded bg-white/[0.04]" />
+        <div className="h-3 w-20 rounded bg-white/[0.06]" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-2xl bg-white/[0.04] h-[180px]" />
-          <div className="rounded-2xl bg-white/[0.04] h-[180px]" />
+          <div className="rounded-2xl bg-white/[0.06] h-[180px]" />
+          <div className="rounded-2xl bg-white/[0.06] h-[180px]" />
         </div>
       </div>
 
       {/* Zone 3: Spaces skeleton */}
       <div className="space-y-4 animate-pulse">
-        <div className="h-3 w-16 rounded bg-white/[0.04]" />
+        <div className="h-3 w-16 rounded bg-white/[0.06]" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[0, 1, 2].map(i => (
-            <div key={i} className="rounded-2xl bg-white/[0.04] h-[68px]" />
+            <div key={i} className="rounded-2xl bg-white/[0.06] h-[68px]" />
           ))}
         </div>
       </div>
 
       {/* Zone 4: Momentum skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
-        <div className="rounded-2xl bg-white/[0.04] h-[240px] md:col-span-2" />
-        <div className="rounded-2xl bg-white/[0.04] h-[160px]" />
-        <div className="rounded-2xl bg-white/[0.04] h-[160px]" />
+        <div className="rounded-2xl bg-white/[0.06] h-[240px] md:col-span-2" />
+        <div className="rounded-2xl bg-white/[0.06] h-[160px]" />
+        <div className="rounded-2xl bg-white/[0.06] h-[160px]" />
       </div>
     </div>
   );
@@ -320,6 +320,14 @@ export default function ProfilePageContent() {
           />
         )}
 
+        {/* Participation count — the identity metric */}
+        {totalToolRuns > 0 && (
+          <p className="text-[13px] text-white/40">
+            <span className="text-white/60 font-medium">{totalToolRuns.toLocaleString()}</span>
+            {' '}people participated in {isOwnProfile ? 'your' : `${heroUser.fullName.split(' ')[0]}'s`} tools
+          </p>
+        )}
+
         {/* Stats row — inline, supporting the narrative */}
         <ProfileStatsRow
           spaces={profileSpaces.length}
@@ -368,14 +376,14 @@ export default function ProfilePageContent() {
                   <Sparkles className="w-6 h-6 text-[#FFD700]/50" />
                 </div>
                 <div>
-                  <p className="text-[15px] font-medium text-white/60 mb-1">You haven't built anything yet</p>
-                  <p className="text-[13px] text-white/30 max-w-xs">Create polls, forms, leaderboards, and more for your campus communities</p>
+                  <p className="text-[15px] font-medium text-white/60 mb-1">What will you build first?</p>
+                  <p className="text-[13px] text-white/30 max-w-xs">Your profile fills up as you create. Polls, forms, signups — whatever your campus needs.</p>
                 </div>
                 <Link
                   href="/lab"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#FFD700]/10 border border-[#FFD700]/30 text-[13px] font-medium text-[#FFD700] hover:bg-[#FFD700]/15 transition-colors"
                 >
-                  <Zap className="w-3.5 h-3.5" />Open Lab <ArrowRight className="w-3.5 h-3.5" />
+                  <Zap className="w-3.5 h-3.5" />Start creating <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </motion.div>

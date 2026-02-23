@@ -3,12 +3,12 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, Calendar, Vote, Users, Clock, ClipboardList } from 'lucide-react';
 import { Button, Input } from '@hive/ui/design-system/primitives';
 import { useOnboardingAnalytics } from '@hive/hooks';
 import { InterestPicker } from './InterestPicker';
 
-type Step = 'email' | 'code' | 'name' | 'interests' | 'spaces';
+type Step = 'email' | 'code' | 'name' | 'interests' | 'campusLive' | 'create' | 'spaces';
 
 const SCREEN_FADE = { duration: 0.15, ease: 'easeOut' } as const;
 
@@ -30,7 +30,7 @@ interface RecommendedSpace {
 // ─────────────────────────────────────────────────────────────────
 function ProgressDots({ step }: { step: Step }) {
   if (step === 'email') return null;
-  const steps: Step[] = ['code', 'name', 'interests', 'spaces'];
+  const steps: Step[] = ['code', 'name', 'interests', 'campusLive', 'create', 'spaces'];
   const currentIndex = steps.indexOf(step);
 
   return (
@@ -115,13 +115,32 @@ export function EntryFlowV2() {
   const [nameError, setNameError] = React.useState<string | null>(null);
   const [isSubmittingName, setIsSubmittingName] = React.useState(false);
 
-  // Screen 5 state
+  // Screen 5 state (interests data)
   const [savedInterestData, setSavedInterestData] = React.useState<{
     interests: string[];
     major?: string;
     residentialSpaceId?: string;
     residenceType?: string;
+    greekLife?: { affiliated: boolean; chapterId?: string };
+    studentOrgs?: string[];
   } | null>(null);
+
+  // Campus live screen state
+  const [campusEvents, setCampusEvents] = React.useState<Array<{
+    id: string;
+    title: string;
+    startDate?: string;
+    startAt?: string;
+    spaceName?: string;
+  }>>([]);
+  const [campusEventCount, setCampusEventCount] = React.useState(0);
+  const [isLoadingEvents, setIsLoadingEvents] = React.useState(false);
+
+  // Create step state
+  const [isCreatingTool, setIsCreatingTool] = React.useState(false);
+  const [createdToolId, setCreatedToolId] = React.useState<string | null>(null);
+
+  // Spaces state
   const [joinedSpaces, setJoinedSpaces] = React.useState<string[]>([]);
   const [recommendedSpaces, setRecommendedSpaces] = React.useState<RecommendedSpace[]>([]);
   const [isLoadingSpaces, setIsLoadingSpaces] = React.useState(false);
@@ -153,6 +172,8 @@ export function EntryFlowV2() {
       code: 'verify',
       name: 'name',
       interests: 'interests',
+      campusLive: 'campus_live',
+      create: 'create',
       spaces: 'spaces',
     } as const;
 
@@ -169,6 +190,8 @@ export function EntryFlowV2() {
           code: 'verify',
           name: 'name',
           interests: 'interests',
+          campusLive: 'campus_live',
+          create: 'create',
           spaces: 'spaces',
         } as const;
         analytics.trackOnboardingAbandoned(stepMap[prevStepRef.current], 'component_unmounted');
@@ -276,6 +299,44 @@ export function EntryFlowV2() {
 
     return () => { cancelled = true; };
   }, [step, recommendedSpaces.length]);
+
+  // ── Fetch campus events when entering campusLive step ──────
+
+  React.useEffect(() => {
+    if (step !== 'campusLive') return;
+
+    let cancelled = false;
+    setIsLoadingEvents(true);
+
+    (async () => {
+      try {
+        const res = await fetch('/api/events?campusId=ub-buffalo&upcoming=true&limit=10', {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const events = (data.events || data.data || []).slice(0, 3).map((e: Record<string, unknown>) => ({
+            id: e.id || e.eventId,
+            title: e.title || e.name,
+            startDate: e.startDate,
+            startAt: e.startAt,
+            spaceName: e.spaceName || e.organizerName,
+          }));
+          const totalCount = data.totalCount || data.total || events.length;
+          if (!cancelled) {
+            setCampusEvents(events);
+            setCampusEventCount(totalCount);
+          }
+        }
+      } catch {
+        // Silently fail — screen still works without events
+      } finally {
+        if (!cancelled) setIsLoadingEvents(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [step]);
 
   // ── Actions ─────────────────────────────────────────────────
 
@@ -434,6 +495,8 @@ export function EntryFlowV2() {
           major: savedInterestData.major,
           residentialSpaceId: savedInterestData.residentialSpaceId,
           residenceType: savedInterestData.residenceType,
+          greekLife: savedInterestData.greekLife,
+          studentOrgs: savedInterestData.studentOrgs,
         }),
       });
 
@@ -457,9 +520,18 @@ export function EntryFlowV2() {
         interestCount: savedInterestData.interests.length,
         spacesJoined: joinedSpaces.length,
       });
-      analytics.trackOnboardingCompleted(0, ['welcome', 'verify', 'name', 'interests', 'spaces']);
+      analytics.trackOnboardingCompleted(0, ['welcome', 'verify', 'name', 'interests', 'campus_live', 'create', 'spaces']);
 
-      goToApp(result.redirect || '/discover');
+      // If user created a tool during onboarding, send them to it
+      const onboardingToolId = typeof window !== 'undefined'
+        ? sessionStorage.getItem('hive_onboarding_tool')
+        : null;
+      if (onboardingToolId) {
+        sessionStorage.removeItem('hive_onboarding_tool');
+        goToApp(`/t/${onboardingToolId}?just_created=true`);
+      } else {
+        goToApp(result.redirect || '/discover');
+      }
     } catch (error) {
       setNameError(error instanceof Error ? error.message : 'Failed to complete entry');
       setStep('name');
@@ -467,6 +539,61 @@ export function EntryFlowV2() {
       setIsSubmittingName(false);
     }
   }, [firstName, lastName, savedInterestData, joinedSpaces, goToApp, analytics]);
+
+  // ── Quick create from onboarding ────────────────────────────
+
+  const handleOnboardingCreate = React.useCallback(async (templateType: string) => {
+    setIsCreatingTool(true);
+    try {
+      const { getQuickTemplate, createToolFromTemplate } = await import('@hive/ui');
+      const template = getQuickTemplate(templateType);
+      if (!template) {
+        setStep('spaces');
+        return;
+      }
+
+      const composition = createToolFromTemplate(template);
+      const res = await fetch('/api/tools', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: template.name,
+          description: template.description,
+          status: 'draft',
+          type: 'visual',
+          templateId: template.id,
+          elements: composition.elements.map((el: { elementId: string; instanceId: string; config: Record<string, unknown>; position?: { x: number; y: number }; size?: { width: number; height: number } }) => ({
+            elementId: el.elementId,
+            instanceId: el.instanceId,
+            config: el.config,
+            position: el.position,
+            size: el.size,
+          })),
+          connections: composition.connections?.map((conn: { from: { instanceId: string; output?: string }; to: { instanceId: string; input?: string } }) => ({
+            id: `conn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            sourceElementId: conn.from.instanceId,
+            sourceOutput: conn.from.output || 'output',
+            targetElementId: conn.to.instanceId,
+            targetInput: conn.to.input || 'input',
+          })) || [],
+        }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        const toolId = (result.data?.tool?.id) || result.id;
+        setCreatedToolId(toolId);
+        // Store so it persists across profile submission
+        sessionStorage.setItem('hive_onboarding_tool', toolId);
+      }
+    } catch {
+      // Creation failed silently — still proceed
+    } finally {
+      setIsCreatingTool(false);
+      setStep('spaces');
+    }
+  }, []);
 
   // ── OTP Handlers ────────────────────────────────────────────
 
@@ -789,14 +916,180 @@ export function EntryFlowV2() {
               <InterestPicker
                 onComplete={(data) => {
                   setSavedInterestData(data);
-                  setStep('spaces');
+                  setStep('campusLive');
                 }}
                 isSubmitting={false}
               />
             </motion.div>
           )}
 
-          {/* ── Screen 5: Space Recommendations ──────────────── */}
+          {/* ── Screen 5: Your Campus is Live (O3) ─────────── */}
+          {step === 'campusLive' && (
+            <motion.div
+              key="entry-campus-live"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={SCREEN_FADE}
+              className="space-y-6"
+            >
+              <div className="space-y-2">
+                <h1 className="font-display text-[28px] font-semibold leading-tight text-white">
+                  Your campus is live.
+                </h1>
+                {campusEventCount > 0 && (
+                  <p className="text-sm text-white/40">
+                    {campusEventCount} events happening at UB this week.
+                  </p>
+                )}
+              </div>
+
+              {isLoadingEvents ? (
+                <div className="space-y-3">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4 animate-pulse">
+                      <div className="h-4 w-48 bg-white/[0.04] rounded" />
+                      <div className="h-3 w-32 bg-white/[0.03] rounded mt-2" />
+                    </div>
+                  ))}
+                </div>
+              ) : campusEvents.length > 0 ? (
+                <div className="space-y-3">
+                  {campusEvents.map((event, i) => {
+                    const eventDate = event.startAt || event.startDate;
+                    const formatted = eventDate
+                      ? new Date(eventDate).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })
+                      : null;
+                    return (
+                      <motion.div
+                        key={event.id || i}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: i * 0.08 }}
+                        className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-lg bg-white/[0.04] mt-0.5">
+                            <Calendar className="w-4 h-4 text-white/30" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-white truncate">
+                              {event.title}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {formatted && (
+                                <span className="text-[11px] text-white/30">{formatted}</span>
+                              )}
+                              {event.spaceName && (
+                                <>
+                                  <span className="text-white/10">·</span>
+                                  <span className="text-[11px] text-white/20">{event.spaceName}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-6 text-center">
+                  <p className="text-sm text-white/30">Events are being added every day</p>
+                </div>
+              )}
+
+              <Button
+                variant="primary"
+                size="default"
+                className="w-full"
+                onClick={() => setStep('create')}
+              >
+                <span className="flex items-center gap-2">
+                  Now let&apos;s make something
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </Button>
+            </motion.div>
+          )}
+
+          {/* ── Screen 6: Create (O4) ─────────────────────────── */}
+          {step === 'create' && (
+            <motion.div
+              key="entry-create"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={SCREEN_FADE}
+              className="space-y-6"
+            >
+              <div className="space-y-2">
+                <h1 className="font-display text-[28px] font-semibold leading-tight text-white">
+                  What do you want to make?
+                </h1>
+                <p className="text-sm text-white/40">
+                  Pick one — you can always make more later.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'quick-poll', label: 'Poll', desc: 'Ask a question', icon: Vote },
+                  { id: 'event-rsvp', label: 'RSVP', desc: 'Plan something', icon: Calendar },
+                  { id: 'resource-signup', label: 'Signup', desc: 'Collect names', icon: ClipboardList },
+                  { id: 'event-countdown', label: 'Countdown', desc: 'Count down to it', icon: Clock },
+                ].map(({ id, label, desc, icon: Icon }, i) => (
+                  <motion.button
+                    key={id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: i * 0.06 }}
+                    onClick={() => handleOnboardingCreate(id)}
+                    disabled={isCreatingTool}
+                    className="group rounded-2xl bg-white/[0.03] border border-white/[0.06]
+                      hover:border-white/[0.10] hover:bg-white/[0.05]
+                      p-5 text-left transition-all duration-200
+                      disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="p-2.5 rounded-xl bg-white/[0.04] group-hover:bg-white/[0.06]
+                      transition-colors w-fit mb-3">
+                      <Icon className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
+                    </div>
+                    <p className="text-sm font-medium text-white">{label}</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">{desc}</p>
+                  </motion.button>
+                ))}
+              </div>
+
+              {isCreatingTool && (
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full"
+                  />
+                  <span className="text-sm text-white/40">Creating...</span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setStep('spaces')}
+                disabled={isCreatingTool}
+                className="w-full text-center text-[12px] text-white/20 hover:text-white/40 transition-colors"
+              >
+                Skip for now
+              </button>
+            </motion.div>
+          )}
+
+          {/* ── Screen 7: Space Recommendations ──────────────── */}
           {step === 'spaces' && (
             <motion.div
               key="entry-spaces"
@@ -807,9 +1100,13 @@ export function EntryFlowV2() {
               className="space-y-5"
             >
               <h1 className="font-display text-[24px] font-semibold leading-tight text-white">
-                Spaces for you
+                {createdToolId ? 'Where should it live?' : 'Spaces for you'}
               </h1>
-              <p className="text-sm text-white/30">Join a few to get started</p>
+              <p className="text-sm text-white/30">
+                {createdToolId
+                  ? 'Join spaces to share your tools with their members'
+                  : 'Join a few to get started'}
+              </p>
 
               {isLoadingSpaces ? (
                 <div className="grid grid-cols-2 gap-3">

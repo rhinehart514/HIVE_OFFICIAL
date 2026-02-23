@@ -10,6 +10,8 @@ export type OnboardingStepName =
   | 'academics'
   | 'handle'
   | 'interests'
+  | 'campus_live'
+  | 'create'
   | 'spaces'
   | 'photo'
   | 'builder'

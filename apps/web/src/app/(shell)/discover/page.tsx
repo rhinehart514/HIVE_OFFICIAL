@@ -471,10 +471,10 @@ function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
         )}
       </div>
 
-      {/* Use CTA */}
+      {/* Participate CTA */}
       <div className="mt-3 flex items-center gap-2 text-[13px] font-medium text-[#FFD700]/70 group-hover:text-[#FFD700] transition-colors">
         <Zap className="w-3.5 h-3.5" />
-        Open tool
+        Participate
         <ChevronRight className="w-3.5 h-3.5" />
       </div>
     </Link>
@@ -517,16 +517,110 @@ function SpaceDiscoveryCard({ space }: { space: FeedSpace }) {
 /* ─────────────────────────────────────────────────────────────────── */
 
 function EmptyState() {
+  const [fallbackEvents, setFallbackEvents] = useState<FeedEvent[]>([]);
+  const [fallbackTools, setFallbackTools] = useState<FeedTool[]>([]);
+  const [isLoadingFallback, setIsLoadingFallback] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const [evRes, toolRes] = await Promise.allSettled([
+          fetch('/api/events?campusId=ub-buffalo&upcoming=true&limit=5&sort=soonest', { credentials: 'include' }),
+          fetch('/api/tools/discover?sort=trending&limit=4', { credentials: 'include' }),
+        ]);
+
+        if (!cancelled) {
+          if (evRes.status === 'fulfilled' && evRes.value.ok) {
+            const evData = await evRes.value.json();
+            const events = (evData.events || evData.data?.events || []).map((e: Record<string, unknown>) => ({
+              id: e.id || e.eventId,
+              title: e.title || e.name,
+              startDate: (e.startDate || e.startAt) as string,
+              endDate: e.endDate as string | undefined,
+              location: e.location as string | undefined,
+              isOnline: e.isOnline as boolean | undefined,
+              rsvpCount: (e.rsvpCount as number) || 0,
+              spaceName: e.spaceName as string | undefined,
+              spaceHandle: e.spaceHandle as string | undefined,
+              spaceId: e.spaceId as string | undefined,
+              coverImageUrl: (e.imageUrl || e.coverImageUrl) as string | undefined,
+              category: e.category as string | undefined,
+              eventType: e.eventType as string | undefined,
+            }));
+            setFallbackEvents(events);
+          }
+
+          if (toolRes.status === 'fulfilled' && toolRes.value.ok) {
+            const toolData = await toolRes.value.json();
+            const tools = (toolData.data?.tools || toolData.tools || []).map((t: Record<string, unknown>) => ({
+              id: t.id as string,
+              title: (t.title || t.name) as string,
+              description: t.description as string | undefined,
+              creatorName: (t.creator as Record<string, unknown>)?.name as string | undefined,
+              forkCount: (t.forkCount as number) || 0,
+              useCount: (t.useCount as number) || 0,
+              category: t.category as string | undefined,
+              createdAt: t.createdAt as string,
+            }));
+            setFallbackTools(tools);
+          }
+        }
+      } catch {
+        // Silently fail
+      } finally {
+        if (!cancelled) setIsLoadingFallback(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  if (isLoadingFallback) {
+    return <FeedSkeleton />;
+  }
+
+  if (fallbackEvents.length === 0 && fallbackTools.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-4 text-xl">🌱</div>
+        <p className="text-[15px] text-white/50 font-medium">Nothing yet</p>
+        <p className="text-[13px] text-white/25 mt-1 max-w-[240px]">
+          Events, tools, and spaces from your campus will show up here
+        </p>
+        <Link href="/lab" className="mt-5 flex items-center gap-1.5 text-[13px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors font-medium">
+          Create something <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-      <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-4 text-xl">🌱</div>
-      <p className="text-[15px] text-white/50 font-medium">Nothing yet</p>
-      <p className="text-[13px] text-white/25 mt-1 max-w-[240px]">
-        Events, tools, and spaces from your campus will show up here
-      </p>
-      <Link href="/spaces" className="mt-5 flex items-center gap-1.5 text-[13px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors font-medium">
-        Browse spaces <ArrowRight className="w-3.5 h-3.5" />
-      </Link>
+    <div className="space-y-3">
+      <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-4 mb-2">
+        <p className="text-[13px] text-white/40">Here&apos;s what&apos;s happening across campus — personalized picks appear as you join spaces and create tools.</p>
+      </div>
+      {fallbackEvents.map((event, i) => (
+        <motion.div
+          key={event.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <FeedEventCard event={event} onRsvp={() => {}} />
+        </motion.div>
+      ))}
+      {fallbackTools.map((tool, i) => (
+        <motion.div
+          key={tool.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: (fallbackEvents.length + i) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <EmbeddedToolCard tool={tool} />
+        </motion.div>
+      ))}
     </div>
   );
 }
@@ -581,13 +675,10 @@ function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], 
       items.push({ type: 'tool', data: tools[toolIdx++] });
     }
 
-    // Every 5 events, drop a space suggestion
-    if ((i + 1) % 5 === 0 && spaceIdx < spaces.length) {
-      items.push({ type: 'space', data: spaces[spaceIdx++] });
-    }
+    // Space discovery lives in the Spaces tab — not interleaved in feed
   }
 
-  // Append remaining tools / spaces at end
+  // Append remaining tools at end
   while (toolIdx < tools.length) items.push({ type: 'tool', data: tools[toolIdx++] });
 
   return items;
@@ -765,7 +856,6 @@ export default function DiscoverPage() {
                       >
                         {item.type === 'event' && <FeedEventCard event={item.data} onRsvp={handleRsvp} />}
                         {item.type === 'tool' && <EmbeddedToolCard tool={item.data} />}
-                        {item.type === 'space' && <SpaceDiscoveryCard space={item.data} />}
                       </motion.div>
                     </div>
                   );

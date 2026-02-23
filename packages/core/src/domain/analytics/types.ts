@@ -71,9 +71,14 @@ export interface FeedAnalyticsConfig {
 // Onboarding Analytics Types
 export type OnboardingStepName =
   | 'welcome'
+  | 'verify'
   | 'name'
   | 'academics'
   | 'handle'
+  | 'interests'
+  | 'campus_live'
+  | 'create'
+  | 'spaces'
   | 'photo'
   | 'builder'
   | 'legal';

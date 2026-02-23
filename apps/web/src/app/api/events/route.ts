@@ -113,16 +113,19 @@ async function fetchDocsForTimeField({
 
   const sortDirection = resolveSortDirection(fromDate, toDate, queryParams.upcoming);
 
+  // startDate is stored as ISO string on CampusLabs events; startAt is a Timestamp
+  const toValue = (d: Date): Date | string => dateField === 'startDate' ? d.toISOString() : d;
+
   if (fromDate) {
-    query = query.where(dateField, ">=", fromDate);
+    query = query.where(dateField, ">=", toValue(fromDate));
   } else if (queryParams.upcoming) {
-    query = query.where(dateField, ">=", now);
+    query = query.where(dateField, ">=", toValue(now));
   } else {
-    query = query.where(dateField, "<", now);
+    query = query.where(dateField, "<", toValue(now));
   }
 
   if (toDate) {
-    query = query.where(dateField, "<=", toDate);
+    query = query.where(dateField, "<=", toValue(toDate));
   }
 
   query = query.orderBy(dateField, sortDirection).limit(fetchWindow);

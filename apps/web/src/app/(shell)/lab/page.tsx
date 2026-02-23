@@ -28,26 +28,36 @@ import {
   MessageSquare,
   Trophy,
   BarChart3,
+  Check,
+  Link2,
+  Pencil,
+  Rocket,
 } from 'lucide-react';
 import { MOTION, durationSeconds } from '@hive/tokens';
 import {
   BrandSpinner,
+  ToolCanvas,
   getQuickTemplate,
   getAvailableTemplates,
   getTemplatesForInterests,
   type QuickTemplate,
+  type ToolElement,
 } from '@hive/ui';
 
 import { ToolCard, NewToolCard } from '@/components/hivelab/dashboard/ToolCard';
 import { StatsBar } from '@/components/hivelab/dashboard/StatsBar';
 import { BuilderLevel } from '@/components/hivelab/dashboard/BuilderLevel';
 import { QuickStartChips } from '@/components/hivelab/dashboard/QuickStartChips';
+import { matchTemplate } from '@/components/hivelab/conversational/template-matcher';
 import { useMyTools } from '@/hooks/use-my-tools';
 import { useCurrentProfile } from '@/hooks/queries';
 import {
+  createBlankTool,
   createToolFromTemplateApi,
+  generateToolName,
 } from '@/lib/hivelab/create-tool';
 import { apiClient } from '@/lib/api-client';
+import type { StreamingChunk } from '@/lib/ai-generator';
 
 // Premium easing
 const EASE = MOTION.ease.premium;
@@ -96,49 +106,396 @@ const staggerItemVariants = {
   },
 };
 
-// Curated library sections — grouped by use case, not raw category
+// Curated library sections — casual-first, org-leader last
 const LIBRARY_SECTIONS = [
   {
-    id: 'meetings',
-    title: 'Run Your Meetings',
-    desc: 'Agendas, notes, attendance, and follow-ups',
-    Icon: MessageSquare,
-    templateIds: ['meeting-agenda', 'meeting-notes', 'attendance-tracker'],
+    id: 'settle',
+    title: 'Settle It',
+    desc: 'Debates, rankings, "who\'s right" votes',
+    Icon: Trophy,
+    templateIds: ['quick-poll', 'anonymous-qa', 'feedback-form'],
   },
   {
-    id: 'events',
-    title: 'Plan Events',
-    desc: 'RSVPs, countdowns, check-ins, and recaps',
+    id: 'plan',
+    title: 'Plan It',
+    desc: 'Road trips, nights out, group decisions',
     Icon: CalendarDays,
     templateIds: ['event-rsvp', 'event-countdown', 'event-checkin'],
   },
   {
-    id: 'engage',
-    title: 'Engage Members',
-    desc: 'Polls, leaderboards, spotlights, and challenges',
-    Icon: Trophy,
-    templateIds: ['quick-poll', 'member-leaderboard', 'member-spotlight'],
-  },
-  {
-    id: 'feedback',
-    title: 'Get Feedback',
-    desc: 'Anonymous Q&A, suggestion boxes, and surveys',
-    Icon: BarChart3,
-    templateIds: ['anonymous-qa', 'feedback-form', 'suggestion-box'],
-  },
-  {
-    id: 'coordinate',
-    title: 'Coordinate Teams',
-    desc: 'Sign-ups, study groups, and resource scheduling',
+    id: 'fill',
+    title: 'Fill It',
+    desc: 'Cookout contributions, carpool slots, signups',
     Icon: Users,
-    templateIds: ['study-group-signup', 'study-group-matcher', 'resource-signup'],
+    templateIds: ['study-group-signup', 'resource-signup', 'study-group-matcher'],
+  },
+  {
+    id: 'engage',
+    title: 'Game It',
+    desc: 'Brackets, survivor votes, leaderboards',
+    Icon: BarChart3,
+    templateIds: ['member-leaderboard', 'member-spotlight', 'suggestion-box'],
+  },
+  {
+    id: 'run',
+    title: 'Run It',
+    desc: 'Org meetings, elections, dues, events',
+    Icon: MessageSquare,
+    templateIds: ['meeting-agenda', 'meeting-notes', 'attendance-tracker'],
   },
 ];
 
 // Submit loading state
 type CeremonyPhase = 'idle' | 'creating';
 
+// Inline generation phases
+type InlineGenPhase = 'idle' | 'creating-tool' | 'streaming' | 'complete' | 'error';
+
+/**
+ * InlineGenerationPreview — Streams AI generation directly on the Lab page.
+ * Shows live ToolCanvas preview as elements arrive, then share/edit CTAs.
+ */
+function InlineGenerationPreview({
+  prompt,
+  toolId,
+  onComplete,
+  onError,
+  onShareLink,
+  onEditInStudio,
+  onDeploy,
+}: {
+  prompt: string;
+  toolId: string;
+  onComplete: (elements: ToolElement[], name: string) => void;
+  onError: (msg: string) => void;
+  onShareLink: () => void;
+  onEditInStudio: () => void;
+  onDeploy: () => void;
+}) {
+  const [phase, setPhase] = useState<'streaming' | 'complete' | 'error'>('streaming');
+  const [statusMessage, setStatusMessage] = useState('AI is thinking...');
+  const [elements, setElements] = useState<ToolElement[]>([]);
+  const [toolName, setToolName] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const hasStarted = useRef(false);
+
+  useEffect(() => {
+    if (hasStarted.current) return;
+    hasStarted.current = true;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    (async () => {
+      try {
+        const response = await fetch('/api/tools/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ prompt }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.message || err.error || `Generation failed (${response.status})`);
+        }
+        if (!response.body) throw new Error('No response stream');
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        const collected: ToolElement[] = [];
+        let completeName = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            try {
+              const chunk: StreamingChunk = JSON.parse(trimmed);
+
+              switch (chunk.type) {
+                case 'thinking':
+                  setStatusMessage((chunk.data.message as string) || 'Thinking...');
+                  break;
+
+                case 'element': {
+                  const elData = chunk.data;
+                  if (elData.refinementAction) break;
+
+                  const newEl: ToolElement = {
+                    elementId: (elData.type as string) || (elData.elementId as string),
+                    instanceId: (elData.id as string) || (elData.instanceId as string) || `gen_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                    config: (elData.config as Record<string, unknown>) || {},
+                    position: elData.position as { x: number; y: number } | undefined,
+                    size: elData.size as { width: number; height: number } | undefined,
+                  };
+                  collected.push(newEl);
+                  setElements([...collected]);
+
+                  const displayName = (elData.name as string) || newEl.elementId;
+                  setStatusMessage(`Adding ${displayName}...`);
+                  break;
+                }
+
+                case 'connection':
+                  setStatusMessage('Connecting elements...');
+                  break;
+
+                case 'complete':
+                  completeName = (chunk.data.name as string) || '';
+                  setToolName(completeName);
+                  setPhase('complete');
+                  setStatusMessage('Your tool is ready');
+                  break;
+
+                case 'error':
+                  throw new Error((chunk.data.error as string) || 'Generation failed');
+              }
+            } catch (parseError) {
+              if (parseError instanceof SyntaxError) continue;
+              throw parseError;
+            }
+          }
+        }
+
+        onComplete(collected, completeName);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        const message = error instanceof Error ? error.message : 'Generation failed';
+        setPhase('error');
+        setStatusMessage(message);
+        onError(message);
+      }
+    })();
+
+    return () => { controller.abort(); };
+  }, [prompt, onComplete, onError]);
+
+  const handleCopyLink = useCallback(async () => {
+    onShareLink();
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2500);
+  }, [onShareLink]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="max-w-xl mx-auto"
+    >
+      {/* Status bar */}
+      <div className="flex items-center gap-3 mb-4 px-4 py-3 rounded-2xl bg-[#080808] border border-white/[0.06]">
+        {phase === 'complete' ? (
+          <Check className="w-4 h-4 text-[#FFD700]" />
+        ) : phase === 'error' ? (
+          <div className="w-4 h-4 rounded-full bg-red-400/20 flex items-center justify-center">
+            <span className="text-red-400 text-[10px]">!</span>
+          </div>
+        ) : (
+          <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}>
+            <Sparkles className="w-4 h-4 text-white/40" />
+          </motion.div>
+        )}
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={statusMessage}
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.12 }}
+            className={`text-sm ${phase === 'complete' ? 'text-white/60' : phase === 'error' ? 'text-red-400/80' : 'text-white/40'}`}
+          >
+            {statusMessage}
+          </motion.span>
+        </AnimatePresence>
+        {toolName && phase === 'complete' && (
+          <span className="ml-auto text-xs text-white/40 truncate max-w-40">{toolName}</span>
+        )}
+      </div>
+
+      {/* Live preview */}
+      <div className="rounded-2xl border border-white/[0.06] bg-[#080808] p-4 sm:p-6 mb-4 min-h-[200px]">
+        {elements.length === 0 && phase !== 'error' && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <motion.div
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-white/30 text-sm"
+            >
+              Building your tool...
+            </motion.div>
+          </div>
+        )}
+        {elements.length > 0 && (
+          <ToolCanvas elements={elements} state={{}} layout="flow" />
+        )}
+        {phase === 'error' && elements.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-red-400/60 text-sm">{statusMessage}</p>
+          </div>
+        )}
+      </div>
+
+      {/* CTAs — only when complete */}
+      {phase === 'complete' && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          className="space-y-3"
+        >
+          {/* Share link row */}
+          <div className="flex items-center gap-2 rounded-2xl border border-white/[0.06] bg-[#080808] px-3 py-2">
+            <Link2 className="w-4 h-4 text-white/30 flex-shrink-0" />
+            <span className="text-xs text-white/40 truncate flex-1 font-mono">
+              {typeof window !== 'undefined' ? window.location.origin : ''}/t/{toolId}
+            </span>
+            <button
+              onClick={handleCopyLink}
+              className="flex-shrink-0 px-3 py-1 rounded-lg bg-white text-black text-xs font-medium hover:bg-white/90 transition-all"
+            >
+              {linkCopied ? <Check className="w-3.5 h-3.5" /> : 'Copy'}
+            </button>
+          </div>
+          <p className="text-[11px] text-white/25 text-center">
+            Anyone with this link can use your tool
+          </p>
+
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleCopyLink}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5
+                rounded-xl bg-white text-black font-medium text-sm
+                hover:bg-white/90 transition-all"
+            >
+              {linkCopied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+              {linkCopied ? 'Copied!' : 'Share link'}
+            </button>
+            <button
+              onClick={onDeploy}
+              className="flex items-center justify-center gap-2 px-4 py-2.5
+                rounded-xl bg-[#080808] text-white/50 text-sm border border-white/[0.06]
+                hover:bg-white/[0.06] hover:text-white/70 transition-all"
+            >
+              <Rocket className="w-4 h-4" />
+              Deploy
+            </button>
+            <button
+              onClick={onEditInStudio}
+              className="flex items-center justify-center gap-2 px-4 py-2.5
+                rounded-xl text-white/40 text-sm hover:text-white/60
+                hover:bg-white/[0.04] transition-all"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
 /* WordReveal removed — DESIGN-2026: no word-by-word reveals */
+
+/**
+ * QuickCreateForm — Inline form for customizing a template before creating
+ */
+function QuickCreateForm({
+  template,
+  values,
+  onChange,
+  onSubmit,
+  onCancel,
+  isSubmitting,
+}: {
+  template: QuickTemplate;
+  values: Record<string, string>;
+  onChange: (key: string, value: string) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+}) {
+  const fields = template.quickDeployFields || template.setupFields || [];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12, height: 0 }}
+      animate={{ opacity: 1, y: 0, height: 'auto' }}
+      exit={{ opacity: 0, y: -8, height: 0 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      className="rounded-2xl border border-white/[0.08] bg-[#080808] p-6 max-w-xl mx-auto overflow-hidden"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-[15px] font-medium text-white">{template.name}</h3>
+        <button
+          onClick={onCancel}
+          className="text-[12px] text-white/30 hover:text-white/50 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {fields.map((field) => (
+          <div key={field.key} className="space-y-1.5">
+            <label className="text-[12px] text-white/40">{field.label}</label>
+            {field.type === 'textarea' ? (
+              <textarea
+                value={values[field.key] || ''}
+                onChange={(e) => onChange(field.key, e.target.value)}
+                placeholder={field.placeholder}
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.06]
+                  text-white text-[14px] placeholder-white/20 outline-none
+                  focus:border-white/[0.12] transition-colors resize-none"
+              />
+            ) : (
+              <input
+                type={field.type === 'number' ? 'number' : 'text'}
+                value={values[field.key] || ''}
+                onChange={(e) => onChange(field.key, e.target.value)}
+                placeholder={field.placeholder}
+                className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.06]
+                  text-white text-[14px] placeholder-white/20 outline-none
+                  focus:border-white/[0.12] transition-colors"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    onSubmit();
+                  }
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onSubmit}
+        disabled={isSubmitting}
+        className="w-full mt-4 py-3 rounded-xl bg-[#FFD700] text-black text-[14px] font-semibold
+          hover:bg-[#FFD700]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isSubmitting ? 'Creating...' : `Create ${template.name}`}
+      </button>
+    </motion.div>
+  );
+}
 
 /**
  * PromptInput — Clean input with subtle focus state. No animated borders.
@@ -206,6 +563,13 @@ export default function BuilderDashboard() {
   const [titleRevealed] = useState(true);
   const [creatingFromTemplate, setCreatingFromTemplate] = useState(false);
   const [showAllTools, setShowAllTools] = useState(false);
+  const [quickCreateTemplate, setQuickCreateTemplate] = useState<QuickTemplate | null>(null);
+  const [quickCreateValues, setQuickCreateValues] = useState<Record<string, string>>({});
+  // Inline generation state (C2)
+  const [inlineGenPhase, setInlineGenPhase] = useState<InlineGenPhase>('idle');
+  const [inlineToolId, setInlineToolId] = useState<string | null>(null);
+  const [inlinePrompt, setInlinePrompt] = useState('');
+  const [inlineLinkCopied, setInlineLinkCopied] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
@@ -244,34 +608,81 @@ export default function BuilderDashboard() {
     }
   }, [authLoading, user, titleRevealed, isNewUser]);
 
-  // Handle submit — route to conversational creation page
-  const handleSubmit = useCallback(() => {
-    if (!prompt.trim() || ceremonyPhase !== 'idle') return;
+  // Handle submit — inline AI generation (C2)
+  // If template match found, go to /lab/new for the template suggestion flow.
+  // Otherwise, create blank tool and stream generation inline.
+  const handleSubmit = useCallback(async () => {
+    if (!prompt.trim() || ceremonyPhase !== 'idle' || inlineGenPhase !== 'idle') return;
 
-    const encodedPrompt = encodeURIComponent(prompt.trim());
-    const spaceParam = originSpaceId ? `&spaceId=${originSpaceId}` : '';
-    router.push(`/lab/new?prompt=${encodedPrompt}${spaceParam}`);
-  }, [prompt, ceremonyPhase, router, originSpaceId]);
+    const userPrompt = prompt.trim();
 
-  // Handle template click
+    // Check for template match — route to conversational flow for template suggestions
+    const match = matchTemplate(userPrompt);
+    if (match) {
+      const encodedPrompt = encodeURIComponent(userPrompt);
+      const spaceParam = originSpaceId ? `&spaceId=${originSpaceId}` : '';
+      router.push(`/lab/new?prompt=${encodedPrompt}${spaceParam}`);
+      return;
+    }
+
+    // No template match — inline generation
+    setInlinePrompt(userPrompt);
+    setInlineGenPhase('creating-tool');
+
+    try {
+      const name = generateToolName(userPrompt);
+      const id = await createBlankTool(name, userPrompt);
+      setInlineToolId(id);
+      setInlineGenPhase('streaming');
+    } catch {
+      toast.error('Failed to create tool. Please try again.');
+      setInlineGenPhase('idle');
+    }
+  }, [prompt, ceremonyPhase, inlineGenPhase, router, originSpaceId]);
+
+  // Handle template click — show inline form if template has quickDeployFields
   const handleTemplateClick = useCallback(async (template: QuickTemplate) => {
     if (ceremonyPhase !== 'idle' || creatingFromTemplate) return;
+
+    const fields = template.quickDeployFields || template.setupFields;
+    if (fields && fields.length > 0) {
+      // Show inline form with pre-filled defaults
+      const defaults: Record<string, string> = {};
+      for (const field of fields) {
+        defaults[field.key] = field.defaultValue?.toString() || '';
+      }
+      setQuickCreateValues(defaults);
+      setQuickCreateTemplate(template);
+      return;
+    }
+
+    // No fields — create immediately
+    await createFromTemplate(template);
+  }, [ceremonyPhase, creatingFromTemplate]);
+
+  // Create tool from template (with optional config overrides)
+  const createFromTemplate = useCallback(async (template: QuickTemplate, overrides?: Record<string, string>) => {
+    if (creatingFromTemplate) return;
 
     setCreatingFromTemplate(true);
     setCeremonyPhase('creating');
     setStatusText(`Creating ${template.name}...`);
+    setQuickCreateTemplate(null);
 
     try {
-      const toolId = await createToolFromTemplateApi(template);
-      const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
-      router.push(`/lab/${toolId}${spaceParam}`);
+      const toolId = await createToolFromTemplateApi(template, overrides);
+      // Skip IDE — go straight to the shareable standalone page
+      const params = new URLSearchParams();
+      if (originSpaceId) params.set('spaceId', originSpaceId);
+      params.set('just_created', 'true');
+      router.push(`/t/${toolId}?${params.toString()}`);
     } catch {
       toast.error('Failed to create tool from template');
       setCeremonyPhase('idle');
       setCreatingFromTemplate(false);
       setStatusText('');
     }
-  }, [ceremonyPhase, creatingFromTemplate, router, originSpaceId]);
+  }, [creatingFromTemplate, router, originSpaceId]);
 
   // Handle keyboard
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -306,6 +717,59 @@ export default function BuilderDashboard() {
       toast.error(error instanceof Error ? error.message : 'Failed to delete tool');
     }
   }, [queryClient]);
+
+  // Inline generation callbacks
+  const handleInlineComplete = useCallback((elements: ToolElement[], name: string) => {
+    setInlineGenPhase('complete');
+    queryClient.invalidateQueries({ queryKey: ['my-tools'] });
+  }, [queryClient]);
+
+  const handleInlineError = useCallback((msg: string) => {
+    toast.error(msg);
+    setInlineGenPhase('error');
+  }, []);
+
+  const handleInlineShareLink = useCallback(async () => {
+    if (!inlineToolId) return;
+    const url = `${window.location.origin}/t/${inlineToolId}`;
+
+    // Auto-publish so share link works
+    try {
+      await fetch('/api/tools', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ toolId: inlineToolId, status: 'published' }),
+      });
+    } catch { /* non-critical */ }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied! Share it anywhere.');
+    } catch {
+      toast.success(`Share link: ${url}`);
+    }
+  }, [inlineToolId]);
+
+  const handleInlineEditInStudio = useCallback(() => {
+    if (inlineToolId) router.push(`/lab/${inlineToolId}`);
+  }, [inlineToolId, router]);
+
+  const handleInlineDeploy = useCallback(() => {
+    if (inlineToolId) {
+      const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
+      router.push(`/lab/${inlineToolId}/deploy${spaceParam}`);
+    }
+  }, [inlineToolId, router, originSpaceId]);
+
+  const handleInlineReset = useCallback(() => {
+    setInlineGenPhase('idle');
+    setInlineToolId(null);
+    setInlinePrompt('');
+    setPrompt('');
+  }, []);
+
+  const isInlineActive = inlineGenPhase !== 'idle';
 
   // Guest state
   if (!authLoading && !user) {
@@ -353,7 +817,7 @@ export default function BuilderDashboard() {
     );
   }
 
-  const isSubmitting = ceremonyPhase !== 'idle';
+  const isSubmitting = ceremonyPhase !== 'idle' || inlineGenPhase === 'creating-tool';
   const showStatus = ceremonyPhase === 'creating';
   const displayTools = showAllTools ? userTools : userTools.slice(0, 8);
 
@@ -464,20 +928,38 @@ export default function BuilderDashboard() {
             <div className="h-px bg-white/[0.06] mb-6" />
 
             {/* Quick Start Chips */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1, ease: EASE }}
-              className="mb-8"
-            >
-              <QuickStartChips
-                templates={allTemplates}
-                onTemplateClick={handleTemplateClick}
-                onViewAll={() => router.push('/lab/templates')}
-                disabled={isSubmitting}
-                variant="secondary"
-              />
-            </motion.div>
+            {!quickCreateTemplate && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1, ease: EASE }}
+                className="mb-8"
+              >
+                <QuickStartChips
+                  templates={allTemplates}
+                  onTemplateClick={handleTemplateClick}
+                  onViewAll={() => router.push('/lab/templates')}
+                  disabled={isSubmitting}
+                  variant="secondary"
+                />
+              </motion.div>
+            )}
+
+            {/* Quick Create Inline Form */}
+            <AnimatePresence>
+              {quickCreateTemplate && (
+                <div className="mb-8">
+                  <QuickCreateForm
+                    template={quickCreateTemplate}
+                    values={quickCreateValues}
+                    onChange={(key, value) => setQuickCreateValues(prev => ({ ...prev, [key]: value }))}
+                    onSubmit={() => createFromTemplate(quickCreateTemplate, quickCreateValues)}
+                    onCancel={() => { setQuickCreateTemplate(null); setQuickCreateValues({}); }}
+                    isSubmitting={creatingFromTemplate}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
 
             {/* AI Prompt */}
             <motion.div
@@ -566,6 +1048,39 @@ export default function BuilderDashboard() {
                 )}
               </AnimatePresence>
             </motion.div>
+
+            {/* Inline AI Generation Preview (C2) */}
+            <AnimatePresence>
+              {isInlineActive && inlineToolId && inlineGenPhase !== 'creating-tool' && (
+                <motion.div
+                  key="inline-gen"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="mt-6"
+                >
+                  <InlineGenerationPreview
+                    prompt={inlinePrompt}
+                    toolId={inlineToolId}
+                    onComplete={handleInlineComplete}
+                    onError={handleInlineError}
+                    onShareLink={handleInlineShareLink}
+                    onEditInStudio={handleInlineEditInStudio}
+                    onDeploy={handleInlineDeploy}
+                  />
+                  {inlineGenPhase === 'error' && (
+                    <div className="flex justify-center mt-3">
+                      <button
+                        onClick={handleInlineReset}
+                        className="text-white/40 hover:text-white/60 text-xs transition-colors"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </>
         )}
 
@@ -574,15 +1089,15 @@ export default function BuilderDashboard() {
         {/* ============================================================ */}
         {isNewUser && (
           <>
-            {/* Welcome Title */}
+            {/* Hero — "What do you want to make?" */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: EASE }}
-              className="text-center mb-8 pt-8"
+              className="text-center mb-6 pt-8"
             >
               <h1 className="text-2xl sm:text-3xl font-medium text-white mb-2">
-                Build something your campus will use
+                What do you want to make?
               </h1>
               <motion.p
                 initial={{ opacity: 0 }}
@@ -590,11 +1105,45 @@ export default function BuilderDashboard() {
                 transition={{ duration: 0.3, delay: 0.1 }}
                 className="text-white/50 text-sm"
               >
-                Polls, sign-ups, countdowns, leaderboards -- no coding required
+                Polls, sign-ups, countdowns, leaderboards — 30 seconds, no code
               </motion.p>
             </motion.div>
 
-            {/* AI Prompt — Primary Action */}
+            {/* Quick Chips — First Action (above prompt) */}
+            {!quickCreateTemplate && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : 0.1, ease: EASE }}
+                className="max-w-xl mx-auto mb-6"
+              >
+                <QuickStartChips
+                  templates={allTemplates}
+                  onTemplateClick={handleTemplateClick}
+                  onViewAll={() => router.push('/lab/templates')}
+                  disabled={isSubmitting}
+                  variant="primary"
+                />
+              </motion.div>
+            )}
+
+            {/* Quick Create Inline Form — shown when a template with fields is selected */}
+            <AnimatePresence>
+              {quickCreateTemplate && (
+                <div className="mb-6">
+                  <QuickCreateForm
+                    template={quickCreateTemplate}
+                    values={quickCreateValues}
+                    onChange={(key, value) => setQuickCreateValues(prev => ({ ...prev, [key]: value }))}
+                    onSubmit={() => createFromTemplate(quickCreateTemplate, quickCreateValues)}
+                    onCancel={() => { setQuickCreateTemplate(null); setQuickCreateValues({}); }}
+                    isSubmitting={creatingFromTemplate}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
+
+            {/* AI Prompt — Custom Builds */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -610,7 +1159,7 @@ export default function BuilderDashboard() {
                   onBlur={() => setIsFocused(false)}
                   disabled={isSubmitting}
                   isFocused={isFocused}
-                  placeholder="Describe what you want to build..."
+                  placeholder="Or describe something custom..."
                   inputRef={inputRef}
                 />
 
@@ -682,7 +1231,41 @@ export default function BuilderDashboard() {
               </AnimatePresence>
             </motion.div>
 
-            {/* Divider */}
+            {/* Inline AI Generation Preview (C2) — New User */}
+            <AnimatePresence>
+              {isInlineActive && inlineToolId && inlineGenPhase !== 'creating-tool' && (
+                <motion.div
+                  key="inline-gen-new"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="max-w-xl mx-auto mb-8"
+                >
+                  <InlineGenerationPreview
+                    prompt={inlinePrompt}
+                    toolId={inlineToolId}
+                    onComplete={handleInlineComplete}
+                    onError={handleInlineError}
+                    onShareLink={handleInlineShareLink}
+                    onEditInStudio={handleInlineEditInStudio}
+                    onDeploy={handleInlineDeploy}
+                  />
+                  {inlineGenPhase === 'error' && (
+                    <div className="flex justify-center mt-3">
+                      <button
+                        onClick={handleInlineReset}
+                        className="text-white/40 hover:text-white/60 text-xs transition-colors"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Divider — hidden when inline gen is active */}
+            {!isInlineActive && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -691,13 +1274,14 @@ export default function BuilderDashboard() {
             >
               <div className="flex-1 h-px bg-white/[0.06]" />
               <span className="text-white/50 text-xs tracking-wide">
-                or start with a template
+                browse by use case
               </span>
               <div className="flex-1 h-px bg-white/[0.06]" />
             </motion.div>
+            )}
 
-            {/* Recommended Templates */}
-            {showRecommendedTemplates && (
+            {/* Recommended Templates — hidden during inline gen */}
+            {showRecommendedTemplates && !isInlineActive && (
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -725,7 +1309,8 @@ export default function BuilderDashboard() {
               </motion.div>
             )}
 
-            {/* Curated Library */}
+            {/* Curated Library — hidden during inline gen */}
+            {!isInlineActive && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -786,8 +1371,10 @@ export default function BuilderDashboard() {
                 </button>
               </div>
             </motion.div>
+            )}
 
-            {/* Build from scratch CTA */}
+            {/* Build from scratch CTA — hidden during inline gen */}
+            {!isInlineActive && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -814,6 +1401,7 @@ export default function BuilderDashboard() {
                 </button>
               </div>
             </motion.div>
+            )}
           </>
         )}
 

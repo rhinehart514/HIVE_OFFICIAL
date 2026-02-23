@@ -288,7 +288,13 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
   React.useEffect(() => {
     let cancelled = false;
     const loadProfile = async () => {
-      if (!profileId) return;
+      if (!profileId) {
+        // If handle resolution finished but produced no profileId, stop loading
+        if (!isResolvingHandle) {
+          setIsLoading(false);
+        }
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -381,7 +387,22 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
 
     loadProfile();
     return () => { cancelled = true; };
-  }, [profileId, handle]);
+  }, [profileId, handle, isResolvingHandle]);
+
+  // Loading safety net — if still loading after 12s, bail with error
+  React.useEffect(() => {
+    if (!isResolvingHandle && !isLoading) return;
+    const timeout = setTimeout(() => {
+      if (isResolvingHandle) setIsResolvingHandle(false);
+      if (isLoading) {
+        setIsLoading(false);
+        if (!profileData && !handleError && !error) {
+          setError('Profile took too long to load');
+        }
+      }
+    }, 12000);
+    return () => clearTimeout(timeout);
+  }, [isResolvingHandle, isLoading, profileData, handleError, error]);
 
   // ============================================================================
   // Subscribe to presence updates
@@ -877,8 +898,9 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
   }, [router]);
 
   const handleToolClick = React.useCallback((toolId: string) => {
-    router.push(`/lab/${toolId}`);
-  }, [router]);
+    // Own profile → edit in IDE; other profiles → public standalone page
+    router.push(isOwnProfile ? `/lab/${toolId}` : `/t/${toolId}`);
+  }, [router, isOwnProfile]);
 
   // Social handlers — connected to /api/profile/[userId]/follow
   const handleConnect = React.useCallback(async () => {

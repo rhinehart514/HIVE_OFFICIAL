@@ -97,7 +97,7 @@ export type ActivationStatus = 'ghost' | 'gathering' | 'open';
  * Default number of members needed to activate a space
  * Once reached, chat and full community features unlock
  */
-export const DEFAULT_ACTIVATION_THRESHOLD = 10;
+export const DEFAULT_ACTIVATION_THRESHOLD = 1;
 
 /**
  * Unified space lifecycle state (ADR-007)
