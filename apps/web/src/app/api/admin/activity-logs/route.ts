@@ -64,9 +64,8 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
 
   try {
     // Build query
-    let query = dbAdmin
-      .collection('adminActivityLogs')
-      // campusId single-field index is exempted — skip Firestore filter;
+    let query: FirebaseFirestore.Query = dbAdmin
+      .collection('adminActivityLogs');
 
     // Apply filters
     if (action) {
