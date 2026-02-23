@@ -22,7 +22,6 @@ import { ContextRail } from './context-rail';
 import { FloatingActionBar, type FloatingActionBarRef } from './floating-action-bar';
 import { TemplateOverlay } from './template-overlay';
 import { TemplateGallery } from './template-gallery';
-import { AIChatPill, type AIChatPillRef } from './ai-chat-pill';
 import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
 // Extracted hooks
@@ -279,11 +278,8 @@ export function HiveLabIDE({
   const [elementRailState, setElementRailState] = useState<RailState>('collapsed');
   const [elementRailTab, setElementRailTab] = useState<RailTab>('elements');
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
-  const [aiChatDock, setAIChatDock] = useState<'float' | 'left'>('float');
-
   // Refs
   const floatingBarRef = useRef<FloatingActionBarRef>(null);
-  const aiChatPillRef = useRef<AIChatPillRef>(null);
   const draggingElementId = useRef<string | null>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 1000, height: 800 });
@@ -489,10 +485,9 @@ export function HiveLabIDE({
       setZoom: canvas.setZoom,
       openAIPanel: () => {
         floatingBarRef.current?.focusInput();
-        aiChatPillRef.current?.focusInput();
       },
       closeAIPanel: () => {
-        aiChatPillRef.current?.collapse();
+        // AI lives in the floating bar now
       },
     },
     mode,
@@ -568,7 +563,6 @@ export function HiveLabIDE({
                 onStartFromScratch={openElements}
                 onOpenAI={() => {
                   floatingBarRef.current?.focusInput();
-                  aiChatPillRef.current?.expand();
                 }}
                 onSeeAllTemplates={openTemplates}
               />
@@ -657,21 +651,6 @@ export function HiveLabIDE({
         mode={automationHook.editingAutomation ? 'edit' : 'create'}
         deploymentId={deploymentId}
       />
-
-      {/* AI Chat Pill */}
-      {!canvas.isCanvasEmpty && (
-        <AIChatPill
-          ref={aiChatPillRef}
-          onSubmit={aiHook.handleAISubmit}
-          isLoading={aiHook.aiState.isGenerating}
-          streamingStatus={aiHook.aiState.currentStatus}
-          selectedCount={canvas.selectedIds.length}
-          onCancel={aiHook.cancelGeneration}
-          initialPrompt={initialPrompt}
-          dockPosition={aiChatDock}
-          onDockChange={setAIChatDock}
-        />
-      )}
 
       {/* Deploy Success Celebration */}
       <AnimatePresence>

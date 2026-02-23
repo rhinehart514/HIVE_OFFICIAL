@@ -9,6 +9,7 @@ import { SparklesIcon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, RectangleGr
 const Shapes = RectangleGroupIcon;
 const Layers = Square3Stack3DIcon;
 import { cn } from '../../../lib/utils';
+import { HiveLogo } from '../../../shells/shell-icons';
 import { ElementPalette } from './element-palette';
 import { LayersPanel } from './layers-panel';
 import { OtherToolsPanel, type OtherToolData } from './other-tools-panel';
@@ -196,11 +197,9 @@ function CollapsedRail({
         borderBottomLeftRadius: '24px',
       }}
     >
-      {/* HiveLab Logo */}
+      {/* HIVE Logo */}
       <div className="flex items-center gap-1 mb-2">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--life-gold)] to-amber-500 flex items-center justify-center">
-          <span className="text-black font-bold text-sm">H</span>
-        </div>
+        <HiveLogo className="w-8 h-8 text-[var(--life-gold)]" />
       </div>
 
       {/* Plus Button - top right style */}

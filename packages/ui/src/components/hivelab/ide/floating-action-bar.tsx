@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowsPointingOutIcon, MinusIcon, PlusIcon, Squares2X2Icon, ArrowUturnLeftIcon, ArrowUturnRightIcon, SparklesIcon, ArrowUpIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowsPointingOutIcon, MinusIcon, PlusIcon, Squares2X2Icon, ArrowUturnLeftIcon, ArrowUturnRightIcon, SparklesIcon, ArrowUpIcon, XMarkIcon, EllipsisHorizontalIcon } from '@heroicons/react/24/outline';
 import { PlayIcon as PlayIconSolid } from '@heroicons/react/24/solid';
 
 const ZoomOut = MinusIcon;
@@ -70,6 +70,7 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [showConversation, setShowConversation] = useState(false);
+  const [showOverflow, setShowOverflow] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Expose methods via ref
@@ -340,95 +341,115 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
         {/* Divider */}
         <div className="w-px h-8 bg-[var(--hivelab-border)]" />
 
-        {/* Grid Toggle */}
-        <button
-          type="button"
-          onClick={onToggleGrid}
-          className={cn(
-            'p-2 rounded-lg transition-colors duration-200',
-            showGrid
-              ? 'text-[var(--hivelab-text-primary)] bg-[var(--hivelab-surface)]'
-              : 'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
-            FOCUS_RING
-          )}
-          title={`Grid: ${showGrid ? 'On' : 'Off'} (⌘G)`}
-        >
-          <Grid3X3 className="h-4 w-4" />
-        </button>
-
-        {/* Snap Toggle */}
-        <button
-          type="button"
-          onClick={onToggleSnap}
-          className={cn(
-            'px-2 py-1.5 text-xs font-medium rounded-lg transition-colors duration-200',
-            snapToGrid
-              ? 'text-[var(--hivelab-text-primary)] bg-[var(--hivelab-surface)]'
-              : 'text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
-            FOCUS_RING
-          )}
-          title={`Snap to Grid: ${snapToGrid ? 'On' : 'Off'}`}
-        >
-          Snap
-        </button>
-
-        {/* Fit to Screen */}
-        <button
-          type="button"
-          onClick={onFitToScreen}
-          className={cn(
-            'p-2 rounded-lg transition-colors duration-200',
-            'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
-            FOCUS_RING
-          )}
-          title="Fit to Screen"
-        >
-          <ArrowsPointingOutIcon className="h-4 w-4" />
-        </button>
-
-        {/* Divider */}
-        <div className="w-px h-8 bg-[var(--hivelab-border)]" />
-
-        {/* Zoom Controls */}
-        <div className="flex items-center">
+        {/* Overflow Menu — Grid, Snap, Fit, Zoom */}
+        <div className="relative">
           <button
             type="button"
-            onClick={() => onZoomChange(Math.max(0.25, zoom - 0.1))}
+            onClick={() => setShowOverflow(!showOverflow)}
             className={cn(
               'p-2 rounded-lg transition-colors duration-200',
-              'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)]',
+              showOverflow
+                ? 'text-[var(--hivelab-text-primary)] bg-[var(--hivelab-surface)]'
+                : 'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
               FOCUS_RING
             )}
-            title="Zoom Out"
+            title="More tools"
           >
-            <ZoomOut className="h-4 w-4" />
+            <EllipsisHorizontalIcon className="h-4 w-4" />
           </button>
 
-          <button
-            type="button"
-            onClick={() => onZoomChange(1)}
-            className={cn(
-              'px-2 py-1.5 min-w-[52px] text-center text-sm rounded-lg transition-colors duration-200',
-              'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
-              FOCUS_RING
-            )}
-            title="Reset to 100%"
-          >
-            {Math.round(zoom * 100)}%
-          </button>
+          <AnimatePresence>
+            {showOverflow && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowOverflow(false)} />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute bottom-full mb-2 right-0 z-50 p-2 rounded-xl shadow-lg bg-[var(--hivelab-panel)] border border-[var(--hivelab-border)]"
+                  style={{ minWidth: 200 }}
+                >
+                  {/* Grid Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => { onToggleGrid(); }}
+                    className={cn(
+                      'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors',
+                      showGrid ? 'text-[var(--hivelab-text-primary)]' : 'text-[var(--hivelab-text-secondary)]',
+                      'hover:bg-[var(--hivelab-surface-hover)]'
+                    )}
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                    <span className="flex-1 text-left">Grid</span>
+                    {showGrid && <span className="text-[var(--life-gold)] text-xs font-medium">On</span>}
+                    <kbd className="px-1.5 py-0.5 text-label-xs rounded bg-[var(--hivelab-surface)] text-[var(--hivelab-text-tertiary)]">⌘G</kbd>
+                  </button>
 
-          <button
-            type="button"
-            onClick={() => onZoomChange(Math.min(3, zoom + 0.1))}
-            className={cn(
-              'p-2 rounded-lg transition-colors duration-200',
-              'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)]',
-              FOCUS_RING
+                  {/* Snap Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => { onToggleSnap(); }}
+                    className={cn(
+                      'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors',
+                      snapToGrid ? 'text-[var(--hivelab-text-primary)]' : 'text-[var(--hivelab-text-secondary)]',
+                      'hover:bg-[var(--hivelab-surface-hover)]'
+                    )}
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                    </svg>
+                    <span className="flex-1 text-left">Snap to Grid</span>
+                    {snapToGrid && <span className="text-[var(--life-gold)] text-xs font-medium">On</span>}
+                  </button>
+
+                  {/* Divider */}
+                  <div className="h-px my-1 mx-2 bg-[var(--hivelab-border)]" />
+
+                  {/* Fit to Screen */}
+                  <button
+                    type="button"
+                    onClick={() => { onFitToScreen(); setShowOverflow(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface-hover)] transition-colors"
+                  >
+                    <ArrowsPointingOutIcon className="h-4 w-4" />
+                    <span className="flex-1 text-left">Fit to Screen</span>
+                  </button>
+
+                  {/* Divider */}
+                  <div className="h-px my-1 mx-2 bg-[var(--hivelab-border)]" />
+
+                  {/* Zoom Controls */}
+                  <div className="flex items-center justify-between px-3 py-1.5">
+                    <span className="text-xs text-[var(--hivelab-text-tertiary)]">Zoom</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onZoomChange(Math.max(0.25, zoom - 0.1))}
+                        className="p-1 rounded-md text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] transition-colors"
+                      >
+                        <ZoomOut className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onZoomChange(1)}
+                        className="px-2 py-0.5 min-w-[44px] text-center text-xs rounded-md text-[var(--hivelab-text-secondary)] hover:bg-[var(--hivelab-surface-hover)] transition-colors"
+                      >
+                        {Math.round(zoom * 100)}%
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onZoomChange(Math.min(3, zoom + 0.1))}
+                        className="p-1 rounded-md text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] transition-colors"
+                      >
+                        <ZoomIn className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
             )}
-            title="Zoom In"
-          >
-            <ZoomIn className="h-4 w-4" />
-          </button>
+          </AnimatePresence>
         </div>
       </motion.div>
 

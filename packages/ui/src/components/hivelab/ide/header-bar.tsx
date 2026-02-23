@@ -14,6 +14,7 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../../lib/utils';
+import { HiveLogo } from '../../../shells/shell-icons';
 
 // ============================================
 // HiveLab Header - Uses CSS variables from globals.css
@@ -135,22 +136,14 @@ export function HeaderBar({
           </button>
         )}
 
-        {/* HiveLab Logo */}
+        {/* HIVE Logo */}
         <div className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{
-              backgroundColor: 'var(--hivelab-connection)',
-              boxShadow: `0 2px 8px ${'var(--hivelab-connection)'}40`,
-            }}
-          >
-            <span className="text-white font-bold text-xs">H</span>
-          </div>
+          <HiveLogo className="w-7 h-7 text-[var(--life-gold)]" />
           <span
             className="font-semibold text-sm hidden sm:block"
             style={{ color: 'var(--hivelab-text-primary)' }}
           >
-            HiveLab
+            HIVE
           </span>
         </div>
 
