@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HiveLab Generation Benchmarks</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #050505;
+    --surface: #0a0a0a;
+    --surface-2: #111;
+    --surface-3: #1a1a1a;
+    --border: rgba(255,255,255,0.06);
+    --border-hover: rgba(255,255,255,0.1);
+    --text: #fff;
+    --text-2: rgba(255,255,255,0.5);
+    --text-3: rgba(255,255,255,0.3);
+    --gold: #FFD700;
+    --gold-dim: rgba(255,215,0,0.15);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.12);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 80px 24px;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 64px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--gold-dim);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--text-2);
+    max-width: 520px;
+  }
+
+  /* Score Hero */
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 48px;
+  }
+
+  .hero-card {
+    background: var(--surface);
+    padding: 32px;
+    text-align: center;
+  }
+
+  .hero-value {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .hero-value.gold { color: var(--gold); }
+  .hero-value.green { color: var(--green); }
+
+  .hero-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-3);
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 48px;
+  }
+
+  .section-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-3);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Level Cards */
+  .level-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .level-card {
+    display: grid;
+    grid-template-columns: 80px 1fr 100px;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: border-color 0.2s;
+  }
+
+  .level-card:hover {
+    border-color: var(--border-hover);
+  }
+
+  .level-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .level-bar-container {
+    position: relative;
+    height: 8px;
+    background: var(--surface-3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .level-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .level-bar.green { background: var(--green); }
+  .level-bar.gold { background: var(--gold); }
+  .level-bar.blue { background: var(--blue); }
+  .level-bar.red { background: var(--red); }
+
+  .level-target {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 1px;
+  }
+
+  .level-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: right;
+  }
+
+  .level-score .fraction {
+    color: var(--text-3);
+    font-size: 12px;
+    margin-left: 4px;
+  }
+
+  .level-desc {
+    font-size: 12px;
+    color: var(--text-3);
+    grid-column: 1 / -1;
+    margin-top: -4px;
+    padding-left: 96px;
+  }
+
+  /* Dimension Cards */
+  .dimension-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 640px) {
+    .dimension-grid { grid-template-columns: 1fr; }
+    .hero-grid { grid-template-columns: 1fr; }
+    .level-card { grid-template-columns: 60px 1fr 80px; }
+  }
+
+  .dim-card {
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: border-color 0.2s;
+  }
+
+  .dim-card:hover {
+    border-color: var(--border-hover);
+  }
+
+  .dim-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+
+  .dim-name {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .dim-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .dim-bar-container {
+    height: 4px;
+    background: var(--surface-3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .dim-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .dim-detail {
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .dim-range {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  /* Failure Analysis */
+  .failure-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .failure-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 100px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  .failure-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--red);
+  }
+
+  .failure-desc {
+    color: var(--text-2);
+  }
+
+  .failure-got {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-3);
+    text-align: right;
+  }
+
+  /* Methodology */
+  .methodology {
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.7;
+  }
+
+  .methodology h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .methodology ul {
+    padding-left: 20px;
+    margin-top: 8px;
+  }
+
+  .methodology li {
+    margin-bottom: 4px;
+  }
+
+  .methodology code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--surface-3);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .footer a {
+    color: var(--gold);
+    text-decoration: none;
+  }
+
+  /* Status indicator */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .status.pass {
+    background: var(--green-dim);
+    color: var(--green);
+  }
+
+  .status.warn {
+    background: rgba(250,204,21,0.12);
+    color: #facc15;
+  }
+
+  .status.fail {
+    background: var(--red-dim);
+    color: var(--red);
+  }
+
+  .insights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .insight-card {
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .insight-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-3);
+    margin-bottom: 4px;
+  }
+
+  .insight-value {
+    font-size: 14px;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">HiveLab Internal</div>
+    <h1>Generation Benchmarks</h1>
+    <p class="subtitle">5-dimension evaluation of HiveLab's tool generation engine across 60 test cases. Rules-based generator, no LLM.</p>
+  </div>
+
+  <!-- Hero Scores -->
+  <div class="hero-grid">
+    <div class="hero-card">
+      <div class="hero-value gold">80%</div>
+      <div class="hero-label">Pass Rate</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-value">48<span style="font-size:24px;color:var(--text-3)">/60</span></div>
+      <div class="hero-label">Cases Passing</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-value green">16ms</div>
+      <div class="hero-label">Total Runtime</div>
+    </div>
+  </div>
+
+  <!-- Pass Rate by Level -->
+  <div class="section">
+    <div class="section-header">Pass Rate by Difficulty</div>
+    <div class="level-grid">
+      <div class="level-card">
+        <div class="level-tag">Level 1</div>
+        <div class="level-bar-container">
+          <div class="level-bar green" style="width: 90%"></div>
+          <div class="level-target" style="left: 100%"></div>
+        </div>
+        <div class="level-score">90% <span class="fraction">18/20</span></div>
+        <div class="level-desc">Explicit keywords — "create a poll", "RSVP for the formal". Target: 100%</div>
+      </div>
+      <div class="level-card">
+        <div class="level-tag">Level 2</div>
+        <div class="level-bar-container">
+          <div class="level-bar green" style="width: 87%"></div>
+          <div class="level-target" style="left: 80%"></div>
+        </div>
+        <div class="level-score">87% <span class="fraction">13/15</span></div>
+        <div class="level-desc">Multi-element composition — "poll with chart", "RSVP + countdown". Target: 80% <span class="status pass">PASS</span></div>
+      </div>
+      <div class="level-card">
+        <div class="level-tag">Level 3</div>
+        <div class="level-bar-container">
+          <div class="level-bar gold" style="width: 70%"></div>
+          <div class="level-target" style="left: 70%"></div>
+        </div>
+        <div class="level-score">70% <span class="fraction">7/10</span></div>
+        <div class="level-desc">Implicit intent — "let people say if they're coming", no keywords. Target: 70% <span class="status pass">PASS</span></div>
+      </div>
+      <div class="level-card">
+        <div class="level-tag">Level 4</div>
+        <div class="level-bar-container">
+          <div class="level-bar blue" style="width: 67%"></div>
+          <div class="level-target" style="left: 60%"></div>
+        </div>
+        <div class="level-score">67% <span class="fraction">10/15</span></div>
+        <div class="level-desc">Edge cases — typos, slang, emoji, negation, ambiguity. Target: 60% <span class="status pass">PASS</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dimension Scores -->
+  <div class="section">
+    <div class="section-header">Scores by Dimension</div>
+    <div class="dimension-grid">
+      <div class="dim-card">
+        <div class="dim-header">
+          <span class="dim-name">Intent</span>
+          <span class="dim-score" style="color:var(--gold)">77%</span>
+        </div>
+        <div class="dim-bar-container">
+          <div class="dim-bar" style="width:77%; background:var(--gold)"></div>
+        </div>
+        <div class="dim-detail">Did we pick the right element type?</div>
+        <div class="dim-range">min 0% · max 100%</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-header">
+          <span class="dim-name">Schema</span>
+          <span class="dim-score" style="color:var(--green)">90%</span>
+        </div>
+        <div class="dim-bar-container">
+          <div class="dim-bar" style="width:90%; background:var(--green)"></div>
+        </div>
+        <div class="dim-detail">Is the config valid per Zod + manifest?</div>
+        <div class="dim-range">min 0% · max 100%</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-header">
+          <span class="dim-name">Tier</span>
+          <span class="dim-score" style="color:var(--green)">92%</span>
+        </div>
+        <div class="dim-bar-container">
+          <div class="dim-bar" style="width:92%; background:var(--green)"></div>
+        </div>
+        <div class="dim-detail">Are tier assignments (T1/T2/T3) correct?</div>
+        <div class="dim-range">min 0% · max 100%</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-header">
+          <span class="dim-name">Connections</span>
+          <span class="dim-score" style="color:var(--green)">95%</span>
+        </div>
+        <div class="dim-bar-container">
+          <div class="dim-bar" style="width:95%; background:var(--green)"></div>
+        </div>
+        <div class="dim-detail">Are required data connections declared?</div>
+        <div class="dim-range">min 50% · max 100%</div>
+      </div>
+      <div class="dim-card" style="grid-column: 1 / -1">
+        <div class="dim-header">
+          <span class="dim-name">Functional</span>
+          <span class="dim-score" style="color:var(--green)">100%</span>
+        </div>
+        <div class="dim-bar-container">
+          <div class="dim-bar" style="width:100%; background:var(--green)"></div>
+        </div>
+        <div class="dim-detail">Will it render? Config + position + size present for every generated element.</div>
+        <div class="dim-range">min 100% · max 100%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Insights -->
+  <div class="section">
+    <div class="section-header">Key Insights</div>
+    <div class="insights-grid">
+      <div class="insight-card">
+        <div class="insight-label">Strongest</div>
+        <div class="insight-value">Multi-element composition auto-pairs poll↔chart and RSVP↔countdown reliably</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-label">Weakest</div>
+        <div class="insight-value">Signup-sheet regex loses to RSVP 4/4 times when both keywords appear</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-label">Surprising</div>
+        <div class="insight-value">67% on L4 edge cases with pure regex — no NLP, no embeddings, no LLM</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-label">Bottleneck</div>
+        <div class="insight-value">Intent (77%) gates everything — schema/tier/functional all score 90%+</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Failures -->
+  <div class="section">
+    <div class="section-header">12 Failing Cases</div>
+    <div class="failure-grid">
+      <div class="failure-row">
+        <div class="failure-id">L1-09</div>
+        <div class="failure-desc">"signup sheet for volunteering" → RSVP wins regex race</div>
+        <div class="failure-got">rsvp-button</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L1-11</div>
+        <div class="failure-desc">"make a timer" → no standalone timer regex match</div>
+        <div class="failure-got">poll-element</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L2-09</div>
+        <div class="failure-desc">"fundraiser signup" → RSVP wins over signup-sheet again</div>
+        <div class="failure-got">rsvp-button</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L2-14</div>
+        <div class="failure-desc">"volunteer signup sheet" → RSVP regex priority bug</div>
+        <div class="failure-got">rsvp-button</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L3-02</div>
+        <div class="failure-desc">"ask what they think" → "meeting" triggers event fallback</div>
+        <div class="failure-got">rsvp-button</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L3-05</div>
+        <div class="failure-desc">"how long until spring break?" → no countdown from questions</div>
+        <div class="failure-got">poll-element</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L3-08</div>
+        <div class="failure-desc">"raised $800 out of $3000" → no implicit progress detection</div>
+        <div class="failure-got">poll-element</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L4-04</div>
+        <div class="failure-desc">"crate a sinup sheet" → typos break all regex</div>
+        <div class="failure-got">poll-element</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L4-05</div>
+        <div class="failure-desc">"nuestras reuniones semanales" → mixed language breaks regex</div>
+        <div class="failure-got">poll-element</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L4-07</div>
+        <div class="failure-desc">Long rambling prompt → "sign up" in middle gets lost</div>
+        <div class="failure-got">rsvp-button</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L4-10</div>
+        <div class="failure-desc">"who tryna pull up" → slang has no regex match</div>
+        <div class="failure-got">poll-element</div>
+      </div>
+      <div class="failure-row">
+        <div class="failure-id">L4-15</div>
+        <div class="failure-desc">"track scores, best of 3" → "game" triggers custom-block</div>
+        <div class="failure-got">custom-block</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Methodology -->
+  <div class="section">
+    <div class="section-header">Methodology</div>
+    <div class="methodology">
+      <h3>How we score</h3>
+      <p>Each generation is evaluated on 5 dimensions with weighted composite scoring:</p>
+      <ul>
+        <li><strong>Intent (35%)</strong> — Right element types selected? Count-aware matching with recall-weighted F1.</li>
+        <li><strong>Schema (25%)</strong> — Valid config per Zod schemas and element manifest required fields.</li>
+        <li><strong>Tier (15%)</strong> — Element tiers (T1/T2/T3) appropriate for the deployment context.</li>
+        <li><strong>Connections (10%)</strong> — Required data connections declared with valid instance references.</li>
+        <li><strong>Functional (15%)</strong> — Config + position + size present, element exists in renderer registry.</li>
+      </ul>
+      <p style="margin-top: 12px"><strong>Intent gate:</strong> If Intent scores below 50% (wrong element type entirely), the case auto-fails regardless of composite score. A well-formed wrong answer is still wrong.</p>
+      <p style="margin-top: 12px"><strong>Engine:</strong> Rules-based regex generator. ~100ms latency, $0 cost, no LLM. 13 element patterns, 2 smart auto-pairs (poll↔chart, RSVP↔countdown).</p>
+      <p style="margin-top: 12px"><strong>Suite:</strong> 60 cases across 4 levels — 20 explicit keyword, 15 multi-element, 10 implicit intent, 15 edge cases (typos, slang, emoji, negation, mixed language).</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>HiveLab · Rules Engine v1 · Feb 2026</span>
+    <span>60 cases · 16ms · <code style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--surface-3);padding:2px 6px;border-radius:4px">npx tsx scripts/eval/run-generation-eval.ts</code></span>
+  </div>
+</div>
+
+</body>
+</html>
