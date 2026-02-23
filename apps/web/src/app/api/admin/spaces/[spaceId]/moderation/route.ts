@@ -76,7 +76,6 @@ const _GET = withAdminAuthAndErrors(async (request, context: RouteContext, respo
     // Build query for reports in this space
     let reportsQuery = dbAdmin
       .collection('contentReports')
-      .where('campusId', '==', campusId)
       .where('spaceId', '==', spaceId)
       .orderBy('createdAt', 'desc');
 

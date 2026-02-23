@@ -41,7 +41,6 @@ async function validateSpaceAndMembership(spaceId: string, userId: string, campu
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -78,8 +77,7 @@ const _GET = withAuthAndErrors(async (
     let membersQuery = dbAdmin
       .collection("spaceMembers")
       .where("spaceId", "==", spaceId)
-      .where("isActive", "==", true)
-      .where("campusId", "==", campusId);
+      .where("isActive", "==", true);
 
     if (queryParams.role) {
       membersQuery = membersQuery.where("role", "==", queryParams.role);
@@ -96,7 +94,6 @@ const _GET = withAuthAndErrors(async (
       .collection("spaceMembers")
       .where("spaceId", "==", spaceId)
       .where("isActive", "==", true)
-      .where("campusId", "==", campusId)
       .get();
 
     const memberPromises = membersSnapshot.docs.map(async (memberDoc) => {

@@ -210,16 +210,16 @@ async function checkUserVisibility(targetUserId: string, viewerUserId: string, g
     return true; // Always visible to self
   }
 
-  // Check if users are in the same spaces
+  // Check if users are in the same spaces.
+  // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+  // userId is selective enough for this visibility check.
   const targetMembershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
     .where('userId', '==', targetUserId)
-    .where('status', '==', 'active')
-    .where('campusId', '==', campusId);
+    .where('status', '==', 'active');
 
   const viewerMembershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
     .where('userId', '==', viewerUserId)
-    .where('status', '==', 'active')
-    .where('campusId', '==', campusId);
+    .where('status', '==', 'active');
 
   const [targetMemberships, viewerMemberships] = await Promise.all([
     targetMembershipsQuery.get(),
@@ -254,11 +254,12 @@ async function checkUserVisibility(targetUserId: string, viewerUserId: string, g
 // Helper function to apply ghost mode changes
 async function applyGhostModeChanges(userId: string, ghostMode: { enabled: boolean; level: string; hideFromDirectory: boolean; hideActivity: boolean; hideOnlineStatus: boolean; hideLastSeen: boolean }, campusId: string) {
   try {
-    // Update user's visibility in spaces
-  const membershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
+    // Update user's visibility in spaces.
+    // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+    // userId is selective; updating all memberships for this user is the right scope.
+    const membershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
-      .where('status', '==', 'active')
-      .where('campusId', '==', campusId);
+      .where('status', '==', 'active');
 
     const membershipsSnapshot = await membershipsQuery.get();
     

@@ -56,22 +56,18 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     ] = await Promise.all([
       // Recent activity (last 5 min)
       dbAdmin.collection('activityEvents')
-        .where('campusId', '==', campusId)
         .where('timestamp', '>=', fiveMinutesAgo)
         .get(),
       // Presence data (last hour for online users estimate)
       dbAdmin.collection('presence')
-        .where('campusId', '==', campusId)
         .where('lastActive', '>=', oneHourAgo)
         .get(),
       // Live events (happening now or soon)
       dbAdmin.collection('events')
-        .where('campusId', '==', campusId)
         .where('startDate', '<=', now)
         .get(),
       // Active tool deployments
       dbAdmin.collection('deployedTools')
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .get(),
     ]);

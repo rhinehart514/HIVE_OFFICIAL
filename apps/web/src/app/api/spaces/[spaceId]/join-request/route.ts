@@ -114,7 +114,6 @@ export const POST = withAuthValidationAndErrors(
       .where('spaceId', '==', spaceId)
       .where('userId', '==', userId)
       .where('status', '==', 'pending')
-      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 
@@ -152,7 +151,6 @@ export const POST = withAuthValidationAndErrors(
     const leaderSnapshot = await dbAdmin
       .collection('spaceMembers')
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', campusId)
       .where('isActive', '==', true)
       .where('role', 'in', ['owner', 'admin', 'moderator'])
       .get();
@@ -238,7 +236,6 @@ async function _GET(
       .collection('spaceJoinRequests')
       .where('spaceId', '==', spaceId)
       .where('userId', '==', userId)
-      .where('campusId', '==', campusId)
       .orderBy('createdAt', 'desc')
       .limit(1)
       .get();
@@ -322,7 +319,6 @@ export async function DELETE(
       .where('spaceId', '==', spaceId)
       .where('userId', '==', userId)
       .where('status', '==', 'pending')
-      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 

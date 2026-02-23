@@ -110,7 +110,6 @@ export const POST = withAuthValidationAndErrors(
       .where("userId", "==", actorUserId)
       .where("spaceId", "==", spaceId)
       .where("status", "==", "active")
-      .where("campusId", "==", campusId)
       .limit(1)
       .get();
 
@@ -138,7 +137,6 @@ export const POST = withAuthValidationAndErrors(
       .collection("tool_deployments")
       .where("toolId", "==", toolId)
       .where("spaceId", "==", spaceId)
-      .where("campusId", "==", campusId)
       .where("isActive", "==", true)
       .limit(1)
       .get();

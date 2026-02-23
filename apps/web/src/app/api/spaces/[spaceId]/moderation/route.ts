@@ -68,7 +68,6 @@ async function validateSpaceAndModeratorPermission(spaceId: string, userId: stri
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -151,11 +150,11 @@ const _GET = withAuthAndErrors(async (
     const postsSnapshot = await dbAdmin
       .collection('posts')
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', campusId)
       .get();
 
     for (const doc of postsSnapshot.docs) {
       const data = doc.data();
+      if (data.campusId && data.campusId !== campusId) continue;
 
       // Filter based on status
       if (queryParams.status === 'flagged' && !isContentFlagged(data)) continue;
@@ -188,11 +187,11 @@ const _GET = withAuthAndErrors(async (
     const eventsSnapshot = await dbAdmin
       .collection('events')
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', campusId)
       .get();
 
     for (const doc of eventsSnapshot.docs) {
       const data = doc.data();
+      if (data.campusId && data.campusId !== campusId) continue;
 
       if (queryParams.status === 'flagged' && !isContentFlagged(data)) continue;
       if (queryParams.status === 'hidden' && !isContentHidden(data)) continue;

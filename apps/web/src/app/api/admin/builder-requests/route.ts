@@ -37,7 +37,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   try {
     const requestsSnapshot = await dbAdmin
       .collection('builderRequests')
-      .where('campusId', '==', campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where('status', '==', status)
       .orderBy('submittedAt', 'desc')
       .limit(limit)
@@ -69,7 +69,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     const pendingCount = (
       await dbAdmin
         .collection('builderRequests')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .where('status', '==', 'pending')
         .count()
         .get()
@@ -149,7 +149,7 @@ export const POST = withAuthValidationAndErrors(
           .collection('spaceMembers')
           .where('spaceId', '==', requestData.spaceId)
           .where('userId', '==', requestData.userId)
-          .where('campusId', '==', campusId)
+          // campusId single-field index is exempted — skip Firestore filter
           .limit(1)
           .get();
 

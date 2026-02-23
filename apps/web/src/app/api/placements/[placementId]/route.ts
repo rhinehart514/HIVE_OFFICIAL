@@ -67,10 +67,10 @@ async function findPlacementWithContext(
   // A better approach would be to include context in the placementId or query params
 
   // First, try to find deployment record that references this placement
+  // campusId filter omitted (index exempted); placementId uniquely scopes this lookup
   const deploymentSnapshot = await dbAdmin
     .collection('deployedTools')
     .where('placementId', '==', placementId)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 

@@ -28,12 +28,13 @@ const _GET = withAuthAndErrors(async (
 
   try {
     // Query events where user is the organizer
+    // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+    // organizerId is selective enough; campus isolation enforced in-memory below.
     const now = new Date();
     const eventsQuery = dbAdmin
       .collection('events')
       .where('organizerId', '==', targetUserId)
-      .where('campusId', '==', campusId)
-      .where('startDate', '>=', now)
+      .where('startDate', '>=', now.toISOString())
       .orderBy('startDate', 'asc')
       .limit(limit);
 
@@ -43,15 +44,16 @@ const _GET = withAuthAndErrors(async (
     const countQuery = dbAdmin
       .collection('events')
       .where('organizerId', '==', targetUserId)
-      .where('campusId', '==', campusId)
-      .where('startDate', '>=', now);
+      .where('startDate', '>=', now.toISOString());
 
     const countSnapshot = await countQuery.count().get();
     const totalCount = countSnapshot.data().count;
 
     // Transform events to ProfileEvent format
-    const events = eventsSnapshot.docs.map((doc) => {
+    // In-memory campus isolation (campusId Firestore filter is exempted from index)
+    const events = eventsSnapshot.docs.flatMap((doc) => {
       const data = doc.data();
+      if (data.campusId && data.campusId !== campusId) return [];
       const startDate = data.startDate?.toDate?.() || new Date(data.startDate);
 
       return {

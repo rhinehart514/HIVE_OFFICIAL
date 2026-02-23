@@ -101,29 +101,29 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
       spacesSnapshot,
     ] = await Promise.all([
       dbAdmin.collection('profiles')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .count()
         .get(),
       dbAdmin.collection('spaces')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .where('isActive', '==', true)
         .count()
         .get(),
       dbAdmin.collection('events')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .count()
         .get(),
       dbAdmin.collection('tools')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .count()
         .get(),
       dbAdmin.collection('posts')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .count()
         .get(),
       // Get top spaces for success stories
       dbAdmin.collection('spaces')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .where('isActive', '==', true)
         .orderBy('metrics.memberCount', 'desc')
         .limit(5)

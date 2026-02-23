@@ -62,17 +62,21 @@ async function _GET(request: NextRequest) {
     // Query spaces where category = 'residential'
     const spacesSnapshot = await dbAdmin
       .collection('spaces')
-      .where('campusId', '==', campusId)
       .where('category', '==', 'residential')
       .where('isActive', '==', true)
       .orderBy('name', 'asc')
       .get();
 
-    const spaces = spacesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      name: doc.data().name as string,
-      memberCount: (doc.data().memberCount as number) || 0,
-    }));
+    const spaces = spacesSnapshot.docs
+      .filter((doc) => {
+        const data = doc.data();
+        return !data.campusId || data.campusId === campusId;
+      })
+      .map((doc) => ({
+        id: doc.id,
+        name: doc.data().name as string,
+        memberCount: (doc.data().memberCount as number) || 0,
+      }));
 
     return NextResponse.json({
       success: true,

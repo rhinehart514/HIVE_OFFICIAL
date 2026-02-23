@@ -51,7 +51,6 @@ export class FirebaseRitualRepository implements IRitualRepository {
     try {
       const q = query(
         collection(db, this.collectionName),
-        where('campusId', '==', campusId),
         orderBy('startDate', 'desc'),
         firestoreLimit(50)
       );
@@ -76,7 +75,6 @@ export class FirebaseRitualRepository implements IRitualRepository {
       const now = Timestamp.now();
       const q = query(
         collection(db, this.collectionName),
-        where('campusId', '==', campusId),
         where('startDate', '<=', now),
         where('endDate', '>=', now),
         where('isActive', '==', true),
@@ -107,7 +105,6 @@ export class FirebaseRitualRepository implements IRitualRepository {
     try {
       const q = query(
         collection(db, this.collectionName),
-        where('campusId', '==', campusId),
         where('type', '==', type),
         orderBy('startDate', 'desc'),
         firestoreLimit(20)
@@ -133,7 +130,6 @@ export class FirebaseRitualRepository implements IRitualRepository {
       const now = Timestamp.now();
       const q = query(
         collection(db, this.collectionName),
-        where('campusId', '==', campusId),
         where('type', '==', type),
         where('startDate', '<=', now),
         where('endDate', '>=', now),
@@ -472,7 +468,6 @@ export class FirebaseRitualRepository implements IRitualRepository {
   subscribeToActiveRituals(campusId: string, callback: (rituals: EnhancedRitual[]) => void): () => void {
     const q = query(
       collection(db, this.collectionName),
-      where('campusId', '==', campusId),
       where('isActive', '==', true),
       orderBy('startDate', 'desc')
     );

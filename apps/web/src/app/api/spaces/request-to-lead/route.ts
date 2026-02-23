@@ -137,7 +137,6 @@ export const POST = withAuthValidationAndErrors(
         .where('spaceId', '==', spaceId)
         .where('userId', '==', userId)
         .where('isActive', '==', true)
-        .where('campusId', '==', campusId)
         .limit(1)
         .get();
 
@@ -157,7 +156,6 @@ export const POST = withAuthValidationAndErrors(
         .where('spaceId', '==', spaceId)
         .where('userId', '==', userId)
         .where('status', '==', 'pending')
-        .where('campusId', '==', campusId)
         .limit(1)
         .get();
 
@@ -246,12 +244,14 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
     const requestsSnapshot = await dbAdmin
       .collection('builderRequests')
       .where('userId', '==', userId)
-      .where('campusId', '==', campusId)
       .orderBy('submittedAt', 'desc')
       .limit(20)
       .get();
 
-    const requests = requestsSnapshot.docs.map((doc) => {
+    const requests = requestsSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+      return !data.campusId || data.campusId === campusId;
+    }).map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,

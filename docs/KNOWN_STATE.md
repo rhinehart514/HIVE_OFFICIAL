@@ -57,14 +57,15 @@ _Verified against live Firestore + local dev server. This is what actually exist
 - 18 types defined, FCM wired ✓
 - **Not active** — needs env var flip (`NEXT_PUBLIC_FCM_VAPID_KEY` or similar). One-line enablement.
 
-### Launch Blockers (Feb 22 — updated)
-1. **Events feed missing images + space links** — `/api/events/personalized` no longer 500s (fallback fixed) but `coverImageUrl` reads wrong field and `spaceHandle` is always null. Fix both field mappings. See Broken section.
-2. **Space events returning 0** — `/api/events?spaceId=...` — Date object vs ISO string mismatch in `fetchDocsForTimeField`. Fix: use `toISOString()` when `dateField === 'startDate'`. See Broken section.
+### Launch Blockers (Feb 22 — updated, most RESOLVED)
+1. ~~**Events feed missing images + space links**~~ — **RESOLVED.** `coverImageUrl` now reads `event.imageUrl || event.coverImageUrl`. `spaceHandle` resolved via batch space lookup.
+2. ~~**Space events returning 0**~~ — **RESOLVED.** `fetchDocsForTimeField` now uses `toISOString()` for `startDate` fields. campusId removed from Firestore queries.
 3. **Auth flow** — needs end-to-end validation as a new user. Last validated ~Feb 14.
-4. **Profile black screen** — blocks identity layer. Cause not yet diagnosed.
-5. **7-day account age gate on space creation** — `apps/web/src/app/api/spaces/route.ts:167`. New users cannot create a space until account is 7 days old. Kills first-session activation for any user who wants to create. Remove or reduce to 0 for first space only.
-6. **Events nav tab in sidebar** — contradicts LAUNCH-IA.md locked decision ("no dedicated events nav tab"). Needs to be removed from `navigation.ts` + `AppSidebar.tsx`.
-7. **Gathering threshold set to 10** — `packages/core/src/domain/spaces/aggregates/enhanced-space.ts:100`. `DEFAULT_ACTIVATION_THRESHOLD = 10` means no space opens chat until 10 members join. With 0 members across 1,174 spaces, every space is locked. Change to `1`. One-liner fix.
+4. **Profile page** — params access updated for Next.js 15 safety. Needs live validation.
+5. ~~**7-day account age gate on space creation**~~ — **RESOLVED.** Gate removed from both `POST /api/spaces` and `GET /api/spaces/check-create-permission`.
+6. ~~**Events nav tab in sidebar**~~ — **RESOLVED.** Already absent from `navigation.ts`. No Events tab exists.
+7. ~~**Gathering threshold set to 10**~~ — **RESOLVED.** `DEFAULT_ACTIVATION_THRESHOLD = 1`.
+8. ~~**campusId FAILED_PRECONDITION across all routes**~~ — **RESOLVED.** Removed `where('campusId', '==', ...)` from 60+ Firestore queries across all spaces, events, feed, auth, profile, privacy, and user routes. App-code filters added where campus isolation is needed.
 
 ---
 
@@ -79,74 +80,23 @@ _Verified against live Firestore + local dev server. This is what actually exist
 
 ---
 
-## Broken — Feb 22 2026
-_Confirmed broken via live testing. Read before touching these routes._
+## Broken — Feb 22 2026 (mostly resolved)
+_Updated after systemic campusId fix pass._
 
-### `/api/events/personalized` — 500 resolved; field mappings still wrong
-**Status (Feb 22 updated):** The 500 is gone. The fallback query was fixed to use
-`start.toISOString()` (committed). Events are now returned. BUT two field mapping bugs remain:
+### `/api/events/personalized` — RESOLVED
+Both field mapping bugs fixed: `coverImageUrl` reads `imageUrl || coverImageUrl`, `spaceHandle` resolved via batch space lookup. campusId removed from primary query — events fetch directly without fallback now.
 
-**Bug 1 — `coverImageUrl` always null:**
-API maps `event.coverImageUrl` but Firestore stores it as `event.imageUrl`.
-```ts
-// ❌ current (wrong)
-coverImageUrl: event.coverImageUrl as string | undefined,
-// ✅ fix
-coverImageUrl: (event.imageUrl || event.coverImageUrl) as string | undefined,
-```
+### `/api/events` (space-scoped) — RESOLVED
+`fetchDocsForTimeField` uses `toISOString()` for `startDate` fields. campusId removed from queries.
 
-**Bug 2 — `spaceHandle` always undefined:**
-`spaceHandle` doesn't exist on event documents. Current code passes `event.spaceHandle` which is always `undefined`.
-```ts
-// ❌ current (wrong)
-spaceHandle: event.spaceHandle as string | undefined,
-// ✅ fix — batch-resolve from spaces collection before the .map()
-// Build spaceHandleMap: Map<spaceId, handle> using Promise.allSettled + individual .doc(id).get()
-// Then in the map: spaceHandle: spaceHandleMap.get(eventSpaceId)
-```
-Use `Promise.allSettled` with individual `.doc(id).get()` calls. Do NOT use `getAll()` or
-`where('__name__', 'in', batch)` — both have reliability issues in this route's context.
-
-**Note:** The primary `fetchEventsForTimeField()` still uses `where('campusId', '==', campusId)`
-which throws `FAILED_PRECONDITION`. That error is caught/swallowed. The fallback carries all the load.
-
-### `/api/events` (space-scoped) — returns 0 events
-**Root cause (still broken Feb 22):** Two-stage failure:
-1. Primary queries include `where('campusId', '==', campusId)` — throws `FAILED_PRECONDITION`, caught, ignored.
-2. Space fallback (`includeCampusFilter: false`) triggers correctly, but inside `fetchDocsForTimeField`,
-   the upcoming filter is `query.where(dateField, '>=', now)` where `now` is a `Date` object.
-   For `dateField === 'startDate'`, this is a Date-vs-string mismatch → 0 results silently.
-   For `dateField === 'startAt'`, the `Date` object works (Timestamp field) but CampusLabs events
-   use `startDate` not `startAt`, so these return 0 too.
-
-**Fix:** In `fetchDocsForTimeField`, when `dateField === 'startDate'`, use ISO strings:
-```ts
-// In fetchDocsForTimeField, replace:
-if (fromDate) {
-  query = query.where(dateField, ">=", fromDate);
-} else if (queryParams.upcoming) {
-  query = query.where(dateField, ">=", now);
-}
-// With:
-if (fromDate) {
-  query = query.where(dateField, ">=", dateField === 'startDate' ? fromDate.toISOString() : fromDate);
-} else if (queryParams.upcoming) {
-  query = query.where(dateField, ">=", dateField === 'startDate' ? now.toISOString() : now);
-}
-// Apply same pattern to the toDate filter.
-```
-
-### `/events` nav tab — exists in code, conflicts with LAUNCH-IA.md locked decision
-**Root cause:** LAUNCH-IA.md LOCKED DECISION is "no dedicated events nav tab — events surface
-through Feed + Spaces." But `navigation.ts` and `AppSidebar.tsx` still include an Events tab.
-**Impact:** Confuses agents working on nav. Creates UX inconsistency.
-**Fix:** Remove Events from `apps/web/src/lib/navigation.ts` and `AppSidebar.tsx`.
-The `/events` page can remain (redirect target) but should not be a sidebar nav item.
-
-_(coverImageUrl and spaceHandle bugs are detailed above in the personalized API section)_
+### `/events` nav tab — RESOLVED (was already clean)
+`navigation.ts` never had an Events tab. 4-tab model: Feed · Spaces · Lab · Profile.
 
 ### `campuses` collection is empty
 **Root cause:** Campus documents were never created.
 **Impact:** `useCampusMode()` returns `false` everywhere. Any UI gated on `hasCampus`
 is invisible to all users. `getCampusId(request)` falls back to hardcoded `'ub-buffalo'`.
 **Status:** Intentional for now — hardcoded campus works for UB single-tenant launch.
+
+### Remaining campusId queries (non-critical)
+Admin routes (`/api/admin/*`) still have ~15 `where('campusId', ...)` calls. These are not user-facing and can be fixed when admin tooling is prioritized.

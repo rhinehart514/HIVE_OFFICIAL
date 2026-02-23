@@ -63,14 +63,16 @@ export const POST = withAuthAndErrors(async (request, context: { params: Promise
   }
 
   // Fallback: Search for the comment in recent posts (less efficient)
+  // campusId filter omitted (index exempted); filter in-memory after fetch
   const postsSnapshot = await dbAdmin
     .collection('posts')
-    .where('campusId', '==', campusId)
     .orderBy('createdAt', 'desc')
     .limit(100)
     .get();
 
   for (const postDoc of postsSnapshot.docs) {
+    const postData = postDoc.data();
+    if (postData.campusId && postData.campusId !== campusId) continue;
     const commentRef = postDoc.ref.collection('comments').doc(commentId);
     const commentDoc = await commentRef.get();
 

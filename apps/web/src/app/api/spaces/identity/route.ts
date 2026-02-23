@@ -67,7 +67,6 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
     const claimsSnapshot = await dbAdmin
       .collection('identity_claims')
       .where('userId', '==', userId)
-      .where('campusId', '==', campusId)
       .get();
 
     const claims: Record<IdentityType, IdentityClaim | null> = {
@@ -81,6 +80,7 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
 
     for (const doc of claimsSnapshot.docs) {
       const data = doc.data();
+      if (data.campusId && data.campusId !== campusId) continue;
       const type = data.type as IdentityType;
       const spaceId = data.spaceId as string;
 
@@ -136,7 +136,6 @@ export const POST = withAuthValidationAndErrors(
       const existingClaim = await dbAdmin
         .collection('identity_claims')
         .where('userId', '==', userId)
-        .where('campusId', '==', campusId)
         .where('type', '==', type)
         .limit(1)
         .get();
@@ -293,7 +292,6 @@ export const DELETE = withAuthValidationAndErrors(
       const claimSnapshot = await dbAdmin
         .collection('identity_claims')
         .where('userId', '==', userId)
-        .where('campusId', '==', campusId)
         .where('type', '==', type)
         .limit(1)
         .get();

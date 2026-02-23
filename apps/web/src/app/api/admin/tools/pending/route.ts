@@ -63,7 +63,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Fetch pending publish requests
     const requestsQuery = dbAdmin
       .collection('toolPublishRequests')
-      .where('campusId', '==', campusId)
       .where('status', 'in', ['pending', 'in_review'])
       .orderBy('createdAt', 'desc');
 

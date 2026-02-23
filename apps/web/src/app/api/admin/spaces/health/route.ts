@@ -178,7 +178,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Fetch all spaces
     let spacesQuery = dbAdmin
       .collection('spaces')
-      .where('campusId', '==', campusId)
       .where('isActive', '==', true);
 
     if (query.category) {
@@ -227,7 +226,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
       const newMembersSnapshot = await dbAdmin
         .collection('spaceMembers')
         .where('spaceId', '==', spaceId)
-        .where('campusId', '==', campusId)
         .where('joinedAt', '>=', sevenDaysAgo)
         .where('isActive', '==', true)
         .count()

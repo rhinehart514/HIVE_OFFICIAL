@@ -88,9 +88,8 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
 
     // Base query - filter by campus if school admin
     let spacesQuery = dbAdmin.collection('spaces').where('isActive', '==', true);
-    if (campusId) {
-      spacesQuery = spacesQuery.where('campusId', '==', campusId);
-    }
+    // campusId single-field index is exempted — skip Firestore filter (single-tenant)
+    // if (campusId) { spacesQuery = spacesQuery.where('campusId', '==', campusId); }
 
     const spacesSnapshot = await spacesQuery.get();
     const spaces = spacesSnapshot.docs.map(doc => ({

@@ -235,7 +235,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       const snapshot = await dbAdmin
         .collection(this.collectionName)
         .where('name', '==', name)
-        .where('campusId', '==', campusId)
         .limit(1)
         .get();
 
@@ -262,7 +261,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       const snapshot = await dbAdmin
         .collection(this.collectionName)
         .where('slug', '==', slug)
-        .where('campusId', '==', campusId)
         .limit(1)
         .get();
 
@@ -289,7 +287,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
     try {
       const snapshot = await dbAdmin
         .collection(this.collectionName)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .orderBy('memberCount', 'desc')
         .limit(limitCount)
@@ -311,7 +308,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       const snapshot = await dbAdmin
         .collection(this.collectionName)
         .where('category', '==', category)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .orderBy('memberCount', 'desc')
         .limit(50)
@@ -427,7 +423,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
     try {
       const snapshot = await dbAdmin
         .collection(this.collectionName)
-        .where('campusId', '==', campusId)
         .where('visibility', '==', 'public')
         .where('isActive', '==', true)
         .orderBy('memberCount', 'desc')
@@ -455,7 +450,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
     try {
       const snapshot = await dbAdmin
         .collection(this.collectionName)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .orderBy('trendingScore', 'desc')
         .orderBy('memberCount', 'desc')
@@ -468,7 +462,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       try {
         const fallbackSnapshot = await dbAdmin
           .collection(this.collectionName)
-          .where('campusId', '==', campusId)
           .where('isActive', '==', true)
           .orderBy('memberCount', 'desc')
           .limit(limitCount)
@@ -496,7 +489,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       // Get popular spaces
       const popularSnapshot = await dbAdmin
         .collection(this.collectionName)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .orderBy('memberCount', 'desc')
         .limit(10)
@@ -519,7 +511,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       if (major) {
         const majorSnapshot = await dbAdmin
           .collection(this.collectionName)
-          .where('campusId', '==', campusId)
           .where('tags', 'array-contains', major.toLowerCase())
           .where('isActive', '==', true)
           .limit(5)
@@ -555,7 +546,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       // Do a basic name-based search
       const snapshot = await dbAdmin
         .collection(this.collectionName)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .orderBy('name')
         .limit(50)
@@ -621,7 +611,6 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
 
       let query: admin.firestore.Query = dbAdmin
         .collection(this.collectionName)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true);
 
       // Apply category filter (use 'category' field, not legacy 'type')

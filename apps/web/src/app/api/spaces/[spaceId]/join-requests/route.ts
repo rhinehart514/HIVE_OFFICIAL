@@ -172,8 +172,7 @@ async function _GET(
     // Fetch join requests
     let query = dbAdmin
       .collection('spaceJoinRequests')
-      .where('spaceId', '==', spaceId)
-      .where('campusId', '==', campusId);
+      .where('spaceId', '==', spaceId);
 
     if (status !== 'all') {
       query = query.where('status', '==', status);
@@ -484,7 +483,6 @@ async function notifyOtherLeadersOfJoin(
   // Find other space leaders/admins (excluding the approver)
   const leadersSnapshot = await dbAdmin.collection('spaceMembers')
     .where('spaceId', '==', spaceId)
-    .where('campusId', '==', campusId)
     .where('role', 'in', ['owner', 'admin', 'moderator'])
     .where('isActive', '==', true)
     .get();

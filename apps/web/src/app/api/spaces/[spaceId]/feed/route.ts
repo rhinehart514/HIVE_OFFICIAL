@@ -104,7 +104,6 @@ const _GET = withAuthAndErrors(async (
       .where('spaceId', '==', spaceId)
       .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 

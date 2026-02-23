@@ -239,13 +239,21 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       // Pre-fetch major space if major is provided
       let majorSpaceSnapshot: FirebaseFirestore.QuerySnapshot | null = null;
       if (body.major && campusId) {
-        majorSpaceSnapshot = await transaction.get(
+        const rawMajorSnapshot = await transaction.get(
           dbAdmin.collection('spaces')
-            .where('campusId', '==', campusId)
             .where('identityType', '==', 'major')
             .where('majorName', '==', body.major)
-            .limit(1)
+            .limit(10)
         );
+        // Filter by campusId in-memory (campusId single-field index is exempted)
+        const filteredDocs = rawMajorSnapshot.docs.filter(
+          (d) => !d.data().campusId || d.data().campusId === campusId
+        );
+        if (filteredDocs.length > 0) {
+          majorSpaceSnapshot = { ...rawMajorSnapshot, docs: filteredDocs, empty: false, size: filteredDocs.length } as unknown as FirebaseFirestore.QuerySnapshot;
+        } else {
+          majorSpaceSnapshot = { ...rawMajorSnapshot, docs: [], empty: true, size: 0 } as unknown as FirebaseFirestore.QuerySnapshot;
+        }
       }
 
       // Pre-fetch community spaces based on identity checkboxes
@@ -267,14 +275,20 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       if (body.communityIdentities && campusId) {
         for (const [key, communityType] of Object.entries(communityMappings)) {
           if (body.communityIdentities[key as keyof typeof body.communityIdentities]) {
-            const snapshot = await transaction.get(
+            const rawSnapshot = await transaction.get(
               dbAdmin.collection('spaces')
-                .where('campusId', '==', campusId)
                 .where('identityType', '==', 'community')
                 .where('communityType', '==', communityType)
                 .where('isUniversal', '==', true)
-                .limit(1)
+                .limit(20)
             );
+            // Filter by campusId in-memory (campusId single-field index is exempted)
+            const filteredDocs = rawSnapshot.docs.filter(
+              (d) => !d.data().campusId || d.data().campusId === campusId
+            );
+            const snapshot = filteredDocs.length > 0
+              ? { ...rawSnapshot, docs: filteredDocs, empty: false, size: filteredDocs.length } as unknown as FirebaseFirestore.QuerySnapshot
+              : { ...rawSnapshot, docs: [], empty: true, size: 0 } as unknown as FirebaseFirestore.QuerySnapshot;
             communitySpaceReads.push({ key, communityType, snapshot });
           }
         }
@@ -314,11 +328,16 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       if (campusId && Array.isArray(body.interests) && body.interests.length > 0) {
         const orgSpacesSnapshot = await transaction.get(
           dbAdmin.collection('spaces')
-            .where('campusId', '==', campusId)
             .where('category', 'in', ['student_org', 'university_org', 'greek_life'])
         );
 
-        const orgSpaces = orgSpacesSnapshot.docs.map((spaceDoc) => {
+        const orgSpaces = orgSpacesSnapshot.docs
+          // Filter by campusId in-memory (campusId single-field index is exempted)
+          .filter((spaceDoc) => {
+            const d = spaceDoc.data();
+            return !d.campusId || d.campusId === campusId;
+          })
+          .map((spaceDoc) => {
           const spaceData = spaceDoc.data();
           interestSpaceDataById.set(spaceDoc.id, spaceData);
           return {

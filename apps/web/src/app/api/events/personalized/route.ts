@@ -102,17 +102,17 @@ function normalizeRsvpStatus(status: unknown): 'going' | 'maybe' | 'not_going' |
 }
 
 async function fetchEventsForTimeField(
-  campusId: string,
+  _campusId: string,
   start: Date,
   end: Date,
   field: TimeField,
   limit: number
 ): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
   // startDate is stored as ISO string on CampusLabs events; startAt is a Timestamp
+  // NOTE: campusId single-field index is exempted — filter in app code, not Firestore
   const toValue = (d: Date): Date | string => field === 'startDate' ? d.toISOString() : d;
   const query = dbAdmin
     .collection('events')
-    .where('campusId', '==', campusId)
     .where(field, '>=', toValue(start))
     .where(field, '<=', toValue(end))
     .orderBy(field, 'asc')
@@ -292,6 +292,9 @@ async function handler(
       .map((doc) => ({ id: doc.id, ...doc.data() }) as Record<string, unknown>)
       .filter((event) => {
         if (!isEventDiscoverable(event)) return false;
+
+        // campusId filter in app code (index is exempted in Firestore)
+        if (event.campusId && event.campusId !== campusId) return false;
 
         const eventStart = getEventStartDate(event);
         if (!eventStart) return false;

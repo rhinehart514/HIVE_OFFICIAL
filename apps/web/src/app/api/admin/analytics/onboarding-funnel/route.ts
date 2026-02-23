@@ -78,7 +78,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Fetch all profiles created in the time period
     const profilesSnapshot = await dbAdmin
       .collection('profiles')
-      .where('campusId', '==', campusId)
       .where('createdAt', '>=', startDate)
       .get();
 

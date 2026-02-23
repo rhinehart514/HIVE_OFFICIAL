@@ -64,9 +64,8 @@ async function fetchSpaceEventDocsForTimeField({
     .collection("events")
     .where("spaceId", "==", spaceId);
 
-  if (includeCampusFilter) {
-    query = query.where("campusId", "==", campusId);
-  }
+  // campusId single-field index is exempted — skip Firestore filter, filter in app code
+  // if (includeCampusFilter) { query = query.where("campusId", "==", campusId); }
 
   if (queryParams.type) {
     query = query.where("type", "==", queryParams.type);

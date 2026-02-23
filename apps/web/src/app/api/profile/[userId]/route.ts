@@ -18,8 +18,10 @@ import { withCache } from '../../../../lib/cache-headers';
  * The endpoint determines viewer type and enforces field-level privacy.
  */
 const _GET = withOptionalAuth(
-  async (request, context: { params: { userId: string } }, respond) => {
-    const targetUserId = (context.params?.userId || '').toString();
+  async (request, context: { params: { userId: string } | Promise<{ userId: string }> }, respond) => {
+    // Next.js 15: params may be a Promise — handle both sync and async access
+    const resolvedParams = 'then' in context.params ? await context.params : context.params;
+    const targetUserId = (resolvedParams?.userId || '').toString();
     if (!targetUserId) {
       return respond.error('Missing userId', 'INVALID_INPUT', { status: 400 });
     }

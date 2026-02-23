@@ -39,7 +39,7 @@ export const COLLECTIONS = {
   SCHOOLS: 'schools',
   TOOLS: 'tools',
   DEPLOYED_TOOLS: 'deployedTools',
-  TOOL_STATES: 'toolStates',
+  TOOL_STATES: 'tool_states',
   CONNECTIONS: 'connections',
   NOTIFICATIONS: 'notifications',
   ACTIVITY_EVENTS: 'activityEvents',
@@ -354,9 +354,9 @@ export function getToolVersionsCollection(db: Firestore, toolId: string): Collec
  */
 export function buildCrossSpacePostsQuery(db: Firestore, campusId: string) {
   if (MIGRATION_FLAGS.USE_NESTED_POSTS) {
-    return db.collectionGroup(COLLECTIONS.POSTS).where('campusId', '==', campusId);
+    return db.collectionGroup(COLLECTIONS.POSTS);
   }
-  return db.collection(COLLECTIONS.POSTS_FLAT).where('campusId', '==', campusId);
+  return db.collection(COLLECTIONS.POSTS_FLAT);
 }
 
 /**
@@ -365,9 +365,9 @@ export function buildCrossSpacePostsQuery(db: Firestore, campusId: string) {
  */
 export function buildCrossSpaceEventsQuery(db: Firestore, campusId: string) {
   if (MIGRATION_FLAGS.USE_NESTED_EVENTS) {
-    return db.collectionGroup(COLLECTIONS.EVENTS).where('campusId', '==', campusId);
+    return db.collectionGroup(COLLECTIONS.EVENTS);
   }
-  return db.collection(COLLECTIONS.EVENTS_FLAT).where('campusId', '==', campusId);
+  return db.collection(COLLECTIONS.EVENTS_FLAT);
 }
 
 /**
@@ -377,10 +377,8 @@ export function buildCrossSpaceEventsQuery(db: Firestore, campusId: string) {
 export function buildUserMembershipsQuery(db: Firestore, userId: string, campusId: string) {
   if (MIGRATION_FLAGS.USE_NESTED_MEMBERS) {
     return db.collectionGroup(COLLECTIONS.MEMBERS)
-      .where('userId', '==', userId)
-      .where('campusId', '==', campusId);
+      .where('userId', '==', userId);
   }
   return db.collection(COLLECTIONS.SPACE_MEMBERS_FLAT)
-    .where('userId', '==', userId)
-    .where('campusId', '==', campusId);
+    .where('userId', '==', userId);
 }

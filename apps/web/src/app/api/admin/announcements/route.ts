@@ -50,9 +50,9 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const status = searchParams.get('status');
 
   try {
+    // campusId single-field index is exempted — skip Firestore filter
     let query = dbAdmin
       .collection('adminAnnouncements')
-      .where('campusId', '==', campusId)
       .orderBy('createdAt', 'desc')
       .limit(limit);
 
@@ -148,9 +148,9 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
         // Collect user IDs based on audience
         switch (data.audience) {
           case 'all': {
+            // campusId single-field index is exempted — skip Firestore filter
             const usersSnap = await dbAdmin
               .collection('users')
-              .where('campusId', '==', campusId)
               .where('status', '==', 'active')
               .select()
               .get();
@@ -158,9 +158,9 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
             break;
           }
           case 'builders': {
+            // campusId single-field index is exempted — skip Firestore filter
             const buildersSnap = await dbAdmin
               .collection('users')
-              .where('campusId', '==', campusId)
               .where('role', '==', 'builder')
               .where('status', '==', 'active')
               .select()
@@ -169,9 +169,9 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
             break;
           }
           case 'admins': {
+            // campusId single-field index is exempted — skip Firestore filter
             const adminsSnap = await dbAdmin
               .collection('users')
-              .where('campusId', '==', campusId)
               .where('role', 'in', ['admin', 'super_admin'])
               .where('status', '==', 'active')
               .select()

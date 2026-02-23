@@ -132,14 +132,17 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
   }
 
   // Strategy 2: Same campus users (baseline)
+  // campusId Firestore filter is exempted from single-field index — enforce in-memory instead.
   if (campusId) {
     const campusUsersSnapshot = await db.collection('users')
-      .where('campusId', '==', campusId)
-      .limit(100)
+      .limit(500)
       .get();
 
     for (const doc of campusUsersSnapshot.docs) {
       const candidateId = doc.id;
+      const candidateData = doc.data();
+      // In-memory campus isolation
+      if (candidateData.campusId && candidateData.campusId !== campusId) continue;
       if (connectedUserIds.has(candidateId)) continue;
 
       const existing = candidateScores.get(candidateId) || {
@@ -156,7 +159,6 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
       existing.score += 2; // Lower weight for same campus
 
       // Bonus for same major
-      const candidateData = doc.data();
       if (currentUser.major && candidateData.major === currentUser.major) {
         existing.sameMajor = true;
         existing.score += 5;

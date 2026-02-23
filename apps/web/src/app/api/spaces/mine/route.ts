@@ -27,7 +27,6 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const membershipSnapshot = await dbAdmin
     .collection('spaceMembers')
     .where('userId', '==', userId)
-    .where('campusId', '==', campusId)
     .where('isActive', '==', true)
     .get();
 

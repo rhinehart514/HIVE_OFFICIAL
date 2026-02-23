@@ -39,7 +39,6 @@ async function validateSpaceAndMembership(spaceId: string, userId: string, campu
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 

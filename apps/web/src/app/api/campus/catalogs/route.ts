@@ -32,14 +32,19 @@ export const GET = withCache(async (request: NextRequest) => {
     const data = doc.data()!;
 
     // Fetch residential spaces for housing picker (on-campus + off-campus)
+    // campusId filter omitted from query (index exempted); filter in-memory after fetch
     const [onCampusSnap, offCampusSnap] = await Promise.all([
-      dbAdmin.collection('spaces').where('campusId', '==', campusId).where('identityType', '==', 'residential').get(),
-      dbAdmin.collection('spaces').where('campusId', '==', campusId).where('identityType', '==', 'residential-offcampus').get(),
+      dbAdmin.collection('spaces').where('identityType', '==', 'residential').get(),
+      dbAdmin.collection('spaces').where('identityType', '==', 'residential-offcampus').get(),
     ]);
 
     const toOption = (d: FirebaseFirestore.QueryDocumentSnapshot) => ({ id: d.id, name: d.data().name });
-    const residentialSpaces = onCampusSnap.docs.map(toOption).sort((a, b) => a.name.localeCompare(b.name));
-    const offCampusSpaces = offCampusSnap.docs.map(toOption).sort((a, b) => a.name.localeCompare(b.name));
+    const residentialSpaces = onCampusSnap.docs
+      .filter(d => !d.data().campusId || d.data().campusId === campusId)
+      .map(toOption).sort((a, b) => a.name.localeCompare(b.name));
+    const offCampusSpaces = offCampusSnap.docs
+      .filter(d => !d.data().campusId || d.data().campusId === campusId)
+      .map(toOption).sort((a, b) => a.name.localeCompare(b.name));
 
     return NextResponse.json({
       interests: data.interests || [],

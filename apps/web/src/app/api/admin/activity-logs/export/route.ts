@@ -40,7 +40,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Build query (max 1000 for export)
     let query = dbAdmin
       .collection('adminActivityLogs')
-      .where('campusId', '==', campusId);
+      // campusId single-field index is exempted — skip Firestore filter;
 
     if (action) {
       query = query.where('action', '==', action);

@@ -59,9 +59,6 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
     } else if (!emailVerified && !isAdmin) {
       canCreate = false;
       reason = 'Email verification required';
-    } else if (accountAge < 7 && !isAdmin) {
-      canCreate = false;
-      reason = `Account must be at least 7 days old (current: ${accountAge} days)`;
     } else if (spacesCreatedToday >= 3 && !isAdmin) {
       canCreate = false;
       reason = 'Daily limit reached (3 spaces per day)';
@@ -95,7 +92,7 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
       spacesCreatedToday,
       maxSpacesPerDay: isAdmin ? 999 : 3,
       accountAge,
-      minAccountAge: 7,
+      minAccountAge: 0,
       emailVerified,
       isAdmin,
       restrictions: {

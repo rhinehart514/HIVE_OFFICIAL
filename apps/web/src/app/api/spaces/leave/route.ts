@@ -71,7 +71,6 @@ export const POST = withAuthValidationAndErrors(
           const query = dbAdmin.collection('spaceMembers')
             .where('spaceId', '==', spaceIdParam)
             .where('userId', '==', userIdParam)
-            .where('campusId', '==', campusId)
             .limit(1);
           const snapshot = await query.get();
           if (snapshot.empty) {
@@ -98,7 +97,6 @@ export const POST = withAuthValidationAndErrors(
           const query = dbAdmin.collection('spaceMembers')
             .where('spaceId', '==', spaceIdParam)
             .where('userId', '==', userIdParam)
-            .where('campusId', '==', campusId)
             .limit(1);
           const snapshot = await query.get();
           if (!snapshot.empty) {

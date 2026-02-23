@@ -57,7 +57,6 @@ async function validateSpaceMembership(userId: string, spaceId: string, campusId
     .where("userId", "==", userId)
     .where("spaceId", "==", spaceId)
     .where("status", "==", "active")
-    .where("campusId", "==", campusId)
     .limit(1)
     .get();
 
@@ -92,7 +91,6 @@ export const POST = withAuthValidationAndErrors(
       const marketplaceSnapshot = await adminDb
         .collection("marketplace")
         .where("toolId", "==", validatedData.toolId)
-        .where("campusId", "==", campusId)
         .limit(1)
         .get();
 
@@ -152,7 +150,6 @@ export const POST = withAuthValidationAndErrors(
         .where("toolId", "==", validatedData.toolId)
         .where("installTo", "==", validatedData.installTo)
         .where("targetId", "==", validatedData.targetId)
-        .where("campusId", "==", campusId)
         .where("status", "!=", "disabled")
         .limit(1)
         .get();
@@ -174,7 +171,6 @@ export const POST = withAuthValidationAndErrors(
           .collection("toolInstallations")
           .where("installTo", "==", "space")
           .where("targetId", "==", validatedData.targetId)
-          .where("campusId", "==", campusId)
           .where("status", "==", "active")
           .get();
 

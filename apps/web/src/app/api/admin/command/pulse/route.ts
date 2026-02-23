@@ -130,35 +130,35 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
       toolsPending,
     ] = await Promise.all([
       dbAdmin.collection('profiles')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .count()
         .get(),
       dbAdmin.collection('profiles')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .where('lastActive', '>=', yesterday)
         .count()
         .get(),
       dbAdmin.collection('spaces')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .where('isActive', '==', true)
         .count()
         .get(),
       dbAdmin.collection('events')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .count()
         .get(),
       dbAdmin.collection('posts')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .where('createdAt', '>=', today)
         .count()
         .get(),
       dbAdmin.collection('contentReports')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .where('status', '==', 'pending')
         .count()
         .get(),
       dbAdmin.collection('toolPublishRequests')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .where('status', '==', 'pending')
         .count()
         .get(),
@@ -182,7 +182,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Get recent activity
     const recentUsersSnapshot = await dbAdmin
       .collection('profiles')
-      .where('campusId', '==', campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .orderBy('createdAt', 'desc')
       .limit(5)
       .get();

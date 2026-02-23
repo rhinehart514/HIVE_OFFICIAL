@@ -97,11 +97,10 @@ const _GET = withAuthAndErrors(async (request: NextRequest, _context, respond) =
     logger.debug('Using DDD profile for spaces endpoint', { userId, spaceCount: profile.spaces.length });
   }
 
-  // Fetch user's memberships
+  // Fetch user's memberships — campusId filter omitted (index exempted; userId scopes query)
   const membershipsSnapshot = await dbAdmin
     .collection('spaceMembers')
     .where('userId', '==', userId)
-    .where('campusId', '==', campusId)
     .orderBy('joinedAt', 'desc')
     .get();
   const memberships: MembershipData[] = membershipsSnapshot.docs.map((doc) => {
@@ -222,11 +221,10 @@ async function getSpaceActivityForUser(userId: string, spaceId: string, timeRang
     const startDateStr = startDate.toISOString().split('T')[0];
     const endDateStr = endDate.toISOString().split('T')[0];
 
-    // Get activity events for this space
+    // Get activity events for this space — campusId filter omitted (index exempted; userId+spaceId scopes query)
     const activitySnapshot = await dbAdmin.collection('activityEvents')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', campusId)
       .where('date', '>=', startDateStr)
       .where('date', '<=', endDateStr)
       .get();

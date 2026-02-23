@@ -157,7 +157,6 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
     .where('spaceId', '==', fromSpaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -174,7 +173,6 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
     .collection('spaceMembers')
     .where('spaceId', '==', toSpaceId)
     .where('userId', '==', userId)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -209,7 +207,6 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', campusId)
       .limit(10)
       .get();
 
@@ -361,12 +358,13 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const movementHistorySnapshot = await dbAdmin
     .collection('spaceMovements')
     .where('userId', '==', userId)
-    .where('campusId', '==', campusId)
     .orderBy('timestamp', 'desc')
     .limit(20)
     .get();
 
-  const movementHistory = movementHistorySnapshot.docs.map((doc) => doc.data());
+  const movementHistory = movementHistorySnapshot.docs
+    .map((doc) => doc.data())
+    .filter((d) => !d.campusId || d.campusId === campusId);
   const restrictions: Record<string, MovementValidationResult> = {};
 
   for (const [key, restriction] of Object.entries(MOVEMENT_RESTRICTIONS)) {
@@ -374,7 +372,6 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', campusId)
       .limit(5)
       .get();
 
@@ -472,11 +469,12 @@ async function validateMovementRestrictions(
     .collection('spaceMovements')
     .where('userId', '==', userId)
     .where('spaceType', '==', movementType)
-    .where('campusId', '==', campusId)
     .where('timestamp', '>=', cooldownDate.toISOString())
     .get();
 
-  const recentMovements = recentMovementsSnapshot.docs.map((doc) => doc.data());
+  const recentMovements = recentMovementsSnapshot.docs
+    .map((doc) => doc.data())
+    .filter((d) => !d.campusId || d.campusId === campusId);
 
   if (restriction.maxMovements > 0 && recentMovements.length >= restriction.maxMovements) {
     const lastMovement = recentMovements
@@ -513,7 +511,6 @@ async function validateMovementRestrictions(
       .where('userId', '==', userId)
       .where('spaceId', '==', fromSpace.id)
       .where('isActive', '==', true)
-      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 

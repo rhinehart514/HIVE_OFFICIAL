@@ -41,7 +41,6 @@ async function validateSpaceAndLeaderPermission(spaceId: string, userId: string,
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -151,7 +150,6 @@ const _GET = withAuthAndErrors(async (
       .collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('isActive', '==', true)
-      .where('campusId', '==', campusId)
       .get();
 
     const totalMembers = membersSnapshot.size;
@@ -161,7 +159,6 @@ const _GET = withAuthAndErrors(async (
       .collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('isActive', '==', true)
-      .where('campusId', '==', campusId)
       .where('joinedAt', '>=', startDate)
       .get();
 
@@ -263,7 +260,7 @@ const _GET = withAuthAndErrors(async (
       .collection('spaces')
       .doc(spaceId)
       .collection('events')
-      .where('startDate', '>=', new Date())
+      .where('startDate', '>=', new Date().toISOString())
       .get();
 
     analytics.events = {

@@ -293,7 +293,6 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
       .collection('builderRequests')
       .where('type', '==', 'claim')
       .where('userId', '==', userId)
-      .where('campusId', '==', campusId)
       .orderBy('submittedAt', 'desc')
       .limit(20)
       .get();
@@ -339,7 +338,6 @@ async function notifyWaitlistMembersOfClaim(
   // Find all waitlist members for this space
   const waitlistSnapshot = await dbAdmin.collection('spaceWaitlists')
     .where('spaceId', '==', spaceId)
-    .where('campusId', '==', campusId)
     .get();
 
   if (waitlistSnapshot.empty) {

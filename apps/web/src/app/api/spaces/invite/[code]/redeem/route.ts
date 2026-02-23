@@ -341,7 +341,6 @@ async function notifySpaceLeadersOfJoin(
   // Find space leaders/admins to notify
   const leadersSnapshot = await dbAdmin.collection('spaceMembers')
     .where('spaceId', '==', spaceId)
-    .where('campusId', '==', campusId)
     .where('role', 'in', ['owner', 'admin', 'leader'])
     .where('isActive', '==', true)
     .get();

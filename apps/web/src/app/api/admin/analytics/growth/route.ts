@@ -73,7 +73,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Get all profiles for analysis
     const allProfilesSnapshot = await dbAdmin
       .collection('profiles')
-      .where('campusId', '==', campusId)
       .get();
 
     const profiles = allProfilesSnapshot.docs.map(doc => ({

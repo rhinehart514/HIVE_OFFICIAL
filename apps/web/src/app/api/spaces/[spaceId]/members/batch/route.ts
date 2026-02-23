@@ -99,7 +99,6 @@ async function validateSpaceAndLeaderPermission(spaceId: string, userId: string,
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -444,7 +443,6 @@ export const POST = withAuthValidationAndErrors(
       const existingCount = await dbAdmin
         .collection("spaceInvites")
         .where("spaceId", "==", spaceId)
-        .where("campusId", "==", campusId)
         .where("isActive", "==", true)
         .count()
         .get();

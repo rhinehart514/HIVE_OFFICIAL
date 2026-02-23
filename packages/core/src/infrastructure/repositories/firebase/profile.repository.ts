@@ -109,7 +109,6 @@ export class FirebaseProfileRepository implements IProfileRepository {
     try {
       const q = query(
         collection(db, this.collectionName),
-        where('campusId', '==', campusId),
         where('isActive', '==', true),
         orderBy('createdAt', 'desc'),
         firestoreLimit(limitCount)
@@ -156,7 +155,6 @@ export class FirebaseProfileRepository implements IProfileRepository {
       // Try handle prefix search first (most specific)
       const handleQuery = query(
         collection(db, this.collectionName),
-        where('campusId', '==', campusId),
         where('isActive', '==', true),
         where('handle', '>=', searchLower),
         where('handle', '<=', searchLower + '\uf8ff'),
@@ -180,7 +178,6 @@ export class FirebaseProfileRepository implements IProfileRepository {
       if (profiles.length < 10) {
         const firstNameQuery = query(
           collection(db, this.collectionName),
-          where('campusId', '==', campusId),
           where('isActive', '==', true),
           where('firstName', '>=', searchLower.charAt(0).toUpperCase() + searchLower.slice(1)),
           where('firstName', '<=', searchLower.charAt(0).toUpperCase() + searchLower.slice(1) + '\uf8ff'),
@@ -205,7 +202,6 @@ export class FirebaseProfileRepository implements IProfileRepository {
       try {
         const fallbackQuery = query(
           collection(db, this.collectionName),
-          where('campusId', '==', campusId),
           where('isActive', '==', true),
           orderBy('createdAt', 'desc'),
           firestoreLimit(20)
@@ -549,7 +545,6 @@ export class FirebaseProfileRepository implements IProfileRepository {
     try {
       const q = query(
         collection(db, this.collectionName),
-        where('campusId', '==', campusId),
         where('isActive', '==', true)
       );
       // Use getCountFromServer to avoid fetching all documents

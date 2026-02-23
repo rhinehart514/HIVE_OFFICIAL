@@ -52,7 +52,6 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', campusId)
       .where('status', '==', 'active')
       .where('role', 'in', ['owner', 'admin', 'leader', 'builder'])
       .limit(1)

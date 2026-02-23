@@ -44,7 +44,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Build Firestore query for pending reports
     const reportsQuery = dbAdmin
       .collection('contentReports')
-      .where('campusId', '==', campusId)
       .where('status', '==', 'pending')
       .orderBy('priority', 'asc') // high priority first (alphabetically 'high' < 'low' < 'medium')
       .orderBy('createdAt', 'desc');
@@ -102,7 +101,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Get summary stats
     const allPendingSnapshot = await dbAdmin
       .collection('contentReports')
-      .where('campusId', '==', campusId)
       .where('status', '==', 'pending')
       .get();
 

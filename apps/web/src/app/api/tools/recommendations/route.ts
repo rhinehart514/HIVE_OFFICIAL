@@ -6,11 +6,10 @@
  * Same pattern as /api/events/personalized.
  */
 
-import { NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
-import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
+import { type ResponseFormatter } from '@/lib/middleware/response';
 
 // Interest keywords → tool category mapping (mirrors event personalization)
 const INTEREST_TO_TOOL_TYPE: Record<string, string[]> = {
@@ -43,7 +42,7 @@ interface ScoredTool {
 async function handler(
   request: AuthenticatedRequest,
   _context: unknown,
-  _respond: unknown
+  respond: typeof ResponseFormatter
 ): Promise<Response> {
   const userId = getUserId(request);
   const campusId = getCampusId(request) || 'ub-buffalo';
@@ -64,8 +63,9 @@ async function handler(
         .limit(200)
         .get()
         .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+      // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+      // Campus isolation enforced in-memory below.
       dbAdmin.collection('tools')
-        .where('campusId', '==', campusId)
         .where('isPublic', '==', true)
         .limit(200)
         .get()
@@ -95,6 +95,8 @@ async function handler(
 
     for (const doc of toolsSnapshot.docs) {
       const tool = doc.data();
+      // In-memory campus isolation (campusId Firestore filter is exempted from index)
+      if (tool.campusId && tool.campusId !== campusId) continue;
       // Skip user's own tools
       if (tool.ownerId === userId || tool.createdBy === userId) continue;
 
@@ -191,20 +193,17 @@ async function handler(
       returned: trending.length,
     });
 
-    return NextResponse.json(ApiResponseHelper.success({
+    return respond.success({
       trending,
       meta: {
         totalAvailable: scoredTools.length,
         returned: trending.length,
         userInterests: userInterests.slice(0, 5),
       },
-    }));
+    });
   } catch (error) {
     logger.error('Tool recommendations error', {}, error instanceof Error ? error : undefined);
-    return NextResponse.json(
-      ApiResponseHelper.error('Failed to generate recommendations', 'INTERNAL_ERROR'),
-      { status: HttpStatus.INTERNAL_SERVER_ERROR }
-    );
+    return respond.error('Failed to generate recommendations', 'INTERNAL_ERROR', { status: 500 });
   }
 }
 

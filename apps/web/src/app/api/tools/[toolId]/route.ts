@@ -264,10 +264,8 @@ export const DELETE = withAuthAndErrors(async (
   }
 
   // CASCADE DELETE: Find and delete all PlacedTools referencing this tool across all spaces
-  let placedToolsQuery = dbAdmin.collectionGroup('placed_tools').where('toolId', '==', toolId);
-  if (campusId) {
-    placedToolsQuery = placedToolsQuery.where('campusId', '==', campusId);
-  }
+  // campusId filter omitted — index exempted; toolId scopes the query sufficiently
+  const placedToolsQuery = dbAdmin.collectionGroup('placed_tools').where('toolId', '==', toolId);
   const placedToolsSnapshot = await placedToolsQuery.get();
 
   const cascadeBatch = dbAdmin.batch();

@@ -90,7 +90,7 @@ const _GET = withAdminAuthAndErrors(async (request, context: RouteContext, respo
     const membersQuery = dbAdmin
       .collection('spaceMembers')
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where('isActive', '==', true)
       .orderBy('joinedAt', 'desc');
 

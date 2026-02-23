@@ -54,7 +54,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   try {
     let logsQuery = dbAdmin
       .collection('adminActivityLogs')
-      .where('campusId', '==', campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .orderBy('timestamp', 'desc');
 
     if (query.action) {
@@ -91,7 +91,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Get unique actions for filter dropdown
     const actionsSnapshot = await dbAdmin
       .collection('adminActivityLogs')
-      .where('campusId', '==', campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .select('action')
       .limit(100)
       .get();

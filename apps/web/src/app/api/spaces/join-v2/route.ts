@@ -179,7 +179,6 @@ export const POST = withAuthValidationAndErrors(
             const legacyQuery = dbAdmin.collection('spaceMembers')
               .where('spaceId', '==', spaceIdParam)
               .where('userId', '==', userIdParam)
-              .where('campusId', '==', campusId)
               .limit(1);
             const legacySnapshot = await legacyQuery.get();
             if (legacySnapshot.empty) {
@@ -235,7 +234,6 @@ export const POST = withAuthValidationAndErrors(
             const legacyQuery = dbAdmin.collection('spaceMembers')
               .where('spaceId', '==', spaceIdParam)
               .where('userId', '==', userIdParam)
-              .where('campusId', '==', campusId)
               .limit(1);
             const snapshot = await legacyQuery.get();
             if (!snapshot.empty) {
@@ -457,22 +455,26 @@ export const POST = withAuthValidationAndErrors(
         // Find space leaders/admins to notify
         const leadersSnapshot = await dbAdmin.collection('spaceMembers')
           .where('spaceId', '==', spaceId)
-          .where('campusId', '==', campusId)
           .where('role', 'in', ['owner', 'admin', 'leader'])
           .where('isActive', '==', true)
           .get();
 
-        // Notify each leader
-        const notifyPromises = leadersSnapshot.docs.map(doc => {
-          const leaderUserId = doc.data().userId;
-          return notifySpaceJoin({
-            leaderUserId,
-            newMemberId: userId,
-            newMemberName: userName,
-            spaceId,
-            spaceName: space.name,
+        // Notify each leader (in-memory campus isolation filter)
+        const notifyPromises = leadersSnapshot.docs
+          .filter(doc => {
+            const d = doc.data();
+            return !d.campusId || d.campusId === campusId;
+          })
+          .map(doc => {
+            const leaderUserId = doc.data().userId;
+            return notifySpaceJoin({
+              leaderUserId,
+              newMemberId: userId,
+              newMemberName: userName,
+              spaceId,
+              spaceName: space.name,
+            });
           });
-        });
 
         await Promise.all(notifyPromises);
       } catch (notifyError) {

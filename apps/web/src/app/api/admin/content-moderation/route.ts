@@ -54,9 +54,8 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
 
   try {
     // Query flagged content from Firestore
-    let query = dbAdmin
-      .collection('flaggedContent')
-      .where('campusId', '==', campusId);
+    let query: FirebaseFirestore.Query = dbAdmin
+      .collection('flaggedContent');
 
     // Apply status filter
     if (status !== 'all') {
@@ -102,17 +101,14 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Get counts by status for stats
     const [pendingSnap, reviewedSnap, resolvedSnap] = await Promise.all([
       dbAdmin.collection('flaggedContent')
-        .where('campusId', '==', campusId)
         .where('status', '==', 'pending')
         .count()
         .get(),
       dbAdmin.collection('flaggedContent')
-        .where('campusId', '==', campusId)
         .where('status', '==', 'reviewed')
         .count()
         .get(),
       dbAdmin.collection('flaggedContent')
-        .where('campusId', '==', campusId)
         .where('status', '==', 'resolved')
         .count()
         .get(),

@@ -171,7 +171,6 @@ async function searchSpaces(
     // Search by name_lowercase prefix - most likely to be relevant
     const nameSnapshot = await dbAdmin
       .collection('spaces')
-      .where('campusId', '==', campusId)
       .where('isActive', '==', true)
       .where('name_lowercase', '>=', lowercaseQuery)
       .where('name_lowercase', '<=', lowercaseQuery + '\uf8ff')
@@ -183,6 +182,8 @@ async function searchSpaces(
       seenIds.add(doc.id);
 
       const data = doc.data();
+      // In-memory campus filter (campusId index is exempted from single-field queries)
+      if (data.campusId && data.campusId !== campusId) continue;
       const name = data.name || 'Unnamed Space';
       const memberCount = data.memberCount || data.metrics?.memberCount || 0;
       const createdAt = toDate(data.createdAt);
@@ -245,7 +246,6 @@ async function searchSpaces(
     if (categoryMatches.length > 0 && results.length < limit * 2) {
       const categorySnapshot = await dbAdmin
         .collection('spaces')
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .where('category', 'in', categoryMatches)
         .orderBy('memberCount', 'desc')
@@ -257,6 +257,7 @@ async function searchSpaces(
         seenIds.add(doc.id);
 
         const data = doc.data();
+        if (data.campusId && data.campusId !== campusId) continue;
         const name = data.name || 'Unnamed Space';
         const memberCount = data.memberCount || data.metrics?.memberCount || 0;
         const createdAt = toDate(data.createdAt);
@@ -320,7 +321,6 @@ async function searchProfiles(
     // BOUNDED QUERY: Cap at 100 docs to prevent OOM, even with filtering
     const handleSnapshot = await dbAdmin
       .collection('profiles')
-      .where('campusId', '==', campusId)
       .where('handle', '>=', lowercaseQuery)
       .where('handle', '<=', lowercaseQuery + '\uf8ff')
       .limit(Math.min(limit * 2, 100))
@@ -328,6 +328,8 @@ async function searchProfiles(
 
     for (const doc of handleSnapshot.docs) {
       const data = doc.data();
+      // In-memory campus filter (campusId index is exempted from single-field queries)
+      if (data.campusId && data.campusId !== campusId) continue;
       // Respect privacy settings
       if (data.privacy?.profileVisibility === 'private') continue;
       profileIds.push(doc.id);
@@ -340,7 +342,6 @@ async function searchProfiles(
     if (profileIds.length < maxProfiles) {
       const nameSnapshot = await dbAdmin
         .collection('profiles')
-        .where('campusId', '==', campusId)
         .where('displayName_lowercase', '>=', lowercaseQuery)
         .where('displayName_lowercase', '<=', lowercaseQuery + '\uf8ff')
         .limit(maxProfiles - profileIds.length)
@@ -349,6 +350,8 @@ async function searchProfiles(
       for (const doc of nameSnapshot.docs) {
         if (profileData.has(doc.id)) continue;
         const data = doc.data();
+        // In-memory campus filter (campusId index is exempted from single-field queries)
+        if (data.campusId && data.campusId !== campusId) continue;
         if (data.privacy?.profileVisibility === 'private') continue;
         profileIds.push(doc.id);
         profileData.set(doc.id, { doc, matchType: 'name' });
@@ -474,7 +477,6 @@ async function searchPosts(
     // BOUNDED QUERY: Cap at 100 docs to prevent OOM, even with moderation filtering
     const titleSnapshot = await dbAdmin
       .collection('posts')
-      .where('campusId', '==', campusId)
       .where('title_lowercase', '>=', lowercaseQuery)
       .where('title_lowercase', '<=', lowercaseQuery + '\uf8ff')
       .limit(Math.min(limit * 2, 100))
@@ -485,6 +487,8 @@ async function searchPosts(
       seenIds.add(doc.id);
 
       const data = doc.data();
+      // In-memory campus filter (campusId index is exempted from single-field queries)
+      if (data.campusId && data.campusId !== campusId) continue;
       // Use ContentModerationService for consistent moderation checks
       if (ContentModerationService.isHidden(data)) continue;
 
@@ -548,7 +552,6 @@ async function searchPosts(
     if (results.length < limit * 2) {
       const tagSnapshot = await dbAdmin
         .collection('posts')
-        .where('campusId', '==', campusId)
         .where('tags', 'array-contains', lowercaseQuery)
         .limit(Math.min(limit * 2, 100))
         .get();
@@ -558,6 +561,8 @@ async function searchPosts(
         seenIds.add(doc.id);
 
         const data = doc.data();
+        // In-memory campus filter (campusId index is exempted from single-field queries)
+        if (data.campusId && data.campusId !== campusId) continue;
         // Use ContentModerationService for consistent moderation checks
         if (ContentModerationService.isHidden(data)) continue;
 
@@ -620,7 +625,6 @@ async function searchEvents(
     // Search by title prefix
     const titleSnapshot = await dbAdmin
       .collection('events')
-      .where('campusId', '==', campusId)
       .where('title_lowercase', '>=', lowercaseQuery)
       .where('title_lowercase', '<=', lowercaseQuery + '\uf8ff')
       .limit(limit * 2)
@@ -631,6 +635,8 @@ async function searchEvents(
       seenIds.add(doc.id);
 
       const data = doc.data();
+      // In-memory campus filter (campusId index is exempted from single-field queries)
+      if (data.campusId && data.campusId !== campusId) continue;
       const startTime = toDate(data.startTime);
       const endTime = toDate(data.endTime);
 
@@ -696,7 +702,6 @@ async function searchEvents(
     if (results.length < limit * 2) {
       const locationSnapshot = await dbAdmin
         .collection('events')
-        .where('campusId', '==', campusId)
         .where('location_lowercase', '>=', lowercaseQuery)
         .where('location_lowercase', '<=', lowercaseQuery + '\uf8ff')
         .limit(limit)
@@ -707,6 +712,8 @@ async function searchEvents(
         seenIds.add(doc.id);
 
         const data = doc.data();
+        // In-memory campus filter (campusId index is exempted from single-field queries)
+        if (data.campusId && data.campusId !== campusId) continue;
         const startTime = toDate(data.startTime);
         const endTime = toDate(data.endTime);
 

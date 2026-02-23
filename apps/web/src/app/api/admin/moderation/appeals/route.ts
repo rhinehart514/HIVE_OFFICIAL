@@ -53,9 +53,8 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
 
   try {
     // Build query
-    let appealsQuery = dbAdmin
+    let appealsQuery: FirebaseFirestore.Query = dbAdmin
       .collection('appeals')
-      .where('campusId', '==', campusId)
       .orderBy('createdAt', 'desc');
 
     if (query.status !== 'all') {
@@ -95,7 +94,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Get summary stats
     const allAppealsSnapshot = await dbAdmin
       .collection('appeals')
-      .where('campusId', '==', campusId)
       .get();
 
     const allAppeals = allAppealsSnapshot.docs.map(d => d.data());

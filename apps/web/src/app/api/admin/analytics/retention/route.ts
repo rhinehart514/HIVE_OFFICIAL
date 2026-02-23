@@ -69,7 +69,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Fetch all profiles created in the time period
     const profilesSnapshot = await dbAdmin
       .collection('profiles')
-      .where('campusId', '==', campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where('createdAt', '>=', startDate)
       .get();
 

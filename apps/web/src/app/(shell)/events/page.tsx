@@ -43,6 +43,7 @@ interface CampusEvent {
   spaceName?: string;
   spaceHandle?: string;
   organizerName?: string;
+  imageUrl?: string;
   coverImageUrl?: string;
   relevanceScore?: number;
   matchReasons?: string[];

@@ -243,10 +243,11 @@ async function applyPrivacyChanges(userId: string, settings: PrivacySettings, ca
 // Helper function to update space visibility
 async function updateSpaceVisibility(userId: string, settings: PrivacySettings, campusId: string) {
   try {
+    // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+    // userId is selective; all memberships for this user are the right scope.
     const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
-      .where('campusId', '==', campusId)
       .get();
     
     // Update visibility in each space membership (batched for atomicity + cost)

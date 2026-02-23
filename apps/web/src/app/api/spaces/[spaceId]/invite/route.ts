@@ -66,7 +66,6 @@ const _GET = withAuthAndErrors(async (
     const invitesSnapshot = await dbAdmin
       .collection('spaceInvites')
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', campusId)
       .where('isActive', '==', true)
       .orderBy('createdAt', 'desc')
       .limit(10)
@@ -160,7 +159,6 @@ export const POST = withAuthAndErrors(async (
     const existingCount = await dbAdmin
       .collection('spaceInvites')
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', campusId)
       .where('isActive', '==', true)
       .count()
       .get();

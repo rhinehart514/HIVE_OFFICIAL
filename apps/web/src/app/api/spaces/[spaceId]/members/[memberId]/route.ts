@@ -41,7 +41,6 @@ function createSpaceCallbacks(campusId: string): SpaceServiceCallbacks {
         const query = dbAdmin.collection('spaceMembers')
           .where('spaceId', '==', spaceId)
           .where('userId', '==', userId)
-          .where('campusId', '==', campusId)
           .limit(1);
         const snapshot = await query.get();
         if (snapshot.empty) {
@@ -68,7 +67,6 @@ function createSpaceCallbacks(campusId: string): SpaceServiceCallbacks {
         const query = dbAdmin.collection('spaceMembers')
           .where('spaceId', '==', spaceId)
           .where('userId', '==', userId)
-          .where('campusId', '==', campusId)
           .limit(1);
         const snapshot = await query.get();
         if (!snapshot.empty) {

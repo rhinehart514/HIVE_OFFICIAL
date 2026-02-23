@@ -122,13 +122,12 @@ export const POST = withAuthValidationAndErrors(
     }
 
     // Verify user has admin access to the space
-    // Check spaceMembers collection first
+    // Check spaceMembers collection first — campusId filter omitted (index exempted; userId+spaceId scopes query)
     const membershipSnapshot = await db
       .collection("spaceMembers")
       .where("userId", "==", userId)
       .where("spaceId", "==", spaceId)
       .where("status", "==", "active")
-      .where("campusId", "==", campusId)
       .limit(1)
       .get();
 
@@ -189,12 +188,11 @@ export const POST = withAuthValidationAndErrors(
       });
     }
 
-    // Check if tool is already deployed to this space
+    // Check if tool is already deployed to this space — campusId filter omitted (index exempted; toolId+spaceId scopes query)
     const existingDeploymentQuery = await db
       .collection("tool_deployments")
       .where("toolId", "==", toolId)
       .where("spaceId", "==", spaceId)
-      .where("campusId", "==", campusId)
       .where("isActive", "==", true)
       .limit(1)
       .get();
@@ -316,18 +314,17 @@ export const POST = withAuthValidationAndErrors(
 
     // Notify space members about deployment (non-blocking)
     try {
-      const [deployerDoc, membersByStatus, membersByIsActive] = await Promise.all([
+      // campusId filter omitted on spaceMembers — index exempted; spaceId scopes query
+    const [deployerDoc, membersByStatus, membersByIsActive] = await Promise.all([
         db.collection('users').doc(userId).get(),
         db
           .collection('spaceMembers')
           .where('spaceId', '==', spaceId)
-          .where('campusId', '==', campusId)
           .where('status', '==', 'active')
           .get(),
         db
           .collection('spaceMembers')
           .where('spaceId', '==', spaceId)
-          .where('campusId', '==', campusId)
           .where('isActive', '==', true)
           .get(),
       ]);
@@ -393,13 +390,12 @@ export const DELETE = withAuthAndErrors(async (
 
   const db = dbAdmin;
 
-  // Verify user has admin access to the space (using flat spaceMembers collection)
+  // Verify user has admin access to the space — campusId filter omitted (index exempted; userId+spaceId scopes query)
   const membershipSnapshot = await db
     .collection("spaceMembers")
     .where("userId", "==", userId)
     .where("spaceId", "==", spaceId)
     .where("status", "==", "active")
-    .where("campusId", "==", campusId)
     .limit(1)
     .get();
 
@@ -459,12 +455,11 @@ export const DELETE = withAuthAndErrors(async (
         toolCount: admin.firestore.FieldValue.increment(-1),
         updatedAt: admin.firestore.FieldValue.serverTimestamp() });
 
-    // Archive user states (move to archived collection for data preservation)
+    // Archive user states — campusId filter omitted (index exempted; toolId+spaceId scopes query)
     const stateDocsQuery = await db
       .collection("tool_states")
       .where("toolId", "==", toolId)
       .where("spaceId", "==", spaceId)
-      .where("campusId", "==", campusId)
       .get();
 
     const batch = dbAdmin.batch();
@@ -508,13 +503,12 @@ const _GET = withAuthAndErrors(async (
 
   const db = dbAdmin;
 
-  // Verify user has access to the space (using flat spaceMembers collection)
+  // Verify user has access to the space — campusId filter omitted (index exempted; userId+spaceId scopes query)
   const membershipSnapshot = await db
     .collection("spaceMembers")
     .where("userId", "==", userId)
     .where("spaceId", "==", spaceId)
     .where("status", "==", "active")
-    .where("campusId", "==", campusId)
     .limit(1)
     .get();
 

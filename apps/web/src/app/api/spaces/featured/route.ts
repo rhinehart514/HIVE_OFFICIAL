@@ -16,19 +16,10 @@ const _GET = withOptionalAuth(async (request, _context, respond) => {
   const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
   const category = searchParams.get('category');
 
-  let query = dbAdmin.collection('spaces')
+  const query = dbAdmin.collection('spaces')
     .where('visibility', '==', 'public')
     .orderBy('memberCount', 'desc')
     .limit(limit);
-
-  // Filter by campus if user is authenticated
-  if (campusId) {
-    query = dbAdmin.collection('spaces')
-      .where('visibility', '==', 'public')
-      .where('campusId', '==', campusId)
-      .orderBy('memberCount', 'desc')
-      .limit(limit);
-  }
 
   const snapshot = await query.get();
 
@@ -46,6 +37,11 @@ const _GET = withOptionalAuth(async (request, _context, respond) => {
       campusId: (data.campusId as string) || '',
     };
   });
+
+  // In-memory campus filter — campusId single-field index is exempted, cannot use .where()
+  if (campusId) {
+    spaces = spaces.filter(s => !s.campusId || s.campusId === campusId);
+  }
 
   // Client-side category filter (Firestore compound index may not exist)
   if (category) {

@@ -28,7 +28,7 @@ const _GET = withAdminAuthAndErrors(async (request, context, respond) => {
   // Search by email prefix
   const emailResults = await dbAdmin
     .collection('profiles')
-    .where('campusId', '==', campusId)
+    // campusId single-field index is exempted — skip Firestore filter
     .where('email', '>=', queryLower)
     .where('email', '<=', queryLower + '\uf8ff')
     .limit(10)
@@ -37,7 +37,7 @@ const _GET = withAdminAuthAndErrors(async (request, context, respond) => {
   // Also search by handle if it looks like a handle
   const handleResults = await dbAdmin
     .collection('profiles')
-    .where('campusId', '==', campusId)
+    // campusId single-field index is exempted — skip Firestore filter
     .where('handle', '>=', queryLower)
     .where('handle', '<=', queryLower + '\uf8ff')
     .limit(10)

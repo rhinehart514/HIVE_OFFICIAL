@@ -230,7 +230,6 @@ export class FirebaseAdminProfileRepository implements IProfileRepository {
     try {
       const snapshot = await dbAdmin
         .collection(this.collectionName)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .orderBy('createdAt', 'desc')
         .limit(limitCount)
@@ -274,7 +273,6 @@ export class FirebaseAdminProfileRepository implements IProfileRepository {
       // Firebase doesn't support full-text search natively
       const snapshot = await dbAdmin
         .collection(this.collectionName)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .orderBy('firstName')
         .limit(50)
@@ -464,7 +462,6 @@ export class FirebaseAdminProfileRepository implements IProfileRepository {
     try {
       const snapshot = await dbAdmin
         .collection(this.collectionName)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .count()
         .get();

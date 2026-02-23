@@ -313,16 +313,11 @@ async function buildUserContext(userId: string, campusId?: string): Promise<User
     const userDoc = await dbAdmin.collection('users').doc(userId).get();
     const userData = userDoc.exists ? userDoc.data() : {};
 
-    // Get user's spaces
-    let membershipsQuery = dbAdmin.collection('spaceMembers')
+    // Get user's spaces — campusId filter omitted (index exempted; userId scopes query)
+    const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
-      .where('status', '==', 'active');
-
-    if (campusId) {
-      membershipsQuery = membershipsQuery.where('campusId', '==', campusId);
-    }
-    
-    const membershipsSnapshot = await membershipsQuery.get();
+      .where('status', '==', 'active')
+      .get();
     const spaceIds = membershipsSnapshot.docs.map((doc: QueryDocumentSnapshot) => doc.data().spaceId);
 
     // Determine user role (highest role across all spaces)

@@ -197,16 +197,13 @@ async function validateSpaceAccess(spaceId: string, userId: string, campusId: st
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
   }
 
-  // Check membership - filter by campus if present
-  let membershipQuery = dbAdmin
+  // Check membership
+  // campusId single-field index is exempted — skip Firestore filter
+  const membershipQuery = dbAdmin
     .collection("spaceMembers")
     .where("spaceId", "==", spaceId)
     .where("userId", "==", userId)
     .where("isActive", "==", true);
-
-  if (campusId) {
-    membershipQuery = membershipQuery.where("campusId", "==", campusId);
-  }
 
   const membershipSnapshot = await membershipQuery.limit(1).get();
 

@@ -79,7 +79,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Get alert rules
     const rulesSnapshot = await dbAdmin
       .collection('adminAlertRules')
-      .where('campusId', '==', campusId)
       .orderBy('createdAt', 'desc')
       .get();
 
@@ -94,7 +93,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
 
     const triggeredSnapshot = await dbAdmin
       .collection('adminTriggeredAlerts')
-      .where('campusId', '==', campusId)
       .where('triggeredAt', '>=', oneDayAgo)
       .orderBy('triggeredAt', 'desc')
       .limit(50)

@@ -41,6 +41,7 @@ interface FeedEvent {
   spaceHandle?: string;
   spaceId?: string;
   spaceAvatarUrl?: string;
+  imageUrl?: string;
   coverImageUrl?: string;
   eventType?: string;
   category?: string;
@@ -261,7 +262,8 @@ function SpaceAvatar({ name, url, size = 32 }: { name?: string; url?: string; si
 function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, spaceId: string) => void }) {
   const live = isHappeningNow(event.startDate, event.endDate);
   const isGoing = event.isUserRsvped || event.userRsvp === 'going';
-  const hasImage = !!event.coverImageUrl;
+  const coverSrc = event.imageUrl || event.coverImageUrl;
+  const hasImage = !!coverSrc;
 
   return (
     <motion.div
@@ -273,7 +275,7 @@ function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, s
       {/* Cover image or category gradient */}
       <div className="relative h-40 w-full overflow-hidden">
         {hasImage ? (
-          <img src={event.coverImageUrl!} alt={event.title} className="w-full h-full object-cover" />
+          <img src={coverSrc!} alt={event.title} className="w-full h-full object-cover" />
         ) : (
           <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
         )}
@@ -412,8 +414,8 @@ function FeedEventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: strin
     <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
       {/* Cover strip — image if available, category gradient otherwise */}
       <div className="h-24 w-full overflow-hidden flex-shrink-0">
-        {event.coverImageUrl ? (
-          <img src={event.coverImageUrl} alt={event.title} className="w-full h-full object-cover" />
+        {(event.imageUrl || event.coverImageUrl) ? (
+          <img src={(event.imageUrl || event.coverImageUrl)!} alt={event.title} className="w-full h-full object-cover" />
         ) : (
           <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
         )}

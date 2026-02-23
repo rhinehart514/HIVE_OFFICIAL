@@ -48,7 +48,7 @@ const _GET = withAuthAndErrors(
       .collection("spaceMembers")
       .where("userId", "==", userId)
       .where("spaceId", "==", spaceId)
-      .where("campusId", "==", campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where("isActive", "==", true)
       .limit(1)
       .get();

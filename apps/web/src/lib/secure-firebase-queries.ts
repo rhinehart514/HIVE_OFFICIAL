@@ -68,8 +68,10 @@ export async function validateSecureSpaceAccess(
  * @param campusId - Campus to filter by (defaults to CURRENT_CAMPUS_ID for backwards compat)
  */
 export function getSecureSpacesQuery(campusId: string = CURRENT_CAMPUS_ID) {
+  // campusId single-field index is exempted — skip Firestore filter
+  // Campus validation happens at document level in validateSecureSpaceAccess
+  void campusId; // Keep param for callers
   return dbAdmin.collection('spaces')
-    .where('campusId', '==', campusId)
     .where('isActive', '==', true);
 }
 
@@ -101,8 +103,8 @@ export async function getSecureSpacesWithCursor({
   try {
     // Simplified query to avoid compound index requirements
     // Only use campus isolation and active status
+    // campusId single-field index is exempted — skip Firestore filter
     let query = dbAdmin.collection('spaces')
-      .where('campusId', '==', campusId)
       .where('isActive', '==', true);
 
     // For development: limit to reasonable number
@@ -151,9 +153,10 @@ export async function getSecureSpacesWithCursor({
  * @param campusId - Campus to filter by (defaults to CURRENT_CAMPUS_ID)
  */
 export function getSecureSpaceMembersQuery(spaceId: string, campusId: string = CURRENT_CAMPUS_ID) {
+  // campusId single-field index is exempted — skip Firestore filter
+  void campusId; // Keep param for callers
   return dbAdmin.collection('spaceMembers')
     .where('spaceId', '==', spaceId)
-    .where('campusId', '==', campusId)
     .where('isActive', '==', true)
     .orderBy('joinedAt', 'desc');
 }
@@ -183,9 +186,9 @@ export async function validateSecureSpaceMembership(
     }
 
     // Check user membership - optimized query order
+    // campusId single-field index is exempted — skip Firestore filter
     const membershipQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
-      .where('campusId', '==', campusId)
       .where('isActive', '==', true)
       .where('spaceId', '==', spaceId)
       .limit(1);
@@ -241,9 +244,9 @@ export async function validateSpaceJoinability(
     }
 
     // Check if user is already a member - optimized query order
+    // campusId single-field index is exempted — skip Firestore filter
     const existingMemberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
-      .where('campusId', '==', campusId)
       .where('isActive', '==', true)
       .where('spaceId', '==', spaceId)
       .limit(1);

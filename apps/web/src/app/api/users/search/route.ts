@@ -85,11 +85,12 @@ export const POST = withOptionalAuth(async (
       }
     }
     try {
+      // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+      // spaceId is selective; campus isolation enforced in-memory below.
       const membersSnapshot = await db
         .collection('spaceMembers')
         .where('spaceId', '==', spaceId)
         .where('isActive', '==', true)
-        .where('campusId', '==', campusId)
         .limit(200)
         .get();
 
@@ -119,8 +120,10 @@ export const POST = withOptionalAuth(async (
       );
     }
   } else {
-    // Search all users with basic filters
-    let usersQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('users').where('campusId', '==', campusId);
+    // Search all users with basic filters.
+    // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+    // Campus isolation enforced in-memory after fetch.
+    let usersQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('users');
 
     if (userType) {
       usersQuery = usersQuery.where('userType', '==', userType);
@@ -144,6 +147,9 @@ export const POST = withOptionalAuth(async (
 
   // Process each user and apply text search + privacy filters
   for (const userData of usersToSearch) {
+    // In-memory campus isolation (campusId Firestore filter is exempted from index)
+    if (userData.campusId && userData.campusId !== campusId) continue;
+
     // SECURITY: Enforce privacy levels
     const profileVisibility = userData.privacy?.profileVisibility || 'public';
     const isOwnProfile = userData.id === userId;
@@ -230,11 +236,12 @@ export const POST = withOptionalAuth(async (
         if (spaceId) {
           mutualSpacesCount = 1;
         } else {
+          // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+          // userId is selective enough; mutual spaces count only used for ranking.
           const currentUserSpacesSnapshot = await db
             .collection('spaceMembers')
             .where('userId', '==', userId)
             .where('isActive', '==', true)
-            .where('campusId', '==', campusId)
             .limit(200)
             .get();
           const currentUserSpaceIds = currentUserSpacesSnapshot.docs
@@ -245,7 +252,6 @@ export const POST = withOptionalAuth(async (
             .collection('spaceMembers')
             .where('userId', '==', userData.id)
             .where('isActive', '==', true)
-            .where('campusId', '==', campusId)
             .limit(200)
             .get();
           const otherUserSpaceIds = otherUserSpacesSnapshot.docs

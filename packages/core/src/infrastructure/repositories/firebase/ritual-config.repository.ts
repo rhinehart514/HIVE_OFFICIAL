@@ -67,7 +67,6 @@ export class FirebaseRitualConfigRepository
     try {
       const q = query(
         this.collectionRef,
-        where("campusId", "==", campusId),
         where("slug", "==", slug),
         orderBy("updatedAt", "desc"),
       );
@@ -97,7 +96,6 @@ export class FirebaseRitualConfigRepository
   ): Promise<Result<RitualUnion[]>> {
     try {
       const constraints: any[] = [
-        where("campusId", "==", campusId),
         orderBy("startsAt", "desc"),
       ];
 
@@ -136,7 +134,6 @@ export class FirebaseRitualConfigRepository
       const snapshot = await getDocs(
         query(
           this.collectionRef,
-          where("campusId", "==", campusId),
           where("phase", "in", ["announced", "active"]),
           where("startsAt", "<=", nowTs),
           orderBy("startsAt", "desc"),
@@ -177,7 +174,6 @@ export class FirebaseRitualConfigRepository
       const snapshot = await getDocs(
         query(
           this.collectionRef,
-          where("campusId", "==", campusId),
           where("archetype", "==", archetype),
           orderBy("startsAt", "desc"),
         ),
@@ -212,7 +208,6 @@ export class FirebaseRitualConfigRepository
       const snapshot = await getDocs(
         query(
           this.collectionRef,
-          where("campusId", "==", campusId),
           where("archetype", "==", archetype),
           where("phase", "in", ["announced", "active"]),
           where("startsAt", "<=", nowTs),

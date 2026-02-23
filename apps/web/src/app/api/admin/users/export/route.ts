@@ -46,9 +46,9 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
 
   try {
     // Build Firestore query
-    let usersQuery = dbAdmin
-      .collection('profiles')
-      .where('campusId', '==', campusId);
+    // campusId single-field index is exempted — skip Firestore filter
+    let usersQuery: FirebaseFirestore.Query = dbAdmin
+      .collection('profiles');
 
     if (query.status !== 'all') {
       usersQuery = usersQuery.where('status', '==', query.status);

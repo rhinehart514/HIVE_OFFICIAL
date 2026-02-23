@@ -173,8 +173,8 @@ export function useOnlineUsers(spaceId?: string) {
     }
 
     const campusId = user.campusId;
+    // campusId single-field index is exempted — skip Firestore filter
     const constraints = [
-      where('campusId', '==', campusId),
       where('status', 'in', ['online', 'away'])
     ];
 
@@ -362,7 +362,8 @@ export function useActiveTodayCount() {
 
     const campusId = user.campusId;
     const presenceRef = collection(db, 'presence');
-    const q = query(presenceRef, where('campusId', '==', campusId));
+    // campusId single-field index is exempted — skip Firestore filter
+    const q = query(presenceRef);
 
     const unsubscribe = onSnapshot(
       q,

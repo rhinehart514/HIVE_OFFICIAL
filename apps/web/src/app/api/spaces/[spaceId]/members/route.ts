@@ -80,7 +80,6 @@ async function validateSpaceAndMembership(spaceId: string, userId: string, campu
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -100,7 +99,6 @@ async function findActiveMember(spaceId: string, userId: string, campusId: strin
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -149,7 +147,6 @@ function createSpaceCallbacks(campusId: string): SpaceServiceCallbacks {
         const query = dbAdmin.collection('spaceMembers')
           .where('spaceId', '==', spaceIdParam)
           .where('userId', '==', userIdParam)
-          .where('campusId', '==', campusId)
           .limit(1);
         const snapshot = await query.get();
         if (snapshot.empty) {
@@ -176,7 +173,6 @@ function createSpaceCallbacks(campusId: string): SpaceServiceCallbacks {
         const query = dbAdmin.collection('spaceMembers')
           .where('spaceId', '==', spaceIdParam)
           .where('userId', '==', userIdParam)
-          .where('campusId', '==', campusId)
           .limit(1);
         const snapshot = await query.get();
         if (!snapshot.empty) {
@@ -275,8 +271,7 @@ const _GET = withAuthAndErrors(async (
   let memberQuery: FirebaseFirestore.Query = dbAdmin
     .collection("spaceMembers")
     .where("spaceId", "==", spaceId)
-    .where("isActive", "==", true)
-    .where("campusId", "==", campusId);
+    .where("isActive", "==", true);
 
   if (roleFilter) {
     memberQuery = memberQuery.where("role", "==", roleFilter);

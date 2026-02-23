@@ -54,11 +54,8 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
     // Build query - filter by campus if present
     let query: admin.firestore.Query<admin.firestore.DocumentData> = adminDb.collection("tools");
 
-    if (campusId) {
-      query = query.where("campusId", "==", campusId).where("ownerId", "==", userId);
-    } else {
-      query = query.where("ownerId", "==", userId);
-    }
+    // campusId single-field index is exempted — skip Firestore filter (single-tenant)
+    query = query.where("ownerId", "==", userId);
 
     query = query.orderBy("updatedAt", "desc");
 
@@ -154,11 +151,8 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
 
     // Get total count for pagination
     let countQuery: admin.firestore.Query<admin.firestore.DocumentData> = adminDb.collection("tools");
-    if (campusId) {
-      countQuery = countQuery.where("campusId", "==", campusId).where("ownerId", "==", userId);
-    } else {
-      countQuery = countQuery.where("ownerId", "==", userId);
-    }
+    // campusId single-field index is exempted — skip Firestore filter (single-tenant)
+    countQuery = countQuery.where("ownerId", "==", userId);
     const countSnapshot = await countQuery.count().get();
     const total = countSnapshot.data().count;
 

@@ -134,7 +134,6 @@ export class FeedListener {
 
     const promotedQuery = query(
       collection(db, 'promoted_posts'),
-      where('campusId', '==', campusId),
       where('expiresAt', '>', Timestamp.now()),
       orderBy('expiresAt', 'desc'),
       orderBy('promotedAt', 'desc'),
@@ -176,7 +175,6 @@ export class FeedListener {
     // For MVP, we'll query recent posts from joined spaces
     const feedQuery = query(
       collection(db, 'feed_items'),
-      where('campusId', '==', campusId),
       where('visibility', '==', 'public'),
       orderBy('createdAt', 'desc'),
       limit(options.limitCount || 100)
@@ -240,7 +238,6 @@ export class FeedListener {
   private buildFeedQuery(options: FeedListenerOptions) {
     const baseCollection = collection(db, 'feed_items');
     const constraints: any[] = [
-      where('campusId', '==', options.campusId),
       orderBy('createdAt', 'desc')
     ];
 

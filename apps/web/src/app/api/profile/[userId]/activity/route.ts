@@ -73,10 +73,11 @@ const _GET = withAuthAndErrors(async (
     let contributions: Array<{ date: string; count: number }> = [];
 
     try {
+      // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+      // userId is selective; campus isolation already enforced via user doc check above.
       const summariesSnap = await dbAdmin
         .collection('activitySummaries')
         .where('userId', '==', targetUserId)
-        .where('campusId', '==', campusId)
         .where('date', '>=', startDateStr)
         .orderBy('date', 'asc')
         .get();

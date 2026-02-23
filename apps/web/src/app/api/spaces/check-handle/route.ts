@@ -34,12 +34,16 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
     // Check if handle exists as a slug within this campus
     const spaceSnapshot = await dbAdmin
       .collection('spaces')
-      .where('campusId', '==', campusId)
       .where('slug', '==', handle)
-      .limit(1)
+      .limit(10)
       .get();
 
-    if (spaceSnapshot.empty) {
+    const takenInCampus = spaceSnapshot.docs.some(doc => {
+      const d = doc.data();
+      return !d.campusId || d.campusId === campusId;
+    });
+
+    if (!takenInCampus) {
       return respond.success({ available: true, handle });
     }
 
@@ -52,12 +56,16 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
       if (candidate.length <= 20) {
         const suggestionSnapshot = await dbAdmin
           .collection('spaces')
-          .where('campusId', '==', campusId)
           .where('slug', '==', candidate)
-          .limit(1)
+          .limit(10)
           .get();
 
-        if (suggestionSnapshot.empty) {
+        const candidateTaken = suggestionSnapshot.docs.some(doc => {
+          const d = doc.data();
+          return !d.campusId || d.campusId === campusId;
+        });
+
+        if (!candidateTaken) {
           suggestion = candidate;
           break;
         }

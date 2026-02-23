@@ -88,7 +88,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     if (query.type === 'all' || query.type === 'suspension' || query.type === 'ban') {
       let profilesQuery = dbAdmin
         .collection('profiles')
-        .where('campusId', '==', campusId)
         .where('status', 'in', ['suspended', 'banned']);
 
       if (query.userId) {
@@ -136,7 +135,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     if (query.type === 'all' || query.type === 'content_removal') {
       let removalsQuery = dbAdmin
         .collection('contentReports')
-        .where('campusId', '==', campusId)
         .where('actionTaken', '==', 'remove_content')
         .orderBy('resolvedAt', 'desc');
 

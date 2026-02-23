@@ -44,17 +44,21 @@ export async function POST(request: NextRequest) {
 
     const { interests, major: _major, housing, year } = parsed.data;
 
-    // Fetch org spaces for this campus
+    // Fetch org spaces — campusId filter done in-memory (single-field index is exempted)
     const orgSpacesSnapshot = await dbAdmin
       .collection('spaces')
-      .where('campusId', '==', campusId)
       .where('category', 'in', ['student_org', 'university_org', 'greek_life'])
       .get();
 
-    const orgSpaces = orgSpacesSnapshot.docs.map((doc) => ({
-      spaceId: doc.id,
-      ...doc.data(),
-    }));
+    const orgSpaces = orgSpacesSnapshot.docs
+      .filter((doc) => {
+        const d = doc.data();
+        return !d.campusId || d.campusId === campusId;
+      })
+      .map((doc) => ({
+        spaceId: doc.id,
+        ...doc.data(),
+      }));
 
     // Run matching with year/housing weighting
     const scored = matchSpacesForInterests(orgSpaces, interests, 20, { year, housing });

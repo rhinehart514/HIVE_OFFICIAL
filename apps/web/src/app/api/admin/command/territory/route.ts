@@ -85,7 +85,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Fetch all active spaces
     const spacesSnapshot = await dbAdmin
       .collection('spaces')
-      .where('campusId', '==', campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where('isActive', '==', true)
       .orderBy('metrics.memberCount', 'desc')
       .limit(limit)

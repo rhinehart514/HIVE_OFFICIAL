@@ -46,7 +46,6 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, r
     .collection('spaceMembers')
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .get();
 
   if (membershipsSnapshot.empty) {
@@ -114,7 +113,6 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, r
   const eventsSnapshot = await dbAdmin
     .collection('events')
     .where('spaceId', 'in', spaceIds.slice(0, 10))
-    .where('campusId', '==', campusId)
     .where('createdAt', '>=', oneDayAgo)
     .orderBy('createdAt', 'desc')
     .limit(10)

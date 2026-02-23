@@ -50,9 +50,9 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
 
   try {
     // Build Firestore query
-    let usersQuery = dbAdmin
-      .collection('profiles')
-      .where('campusId', '==', campusId);
+    // campusId single-field index is exempted — skip Firestore filter
+    let usersQuery: FirebaseFirestore.Query = dbAdmin
+      .collection('profiles');
 
     // Apply filters
     if (query.status) {
@@ -105,9 +105,9 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     }
 
     // Get summary counts
+    // campusId single-field index is exempted — skip Firestore filter
     const summarySnapshot = await dbAdmin
       .collection('profiles')
-      .where('campusId', '==', campusId)
       .get();
 
     const summary = {

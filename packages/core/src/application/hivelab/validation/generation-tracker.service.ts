@@ -265,9 +265,8 @@ export class GenerationTrackerService {
       .where('createdAt', '>=', startDate)
       .where('createdAt', '<=', endDate);
 
-    if (campusId) {
-      query = query.where('campusId', '==', campusId);
-    }
+    // campusId filter removed — single-field index is exempted in Firestore
+    // Single-tenant (UB Buffalo) so campus isolation not needed
 
     const snapshot = await query.get();
     const records = snapshot.docs.map(doc => doc.data() as AIGenerationRecord);

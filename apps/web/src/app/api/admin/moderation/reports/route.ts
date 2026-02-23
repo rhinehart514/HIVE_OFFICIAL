@@ -63,9 +63,8 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
 
   try {
     // Build base query
-    let reportsQuery = dbAdmin
-      .collection('contentReports')
-      .where('campusId', '==', campusId);
+    let reportsQuery: FirebaseFirestore.Query = dbAdmin
+      .collection('contentReports');
 
     // Apply status filter
     if (query.status !== 'all') {
@@ -143,7 +142,6 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Get summary stats
     const statsSnapshot = await dbAdmin
       .collection('contentReports')
-      .where('campusId', '==', campusId)
       .get();
 
     const allReports = statsSnapshot.docs.map(d => d.data());

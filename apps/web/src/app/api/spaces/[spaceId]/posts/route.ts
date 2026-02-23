@@ -336,10 +336,10 @@ async function notifyNewSpacePost(
     .collection('spaceMembers')
     .where('spaceId', '==', spaceId)
     .where('isActive', '==', true)
-    .where('campusId', '==', campusId)
     .get();
 
   const memberIds = membersSnapshot.docs
+    .filter(d => !d.data().campusId || d.data().campusId === campusId)
     .map(d => d.data().userId)
     .filter(id => id !== authorId);
 

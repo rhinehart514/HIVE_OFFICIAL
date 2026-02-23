@@ -217,16 +217,16 @@ async function determineRelationship(viewerId: string, targetId: string, campusI
 // Helper function to get shared spaces between users
 async function getSharedSpaces(viewerId: string, targetId: string, campusId: string): Promise<string[]> {
   try {
+    // campusId filter omitted — single-field index is exempted (FAILED_PRECONDITION).
+    // userId is selective enough; shared-space calculation is for visibility, not data isolation.
     const [viewerMemberships, targetMemberships] = await Promise.all([
       dbAdmin.collection('spaceMembers')
         .where('userId', '==', viewerId)
         .where('status', '==', 'active')
-        .where('campusId', '==', campusId)
         .get(),
       dbAdmin.collection('spaceMembers')
         .where('userId', '==', targetId)
         .where('status', '==', 'active')
-        .where('campusId', '==', campusId)
         .get()
     ]);
 

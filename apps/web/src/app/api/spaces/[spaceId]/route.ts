@@ -168,7 +168,6 @@ const _GET = withAuthAndErrors(async (
     try {
       const membersSnap = await dbAdmin.collection('spaceMembers')
         .where('spaceId', '==', spaceId)
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .limit(20)
         .get();

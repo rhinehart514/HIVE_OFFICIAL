@@ -50,7 +50,6 @@ export const POST = withAuthValidationAndErrors(
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', campusId)
       .limit(200)
       .get();
     const userSpaceIds = userSpacesSnapshot.docs
@@ -62,9 +61,8 @@ export const POST = withAuthValidationAndErrors(
 
     // Search posts
     if (!type || type === 'post') {
-      let postsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('posts')
-        .where('campusId', '==', campusId);
-      
+      let postsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('posts');
+
       if (spaceId) {
         postsQuery = postsQuery.where('spaceId', '==', spaceId);
       } else {
@@ -73,13 +71,13 @@ export const POST = withAuthValidationAndErrors(
           postsQuery = postsQuery.where('spaceId', 'in', userSpaceIds.slice(0, 10)); // Firestore limit
         }
       }
-      
+
       if (timeFilter) {
         postsQuery = postsQuery.where('createdAt', '>=', timeFilter);
       }
 
       const postsSnapshot = await postsQuery.get();
-      
+
       // First pass: filter matching posts and collect IDs for batch fetch
       const matchingPosts: Array<{ doc: typeof postsSnapshot.docs[0]; postData: ReturnType<typeof postsSnapshot.docs[0]['data']>; contentMatch: boolean; titleMatch: boolean }> = [];
       const postAuthorIds = new Set<string>();
@@ -87,6 +85,8 @@ export const POST = withAuthValidationAndErrors(
 
       for (const doc of postsSnapshot.docs) {
         const postData = doc.data();
+        // campusId single-field index is exempted — filter in memory
+        if (postData.campusId && postData.campusId !== campusId) continue;
         const content = (postData.content || '').toLowerCase();
         const title = (postData.title || '').toLowerCase();
         const contentMatch = content.includes(queryLower);
@@ -297,21 +297,22 @@ export const POST = withAuthValidationAndErrors(
 
     // Search tools
     if (!type || type === 'tool') {
-      let toolsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('tools')
-        .where('campusId', '==', campusId);
-      
+      let toolsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('tools');
+
       if (timeFilter) {
         toolsQuery = toolsQuery.where('createdAt', '>=', timeFilter);
       }
 
       const toolsSnapshot = await toolsQuery.get();
-      
+
       // First pass: filter matching tools and collect creator IDs
       const matchingTools: Array<{ doc: typeof toolsSnapshot.docs[0]; toolData: ReturnType<typeof toolsSnapshot.docs[0]['data']>; nameMatch: boolean; descriptionMatch: boolean }> = [];
       const toolCreatorIds = new Set<string>();
 
       for (const doc of toolsSnapshot.docs) {
         const toolData = doc.data();
+        // campusId single-field index is exempted — filter in memory
+        if (toolData.campusId && toolData.campusId !== campusId) continue;
         if (toolData.isPrivate && toolData.creatorId !== userId) continue;
 
         const name = (toolData.name || '').toLowerCase();

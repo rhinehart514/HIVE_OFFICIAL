@@ -16,7 +16,6 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const cursor = searchParams.get('cursor'); // ISO timestamp
 
   let query = dbAdmin.collection('analytics_events')
-    .where('campusId', '==', campusId)
     .orderBy('timestamp', 'desc')
     .limit(limit + 1); // fetch one extra to detect hasMore
 
@@ -24,7 +23,6 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
     const cursorDate = new Date(cursor);
     if (!isNaN(cursorDate.getTime())) {
       query = dbAdmin.collection('analytics_events')
-        .where('campusId', '==', campusId)
         .where('timestamp', '<', cursorDate)
         .orderBy('timestamp', 'desc')
         .limit(limit + 1);
@@ -33,8 +31,15 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
 
   const snapshot = await query.get();
 
-  const hasMore = snapshot.docs.length > limit;
-  const docs = hasMore ? snapshot.docs.slice(0, limit) : snapshot.docs;
+  const allDocs = snapshot.docs.filter(doc => {
+    const data = doc.data();
+    // campusId single-field index is exempted — filter in memory
+    if (data.campusId && data.campusId !== campusId) return false;
+    return true;
+  });
+
+  const hasMore = allDocs.length > limit;
+  const docs = hasMore ? allDocs.slice(0, limit) : allDocs;
 
   const items = docs.map(doc => {
     const data = doc.data();

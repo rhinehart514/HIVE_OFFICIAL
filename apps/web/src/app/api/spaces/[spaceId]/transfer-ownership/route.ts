@@ -86,7 +86,6 @@ export const POST = withAuthAndErrors(
       .where('spaceId', '==', spaceId)
       .where('userId', '==', newOwnerId)
       .where('isActive', '==', true)
-      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 
@@ -130,7 +129,6 @@ export const POST = withAuthAndErrors(
       .where('spaceId', '==', spaceId)
       .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 

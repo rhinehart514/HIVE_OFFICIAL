@@ -105,7 +105,6 @@ export const POST = withAuthAndErrors(async (
       .collection('feed')
       .where('sourcePostId', '==', postId)
       .where('sourceSpaceId', '==', spaceId)
-      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 

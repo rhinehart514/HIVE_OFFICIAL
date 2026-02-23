@@ -196,38 +196,30 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     const results = await Promise.allSettled([
       // Total users
       dbAdmin.collection('profiles')
-        .where('campusId', '==', campusId)
         .get(),
       // All spaces
       dbAdmin.collection('spaces')
-        .where('campusId', '==', campusId)
         .get(),
       // Posts in time range
       dbAdmin.collection('posts')
-        .where('campusId', '==', campusId)
         .where('createdAt', '>=', startDate)
         .where('createdAt', '<=', endDate)
         .get(),
       // Events
       dbAdmin.collection('events')
-        .where('campusId', '==', campusId)
         .get(),
       // Tools
       dbAdmin.collection('tools')
-        .where('campusId', '==', campusId)
         .get(),
       // Deployed tools
       dbAdmin.collection('deployedTools')
-        .where('campusId', '==', campusId)
         .get(),
       // Space members
       dbAdmin.collection('spaceMembers')
-        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .get(),
       // Activity events in time range
       dbAdmin.collection('activityEvents')
-        .where('campusId', '==', campusId)
         .where('timestamp', '>=', startDate)
         .where('timestamp', '<=', endDate)
         .limit(10000)

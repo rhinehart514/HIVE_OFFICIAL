@@ -52,28 +52,28 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Count by status
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where("status", "==", "pending")
       .count()
       .get(),
 
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where("status", "==", "approved")
       .count()
       .get(),
 
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where("status", "==", "rejected")
       .count()
       .get(),
 
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where("status", "==", "changes_requested")
       .count()
       .get(),
@@ -81,7 +81,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Recent review activity
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where("reviewedAt", ">=", startDateStr)
       .orderBy("reviewedAt", "desc")
       .limit(100)
@@ -90,7 +90,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // All requests in time period (for metrics)
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where("createdAt", ">=", startDateStr)
       .get(),
   ]);

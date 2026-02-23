@@ -199,14 +199,20 @@ export const POST = withAuthValidationAndErrors(
   }
 
   // CHECK 8: Name uniqueness within campus
+  // NOTE: campusId single-field index is exempted — query by name_lowercase only,
+  // then filter by campusId in app code.
   const existingSpaceSnapshot = await dbAdmin
     .collection('spaces')
-    .where('campusId', '==', campusId)
     .where('name_lowercase', '==', name.toLowerCase())
-    .limit(1)
+    .limit(10)
     .get();
 
-  if (!existingSpaceSnapshot.empty) {
+  const nameConflict = existingSpaceSnapshot.docs.some(doc => {
+    const data = doc.data();
+    return !data.campusId || data.campusId === campusId;
+  });
+
+  if (nameConflict) {
     return respond.error("A space with this name already exists", "CONFLICT", { status: 409 });
   }
 

@@ -47,7 +47,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Query claim requests specifically (type: 'claim')
     const claimsSnapshot = await dbAdmin
       .collection('builderRequests')
-      .where('campusId', '==', campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where('type', '==', 'claim')
       .where('status', '==', status)
       .orderBy('submittedAt', 'desc')
@@ -107,7 +107,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     const pendingCount = (
       await dbAdmin
         .collection('builderRequests')
-        .where('campusId', '==', campusId)
+        // campusId single-field index is exempted — skip Firestore filter
         .where('type', '==', 'claim')
         .where('status', '==', 'pending')
         .count()
@@ -117,7 +117,7 @@ const _GET = withAdminAuthAndErrors(async (request, _context, respond) => {
     // Calculate average verification time for approved claims
     const approvedSnapshot = await dbAdmin
       .collection('builderRequests')
-      .where('campusId', '==', campusId)
+      // campusId single-field index is exempted — skip Firestore filter
       .where('type', '==', 'claim')
       .where('status', '==', 'approved')
       .orderBy('reviewedAt', 'desc')
