@@ -14,6 +14,7 @@ import {
   Users,
   Video,
   Zap,
+  Sparkles,
   ArrowRight,
   ChevronRight,
 } from 'lucide-react';
@@ -127,6 +128,25 @@ async function fetchFeedTools(): Promise<FeedTool[]> {
     category: t.category,
     createdAt: t.createdAt as string,
   }));
+}
+
+interface ActivityItem {
+  id: string;
+  type: string;
+  headline: string;
+  toolId?: string;
+  toolName?: string;
+  spaceId?: string;
+  spaceName?: string;
+  timestamp: string;
+}
+
+async function fetchGlobalActivity(): Promise<ActivityItem[]> {
+  const res = await fetch('/api/feed/global?limit=8', { credentials: 'include' });
+  if (!res.ok) return [];
+  const payload = await res.json();
+  const items: ActivityItem[] = payload?.data?.items || [];
+  return items.filter(i => i.type === 'tool_created' || i.type === 'tool_deployed');
 }
 
 async function rsvpToEvent(spaceId: string, eventId: string): Promise<void> {
@@ -448,7 +468,7 @@ function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
       <div className="flex items-center justify-between mb-3">
         <span className="flex items-center gap-1.5 text-[11px] text-[#FFD700]/60 font-medium">
           <span className="text-base leading-none">{categoryIcon(tool.category)}</span>
-          <span className="font-sans uppercase tracking-[0.12em]">Tool</span>
+          <span className="font-sans uppercase tracking-[0.12em]">Creation</span>
           {tool.spaceOriginName && (
             <span className="text-white/20 font-normal normal-case tracking-normal">· {tool.spaceOriginName}</span>
           )}
@@ -509,6 +529,57 @@ function SpaceDiscoveryCard({ space }: { space: FeedSpace }) {
       </div>
       <ChevronRight className="w-4 h-4 text-white/15 group-hover:text-white/30 transition-colors shrink-0 mt-0.5" />
     </Link>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Activity Strip (Recent Creations)                                  */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function ActivityStrip({ items }: { items: ActivityItem[] }) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[12px] font-sans uppercase tracking-[0.15em] text-white/30">Recent activity</span>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+        {items.map((item, i) => (
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Link
+              href={item.toolId ? `/t/${item.toolId}` : '#'}
+              className="shrink-0 w-[200px] rounded-xl border border-white/[0.06] bg-[#080808] p-3 flex flex-col gap-2 hover:border-white/[0.1] transition-all block"
+            >
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-[#FFD700]/60" />
+                <span className="text-[10px] text-white/30">{relativeTime(item.timestamp)}</span>
+              </div>
+              <p className="text-[13px] font-medium text-white leading-snug line-clamp-2">{item.headline}</p>
+              {item.toolName && (
+                <span className="text-[11px] text-[#FFD700]/50 truncate">{item.toolName}</span>
+              )}
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -700,6 +771,7 @@ export default function DiscoverPage() {
   const eventsQuery = useQuery({ queryKey: ['feed-events'], queryFn: fetchFeedEvents, staleTime: 60_000, enabled: !authLoading && !!user });
   const spacesQuery = useQuery({ queryKey: ['feed-spaces'], queryFn: fetchFeedSpaces, staleTime: 5 * 60_000, enabled: !authLoading && !!user });
   const toolsQuery = useQuery({ queryKey: ['feed-tools'], queryFn: fetchFeedTools, staleTime: 5 * 60_000, enabled: !authLoading && !!user });
+  const activityQuery = useQuery({ queryKey: ['global-activity'], queryFn: fetchGlobalActivity, staleTime: 60_000, enabled: !authLoading && !!user });
 
   const rsvpMutation = useMutation({
     mutationFn: ({ eventId, spaceId }: { eventId: string; spaceId: string }) => rsvpToEvent(spaceId, eventId),
@@ -713,6 +785,7 @@ export default function DiscoverPage() {
   const events = eventsQuery.data || [];
   const spaces = spacesQuery.data || [];
   const tools = toolsQuery.data || [];
+  const activity = activityQuery.data || [];
 
   // Pick hero: live first, then earliest upcoming
   const heroEvent = useMemo(() => {
@@ -824,7 +897,8 @@ export default function DiscoverPage() {
           {/* Today strip */}
           {todayEvents.length > 0 && <TodayStrip events={todayEvents} onRsvp={handleRsvp} />}
 
-          {/* Feed tease removed — no empty promises */}
+          {/* Recent creations */}
+          {activity.length > 0 && <ActivityStrip items={activity} />}
 
           {/* Feed body */}
           {feed.length > 0 && (

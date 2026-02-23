@@ -51,6 +51,7 @@ import { QuickStartChips } from '@/components/hivelab/dashboard/QuickStartChips'
 import { matchTemplate } from '@/components/hivelab/conversational/template-matcher';
 import { useMyTools } from '@/hooks/use-my-tools';
 import { useCurrentProfile } from '@/hooks/queries';
+import { useAnalytics } from '@/hooks/use-analytics';
 import {
   createBlankTool,
   createToolFromTemplateApi,
@@ -556,6 +557,7 @@ export default function BuilderDashboard() {
   const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
   const { data: currentProfile } = useCurrentProfile({ enabled: !!user });
+  const { track, startTimer, elapsed } = useAnalytics();
   const [prompt, setPrompt] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [ceremonyPhase, setCeremonyPhase] = useState<CeremonyPhase>('idle');
@@ -598,6 +600,15 @@ export default function BuilderDashboard() {
   );
   const showRecommendedTemplates = userInterestCategories.length > 0 && recommendedTemplates.length > 0;
 
+  // Track lab_viewed
+  const hasTrackedView = useRef(false);
+  useEffect(() => {
+    if (!toolsLoading && user && !hasTrackedView.current) {
+      hasTrackedView.current = true;
+      track('lab_viewed', { hasCreations: userTools.length > 0 });
+    }
+  }, [toolsLoading, user, userTools.length, track]);
+
   // Focus input after title reveals (only for new users)
   useEffect(() => {
     if (!authLoading && user && titleRevealed && inputRef.current && isNewUser) {
@@ -615,6 +626,9 @@ export default function BuilderDashboard() {
     if (!prompt.trim() || ceremonyPhase !== 'idle' || inlineGenPhase !== 'idle') return;
 
     const userPrompt = prompt.trim();
+
+    startTimer();
+    track('creation_started', { source: 'ai' });
 
     // Check for template match — route to conversational flow for template suggestions
     const match = matchTemplate(userPrompt);
@@ -643,6 +657,8 @@ export default function BuilderDashboard() {
   // Handle template click — show inline form if template has quickDeployFields
   const handleTemplateClick = useCallback(async (template: QuickTemplate) => {
     if (ceremonyPhase !== 'idle' || creatingFromTemplate) return;
+    startTimer();
+    track('creation_started', { source: 'template' });
 
     const fields = template.quickDeployFields || template.setupFields;
     if (fields && fields.length > 0) {
@@ -722,7 +738,8 @@ export default function BuilderDashboard() {
   const handleInlineComplete = useCallback((elements: ToolElement[], name: string) => {
     setInlineGenPhase('complete');
     queryClient.invalidateQueries({ queryKey: ['my-tools'] });
-  }, [queryClient]);
+    track('creation_completed', { toolId: inlineToolId, source: 'ai', durationMs: elapsed() });
+  }, [queryClient, inlineToolId, track, elapsed]);
 
   const handleInlineError = useCallback((msg: string) => {
     toast.error(msg);
@@ -741,15 +758,17 @@ export default function BuilderDashboard() {
         credentials: 'include',
         body: JSON.stringify({ toolId: inlineToolId, status: 'published' }),
       });
+      track('creation_published', { toolId: inlineToolId });
     } catch { /* non-critical */ }
 
     try {
       await navigator.clipboard.writeText(url);
       toast.success('Link copied! Share it anywhere.');
+      track('creation_shared', { toolId: inlineToolId });
     } catch {
       toast.success(`Share link: ${url}`);
     }
-  }, [inlineToolId]);
+  }, [inlineToolId, track]);
 
   const handleInlineEditInStudio = useCallback(() => {
     if (inlineToolId) router.push(`/lab/${inlineToolId}`);
@@ -757,10 +776,11 @@ export default function BuilderDashboard() {
 
   const handleInlineDeploy = useCallback(() => {
     if (inlineToolId) {
+      track('creation_deployed', { toolId: inlineToolId, spaceId: originSpaceId });
       const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
       router.push(`/lab/${inlineToolId}/deploy${spaceParam}`);
     }
-  }, [inlineToolId, router, originSpaceId]);
+  }, [inlineToolId, router, originSpaceId, track]);
 
   const handleInlineReset = useCallback(() => {
     setInlineGenPhase('idle');
@@ -782,7 +802,7 @@ export default function BuilderDashboard() {
           className="text-center max-w-lg"
         >
           <h1 className="text-3xl font-semibold text-white mb-4">
-            Build tools for your campus
+            Build anything for your campus
           </h1>
           <p className="text-white/50 mb-8">
             Sign in to create polls, RSVPs, countdowns, and more for your spaces.
@@ -860,7 +880,7 @@ export default function BuilderDashboard() {
                     transition-colors text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
-                  New Tool
+                  Create
                 </button>
               </div>
             </motion.div>
@@ -888,7 +908,7 @@ export default function BuilderDashboard() {
               className="mb-8"
             >
               <div className="text-xs font-medium text-white/50 tracking-wide mb-3">
-                Your Tools
+                Your Creations
               </div>
               <motion.div
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
@@ -977,7 +997,7 @@ export default function BuilderDashboard() {
                   onBlur={() => setIsFocused(false)}
                   disabled={isSubmitting}
                   isFocused={isFocused}
-                  placeholder="Or name a new tool..."
+                  placeholder="Or describe something new..."
                   inputRef={inputRef}
                 />
 
@@ -1427,7 +1447,7 @@ export default function BuilderDashboard() {
               ))}
             </div>
             <div className="text-xs font-medium text-white/50 tracking-wide mb-3">
-              Your Tools
+              Your Creations
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (

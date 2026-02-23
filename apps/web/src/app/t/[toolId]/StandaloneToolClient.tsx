@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@hive/auth-logic';
 import { useQuery } from '@tanstack/react-query';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
+import { useAnalytics } from '@/hooks/use-analytics';
 
 const LazyToolCanvas = dynamic(
   () => import('@hive/ui').then(mod => ({ default: mod.ToolCanvas })),
@@ -68,6 +69,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { track } = useAnalytics();
   const [hasInteracted, setHasInteracted] = useState(false);
   const [showCreatedBanner, setShowCreatedBanner] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -79,6 +81,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       setShowCreatedBanner(true);
     }
   }, [searchParams]);
+
 
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}/t/${toolId}`;
@@ -119,6 +122,15 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     enableRealtime: true,
   });
 
+  // Track standalone view
+  const hasTrackedView = useRef(false);
+  useEffect(() => {
+    if (tool && !hasTrackedView.current) {
+      hasTrackedView.current = true;
+      track('standalone_viewed', { toolId, isCreator: !!user && tool.ownerId === user.uid });
+    }
+  }, [toolId, user, tool, track]);
+
   const handleElementChange = useCallback((instanceId: string, data: unknown) => {
     runtime.updateState({ [instanceId]: data });
     if (!interactionRef.current) {
@@ -132,8 +144,9 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     if (!interactionRef.current) {
       interactionRef.current = true;
       setHasInteracted(true);
+      track('standalone_interacted', { toolId, action });
     }
-  }, [runtime]);
+  }, [runtime, toolId, track]);
 
   // Loading
   if (isLoading) {
@@ -160,7 +173,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
-          <h2 className="text-xl font-semibold text-white mb-2">Private Tool</h2>
+          <h2 className="text-xl font-semibold text-white mb-2">Private Creation</h2>
           <p className="text-white/50 text-sm mb-6">
             Sign in to view this tool if you have access.
           </p>
@@ -180,7 +193,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
-          <h2 className="text-xl font-semibold text-white mb-2">Tool Not Found</h2>
+          <h2 className="text-xl font-semibold text-white mb-2">Not Found</h2>
           <p className="text-white/50 text-sm mb-6">
             This tool may have been deleted or the link is incorrect.
           </p>
@@ -188,7 +201,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             onClick={() => router.push('/discover')}
             className="px-6 py-2.5 bg-white text-black text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
           >
-            Explore Tools
+            Explore
           </button>
         </div>
       </div>
@@ -263,7 +276,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           {showCreatedBanner && (
             <div className="mt-4 rounded-2xl border border-[#FFD700]/20 bg-[#FFD700]/[0.04] p-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <p className="text-[15px] font-medium text-white mb-1">
-                Your tool is ready
+                Your creation is live
               </p>
               <p className="text-[13px] text-white/50 mb-4">
                 Share this link — anyone can use it, no account needed.
@@ -292,7 +305,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                 href="/enter"
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-black text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
               >
-                Create your own tool
+                Create your own
               </Link>
             </div>
           )}
@@ -328,7 +341,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           onClick={handleShare}
           className="text-[12px] text-white/20 hover:text-white/40 transition-colors"
         >
-          {copied ? 'Copied!' : 'Share this tool'}
+          {copied ? 'Copied!' : 'Share'}
         </button>
       </footer>
 

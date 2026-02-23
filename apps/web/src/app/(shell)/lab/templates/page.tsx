@@ -16,6 +16,7 @@ import { logger } from '@/lib/logger';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { MOTION } from '@hive/tokens';
 import { createToolFromTemplateApi } from '@/lib/hivelab/create-tool';
+import { useAnalytics } from '@/hooks/use-analytics';
 import { getQuickTemplate } from '@hive/ui';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -243,7 +244,7 @@ function NameDialog({
             className="block text-[13px] font-medium mb-2"
             style={{ color: COLORS.textSecondary }}
           >
-            Name your tool
+            Name your creation
           </label>
           <input
             ref={inputRef}
@@ -320,6 +321,7 @@ export default function TemplatesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const shouldReduceMotion = useReducedMotion();
+  const { track, startTimer, elapsed } = useAnalytics();
 
   // Space context from query params (when launched from a space)
   const originSpaceId = searchParams.get('spaceId');
@@ -334,7 +336,9 @@ export default function TemplatesPage() {
     setSelected(template);
     setState('naming');
     setError(null);
-  }, []);
+    startTimer();
+    track('creation_started', { source: 'template' });
+  }, [startTimer, track]);
 
   const handleBack = React.useCallback(() => {
     setState('grid');
@@ -369,6 +373,8 @@ export default function TemplatesPage() {
             });
 
             if (deployRes.ok) {
+              track('creation_completed', { toolId, source: 'template', durationMs: elapsed() });
+              track('creation_deployed', { toolId, spaceId: originSpaceId });
               toast.success(`${toolName} added to ${originSpaceName ? decodeURIComponent(originSpaceName) : 'your space'}`);
               // Return to the space — the tool is already deployed there
               if (originSpaceHandle) {
@@ -393,6 +399,7 @@ export default function TemplatesPage() {
           }
         }
 
+        track('creation_completed', { toolId, source: 'template', durationMs: elapsed() });
         toast.success(`${toolName} created`);
         // Navigate to the tool IDE (with deploy modal hint if from a space)
         const spaceParam = originSpaceId ? `?deploy=true&spaceId=${originSpaceId}` : '';

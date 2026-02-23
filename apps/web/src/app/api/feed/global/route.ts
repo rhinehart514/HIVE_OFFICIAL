@@ -104,8 +104,8 @@ async function handleGet(request: NextRequest) {
         id: `tool-${doc.id}`,
         type: isDeployed ? 'tool_deployed' : 'tool_created',
         headline: isDeployed
-          ? `${d.metadata?.toolName || 'A tool'} was deployed`
-          : `${d.metadata?.toolName || 'A new tool'} was created`,
+          ? `${d.metadata?.toolName || 'A creation'} was deployed`
+          : `${d.metadata?.toolName || 'A new creation'} was created`,
         toolId: d.toolId,
         toolName: d.metadata?.toolName,
         spaceId: d.spaceId || undefined,

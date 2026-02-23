@@ -5,7 +5,7 @@
  *
  * Feed   — campus discover, events, activity
  * Spaces — your communities, browse, /s/[handle]
- * Lab    — creation home, your tools, templates
+ * Lab    — creation home, your creations, templates
  * Profile — you, settings, account
  */
 

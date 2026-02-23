@@ -19,6 +19,7 @@ import { BrandSpinner, ToolCanvas, type ToolElement } from '@hive/ui';
 import type { QuickTemplate } from '@hive/ui';
 
 import { createBlankTool, createToolFromTemplateApi, generateToolName } from '@/lib/hivelab/create-tool';
+import { useAnalytics } from '@/hooks/use-analytics';
 import { PromptHero } from './PromptHero';
 import { TemplateSuggestion } from './TemplateSuggestion';
 import { StreamingPreview } from './StreamingPreview';
@@ -55,6 +56,7 @@ interface ConversationalCreatorProps {
 
 export function ConversationalCreator({ initialPrompt, spaceContext }: ConversationalCreatorProps) {
   const router = useRouter();
+  const { track, startTimer, elapsed } = useAnalytics();
   const [phase, setPhase] = useState<CreationPhase>(initialPrompt ? 'creating-tool' : 'prompt');
   const [prompt, setPrompt] = useState(initialPrompt || '');
   const [toolId, setToolId] = useState<string | null>(null);
@@ -84,6 +86,8 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
   // Handle prompt submission from hero
   const handlePromptSubmit = useCallback(async (userPrompt: string) => {
     setPrompt(userPrompt);
+    startTimer();
+    track('creation_started', { source: 'ai' });
 
     // Check for template match first
     const match = matchTemplate(userPrompt);
@@ -120,7 +124,8 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
     setElements(result.elements);
     setToolName(result.name || toolName);
     setPhase('ready');
-  }, [toolName]);
+    track('creation_completed', { toolId, source: 'ai', durationMs: elapsed() });
+  }, [toolName, toolId, track, elapsed]);
 
   // Handle generation error
   const handleGenerationError = useCallback((error: string) => {
@@ -184,6 +189,7 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
         credentials: 'include',
         body: JSON.stringify({ toolId, status: 'published' }),
       });
+      track('creation_published', { toolId });
     } catch {
       // Non-critical — tool may already be published
     }
@@ -192,19 +198,21 @@ export function ConversationalCreator({ initialPrompt, spaceContext }: Conversat
       await navigator.clipboard.writeText(url);
       setLinkCopied(true);
       toast.success('Link copied! Share it anywhere.');
+      track('creation_shared', { toolId });
       setTimeout(() => setLinkCopied(false), 2500);
     } catch {
       toast.success(`Share link: ${url}`);
     }
-  }, [toolId]);
+  }, [toolId, track]);
 
   // Navigate to deploy
   const handleDeploy = useCallback(() => {
     if (toolId) {
+      track('creation_deployed', { toolId, spaceId: spaceContext?.spaceId });
       const spaceParam = spaceContext ? `?spaceId=${spaceContext.spaceId}` : '';
       router.push(`/lab/${toolId}/deploy${spaceParam}`);
     }
-  }, [toolId, router, spaceContext]);
+  }, [toolId, router, spaceContext, track]);
 
   // Handle initial prompt auto-submission
   const handleInitialPrompt = useCallback(async (userPrompt: string) => {

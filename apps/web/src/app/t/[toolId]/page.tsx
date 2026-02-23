@@ -47,11 +47,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!tool) {
     return {
-      title: 'Tool',
-      description: 'Create and share interactive tools on HIVE',
+      title: 'Creation',
+      description: 'Create and share on HIVE',
       openGraph: {
-        title: 'Tool | HIVE',
-        description: 'Create and share interactive tools on HIVE',
+        title: 'HIVE',
+        description: 'Create and share on HIVE',
         siteName: 'HIVE',
         type: 'website',
       },
