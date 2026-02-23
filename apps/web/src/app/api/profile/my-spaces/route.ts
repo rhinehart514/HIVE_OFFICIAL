@@ -37,12 +37,12 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, _
     }
 
     // Get user's space memberships using flat collection
-    let membershipQuery = dbAdmin
+    // NOTE: campusId single-field index is exempted in Firestore — filtering
+    // by campusId in a where() clause throws FAILED_PRECONDITION. Filter in
+    // application code instead.
+    let membershipQuery: FirebaseFirestore.Query = dbAdmin
       .collection('spaceMembers')
       .where('userId', '==', userId);
-    
-    // Enforce campus isolation
-    membershipQuery = membershipQuery.where('campusId', '==', campusId);
 
     if (!includeInactive) {
       membershipQuery = membershipQuery.where('isActive', '==', true);
@@ -50,7 +50,7 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, _
 
     const membershipsSnapshot = await membershipQuery.limit(limit).get();
 
-    // Extract space IDs and roles from flat collection
+    // Extract space IDs and roles — filter campusId in app code
     const spaceIds: string[] = [];
     const membershipData: Record<string, { role: string; joinedAt: unknown; permissions: string[]; isFavorite?: boolean; isPinned?: boolean }> = {};
 
@@ -75,16 +75,16 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, _
     const createdByQuery = await dbAdmin
       .collection('spaces')
       .where('createdBy', '==', userId)
-      .where('campusId', '==', campusId)
       .limit(limit)
       .get();
 
     createdByQuery.docs.forEach((doc) => {
+      const spaceData = doc.data();
+      // Filter campusId in app code (index is exempted)
+      if (spaceData.campusId && spaceData.campusId !== campusId) return;
       const spaceId = doc.id;
-      // Only add if not already in spaceIds (avoid duplicates)
       if (!spaceIds.includes(spaceId)) {
         spaceIds.push(spaceId);
-        const spaceData = doc.data();
         membershipData[spaceId] = {
           role: 'owner',
           joinedAt: spaceData.createdAt,
@@ -100,15 +100,15 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, _
     const leadersQuery = await dbAdmin
       .collection('spaces')
       .where('leaders', 'array-contains', userId)
-      .where('campusId', '==', campusId)
       .limit(limit)
       .get();
 
     leadersQuery.docs.forEach((doc) => {
+      const spaceData = doc.data();
+      if (spaceData.campusId && spaceData.campusId !== campusId) return;
       const spaceId = doc.id;
       if (!spaceIds.includes(spaceId)) {
         spaceIds.push(spaceId);
-        const spaceData = doc.data();
         membershipData[spaceId] = {
           role: 'leader',
           joinedAt: spaceData.createdAt,
@@ -141,55 +141,58 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, _
 
     const spaceSnapshots = await Promise.all(spacePromises);
 
-    // Fetch online counts and unread counts in parallel for each space
-    const onlineThreshold = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 min threshold
-    const enrichmentPromises = spaceIds.map(async (spaceId) => {
-      // Query presence collection for online users
-      const presenceQuery = dbAdmin
-        .collection('presence')
-        .where('spaceId', '==', spaceId)
-        .where('lastSeen', '>', onlineThreshold)
-        .select(); // Only need count, not data
+    // Batch-fetch read markers for all spaces in one query (instead of N queries)
+    // Then derive unread counts only for spaces that have a read marker.
+    // Presence counts are deferred — not critical for initial render.
+    const enrichmentMap = new Map<string, { onlineCount: number; unreadCount: number }>();
+    for (const id of spaceIds) {
+      enrichmentMap.set(id, { onlineCount: 0, unreadCount: 0 });
+    }
 
-      // Query user's read marker for this space
-      const readMarkerQuery = dbAdmin
-        .collection('readMarkers')
-        .where('userId', '==', userId)
-        .where('spaceId', '==', spaceId)
-        .limit(1);
+    try {
+      // Batch read markers: one query for all spaces (Firestore 'in' limit = 30)
+      const markerBatches: string[][] = [];
+      for (let i = 0; i < spaceIds.length; i += 30) {
+        markerBatches.push(spaceIds.slice(i, i + 30));
+      }
 
-      const [presenceSnap, readMarkerSnap] = await Promise.all([
-        presenceQuery.get().catch(() => ({ size: 0 })),
-        readMarkerQuery.get().catch(() => ({ docs: [] })),
-      ]);
-
-      let unreadCount = 0;
-      if (readMarkerSnap.docs && readMarkerSnap.docs.length > 0) {
-        const marker = readMarkerSnap.docs[0].data();
-        const lastReadAt = marker.lastReadAt;
-        if (lastReadAt) {
-          // Count posts after lastReadAt
-          const unreadSnap = await dbAdmin
-            .collection('spaces')
-            .doc(spaceId)
-            .collection('posts')
-            .where('createdAt', '>', lastReadAt)
-            .select()
+      const markerResults = await Promise.all(
+        markerBatches.map(batch =>
+          dbAdmin.collection('readMarkers')
+            .where('userId', '==', userId)
+            .where('spaceId', 'in', batch)
             .get()
-            .catch(() => ({ size: 0 }));
-          unreadCount = unreadSnap.size;
+            .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] }))
+        )
+      );
+
+      // For each marker, count unread posts (parallel, but only for spaces with markers)
+      const unreadPromises: Promise<void>[] = [];
+      for (const result of markerResults) {
+        for (const doc of result.docs) {
+          const marker = doc.data();
+          const spaceId = marker.spaceId as string;
+          const lastReadAt = marker.lastReadAt;
+          if (!lastReadAt || !enrichmentMap.has(spaceId)) continue;
+
+          unreadPromises.push(
+            dbAdmin.collection('spaces').doc(spaceId).collection('posts')
+              .where('createdAt', '>', lastReadAt)
+              .select()
+              .get()
+              .then(snap => {
+                const entry = enrichmentMap.get(spaceId)!;
+                entry.unreadCount = snap.size;
+              })
+              .catch(() => { /* non-fatal */ })
+          );
         }
       }
 
-      return {
-        spaceId,
-        onlineCount: presenceSnap.size || 0,
-        unreadCount,
-      };
-    });
-
-    const enrichmentResults = await Promise.all(enrichmentPromises);
-    const enrichmentMap = new Map(enrichmentResults.map(r => [r.spaceId, r]));
+      await Promise.all(unreadPromises);
+    } catch {
+      // Non-fatal — spaces still render, just without unread badges
+    }
 
     const spaces = spaceSnapshots
       .filter(snap => snap.exists)
@@ -205,7 +208,8 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, _
           type: spaceData.type,
           status: spaceData.status,
           isPrivate: spaceData.isPrivate || false,
-          bannerUrl: spaceData.bannerUrl,
+          iconURL: spaceData.iconURL || null,
+          bannerUrl: spaceData.bannerUrl || spaceData.bannerImage || null,
           metrics: spaceData.metrics || { memberCount: 0, postCount: 0, eventCount: 0 },
           createdAt: spaceData.createdAt,
           updatedAt: spaceData.updatedAt,

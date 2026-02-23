@@ -127,7 +127,7 @@ function SpaceRow({
         </p>
         {space.memberCount > 0 && (
           <p className="text-[11px] text-white/25 mt-0.5">
-            {space.memberCount.toLocaleString()} members
+            {space.memberCount.toLocaleString()} {space.memberCount === 1 ? 'member' : 'members'}
           </p>
         )}
       </div>
@@ -297,13 +297,13 @@ export function SpacesFirstEntry({ onComplete }: SpacesFirstEntryProps) {
             </div>
           )}
 
-          {/* Skip if no recommendations */}
-          {!loading && allSpaces.length === 0 && (
+          {/* Skip — always visible once loaded */}
+          {!loading && (
             <button
               onClick={onComplete}
-              className="w-full py-3 text-[13px] text-white/30 hover:text-white/50 transition-colors"
+              className="w-full py-4 mt-4 text-[13px] text-white/30 hover:text-white/50 transition-colors"
             >
-              Browse all spaces →
+              {allSpaces.length === 0 ? 'Browse all spaces →' : 'Skip — browse on your own'}
             </button>
           )}
         </motion.div>

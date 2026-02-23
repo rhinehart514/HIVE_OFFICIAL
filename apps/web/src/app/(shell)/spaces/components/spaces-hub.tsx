@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
-import { useSpacesHQ, type Space } from '../hooks/useSpacesHQ';
+import { useMySpaces, type MySpace } from '@/hooks/queries/use-my-spaces';
 import { SpaceCreationModal, SpaceClaimModal, SpaceJoinModal } from '@/components/spaces';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { cn } from '@/lib/utils';
@@ -48,8 +48,8 @@ type CategoryKey = (typeof CATEGORIES)[number]['key'];
 // Your Space Pill (horizontal strip)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function YourSpacePill({ space }: { space: Space }) {
-  const hasUnread = (space.unreadCount ?? 0) > 0;
+function YourSpacePill({ space }: { space: MySpace }) {
+  const hasUnread = space.unreadCount > 0;
   const href = `/s/${encodeURIComponent(space.handle ?? space.id)}`;
   const initial = space.name.charAt(0).toUpperCase();
 
@@ -61,8 +61,8 @@ function YourSpacePill({ space }: { space: Space }) {
           'bg-white/[0.06] border transition-colors',
           hasUnread ? 'border-[#FFD700]/40' : 'border-white/[0.06]'
         )}>
-          {space.avatarUrl ? (
-            <img src={space.avatarUrl} alt="" className="h-full w-full object-cover" />
+          {space.iconURL ? (
+            <img src={space.iconURL} alt="" className="h-full w-full object-cover" />
           ) : (
             <span className="text-[16px] font-medium text-white/50">{initial}</span>
           )}
@@ -241,7 +241,7 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
     if (user) fetchDiscover();
   }, [user, activeCategory]);
 
-  const { loading: yourLoading, organizations, refresh } = useSpacesHQ();
+  const { data: mySpaces = [], isLoading: spacesLoading, refetch: refreshSpaces } = useMySpaces();
 
   if (authLoading || !user) {
     return (
@@ -252,13 +252,13 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
   }
 
   // First-entry: no spaces joined yet — show smart match reveal
-  if (!yourLoading && organizations.length === 0 && !firstEntryDone) {
+  if (!spacesLoading && mySpaces.length === 0 && !firstEntryDone) {
     return (
       <SpacesFirstEntry
         onComplete={() => {
           setFirstEntryDone(true);
           sessionStorage.setItem('spaces-first-entry-done', 'true');
-          refresh();
+          refreshSpaces();
         }}
       />
     );
@@ -305,15 +305,15 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
       <div className="px-6">
 
         {/* ── Your Spaces ── */}
-        {(yourLoading || organizations.length > 0) && (
+        {(spacesLoading || mySpaces.length > 0) && (
           <section className="pt-5 pb-4 border-b border-white/[0.04]">
             <p className="text-[11px] uppercase tracking-[0.12em] text-white/25 mb-4">
               Your spaces
             </p>
             <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1">
-              {yourLoading
+              {spacesLoading
                 ? Array.from({ length: 5 }).map((_, i) => <PillSkeleton key={i} />)
-                : organizations.map((space) => (
+                : mySpaces.map((space) => (
                     <YourSpacePill key={space.id} space={space} />
                   ))}
             </div>
@@ -342,9 +342,9 @@ export function SpacesHub({ isOnboarding: _isOnboarding = false }: SpacesHubProp
       </div>
 
       {/* Modals */}
-      <SpaceCreationModal isOpen={showCreateModal} onClose={() => { setShowCreateModal(false); refresh(); }} />
-      <SpaceClaimModal isOpen={showClaimModal} onClose={() => { setShowClaimModal(false); setClaimDefaultQuery(''); refresh(); }} defaultQuery={claimDefaultQuery} />
-      <SpaceJoinModal isOpen={showJoinModal} onClose={() => { setShowJoinModal(false); refresh(); }} code={joinCode} />
+      <SpaceCreationModal isOpen={showCreateModal} onClose={() => { setShowCreateModal(false); refreshSpaces(); }} />
+      <SpaceClaimModal isOpen={showClaimModal} onClose={() => { setShowClaimModal(false); setClaimDefaultQuery(''); refreshSpaces(); }} defaultQuery={claimDefaultQuery} />
+      <SpaceJoinModal isOpen={showJoinModal} onClose={() => { setShowJoinModal(false); refreshSpaces(); }} code={joinCode} />
     </div>
   );
 }

@@ -7,6 +7,7 @@ export interface MySpace {
   name: string;
   type: string;
   handle: string;
+  iconURL?: string;
   bannerUrl?: string;
   unreadCount: number;
   onlineCount: number;
@@ -27,6 +28,7 @@ async function fetchMySpaces(): Promise<MySpace[]> {
     name: s.name as string,
     type: (s.type as string) || 'general',
     handle: s.handle as string,
+    iconURL: s.iconURL as string | undefined,
     bannerUrl: s.bannerUrl as string | undefined,
     unreadCount: (s.unreadCount as number) || 0,
     onlineCount: (s.onlineCount as number) || 0,

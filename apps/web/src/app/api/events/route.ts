@@ -200,8 +200,10 @@ const _GET = withOptionalAuth(async (
     );
 
     // Query both date fields and merge for mixed-schema compatibility.
+    // NOTE: campusId single-field index is exempted in Firestore — filtering
+    // by campusId throws FAILED_PRECONDITION. Skip it in queries; filter in
+    // app code below instead.
     const docsById = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
-    let foundWithCampusFilter = false;
 
     for (const dateField of TIME_FIELDS) {
       try {
@@ -213,11 +215,8 @@ const _GET = withOptionalAuth(async (
           toDate,
           dateField,
           fetchWindow,
-          includeCampusFilter: true,
+          includeCampusFilter: false,
         });
-        if (docs.length > 0) {
-          foundWithCampusFilter = true;
-        }
         for (const doc of docs) docsById.set(doc.id, doc);
       } catch (error) {
         logger.warn("Failed to query events for date field", {
@@ -225,36 +224,6 @@ const _GET = withOptionalAuth(async (
           campusId,
           error: error instanceof Error ? error.message : String(error),
         });
-      }
-    }
-
-    // Space-specific fallback for imported/legacy events that may have missing campusId.
-    if (!foundWithCampusFilter && queryParams.spaceId) {
-      logger.info("No events found with campus filter, trying space fallback", {
-        spaceId: queryParams.spaceId,
-        campusId,
-      });
-
-      for (const dateField of TIME_FIELDS) {
-        try {
-          const docs = await fetchDocsForTimeField({
-            campusId,
-            queryParams,
-            now,
-            fromDate,
-            toDate,
-            dateField,
-            fetchWindow,
-            includeCampusFilter: false,
-          });
-          for (const doc of docs) docsById.set(doc.id, doc);
-        } catch (error) {
-          logger.warn("Fallback event query failed for date field", {
-            dateField,
-            spaceId: queryParams.spaceId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
       }
     }
 
@@ -311,6 +280,12 @@ const _GET = withOptionalAuth(async (
 
       // SECURITY: Skip hidden/moderated content.
       if (isContentHidden(eventData)) {
+        continue;
+      }
+
+      // SECURITY: Skip events from other campuses (app-code filter since
+      // campusId index is exempted and can't be used in Firestore queries).
+      if (eventData.campusId && eventData.campusId !== campusId) {
         continue;
       }
 

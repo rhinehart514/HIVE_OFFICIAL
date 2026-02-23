@@ -156,8 +156,9 @@ const _GET = withAuthAndErrors(async (
     );
 
     // Query both startDate and startAt fields, then merge.
+    // NOTE: campusId single-field index is exempted — skip in queries,
+    // filter in app code below (line ~238).
     const docsById = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
-    let foundWithCampusFilter = false;
 
     for (const dateField of TIME_FIELDS) {
       try {
@@ -168,11 +169,8 @@ const _GET = withAuthAndErrors(async (
           now,
           dateField,
           fetchWindow,
-          includeCampusFilter: true,
+          includeCampusFilter: false,
         });
-        if (docs.length > 0) {
-          foundWithCampusFilter = true;
-        }
         for (const doc of docs) docsById.set(doc.id, doc);
       } catch (error) {
         logger.warn("Space events query failed for date field", {
@@ -180,31 +178,6 @@ const _GET = withAuthAndErrors(async (
           dateField,
           error: error instanceof Error ? error.message : String(error),
         });
-      }
-    }
-
-    // Fallback: If no events found with campus filter, try space-only for imported legacy docs.
-    if (!foundWithCampusFilter) {
-      logger.info("No events found with campusId, trying fallback query", { spaceId, campusId });
-      for (const dateField of TIME_FIELDS) {
-        try {
-          const docs = await fetchSpaceEventDocsForTimeField({
-            spaceId,
-            campusId,
-            queryParams,
-            now,
-            dateField,
-            fetchWindow,
-            includeCampusFilter: false,
-          });
-          for (const doc of docs) docsById.set(doc.id, doc);
-        } catch (error) {
-          logger.warn("Fallback space events query failed for date field", {
-            spaceId,
-            dateField,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
       }
     }
 
@@ -509,9 +482,9 @@ export const POST = withAuthValidationAndErrors(
             : 'Someone';
 
           // Get active space members, limited to 100
+          // NOTE: campusId index is exempted — skip in query, space scoping is sufficient
           const membersSnapshot = await dbAdmin.collection('spaceMembers')
             .where('spaceId', '==', spaceId)
-            .where('campusId', '==', campusId)
             .where('isActive', '==', true)
             .limit(100)
             .get();

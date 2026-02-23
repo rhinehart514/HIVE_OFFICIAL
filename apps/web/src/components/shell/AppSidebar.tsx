@@ -22,15 +22,22 @@ const ICON_SLOT = 56;
 
 const SPACE_TYPE_LABEL: Record<string, string> = {
   greek_life: 'Greek Life',
+  greek: 'Greek Life',
   campus_living: 'Residential',
+  residential: 'Residential',
   student_organizations: 'Clubs',
+  student_org: 'Clubs',
+  organization: 'Clubs',
+  club: 'Clubs',
   university_organizations: 'Campus',
+  university_org: 'Campus',
+  academic: 'Campus',
   hive_exclusive: 'Community',
   general: 'Other',
 };
 
 function spaceTypeLabel(type: string): string {
-  return SPACE_TYPE_LABEL[type] || 'Spaces';
+  return SPACE_TYPE_LABEL[type] || 'Other';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -153,15 +160,19 @@ function SpacesQuickAccess({
   currentPath: string;
 }) {
   const grouped = useMemo(() => {
+    const labelOrder = ['Greek Life', 'Residential', 'Clubs', 'Campus', 'Community', 'Other'];
     const map = new Map<string, MySpace[]>();
     for (const s of spaces) {
-      const type = s.type || 'general';
-      if (!map.has(type)) map.set(type, []);
-      map.get(type)!.push(s);
+      const label = spaceTypeLabel(s.type || 'general');
+      if (!map.has(label)) map.set(label, []);
+      map.get(label)!.push(s);
     }
-    const order = ['greek_life', 'campus_living', 'student_organizations', 'university_organizations', 'hive_exclusive', 'general'];
     return Array.from(map.entries()).sort(
-      (a, b) => order.indexOf(a[0]) - order.indexOf(b[0])
+      (a, b) => {
+        const ai = labelOrder.indexOf(a[0]);
+        const bi = labelOrder.indexOf(b[0]);
+        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      }
     );
   }, [spaces]);
 
@@ -201,13 +212,13 @@ function SpacesQuickAccess({
   // Expanded: glassy space cards grouped by type
   return (
     <div className="flex flex-col gap-1 px-3 py-1">
-      {grouped.map(([type, typeSpaces]) => (
-        <div key={type} className="flex flex-col">
-          {/* Group header — only when multiple types */}
+      {grouped.map(([label, typeSpaces]) => (
+        <div key={label} className="flex flex-col">
+          {/* Group header — only when multiple groups */}
           {hasMultipleGroups && (
             <div className="flex items-center h-7 px-1">
               <span className="font-sans text-[10px] uppercase tracking-[0.1em] text-white/25 font-medium">
-                {spaceTypeLabel(type)}
+                {label}
               </span>
             </div>
           )}
