@@ -1,18 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
   Check,
   Clock,
+  ExternalLink,
   GitFork,
   MapPin,
   Play,
   Users,
   Video,
+  X,
   Zap,
   Sparkles,
   ArrowRight,
@@ -194,6 +196,17 @@ function timeLabel(startDate: string): string {
   return start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
+function fullTimeLabel(startDate: string, endDate?: string): string {
+  const start = new Date(startDate);
+  const opts: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+  let label = start.toLocaleDateString('en-US', opts);
+  if (endDate) {
+    const end = new Date(endDate);
+    label += ` – ${end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+  }
+  return label;
+}
+
 function dayLabel(startDate: string): string {
   const start = new Date(startDate);
   const now = new Date();
@@ -242,12 +255,6 @@ function eventGradient(category?: string, eventType?: string): string {
   return 'from-zinc-900/80 to-zinc-950/60';
 }
 
-function eventHref(event: FeedEvent): string {
-  if (event.spaceHandle) return `/s/${event.spaceHandle}`;
-  if (event.spaceId) return `/s/${event.spaceId}`;
-  return '/discover';
-}
-
 /* ─────────────────────────────────────────────────────────────────── */
 /*  Shared Avatar                                                      */
 /* ─────────────────────────────────────────────────────────────────── */
@@ -263,112 +270,287 @@ function SpaceAvatar({ name, url, size = 32 }: { name?: string; url?: string; si
 }
 
 /* ─────────────────────────────────────────────────────────────────── */
-/*  Hero Event                                                         */
+/*  Event Detail Modal                                                 */
 /* ─────────────────────────────────────────────────────────────────── */
 
-function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, spaceId: string) => void }) {
+const modalSpring = { type: 'spring' as const, damping: 28, stiffness: 300, mass: 0.8 };
+const modalFade = { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const };
+
+function EventDetailModal({
+  event,
+  onClose,
+  onRsvp,
+}: {
+  event: FeedEvent;
+  onClose: () => void;
+  onRsvp: (id: string, spaceId: string) => void;
+}) {
   const live = isHappeningNow(event.startDate, event.endDate);
   const isGoing = event.isUserRsvped || event.userRsvp === 'going';
   const coverSrc = event.imageUrl || event.coverImageUrl;
-  const hasImage = !!coverSrc;
+  const desc = cleanDescription(event.description);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  // Lock scroll
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="relative group"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={modalFade}
     >
-      <Link href={eventHref(event)} className="block relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0a] hover:border-white/[0.14] transition-all duration-300">
-        {/* Cover image or category gradient */}
-        <div className="relative h-48 w-full overflow-hidden">
-          {hasImage ? (
-            <img
-              src={coverSrc!}
-              alt={event.title}
-              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-            />
+      {/* Backdrop */}
+      <motion.div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={modalFade}
+      />
+
+      {/* Modal panel */}
+      <motion.div
+        ref={modalRef}
+        layoutId={`event-card-${event.id}`}
+        className="relative w-full max-w-[520px] max-h-[85vh] overflow-hidden rounded-2xl bg-[#111] border border-white/[0.08] shadow-2xl shadow-black/40 flex flex-col"
+        initial={{ scale: 0.92, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 10 }}
+        transition={modalSpring}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md border border-white/[0.1] flex items-center justify-center text-white/60 hover:text-white hover:bg-black/70 transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Image / gradient header */}
+        <div className="relative h-56 w-full shrink-0 overflow-hidden">
+          {coverSrc ? (
+            <img src={coverSrc} alt={event.title} className="w-full h-full object-cover" />
           ) : (
             <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
           )}
-          {/* Vignette overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/30 to-transparent" />
 
-          {/* Time badge — frosted glass */}
-          <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
-            {live ? (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 backdrop-blur-md border border-red-500/20 text-[11px] font-semibold text-red-400">
+          {/* Badges on image */}
+          <div className="absolute top-3 left-3 flex items-center gap-2">
+            {live && (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/25 backdrop-blur-md border border-red-500/20 text-[11px] font-semibold text-red-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
                 Live now
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/[0.08] text-[11px] font-medium text-white/70">
-                <Clock className="w-3 h-3" />
-                {dayLabel(event.startDate)} · {timeLabel(event.startDate)}
               </span>
             )}
           </div>
 
-          {/* Space pill — top right */}
-          {event.spaceName && (
-            <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/[0.08]">
-              <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={14} />
-              <span className="text-[11px] text-white/60 truncate max-w-[100px]">{event.spaceName}</span>
+          {/* Title overlaid at bottom of image */}
+          <div className="absolute bottom-0 left-0 right-0 px-6 pb-5">
+            <h2 className="text-[24px] font-semibold text-white leading-tight tracking-[-0.02em]">
+              {event.title}
+            </h2>
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-5">
+
+          {/* Time & Location details */}
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center shrink-0 mt-0.5">
+                <Calendar className="w-4 h-4 text-white/40" />
+              </div>
+              <div>
+                <p className="text-[14px] text-white/80 font-medium">{fullTimeLabel(event.startDate, event.endDate)}</p>
+                <p className="text-[12px] text-white/30 mt-0.5">{dayLabel(event.startDate)} · {timeLabel(event.startDate)}</p>
+              </div>
             </div>
+
+            {event.location && (
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center shrink-0 mt-0.5">
+                  {event.isOnline ? <Video className="w-4 h-4 text-white/40" /> : <MapPin className="w-4 h-4 text-white/40" />}
+                </div>
+                <div>
+                  <p className="text-[14px] text-white/80 font-medium">{event.isOnline ? 'Online event' : event.location}</p>
+                </div>
+              </div>
+            )}
+
+            {(event.rsvpCount > 0 || (event.friendsAttending && event.friendsAttending > 0)) && (
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center shrink-0 mt-0.5">
+                  <Users className="w-4 h-4 text-white/40" />
+                </div>
+                <div>
+                  <p className="text-[14px] text-white/80 font-medium">
+                    {event.rsvpCount} going
+                    {event.friendsAttending && event.friendsAttending > 0 && (
+                      <span className="text-[#FFD700]/60"> · {event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Description */}
+          {desc && (
+            <div>
+              <p className="text-[13px] text-white/40 leading-relaxed">{desc}</p>
+            </div>
+          )}
+
+          {/* Match reasons */}
+          {event.matchReasons && event.matchReasons.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {event.matchReasons.map((reason, i) => (
+                <span key={i} className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/35">
+                  {reason}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Space link */}
+          {event.spaceName && (
+            <Link
+              href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'}
+              onClick={onClose}
+              className="flex items-center gap-3 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all group"
+            >
+              <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={28} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] text-white/70 font-medium truncate group-hover:text-white/90 transition-colors">{event.spaceName}</p>
+                <p className="text-[11px] text-white/25">View space</p>
+              </div>
+              <ExternalLink className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors shrink-0" />
+            </Link>
           )}
         </div>
 
-        {/* Content */}
-        <div className="px-5 pt-4 pb-5">
-          <h2 className="text-[22px] font-semibold text-white leading-tight tracking-[-0.02em] mb-1.5">
+        {/* Sticky footer — RSVP action */}
+        {event.spaceId && (
+          <div className="shrink-0 px-6 py-4 border-t border-white/[0.06] bg-[#111]">
+            <button
+              onClick={() => onRsvp(event.id, event.spaceId!)}
+              className={cn(
+                'flex items-center justify-center gap-2 w-full py-3 rounded-xl text-[14px] font-semibold transition-all duration-200 active:scale-[0.98]',
+                isGoing
+                  ? 'bg-white/[0.06] border border-white/[0.10] text-white/50 hover:bg-white/[0.08]'
+                  : 'bg-white text-black hover:bg-white/90'
+              )}
+            >
+              {isGoing ? <><Check className="w-4 h-4" />Going</> : 'Attend'}
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Hero Event                                                         */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function HeroEvent({ event, onSelect }: { event: FeedEvent; onSelect: (e: FeedEvent) => void }) {
+  const live = isHappeningNow(event.startDate, event.endDate);
+  const isGoing = event.isUserRsvped || event.userRsvp === 'going';
+  const coverSrc = event.imageUrl || event.coverImageUrl;
+
+  return (
+    <motion.div
+      layoutId={`event-card-${event.id}`}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      onClick={() => onSelect(event)}
+      className="relative group cursor-pointer overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0a0a] hover:border-white/[0.12] transition-colors duration-300"
+    >
+      {/* Full-bleed image with overlaid content */}
+      <div className="relative h-[280px] w-full overflow-hidden">
+        {coverSrc ? (
+          <img
+            src={coverSrc}
+            alt={event.title}
+            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
+        )}
+
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+
+        {/* Top badges */}
+        <div className="absolute top-4 left-4 flex items-center gap-2">
+          {live ? (
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/20 backdrop-blur-md border border-red-500/20 text-[11px] font-semibold text-red-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+              Live now
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/[0.08] text-[11px] font-medium text-white/70">
+              {dayLabel(event.startDate)} · {timeLabel(event.startDate)}
+            </span>
+          )}
+          {isGoing && (
+            <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#FFD700]/10 backdrop-blur-md border border-[#FFD700]/20 text-[11px] font-medium text-[#FFD700]/80">
+              <Check className="w-3 h-3" /> Going
+            </span>
+          )}
+        </div>
+
+        {/* Bottom content — overlaid on image */}
+        <div className="absolute bottom-0 left-0 right-0 p-5">
+          {/* Space context */}
+          {event.spaceName && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={16} />
+              <span className="text-[12px] text-white/50">{event.spaceName}</span>
+            </div>
+          )}
+
+          <h2 className="text-[24px] font-semibold text-white leading-tight tracking-[-0.02em] mb-2">
             {event.title}
           </h2>
 
-          {cleanDescription(event.description) && (
-            <p className="text-[13px] text-white/40 line-clamp-2 leading-relaxed mb-3">{cleanDescription(event.description)}</p>
-          )}
-
-          {/* Meta row */}
-          <div className="flex items-center gap-4 text-[12px] text-white/30 mb-4">
+          {/* Inline meta */}
+          <div className="flex items-center gap-4 text-[12px] text-white/40">
             {event.location && (
               <span className="flex items-center gap-1.5">
-                {event.isOnline ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
-                <span className="truncate max-w-[180px]">{event.isOnline ? 'Online' : event.location}</span>
+                {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+                <span className="truncate max-w-[200px]">{event.isOnline ? 'Online' : event.location}</span>
               </span>
             )}
             {event.rsvpCount > 0 && (
               <span className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" />
-                {event.rsvpCount} going
-              </span>
-            )}
-            {event.friendsAttending && event.friendsAttending > 0 && (
-              <span className="flex items-center gap-1.5 text-[#FFD700]/50">
-                {event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}
+                <Users className="w-3 h-3" />
+                {event.rsvpCount}
               </span>
             )}
           </div>
         </div>
-      </Link>
-
-      {/* RSVP floats outside the link to prevent nested interactive */}
-      {event.spaceId && (
-        <div className="px-5 pb-5 -mt-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); onRsvp(event.id, event.spaceId!); }}
-            className={cn(
-              'flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[14px] font-semibold transition-all duration-200 active:scale-[0.98]',
-              isGoing
-                ? 'bg-white/[0.06] border border-white/[0.10] text-white/50 hover:bg-white/[0.08]'
-                : 'bg-white text-black hover:bg-white/90'
-            )}
-          >
-            {isGoing
-              ? <><Check className="w-4 h-4" />Going</>
-              : 'Attend'}
-          </button>
-        </div>
-      )}
+      </div>
     </motion.div>
   );
 }
@@ -377,11 +559,11 @@ function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, s
 /*  Today Strip                                                        */
 /* ─────────────────────────────────────────────────────────────────── */
 
-function TodayStrip({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (id: string, spaceId: string) => void }) {
+function TodayStrip({ events, onSelect }: { events: FeedEvent[]; onSelect: (e: FeedEvent) => void }) {
   if (events.length === 0) return null;
 
   return (
-    <div className="mt-6">
+    <div className="mt-7">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
@@ -389,73 +571,47 @@ function TodayStrip({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (id: stri
         </div>
         <span className="text-[11px] text-white/20 tabular-nums">{events.length} event{events.length !== 1 ? 's' : ''}</span>
       </div>
-      <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         {events.map((event, i) => {
           const live = isHappeningNow(event.startDate, event.endDate);
           const isGoing = event.isUserRsvped || event.userRsvp === 'going';
           const coverSrc = event.imageUrl || event.coverImageUrl;
 
           return (
-            <motion.div
+            <motion.button
               key={event.id}
-              initial={{ opacity: 0, x: 12 }}
+              initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.35, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
-              className="shrink-0 w-[200px]"
+              transition={{ duration: 0.3, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+              onClick={() => onSelect(event)}
+              className="shrink-0 w-[180px] text-left group cursor-pointer relative overflow-hidden rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-[#0a0a0a] transition-all duration-200"
             >
-              <Link
-                href={eventHref(event)}
-                className="group block relative overflow-hidden rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-[#0a0a0a] transition-all duration-200"
-              >
-                {/* Mini cover — gradient or image */}
-                <div className="h-16 w-full overflow-hidden relative">
-                  {coverSrc ? (
-                    <img src={coverSrc} alt="" className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
-                  ) : (
-                    <div className={cn('w-full h-full bg-gradient-to-br opacity-80', eventGradient(event.category, event.eventType))} />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
-                  {/* Time badge on image */}
-                  <span className={cn(
-                    'absolute top-2 left-2.5 text-[10px] font-semibold',
-                    live ? 'text-red-400' : 'text-white/50'
-                  )}>
-                    {live ? '● LIVE' : timeLabel(event.startDate)}
-                  </span>
-                  {isGoing && (
-                    <span className="absolute top-2 right-2.5">
-                      <Check className="w-3 h-3 text-[#FFD700]" />
-                    </span>
-                  )}
-                </div>
+              {/* Micro image header */}
+              <div className="h-14 w-full overflow-hidden relative">
+                {coverSrc ? (
+                  <img src={coverSrc} alt="" className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity duration-300" />
+                ) : (
+                  <div className={cn('w-full h-full bg-gradient-to-br opacity-60', eventGradient(event.category, event.eventType))} />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
+                <span className={cn(
+                  'absolute top-2 left-2.5 text-[10px] font-semibold',
+                  live ? 'text-red-400' : 'text-white/50'
+                )}>
+                  {live ? '● LIVE' : timeLabel(event.startDate)}
+                </span>
+                {isGoing && <Check className="absolute top-2 right-2.5 w-3 h-3 text-[#FFD700]" />}
+              </div>
 
-                <div className="px-3 pb-3 pt-1.5">
-                  <p className="text-[13px] font-medium text-white leading-snug line-clamp-2 group-hover:text-white/90 transition-colors">
-                    {event.title}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    {event.location && (
-                      <span className="text-[10px] text-white/25 flex items-center gap-1 truncate">
-                        <MapPin className="w-2.5 h-2.5 shrink-0" />
-                        <span className="truncate max-w-[80px]">{event.isOnline ? 'Online' : event.location}</span>
-                      </span>
-                    )}
-                    {event.rsvpCount > 0 && (
-                      <span className="text-[10px] text-white/20">{event.rsvpCount} going</span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-              {/* Quick RSVP for non-going items */}
-              {event.spaceId && !isGoing && (
-                <button
-                  onClick={() => onRsvp(event.id, event.spaceId!)}
-                  className="mt-1.5 w-full text-[10px] font-medium text-white/30 hover:text-white/60 transition-colors text-center py-1"
-                >
-                  Quick RSVP
-                </button>
-              )}
-            </motion.div>
+              <div className="px-3 pb-2.5 pt-1">
+                <p className="text-[12px] font-medium text-white/80 leading-snug line-clamp-2 group-hover:text-white transition-colors">
+                  {event.title}
+                </p>
+                {event.rsvpCount > 0 && (
+                  <span className="text-[10px] text-white/20 mt-1 block">{event.rsvpCount} going</span>
+                )}
+              </div>
+            </motion.button>
           );
         })}
       </div>
@@ -467,98 +623,81 @@ function TodayStrip({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (id: stri
 /*  Feed Event Card                                                    */
 /* ─────────────────────────────────────────────────────────────────── */
 
-function FeedEventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, spaceId: string) => void }) {
+function FeedEventCard({ event, onSelect }: { event: FeedEvent; onSelect: (e: FeedEvent) => void }) {
   const live = isHappeningNow(event.startDate, event.endDate);
   const isGoing = event.isUserRsvped || event.userRsvp === 'going';
   const coverSrc = event.imageUrl || event.coverImageUrl;
 
   return (
-    <div className="group rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden hover:border-white/[0.12] transition-all duration-200">
-      <Link href={eventHref(event)} className="block">
-        {/* Cover strip */}
-        <div className="h-28 w-full overflow-hidden relative">
-          {coverSrc ? (
-            <img
-              src={coverSrc}
-              alt={event.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-            />
-          ) : (
-            <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/60 to-transparent" />
+    <motion.div
+      layoutId={`event-card-${event.id}`}
+      onClick={() => onSelect(event)}
+      className="group cursor-pointer rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden hover:border-white/[0.12] transition-all duration-200"
+    >
+      {/* Image — 16:9-ish ratio */}
+      <div className="relative h-36 w-full overflow-hidden">
+        {coverSrc ? (
+          <img
+            src={coverSrc}
+            alt={event.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/70 via-transparent to-transparent" />
 
-          {/* Live badge */}
-          {live && (
-            <span className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 backdrop-blur-sm border border-red-500/20 text-[10px] font-semibold text-red-400">
+        {/* Time badge */}
+        <div className="absolute top-3 left-3 flex items-center gap-2">
+          {live ? (
+            <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/20 backdrop-blur-sm border border-red-500/20 text-[10px] font-semibold text-red-400">
               <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
               Live
             </span>
-          )}
-        </div>
-
-        <div className="p-4">
-          {/* Space + time */}
-          <div className="flex items-center justify-between mb-2">
-            {event.spaceName ? (
-              <span className="flex items-center gap-1.5 text-[12px] text-white/30">
-                <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={14} />
-                <span className="truncate max-w-[160px]">{event.spaceName}</span>
-              </span>
-            ) : <span />}
-            <span className={cn(
-              'text-[11px] font-medium shrink-0',
-              live ? 'text-red-400' : 'text-white/30'
-            )}>
-              {live ? '● Live' : `${dayLabel(event.startDate)} · ${timeLabel(event.startDate)}`}
+          ) : (
+            <span className="px-2 py-1 rounded-full bg-black/30 backdrop-blur-sm border border-white/[0.08] text-[10px] font-medium text-white/60">
+              {dayLabel(event.startDate)} · {timeLabel(event.startDate)}
             </span>
-          </div>
-
-          {/* Title */}
-          <h3 className="text-[15px] font-semibold text-white leading-snug mb-1 group-hover:text-white/90 transition-colors">
-            {event.title}
-          </h3>
-
-          {/* Description — show first line */}
-          {cleanDescription(event.description) && (
-            <p className="text-[12px] text-white/30 line-clamp-1 leading-relaxed mb-2">{cleanDescription(event.description)}</p>
           )}
+          {isGoing && (
+            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#FFD700]/10 backdrop-blur-sm border border-[#FFD700]/20 text-[10px] text-[#FFD700]/80">
+              <Check className="w-2.5 h-2.5" />
+            </span>
+          )}
+        </div>
+      </div>
 
-          {/* Meta */}
-          <div className="flex items-center gap-3 text-[11px] text-white/25">
-            {event.location && (
-              <span className="flex items-center gap-1">
-                {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-                <span className="truncate max-w-[140px]">{event.isOnline ? 'Online' : event.location}</span>
-              </span>
-            )}
-            {event.rsvpCount > 0 && (
-              <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount} going</span>
-            )}
-            {event.friendsAttending && event.friendsAttending > 0 && (
-              <span className="text-[#FFD700]/40">{event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
-            )}
+      {/* Content */}
+      <div className="px-4 py-3.5">
+        {/* Space context */}
+        {event.spaceName && (
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={14} />
+            <span className="text-[11px] text-white/30 truncate">{event.spaceName}</span>
           </div>
-        </div>
-      </Link>
+        )}
 
-      {/* RSVP button — outside link */}
-      {event.spaceId && (
-        <div className="px-4 pb-4 -mt-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); onRsvp(event.id, event.spaceId!); }}
-            className={cn(
-              'flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 active:scale-[0.98]',
-              isGoing
-                ? 'bg-white/[0.05] border border-white/[0.08] text-white/40 hover:bg-white/[0.07]'
-                : 'bg-white text-black hover:bg-white/90'
-            )}
-          >
-            {isGoing ? <><Check className="w-3.5 h-3.5" />Going</> : 'Attend'}
-          </button>
+        <h3 className="text-[15px] font-semibold text-white leading-snug group-hover:text-white/90 transition-colors">
+          {event.title}
+        </h3>
+
+        {/* Meta */}
+        <div className="flex items-center gap-3 mt-2 text-[11px] text-white/25">
+          {event.location && (
+            <span className="flex items-center gap-1">
+              {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+              <span className="truncate max-w-[140px]">{event.isOnline ? 'Online' : event.location}</span>
+            </span>
+          )}
+          {event.rsvpCount > 0 && (
+            <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount}</span>
+          )}
+          {event.friendsAttending && event.friendsAttending > 0 && (
+            <span className="text-[#FFD700]/40">{event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -569,24 +708,22 @@ function FeedEventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: strin
 function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
   return (
     <Link href={`/t/${tool.id}`} className="group block rounded-2xl border border-white/[0.06] bg-[#080808] p-4 hover:border-[#FFD700]/10 hover:bg-[#FFD700]/[0.02] transition-all duration-200">
-      {/* Label */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2.5">
         <span className="flex items-center gap-1.5 text-[11px] text-[#FFD700]/60 font-medium">
-          <span className="text-base leading-none">{categoryIcon(tool.category)}</span>
+          <span className="text-sm leading-none">{categoryIcon(tool.category)}</span>
           <span className="font-sans uppercase tracking-[0.12em]">Creation</span>
           {tool.spaceOriginName && (
             <span className="text-white/20 font-normal normal-case tracking-normal">· {tool.spaceOriginName}</span>
           )}
         </span>
-        <ArrowRight className="w-3.5 h-3.5 text-white/15 group-hover:text-[#FFD700]/40 transition-colors" />
+        <ChevronRight className="w-3.5 h-3.5 text-white/10 group-hover:text-[#FFD700]/30 transition-colors" />
       </div>
 
       <h3 className="text-[15px] font-semibold text-white leading-snug group-hover:text-white/90">{tool.title}</h3>
       {tool.description && (
-        <p className="mt-1.5 text-[12px] text-white/30 line-clamp-2 leading-relaxed">{tool.description}</p>
+        <p className="mt-1.5 text-[12px] text-white/25 line-clamp-2 leading-relaxed">{tool.description}</p>
       )}
 
-      {/* Stats */}
       <div className="flex items-center gap-4 mt-3 text-[11px] text-white/20">
         {tool.useCount > 0 && (
           <span className="flex items-center gap-1"><Play className="w-3 h-3" />{tool.useCount} uses</span>
@@ -595,19 +732,12 @@ function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
           <span className="flex items-center gap-1"><GitFork className="w-3 h-3" />{tool.forkCount} forks</span>
         )}
       </div>
-
-      {/* Participate CTA */}
-      <div className="mt-3 flex items-center gap-2 text-[12px] font-medium text-[#FFD700]/50 group-hover:text-[#FFD700]/80 transition-colors">
-        <Zap className="w-3.5 h-3.5" />
-        Open
-        <ChevronRight className="w-3 h-3" />
-      </div>
     </Link>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────────── */
-/*  Activity Strip (Recent Creations)                                  */
+/*  Activity Strip                                                     */
 /* ─────────────────────────────────────────────────────────────────── */
 
 function relativeTime(iso: string): string {
@@ -625,14 +755,12 @@ function ActivityStrip({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="mt-6">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-3 h-3 text-[#FFD700]/40" />
-          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">Recent creations</span>
-        </div>
+    <div className="mt-7">
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="w-3 h-3 text-[#FFD700]/40" />
+        <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">Recent creations</span>
       </div>
-      <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         {items.map((item, i) => (
           <motion.div
             key={item.id}
@@ -642,15 +770,15 @@ function ActivityStrip({ items }: { items: ActivityItem[] }) {
           >
             <Link
               href={item.toolId ? `/t/${item.toolId}` : '#'}
-              className="shrink-0 w-[190px] rounded-xl border border-white/[0.06] bg-[#080808] p-3 flex flex-col gap-2 hover:border-[#FFD700]/10 hover:bg-[#FFD700]/[0.02] transition-all duration-200 block"
+              className="shrink-0 w-[180px] rounded-xl border border-white/[0.06] bg-[#080808] p-3 flex flex-col gap-1.5 hover:border-[#FFD700]/10 hover:bg-[#FFD700]/[0.02] transition-all duration-200 block"
             >
               <div className="flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-[#FFD700]/50" />
-                <span className="text-[10px] text-white/30">{relativeTime(item.timestamp)}</span>
+                <span className="text-[10px] text-white/25">{relativeTime(item.timestamp)}</span>
               </div>
-              <p className="text-[13px] font-medium text-white leading-snug line-clamp-2">{item.headline}</p>
+              <p className="text-[12px] font-medium text-white/80 leading-snug line-clamp-2">{item.headline}</p>
               {item.toolName && (
-                <span className="text-[10px] text-[#FFD700]/40 truncate">{item.toolName}</span>
+                <span className="text-[10px] text-[#FFD700]/35 truncate">{item.toolName}</span>
               )}
             </Link>
           </motion.div>
@@ -669,20 +797,21 @@ function FeedRightRail({
   spaces,
   todayCount,
   totalCount,
+  onSelectEvent,
 }: {
   events: FeedEvent[];
   spaces: FeedSpace[];
   todayCount: number;
   totalCount: number;
+  onSelectEvent: (e: FeedEvent) => void;
 }) {
-  // Next few events excluding today
   const upcoming = events.filter(e => !isToday(e.startDate)).slice(0, 4);
   const topSpaces = spaces.slice(0, 5);
 
   return (
     <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0 sticky top-6 self-start order-2 gap-0">
 
-      {/* Campus pulse — always shows something */}
+      {/* Campus pulse */}
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 mb-5">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-6 h-6 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
@@ -710,12 +839,12 @@ function FeedRightRail({
       <div className="mb-5">
         <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25 mb-3">Next up</p>
         {upcoming.length > 0 ? (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5">
             {upcoming.map((ev) => (
-              <Link
+              <button
                 key={ev.id}
-                href={eventHref(ev)}
-                className="group flex items-start gap-2.5 rounded-lg px-2 py-2 -mx-2 hover:bg-white/[0.03] transition-colors"
+                onClick={() => onSelectEvent(ev)}
+                className="group flex items-start gap-2.5 rounded-lg px-2 py-2 -mx-2 hover:bg-white/[0.03] transition-colors text-left w-full"
               >
                 <span className="text-[11px] text-white/30 shrink-0 tabular-nums w-14 pt-px">
                   {dayLabel(ev.startDate) === 'Tomorrow' ? 'Tmrw' : dayLabel(ev.startDate).split(',')[0]}
@@ -726,7 +855,7 @@ function FeedRightRail({
                   </p>
                   <span className="text-[10px] text-white/20">{timeLabel(ev.startDate)}</span>
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
         ) : (
@@ -737,10 +866,9 @@ function FeedRightRail({
         )}
       </div>
 
-      {/* Hairline */}
       <div className="h-px bg-white/[0.05] mb-5" />
 
-      {/* Spaces to explore */}
+      {/* Spaces */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-3">
           <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25">Spaces</p>
@@ -749,7 +877,7 @@ function FeedRightRail({
           </Link>
         </div>
         {topSpaces.length > 0 ? (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5">
             {topSpaces.map(sp => (
               <Link
                 key={sp.id}
@@ -784,7 +912,6 @@ function FeedRightRail({
         )}
       </div>
 
-      {/* Hairline */}
       <div className="h-px bg-white/[0.05] mb-5" />
 
       {/* Create CTA */}
@@ -809,7 +936,7 @@ function FeedRightRail({
 /*  Empty State                                                        */
 /* ─────────────────────────────────────────────────────────────────── */
 
-function EmptyState() {
+function EmptyState({ onSelectEvent }: { onSelectEvent: (e: FeedEvent) => void }) {
   const [fallbackEvents, setFallbackEvents] = useState<FeedEvent[]>([]);
   const [fallbackTools, setFallbackTools] = useState<FeedTool[]>([]);
   const [isLoadingFallback, setIsLoadingFallback] = useState(true);
@@ -870,9 +997,7 @@ function EmptyState() {
     return () => { cancelled = true; };
   }, []);
 
-  if (isLoadingFallback) {
-    return <FeedSkeleton />;
-  }
+  if (isLoadingFallback) return <FeedSkeleton />;
 
   if (fallbackEvents.length === 0 && fallbackTools.length === 0) {
     return (
@@ -907,10 +1032,9 @@ function EmptyState() {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
         className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-4 mb-1"
       >
-        <p className="text-[13px] text-white/35">Here&apos;s what&apos;s happening across campus — personalized picks appear as you join spaces and RSVP to events.</p>
+        <p className="text-[13px] text-white/35">Here&apos;s what&apos;s happening across campus — personalized picks appear as you join spaces.</p>
       </motion.div>
       {fallbackEvents.map((event, i) => (
         <motion.div
@@ -919,7 +1043,7 @@ function EmptyState() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
         >
-          <FeedEventCard event={event} onRsvp={() => {}} />
+          <FeedEventCard event={event} onSelect={onSelectEvent} />
         </motion.div>
       ))}
       {fallbackTools.map((tool, i) => (
@@ -943,36 +1067,25 @@ function EmptyState() {
 function FeedSkeleton() {
   return (
     <div className="space-y-3">
-      {/* Hero skeleton */}
       <div className="rounded-2xl bg-white/[0.02] border border-white/[0.04] overflow-hidden">
-        <div className="h-48 bg-white/[0.03] animate-pulse" />
-        <div className="p-5 space-y-3">
-          <div className="h-3 w-24 bg-white/[0.04] rounded animate-pulse" />
-          <div className="h-5 w-3/4 bg-white/[0.04] rounded animate-pulse" />
-          <div className="h-3 w-1/2 bg-white/[0.03] rounded animate-pulse" />
-          <div className="h-10 w-full bg-white/[0.04] rounded-xl animate-pulse mt-2" />
-        </div>
+        <div className="h-[280px] bg-white/[0.03] animate-pulse" />
       </div>
-      {/* Strip skeleton */}
-      <div className="flex gap-2.5 overflow-hidden mt-6">
+      <div className="flex gap-2 overflow-hidden mt-7">
         {[0, 1, 2].map(i => (
-          <div key={i} className="shrink-0 w-[200px] rounded-xl bg-white/[0.02] border border-white/[0.04] overflow-hidden">
-            <div className="h-16 bg-white/[0.03] animate-pulse" />
+          <div key={i} className="shrink-0 w-[180px] rounded-xl bg-white/[0.02] border border-white/[0.04] overflow-hidden">
+            <div className="h-14 bg-white/[0.03] animate-pulse" />
             <div className="p-3 space-y-2">
               <div className="h-3 w-3/4 bg-white/[0.04] rounded animate-pulse" />
-              <div className="h-2 w-1/2 bg-white/[0.03] rounded animate-pulse" />
             </div>
           </div>
         ))}
       </div>
-      {/* Card skeletons */}
       {[0, 1].map(i => (
         <div key={i} className="rounded-2xl bg-white/[0.02] border border-white/[0.04] overflow-hidden mt-3">
-          <div className="h-28 bg-white/[0.03] animate-pulse" />
+          <div className="h-36 bg-white/[0.03] animate-pulse" />
           <div className="p-4 space-y-2">
             <div className="h-3 w-32 bg-white/[0.04] rounded animate-pulse" />
             <div className="h-4 w-2/3 bg-white/[0.04] rounded animate-pulse" />
-            <div className="h-9 w-full bg-white/[0.04] rounded-xl animate-pulse mt-1" />
           </div>
         </div>
       ))}
@@ -1004,14 +1117,12 @@ function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], 
 
   for (let i = 0; i < remaining.length; i++) {
     items.push({ type: 'event', data: remaining[i] });
-
     if ((i + 1) % 3 === 0 && toolIdx < tools.length) {
       items.push({ type: 'tool', data: tools[toolIdx++] });
     }
   }
 
   while (toolIdx < tools.length) items.push({ type: 'tool', data: tools[toolIdx++] });
-
   return items;
 }
 
@@ -1023,6 +1134,7 @@ export default function DiscoverPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const [selectedEvent, setSelectedEvent] = useState<FeedEvent | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/enter?redirect=/discover');
@@ -1041,6 +1153,10 @@ export default function DiscoverPage() {
   const handleRsvp = useCallback((eventId: string, spaceId: string) => {
     rsvpMutation.mutate({ eventId, spaceId });
   }, [rsvpMutation]);
+
+  const handleSelectEvent = useCallback((event: FeedEvent) => {
+    setSelectedEvent(event);
+  }, []);
 
   const events = eventsQuery.data || [];
   const spaces = spacesQuery.data || [];
@@ -1073,88 +1189,94 @@ export default function DiscoverPage() {
   const todayCount = events.filter(e => isToday(e.startDate)).length;
 
   return (
-    <div className="flex gap-10 w-full px-4 py-6 md:px-8">
-
-      {/* Right rail */}
-      <FeedRightRail
-        events={events}
-        spaces={spaces}
-        todayCount={todayCount}
-        totalCount={events.length}
-      />
-
-      {/* Main feed */}
-      <div className="flex-1 min-w-0 max-w-[680px] order-1">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-          className="mb-6 flex items-center justify-between"
-        >
-          <h1 className="text-[13px] font-sans uppercase tracking-[0.14em] text-white/25">Feed</h1>
-          {todayCount > 0 && (
-            <span className="text-[11px] text-white/20 flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
-              {todayCount} event{todayCount !== 1 ? 's' : ''} today
-            </span>
-          )}
-        </motion.div>
-
-        {isLoading ? (
-          <FeedSkeleton />
-        ) : !heroEvent && feed.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="space-y-3">
-            {/* Hero */}
-            {heroEvent && <HeroEvent event={heroEvent} onRsvp={handleRsvp} />}
-
-            {/* Today strip */}
-            {todayEvents.length > 0 && <TodayStrip events={todayEvents} onRsvp={handleRsvp} />}
-
-            {/* Recent creations */}
-            {activity.length > 0 && <ActivityStrip items={activity} />}
-
-            {/* Feed body */}
-            {feed.length > 0 && (
-              <div className="space-y-3 pt-2">
-                {(() => {
-                  let lastDay = '';
-                  return feed.map((item, i) => {
-                    let dayDivider: React.ReactNode = null;
-                    if (item.type === 'event') {
-                      const day = dayLabel(item.data.startDate);
-                      if (day !== lastDay && day !== 'Today') {
-                        lastDay = day;
-                        dayDivider = (
-                          <div key={`divider-${day}`} className="flex items-center gap-3 pt-3 pb-1">
-                            <span className="text-[11px] uppercase tracking-[0.12em] text-white/20 font-medium">{day}</span>
-                            <div className="flex-1 h-px bg-white/[0.04]" />
-                          </div>
-                        );
-                      }
-                    }
-                    return (
-                      <div key={`${item.type}-${item.data.id}`}>
-                        {dayDivider}
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
-                        >
-                          {item.type === 'event' && <FeedEventCard event={item.data} onRsvp={handleRsvp} />}
-                          {item.type === 'tool' && <EmbeddedToolCard tool={item.data} />}
-                        </motion.div>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            )}
-          </div>
+    <>
+      {/* Event detail modal */}
+      <AnimatePresence>
+        {selectedEvent && (
+          <EventDetailModal
+            event={selectedEvent}
+            onClose={() => setSelectedEvent(null)}
+            onRsvp={handleRsvp}
+          />
         )}
+      </AnimatePresence>
+
+      <div className="flex gap-10 w-full px-4 py-6 md:px-8">
+        {/* Right rail */}
+        <FeedRightRail
+          events={events}
+          spaces={spaces}
+          todayCount={todayCount}
+          totalCount={events.length}
+          onSelectEvent={handleSelectEvent}
+        />
+
+        {/* Main feed */}
+        <div className="flex-1 min-w-0 max-w-[680px] order-1">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className="mb-6 flex items-center justify-between"
+          >
+            <h1 className="text-[13px] font-sans uppercase tracking-[0.14em] text-white/25">Feed</h1>
+            {todayCount > 0 && (
+              <span className="text-[11px] text-white/20 flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
+                {todayCount} event{todayCount !== 1 ? 's' : ''} today
+              </span>
+            )}
+          </motion.div>
+
+          {isLoading ? (
+            <FeedSkeleton />
+          ) : !heroEvent && feed.length === 0 ? (
+            <EmptyState onSelectEvent={handleSelectEvent} />
+          ) : (
+            <div className="space-y-3">
+              {heroEvent && <HeroEvent event={heroEvent} onSelect={handleSelectEvent} />}
+              {todayEvents.length > 0 && <TodayStrip events={todayEvents} onSelect={handleSelectEvent} />}
+              {activity.length > 0 && <ActivityStrip items={activity} />}
+
+              {feed.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  {(() => {
+                    let lastDay = '';
+                    return feed.map((item, i) => {
+                      let dayDivider: React.ReactNode = null;
+                      if (item.type === 'event') {
+                        const day = dayLabel(item.data.startDate);
+                        if (day !== lastDay && day !== 'Today') {
+                          lastDay = day;
+                          dayDivider = (
+                            <div key={`divider-${day}`} className="flex items-center gap-3 pt-4 pb-1">
+                              <span className="text-[11px] uppercase tracking-[0.12em] text-white/20 font-medium">{day}</span>
+                              <div className="flex-1 h-px bg-white/[0.04]" />
+                            </div>
+                          );
+                        }
+                      }
+                      return (
+                        <div key={`${item.type}-${item.data.id}`}>
+                          {dayDivider}
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
+                          >
+                            {item.type === 'event' && <FeedEventCard event={item.data} onSelect={handleSelectEvent} />}
+                            {item.type === 'tool' && <EmbeddedToolCard tool={item.data} />}
+                          </motion.div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
