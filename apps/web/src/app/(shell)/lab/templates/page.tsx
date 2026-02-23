@@ -55,7 +55,7 @@ const CORE_TEMPLATES: CoreTemplate[] = [
     emoji: '',
     name: 'Signup Sheet',
     description: 'Slot-based signups for anything',
-    templateId: 'office-hours',
+    templateId: 'resource-signup',
   },
   {
     id: 'feedback-form',
@@ -81,15 +81,15 @@ const CORE_TEMPLATES: CoreTemplate[] = [
   {
     id: 'checklist',
     emoji: '',
-    name: 'Checklist',
-    description: 'Shared progress tracking',
+    name: 'Meeting Notes',
+    description: 'Collaborative notes with checklist',
     templateId: 'meeting-notes',
   },
   {
     id: 'member-directory',
     emoji: '',
-    name: 'Member Directory',
-    description: 'Searchable contact list',
+    name: 'Group Signup',
+    description: 'Collect signups for study groups',
     templateId: 'study-group-signup',
   },
 ];
@@ -112,14 +112,14 @@ const TEMPLATE_ICONS: Record<string, React.ComponentType<{ className?: string }>
 const EASE = MOTION.ease.premium;
 
 const COLORS = {
-  bg: '#08080F',
-  text: '#FAF9F7',
-  textSecondary: '#8A8A8A',
-  textTertiary: '#5A5A5A',
-  surface: '#0D0D14',
-  border: 'rgba(255, 255, 255, 0.06)',
+  bg: 'var(--hivelab-bg, #000000)',
+  text: 'var(--hivelab-text-primary, #FAF9F7)',
+  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
+  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
+  surface: 'var(--hivelab-surface, #0D0D14)',
+  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.06))',
   borderHover: 'rgba(255, 255, 255, 0.14)',
-  accent: '#FFD700',
+  accent: 'var(--life-gold, #FFD700)',
   shadowBase: '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 8px rgba(0,0,0,0.4)',
   shadowHover: '0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 20px rgba(0,0,0,0.5), 0 0 24px rgba(255,215,0,0.06)',
 };
@@ -448,7 +448,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: COLORS.bg }}>
-      <div className="max-w-2xl px-6 py-8">
+      <div className="max-w-2xl mx-auto px-6 py-8">
         {/* Back link */}
         <motion.div
           initial={{ opacity: 0, x: -8 }}

@@ -73,10 +73,10 @@ function StatCard({
   icon: React.ElementType;
 }) {
   return (
-    <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
+    <div className="bg-[var(--hivelab-surface)] rounded-lg p-4 border border-[var(--hivelab-border)]">
       <div className="flex items-start justify-between mb-2">
-        <div className="w-8 h-8 rounded-lg bg-[var(--hive-gold)]/10 flex items-center justify-center">
-          <Icon className="h-4 w-4 text-[var(--hive-gold)]" />
+        <div className="w-8 h-8 rounded-lg bg-[var(--life-gold)]/10 flex items-center justify-center">
+          <Icon className="h-4 w-4 text-[var(--life-gold)]" />
         </div>
         {trend !== undefined && <TrendBadge value={trend} label="vs prev" />}
       </div>
@@ -94,7 +94,7 @@ function MiniBarChart({ data }: { data: Array<{ date: string; usage: number }> }
       {data.slice(-14).map((d) => (
         <div
           key={d.date}
-          className="flex-1 bg-[var(--hive-gold)]/20 rounded-t transition-all hover:bg-[var(--hive-gold)]/40"
+          className="flex-1 bg-[var(--life-gold)]/20 rounded-t transition-all hover:bg-[var(--life-gold)]/40"
           style={{ height: `${(d.usage / maxUsage) * 100}%`, minHeight: d.usage > 0 ? 4 : 0 }}
           title={`${d.date}: ${d.usage} uses`}
         />
@@ -219,7 +219,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
               </div>
 
               {/* Usage Chart */}
-              <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
+              <div className="bg-[var(--hivelab-surface)] rounded-lg p-4 border border-[var(--hivelab-border)]">
                 <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-4">Daily Usage</h3>
                 <MiniBarChart data={data.usage.daily} />
                 <div className="flex justify-between mt-2 text-xs text-[var(--hivelab-text-tertiary)]">
@@ -230,13 +230,13 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
 
               {/* Top Spaces */}
               {data.usage.spaces.length > 0 && (
-                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
+                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4 border border-[var(--hivelab-border)]">
                   <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-3">Top Spaces</h3>
                   <div className="space-y-3">
                     {data.usage.spaces.slice(0, 5).map((space, i) => (
                       <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-lg bg-[var(--hive-gold)]/10 flex items-center justify-center text-xs font-medium text-[var(--hive-gold)]">
+                          <div className="w-6 h-6 rounded-lg bg-[var(--life-gold)]/10 flex items-center justify-center text-xs font-medium text-[var(--life-gold)]">
                             {i + 1}
                           </div>
                           <span className="text-sm text-[var(--hivelab-text-primary)]">{space.name}</span>
@@ -250,7 +250,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
 
               {/* Feature Usage */}
               {data.usage.features.length > 0 && (
-                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
+                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4 border border-[var(--hivelab-border)]">
                   <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-3">Top Actions</h3>
                   <div className="space-y-2">
                     {data.usage.features.slice(0, 5).map((feature, i) => (
@@ -262,7 +262,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
                           </div>
                           <div className="h-1.5 bg-[var(--hivelab-bg)] rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-[var(--hive-gold)] rounded-full"
+                              className="h-full bg-[var(--life-gold)] rounded-full"
                               style={{ width: `${feature.percentage}%` }}
                             />
                           </div>
@@ -275,7 +275,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
 
               {/* Ratings */}
               {data.feedback.totalReviews > 0 && (
-                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
+                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4 border border-[var(--hivelab-border)]">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)]">Ratings</h3>
                     <span className="text-sm text-[var(--hivelab-text-secondary)]">{data.feedback.totalReviews} reviews</span>
@@ -295,7 +295,7 @@ export function ToolAnalyticsPanel({ toolId, toolName, onClose }: ToolAnalyticsP
 
               {/* Recent Comments */}
               {data.feedback.comments.length > 0 && (
-                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4border-[var(--hivelab-border)]">
+                <div className="bg-[var(--hivelab-surface)] rounded-lg p-4 border border-[var(--hivelab-border)]">
                   <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-3">Recent Reviews</h3>
                   <div className="space-y-3">
                     {data.feedback.comments.slice(0, 3).map((comment, i) => (

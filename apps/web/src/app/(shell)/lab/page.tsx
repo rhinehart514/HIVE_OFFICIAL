@@ -74,21 +74,14 @@ const fadeInUpVariants = {
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: DURATION.fast, ease: EASE },
   },
   hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: DURATION.fast, ease: EASE },
   },
-};
-
-const _listVariants = {
-  initial: { opacity: 1 },
-  animate: { opacity: 1, transition: { staggerChildren: 0.04 } },
-  hidden: { opacity: 1 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
 };
 
 const staggerItemVariants = {
@@ -96,13 +89,13 @@ const staggerItemVariants = {
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: DURATION.fast, ease: EASE },
   },
   hidden: { opacity: 0, y: 8 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: DURATION.fast, ease: EASE },
   },
 };
 
@@ -1432,7 +1425,7 @@ export default function BuilderDashboard() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-16 rounded-lg bg-white/[0.06]"
+                  className="h-16 rounded-lg bg-white/[0.06] animate-pulse"
                   style={{ animationDelay: `${i * 80}ms` }}
                 />
               ))}
@@ -1444,7 +1437,7 @@ export default function BuilderDashboard() {
               {Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-[140px] rounded-lg bg-white/[0.06]"
+                  className="h-[140px] rounded-lg bg-white/[0.06] animate-pulse"
                   style={{ animationDelay: `${i * 100}ms` }}
                 />
               ))}

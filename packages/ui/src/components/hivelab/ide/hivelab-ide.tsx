@@ -207,9 +207,9 @@ function DeploySuccessOverlay({
         <motion.div
           animate={{
             boxShadow: [
-              '0 0 0 0 rgba(212,175,55,0)',
-              '0 0 40px 20px rgba(212,175,55,0.15)',
-              '0 0 0 0 rgba(212,175,55,0)',
+              '0 0 0 0 rgba(255,215,0,0)',
+              '0 0 40px 20px rgba(255,215,0,0.15)',
+              '0 0 0 0 rgba(255,215,0,0)',
             ],
           }}
           transition={{ duration: 2, repeat: Infinity }}

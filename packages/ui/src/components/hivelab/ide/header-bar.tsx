@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronDownIcon,
   BookmarkIcon,
   RocketLaunchIcon,
   EllipsisHorizontalIcon,
@@ -261,30 +260,14 @@ export function HeaderBar({
                   title="Unsaved changes"
                 />
               )}
-              <ChevronDownIcon
-                className="h-3.5 w-3.5 transition-colors"
+              <PencilSquareIcon
+                className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity"
                 style={{ color: 'var(--hivelab-text-tertiary)' }}
               />
             </motion.button>
           )}
         </AnimatePresence>
 
-        {/* Separate "Saved" status indicator - fades after 2s per DRAMA plan */}
-        <AnimatePresence>
-          {showSavedIndicator && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-1.5 ml-3 text-xs font-medium"
-              style={{ color: 'var(--hivelab-connection)' }}
-            >
-              <CheckIcon className="h-3 w-3" />
-              <span>Saved</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Right: Auto-save Indicator + Deploy + Menu */}

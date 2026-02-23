@@ -235,7 +235,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           href="/discover"
           className="flex items-center gap-2 rounded-full px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
         >
-          <span className="h-4 w-4 rounded-full bg-[#FFD700]" aria-hidden />
+          <span className="h-4 w-4 rounded-full bg-[var(--life-gold,#FFD700)]" aria-hidden />
           <span className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
             HIVE
           </span>
@@ -287,7 +287,15 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               />
             ) : (
               <div className="text-center py-12">
-                <p className="text-white/50 text-sm">Nothing here yet</p>
+                <p className="text-white/50 text-sm mb-4">This creation is empty</p>
+                {user && tool.ownerId === user.uid && (
+                  <button
+                    onClick={() => router.push(`/lab/${toolId}`)}
+                    className="px-4 py-2 text-sm font-medium text-black bg-[var(--life-gold,#FFD700)] rounded-xl hover:opacity-90 transition-opacity"
+                  >
+                    Open in editor
+                  </button>
+                )}
               </div>
             )}
           </div>

@@ -9,11 +9,13 @@ import {
   HiveLabIDE,
   HeaderBar,
   Skeleton,
+  BrandSpinner,
   ToolDeployModal,
   ToolCanvas,
   BuilderOnboarding,
   SimpleEditor,
   detectEditorLevel,
+  useConfirmDialog,
   type HiveLabComposition,
   type IDECanvasElement,
   type IDEConnection,
@@ -288,6 +290,9 @@ export default function ToolStudioPage({ params }: Props) {
     staleTime: 300000,
   });
 
+  // Confirm dialog for unsaved changes
+  const { confirm, Dialog: ConfirmDialogEl } = useConfirmDialog();
+
   // Runtime hook for "use" mode - manages tool state and actions
   // Only active when in "use" mode and we have a composition
   const runtime = useToolRuntime({
@@ -431,15 +436,19 @@ export default function ToolStudioPage({ params }: Props) {
   );
 
   // Handle cancel/back
-  const handleCancel = useCallback(() => {
+  const handleCancel = useCallback(async () => {
     if (hasUnsavedChanges) {
-      const confirmLeave = window.confirm(
-        'You have unsaved changes. Are you sure you want to leave?'
-      );
-      if (!confirmLeave) return;
+      const confirmed = await confirm({
+        title: 'Unsaved changes',
+        description: 'You have unsaved changes. Are you sure you want to leave?',
+        variant: 'warning',
+        confirmText: 'Leave',
+        cancelText: 'Stay',
+      });
+      if (!confirmed) return;
     }
     router.push('/lab');
-  }, [router, hasUnsavedChanges]);
+  }, [router, hasUnsavedChanges, confirm]);
 
   // Handle deploy via modal
   const handleDeploy = useCallback(
@@ -533,7 +542,7 @@ export default function ToolStudioPage({ params }: Props) {
   if (toolError && !isNewTool) {
     return (
       <div className="h-screen bg-[var(--hivelab-bg)] flex items-center justify-center">
-        <div className="bg-[var(--hivelab-panel)] rounded-lg p-8 max-w-md text-centerborder-[var(--hivelab-border)]">
+        <div className="bg-[var(--hivelab-panel)] rounded-lg p-8 max-w-md text-center border border-[var(--hivelab-border)]">
           <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-red-500/10 flex items-center justify-center">
             <svg
               className="w-8 h-8 text-red-400"
@@ -571,7 +580,7 @@ export default function ToolStudioPage({ params }: Props) {
     return (
       <div className="h-screen bg-[var(--hivelab-bg)] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[var(--life-gold)] border-t-transparent rounded-full  mx-auto mb-4" />
+          <BrandSpinner size="md" variant="gold" />
           <p className="text-[var(--hivelab-text-secondary)]">Preparing canvas...</p>
         </div>
       </div>
@@ -695,7 +704,7 @@ export default function ToolStudioPage({ params }: Props) {
               </div>
 
               {/* Tool Canvas with runtime */}
-              <div className="bg-[var(--hivelab-panel)] rounded-lg p-6border-[var(--hivelab-border)]">
+              <div className="bg-[var(--hivelab-panel)] rounded-lg p-6 border border-[var(--hivelab-border)]">
                 {composition.elements.length > 0 ? (
                   <ToolCanvas
                     elements={composition.elements.map(el => ({
@@ -794,6 +803,9 @@ export default function ToolStudioPage({ params }: Props) {
         show={showOnboarding}
         onDismiss={() => setShowOnboarding(false)}
       />
+
+      {/* Confirm dialog for unsaved changes */}
+      {ConfirmDialogEl}
     </div>
   );
 }

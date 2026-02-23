@@ -17,8 +17,11 @@ import {
   Sparkles,
   ArrowRight,
   ChevronRight,
+  Radio,
+  TrendingUp,
+  Globe,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import { cn } from '@/lib/utils';
 
@@ -209,21 +212,19 @@ function categoryIcon(cat?: string): string {
   return cat ? (map[cat] || '⚡') : '⚡';
 }
 
-// Strip HTML tags and normalize whitespace from CampusLabs descriptions
 function cleanDescription(raw?: string): string | undefined {
   if (!raw) return undefined;
   const stripped = raw
-    .replace(/<[^>]*>/g, ' ')       // strip HTML tags
-    .replace(/&nbsp;/gi, ' ')       // HTML entities
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
-    .replace(/\s+/g, ' ')           // collapse whitespace
+    .replace(/\s+/g, ' ')
     .trim();
   return stripped.length > 0 ? stripped : undefined;
 }
 
-// Category → subtle warm gradient for imageless event cards
 function eventGradient(category?: string, eventType?: string): string {
   const key = (category || eventType || '').toLowerCase();
   if (key.includes('social') || key.includes('party') || key.includes('networking'))
@@ -239,6 +240,12 @@ function eventGradient(category?: string, eventType?: string): string {
   if (key.includes('food') || key.includes('dining') || key.includes('cook'))
     return 'from-orange-950/80 to-amber-950/60';
   return 'from-zinc-900/80 to-zinc-950/60';
+}
+
+function eventHref(event: FeedEvent): string {
+  if (event.spaceHandle) return `/s/${event.spaceHandle}`;
+  if (event.spaceId) return `/s/${event.spaceId}`;
+  return '/discover';
 }
 
 /* ─────────────────────────────────────────────────────────────────── */
@@ -269,75 +276,90 @@ function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, s
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0a]"
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="relative group"
     >
-      {/* Cover image or category gradient */}
-      <div className="relative h-40 w-full overflow-hidden">
-        {hasImage ? (
-          <img src={coverSrc!} alt={event.title} className="w-full h-full object-cover" />
-        ) : (
-          <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
-        )}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 30%, rgba(10,10,10,0.95) 100%)' }} />
-        {live && (
-          <span className="absolute top-3 left-3 flex items-center gap-1.5 text-[11px] font-semibold text-red-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-            Live now
-          </span>
-        )}
-      </div>
+      <Link href={eventHref(event)} className="block relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0a] hover:border-white/[0.14] transition-all duration-300">
+        {/* Cover image or category gradient */}
+        <div className="relative h-48 w-full overflow-hidden">
+          {hasImage ? (
+            <img
+              src={coverSrc!}
+              alt={event.title}
+              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+            />
+          ) : (
+            <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
+          )}
+          {/* Vignette overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
 
-      {/* Content */}
-      <div className="px-5 pt-4 pb-5">
-        {/* Time + space row */}
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <span className={`text-[12px] font-medium ${live && !hasImage ? 'text-red-400' : 'text-white/35'}`}>
-            {live && !hasImage
-              ? '● Live now'
-              : `${dayLabel(event.startDate)} · ${timeLabel(event.startDate)}`}
-          </span>
+          {/* Time badge — frosted glass */}
+          <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+            {live ? (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 backdrop-blur-md border border-red-500/20 text-[11px] font-semibold text-red-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                Live now
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/[0.08] text-[11px] font-medium text-white/70">
+                <Clock className="w-3 h-3" />
+                {dayLabel(event.startDate)} · {timeLabel(event.startDate)}
+              </span>
+            )}
+          </div>
+
+          {/* Space pill — top right */}
           {event.spaceName && (
-            <Link
-              href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'}
-              className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors shrink-0"
-            >
+            <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/[0.08]">
               <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={14} />
-              <span className="truncate max-w-[120px]">{event.spaceName}</span>
-            </Link>
+              <span className="text-[11px] text-white/60 truncate max-w-[100px]">{event.spaceName}</span>
+            </div>
           )}
         </div>
 
-        {/* Title */}
-        <h2 className="text-[20px] font-semibold text-white leading-tight tracking-[-0.01em] mb-2">
-          {event.title}
-        </h2>
+        {/* Content */}
+        <div className="px-5 pt-4 pb-5">
+          <h2 className="text-[22px] font-semibold text-white leading-tight tracking-[-0.02em] mb-1.5">
+            {event.title}
+          </h2>
 
-        {cleanDescription(event.description) && (
-          <p className="text-[13px] text-white/40 line-clamp-2 leading-relaxed mb-3">{cleanDescription(event.description)}</p>
-        )}
+          {cleanDescription(event.description) && (
+            <p className="text-[13px] text-white/40 line-clamp-2 leading-relaxed mb-3">{cleanDescription(event.description)}</p>
+          )}
 
-        {/* Meta row */}
-        <div className="flex items-center gap-3 text-[12px] text-white/30 mb-4">
-          {event.location && (
-            <span className="flex items-center gap-1">
-              {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-              <span className="truncate max-w-[140px]">{event.isOnline ? 'Online' : event.location}</span>
-            </span>
-          )}
-          {event.rsvpCount > 0 && (
-            <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount} going</span>
-          )}
+          {/* Meta row */}
+          <div className="flex items-center gap-4 text-[12px] text-white/30 mb-4">
+            {event.location && (
+              <span className="flex items-center gap-1.5">
+                {event.isOnline ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                <span className="truncate max-w-[180px]">{event.isOnline ? 'Online' : event.location}</span>
+              </span>
+            )}
+            {event.rsvpCount > 0 && (
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                {event.rsvpCount} going
+              </span>
+            )}
+            {event.friendsAttending && event.friendsAttending > 0 && (
+              <span className="flex items-center gap-1.5 text-[#FFD700]/50">
+                {event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         </div>
+      </Link>
 
-        {/* RSVP */}
-        {event.spaceId && (
+      {/* RSVP floats outside the link to prevent nested interactive */}
+      {event.spaceId && (
+        <div className="px-5 pb-5 -mt-1">
           <button
-            onClick={() => onRsvp(event.id, event.spaceId!)}
+            onClick={(e) => { e.stopPropagation(); onRsvp(event.id, event.spaceId!); }}
             className={cn(
-              'flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98]',
+              'flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[14px] font-semibold transition-all duration-200 active:scale-[0.98]',
               isGoing
-                ? 'bg-white/[0.07] border border-white/[0.10] text-white/60'
+                ? 'bg-white/[0.06] border border-white/[0.10] text-white/50 hover:bg-white/[0.08]'
                 : 'bg-white text-black hover:bg-white/90'
             )}
           >
@@ -345,8 +367,8 @@ function HeroEvent({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, s
               ? <><Check className="w-4 h-4" />Going</>
               : 'Attend'}
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -361,37 +383,76 @@ function TodayStrip({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (id: stri
   return (
     <div className="mt-6">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[12px] font-sans uppercase tracking-[0.15em] text-white/30">Today</span>
-        <span className="text-[12px] text-white/20">{events.length} event{events.length !== 1 ? 's' : ''}</span>
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">Today</span>
+        </div>
+        <span className="text-[11px] text-white/20 tabular-nums">{events.length} event{events.length !== 1 ? 's' : ''}</span>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
         {events.map((event, i) => {
           const live = isHappeningNow(event.startDate, event.endDate);
           const isGoing = event.isUserRsvped || event.userRsvp === 'going';
+          const coverSrc = event.imageUrl || event.coverImageUrl;
+
           return (
             <motion.div
               key={event.id}
-              initial={{ opacity: 0, x: 8 }}
+              initial={{ opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
-              className="shrink-0 w-[190px] rounded-xl border border-white/[0.06] bg-[#080808] p-3 flex flex-col gap-2"
+              transition={{ duration: 0.35, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+              className="shrink-0 w-[200px]"
             >
-              <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-semibold ${live ? 'text-red-400' : 'text-white/30'}`}>
-                  {live ? '● LIVE' : timeLabel(event.startDate)}
-                </span>
-                {isGoing && <Check className="w-3 h-3 text-[#FFD700]" />}
-              </div>
-              <p className="text-[13px] font-medium text-white leading-snug line-clamp-2">{event.title}</p>
-              {event.rsvpCount > 0 && (
-                <span className="text-[11px] text-white/25">{event.rsvpCount} going</span>
-              )}
+              <Link
+                href={eventHref(event)}
+                className="group block relative overflow-hidden rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-[#0a0a0a] transition-all duration-200"
+              >
+                {/* Mini cover — gradient or image */}
+                <div className="h-16 w-full overflow-hidden relative">
+                  {coverSrc ? (
+                    <img src={coverSrc} alt="" className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
+                  ) : (
+                    <div className={cn('w-full h-full bg-gradient-to-br opacity-80', eventGradient(event.category, event.eventType))} />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+                  {/* Time badge on image */}
+                  <span className={cn(
+                    'absolute top-2 left-2.5 text-[10px] font-semibold',
+                    live ? 'text-red-400' : 'text-white/50'
+                  )}>
+                    {live ? '● LIVE' : timeLabel(event.startDate)}
+                  </span>
+                  {isGoing && (
+                    <span className="absolute top-2 right-2.5">
+                      <Check className="w-3 h-3 text-[#FFD700]" />
+                    </span>
+                  )}
+                </div>
+
+                <div className="px-3 pb-3 pt-1.5">
+                  <p className="text-[13px] font-medium text-white leading-snug line-clamp-2 group-hover:text-white/90 transition-colors">
+                    {event.title}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    {event.location && (
+                      <span className="text-[10px] text-white/25 flex items-center gap-1 truncate">
+                        <MapPin className="w-2.5 h-2.5 shrink-0" />
+                        <span className="truncate max-w-[80px]">{event.isOnline ? 'Online' : event.location}</span>
+                      </span>
+                    )}
+                    {event.rsvpCount > 0 && (
+                      <span className="text-[10px] text-white/20">{event.rsvpCount} going</span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+              {/* Quick RSVP for non-going items */}
               {event.spaceId && !isGoing && (
                 <button
                   onClick={() => onRsvp(event.id, event.spaceId!)}
-                  className="mt-auto text-[11px] font-medium text-white/40 hover:text-white/70 transition-colors text-left"
+                  className="mt-1.5 w-full text-[10px] font-medium text-white/30 hover:text-white/60 transition-colors text-center py-1"
                 >
-                  RSVP →
+                  Quick RSVP
                 </button>
               )}
             </motion.div>
@@ -409,66 +470,94 @@ function TodayStrip({ events, onRsvp }: { events: FeedEvent[]; onRsvp: (id: stri
 function FeedEventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: string, spaceId: string) => void }) {
   const live = isHappeningNow(event.startDate, event.endDate);
   const isGoing = event.isUserRsvped || event.userRsvp === 'going';
+  const coverSrc = event.imageUrl || event.coverImageUrl;
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
-      {/* Cover strip — image if available, category gradient otherwise */}
-      <div className="h-24 w-full overflow-hidden flex-shrink-0">
-        {(event.imageUrl || event.coverImageUrl) ? (
-          <img src={(event.imageUrl || event.coverImageUrl)!} alt={event.title} className="w-full h-full object-cover" />
-        ) : (
-          <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
-        )}
-      </div>
+    <div className="group rounded-2xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden hover:border-white/[0.12] transition-all duration-200">
+      <Link href={eventHref(event)} className="block">
+        {/* Cover strip */}
+        <div className="h-28 w-full overflow-hidden relative">
+          {coverSrc ? (
+            <img
+              src={coverSrc}
+              alt={event.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+            />
+          ) : (
+            <div className={cn('w-full h-full bg-gradient-to-br', eventGradient(event.category, event.eventType))} />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/60 to-transparent" />
 
-      <div className="p-4">
-        {/* Space + time */}
-        <div className="flex items-center justify-between mb-2.5">
-          {event.spaceName ? (
-            <Link
-              href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'}
-              className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/50 transition-colors"
-            >
-              <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={14} />
-              <span className="truncate max-w-[160px]">{event.spaceName}</span>
-            </Link>
-          ) : <span />}
-          <span className={`text-[11px] font-medium shrink-0 ${live ? 'text-red-400' : 'text-white/30'}`}>
-            {live ? '● Live' : `${dayLabel(event.startDate)} · ${timeLabel(event.startDate)}`}
-          </span>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-[15px] font-semibold text-white leading-snug mb-1.5">{event.title}</h3>
-
-        {/* Meta */}
-        <div className="flex items-center gap-3 text-[12px] text-white/25 mb-3">
-          {event.location && (
-            <span className="flex items-center gap-1">
-              {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-              <span className="truncate max-w-[140px]">{event.isOnline ? 'Online' : event.location}</span>
+          {/* Live badge */}
+          {live && (
+            <span className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 backdrop-blur-sm border border-red-500/20 text-[10px] font-semibold text-red-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+              Live
             </span>
           )}
-          {event.rsvpCount > 0 && (
-            <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount} going</span>
-          )}
         </div>
 
-        {/* Check-in button */}
-        {event.spaceId && (
+        <div className="p-4">
+          {/* Space + time */}
+          <div className="flex items-center justify-between mb-2">
+            {event.spaceName ? (
+              <span className="flex items-center gap-1.5 text-[12px] text-white/30">
+                <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={14} />
+                <span className="truncate max-w-[160px]">{event.spaceName}</span>
+              </span>
+            ) : <span />}
+            <span className={cn(
+              'text-[11px] font-medium shrink-0',
+              live ? 'text-red-400' : 'text-white/30'
+            )}>
+              {live ? '● Live' : `${dayLabel(event.startDate)} · ${timeLabel(event.startDate)}`}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-[15px] font-semibold text-white leading-snug mb-1 group-hover:text-white/90 transition-colors">
+            {event.title}
+          </h3>
+
+          {/* Description — show first line */}
+          {cleanDescription(event.description) && (
+            <p className="text-[12px] text-white/30 line-clamp-1 leading-relaxed mb-2">{cleanDescription(event.description)}</p>
+          )}
+
+          {/* Meta */}
+          <div className="flex items-center gap-3 text-[11px] text-white/25">
+            {event.location && (
+              <span className="flex items-center gap-1">
+                {event.isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+                <span className="truncate max-w-[140px]">{event.isOnline ? 'Online' : event.location}</span>
+              </span>
+            )}
+            {event.rsvpCount > 0 && (
+              <span className="flex items-center gap-1"><Users className="w-3 h-3" />{event.rsvpCount} going</span>
+            )}
+            {event.friendsAttending && event.friendsAttending > 0 && (
+              <span className="text-[#FFD700]/40">{event.friendsAttending} friend{event.friendsAttending > 1 ? 's' : ''}</span>
+            )}
+          </div>
+        </div>
+      </Link>
+
+      {/* RSVP button — outside link */}
+      {event.spaceId && (
+        <div className="px-4 pb-4 -mt-1">
           <button
-            onClick={() => onRsvp(event.id, event.spaceId!)}
+            onClick={(e) => { e.stopPropagation(); onRsvp(event.id, event.spaceId!); }}
             className={cn(
-              'flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[13px] font-semibold transition-all active:scale-[0.98]',
+              'flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 active:scale-[0.98]',
               isGoing
-                ? 'bg-white/[0.06] border border-white/[0.08] text-white/50'
+                ? 'bg-white/[0.05] border border-white/[0.08] text-white/40 hover:bg-white/[0.07]'
                 : 'bg-white text-black hover:bg-white/90'
             )}
           >
             {isGoing ? <><Check className="w-3.5 h-3.5" />Going</> : 'Attend'}
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -479,7 +568,7 @@ function FeedEventCard({ event, onRsvp }: { event: FeedEvent; onRsvp: (id: strin
 
 function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
   return (
-    <Link href={`/t/${tool.id}`} className="group block rounded-2xl border border-white/[0.06] bg-[#080808] p-4 hover:border-white/[0.1] transition-all">
+    <Link href={`/t/${tool.id}`} className="group block rounded-2xl border border-white/[0.06] bg-[#080808] p-4 hover:border-[#FFD700]/10 hover:bg-[#FFD700]/[0.02] transition-all duration-200">
       {/* Label */}
       <div className="flex items-center justify-between mb-3">
         <span className="flex items-center gap-1.5 text-[11px] text-[#FFD700]/60 font-medium">
@@ -489,16 +578,16 @@ function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
             <span className="text-white/20 font-normal normal-case tracking-normal">· {tool.spaceOriginName}</span>
           )}
         </span>
-        <ArrowRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+        <ArrowRight className="w-3.5 h-3.5 text-white/15 group-hover:text-[#FFD700]/40 transition-colors" />
       </div>
 
       <h3 className="text-[15px] font-semibold text-white leading-snug group-hover:text-white/90">{tool.title}</h3>
       {tool.description && (
-        <p className="mt-1.5 text-[13px] text-white/30 line-clamp-2 leading-relaxed">{tool.description}</p>
+        <p className="mt-1.5 text-[12px] text-white/30 line-clamp-2 leading-relaxed">{tool.description}</p>
       )}
 
       {/* Stats */}
-      <div className="flex items-center gap-4 mt-3 text-[12px] text-white/20">
+      <div className="flex items-center gap-4 mt-3 text-[11px] text-white/20">
         {tool.useCount > 0 && (
           <span className="flex items-center gap-1"><Play className="w-3 h-3" />{tool.useCount} uses</span>
         )}
@@ -508,42 +597,11 @@ function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
       </div>
 
       {/* Participate CTA */}
-      <div className="mt-3 flex items-center gap-2 text-[13px] font-medium text-[#FFD700]/70 group-hover:text-[#FFD700] transition-colors">
+      <div className="mt-3 flex items-center gap-2 text-[12px] font-medium text-[#FFD700]/50 group-hover:text-[#FFD700]/80 transition-colors">
         <Zap className="w-3.5 h-3.5" />
-        Participate
-        <ChevronRight className="w-3.5 h-3.5" />
+        Open
+        <ChevronRight className="w-3 h-3" />
       </div>
-    </Link>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────── */
-/*  Space Discovery Card                                              */
-/* ─────────────────────────────────────────────────────────────────── */
-
-function SpaceDiscoveryCard({ space }: { space: FeedSpace }) {
-  return (
-    <Link href={`/s/${space.handle || space.id}`} className="group flex items-start gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-3.5 hover:border-white/[0.08] hover:bg-white/[0.03] transition-all">
-      <SpaceAvatar name={space.name} url={space.avatarUrl} size={36} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1">
-          <span className="text-[14px] font-medium text-white truncate">{space.name}</span>
-          {space.isVerified && <span className="text-[#FFD700] text-[11px]">✓</span>}
-        </div>
-        {space.description && (
-          <p className="text-[12px] text-white/30 line-clamp-1 mt-0.5">{space.description}</p>
-        )}
-        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-white/20">
-          <span className="flex items-center gap-1"><Users className="w-3 h-3" />{space.memberCount}</span>
-          {!!space.upcomingEventCount && space.upcomingEventCount > 0 && (
-            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{space.upcomingEventCount} upcoming</span>
-          )}
-          {!!space.mutualCount && space.mutualCount > 0 && (
-            <span className="text-[#FFD700]/50">{space.mutualCount} mutual{space.mutualCount > 1 ? 's' : ''}</span>
-          )}
-        </div>
-      </div>
-      <ChevronRight className="w-4 h-4 text-white/15 group-hover:text-white/30 transition-colors shrink-0 mt-0.5" />
     </Link>
   );
 }
@@ -569,9 +627,12 @@ function ActivityStrip({ items }: { items: ActivityItem[] }) {
   return (
     <div className="mt-6">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[12px] font-sans uppercase tracking-[0.15em] text-white/30">Recent activity</span>
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-3 h-3 text-[#FFD700]/40" />
+          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">Recent creations</span>
+        </div>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
         {items.map((item, i) => (
           <motion.div
             key={item.id}
@@ -581,21 +642,166 @@ function ActivityStrip({ items }: { items: ActivityItem[] }) {
           >
             <Link
               href={item.toolId ? `/t/${item.toolId}` : '#'}
-              className="shrink-0 w-[200px] rounded-xl border border-white/[0.06] bg-[#080808] p-3 flex flex-col gap-2 hover:border-white/[0.1] transition-all block"
+              className="shrink-0 w-[190px] rounded-xl border border-white/[0.06] bg-[#080808] p-3 flex flex-col gap-2 hover:border-[#FFD700]/10 hover:bg-[#FFD700]/[0.02] transition-all duration-200 block"
             >
               <div className="flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-[#FFD700]/60" />
+                <Sparkles className="w-3 h-3 text-[#FFD700]/50" />
                 <span className="text-[10px] text-white/30">{relativeTime(item.timestamp)}</span>
               </div>
               <p className="text-[13px] font-medium text-white leading-snug line-clamp-2">{item.headline}</p>
               {item.toolName && (
-                <span className="text-[11px] text-[#FFD700]/50 truncate">{item.toolName}</span>
+                <span className="text-[10px] text-[#FFD700]/40 truncate">{item.toolName}</span>
               )}
             </Link>
           </motion.div>
         ))}
       </div>
     </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Right Rail                                                         */
+/* ─────────────────────────────────────────────────────────────────── */
+
+function FeedRightRail({
+  events,
+  spaces,
+  todayCount,
+  totalCount,
+}: {
+  events: FeedEvent[];
+  spaces: FeedSpace[];
+  todayCount: number;
+  totalCount: number;
+}) {
+  // Next few events excluding today
+  const upcoming = events.filter(e => !isToday(e.startDate)).slice(0, 4);
+  const topSpaces = spaces.slice(0, 5);
+
+  return (
+    <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0 sticky top-6 self-start order-2 gap-0">
+
+      {/* Campus pulse — always shows something */}
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 mb-5">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-6 h-6 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
+            <Radio className="w-3 h-3 text-[#FFD700]/70" />
+          </div>
+          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">Campus pulse</span>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <span className="text-[28px] font-semibold text-white tracking-tight tabular-nums leading-none">
+            {todayCount > 0 ? todayCount : totalCount}
+          </span>
+          <span className="text-[12px] text-white/35">
+            {todayCount > 0 ? `event${todayCount !== 1 ? 's' : ''} today` : `upcoming event${totalCount !== 1 ? 's' : ''}`}
+          </span>
+        </div>
+        {topSpaces.length > 0 && (
+          <div className="flex items-center gap-1 mt-3 text-[11px] text-white/25">
+            <TrendingUp className="w-3 h-3" />
+            <span>{topSpaces.length} active space{topSpaces.length !== 1 ? 's' : ''}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Next up */}
+      <div className="mb-5">
+        <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25 mb-3">Next up</p>
+        {upcoming.length > 0 ? (
+          <div className="flex flex-col gap-1">
+            {upcoming.map((ev) => (
+              <Link
+                key={ev.id}
+                href={eventHref(ev)}
+                className="group flex items-start gap-2.5 rounded-lg px-2 py-2 -mx-2 hover:bg-white/[0.03] transition-colors"
+              >
+                <span className="text-[11px] text-white/30 shrink-0 tabular-nums w-14 pt-px">
+                  {dayLabel(ev.startDate) === 'Tomorrow' ? 'Tmrw' : dayLabel(ev.startDate).split(',')[0]}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] text-white/60 group-hover:text-white/90 transition-colors truncate leading-snug">
+                    {ev.title}
+                  </p>
+                  <span className="text-[10px] text-white/20">{timeLabel(ev.startDate)}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] px-3 py-3">
+            <p className="text-[12px] text-white/25">No upcoming events yet</p>
+            <p className="text-[10px] text-white/15 mt-0.5">Events from your spaces will appear here</p>
+          </div>
+        )}
+      </div>
+
+      {/* Hairline */}
+      <div className="h-px bg-white/[0.05] mb-5" />
+
+      {/* Spaces to explore */}
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25">Spaces</p>
+          <Link href="/spaces" className="text-[10px] text-white/20 hover:text-white/40 transition-colors">
+            Browse all
+          </Link>
+        </div>
+        {topSpaces.length > 0 ? (
+          <div className="flex flex-col gap-1">
+            {topSpaces.map(sp => (
+              <Link
+                key={sp.id}
+                href={`/s/${sp.handle || sp.id}`}
+                className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 -mx-2 hover:bg-white/[0.03] transition-colors"
+              >
+                <div className="h-6 w-6 rounded-full overflow-hidden flex-shrink-0 bg-white/[0.06] flex items-center justify-center">
+                  {sp.avatarUrl
+                    ? <img src={sp.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    : <span className="text-[9px] text-white/40 font-medium">{sp.name?.[0]}</span>
+                  }
+                </div>
+                <span className="text-[12px] text-white/50 group-hover:text-white/80 transition-colors line-clamp-1 flex-1 min-w-0">
+                  {sp.name}
+                </span>
+                {sp.isVerified && <span className="text-[10px] text-[#FFD700]/50">✓</span>}
+                {sp.upcomingEventCount && sp.upcomingEventCount > 0 ? (
+                  <span className="text-[10px] text-white/20 tabular-nums">{sp.upcomingEventCount} events</span>
+                ) : (
+                  <span className="text-[10px] text-white/15 tabular-nums">{sp.memberCount}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg bg-white/[0.02] border border-white/[0.04] px-3 py-3">
+            <p className="text-[12px] text-white/25">Discover campus communities</p>
+            <Link href="/spaces" className="text-[10px] text-[#FFD700]/40 hover:text-[#FFD700]/60 transition-colors mt-1 inline-flex items-center gap-1">
+              Explore spaces <ArrowRight className="w-2.5 h-2.5" />
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Hairline */}
+      <div className="h-px bg-white/[0.05] mb-5" />
+
+      {/* Create CTA */}
+      <Link
+        href="/lab"
+        className="group flex items-center gap-3 rounded-xl border border-[#FFD700]/[0.08] bg-[#FFD700]/[0.03] px-3.5 py-3 hover:border-[#FFD700]/[0.15] hover:bg-[#FFD700]/[0.05] transition-all duration-200"
+      >
+        <div className="w-8 h-8 rounded-lg bg-[#FFD700]/10 flex items-center justify-center shrink-0">
+          <Zap className="w-4 h-4 text-[#FFD700]/70" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[12px] font-medium text-white/70 group-hover:text-white/90 transition-colors">Build something</p>
+          <p className="text-[10px] text-white/25">AI-powered creation in 30s</p>
+        </div>
+        <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-[#FFD700]/40 transition-colors shrink-0" />
+      </Link>
+    </aside>
   );
 }
 
@@ -670,24 +876,42 @@ function EmptyState() {
 
   if (fallbackEvents.length === 0 && fallbackTools.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-4 text-xl">🌱</div>
-        <p className="text-[15px] text-white/50 font-medium">Nothing yet</p>
-        <p className="text-[13px] text-white/25 mt-1 max-w-[240px]">
-          Events, tools, and spaces from your campus will show up here
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="flex flex-col items-center justify-center py-20 px-6 text-center"
+      >
+        <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-5">
+          <Globe className="w-6 h-6 text-white/20" />
+        </div>
+        <p className="text-[16px] text-white/60 font-medium">Your campus feed is warming up</p>
+        <p className="text-[13px] text-white/25 mt-2 max-w-[280px] leading-relaxed">
+          Join spaces and RSVP to events — your personalized feed builds from there
         </p>
-        <Link href="/lab" className="mt-5 flex items-center gap-1.5 text-[13px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors font-medium">
-          Create something <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
+        <div className="flex items-center gap-3 mt-6">
+          <Link href="/spaces" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] text-white/60 hover:text-white/80 hover:bg-white/[0.08] transition-all font-medium">
+            Browse spaces
+          </Link>
+          <Link href="/lab" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FFD700]/10 border border-[#FFD700]/[0.12] text-[13px] text-[#FFD700]/70 hover:text-[#FFD700] hover:bg-[#FFD700]/15 transition-all font-medium">
+            <Zap className="w-3.5 h-3.5" />
+            Create something
+          </Link>
+        </div>
+      </motion.div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-4 mb-2">
-        <p className="text-[13px] text-white/40">Here&apos;s what&apos;s happening across campus — personalized picks appear as you join spaces and create tools.</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-4 mb-1"
+      >
+        <p className="text-[13px] text-white/35">Here&apos;s what&apos;s happening across campus — personalized picks appear as you join spaces and RSVP to events.</p>
+      </motion.div>
       {fallbackEvents.map((event, i) => (
         <motion.div
           key={event.id}
@@ -718,13 +942,39 @@ function EmptyState() {
 
 function FeedSkeleton() {
   return (
-    <div className="space-y-3 animate-pulse">
-      <div className="rounded-2xl bg-white/[0.03] border border-white/[0.04] h-[200px]" />
-      <div className="flex gap-3 overflow-hidden">
-        {[0, 1, 2].map(i => <div key={i} className="shrink-0 w-[190px] h-[110px] rounded-xl bg-white/[0.03] border border-white/[0.04]" />)}
+    <div className="space-y-3">
+      {/* Hero skeleton */}
+      <div className="rounded-2xl bg-white/[0.02] border border-white/[0.04] overflow-hidden">
+        <div className="h-48 bg-white/[0.03] animate-pulse" />
+        <div className="p-5 space-y-3">
+          <div className="h-3 w-24 bg-white/[0.04] rounded animate-pulse" />
+          <div className="h-5 w-3/4 bg-white/[0.04] rounded animate-pulse" />
+          <div className="h-3 w-1/2 bg-white/[0.03] rounded animate-pulse" />
+          <div className="h-10 w-full bg-white/[0.04] rounded-xl animate-pulse mt-2" />
+        </div>
       </div>
-      {[0, 1, 2].map(i => (
-        <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/[0.04]" style={{ height: 130 + i * 20 }} />
+      {/* Strip skeleton */}
+      <div className="flex gap-2.5 overflow-hidden mt-6">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="shrink-0 w-[200px] rounded-xl bg-white/[0.02] border border-white/[0.04] overflow-hidden">
+            <div className="h-16 bg-white/[0.03] animate-pulse" />
+            <div className="p-3 space-y-2">
+              <div className="h-3 w-3/4 bg-white/[0.04] rounded animate-pulse" />
+              <div className="h-2 w-1/2 bg-white/[0.03] rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Card skeletons */}
+      {[0, 1].map(i => (
+        <div key={i} className="rounded-2xl bg-white/[0.02] border border-white/[0.04] overflow-hidden mt-3">
+          <div className="h-28 bg-white/[0.03] animate-pulse" />
+          <div className="p-4 space-y-2">
+            <div className="h-3 w-32 bg-white/[0.04] rounded animate-pulse" />
+            <div className="h-4 w-2/3 bg-white/[0.04] rounded animate-pulse" />
+            <div className="h-9 w-full bg-white/[0.04] rounded-xl animate-pulse mt-1" />
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -742,7 +992,6 @@ type FeedItem =
 const TODAY_STRIP_MAX = 5;
 
 function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], heroId: string, todayStripCount: number = 0): FeedItem[] {
-  // Remaining events: exclude hero + the first N today events shown in the strip
   const todayIds = events
     .filter(e => isToday(e.startDate) && e.id !== heroId)
     .slice(0, todayStripCount)
@@ -752,20 +1001,15 @@ function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], 
 
   const items: FeedItem[] = [];
   let toolIdx = 0;
-  let spaceIdx = 0;
 
   for (let i = 0; i < remaining.length; i++) {
     items.push({ type: 'event', data: remaining[i] });
 
-    // Every 3 events, drop a tool
     if ((i + 1) % 3 === 0 && toolIdx < tools.length) {
       items.push({ type: 'tool', data: tools[toolIdx++] });
     }
-
-    // Space discovery lives in the Spaces tab — not interleaved in feed
   }
 
-  // Append remaining tools at end
   while (toolIdx < tools.length) items.push({ type: 'tool', data: tools[toolIdx++] });
 
   return items;
@@ -803,7 +1047,6 @@ export default function DiscoverPage() {
   const tools = toolsQuery.data || [];
   const activity = activityQuery.data || [];
 
-  // Pick hero: live first, then earliest upcoming
   const heroEvent = useMemo(() => {
     const live = events.find(e => isHappeningNow(e.startDate, e.endDate));
     return live || events[0] || null;
@@ -822,143 +1065,96 @@ export default function DiscoverPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="w-6 h-6 rounded-full border-2 border-white/[0.06] border-t-white/40 animate-spin" />
+        <div className="w-5 h-5 rounded-full border-2 border-white/[0.06] border-t-white/30 animate-spin" />
       </div>
     );
   }
 
   const todayCount = events.filter(e => isToday(e.startDate)).length;
-  const upcomingThree = events.filter(e => !isToday(e.startDate) && e.id !== heroEvent?.id).slice(0, 3);
 
   return (
-    <div className="flex gap-8 w-full px-4 py-6 md:px-8">
+    <div className="flex gap-10 w-full px-4 py-6 md:px-8">
 
-    {/* ── Right panel: desktop ambient layer ── */}
-    <aside className="hidden lg:flex flex-col w-[280px] flex-shrink-0 sticky top-6 self-start order-2">
+      {/* Right rail */}
+      <FeedRightRail
+        events={events}
+        spaces={spaces}
+        todayCount={todayCount}
+        totalCount={events.length}
+      />
 
-      {/* Next up */}
-      <div>
-        <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25 mb-3">Next up</p>
-        {upcomingThree.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {upcomingThree.map(ev => (
-              <Link key={ev.id} href={ev.spaceHandle ? `/s/${ev.spaceHandle}` : '/discover'} className="flex items-baseline gap-2 group">
-                <span className="text-[12px] text-white/35 shrink-0 tabular-nums w-12">{timeLabel(ev.startDate)}</span>
-                <span className="text-[12px] text-white/70 group-hover:text-white transition-colors truncate">{ev.title}</span>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p className="text-[12px] text-white/20">Nothing coming up</p>
-        )}
-      </div>
-
-      {/* Hairline */}
-      <div className="h-px bg-white/[0.06] my-5" />
-
-      {/* Active spaces */}
-      <div>
-        <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25 mb-3">Active spaces</p>
-        {spaces.length > 0 ? (
-          <div className="flex flex-col gap-2.5">
-            {spaces.slice(0, 4).map(sp => (
-              <Link key={sp.id} href={`/s/${sp.handle || sp.id}`} className="flex items-center gap-2 group">
-                <div className="h-5 w-5 rounded-full overflow-hidden flex-shrink-0 bg-white/[0.08] flex items-center justify-center">
-                  {sp.avatarUrl
-                    ? <img src={sp.avatarUrl} alt="" className="h-full w-full object-cover" />
-                    : <span className="text-[9px] text-white/40 font-medium">{sp.name?.[0]}</span>
-                  }
-                </div>
-                <span className="text-[12px] text-white/70 group-hover:text-white transition-colors line-clamp-1 flex-1 min-w-0">{sp.name}</span>
-                <span className="text-[12px] text-white/25">{sp.memberCount}</span>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p className="text-[12px] text-white/20">No active spaces</p>
-        )}
-      </div>
-
-      {/* Hairline */}
-      <div className="h-px bg-white/[0.06] my-5" />
-
-      {/* On campus */}
-      <div>
-        <p className="font-sans text-[11px] uppercase tracking-[0.14em] text-white/25 mb-2">On campus</p>
-        <p className="text-[12px] text-white/50">
-          {todayCount > 0
-            ? `${todayCount} event${todayCount !== 1 ? 's' : ''} today`
-            : events.length > 0
-              ? `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`
-              : 'Check back soon'}
-        </p>
-      </div>
-
-    </aside>
-
-    {/* ── Main feed ── */}
-    <div className="flex-1 min-w-0 max-w-[680px] order-1">
-      {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-[13px] font-sans uppercase tracking-[0.15em] text-white/30">What&apos;s happening at UB</h1>
-      </div>
-
-      {isLoading ? (
-        <FeedSkeleton />
-      ) : !heroEvent && feed.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="space-y-3">
-          {/* Hero */}
-          {heroEvent && <HeroEvent event={heroEvent} onRsvp={handleRsvp} />}
-
-          {/* Today strip */}
-          {todayEvents.length > 0 && <TodayStrip events={todayEvents} onRsvp={handleRsvp} />}
-
-          {/* Recent creations */}
-          {activity.length > 0 && <ActivityStrip items={activity} />}
-
-          {/* Feed body */}
-          {feed.length > 0 && (
-            <div className="space-y-3 pt-2">
-              {(() => {
-                let lastDay = '';
-                return feed.map((item, i) => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  let dayDivider: any = null;
-                  if (item.type === 'event') {
-                    const day = dayLabel(item.data.startDate);
-                    if (day !== lastDay && day !== 'Today') {
-                      lastDay = day;
-                      dayDivider = (
-                        <div key={`divider-${day}`} className="flex items-center gap-3 pt-2">
-                          <span className="text-[11px] uppercase tracking-[0.12em] text-white/25">{day}</span>
-                          <div className="flex-1 h-px bg-white/[0.04]" />
-                        </div>
-                      );
-                    }
-                  }
-                  return (
-                    <div key={`${item.type}-${item.data.id}`}>
-                      {dayDivider}
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
-                      >
-                        {item.type === 'event' && <FeedEventCard event={item.data} onRsvp={handleRsvp} />}
-                        {item.type === 'tool' && <EmbeddedToolCard tool={item.data} />}
-                      </motion.div>
-                    </div>
-                  );
-                });
-              })()}
-              {/* FeedTease removed */}
-            </div>
+      {/* Main feed */}
+      <div className="flex-1 min-w-0 max-w-[680px] order-1">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="mb-6 flex items-center justify-between"
+        >
+          <h1 className="text-[13px] font-sans uppercase tracking-[0.14em] text-white/25">Feed</h1>
+          {todayCount > 0 && (
+            <span className="text-[11px] text-white/20 flex items-center gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
+              {todayCount} event{todayCount !== 1 ? 's' : ''} today
+            </span>
           )}
-        </div>
-      )}
-    </div>
+        </motion.div>
+
+        {isLoading ? (
+          <FeedSkeleton />
+        ) : !heroEvent && feed.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div className="space-y-3">
+            {/* Hero */}
+            {heroEvent && <HeroEvent event={heroEvent} onRsvp={handleRsvp} />}
+
+            {/* Today strip */}
+            {todayEvents.length > 0 && <TodayStrip events={todayEvents} onRsvp={handleRsvp} />}
+
+            {/* Recent creations */}
+            {activity.length > 0 && <ActivityStrip items={activity} />}
+
+            {/* Feed body */}
+            {feed.length > 0 && (
+              <div className="space-y-3 pt-2">
+                {(() => {
+                  let lastDay = '';
+                  return feed.map((item, i) => {
+                    let dayDivider: React.ReactNode = null;
+                    if (item.type === 'event') {
+                      const day = dayLabel(item.data.startDate);
+                      if (day !== lastDay && day !== 'Today') {
+                        lastDay = day;
+                        dayDivider = (
+                          <div key={`divider-${day}`} className="flex items-center gap-3 pt-3 pb-1">
+                            <span className="text-[11px] uppercase tracking-[0.12em] text-white/20 font-medium">{day}</span>
+                            <div className="flex-1 h-px bg-white/[0.04]" />
+                          </div>
+                        );
+                      }
+                    }
+                    return (
+                      <div key={`${item.type}-${item.data.id}`}>
+                        {dayDivider}
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
+                        >
+                          {item.type === 'event' && <FeedEventCard event={item.data} onRsvp={handleRsvp} />}
+                          {item.type === 'tool' && <EmbeddedToolCard tool={item.data} />}
+                        </motion.div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
