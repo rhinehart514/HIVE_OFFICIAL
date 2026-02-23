@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ArrowPathIcon, ExclamationTriangleIcon, ViewfinderCircleIcon } from '@heroicons/react/24/outline';
 
 // Aliases for lucide compatibility
@@ -58,6 +58,11 @@ const elementVariants = {
 // TYPES
 // ============================================================================
 
+export interface NavigationAction {
+  type: 'navigate';
+  targetPageId: string;
+}
+
 export interface ToolElement {
   elementId: string;
   instanceId: string;
@@ -66,6 +71,19 @@ export interface ToolElement {
   size?: { width: number; height: number };
   /** Visibility conditions for conditional rendering */
   visibilityConditions?: VisibilityCondition[] | ConditionGroup;
+  /** Navigation action on interaction */
+  onAction?: NavigationAction;
+}
+
+export interface ToolPage {
+  id: string;
+  name: string;
+  elements: ToolElement[];
+  connections?: Array<{
+    from: { instanceId: string; port: string };
+    to: { instanceId: string; port: string };
+  }>;
+  isStartPage?: boolean;
 }
 
 export interface ToolCanvasContext {
@@ -92,6 +110,8 @@ export interface ToolCanvasContext {
 export interface ToolCanvasProps {
   /** Array of elements to render */
   elements: ToolElement[];
+  /** Pages for multi-page tools (if present, overrides elements) */
+  pages?: ToolPage[];
   /** Current state for all elements, keyed by instanceId */
   state: Record<string, unknown>;
   /** Layout mode for the canvas */
@@ -345,23 +365,71 @@ function ElementWrapper({
   elementDefinitions?: ElementProps['elementDefinitions'];
 }) {
   // Evaluate visibility conditions if present
+  // Supports both runtimeContext fields and state-based conditions (e.g., "state.poll-1.counters.hasVoted")
   const isVisible = React.useMemo(() => {
     const conditions = element.visibilityConditions;
     if (!conditions) return true;
 
-    // Need runtime context to evaluate conditions
+    // Build an extended context that includes shared/user state paths
     const runtimeContext = context?.runtimeContext;
-    if (!runtimeContext) return true; // Show by default if no context
 
-    // Handle both array of conditions (implicit AND) and ConditionGroup
+    // Resolve a state-based field path like "state.{instanceId}.counters.{key}" or "userState.participation.{key}"
+    const resolveStateField = (field: string): unknown => {
+      if (field.startsWith('state.') && sharedState) {
+        const parts = field.split('.');
+        const instanceId = parts[1];
+        const category = parts[2]; // 'counters', 'lists', etc.
+        const key = parts.slice(3).join('.');
+        const stateObj = sharedState as unknown as Record<string, Record<string, unknown>>;
+        return stateObj?.[category]?.[`${instanceId}:${key}`];
+      }
+      if (field.startsWith('userState.') && userState) {
+        const parts = field.split('.');
+        const category = parts[1]; // 'participation', 'preferences', etc.
+        const key = parts.slice(2).join('.');
+        const stateObj = userState as unknown as Record<string, Record<string, unknown>>;
+        return stateObj?.[category]?.[key];
+      }
+      return undefined;
+    };
+
+    const evaluateWithState = (condition: VisibilityCondition): boolean => {
+      // Check if field is a state path
+      if (condition.field.startsWith('state.') || condition.field.startsWith('userState.')) {
+        const value = resolveStateField(condition.field);
+        const { operator, value: expected } = condition;
+        switch (operator) {
+          case 'equals': return value === expected;
+          case 'notEquals': return value !== expected;
+          case 'exists': return value !== undefined && value !== null;
+          case 'notExists': return value === undefined || value === null;
+          case 'greaterThan': return typeof value === 'number' && typeof expected === 'number' && value > expected;
+          case 'lessThan': return typeof value === 'number' && typeof expected === 'number' && value < expected;
+          default: return true;
+        }
+      }
+      // Fall back to runtimeContext evaluation
+      if (!runtimeContext) return true;
+      return evaluateCondition(condition, runtimeContext);
+    };
+
     if (Array.isArray(conditions)) {
-      // Array of conditions - all must be true (AND logic)
-      return conditions.every((condition) => evaluateCondition(condition, runtimeContext));
+      return conditions.every(evaluateWithState);
     }
 
-    // ConditionGroup with explicit logic
+    // ConditionGroup — if any conditions reference state, evaluate with state resolver
+    if (!runtimeContext) {
+      // Without runtime context, evaluate state-based conditions only
+      const group = conditions as ConditionGroup;
+      const conditionsList = group.conditions || [];
+      if (conditionsList.length === 0) return true;
+      const results = conditionsList.map((c) =>
+        'field' in c ? evaluateWithState(c as VisibilityCondition) : true
+      );
+      return group.logic === 'or' ? results.some(Boolean) : results.every(Boolean);
+    }
     return evaluateConditionGroup(conditions, runtimeContext);
-  }, [element.visibilityConditions, context?.runtimeContext]);
+  }, [element.visibilityConditions, context?.runtimeContext, sharedState, userState]);
 
   // Don't render hidden elements
   if (!isVisible) {
@@ -641,8 +709,16 @@ function CanvasEmpty() {
  * - grid: 12-column grid with position/size
  * - flow: Flex wrap for horizontal flow
  */
+// Page transition variants for multi-page navigation
+const pageTransition = {
+  initial: { opacity: 0, x: 40 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.25, ease: [0.23, 1, 0.32, 1] } },
+  exit: { opacity: 0, x: -40, transition: { duration: 0.15 } },
+};
+
 export function ToolCanvas({
   elements,
+  pages,
   state,
   layout = 'stack',
   onElementChange,
@@ -658,6 +734,30 @@ export function ToolCanvas({
   connections,
   theme,
 }: ToolCanvasProps) {
+  // Multi-page state
+  const isMultiPage = pages && pages.length > 1;
+  const [currentPageId, setCurrentPageId] = React.useState<string>(() => {
+    if (!pages?.length) return '';
+    return pages.find((p) => p.isStartPage)?.id || pages[0].id;
+  });
+
+  // Resolve which elements to render: page-scoped or flat
+  const activeElements = React.useMemo(() => {
+    if (isMultiPage) {
+      const page = pages!.find((p) => p.id === currentPageId) || pages![0];
+      return page?.elements || [];
+    }
+    return elements;
+  }, [isMultiPage, pages, currentPageId, elements]);
+
+  const activeConnections = React.useMemo(() => {
+    if (isMultiPage) {
+      const page = pages!.find((p) => p.id === currentPageId) || pages![0];
+      return page?.connections || [];
+    }
+    return connections;
+  }, [isMultiPage, pages, currentPageId, connections]);
+
   // Build CSS variable style object from theme
   const themeStyle = React.useMemo(() => {
     if (!theme?.cssVariables) return undefined;
@@ -666,14 +766,28 @@ export function ToolCanvas({
 
   // Resolve element-to-element connections so source outputs flow into target inputs.
   const elementDefinitions = React.useMemo(
-    () => elements.map((el) => ({ instanceId: el.instanceId, elementId: el.elementId })),
-    [elements]
+    () => activeElements.map((el) => ({ instanceId: el.instanceId, elementId: el.elementId })),
+    [activeElements]
   );
   const resolvedInputs = useConnectionResolver(
-    connections,
+    activeConnections as ElementProps['connections'],
     sharedState,
     state,
     elementDefinitions
+  );
+
+  // Navigation handler — intercepts element actions to handle page navigation
+  const handleElementAction = React.useCallback(
+    (instanceId: string, action: string, payload: unknown) => {
+      // Check if this element has a navigation action
+      const element = activeElements.find((el) => el.instanceId === instanceId);
+      if (element?.onAction?.type === 'navigate' && element.onAction.targetPageId) {
+        setCurrentPageId(element.onAction.targetPageId);
+      }
+      // Always fire the original action (e.g., form submit still saves data)
+      onElementAction?.(instanceId, action, payload);
+    },
+    [activeElements, onElementAction]
   );
 
   if (isLoading) {
@@ -684,22 +798,20 @@ export function ToolCanvas({
     return <CanvasError error={error} onRetry={onRetry} />;
   }
 
-  if (!elements || elements.length === 0) {
+  if (!activeElements || activeElements.length === 0) {
     return <CanvasEmpty />;
   }
 
   const layoutProps = {
-    elements,
+    elements: activeElements,
     state,
     onElementChange,
-    onElementAction,
+    onElementAction: handleElementAction,
     onElementOutput,
     context,
-    // Phase 1: SharedState Architecture
     sharedState,
     userState,
-    connections,
-    // Connection resolver output — injects source data into target elements
+    connections: activeConnections as ElementProps['connections'],
     resolvedInputs,
   };
 
@@ -709,9 +821,16 @@ export function ToolCanvas({
       style={themeStyle}
       data-theme-source={theme?.source}
     >
-      {layout === 'grid' && <GridLayout {...layoutProps} />}
-      {layout === 'flow' && <FlowLayout {...layoutProps} />}
-      {layout === 'stack' && <StackLayout {...layoutProps} />}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={isMultiPage ? currentPageId : 'single'}
+          {...(isMultiPage ? pageTransition : { initial: false, animate: { opacity: 1 } })}
+        >
+          {layout === 'grid' && <GridLayout {...layoutProps} />}
+          {layout === 'flow' && <FlowLayout {...layoutProps} />}
+          {layout === 'stack' && <StackLayout {...layoutProps} />}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

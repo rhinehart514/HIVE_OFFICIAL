@@ -31,12 +31,21 @@ export interface ValidationWarning {
   suggestion?: string;
 }
 
+export interface ToolCompositionPage {
+  id: string;
+  name: string;
+  elements: CanvasElement[];
+  connections: Connection[];
+  isStartPage?: boolean;
+}
+
 export interface ToolComposition {
   elements: CanvasElement[];
   connections: Connection[];
   name: string;
   description: string;
   layout: 'grid' | 'flow' | 'tabs' | 'sidebar';
+  pages?: ToolCompositionPage[];
 }
 
 export interface CanvasElement {
@@ -45,6 +54,7 @@ export interface CanvasElement {
   config: Record<string, unknown>;
   position: { x: number; y: number };
   size: { width: number; height: number };
+  onAction?: { type: 'navigate'; targetPageId: string };
 }
 
 export interface Connection {

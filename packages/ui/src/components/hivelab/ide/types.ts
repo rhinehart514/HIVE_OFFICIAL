@@ -28,6 +28,9 @@ export interface CanvasElement {
   contextRequirements?: ContextRequirements;
   /** Conditions that determine when this element is visible */
   visibilityConditions?: VisibilityCondition[] | ConditionGroup;
+
+  /** Action to perform when element interaction occurs (e.g., navigate to page) */
+  onAction?: NavigationAction;
 }
 
 export interface Connection {
@@ -160,6 +163,19 @@ export const DEFAULT_CANVAS_STATE: CanvasState = {
   gridSize: 20,
 };
 
+export interface NavigationAction {
+  type: 'navigate';
+  targetPageId: string;
+}
+
+export interface Page {
+  id: string;
+  name: string;
+  elements: CanvasElement[];
+  connections: Connection[];
+  isStartPage?: boolean;
+}
+
 export interface HiveLabComposition {
   id: string;
   name: string;
@@ -167,6 +183,7 @@ export interface HiveLabComposition {
   elements: CanvasElement[];
   connections: Connection[];
   layout: 'flow';
+  pages?: Page[];
 }
 
 export const DEFAULT_IDE_STATE: IDEState = {

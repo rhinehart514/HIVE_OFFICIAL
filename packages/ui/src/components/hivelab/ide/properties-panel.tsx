@@ -39,11 +39,18 @@ function useNudgeFeedback() {
   return { nudgeDirection, triggerNudge };
 }
 
+interface PageInfo {
+  id: string;
+  name: string;
+}
+
 interface PropertiesPanelProps {
   selectedElement: CanvasElement | null;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onDeleteElement: (id: string) => void;
   onDuplicateElement: (id: string) => void;
+  /** Available pages for navigation configuration */
+  pages?: PageInfo[];
   /** Sprint 3: Connections targeting this element */
   elementConnections?: ConnectionWithMetadata[];
   /** Sprint 3: Loading state for connections */
@@ -553,6 +560,7 @@ function AdvancedSection({
   onTestConnection,
   onAddConnection,
   onRefreshConnections,
+  pages,
 }: {
   selectedElement: CanvasElement;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
@@ -564,9 +572,12 @@ function AdvancedSection({
   onTestConnection?: (connectionId: string) => void;
   onAddConnection?: () => void;
   onRefreshConnections?: () => void;
+  pages?: PageInfo[];
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [activeTab, setActiveTab] = useState<'context' | 'visibility' | 'connections'>('context');
+  const hasPages = pages && pages.length > 1;
+  type AdvancedTab = 'context' | 'visibility' | 'connections' | 'navigation';
+  const [activeTab, setActiveTab] = useState<AdvancedTab>('context');
   const prefersReducedMotion = useReducedMotion();
 
   // Count configured items for badge
@@ -658,8 +669,8 @@ function AdvancedSection({
 
       {/* Tab bar */}
       <div className="flex px-4 pt-2 gap-1">
-        {(['context', 'visibility', 'connections'] as const).map((tab) => {
-          const count = tab === 'context' ? contextCount : tab === 'visibility' ? visibilityCount : connectionCount;
+        {([...(['context', 'visibility', 'connections'] as const), ...(hasPages ? ['navigation' as const] : [])] as AdvancedTab[]).map((tab) => {
+          const count = tab === 'context' ? contextCount : tab === 'visibility' ? visibilityCount : tab === 'connections' ? connectionCount : (selectedElement.onAction ? 1 : 0);
           return (
             <button
               key={tab}
@@ -734,6 +745,60 @@ function AdvancedSection({
               transition={{ duration: 0.15 }}
             >
               <div className="p-4 text-sm opacity-50">Connections removed</div>
+            </motion.div>
+          )}
+
+          {activeTab === 'navigation' && hasPages && (
+            <motion.div
+              key="navigation"
+              initial={prefersReducedMotion ? {} : { opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={prefersReducedMotion ? {} : { opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="space-y-3">
+                <p
+                  className="text-xs"
+                  style={{ color: 'var(--hivelab-text-tertiary)' }}
+                >
+                  Navigate to another page when the user interacts with this element.
+                </p>
+                <div>
+                  <label
+                    className="text-label-xs font-medium uppercase tracking-wider mb-1.5 block"
+                    style={{ color: 'var(--hivelab-text-tertiary)' }}
+                  >
+                    On interaction, go to
+                  </label>
+                  <select
+                    value={selectedElement.onAction?.targetPageId || ''}
+                    onChange={(e) => {
+                      const targetPageId = e.target.value;
+                      onUpdateElement(selectedElement.id, {
+                        onAction: targetPageId
+                          ? { type: 'navigate', targetPageId }
+                          : undefined,
+                      });
+                    }}
+                    className={cn(
+                      'w-full rounded-lg px-3 py-2 text-sm cursor-pointer outline-none transition-all duration-200',
+                      focusRing
+                    )}
+                    style={{
+                      backgroundColor: 'var(--hivelab-surface-hover)',
+                      border: '1px solid var(--hivelab-border)',
+                      color: 'var(--hivelab-text-primary)',
+                    }}
+                  >
+                    <option value="">No navigation</option>
+                    {pages!.map((page) => (
+                      <option key={page.id} value={page.id}>
+                        {page.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -830,6 +895,7 @@ export function PropertiesPanel({
   onTestConnection,
   onAddConnection,
   onRefreshConnections,
+  pages,
 }: PropertiesPanelProps) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -1180,6 +1246,7 @@ export function PropertiesPanel({
           onTestConnection={onTestConnection}
           onAddConnection={onAddConnection}
           onRefreshConnections={onRefreshConnections}
+          pages={pages}
         />
       </div>
 

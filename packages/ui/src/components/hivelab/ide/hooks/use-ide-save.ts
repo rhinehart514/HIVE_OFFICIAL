@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { CanvasElement, Connection } from '../types';
+import type { CanvasElement, Connection, Page } from '../types';
 import type { HiveLabComposition } from '../types';
 import { toast } from 'sonner';
 
@@ -11,6 +11,7 @@ interface UseIDESaveOptions {
   toolDescription: string;
   elements: CanvasElement[];
   connections: Connection[];
+  pages?: Page[];
   onSave: (composition: HiveLabComposition) => Promise<void>;
 }
 
@@ -20,6 +21,7 @@ export function useIDESave({
   toolDescription,
   elements,
   connections,
+  pages,
   onSave,
 }: UseIDESaveOptions) {
   const [saving, setSaving] = useState(false);
@@ -53,14 +55,18 @@ export function useIDESave({
   }, [hasUnsavedChanges]);
 
   // Build composition helper
-  const buildComposition = useCallback((): HiveLabComposition => ({
-    id: toolId,
-    name: toolName || 'Untitled Tool',
-    description: toolDescription,
-    elements,
-    connections,
-    layout: 'flow',
-  }), [toolId, toolName, toolDescription, elements, connections]);
+  const buildComposition = useCallback((): HiveLabComposition => {
+    const isMultiPage = pages && pages.length > 1;
+    return {
+      id: toolId,
+      name: toolName || 'Untitled Tool',
+      description: toolDescription,
+      elements,
+      connections,
+      layout: 'flow',
+      ...(isMultiPage ? { pages } : {}),
+    };
+  }, [toolId, toolName, toolDescription, elements, connections, pages]);
 
   // Auto-save every 30 seconds when there are unsaved changes
   useEffect(() => {

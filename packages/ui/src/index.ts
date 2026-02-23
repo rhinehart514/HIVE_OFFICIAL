@@ -1102,7 +1102,7 @@ export type { VisualToolComposerProps } from "./components/hivelab/visual-tool-c
 
 // HiveLab: Tool Canvas (runtime rendering)
 export { ToolCanvas, ToolErrorBoundary } from "./components/hivelab/tool-canvas";
-export type { ToolCanvasProps, ToolElement, ToolCanvasContext } from "./components/hivelab/tool-canvas";
+export type { ToolCanvasProps, ToolElement, ToolCanvasContext, ToolPage } from "./components/hivelab/tool-canvas";
 
 // HiveLab: Tool Runtime Provider (context injection for space-deployed tools)
 export {
@@ -1572,6 +1572,8 @@ export {
 export type {
   HiveLabIDEProps,
   HiveLabComposition,
+  Page as IDEPage,
+  NavigationAction,
   CanvasElement as IDECanvasElement,
   Connection as IDEConnection,
   ToolMode,

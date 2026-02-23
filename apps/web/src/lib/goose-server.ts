@@ -343,9 +343,30 @@ function extractDateFromText(prompt: string): Date | null {
 // RULES-BASED FALLBACK
 // ═══════════════════════════════════════════════════════════════════
 
+// Detect multi-page intent from prompt keywords
+const MULTI_PAGE_PATTERN = /\b(pages?|steps?|flow|wizard|multi.?step|registration\s+flow|onboarding|walkthrough|funnel|step.?by.?step|(\d+).?page|(\d+).?step)\b/i;
+
+function detectMultiPageIntent(prompt: string): { isMultiPage: boolean; pageCount: number } {
+  const match = prompt.match(MULTI_PAGE_PATTERN);
+  if (!match) return { isMultiPage: false, pageCount: 1 };
+
+  // Try to extract page count from "3-page", "3 step", etc.
+  const countMatch = prompt.match(/(\d+)\s*[-\s]?\s*(?:page|step|screen)/i);
+  const pageCount = countMatch ? Math.min(parseInt(countMatch[1]), 5) : 3; // cap at 5
+
+  return { isMultiPage: true, pageCount };
+}
+
 function generateWithRules(prompt: string): ToolComposition {
   const lowerPrompt = prompt.toLowerCase();
   const analysis = analyzePrompt(prompt);
+  const multiPage = detectMultiPageIntent(prompt);
+
+  // If multi-page is detected, delegate to multi-page generator
+  if (multiPage.isMultiPage) {
+    return generateMultiPageWithRules(prompt, lowerPrompt, analysis, multiPage.pageCount);
+  }
+
   let nextY = 100;
 
   const elements: ToolComposition['elements'] = [];
@@ -601,6 +622,206 @@ content.innerHTML = '<p style="color: var(--hive-color-text-secondary, #a0a0a0);
   };
 }
 
+/**
+ * Multi-page rules-based generator.
+ * Creates a structured multi-page flow (e.g., registration: Info → Form → Confirmation).
+ */
+function generateMultiPageWithRules(
+  prompt: string,
+  lowerPrompt: string,
+  analysis: PromptAnalysis,
+  pageCount: number,
+): ToolComposition {
+  const isRegistration = /\b(register|registration|signup|sign.?up|rsvp|attend)\b/.test(lowerPrompt);
+  const isFeedback = /\b(feedback|survey|questionnaire)\b/.test(lowerPrompt);
+  const isOnboarding = /\b(onboard|welcome|intro|walkthrough)\b/.test(lowerPrompt);
+
+  interface PageDef {
+    id: string;
+    name: string;
+    elements: ToolComposition['elements'];
+    connections: ToolComposition['connections'];
+    isStartPage?: boolean;
+  }
+
+  const pages: PageDef[] = [];
+  const now = Date.now();
+
+  const makePage = (index: number, name: string): PageDef => ({
+    id: `page_${now}_${index}`,
+    name,
+    elements: [],
+    connections: [],
+    isStartPage: index === 0,
+  });
+
+  let nextY: number;
+
+  function addToPage(
+    page: PageDef,
+    type: string,
+    instanceId: string,
+    config: Record<string, unknown>,
+    width = 12,
+    height = 200,
+  ) {
+    const y = page.elements.length === 0 ? 100 : Math.max(...page.elements.map(e => (e.position?.y || 0) + (e.size?.height || 200))) + 20;
+    page.elements.push({
+      type,
+      instanceId,
+      config,
+      position: { x: 0, y },
+      size: { width, height },
+    });
+  }
+
+  const toolName = analysis.eventName || titleCase(analysis.subject) || 'Event';
+
+  if (isRegistration) {
+    // Page 1: Info
+    const infoPage = makePage(0, 'Info');
+    addToPage(infoPage, 'rsvp-button', 'rsvp_001', {
+      eventName: toolName,
+      showAttendeeCount: true,
+      enableWaitlist: lowerPrompt.includes('waitlist'),
+    }, 12, 120);
+    if (analysis.targetDate) {
+      addToPage(infoPage, 'countdown-timer', 'countdown_001', {
+        targetDate: analysis.targetDate.toISOString(),
+        title: `${toolName} starts`,
+        showDays: true,
+        showHours: true,
+        showMinutes: true,
+      }, 12, 140);
+    }
+    pages.push(infoPage);
+
+    // Page 2: Form
+    const formPage = makePage(1, 'Details');
+    const fields = analysis.fields.length > 0 ? analysis.fields : [
+      { name: 'name', label: 'Full Name', type: 'text' },
+      { name: 'email', label: 'Email', type: 'email' },
+    ];
+    addToPage(formPage, 'form-builder', 'form_001', {
+      fields: fields.map(f => ({ ...f, required: true })),
+      submitButtonText: 'Register',
+    });
+    // Wire navigation: RSVP → Form page, Form submit → Confirmation
+    infoPage.elements[0] = { ...infoPage.elements[0], onAction: { type: 'navigate', targetPageId: `page_${now}_1` } };
+    pages.push(formPage);
+
+    // Page 3: Confirmation
+    if (pageCount >= 3) {
+      const confirmPage = makePage(2, 'Confirmation');
+      addToPage(confirmPage, 'counter-element', 'confirm_counter', {
+        label: 'Registered',
+        initialValue: 0,
+        step: 1,
+        showControls: false,
+      }, 12, 120);
+      // Wire form submit → confirmation page
+      formPage.elements[0] = { ...formPage.elements[0], onAction: { type: 'navigate', targetPageId: `page_${now}_2` } };
+      pages.push(confirmPage);
+    }
+  } else if (isFeedback) {
+    // Page 1: Question
+    const questionPage = makePage(0, 'Question');
+    addToPage(questionPage, 'poll-element', 'poll_001', {
+      question: analysis.question || `What do you think about ${toolName}?`,
+      options: analysis.options.length >= 2 ? analysis.options : ['Excellent', 'Good', 'Needs Improvement'],
+      showResults: false,
+    });
+    pages.push(questionPage);
+
+    // Page 2: Details
+    const detailsPage = makePage(1, 'Details');
+    addToPage(detailsPage, 'form-builder', 'form_001', {
+      fields: [
+        { name: 'feedback', label: 'Tell us more', type: 'textarea', required: false },
+      ],
+      submitButtonText: 'Submit Feedback',
+    });
+    questionPage.elements[0] = { ...questionPage.elements[0], onAction: { type: 'navigate', targetPageId: `page_${now}_1` } };
+    pages.push(detailsPage);
+
+    // Page 3: Thank you
+    if (pageCount >= 3) {
+      const thankYouPage = makePage(2, 'Thank You');
+      addToPage(thankYouPage, 'chart-display', 'chart_001', {
+        chartType: 'bar',
+        title: 'Results So Far',
+        showLegend: true,
+      }, 12, 240);
+      thankYouPage.connections.push({
+        from: { instanceId: 'poll_001', port: 'results' },
+        to: { instanceId: 'chart_001', port: 'data' },
+      });
+      detailsPage.elements[0] = { ...detailsPage.elements[0], onAction: { type: 'navigate', targetPageId: `page_${now}_2` } };
+      pages.push(thankYouPage);
+    }
+  } else {
+    // Generic multi-page: create sequential pages with appropriate elements
+    const genericPageNames = ['Welcome', 'Details', 'Confirmation', 'Results', 'Summary'];
+    for (let i = 0; i < pageCount; i++) {
+      const page = makePage(i, genericPageNames[i] || `Page ${i + 1}`);
+
+      if (i === 0) {
+        // First page: informational element
+        addToPage(page, 'counter-element', `counter_p${i}`, {
+          label: titleCase(analysis.subject) || 'Step 1',
+          initialValue: 0,
+          step: 1,
+          showControls: true,
+        }, 12, 120);
+      } else if (i === pageCount - 1) {
+        // Last page: summary/results
+        addToPage(page, 'checklist-tracker', `checklist_p${i}`, {
+          title: 'Summary',
+          items: [{ text: 'All steps completed', completed: false }],
+        });
+      } else {
+        // Middle pages: form
+        addToPage(page, 'form-builder', `form_p${i}`, {
+          fields: [
+            { name: `field_${i}`, label: `Step ${i + 1} Input`, type: 'text', required: true },
+          ],
+          submitButtonText: 'Continue',
+        });
+      }
+
+      // Wire navigation to next page
+      if (i < pageCount - 1) {
+        const nextPageId = `page_${now}_${i + 1}`;
+        page.elements[0] = { ...page.elements[0], onAction: { type: 'navigate', targetPageId: nextPageId } };
+      }
+
+      pages.push(page);
+    }
+  }
+
+  // Flatten all elements/connections for backward compat
+  const allElements = pages.flatMap((p) => p.elements);
+  const allConnections = pages.flatMap((p) => p.connections);
+
+  const name = generateToolName(prompt, analysis);
+  const description = generateDescription(allElements, analysis);
+
+  return {
+    elements: allElements,
+    connections: allConnections,
+    name,
+    description,
+    layout: 'grid',
+    pages: pages.map((p) => ({
+      id: p.id,
+      name: p.name,
+      elements: p.elements,
+      connections: p.connections,
+      isStartPage: p.isStartPage,
+    })),
+  };
+}
+
 function extractNumber(text: string, pattern: RegExp): number | undefined {
   const match = text.match(pattern);
   return match ? parseInt(match[1]) : undefined;
@@ -736,6 +957,7 @@ export async function* generateToolStream(
         name: composition.name,
         description: composition.description,
         elementCount: composition.elements.length,
+        pages: composition.pages,
       },
     };
   } catch (error) {

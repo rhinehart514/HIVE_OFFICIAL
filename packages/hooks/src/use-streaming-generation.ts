@@ -24,6 +24,7 @@ export interface StreamingChunk {
     config?: Record<string, unknown>;
     position?: { x: number; y: number };
     size?: { width: number; height: number };
+    onAction?: { type: 'navigate'; targetPageId: string };
     // For connection
     from?: string;
     to?: string;
@@ -33,6 +34,13 @@ export interface StreamingChunk {
     connectionCount?: number;
     layout?: string;
     description?: string;
+    pages?: Array<{
+      id: string;
+      name: string;
+      elements: CanvasElement[];
+      connections: Array<{ from: { instanceId: string; port: string }; to: { instanceId: string; port: string } }>;
+      isStartPage?: boolean;
+    }>;
     // For error
     error?: string;
   };
@@ -48,6 +56,8 @@ export interface GenerationState {
   composition: ToolComposition | null;
   error: string | null;
   progress: number; // 0-100
+  /** Pages from multi-page generation (present when AI generates multi-page tools) */
+  pages?: StreamingChunk['data']['pages'];
 }
 
 /**
@@ -254,6 +264,7 @@ export function useStreamingGeneration(callbacks?: {
                 setState(prev => ({
                   ...prev,
                   composition,
+                  pages: chunk.data.pages,
                   currentStatus: 'Generation complete!',
                   progress: 100,
                   isGenerating: false

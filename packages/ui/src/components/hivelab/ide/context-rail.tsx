@@ -281,6 +281,7 @@ interface ContextRailProps {
   onDistributeElements?: (direction: 'horizontal' | 'vertical') => void;
   onUpdateConnection?: (id: string, updates: Partial<Connection>) => void;
   onDeleteConnection?: (id: string) => void;
+  pages?: Array<{ id: string; name: string }>;
 }
 
 export type AlignmentType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
@@ -817,6 +818,7 @@ export function ContextRail({
   onDistributeElements,
   onUpdateConnection,
   onDeleteConnection,
+  pages,
 }: ContextRailProps) {
   const [isPinned, setIsPinned] = useState(false); // Show only when selecting
   const hasSelection = selectedElements.length > 0;
@@ -916,6 +918,7 @@ export function ContextRail({
                     onUpdateElement={onUpdateElement}
                     onDeleteElement={(id) => onDeleteElements([id])}
                     onDuplicateElement={(id) => onDuplicateElements([id])}
+                    pages={pages}
                   />
                 </motion.div>
               )}

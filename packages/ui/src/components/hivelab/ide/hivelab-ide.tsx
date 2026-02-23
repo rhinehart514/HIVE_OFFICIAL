@@ -8,6 +8,7 @@ import type {
   Connection,
   ToolMode,
   HiveLabComposition,
+  Page,
 } from './types';
 import type { ElementConnection } from '@hive/core';
 import { IDECanvas } from './ide-canvas';
@@ -22,6 +23,7 @@ import { ContextRail } from './context-rail';
 import { FloatingActionBar, type FloatingActionBarRef } from './floating-action-bar';
 import { TemplateOverlay } from './template-overlay';
 import { TemplateGallery } from './template-gallery';
+import { PageTabs } from './page-tabs';
 import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
 // Extracted hooks
@@ -33,6 +35,7 @@ import {
   useIDESave,
   useIDEDeploy,
   useIDESpaceTools,
+  usePageState,
 } from './hooks';
 
 // Mobile detection hook
@@ -65,6 +68,7 @@ export interface HiveLabIDEProps {
     description?: string;
     elements?: CanvasElement[];
     connections?: ElementConnection[] | Connection[];
+    pages?: Page[];
   };
   showOnboarding?: boolean;
   onSave: (composition: HiveLabComposition) => Promise<void>;
@@ -285,10 +289,17 @@ export function HiveLabIDE({
   const [canvasSize, setCanvasSize] = useState({ width: 1000, height: 800 });
   const gridSize = 20;
 
-  // ---- History ----
-  const historyHook = useIDEHistory({
+  // ---- Pages ----
+  const pageState = usePageState({
     initialElements: initialComposition?.elements,
     initialConnections: initialComposition?.connections,
+    initialPages: initialComposition?.pages,
+  });
+
+  // ---- History ----
+  const historyHook = useIDEHistory({
+    initialElements: pageState.activePage?.elements || initialComposition?.elements,
+    initialConnections: pageState.activePage?.connections || initialComposition?.connections,
   });
 
   // Ref-based bridge so pushHistory always reads current canvas state
@@ -301,8 +312,8 @@ export function HiveLabIDE({
 
   // ---- Canvas State ----
   const canvas = useCanvasState({
-    initialElements: initialComposition?.elements,
-    initialConnections: initialComposition?.connections,
+    initialElements: pageState.activePage?.elements || initialComposition?.elements,
+    initialConnections: pageState.activePage?.connections || initialComposition?.connections,
     isSpaceLeader: userContext?.isSpaceLeader,
     snapToGrid: true,
     gridSize,
@@ -312,6 +323,44 @@ export function HiveLabIDE({
   // Keep refs in sync with canvas state for history
   elementsRef.current = canvas.elements;
   connectionsRef.current = canvas.connections;
+
+  // Sync canvas edits back to active page
+  const syncRef = useRef(false);
+  useEffect(() => {
+    // Skip the initial render — only sync after user edits
+    if (!syncRef.current) {
+      syncRef.current = true;
+      return;
+    }
+    pageState.syncActivePage(canvas.elements, canvas.connections);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvas.elements, canvas.connections]);
+
+  // Page switching: load the new page's data into canvas
+  const prevActivePageId = useRef(pageState.activePageId);
+  const handleSelectPage = useCallback(
+    (pageId: string) => {
+      if (pageId === pageState.activePageId) return;
+      // Save current page state before switching
+      pageState.syncActivePage(canvas.elements, canvas.connections);
+      pageState.setActivePageId(pageId);
+    },
+    [pageState, canvas.elements, canvas.connections]
+  );
+
+  // When activePageId changes, load new page data into canvas
+  useEffect(() => {
+    if (prevActivePageId.current === pageState.activePageId) return;
+    prevActivePageId.current = pageState.activePageId;
+    const page = pageState.pages.find((p) => p.id === pageState.activePageId);
+    if (page) {
+      syncRef.current = false; // prevent sync-back during load
+      canvas.setElements(page.elements);
+      canvas.setConnections(page.connections);
+      canvas.selectElements([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageState.activePageId]);
 
   // Undo/Redo wired to canvas state
   const undo = useCallback(() => {
@@ -337,6 +386,7 @@ export function HiveLabIDE({
     toolDescription,
     elements: canvas.elements,
     connections: canvas.connections,
+    pages: pageState.pages,
     onSave,
   });
 
@@ -360,6 +410,15 @@ export function HiveLabIDE({
     setElements: canvas.setElements,
     setSelectedIds: (ids: string[]) => canvas.selectElements(ids),
     pushHistory,
+    onPagesGenerated: useCallback((pages: Page[]) => {
+      pageState.setPages(pages);
+      const startPage = pages.find((p) => p.isStartPage) || pages[0];
+      if (startPage) {
+        pageState.setActivePageId(startPage.id);
+        canvas.setElements(startPage.elements);
+        canvas.setConnections(startPage.connections);
+      }
+    }, [pageState, canvas]),
   });
 
   // ---- Automations (opt-in: only fetch when deploymentId exists) ----
@@ -556,6 +615,21 @@ export function HiveLabIDE({
 
         {/* Canvas Area */}
         <div ref={canvasContainerRef} className="flex-1 flex flex-col relative">
+          {/* Page Tabs — always show when canvas has elements */}
+          {canvas.elements.length > 0 && (
+            <PageTabs
+              pages={pageState.pages}
+              activePageId={pageState.activePageId}
+              onSelectPage={handleSelectPage}
+              onAddPage={() => pageState.addPage()}
+              onDeletePage={pageState.deletePage}
+              onRenamePage={pageState.renamePage}
+              onDuplicatePage={pageState.duplicatePage}
+              onReorderPages={pageState.reorderPages}
+              onSetStartPage={pageState.setStartPage}
+            />
+          )}
+
           <AnimatePresence>
             {canvas.isCanvasEmpty && !aiHook.aiState.isGenerating && (
               <TemplateOverlay
@@ -609,6 +683,7 @@ export function HiveLabIDE({
             onDistributeElements={canvas.distributeElements}
             onUpdateConnection={canvas.updateConnection}
             onDeleteConnection={canvas.deleteConnection}
+            pages={pageState.pages.map((p) => ({ id: p.id, name: p.name }))}
           />
         )}
 

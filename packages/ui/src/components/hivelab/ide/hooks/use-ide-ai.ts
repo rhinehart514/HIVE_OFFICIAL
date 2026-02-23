@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useStreamingGeneration } from '@hive/hooks';
-import type { CanvasElement, Connection } from '../types';
+import type { CanvasElement, Connection, Page } from '../types';
 
 interface UseIDEAIOptions {
   elements: CanvasElement[];
@@ -14,6 +14,8 @@ interface UseIDEAIOptions {
   setElements: React.Dispatch<React.SetStateAction<CanvasElement[]>>;
   setSelectedIds: (ids: string[]) => void;
   pushHistory: (description: string) => void;
+  /** Callback to load AI-generated pages into page state */
+  onPagesGenerated?: (pages: Page[]) => void;
 }
 
 export function useIDEAI({
@@ -26,6 +28,7 @@ export function useIDEAI({
   setElements,
   setSelectedIds,
   pushHistory,
+  onPagesGenerated,
 }: UseIDEAIOptions) {
   // Track which AI elements have been processed to prevent duplicate additions
   const processedAIElementIdsRef = useRef<Set<string>>(new Set());
@@ -86,6 +89,53 @@ export function useIDEAI({
       }
     }
   }, [aiState.elements, aiState.isGenerating, getPositionNearSelection, elements.length, setElements, setSelectedIds]);
+
+  // Handle multi-page generation: when AI returns pages, load them into page state
+  const pagesLoadedRef = useRef(false);
+  useEffect(() => {
+    if (
+      aiState.pages &&
+      aiState.pages.length > 1 &&
+      !aiState.isGenerating &&
+      onPagesGenerated &&
+      !pagesLoadedRef.current
+    ) {
+      pagesLoadedRef.current = true;
+      const timestamp = Date.now();
+      const pages: Page[] = aiState.pages.map((p, idx) => ({
+        id: p.id || `page_${timestamp}_${idx}`,
+        name: p.name || `Page ${idx + 1}`,
+        elements: (p.elements || []).map((el, elIdx) => {
+          const elAny = el as unknown as Record<string, unknown>;
+          const elementId = (elAny.elementId as string) || (elAny.type as string) || 'unknown';
+          return {
+            id: `element_${timestamp}_${idx}_${elIdx}`,
+            elementId,
+            instanceId: (elAny.instanceId as string) || `${elementId}_${timestamp}_${idx}_${elIdx}`,
+            position: (elAny.position as { x: number; y: number }) || { x: 0, y: 100 + elIdx * 220 },
+            size: (elAny.size as { width: number; height: number }) || { width: 260, height: 140 },
+            config: (elAny.config as Record<string, unknown>) || {},
+            zIndex: elIdx + 1,
+            locked: false,
+            visible: true,
+            onAction: elAny.onAction as Page['elements'][number]['onAction'],
+          };
+        }),
+        connections: (p.connections || []).map((conn, cIdx) => ({
+          id: `conn_${timestamp}_${idx}_${cIdx}`,
+          from: { instanceId: conn.from.instanceId, port: conn.from.port || 'output' },
+          to: { instanceId: conn.to.instanceId, port: conn.to.port || 'input' },
+        })),
+        isStartPage: p.isStartPage,
+      }));
+      onPagesGenerated(pages);
+      pushHistory('AI multi-page generation');
+    }
+    // Reset when generation starts again
+    if (aiState.isGenerating) {
+      pagesLoadedRef.current = false;
+    }
+  }, [aiState.pages, aiState.isGenerating, onPagesGenerated, pushHistory]);
 
   // AI handler
   const handleAISubmit = useCallback(async (prompt: string, type: string) => {

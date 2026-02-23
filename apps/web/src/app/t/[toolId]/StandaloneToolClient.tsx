@@ -23,6 +23,24 @@ const LazyToolCanvas = dynamic(
   }
 );
 
+interface ToolPage {
+  id: string;
+  name: string;
+  elements: Array<{
+    elementId: string;
+    instanceId: string;
+    config: Record<string, unknown>;
+    position?: { x: number; y: number };
+    size?: { width: number; height: number };
+    onAction?: { type: 'navigate'; targetPageId: string };
+  }>;
+  connections?: Array<{
+    from: { instanceId: string; port: string };
+    to: { instanceId: string; port: string };
+  }>;
+  isStartPage?: boolean;
+}
+
 interface ToolData {
   id: string;
   name: string;
@@ -45,6 +63,7 @@ interface ToolData {
     from: { instanceId: string; port: string };
     to: { instanceId: string; port: string };
   }>;
+  pages?: ToolPage[];
   createdAt: string;
   updatedAt?: string;
   viewCount?: number;
@@ -249,6 +268,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             {tool.elements.length > 0 ? (
               <LazyToolCanvas
                 elements={tool.elements}
+                pages={tool.pages}
                 state={runtime.state}
                 sharedState={runtime.sharedState}
                 userState={runtime.userState}
