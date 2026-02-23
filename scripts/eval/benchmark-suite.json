@@ -3,8 +3,8 @@
     "id": "L1-01-simple-poll",
     "level": 1,
     "prompt": "Create a poll about favorite dining halls",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["poll", "single-element", "basic"],
     "description": "Simple poll with topic extraction"
@@ -13,8 +13,8 @@
     "id": "L1-02-poll-with-options",
     "level": 1,
     "prompt": "Poll: Best study spot? Options: Library, Student Union, Coffee Shop, Dorm Room",
-    "expectedElements": [{ "elementId": "poll-element", "requiredConfigKeys": ["question", "options"], "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "requiredConfigKeys": ["question", "options"], "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["poll", "explicit-options"],
     "description": "Poll with explicitly provided options"
@@ -23,8 +23,8 @@
     "id": "L1-03-rsvp",
     "level": 1,
     "prompt": "RSVP for the Spring Formal",
-    "expectedElements": [{ "elementId": "rsvp-button", "requiredConfigKeys": ["eventName"], "tier": "T2" }],
-    "expectedTier": "T2",
+    "expectedElements": [{ "elementId": "rsvp-button", "requiredConfigKeys": ["eventName"], "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["rsvp", "event"],
     "description": "Basic RSVP with event name extraction"
@@ -33,8 +33,8 @@
     "id": "L1-04-countdown",
     "level": 1,
     "prompt": "Countdown timer to finals week starting December 15",
-    "expectedElements": [{ "elementId": "countdown-timer", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "countdown-timer", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["countdown", "date-extraction"],
     "description": "Countdown with date parsing"
@@ -43,8 +43,8 @@
     "id": "L1-05-counter",
     "level": 1,
     "prompt": "Make a counter to track how many people are in the library",
-    "expectedElements": [{ "elementId": "counter", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "counter", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["counter", "single-element"],
     "description": "Simple counter"
@@ -53,8 +53,8 @@
     "id": "L1-06-checklist",
     "level": 1,
     "prompt": "Create a checklist for move-in day: bring bedding, bring toiletries, set up wifi, get meal plan",
-    "expectedElements": [{ "elementId": "checklist-tracker", "requiredConfigKeys": ["items"], "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "checklist-tracker", "requiredConfigKeys": ["items"], "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["checklist", "item-extraction"],
     "description": "Checklist with extracted items"
@@ -63,8 +63,8 @@
     "id": "L1-07-form",
     "level": 1,
     "prompt": "Feedback form for the career fair",
-    "expectedElements": [{ "elementId": "form-builder", "requiredConfigKeys": ["fields"], "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "form-builder", "requiredConfigKeys": ["fields"], "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["form", "feedback"],
     "description": "Basic feedback form"
@@ -73,8 +73,8 @@
     "id": "L1-08-leaderboard",
     "level": 1,
     "prompt": "Create a leaderboard for the intramural basketball league",
-    "expectedElements": [{ "elementId": "leaderboard", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "leaderboard", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["leaderboard", "single-element"],
     "description": "Simple leaderboard"
@@ -83,8 +83,8 @@
     "id": "L1-09-signup-sheet",
     "level": 1,
     "prompt": "Signup sheet for volunteering at the food bank. Slots: morning, afternoon, evening",
-    "expectedElements": [{ "elementId": "signup-sheet", "requiredConfigKeys": ["slots"], "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "signup-sheet", "requiredConfigKeys": ["slots"], "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["signup-sheet", "slot-extraction"],
     "description": "Signup sheet with time slots"
@@ -93,8 +93,8 @@
     "id": "L1-10-progress",
     "level": 1,
     "prompt": "Progress tracker for our fundraiser goal of $5000",
-    "expectedElements": [{ "elementId": "progress-indicator", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "progress-indicator", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["progress", "fundraiser"],
     "description": "Progress bar with dollar target"
@@ -103,8 +103,8 @@
     "id": "L1-11-timer",
     "level": 1,
     "prompt": "Make a timer for the study session",
-    "expectedElements": [{ "elementId": "timer", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "timer", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["timer", "single-element"],
     "description": "Simple timer — should NOT map to countdown"
@@ -113,8 +113,8 @@
     "id": "L1-12-poll-vs-syntax",
     "level": 1,
     "prompt": "Pizza vs Tacos vs Sushi for the group dinner",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["poll", "vs-syntax"],
     "description": "Poll from 'vs' pattern"
@@ -123,8 +123,8 @@
     "id": "L1-13-vote-keyword",
     "level": 1,
     "prompt": "Vote on the new chapter house color scheme",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["poll", "vote-keyword"],
     "description": "Poll triggered by 'vote' keyword"
@@ -133,8 +133,8 @@
     "id": "L1-14-form-with-fields",
     "level": 1,
     "prompt": "Create a form for club membership. Fields: name, email, major, graduation year",
-    "expectedElements": [{ "elementId": "form-builder", "requiredConfigKeys": ["fields"], "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "form-builder", "requiredConfigKeys": ["fields"], "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["form", "field-extraction"],
     "description": "Form with explicitly listed fields"
@@ -143,8 +143,8 @@
     "id": "L1-15-rsvp-with-cap",
     "level": 1,
     "prompt": "Sign up for the pool party, max 50 people",
-    "expectedElements": [{ "elementId": "rsvp-button", "tier": "T2" }],
-    "expectedTier": "T2",
+    "expectedElements": [{ "elementId": "rsvp-button", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["rsvp", "capacity"],
     "description": "RSVP with capacity extraction"
@@ -153,8 +153,8 @@
     "id": "L1-16-countdown-relative",
     "level": 1,
     "prompt": "Countdown for the event in 3 days",
-    "expectedElements": [{ "elementId": "countdown-timer", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "countdown-timer", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["countdown", "relative-date"],
     "description": "Countdown with relative date"
@@ -163,8 +163,8 @@
     "id": "L1-17-survey-synonym",
     "level": 1,
     "prompt": "Survey about campus food quality",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["poll", "synonym"],
     "description": "Poll triggered by 'survey' synonym"
@@ -173,8 +173,8 @@
     "id": "L1-18-todo-list",
     "level": 1,
     "prompt": "To-do list for the rush week planning committee",
-    "expectedElements": [{ "elementId": "checklist-tracker", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "checklist-tracker", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["checklist", "todo-synonym"],
     "description": "Checklist triggered by 'to-do' synonym"
@@ -183,8 +183,8 @@
     "id": "L1-19-register-synonym",
     "level": 1,
     "prompt": "Registration for the hackathon next Friday",
-    "expectedElements": [{ "elementId": "rsvp-button", "tier": "T2" }],
-    "expectedTier": "T2",
+    "expectedElements": [{ "elementId": "rsvp-button", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["rsvp", "register-synonym"],
     "description": "RSVP triggered by 'registration'"
@@ -193,8 +193,8 @@
     "id": "L1-20-scoreboard-synonym",
     "level": 1,
     "prompt": "Scoreboard for the top 10 quiz winners",
-    "expectedElements": [{ "elementId": "leaderboard", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "leaderboard", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["leaderboard", "scoreboard-synonym"],
     "description": "Leaderboard triggered by 'scoreboard'"
@@ -205,10 +205,10 @@
     "level": 2,
     "prompt": "Create a poll about favorite professors with a results chart",
     "expectedElements": [
-      { "elementId": "poll-element", "tier": "T1" },
-      { "elementId": "chart-display", "tier": "T1" }
+      { "elementId": "poll-element", "depth": "standalone" },
+      { "elementId": "chart-display", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": true,
     "tags": ["poll", "chart", "multi-element", "composition"],
     "description": "Poll + chart with connection"
@@ -218,10 +218,10 @@
     "level": 2,
     "prompt": "RSVP for the formal on March 15 with a countdown",
     "expectedElements": [
-      { "elementId": "rsvp-button", "tier": "T2" },
-      { "elementId": "countdown-timer", "tier": "T1" }
+      { "elementId": "rsvp-button", "depth": "standalone" },
+      { "elementId": "countdown-timer", "depth": "standalone" }
     ],
-    "expectedTier": "T2",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["rsvp", "countdown", "multi-element", "date"],
     "description": "RSVP + countdown with date extraction"
@@ -231,10 +231,10 @@
     "level": 2,
     "prompt": "Feedback form for the semester with a progress tracker for our goal of 100 responses",
     "expectedElements": [
-      { "elementId": "form-builder", "tier": "T1" },
-      { "elementId": "progress-indicator", "tier": "T1" }
+      { "elementId": "form-builder", "depth": "standalone" },
+      { "elementId": "progress-indicator", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["form", "progress", "multi-element"],
     "description": "Form + progress indicator"
@@ -244,10 +244,10 @@
     "level": 2,
     "prompt": "Poll about which campus event was best this semester",
     "expectedElements": [
-      { "elementId": "poll-element", "tier": "T1" },
-      { "elementId": "chart-display", "tier": "T1" }
+      { "elementId": "poll-element", "depth": "standalone" },
+      { "elementId": "chart-display", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": true,
     "tags": ["poll", "auto-chart", "smart-composition"],
     "description": "Poll should auto-pair with chart (smart composition)"
@@ -257,10 +257,10 @@
     "level": 2,
     "prompt": "Create a signup sheet for the bake sale with a checklist of items to bring: cookies, brownies, cupcakes, drinks",
     "expectedElements": [
-      { "elementId": "signup-sheet", "tier": "T1" },
-      { "elementId": "checklist-tracker", "tier": "T1" }
+      { "elementId": "signup-sheet", "depth": "standalone" },
+      { "elementId": "checklist-tracker", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["signup-sheet", "checklist", "multi-element"],
     "description": "Signup sheet + checklist with item extraction"
@@ -270,10 +270,10 @@
     "level": 2,
     "prompt": "Track how many pushups each person does with a leaderboard for the competition",
     "expectedElements": [
-      { "elementId": "counter", "tier": "T1" },
-      { "elementId": "leaderboard", "tier": "T1" }
+      { "elementId": "counter", "depth": "standalone" },
+      { "elementId": "leaderboard", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["counter", "leaderboard", "multi-element"],
     "description": "Counter + leaderboard combo"
@@ -283,10 +283,10 @@
     "level": 2,
     "prompt": "RSVP for the concert on January 20 2026",
     "expectedElements": [
-      { "elementId": "rsvp-button", "tier": "T2" },
-      { "elementId": "countdown-timer", "tier": "T1" }
+      { "elementId": "rsvp-button", "depth": "standalone" },
+      { "elementId": "countdown-timer", "depth": "standalone" }
     ],
-    "expectedTier": "T2",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["rsvp", "countdown", "smart-composition", "auto-pair"],
     "description": "RSVP with date should auto-pair countdown (smart composition)"
@@ -296,10 +296,10 @@
     "level": 2,
     "prompt": "Vote on the best dining hall and show results as a pie chart",
     "expectedElements": [
-      { "elementId": "poll-element", "tier": "T1" },
-      { "elementId": "chart-display", "tier": "T1" }
+      { "elementId": "poll-element", "depth": "standalone" },
+      { "elementId": "chart-display", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": true,
     "tags": ["poll", "chart", "pie", "explicit-visualization"],
     "description": "Poll with explicit chart type request"
@@ -309,10 +309,10 @@
     "level": 2,
     "prompt": "Fundraiser tracker: goal of $2000 with a signup sheet for donation tiers: $10, $25, $50, $100",
     "expectedElements": [
-      { "elementId": "progress-indicator", "tier": "T1" },
-      { "elementId": "signup-sheet", "tier": "T1" }
+      { "elementId": "progress-indicator", "depth": "standalone" },
+      { "elementId": "signup-sheet", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["progress", "signup-sheet", "fundraiser", "multi-element"],
     "description": "Progress + signup sheet for fundraiser"
@@ -322,10 +322,10 @@
     "level": 2,
     "prompt": "Task list for the event setup and a counter to track how many tasks are done",
     "expectedElements": [
-      { "elementId": "checklist-tracker", "tier": "T1" },
-      { "elementId": "counter", "tier": "T1" }
+      { "elementId": "checklist-tracker", "depth": "standalone" },
+      { "elementId": "counter", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["checklist", "counter", "multi-element"],
     "description": "Checklist + counter combo"
@@ -335,10 +335,10 @@
     "level": 2,
     "prompt": "Create a poll about favorite dining hall and also one about best study spot",
     "expectedElements": [
-      { "elementId": "poll-element", "tier": "T1" },
-      { "elementId": "poll-element", "tier": "T1" }
+      { "elementId": "poll-element", "depth": "standalone" },
+      { "elementId": "poll-element", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["poll", "multiple-same-type"],
     "description": "Multiple polls in one tool — hard for rules engine"
@@ -348,10 +348,10 @@
     "level": 2,
     "prompt": "Quiz submission form with fields: name, score. Show top scores on a leaderboard",
     "expectedElements": [
-      { "elementId": "form-builder", "tier": "T1" },
-      { "elementId": "leaderboard", "tier": "T1" }
+      { "elementId": "form-builder", "depth": "standalone" },
+      { "elementId": "leaderboard", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["form", "leaderboard", "multi-element"],
     "description": "Form feeding into leaderboard"
@@ -361,10 +361,10 @@
     "level": 2,
     "prompt": "RSVP for the potluck dinner with a form to say what dish you're bringing",
     "expectedElements": [
-      { "elementId": "rsvp-button", "tier": "T2" },
-      { "elementId": "form-builder", "tier": "T1" }
+      { "elementId": "rsvp-button", "depth": "standalone" },
+      { "elementId": "form-builder", "depth": "standalone" }
     ],
-    "expectedTier": "T2",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["rsvp", "form", "multi-element"],
     "description": "RSVP + form combo"
@@ -374,10 +374,10 @@
     "level": 2,
     "prompt": "Volunteer signup sheet for the charity run in 2 weeks with a countdown",
     "expectedElements": [
-      { "elementId": "signup-sheet", "tier": "T1" },
-      { "elementId": "countdown-timer", "tier": "T1" }
+      { "elementId": "signup-sheet", "depth": "standalone" },
+      { "elementId": "countdown-timer", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["signup-sheet", "countdown", "multi-element"],
     "description": "Signup + countdown with relative date"
@@ -387,11 +387,11 @@
     "level": 2,
     "prompt": "Event page: RSVP for the tailgate on September 5, countdown timer, and a poll about what food to bring with options: burgers, hot dogs, wings",
     "expectedElements": [
-      { "elementId": "rsvp-button", "tier": "T2" },
-      { "elementId": "countdown-timer", "tier": "T1" },
-      { "elementId": "poll-element", "tier": "T1" }
+      { "elementId": "rsvp-button", "depth": "standalone" },
+      { "elementId": "countdown-timer", "depth": "standalone" },
+      { "elementId": "poll-element", "depth": "standalone" }
     ],
-    "expectedTier": "T2",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["rsvp", "countdown", "poll", "three-elements"],
     "description": "Three distinct elements from one prompt"
@@ -401,8 +401,8 @@
     "id": "L3-01-implicit-rsvp",
     "level": 3,
     "prompt": "We're having a party this weekend, let people say if they're coming",
-    "expectedElements": [{ "elementId": "rsvp-button", "tier": "T2" }],
-    "expectedTier": "T2",
+    "expectedElements": [{ "elementId": "rsvp-button", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["rsvp", "implicit", "natural-language"],
     "description": "RSVP from natural language without keyword"
@@ -411,8 +411,8 @@
     "id": "L3-02-implicit-poll",
     "level": 3,
     "prompt": "Ask everyone what they think about changing the meeting time",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["poll", "implicit", "opinion"],
     "description": "Poll from opinion-asking language"
@@ -421,8 +421,8 @@
     "id": "L3-03-implicit-signup",
     "level": 3,
     "prompt": "We need people to bring stuff to the potluck. Someone needs to bring drinks, someone plates, someone desserts",
-    "expectedElements": [{ "elementId": "signup-sheet", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "signup-sheet", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["signup-sheet", "implicit", "assignment"],
     "description": "Signup sheet from assignment language"
@@ -431,8 +431,8 @@
     "id": "L3-04-implicit-checklist",
     "level": 3,
     "prompt": "Things we still need to do before the event: book the DJ, order the catering, print the flyers, set up the stage",
-    "expectedElements": [{ "elementId": "checklist-tracker", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "checklist-tracker", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["checklist", "implicit", "task-list"],
     "description": "Checklist from task-listing language"
@@ -441,8 +441,8 @@
     "id": "L3-05-implicit-countdown",
     "level": 3,
     "prompt": "How long until spring break? It starts March 20",
-    "expectedElements": [{ "elementId": "countdown-timer", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "countdown-timer", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["countdown", "implicit", "question-format"],
     "description": "Countdown from question-style prompt"
@@ -451,8 +451,8 @@
     "id": "L3-06-implicit-form",
     "level": 3,
     "prompt": "Collect everyone's name, email, and t-shirt size for the club order",
-    "expectedElements": [{ "elementId": "form-builder", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "form-builder", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["form", "implicit", "collect"],
     "description": "Form from 'collect' language"
@@ -461,8 +461,8 @@
     "id": "L3-07-ambiguous-event-poll",
     "level": 3,
     "prompt": "Which day works best for the study group this week: Monday, Wednesday, or Friday?",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["poll", "ambiguous", "scheduling"],
     "description": "Could be scheduling tool but should map to poll"
@@ -471,8 +471,8 @@
     "id": "L3-08-implicit-progress",
     "level": 3,
     "prompt": "We've raised $800 out of $3000 for the new equipment",
-    "expectedElements": [{ "elementId": "progress-indicator", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "progress-indicator", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["progress", "implicit", "fundraiser"],
     "description": "Progress bar from fundraiser status language"
@@ -482,10 +482,10 @@
     "level": 3,
     "prompt": "Get a headcount for the tailgate and see what everyone wants to eat",
     "expectedElements": [
-      { "elementId": "rsvp-button", "tier": "T2" },
-      { "elementId": "poll-element", "tier": "T1" }
+      { "elementId": "rsvp-button", "depth": "standalone" },
+      { "elementId": "poll-element", "depth": "standalone" }
     ],
-    "expectedTier": "T2",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["rsvp", "poll", "implicit", "multi-intent"],
     "description": "Two intents in natural language"
@@ -494,8 +494,8 @@
     "id": "L3-10-implicit-leaderboard",
     "level": 3,
     "prompt": "Track who's winning the paper airplane contest and show rankings",
-    "expectedElements": [{ "elementId": "leaderboard", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "leaderboard", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["leaderboard", "implicit", "competition"],
     "description": "Leaderboard from competition language"
@@ -505,8 +505,8 @@
     "id": "L4-01-vague-social",
     "level": 4,
     "prompt": "Something fun for the dorm floor",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["vague", "fallback", "social"],
     "description": "Extremely vague — should produce something usable"
@@ -515,8 +515,8 @@
     "id": "L4-02-abstract-engagement",
     "level": 4,
     "prompt": "Increase engagement in the chapter",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["vague", "abstract", "engagement"],
     "description": "Abstract goal — should still produce a tool"
@@ -525,8 +525,8 @@
     "id": "L4-03-emoji-prompt",
     "level": 4,
     "prompt": "🎉 party this weekend who's coming??",
-    "expectedElements": [{ "elementId": "rsvp-button", "tier": "T2" }],
-    "expectedTier": "T2",
+    "expectedElements": [{ "elementId": "rsvp-button", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["emoji", "casual", "rsvp"],
     "description": "Emoji + casual language"
@@ -535,8 +535,8 @@
     "id": "L4-04-typos",
     "level": 4,
     "prompt": "crate a sinup sheet for teh bake sail",
-    "expectedElements": [{ "elementId": "signup-sheet", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "signup-sheet", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["typos", "resilience"],
     "description": "Prompt with typos — should still work"
@@ -545,8 +545,8 @@
     "id": "L4-05-mixed-language",
     "level": 4,
     "prompt": "Need a way to track attendance for nuestras reuniones semanales",
-    "expectedElements": [{ "elementId": "rsvp-button", "tier": "T2" }],
-    "expectedTier": "T2",
+    "expectedElements": [{ "elementId": "rsvp-button", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["multilingual", "attendance"],
     "description": "Mixed English/Spanish prompt"
@@ -555,8 +555,8 @@
     "id": "L4-06-negation",
     "level": 4,
     "prompt": "Don't make a poll, just a simple counter for the door",
-    "expectedElements": [{ "elementId": "counter", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "counter", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["negation", "counter", "explicit-not"],
     "description": "Negation handling — should respect 'don't make a poll'"
@@ -565,8 +565,8 @@
     "id": "L4-07-long-description",
     "level": 4,
     "prompt": "So we have this thing where every week someone in the house has to cook dinner for everyone and we need a way for people to sign up for which week they want to cook and what meal they're going to make so people know what to expect",
-    "expectedElements": [{ "elementId": "signup-sheet", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "signup-sheet", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["long-prompt", "signup-sheet", "verbose"],
     "description": "Long rambling prompt — should extract core intent"
@@ -575,8 +575,8 @@
     "id": "L4-08-impossible",
     "level": 4,
     "prompt": "Build me a social media app",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["impossible", "fallback"],
     "description": "Beyond scope — should gracefully produce a simple tool"
@@ -585,8 +585,8 @@
     "id": "L4-09-question-mark-poll",
     "level": 4,
     "prompt": "best prof in the CS department?",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["question", "implicit-poll", "minimal"],
     "description": "Just a question — should become a poll"
@@ -595,8 +595,8 @@
     "id": "L4-10-slang",
     "level": 4,
     "prompt": "yo who tryna pull up to the function saturday lmk",
-    "expectedElements": [{ "elementId": "rsvp-button", "tier": "T2" }],
-    "expectedTier": "T2",
+    "expectedElements": [{ "elementId": "rsvp-button", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["slang", "casual", "rsvp"],
     "description": "Heavy slang — may fail on current rules engine"
@@ -605,8 +605,8 @@
     "id": "L4-11-competing-keywords",
     "level": 4,
     "prompt": "Poll to vote on when to register for the signup for the volunteer counter at the leaderboard event",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["keyword-collision", "multi-keyword"],
     "description": "Many keywords — first intent (poll) should win"
@@ -615,8 +615,8 @@
     "id": "L4-12-custom-game",
     "level": 4,
     "prompt": "Make a bingo card game for rush week",
-    "expectedElements": [{ "elementId": "custom-block", "tier": "T3" }],
-    "expectedTier": "T3",
+    "expectedElements": [{ "elementId": "custom-block", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["custom-block", "game"],
     "description": "Game request should trigger custom-block"
@@ -625,8 +625,8 @@
     "id": "L4-13-or-syntax",
     "level": 4,
     "prompt": "Should we do community service or a social this weekend?",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["poll", "or-syntax", "question"],
     "description": "Question with 'or' should become poll with options"
@@ -635,8 +635,8 @@
     "id": "L4-14-meta-prompt",
     "level": 4,
     "prompt": "Help",
-    "expectedElements": [{ "elementId": "poll-element", "tier": "T1" }],
-    "expectedTier": "T1",
+    "expectedElements": [{ "elementId": "poll-element", "depth": "standalone" }],
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["meta", "minimal", "fallback"],
     "description": "Single word — should produce default tool"
@@ -646,9 +646,9 @@
     "level": 4,
     "prompt": "Track scores: Team Alpha starts at 0, Team Beta starts at 0, games are best of 3, max score 21 per game",
     "expectedElements": [
-      { "elementId": "leaderboard", "tier": "T1" }
+      { "elementId": "leaderboard", "depth": "standalone" }
     ],
-    "expectedTier": "T1",
+    "expectedDepth": "standalone",
     "expectsConnections": false,
     "tags": ["leaderboard", "numbers", "competition"],
     "description": "Numeric-heavy prompt — should extract competition intent"

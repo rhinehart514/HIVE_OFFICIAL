@@ -4,7 +4,7 @@
  * Scores tool generation output on 5 dimensions:
  *   1. Intent  — did we pick the right element(s)?
  *   2. Schema  — is the config valid per Zod + manifest?
- *   3. Tier    — are tier assignments correct?
+ *   3. Depth   — are depth assignments correct?
  *   4. Connections — are required connections declared?
  *   5. Functional  — will it actually render?
  *
@@ -21,12 +21,14 @@ import { fileURLToPath } from 'url';
 
 // ── Types ──────────────────────────────────────────────────────
 
+type ConnectionLevel = 'standalone' | 'space' | 'campus' | 'event+space';
+
 interface BenchmarkCase {
   id: string;
   level: 1 | 2 | 3 | 4;
   prompt: string;
   expectedElements: ExpectedElement[];
-  expectedTier: 'T1' | 'T2' | 'T3';
+  expectedDepth: ConnectionLevel;
   expectsConnections: boolean;
   tags: string[];
   description: string;
@@ -35,7 +37,7 @@ interface BenchmarkCase {
 interface ExpectedElement {
   elementId: string;
   requiredConfigKeys?: string[];
-  tier: 'T1' | 'T2' | 'T3';
+  depth: ConnectionLevel;
 }
 
 interface GeneratedElement {
@@ -72,7 +74,7 @@ interface CaseResult {
   scores: {
     intent: DimensionScore;
     schema: DimensionScore;
-    tier: DimensionScore;
+    depth: DimensionScore;
     connections: DimensionScore;
     functional: DimensionScore;
   };
@@ -92,23 +94,23 @@ interface EvalSummary {
   durationMs: number;
 }
 
-// ── Manifest + Validation Imports (lazy) ───────────────────────
+// ── Registry + Validation Imports (lazy) ────────────────────────
 
-let manifestModule: typeof import('../../packages/core/src/domain/hivelab/element-manifest');
+let registryModule: typeof import('../../packages/core/src/domain/hivelab/elements/registry');
 let validationModule: typeof import('../../packages/ui/src/lib/hivelab/element-config-validation');
 
 async function loadModules() {
   try {
-    manifestModule = await import('../../packages/core/src/domain/hivelab/element-manifest');
+    registryModule = await import('../../packages/core/src/domain/hivelab/elements/registry');
   } catch {
-    console.error('Failed to load element-manifest. Using inline fallback.');
-    manifestModule = createFallbackManifest();
+    console.error('Failed to load element registry. Using inline fallback.');
+    registryModule = createFallbackRegistry();
   }
 
   try {
     validationModule = await import('../../packages/ui/src/lib/hivelab/element-config-validation');
   } catch {
-    console.error('Failed to load element-config-validation. Schema scoring will use manifest only.');
+    console.error('Failed to load element-config-validation. Schema scoring will use registry only.');
     validationModule = createFallbackValidation();
   }
 }
@@ -151,43 +153,55 @@ async function loadGenerator() {
 
 // ── Fallback modules for when imports fail ─────────────────────
 
-function createFallbackManifest() {
-  // Load manifest data from the TS file as plain text and extract what we need
-  const KNOWN_ELEMENTS = new Map<string, { tier: string; requiredConfig: string[]; connectionType: string | null; canBeStandalone: boolean }>([
-    ['poll-element', { tier: 'T1', requiredConfig: ['question', 'options'], connectionType: null, canBeStandalone: true }],
-    ['counter', { tier: 'T1', requiredConfig: [], connectionType: null, canBeStandalone: true }],
-    ['timer', { tier: 'T1', requiredConfig: [], connectionType: null, canBeStandalone: true }],
-    ['signup-sheet', { tier: 'T1', requiredConfig: ['slots'], connectionType: null, canBeStandalone: true }],
-    ['checklist-tracker', { tier: 'T1', requiredConfig: ['items'], connectionType: null, canBeStandalone: true }],
-    ['countdown-timer', { tier: 'T1', requiredConfig: ['seconds'], connectionType: null, canBeStandalone: true }],
-    ['leaderboard', { tier: 'T1', requiredConfig: [], connectionType: null, canBeStandalone: true }],
-    ['progress-indicator', { tier: 'T1', requiredConfig: [], connectionType: null, canBeStandalone: true }],
-    ['chart-display', { tier: 'T1', requiredConfig: ['chartType'], connectionType: null, canBeStandalone: true }],
-    ['form-builder', { tier: 'T1', requiredConfig: ['fields'], connectionType: null, canBeStandalone: true }],
-    ['rsvp-button', { tier: 'T2', requiredConfig: ['eventName'], connectionType: 'event+space', canBeStandalone: true }],
-    ['member-list', { tier: 'T3', requiredConfig: [], connectionType: 'space', canBeStandalone: false }],
-    ['announcement', { tier: 'T3', requiredConfig: [], connectionType: 'space', canBeStandalone: false }],
-    ['custom-block', { tier: 'T3', requiredConfig: ['html'], connectionType: null, canBeStandalone: true }],
+const DEPTH_RANK: Record<ConnectionLevel, number> = {
+  standalone: 0,
+  space: 1,
+  campus: 2,
+  'event+space': 3,
+};
+
+function createFallbackRegistry() {
+  // Load registry data from inline known elements
+  const KNOWN_ELEMENTS = new Map<string, { minDepth: ConnectionLevel; requiredConfig: string[]; hasConnections: boolean; canBeStandalone: boolean }>([
+    ['poll-element', { minDepth: 'standalone', requiredConfig: ['question', 'options'], hasConnections: false, canBeStandalone: true }],
+    ['counter', { minDepth: 'standalone', requiredConfig: [], hasConnections: false, canBeStandalone: true }],
+    ['timer', { minDepth: 'standalone', requiredConfig: [], hasConnections: false, canBeStandalone: true }],
+    ['signup-sheet', { minDepth: 'standalone', requiredConfig: ['slots'], hasConnections: false, canBeStandalone: true }],
+    ['checklist-tracker', { minDepth: 'standalone', requiredConfig: ['items'], hasConnections: false, canBeStandalone: true }],
+    ['countdown-timer', { minDepth: 'standalone', requiredConfig: ['seconds'], hasConnections: false, canBeStandalone: true }],
+    ['leaderboard', { minDepth: 'standalone', requiredConfig: [], hasConnections: false, canBeStandalone: true }],
+    ['progress-indicator', { minDepth: 'standalone', requiredConfig: [], hasConnections: false, canBeStandalone: true }],
+    ['chart-display', { minDepth: 'standalone', requiredConfig: ['chartType'], hasConnections: false, canBeStandalone: true }],
+    ['form-builder', { minDepth: 'standalone', requiredConfig: ['fields'], hasConnections: false, canBeStandalone: true }],
+    ['rsvp-button', { minDepth: 'standalone', requiredConfig: ['eventName'], hasConnections: true, canBeStandalone: true }],
+    ['member-list', { minDepth: 'space', requiredConfig: [], hasConnections: true, canBeStandalone: false }],
+    ['announcement', { minDepth: 'space', requiredConfig: [], hasConnections: true, canBeStandalone: false }],
+    ['custom-block', { minDepth: 'standalone', requiredConfig: ['html'], hasConnections: false, canBeStandalone: true }],
   ]);
 
   return {
-    ELEMENT_MANIFEST: [] as never[],
-    getElementManifest: (id: string) => {
+    getAllSpecs: () => [],
+    getElementSpec: (id: string) => {
       const canonical = id === 'counter-element' ? 'counter' : id;
       const data = KNOWN_ELEMENTS.get(canonical);
       if (!data) return undefined;
+      const config: Record<string, { type: string; description: string; required: boolean }> = {};
+      for (const k of data.requiredConfig) {
+        config[k] = { type: 'string', description: k, required: true };
+      }
       return {
         elementId: canonical,
         name: canonical,
-        tier: data.tier,
-        category: 'action',
-        dataSource: 'none',
-        requiredConfig: Object.fromEntries(data.requiredConfig.map(k => [k, { type: 'string', description: k }])),
-        optionalConfig: {},
-        connectionRequirements: data.connectionType ? { connectionType: data.connectionType, requiredContext: [] } : null,
+        category: 'action' as const,
+        dataSource: 'none' as const,
+        config,
+        connection: {
+          minDepth: data.minDepth,
+          levels: [{ depth: data.minDepth, provides: '', requiredContext: [] }],
+        },
+        permissions: { create: 'anyone' as const, interact: 'anyone' as const },
         executeActions: [],
-        stateShape: { shared: [], personal: [] },
-        canBeStandalone: data.canBeStandalone,
+        state: { shared: [], personal: [] },
       };
     },
     validateRequiredConfig: (id: string, config: Record<string, unknown>) => {
@@ -200,14 +214,15 @@ function createFallbackManifest() {
     getConnectionRequirements: (id: string) => {
       const canonical = id === 'counter-element' ? 'counter' : id;
       const data = KNOWN_ELEMENTS.get(canonical);
-      if (!data || !data.connectionType) return null;
-      return { connectionType: data.connectionType, requiredContext: [] };
+      if (!data || !data.hasConnections) return null;
+      return { minDepth: data.minDepth, levels: [] };
     },
-    getElementsByTier: () => [],
-    getStandaloneElements: () => [],
+    getSpecsByMinDepth: () => [],
+    getStandaloneSpecs: () => [],
     canBeStandalone: (id: string) => KNOWN_ELEMENTS.get(id)?.canBeStandalone ?? false,
     getGeneratableElementIds: () => [...KNOWN_ELEMENTS.keys()],
-  } as unknown as typeof manifestModule;
+    getMaxDepth: () => undefined,
+  } as unknown as typeof registryModule;
 }
 
 function createFallbackValidation() {
@@ -294,19 +309,19 @@ function scoreSchema(generated: ToolComposition, expected: ExpectedElement[]): D
 
   for (const el of generated.elements) {
     const elementId = normalizeElementId(el.type);
-    const manifest = manifestModule.getElementManifest(elementId);
+    const spec = registryModule.getElementSpec(elementId);
 
-    if (!manifest) {
+    if (!spec) {
       issues.push(`${elementId}: unknown element`);
       continue;
     }
 
-    // Check required config from manifest
-    const validation = manifestModule.validateRequiredConfig(elementId, el.config || {});
+    // Check required config from registry
+    const validation = registryModule.validateRequiredConfig(elementId, el.config || {});
     if (!validation.valid) {
       issues.push(`${elementId}: missing ${validation.missingFields.join(', ')}`);
       // Partial credit — some required fields present
-      const totalRequired = Object.keys(manifest.requiredConfig).length;
+      const totalRequired = Object.entries(spec.config).filter(([, f]) => f.required).length;
       const present = totalRequired - validation.missingFields.length;
       totalScore += totalRequired > 0 ? present / totalRequired : 1;
       continue;
@@ -323,7 +338,7 @@ function scoreSchema(generated: ToolComposition, expected: ExpectedElement[]): D
         issues.push(`${elementId}: Zod returned empty config`);
       }
     } catch {
-      totalScore += 0.8; // manifest passed, Zod unavailable
+      totalScore += 0.8; // registry passed, Zod unavailable
     }
   }
 
@@ -334,7 +349,7 @@ function scoreSchema(generated: ToolComposition, expected: ExpectedElement[]): D
   };
 }
 
-function scoreTier(generated: ToolComposition, expectedTier: string): DimensionScore {
+function scoreDepth(generated: ToolComposition, expectedDepth: ConnectionLevel): DimensionScore {
   if (generated.elements.length === 0) {
     return { score: 0, details: 'No elements generated' };
   }
@@ -344,30 +359,30 @@ function scoreTier(generated: ToolComposition, expectedTier: string): DimensionS
 
   for (const el of generated.elements) {
     const elementId = normalizeElementId(el.type);
-    const manifest = manifestModule.getElementManifest(elementId);
+    const spec = registryModule.getElementSpec(elementId);
 
-    if (!manifest) {
+    if (!spec) {
       wrong.push(`${elementId}: unknown`);
       continue;
     }
 
-    // Check if element tier is compatible with expected tier
-    // T1 elements are always valid. T2/T3 elements in a "T1 expected" test = wrong.
-    const tierRank = { T1: 1, T2: 2, T3: 3 } as Record<string, number>;
-    const expectedRank = tierRank[expectedTier] || 1;
-    const actualRank = tierRank[manifest.tier] || 1;
+    // Check if element's minDepth can operate at the expected depth
+    // An element with minDepth=standalone can work at any depth.
+    // An element with minDepth=space can work at space or deeper, but not standalone.
+    const expectedRank = DEPTH_RANK[expectedDepth] ?? 0;
+    const actualMinRank = DEPTH_RANK[spec.connection.minDepth] ?? 0;
 
-    if (actualRank <= expectedRank) {
+    if (actualMinRank <= expectedRank) {
       correct++;
     } else {
-      wrong.push(`${elementId} is ${manifest.tier}, expected ${expectedTier} or lower`);
+      wrong.push(`${elementId} needs ${spec.connection.minDepth}, context only provides ${expectedDepth}`);
     }
   }
 
   const score = correct / generated.elements.length;
   return {
     score: Math.round(score * 100) / 100,
-    details: wrong.length ? wrong.join('; ') : 'all tiers correct',
+    details: wrong.length ? wrong.join('; ') : 'all depths correct',
   };
 }
 
@@ -377,7 +392,7 @@ function scoreConnections(generated: ToolComposition, expectsConnections: boolea
 
   for (const el of generated.elements) {
     const elementId = normalizeElementId(el.type);
-    const reqs = manifestModule.getConnectionRequirements(elementId);
+    const reqs = registryModule.getConnectionRequirements(elementId);
     if (reqs) {
       elementsNeedingConnections.push(elementId);
     }
@@ -425,9 +440,9 @@ function scoreFunctional(generated: ToolComposition): DimensionScore {
 
   for (const el of generated.elements) {
     const elementId = normalizeElementId(el.type);
-    const manifest = manifestModule.getElementManifest(elementId);
+    const spec = registryModule.getElementSpec(elementId);
 
-    if (!manifest) {
+    if (!spec) {
       issues.push(`${elementId}: not in registry`);
       continue;
     }
@@ -477,7 +492,7 @@ function normalizeElementId(id: string): string {
 const DIMENSION_WEIGHTS = {
   intent: 0.35,
   schema: 0.25,
-  tier: 0.15,
+  depth: 0.15,
   connections: 0.10,
   functional: 0.15,
 };
@@ -502,7 +517,7 @@ async function runCase(testCase: BenchmarkCase): Promise<CaseResult> {
       scores: {
         intent: { score: 0, details: `Generation failed: ${err}` },
         schema: { score: 0, details: 'skipped' },
-        tier: { score: 0, details: 'skipped' },
+        depth: { score: 0, details: 'skipped' },
         connections: { score: 0, details: 'skipped' },
         functional: { score: 0, details: 'skipped' },
       },
@@ -515,14 +530,14 @@ async function runCase(testCase: BenchmarkCase): Promise<CaseResult> {
 
   const intent = scoreIntent(composition, testCase.expectedElements);
   const schema = scoreSchema(composition, testCase.expectedElements);
-  const tier = scoreTier(composition, testCase.expectedTier);
+  const depth = scoreDepth(composition, testCase.expectedDepth);
   const connections = scoreConnections(composition, testCase.expectsConnections);
   const functional = scoreFunctional(composition);
 
   const composite =
     intent.score * DIMENSION_WEIGHTS.intent +
     schema.score * DIMENSION_WEIGHTS.schema +
-    tier.score * DIMENSION_WEIGHTS.tier +
+    depth.score * DIMENSION_WEIGHTS.depth +
     connections.score * DIMENSION_WEIGHTS.connections +
     functional.score * DIMENSION_WEIGHTS.functional;
 
@@ -535,7 +550,7 @@ async function runCase(testCase: BenchmarkCase): Promise<CaseResult> {
     level: testCase.level,
     prompt: testCase.prompt,
     passed,
-    scores: { intent, schema, tier, connections, functional },
+    scores: { intent, schema, depth, connections, functional },
     composite: Math.round(composite * 100) / 100,
     generatedElements: composition.elements.map(e => e.type),
     expectedElements: testCase.expectedElements.map(e => e.elementId),
@@ -546,7 +561,7 @@ async function runCase(testCase: BenchmarkCase): Promise<CaseResult> {
 function summarize(results: CaseResult[]): EvalSummary {
   const byLevel: Record<number, { total: number; passed: number; rate: number }> = {};
   const dimensionScores: Record<string, number[]> = {
-    intent: [], schema: [], tier: [], connections: [], functional: [],
+    intent: [], schema: [], depth: [], connections: [], functional: [],
   };
 
   for (const r of results) {

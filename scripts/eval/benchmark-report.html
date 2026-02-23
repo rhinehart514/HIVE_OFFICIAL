@@ -531,13 +531,13 @@
       </div>
       <div class="dim-card">
         <div class="dim-header">
-          <span class="dim-name">Tier</span>
+          <span class="dim-name">Depth</span>
           <span class="dim-score" style="color:var(--green)">92%</span>
         </div>
         <div class="dim-bar-container">
           <div class="dim-bar" style="width:92%; background:var(--green)"></div>
         </div>
-        <div class="dim-detail">Are tier assignments (T1/T2/T3) correct?</div>
+        <div class="dim-detail">Can each element operate at the available connection depth?</div>
         <div class="dim-range">min 0% · max 100%</div>
       </div>
       <div class="dim-card">
@@ -664,7 +664,7 @@
       <ul>
         <li><strong>Intent (35%)</strong> — Right element types selected? Count-aware matching with recall-weighted F1.</li>
         <li><strong>Schema (25%)</strong> — Valid config per Zod schemas and element manifest required fields.</li>
-        <li><strong>Tier (15%)</strong> — Element tiers (T1/T2/T3) appropriate for the deployment context.</li>
+        <li><strong>Depth (15%)</strong> — Element connection depth appropriate for the available deployment context.</li>
         <li><strong>Connections (10%)</strong> — Required data connections declared with valid instance references.</li>
         <li><strong>Functional (15%)</strong> — Config + position + size present, element exists in renderer registry.</li>
       </ul>
