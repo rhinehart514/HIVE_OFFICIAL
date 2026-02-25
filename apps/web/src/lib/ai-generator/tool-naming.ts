@@ -32,6 +32,11 @@ const INTENT_NAMES: Record<Intent, string> = {
   'group-matching': 'Study Group Matcher',
   'competition-goals': 'Competition Tracker',
   'custom-visual': 'Custom Widget',
+  // Infrastructure
+  'exchange-items': 'Exchange Board',
+  'match-people': 'MatchMaker',
+  'run-approval': 'Request Pipeline',
+  'track-data': 'Data Tracker',
 };
 
 /**

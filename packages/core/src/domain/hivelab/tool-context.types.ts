@@ -472,8 +472,31 @@ export interface ProfileExecutionContext {
 }
 
 /**
+ * Server-side execution context for campus-deployed tools
+ */
+export interface CampusExecutionContext {
+  campus: {
+    campusId: string;
+    campusName: string;
+    toolCount: number;
+  };
+  tool: {
+    slug: string;
+    category: string;
+    badge: 'official' | 'community';
+    status: 'pending_review' | 'active' | 'paused';
+  };
+  usageStats: {
+    weeklyUsers: number;
+    totalUses: number;
+  };
+  fetchedAt: string;
+}
+
+/**
  * Discriminated union for deployment execution context
  */
 export type DeploymentExecutionContext =
   | { type: 'space'; context: SpaceExecutionContext }
-  | { type: 'profile'; context: ProfileExecutionContext };
+  | { type: 'profile'; context: ProfileExecutionContext }
+  | { type: 'campus'; context: CampusExecutionContext };

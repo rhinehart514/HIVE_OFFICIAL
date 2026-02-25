@@ -713,6 +713,134 @@ const UNIVERSAL_ELEMENTS: ElementDefinition[] = [
     render: (props) => renderElement('qr-code-generator', props)
   },
 
+  // Listing Board - Card-grid marketplace
+  {
+    id: 'listing-board',
+    name: 'Listing Board',
+    description: 'Card-grid listing board for textbook exchanges, free stuff, ride boards, and more',
+    category: 'action',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'RectangleStack',
+    configSchema: {
+      title: { type: 'string', default: 'Listing Board' },
+      categories: { type: 'array', default: ['Textbooks', 'Free Stuff', 'Rides', 'Other'] },
+      listingFields: { type: 'array', default: [
+        { key: 'title', label: 'Title', type: 'text', required: true },
+        { key: 'description', label: 'Description', type: 'textarea' },
+        { key: 'price', label: 'Price', type: 'text' },
+      ]},
+      claimBehavior: { type: 'string', default: 'instant', enum: ['instant', 'request'] },
+    },
+    defaultConfig: {
+      title: 'Listing Board',
+      categories: ['Textbooks', 'Free Stuff', 'Rides', 'Other'],
+      listingFields: [
+        { key: 'title', label: 'Title', type: 'text', required: true },
+        { key: 'description', label: 'Description', type: 'textarea' },
+        { key: 'price', label: 'Price', type: 'text' },
+      ],
+      claimBehavior: 'instant',
+    },
+    render: (props) => renderElement('listing-board', props),
+  },
+
+  // MatchMaker - Preference-based matching
+  {
+    id: 'match-maker',
+    name: 'MatchMaker',
+    description: 'Preference-based matching for study groups, mentorship, and more',
+    category: 'action',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'Sparkles',
+    configSchema: {
+      title: { type: 'string', default: 'MatchMaker' },
+      preferenceFields: { type: 'array', default: [
+        { key: 'interests', label: 'Interests', type: 'multi-select', options: ['Study', 'Research', 'Social', 'Projects'] },
+        { key: 'availability', label: 'Availability', type: 'multi-select', options: ['Morning', 'Afternoon', 'Evening', 'Weekend'] },
+      ]},
+      matchSize: { type: 'number', default: 2 },
+    },
+    defaultConfig: {
+      title: 'MatchMaker',
+      preferenceFields: [
+        { key: 'interests', label: 'Interests', type: 'multi-select', options: ['Study', 'Research', 'Social', 'Projects'] },
+        { key: 'availability', label: 'Availability', type: 'multi-select', options: ['Morning', 'Afternoon', 'Evening', 'Weekend'] },
+      ],
+      matchSize: 2,
+    },
+    render: (props) => renderElement('match-maker', props),
+  },
+
+  // WorkflowPipeline - Kanban approval pipeline
+  {
+    id: 'workflow-pipeline',
+    name: 'Workflow Pipeline',
+    description: 'Kanban-style multi-stage approval pipeline for budget requests, event proposals, and more',
+    category: 'action',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'ClipboardDocumentCheck',
+    configSchema: {
+      title: { type: 'string', default: 'Workflow Pipeline' },
+      stages: { type: 'array', default: [
+        { id: 'submitted', name: 'Submitted', color: 'bg-blue-500' },
+        { id: 'review', name: 'In Review', color: 'bg-amber-500' },
+        { id: 'approved', name: 'Approved', color: 'bg-green-500' },
+      ]},
+      intakeFields: { type: 'array', default: [
+        { key: 'title', label: 'Title', type: 'text', required: true },
+        { key: 'description', label: 'Description', type: 'textarea' },
+      ]},
+    },
+    defaultConfig: {
+      title: 'Workflow Pipeline',
+      stages: [
+        { id: 'submitted', name: 'Submitted', color: 'bg-blue-500' },
+        { id: 'review', name: 'In Review', color: 'bg-amber-500' },
+        { id: 'approved', name: 'Approved', color: 'bg-green-500' },
+      ],
+      intakeFields: [
+        { key: 'title', label: 'Title', type: 'text', required: true },
+        { key: 'description', label: 'Description', type: 'textarea' },
+      ],
+    },
+    render: (props) => renderElement('workflow-pipeline', props),
+  },
+
+  // DataTable - Sortable, filterable CRUD table
+  {
+    id: 'data-table',
+    name: 'Data Table',
+    description: 'Sortable, filterable data table with add/edit/delete operations',
+    category: 'action',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'TableCells',
+    configSchema: {
+      title: { type: 'string', default: 'Data Table' },
+      columns: { type: 'array', default: [
+        { key: 'name', label: 'Name', type: 'text', sortable: true, filterable: true },
+        { key: 'email', label: 'Email', type: 'email', sortable: true, filterable: true },
+        { key: 'status', label: 'Status', type: 'text', sortable: true },
+      ]},
+      pageSize: { type: 'number', default: 10 },
+      allowRowActions: { type: 'boolean', default: true },
+    },
+    defaultConfig: {
+      title: 'Data Table',
+      columns: [
+        { key: 'name', label: 'Name', type: 'text', sortable: true, filterable: true },
+        { key: 'email', label: 'Email', type: 'email', sortable: true, filterable: true },
+        { key: 'status', label: 'Status', type: 'text', sortable: true },
+      ],
+      pageSize: 10,
+      allowRowActions: true,
+    },
+    render: (props) => renderElement('data-table', props),
+  },
+
   // Photo Gallery - For Event Series and general photo sharing
   {
     id: 'photo-gallery',

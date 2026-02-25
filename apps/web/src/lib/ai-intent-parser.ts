@@ -64,6 +64,10 @@ const INTENT_MAP: Record<Intent, IntentType> = {
   'group-matching': 'rsvp',
   'competition-goals': 'event',
   'custom-visual': 'event',
+  'exchange-items': 'signup',
+  'match-people': 'rsvp',
+  'run-approval': 'signup',
+  'track-data': 'announcement',
 };
 
 /**

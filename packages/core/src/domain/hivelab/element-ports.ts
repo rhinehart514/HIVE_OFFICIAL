@@ -193,6 +193,38 @@ export const OUTPUT_MAPPINGS: Record<string, Record<string, string>> = {
     isAllowed: 'isAllowed',
     data: 'isAllowed',
   },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CAMPUS INFRASTRUCTURE ELEMENTS (4)
+  // ═══════════════════════════════════════════════════════════════════
+  'listing-board': {
+    listings: 'listings',
+    activeListings: 'activeListings',
+    claimedItems: 'claimedItems',
+    count: 'listingCount',
+    data: 'listings',
+  },
+  'match-maker': {
+    matches: 'matches',
+    unmatchedPool: 'unmatchedPool',
+    userMatches: 'userMatches',
+    poolSize: 'poolSize',
+    data: 'matches',
+  },
+  'workflow-pipeline': {
+    requests: 'requests',
+    queue: 'pipelineQueue',
+    stageCounts: 'stageCounts',
+    userRequests: 'userRequests',
+    data: 'requests',
+  },
+  'data-table': {
+    rows: 'rows',
+    filteredRows: 'filteredRows',
+    rowCount: 'rowCount',
+    selection: 'selectedRow',
+    data: 'rows',
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -284,6 +316,30 @@ export const ACTION_OUTPUT_MAPPINGS: Record<string, Record<string, string[]>> = 
     set: ['value', 'percentage', 'isComplete', 'data'],
     increment: ['value', 'percentage', 'isComplete', 'data'],
     reset: ['value', 'percentage', 'isComplete', 'data'],
+  },
+  'listing-board': {
+    post_listing: ['listings', 'count', 'data'],
+    claim_listing: ['listings', 'claimedItems', 'data'],
+    unclaim: ['listings', 'claimedItems', 'data'],
+    mark_done: ['listings', 'count', 'data'],
+    delete_listing: ['listings', 'count', 'data'],
+  },
+  'match-maker': {
+    submit_preferences: ['unmatchedPool', 'poolSize', 'data'],
+    accept_match: ['matches', 'userMatches', 'data'],
+    reject_match: ['unmatchedPool', 'poolSize', 'data'],
+    rematch: ['matches', 'unmatchedPool', 'data'],
+  },
+  'workflow-pipeline': {
+    submit: ['requests', 'queue', 'stageCounts', 'data'],
+    approve: ['requests', 'queue', 'stageCounts', 'data'],
+    reject: ['requests', 'queue', 'stageCounts', 'data'],
+    request_changes: ['requests', 'data'],
+  },
+  'data-table': {
+    add_row: ['rows', 'rowCount', 'data'],
+    edit_row: ['rows', 'data'],
+    delete_row: ['rows', 'rowCount', 'data'],
   },
 };
 

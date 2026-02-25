@@ -1696,6 +1696,342 @@ const ALL_PATTERNS: CompositionPattern[] = [
     ],
     connections: [link('campus_guide_search', 'query', 'campus_guide_results', 'filter')],
   }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // INFRASTRUCTURE PATTERNS (use new campus elements)
+  // ═══════════════════════════════════════════════════════════════════
+
+  // Exchange Items — listing-board based
+  pattern({
+    id: 'textbook-exchange',
+    name: 'Textbook Exchange',
+    description: 'Post, browse, and claim textbooks with category filters and search.',
+    intent: 'exchange-items',
+    keywords: ['textbook exchange', 'textbook marketplace', 'sell textbooks', 'buy textbooks', 'book swap'],
+    elements: [
+      {
+        elementId: 'listing-board',
+        instanceId: 'textbook_listings',
+        config: {
+          title: 'Textbook Exchange',
+          categories: ['STEM', 'Humanities', 'Business', 'Arts', 'Other'],
+          claimBehavior: 'request',
+          allowImages: true,
+          maxListingsPerUser: 20,
+        },
+      },
+      {
+        elementId: 'search-input',
+        instanceId: 'textbook_search',
+        config: searchConfig('Search by course, title, or author'),
+        size: { width: 340, height: 120 },
+      },
+      {
+        elementId: 'filter-selector',
+        instanceId: 'textbook_filters',
+        config: {
+          title: 'Filter',
+          filters: ['STEM', 'Humanities', 'Business', 'Arts', 'Other'],
+          multiSelect: true,
+        },
+        size: { width: 340, height: 140 },
+      },
+    ],
+    connections: [
+      link('textbook_search', 'query', 'textbook_listings', 'filter'),
+      link('textbook_filters', 'selectedFilters', 'textbook_listings', 'categoryFilter'),
+    ],
+  }),
+  pattern({
+    id: 'campus-marketplace',
+    name: 'Campus Marketplace',
+    description: 'General buy/sell/trade board for anything students need.',
+    intent: 'exchange-items',
+    keywords: ['campus marketplace', 'buy sell', 'classifieds', 'for sale', 'student marketplace'],
+    elements: [
+      {
+        elementId: 'listing-board',
+        instanceId: 'marketplace_listings',
+        config: {
+          title: 'Campus Marketplace',
+          categories: ['Electronics', 'Furniture', 'Clothing', 'Tickets', 'Services', 'Other'],
+          claimBehavior: 'instant',
+          allowImages: true,
+          maxListingsPerUser: 10,
+        },
+      },
+      {
+        elementId: 'search-input',
+        instanceId: 'marketplace_search',
+        config: searchConfig('Search listings...'),
+        size: { width: 340, height: 120 },
+      },
+    ],
+    connections: [
+      link('marketplace_search', 'query', 'marketplace_listings', 'filter'),
+    ],
+  }),
+  pattern({
+    id: 'free-stuff-board',
+    name: 'Free Stuff Board',
+    description: 'Give away items you no longer need. First-come, first-served.',
+    intent: 'exchange-items',
+    keywords: ['free stuff', 'giveaway', 'curb alert', 'free items', 'take it'],
+    elements: [
+      {
+        elementId: 'listing-board',
+        instanceId: 'free_stuff_listings',
+        config: {
+          title: 'Free Stuff',
+          categories: ['Furniture', 'Electronics', 'Books', 'Kitchen', 'Clothing', 'Other'],
+          claimBehavior: 'instant',
+          allowImages: true,
+          maxListingsPerUser: 5,
+        },
+      },
+    ],
+  }),
+  pattern({
+    id: 'ride-board',
+    name: 'Ride Board',
+    description: 'Post and find rides for trips, airport runs, and weekend getaways.',
+    intent: 'exchange-items',
+    keywords: ['ride board', 'rideshare', 'carpool', 'need a ride', 'offering ride', 'airport ride'],
+    elements: [
+      {
+        elementId: 'listing-board',
+        instanceId: 'ride_listings',
+        config: {
+          title: 'Ride Board',
+          categories: ['Airport', 'Weekend Trip', 'Daily Commute', 'Other'],
+          claimBehavior: 'request',
+          allowImages: false,
+          maxListingsPerUser: 5,
+        },
+      },
+      {
+        elementId: 'filter-selector',
+        instanceId: 'ride_filters',
+        config: {
+          title: 'Destination',
+          filters: ['Airport', 'Weekend Trip', 'Daily Commute', 'Other'],
+          multiSelect: false,
+        },
+        size: { width: 340, height: 140 },
+      },
+    ],
+    connections: [
+      link('ride_filters', 'selectedFilters', 'ride_listings', 'categoryFilter'),
+    ],
+  }),
+
+  // Match People — match-maker based
+  pattern({
+    id: 'study-group-matcher',
+    name: 'Study Group Matcher',
+    description: 'Submit your courses and schedule, get matched with compatible study partners.',
+    intent: 'match-people',
+    keywords: ['study group', 'study partner', 'study buddy', 'find study group', 'course match'],
+    elements: [
+      {
+        elementId: 'match-maker',
+        instanceId: 'study_matcher',
+        config: {
+          title: 'Study Group Matcher',
+          matchCriteria: 'compatibility',
+          groupSize: { min: 2, max: 5 },
+          allowRematch: true,
+          preferenceFields: [
+            { key: 'courses', label: 'Courses', type: 'text', required: true },
+            { key: 'availability', label: 'Availability', type: 'text', required: true },
+            { key: 'study_style', label: 'Study Style', type: 'select', options: ['Quiet', 'Collaborative', 'Mixed'] },
+            { key: 'location', label: 'Preferred Location', type: 'text' },
+          ],
+        },
+      },
+      {
+        elementId: 'result-list',
+        instanceId: 'study_match_results',
+        config: resultListConfig('Your matches'),
+      },
+      {
+        elementId: 'countdown-timer',
+        instanceId: 'matching_deadline',
+        config: countdownConfig('Matching round closes in', 3),
+        size: { width: 340, height: 160 },
+      },
+    ],
+    connections: [
+      link('study_matcher', 'matches', 'study_match_results', 'items'),
+    ],
+  }),
+  pattern({
+    id: 'mentorship-pairing',
+    name: 'Mentorship Pairing',
+    description: 'Match mentors and mentees based on interests, experience, and goals.',
+    intent: 'match-people',
+    keywords: ['mentorship', 'mentor', 'mentee', 'pairing', 'mentor match', 'peer mentor'],
+    elements: [
+      {
+        elementId: 'match-maker',
+        instanceId: 'mentor_matcher',
+        config: {
+          title: 'Mentorship Pairing',
+          matchCriteria: 'compatibility',
+          groupSize: { min: 2, max: 2 },
+          allowRematch: true,
+          preferenceFields: [
+            { key: 'role', label: 'I am a...', type: 'select', options: ['Mentor', 'Mentee'], required: true },
+            { key: 'interests', label: 'Interests/Topics', type: 'text', required: true },
+            { key: 'experience', label: 'Experience Level', type: 'select', options: ['Beginner', 'Intermediate', 'Advanced'] },
+            { key: 'goals', label: 'What do you hope to gain?', type: 'text' },
+          ],
+        },
+      },
+      {
+        elementId: 'form-builder',
+        instanceId: 'mentor_intro_form',
+        config: formConfig(
+          [
+            { name: 'bio', label: 'Short bio', type: 'textarea', required: true },
+            { name: 'meeting_preference', label: 'Meeting preference', type: 'select', options: ['In person', 'Virtual', 'Either'], required: true },
+          ],
+          'Complete Profile'
+        ),
+      },
+    ],
+  }),
+
+  // Run Approval — workflow-pipeline based
+  pattern({
+    id: 'budget-request-system',
+    name: 'Budget Request System',
+    description: 'Submit budget requests through a multi-step approval pipeline with progress tracking.',
+    intent: 'run-approval',
+    keywords: ['budget request', 'funding request', 'reimbursement', 'budget approval', 'expense approval'],
+    spaceTypes: ['student_org', 'university_org'],
+    elements: [
+      {
+        elementId: 'workflow-pipeline',
+        instanceId: 'budget_pipeline',
+        config: {
+          title: 'Budget Request Pipeline',
+          stages: [
+            { id: 'submitted', name: 'Submitted', color: '#3B82F6' },
+            { id: 'treasurer_review', name: 'Treasurer Review', color: '#F59E0B' },
+            { id: 'advisor_approval', name: 'Advisor Approval', color: '#8B5CF6' },
+            { id: 'approved', name: 'Approved', color: '#10B981' },
+          ],
+          intakeFields: [
+            { key: 'title', label: 'Request Title', type: 'text', required: true },
+            { key: 'amount', label: 'Amount ($)', type: 'number', required: true },
+            { key: 'category', label: 'Category', type: 'select', options: ['Events', 'Supplies', 'Travel', 'Marketing', 'Other'], required: true },
+            { key: 'justification', label: 'Justification', type: 'textarea', required: true },
+          ],
+          notifyOnStageChange: true,
+        },
+      },
+      {
+        elementId: 'progress-indicator',
+        instanceId: 'budget_progress',
+        config: {
+          title: 'Budget Utilization',
+          max: 100,
+          unit: '%',
+          showPercentage: true,
+        },
+        size: { width: 340, height: 160 },
+      },
+    ],
+  }),
+  pattern({
+    id: 'event-proposal-pipeline',
+    name: 'Event Proposal Pipeline',
+    description: 'Submit event proposals for review and approval by space leadership.',
+    intent: 'run-approval',
+    keywords: ['event proposal', 'propose event', 'event approval', 'submit event', 'event review'],
+    spaceTypes: ['student_org', 'greek_life', 'university_org'],
+    elements: [
+      {
+        elementId: 'workflow-pipeline',
+        instanceId: 'event_proposal_pipeline',
+        config: {
+          title: 'Event Proposals',
+          stages: [
+            { id: 'draft', name: 'Draft', color: '#6B7280' },
+            { id: 'submitted', name: 'Submitted', color: '#3B82F6' },
+            { id: 'in_review', name: 'In Review', color: '#F59E0B' },
+            { id: 'approved', name: 'Approved', color: '#10B981' },
+          ],
+          intakeFields: [
+            { key: 'event_name', label: 'Event Name', type: 'text', required: true },
+            { key: 'date', label: 'Proposed Date', type: 'text', required: true },
+            { key: 'expected_attendance', label: 'Expected Attendance', type: 'number', required: true },
+            { key: 'budget_needed', label: 'Budget Needed ($)', type: 'number', required: false },
+            { key: 'description', label: 'Event Description', type: 'textarea', required: true },
+          ],
+          notifyOnStageChange: true,
+        },
+      },
+    ],
+  }),
+
+  // Track Data — data-table based
+  pattern({
+    id: 'club-roster',
+    name: 'Club Roster',
+    description: 'Maintain a structured member roster with roles, contact info, and status.',
+    intent: 'track-data',
+    keywords: ['club roster', 'member roster', 'member list', 'contact list', 'org roster'],
+    spaceTypes: ['student_org', 'greek_life', 'university_org'],
+    elements: [
+      {
+        elementId: 'data-table',
+        instanceId: 'roster_table',
+        config: {
+          title: 'Club Roster',
+          columns: [
+            { key: 'name', label: 'Name', type: 'text', sortable: true, filterable: true },
+            { key: 'role', label: 'Role', type: 'select', options: ['Member', 'Officer', 'Advisor'], sortable: true, filterable: true },
+            { key: 'email', label: 'Email', type: 'text', sortable: false, filterable: false },
+            { key: 'year', label: 'Year', type: 'select', options: ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Grad'], sortable: true, filterable: true },
+            { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Inactive', 'Alumni'], sortable: true, filterable: true },
+          ],
+          permissions: 'authenticated',
+          allowExport: true,
+          pageSize: 25,
+        },
+      },
+    ],
+  }),
+  pattern({
+    id: 'equipment-inventory',
+    name: 'Equipment Inventory',
+    description: 'Track organization equipment with checkout status and condition.',
+    intent: 'track-data',
+    keywords: ['equipment inventory', 'inventory tracker', 'asset tracking', 'equipment list', 'gear list'],
+    spaceTypes: ['student_org', 'university_org'],
+    elements: [
+      {
+        elementId: 'data-table',
+        instanceId: 'inventory_table',
+        config: {
+          title: 'Equipment Inventory',
+          columns: [
+            { key: 'item', label: 'Item', type: 'text', sortable: true, filterable: true },
+            { key: 'quantity', label: 'Qty', type: 'text', sortable: true, filterable: false },
+            { key: 'condition', label: 'Condition', type: 'select', options: ['New', 'Good', 'Fair', 'Needs Repair'], sortable: true, filterable: true },
+            { key: 'checked_out_by', label: 'Checked Out By', type: 'text', sortable: true, filterable: false },
+            { key: 'location', label: 'Location', type: 'text', sortable: false, filterable: true },
+          ],
+          permissions: 'authenticated',
+          allowExport: true,
+          allowRowActions: true,
+          pageSize: 20,
+        },
+      },
+    ],
+  }),
 ];
 
 export const COMPOSITION_PATTERNS: Partial<Record<Intent, CompositionPattern[]>> = {};

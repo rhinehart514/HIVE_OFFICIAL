@@ -46,6 +46,10 @@ import { spaceStatsSpec } from './space-stats/manifest';
 import { announcementSpec } from './announcement/manifest';
 import { roleGateSpec } from './role-gate/manifest';
 import { customBlockSpec } from './custom-block/manifest';
+import { listingBoardSpec } from './listing-board/manifest';
+import { matchMakerSpec } from './match-maker/manifest';
+import { workflowPipelineSpec } from './workflow-pipeline/manifest';
+import { dataTableSpec } from './data-table/manifest';
 
 // ── All Specs ───────────────────────────────────────────────────
 
@@ -86,6 +90,10 @@ const ALL_SPECS: ElementSpec[] = [
   announcementSpec,
   roleGateSpec,
   customBlockSpec,
+  listingBoardSpec,
+  matchMakerSpec,
+  workflowPipelineSpec,
+  dataTableSpec,
 ];
 
 // ── Internal Indexes ────────────────────────────────────────────

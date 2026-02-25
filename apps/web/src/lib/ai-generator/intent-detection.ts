@@ -28,7 +28,12 @@ export type Intent =
   | 'suggestion-triage'  // feedback with filtering and trends
   | 'group-matching'     // study groups, project teams
   | 'competition-goals' // fundraising, challenges with targets
-  | 'custom-visual';    // bingo, games, drag-and-drop, interactive widgets
+  | 'custom-visual'     // bingo, games, drag-and-drop, interactive widgets
+  // Infrastructure intents (use new campus elements)
+  | 'exchange-items'    // marketplace, buy/sell/trade, listing board
+  | 'match-people'      // preference-based matching, pairing
+  | 'run-approval'      // workflow pipeline, multi-step approval
+  | 'track-data';       // structured data, spreadsheet, CRUD table
 
 export interface DetectedIntent {
   primary: Intent;
@@ -128,6 +133,39 @@ export const INTENT_SIGNALS: Record<Intent, string[]> = {
     'interactive visualization', 'custom visualization', 'mini game', 'minigame',
     'memory game', 'word search', 'crossword', 'puzzle',
   ],
+  // Infrastructure intents (3x weight — use new campus elements)
+  'exchange-items': [
+    'marketplace', 'buy sell', 'buy and sell', 'exchange', 'listing', 'listings',
+    'textbook exchange', 'textbook marketplace', 'sell textbooks', 'free stuff',
+    'free items', 'giveaway board', 'swap', 'trade', 'for sale', 'classifieds',
+    'post listing', 'claim', 'ride board', 'ride share', 'rideshare',
+    'subletting', 'sublet', 'furniture', 'ticket exchange', 'sell tickets',
+    'campus marketplace', 'student marketplace', 'buy used',
+  ],
+  'match-people': [
+    'match', 'matching', 'pair', 'pairing', 'match maker', 'matchmaker',
+    'study partner', 'study partners', 'find partner', 'find partners',
+    'mentorship', 'mentor match', 'mentor pairing', 'roommate match',
+    'project team', 'project teams', 'team formation', 'compatibility',
+    'preference matching', 'pair up', 'buddy system', 'accountability partner',
+    'lab partner', 'language exchange', 'peer tutor', 'peer tutoring',
+  ],
+  'run-approval': [
+    'approval', 'approve', 'approval workflow', 'approval pipeline',
+    'budget request', 'budget approval', 'funding request', 'reimbursement',
+    'event proposal', 'proposal review', 'submit for review', 'review process',
+    'application', 'membership application', 'request system', 'intake form',
+    'multi-step', 'pipeline', 'workflow', 'stage', 'stages',
+    'pending approval', 'approve reject', 'request changes',
+  ],
+  'track-data': [
+    'data table', 'spreadsheet', 'tracker', 'inventory', 'roster',
+    'directory', 'equipment list', 'contact list', 'member roster',
+    'resource directory', 'club roster', 'track items', 'crud',
+    'add edit delete', 'sortable table', 'filterable table', 'csv export',
+    'structured data', 'database', 'record keeping', 'log entries',
+    'catalog', 'registry', 'index', 'master list',
+  ],
 };
 
 // App-level intents get 3x weight for strongest matching (they're specific use cases)
@@ -135,6 +173,8 @@ export const APP_INTENTS: Intent[] = [
   'photo-challenge', 'attendance-tracking', 'resource-management', 'multi-vote',
   'event-series', 'suggestion-triage', 'group-matching', 'competition-goals',
   'custom-visual',
+  // Infrastructure intents (use new campus elements)
+  'exchange-items', 'match-people', 'run-approval', 'track-data',
 ];
 
 // Campus-specific intents get 2x weight for stronger matching
@@ -169,6 +209,11 @@ export function detectIntent(prompt: string): DetectedIntent {
     'group-matching': 0,
     'competition-goals': 0,
     'custom-visual': 0,
+    // Infrastructure intents
+    'exchange-items': 0,
+    'match-people': 0,
+    'run-approval': 0,
+    'track-data': 0,
   };
 
   const matchedKeywords: string[] = [];

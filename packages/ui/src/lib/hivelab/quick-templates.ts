@@ -54,7 +54,7 @@ export interface QuickTemplate {
   /** Short description */
   description: string;
   /** Icon name from Lucide */
-  icon: 'bar-chart-2' | 'timer' | 'link-2' | 'users' | 'calendar' | 'message-square' | 'file-text' | 'sparkles' | 'clipboard-list' | 'target' | 'trending-up' | 'wallet' | 'camera' | 'trophy' | 'inbox' | 'grid';
+  icon: 'bar-chart-2' | 'timer' | 'link-2' | 'users' | 'calendar' | 'message-square' | 'file-text' | 'sparkles' | 'clipboard-list' | 'target' | 'trending-up' | 'wallet' | 'camera' | 'trophy' | 'inbox' | 'grid' | 'shopping-bag' | 'git-merge' | 'table';
   /** Category for grouping */
   category: TemplateCategory;
   /** Complexity level - 'simple' (1-2 elements) or 'app' (4+ elements) */
@@ -1808,11 +1808,355 @@ export const COMPETITION_TRACKER_TEMPLATE: QuickTemplate = {
   },
 };
 
+// =============================================================================
+// INFRASTRUCTURE TEMPLATES (campus-scale tools using new elements)
+// These use listing-board, match-maker, workflow-pipeline, data-table
+// =============================================================================
+
+/**
+ * Textbook Exchange Template
+ * Campus marketplace for buying/selling textbooks
+ */
+export const TEXTBOOK_EXCHANGE_TEMPLATE: QuickTemplate = {
+  id: 'textbook-exchange',
+  name: 'Textbook Exchange',
+  description: 'Buy, sell, and trade textbooks with other students',
+  icon: 'shopping-bag',
+  category: 'resources',
+  complexity: 'app',
+  interestCategories: ['academic_style', 'builders_and_hustle'],
+  spaceTypes: ['student_org', 'uni_org', 'residential'],
+  quickDeploy: true,
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'title', label: 'Board Name', type: 'text', required: false, placeholder: 'Textbook Exchange', defaultValue: 'Textbook Exchange' },
+  ],
+  quickDeployFields: [
+    { key: 'title', label: 'Board Name', type: 'text', required: false, placeholder: 'Textbook Exchange', defaultValue: 'Textbook Exchange' },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Textbook Exchange',
+    description: 'Buy, sell, and trade textbooks',
+    elements: [
+      {
+        elementId: 'listing-board',
+        instanceId: generateId(),
+        config: {
+          title: 'Textbook Exchange',
+          categories: ['Textbooks', 'Course Materials', 'Lab Supplies', 'Other'],
+          listingFields: [
+            { key: 'title', label: 'Book Title', type: 'text', required: true },
+            { key: 'description', label: 'Course / Condition', type: 'textarea' },
+            { key: 'price', label: 'Price', type: 'text' },
+          ],
+          claimBehavior: 'request',
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 400, height: 500 },
+      },
+      {
+        elementId: 'search-input',
+        instanceId: generateId(),
+        config: {
+          placeholder: 'Search by book title or course...',
+          debounceMs: 200,
+        },
+        position: { x: 0, y: 520 },
+        size: { width: 400, height: 60 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Study Group Matcher Template
+ * Match students into study groups by course and availability
+ */
+export const STUDY_GROUP_MATCHER_TEMPLATE_V2: QuickTemplate = {
+  id: 'study-group-matcher',
+  name: 'Study Group Matcher',
+  description: 'Match students into study groups by course and schedule',
+  icon: 'users',
+  category: 'teams',
+  complexity: 'app',
+  interestCategories: ['academic_style', 'social_energy'],
+  spaceTypes: ['student_org', 'uni_org', 'residential'],
+  quickDeploy: true,
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'title', label: 'Matcher Name', type: 'text', required: false, placeholder: 'Study Group Matcher', defaultValue: 'Study Group Matcher' },
+    { key: 'matchSize', label: 'Group Size', type: 'number', required: false, defaultValue: 4 },
+  ],
+  quickDeployFields: [
+    { key: 'title', label: 'Matcher Name', type: 'text', required: false, placeholder: 'Study Group Matcher', defaultValue: 'Study Group Matcher' },
+    { key: 'matchSize', label: 'Group Size', type: 'number', required: false, defaultValue: 4 },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Study Group Matcher',
+    description: 'Match students into study groups',
+    elements: [
+      {
+        elementId: 'match-maker',
+        instanceId: generateId(),
+        config: {
+          title: 'Study Group Matcher',
+          preferenceFields: [
+            { key: 'course', label: 'Course', type: 'multi-select', options: ['CSE 115', 'CSE 116', 'MTH 141', 'PHY 107', 'CHE 101', 'BIO 200'] },
+            { key: 'availability', label: 'Availability', type: 'multi-select', options: ['Morning', 'Afternoon', 'Evening', 'Weekend'] },
+            { key: 'style', label: 'Study Style', type: 'multi-select', options: ['Silent', 'Discussion', 'Practice Problems', 'Flashcards'] },
+          ],
+          matchSize: 4,
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 400, height: 450 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Budget Request System Template
+ * Multi-stage approval pipeline for budget/funding requests
+ */
+export const BUDGET_REQUEST_TEMPLATE: QuickTemplate = {
+  id: 'budget-request',
+  name: 'Budget Request System',
+  description: 'Submit and track budget requests through approval stages',
+  icon: 'git-merge',
+  category: 'resources',
+  complexity: 'app',
+  interestCategories: ['builders_and_hustle'],
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
+  quickDeploy: true,
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'title', label: 'Pipeline Name', type: 'text', required: false, placeholder: 'Budget Requests', defaultValue: 'Budget Requests' },
+  ],
+  quickDeployFields: [
+    { key: 'title', label: 'Pipeline Name', type: 'text', required: false, placeholder: 'Budget Requests', defaultValue: 'Budget Requests' },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Budget Request System',
+    description: 'Submit and track budget requests through approval',
+    elements: [
+      {
+        elementId: 'workflow-pipeline',
+        instanceId: generateId(),
+        config: {
+          title: 'Budget Requests',
+          stages: [
+            { id: 'submitted', name: 'Submitted', color: 'bg-blue-500' },
+            { id: 'treasurer-review', name: 'Treasurer Review', color: 'bg-amber-500' },
+            { id: 'advisor-approval', name: 'Advisor Approval', color: 'bg-purple-500' },
+            { id: 'approved', name: 'Approved', color: 'bg-green-500' },
+          ],
+          intakeFields: [
+            { key: 'title', label: 'Request Title', type: 'text', required: true },
+            { key: 'amount', label: 'Amount ($)', type: 'text', required: true },
+            { key: 'description', label: 'What is this for?', type: 'textarea', required: true },
+            { key: 'date', label: 'Needed By', type: 'text' },
+          ],
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 500, height: 500 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Campus Marketplace Template
+ * General-purpose buy/sell/trade board
+ */
+export const CAMPUS_MARKETPLACE_TEMPLATE: QuickTemplate = {
+  id: 'campus-marketplace',
+  name: 'Campus Marketplace',
+  description: 'Buy, sell, and trade anything on campus',
+  icon: 'shopping-bag',
+  category: 'resources',
+  complexity: 'app',
+  interestCategories: ['builders_and_hustle', 'social_energy'],
+  spaceTypes: ['student_org', 'uni_org', 'residential'],
+  quickDeploy: true,
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'title', label: 'Marketplace Name', type: 'text', required: false, placeholder: 'Campus Marketplace', defaultValue: 'Campus Marketplace' },
+  ],
+  quickDeployFields: [
+    { key: 'title', label: 'Marketplace Name', type: 'text', required: false, placeholder: 'Campus Marketplace', defaultValue: 'Campus Marketplace' },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Campus Marketplace',
+    description: 'Buy, sell, and trade on campus',
+    elements: [
+      {
+        elementId: 'listing-board',
+        instanceId: generateId(),
+        config: {
+          title: 'Campus Marketplace',
+          categories: ['Furniture', 'Electronics', 'Clothing', 'Tickets', 'Free Stuff', 'Other'],
+          listingFields: [
+            { key: 'title', label: 'Item', type: 'text', required: true },
+            { key: 'description', label: 'Description', type: 'textarea' },
+            { key: 'price', label: 'Price', type: 'text' },
+          ],
+          claimBehavior: 'request',
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 400, height: 500 },
+      },
+      {
+        elementId: 'search-input',
+        instanceId: generateId(),
+        config: {
+          placeholder: 'Search listings...',
+          debounceMs: 200,
+        },
+        position: { x: 0, y: 520 },
+        size: { width: 400, height: 60 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Club Roster Template
+ * Sortable member directory with roles and contact info
+ */
+export const CLUB_ROSTER_TEMPLATE: QuickTemplate = {
+  id: 'club-roster',
+  name: 'Club Roster',
+  description: 'Organized member directory with roles and contact info',
+  icon: 'table',
+  category: 'teams',
+  complexity: 'simple',
+  interestCategories: ['builders_and_hustle'],
+  spaceTypes: ['student_org', 'uni_org', 'greek'],
+  quickDeploy: true,
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'title', label: 'Roster Name', type: 'text', required: false, placeholder: 'Club Roster', defaultValue: 'Club Roster' },
+  ],
+  quickDeployFields: [
+    { key: 'title', label: 'Roster Name', type: 'text', required: false, placeholder: 'Club Roster', defaultValue: 'Club Roster' },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Club Roster',
+    description: 'Member directory with roles and contact',
+    elements: [
+      {
+        elementId: 'data-table',
+        instanceId: generateId(),
+        config: {
+          title: 'Club Roster',
+          columns: [
+            { key: 'name', label: 'Name', type: 'text', sortable: true, filterable: true },
+            { key: 'role', label: 'Role', type: 'text', sortable: true, filterable: true },
+            { key: 'email', label: 'Email', type: 'email', sortable: true },
+            { key: 'year', label: 'Year', type: 'text', sortable: true, filterable: true },
+          ],
+          pageSize: 15,
+          allowRowActions: true,
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 500, height: 400 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Mentorship Pairing Template
+ * Match mentors with mentees by interest and experience
+ */
+export const MENTORSHIP_PAIRING_TEMPLATE: QuickTemplate = {
+  id: 'mentorship-pairing',
+  name: 'Mentorship Pairing',
+  description: 'Match mentors and mentees based on interests and experience',
+  icon: 'sparkles',
+  category: 'teams',
+  complexity: 'app',
+  interestCategories: ['academic_style', 'builders_and_hustle'],
+  spaceTypes: ['student_org', 'uni_org'],
+  quickDeploy: true,
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'title', label: 'Program Name', type: 'text', required: false, placeholder: 'Mentorship Program', defaultValue: 'Mentorship Program' },
+  ],
+  quickDeployFields: [
+    { key: 'title', label: 'Program Name', type: 'text', required: false, placeholder: 'Mentorship Program', defaultValue: 'Mentorship Program' },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Mentorship Pairing',
+    description: 'Match mentors with mentees',
+    elements: [
+      {
+        elementId: 'match-maker',
+        instanceId: generateId(),
+        config: {
+          title: 'Mentorship Pairing',
+          preferenceFields: [
+            { key: 'role', label: 'I am a...', type: 'multi-select', options: ['Mentor', 'Mentee'] },
+            { key: 'topics', label: 'Topics', type: 'multi-select', options: ['Career', 'Academics', 'Research', 'Leadership', 'Technical Skills'] },
+            { key: 'availability', label: 'Availability', type: 'multi-select', options: ['Weekly', 'Biweekly', 'Monthly'] },
+          ],
+          matchSize: 2,
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 400, height: 450 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
 /**
  * All quick templates
  */
 export const QUICK_TEMPLATES: QuickTemplate[] = [
-  // App-tier templates (featured first)
+  // Infrastructure templates (campus-scale, new elements)
+  TEXTBOOK_EXCHANGE_TEMPLATE,
+  CAMPUS_MARKETPLACE_TEMPLATE,
+  STUDY_GROUP_MATCHER_TEMPLATE_V2,
+  BUDGET_REQUEST_TEMPLATE,
+  MENTORSHIP_PAIRING_TEMPLATE,
+  CLUB_ROSTER_TEMPLATE,
+  // App-tier templates
   PHOTO_CHALLENGE_TEMPLATE,
   ATTENDANCE_TRACKER_TEMPLATE,
   RESOURCE_SIGNUP_TEMPLATE,

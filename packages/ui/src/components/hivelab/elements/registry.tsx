@@ -66,6 +66,12 @@ import {
   AvailabilityHeatmapElement,
 } from './space';
 
+// Campus Infrastructure elements - core building blocks
+import { ListingBoardElement } from './core/ListingBoard';
+import { MatchMakerElement } from './core/MatchMaker';
+import { WorkflowPipelineElement } from './core/WorkflowPipeline';
+import { DataTableElement } from './core/DataTable';
+
 // Custom elements - Phase 5 iframe sandboxing
 import { CustomBlockElement } from './custom';
 
@@ -145,6 +151,14 @@ export const ELEMENT_RENDERERS: Record<string, ElementRenderer> = {
   'announcement': AnnouncementElement,
   'role-gate': RoleGateElement,
   'availability-heatmap': AvailabilityHeatmapElement,
+
+  // ----------------------------------------
+  // Campus Infrastructure
+  // ----------------------------------------
+  'listing-board': ListingBoardElement,
+  'match-maker': MatchMakerElement,
+  'workflow-pipeline': WorkflowPipelineElement,
+  'data-table': DataTableElement,
 
   // ----------------------------------------
   // Custom tier - Phase 5 iframe sandboxing
@@ -244,5 +258,6 @@ export function getElementsByCategory() {
     action: ['poll-element', 'rsvp-button', 'countdown-timer', 'leaderboard', 'counter', 'timer', 'signup-sheet', 'checklist-tracker'],
     connected: ['event-picker', 'space-picker', 'connection-list', 'personalized-event-feed', 'dining-picker', 'study-spot-finder'],
     space: ['member-list', 'member-selector', 'space-events', 'space-feed', 'space-stats', 'announcement', 'role-gate', 'availability-heatmap'],
+    infrastructure: ['listing-board', 'match-maker', 'workflow-pipeline', 'data-table'],
   };
 }

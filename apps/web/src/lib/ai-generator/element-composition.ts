@@ -548,6 +548,79 @@ export const INTENT_ELEMENTS: Record<Intent, ElementSpec[]> = {
       tier: 'universal',
     },
   ],
+
+  // Infrastructure intents (use new campus elements)
+  'exchange-items': [{
+    elementId: 'listing-board',
+    instanceId: 'listings',
+    config: {
+      title: 'Exchange Board',
+      categories: ['Textbooks', 'Free Stuff', 'Tickets', 'Other'],
+      listingFields: [
+        { key: 'title', label: 'Title', type: 'text', required: true },
+        { key: 'description', label: 'Description', type: 'textarea' },
+        { key: 'price', label: 'Price', type: 'text' },
+      ],
+      claimBehavior: 'request',
+    },
+    position: { x: 0, y: 0 },
+    size: { width: 12, height: 6 },
+    tier: 'universal',
+  }],
+
+  'match-people': [{
+    elementId: 'match-maker',
+    instanceId: 'matcher',
+    config: {
+      title: 'Find Your Match',
+      preferenceFields: [
+        { key: 'interests', label: 'Interests', type: 'multi-select', options: ['Study', 'Research', 'Social', 'Projects'] },
+        { key: 'availability', label: 'Availability', type: 'multi-select', options: ['Morning', 'Afternoon', 'Evening', 'Weekend'] },
+      ],
+      matchSize: 2,
+    },
+    position: { x: 0, y: 0 },
+    size: { width: 12, height: 5 },
+    tier: 'universal',
+  }],
+
+  'run-approval': [{
+    elementId: 'workflow-pipeline',
+    instanceId: 'pipeline',
+    config: {
+      title: 'Request Pipeline',
+      stages: [
+        { id: 'submitted', name: 'Submitted', color: 'bg-blue-500' },
+        { id: 'review', name: 'In Review', color: 'bg-amber-500' },
+        { id: 'approved', name: 'Approved', color: 'bg-green-500' },
+      ],
+      intakeFields: [
+        { key: 'title', label: 'Title', type: 'text', required: true },
+        { key: 'description', label: 'Description', type: 'textarea' },
+      ],
+    },
+    position: { x: 0, y: 0 },
+    size: { width: 12, height: 6 },
+    tier: 'universal',
+  }],
+
+  'track-data': [{
+    elementId: 'data-table',
+    instanceId: 'table',
+    config: {
+      title: 'Data Tracker',
+      columns: [
+        { key: 'name', label: 'Name', type: 'text', sortable: true, filterable: true },
+        { key: 'value', label: 'Value', type: 'text', sortable: true },
+        { key: 'status', label: 'Status', type: 'text', sortable: true, filterable: true },
+      ],
+      pageSize: 10,
+      allowRowActions: true,
+    },
+    position: { x: 0, y: 0 },
+    size: { width: 12, height: 5 },
+    tier: 'universal',
+  }],
 };
 
 // Complementary elements that enhance compositions
@@ -575,6 +648,11 @@ export const COMPLEMENTARY_PAIRS: Record<Intent, Intent[]> = {
   'group-matching': [], // Already complete: form + chart + list + members
   'competition-goals': [], // Already complete: progress + counter + leaderboard + form + chart
   'custom-visual': [], // Self-contained custom block
+  // Infrastructure intents — self-contained with new elements
+  'exchange-items': ['search-filter'], // Can add search/filter
+  'match-people': [], // Self-contained matcher
+  'run-approval': [], // Self-contained pipeline
+  'track-data': [], // Self-contained table
 };
 
 /**

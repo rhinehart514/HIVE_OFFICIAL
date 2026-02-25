@@ -986,6 +986,624 @@ async function handleLeaderboardAction(
   throw new Error(`Unknown leaderboard action: ${action}`);
 }
 
+// --- Listing Board: post_listing, claim_listing, unclaim, mark_done, flag, delete_listing ---
+async function handleListingBoardAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+  sharedState: Record<string, unknown>,
+  toolConfig: Record<string, unknown>,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+  const collectionKey = `${elementId}:listings`;
+
+  if (action === "post_listing") {
+    const entryId = `${userId}:${Date.now()}`;
+    const title = data.title as string;
+    if (!title) throw new Error("title is required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${entryId}`]: {
+          id: entryId,
+          createdAt: now,
+          createdBy: userId,
+          data: { ...data, status: 'open' },
+        },
+        [`counters.${elementId}:listingCount`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      {
+        [`participation.${elementId}:has_posted`]: true,
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [collectionKey]: {
+            [entryId]: { id: entryId, createdAt: now, createdBy: userId, data: { ...data, status: 'open' } },
+          },
+        },
+        counterDeltas: { [`${elementId}:listingCount`]: 1 },
+      },
+      userStateUpdate: { participation: { [`${elementId}:has_posted`]: true } },
+    };
+  }
+
+  if (action === "claim_listing") {
+    const listingId = data.listingId as string;
+    if (!listingId) throw new Error("listingId is required");
+
+    const claimBehavior = toolConfig?.claimBehavior as string | undefined;
+
+    // Check if already claimed when first-come mode
+    if (claimBehavior === 'first-come') {
+      const collections = (sharedState.collections ?? {}) as Record<string, Record<string, { data?: Record<string, unknown> }>>;
+      const listings = collections[collectionKey] ?? {};
+      const listing = listings[listingId];
+      if (listing?.data?.claimedBy) throw new Error("This listing has already been claimed");
+    }
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${listingId}.data.claimedBy`]: userId,
+        [`collections.${collectionKey}.${listingId}.data.claimedAt`]: now,
+        [`collections.${collectionKey}.${listingId}.updatedAt`]: now,
+        [`counters.${elementId}:claimedCount`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        counterDeltas: { [`${elementId}:claimedCount`]: 1 },
+      },
+    };
+  }
+
+  if (action === "unclaim") {
+    const listingId = data.listingId as string;
+    if (!listingId) throw new Error("listingId is required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${listingId}.data.claimedBy`]: admin.firestore.FieldValue.delete(),
+        [`collections.${collectionKey}.${listingId}.data.claimedAt`]: admin.firestore.FieldValue.delete(),
+        [`collections.${collectionKey}.${listingId}.updatedAt`]: now,
+        [`counters.${elementId}:claimedCount`]: admin.firestore.FieldValue.increment(-1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        counterDeltas: { [`${elementId}:claimedCount`]: -1 },
+      },
+    };
+  }
+
+  if (action === "mark_done") {
+    const listingId = data.listingId as string;
+    if (!listingId) throw new Error("listingId is required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${listingId}.data.status`]: 'done',
+        [`collections.${collectionKey}.${listingId}.updatedAt`]: now,
+        [`counters.${elementId}:listingCount`]: admin.firestore.FieldValue.increment(-1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        counterDeltas: { [`${elementId}:listingCount`]: -1 },
+      },
+    };
+  }
+
+  if (action === "flag") {
+    const listingId = data.listingId as string;
+    if (!listingId) throw new Error("listingId is required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${listingId}.data.flagCount`]: admin.firestore.FieldValue.increment(1),
+        [`collections.${collectionKey}.${listingId}.updatedAt`]: now,
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return { sharedStateUpdate: {} };
+  }
+
+  if (action === "delete_listing") {
+    const listingId = data.listingId as string;
+    if (!listingId) throw new Error("listingId is required");
+
+    // Verify ownership
+    const collections = (sharedState.collections ?? {}) as Record<string, Record<string, { createdBy?: string }>>;
+    const listings = collections[collectionKey] ?? {};
+    const listing = listings[listingId];
+    if (!listing || listing.createdBy !== userId) {
+      throw new Error("You can only delete your own listings");
+    }
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${listingId}`]: admin.firestore.FieldValue.delete(),
+        [`counters.${elementId}:listingCount`]: admin.firestore.FieldValue.increment(-1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionDeletes: { [collectionKey]: [listingId] },
+        counterDeltas: { [`${elementId}:listingCount`]: -1 },
+      },
+    };
+  }
+
+  throw new Error(`Unknown listing-board action: ${action}`);
+}
+
+// --- Match Maker: submit_preferences, accept_match, reject_match, rematch ---
+async function handleMatchMakerAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+  const poolKey = `${elementId}:pool`;
+  const matchesKey = `${elementId}:matches`;
+
+  if (action === "submit_preferences") {
+    const entryId = userId;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${poolKey}.${entryId}`]: {
+          id: entryId,
+          createdAt: now,
+          createdBy: userId,
+          data: { ...data, userId },
+        },
+        [`counters.${elementId}:poolSize`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      {
+        [`participation.${elementId}:submitted_preferences`]: true,
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [poolKey]: {
+            [entryId]: { id: entryId, createdAt: now, createdBy: userId, data: { ...data, userId } },
+          },
+        },
+        counterDeltas: { [`${elementId}:poolSize`]: 1 },
+      },
+      userStateUpdate: { participation: { [`${elementId}:submitted_preferences`]: true } },
+    };
+  }
+
+  if (action === "accept_match") {
+    const matchId = data.matchId as string;
+    if (!matchId) throw new Error("matchId is required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${matchesKey}.${matchId}.data.status`]: 'accepted',
+        [`collections.${matchesKey}.${matchId}.updatedAt`]: now,
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      {
+        [`participation.${elementId}:matched`]: true,
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {},
+      userStateUpdate: { participation: { [`${elementId}:matched`]: true } },
+    };
+  }
+
+  if (action === "reject_match") {
+    const matchId = data.matchId as string;
+    if (!matchId) throw new Error("matchId is required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${matchesKey}.${matchId}.data.status`]: 'rejected',
+        [`collections.${matchesKey}.${matchId}.updatedAt`]: now,
+        // Move user back to pool
+        [`collections.${poolKey}.${userId}`]: {
+          id: userId,
+          createdAt: now,
+          createdBy: userId,
+          data: { userId, rematched: true },
+        },
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      {
+        [`participation.${elementId}:matched`]: false,
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {},
+      userStateUpdate: { participation: { [`${elementId}:matched`]: false } },
+    };
+  }
+
+  if (action === "rematch") {
+    // Clear current match and re-add to pool
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${poolKey}.${userId}`]: {
+          id: userId,
+          createdAt: now,
+          createdBy: userId,
+          data: { userId, rematched: true },
+        },
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      {
+        [`participation.${elementId}:matched`]: false,
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [poolKey]: {
+            [userId]: { id: userId, createdAt: now, createdBy: userId, data: { userId, rematched: true } },
+          },
+        },
+      },
+      userStateUpdate: { participation: { [`${elementId}:matched`]: false } },
+    };
+  }
+
+  throw new Error(`Unknown match-maker action: ${action}`);
+}
+
+// --- Workflow Pipeline: submit, approve, reject, request_changes, move_stage ---
+async function handleWorkflowAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+  toolConfig: Record<string, unknown>,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+  const collectionKey = `${elementId}:requests`;
+
+  if (action === "submit") {
+    const entryId = `${userId}:${Date.now()}`;
+    const stages = (toolConfig?.stages as Array<{ id: string }>) ?? [];
+    const firstStageId = stages[0]?.id || 'stage_1';
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${entryId}`]: {
+          id: entryId,
+          createdAt: now,
+          createdBy: userId,
+          data: { ...data, stage: firstStageId, status: 'pending', userId },
+        },
+        [`counters.${elementId}:totalRequests`]: admin.firestore.FieldValue.increment(1),
+        [`counters.${elementId}:stage:${firstStageId}`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [collectionKey]: {
+            [entryId]: { id: entryId, createdAt: now, createdBy: userId, data: { ...data, stage: firstStageId, status: 'pending', userId } },
+          },
+        },
+        counterDeltas: {
+          [`${elementId}:totalRequests`]: 1,
+          [`${elementId}:stage:${firstStageId}`]: 1,
+        },
+      },
+    };
+  }
+
+  if (action === "approve") {
+    const requestId = data.requestId as string;
+    if (!requestId) throw new Error("requestId is required");
+
+    const currentStageId = data.currentStageId as string;
+    const nextStageId = data.nextStageId as string;
+    if (!currentStageId || !nextStageId) throw new Error("currentStageId and nextStageId are required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${requestId}.data.stage`]: nextStageId,
+        [`collections.${collectionKey}.${requestId}.data.status`]: 'pending',
+        [`collections.${collectionKey}.${requestId}.updatedAt`]: now,
+        [`counters.${elementId}:stage:${currentStageId}`]: admin.firestore.FieldValue.increment(-1),
+        [`counters.${elementId}:stage:${nextStageId}`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        counterDeltas: {
+          [`${elementId}:stage:${currentStageId}`]: -1,
+          [`${elementId}:stage:${nextStageId}`]: 1,
+        },
+      },
+    };
+  }
+
+  if (action === "reject") {
+    const requestId = data.requestId as string;
+    const currentStageId = data.currentStageId as string;
+    if (!requestId) throw new Error("requestId is required");
+    if (!currentStageId) throw new Error("currentStageId is required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${requestId}.data.status`]: 'rejected',
+        [`collections.${collectionKey}.${requestId}.updatedAt`]: now,
+        [`counters.${elementId}:stage:${currentStageId}`]: admin.firestore.FieldValue.increment(-1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        counterDeltas: { [`${elementId}:stage:${currentStageId}`]: -1 },
+      },
+    };
+  }
+
+  if (action === "request_changes") {
+    const requestId = data.requestId as string;
+    if (!requestId) throw new Error("requestId is required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${requestId}.data.status`]: 'changes_requested',
+        [`collections.${collectionKey}.${requestId}.updatedAt`]: now,
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return { sharedStateUpdate: {} };
+  }
+
+  if (action === "move_stage") {
+    const requestId = data.requestId as string;
+    const currentStageId = data.currentStageId as string;
+    const targetStageId = data.targetStageId as string;
+    if (!requestId || !currentStageId || !targetStageId) {
+      throw new Error("requestId, currentStageId, and targetStageId are required");
+    }
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${requestId}.data.stage`]: targetStageId,
+        [`collections.${collectionKey}.${requestId}.updatedAt`]: now,
+        [`counters.${elementId}:stage:${currentStageId}`]: admin.firestore.FieldValue.increment(-1),
+        [`counters.${elementId}:stage:${targetStageId}`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        counterDeltas: {
+          [`${elementId}:stage:${currentStageId}`]: -1,
+          [`${elementId}:stage:${targetStageId}`]: 1,
+        },
+      },
+    };
+  }
+
+  throw new Error(`Unknown workflow action: ${action}`);
+}
+
+// --- Data Table: add_row, edit_row, delete_row ---
+async function handleDataTableAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+  sharedState: Record<string, unknown>,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+  const collectionKey = `${elementId}:rows`;
+
+  if (action === "add_row") {
+    const entryId = `${userId}:${Date.now()}`;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${entryId}`]: {
+          id: entryId,
+          createdAt: now,
+          createdBy: userId,
+          data: { ...data, userId },
+        },
+        [`counters.${elementId}:rowCount`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      {
+        [`participation.${elementId}:has_added_row`]: true,
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [collectionKey]: {
+            [entryId]: { id: entryId, createdAt: now, createdBy: userId, data: { ...data, userId } },
+          },
+        },
+        counterDeltas: { [`${elementId}:rowCount`]: 1 },
+      },
+      userStateUpdate: { participation: { [`${elementId}:has_added_row`]: true } },
+    };
+  }
+
+  if (action === "edit_row") {
+    const rowId = data.rowId as string;
+    if (!rowId) throw new Error("rowId is required");
+
+    // Verify ownership or edit permission
+    const collections = (sharedState.collections ?? {}) as Record<string, Record<string, { createdBy?: string }>>;
+    const rows = collections[collectionKey] ?? {};
+    const row = rows[rowId];
+    const hasEditPermission = (data.hasEditPermission as boolean) === true;
+    if (row && row.createdBy !== userId && !hasEditPermission) {
+      throw new Error("You can only edit your own rows");
+    }
+
+    const rowData = { ...data };
+    delete rowData.rowId;
+    delete rowData.hasEditPermission;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${rowId}.data`]: { ...rowData, userId: row?.createdBy || userId },
+        [`collections.${collectionKey}.${rowId}.updatedAt`]: now,
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [collectionKey]: {
+            [rowId]: { updatedAt: now, data: { ...rowData, userId: row?.createdBy || userId } },
+          },
+        },
+      },
+    };
+  }
+
+  if (action === "delete_row") {
+    const rowId = data.rowId as string;
+    if (!rowId) throw new Error("rowId is required");
+
+    // Verify ownership
+    const collections = (sharedState.collections ?? {}) as Record<string, Record<string, { createdBy?: string }>>;
+    const rows = collections[collectionKey] ?? {};
+    const row = rows[rowId];
+    if (row && row.createdBy !== userId) {
+      throw new Error("You can only delete your own rows");
+    }
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${collectionKey}.${rowId}`]: admin.firestore.FieldValue.delete(),
+        [`counters.${elementId}:rowCount`]: admin.firestore.FieldValue.increment(-1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionDeletes: { [collectionKey]: [rowId] },
+        counterDeltas: { [`${elementId}:rowCount`]: -1 },
+      },
+    };
+  }
+
+  throw new Error(`Unknown data-table action: ${action}`);
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -1179,6 +1797,45 @@ export const POST = withAuthAndErrors(async (
         );
         break;
       }
+
+      // Registry ID: listing-board
+      case "listing-board":
+      case "listing_board":
+        result = await handleListingBoardAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId,
+          sharedState, elementConfig
+        );
+        break;
+
+      // Registry ID: match-maker
+      case "match-maker":
+      case "match_maker":
+        result = await handleMatchMakerAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId
+        );
+        break;
+
+      // Registry ID: workflow-pipeline
+      case "workflow-pipeline":
+      case "workflow_pipeline":
+        result = await handleWorkflowAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId,
+          elementConfig
+        );
+        break;
+
+      // Registry ID: data-table
+      case "data-table":
+      case "data_table":
+        result = await handleDataTableAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId,
+          sharedState
+        );
+        break;
 
       default:
         // Generic fallback: record action in timeline
