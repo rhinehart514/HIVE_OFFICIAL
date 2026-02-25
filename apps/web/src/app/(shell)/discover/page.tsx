@@ -7,18 +7,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
   Check,
-  Clock,
   ExternalLink,
-  GitFork,
   MapPin,
-  Play,
   Users,
   Video,
   X,
   Zap,
-  Sparkles,
   ArrowRight,
-  ChevronRight,
   Radio,
   TrendingUp,
   Globe,
@@ -26,6 +21,9 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import { cn } from '@/lib/utils';
+import { FeedToolCard } from './components/FeedToolCard';
+import { FeedActivityCard } from './components/FeedActivityCard';
+import { ToolCanvasInline } from './components/ToolCanvasInline';
 
 /* ─────────────────────────────────────────────────────────────────── */
 /*  Types                                                              */
@@ -73,6 +71,7 @@ interface FeedTool {
   id: string;
   title: string;
   description?: string;
+  creatorId?: string;
   creatorName?: string;
   spaceOriginName?: string;
   forkCount: number;
@@ -118,7 +117,7 @@ async function fetchFeedSpaces(): Promise<FeedSpace[]> {
 }
 
 async function fetchFeedTools(): Promise<FeedTool[]> {
-  const params = new URLSearchParams({ sort: 'trending', limit: '8' });
+  const params = new URLSearchParams({ sort: 'trending', limit: '15' });
   const res = await fetch(`/api/tools/discover?${params}`, { credentials: 'include' });
   if (!res.ok) return [];
   const data = await res.json();
@@ -127,6 +126,7 @@ async function fetchFeedTools(): Promise<FeedTool[]> {
     id: t.id,
     title: t.title || t.name,
     description: t.description,
+    creatorId: (t.creator as Record<string, unknown>)?.id,
     creatorName: (t.creator as Record<string, unknown>)?.name,
     spaceOriginName: (t.spaceOrigin as Record<string, unknown>)?.name,
     forkCount: (t.forkCount as number) || 0,
@@ -216,14 +216,6 @@ function dayLabel(startDate: string): string {
   return start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-function categoryIcon(cat?: string): string {
-  const map: Record<string, string> = {
-    governance: '🗳', scheduling: '📅', commerce: '🛒',
-    content: '📝', social: '💬', events: '🎉',
-    'org-management': '🏛', 'campus-life': '🎓',
-  };
-  return cat ? (map[cat] || '⚡') : '⚡';
-}
 
 function cleanDescription(raw?: string): string | undefined {
   if (!raw) return undefined;
@@ -701,92 +693,9 @@ function FeedEventCard({ event, onSelect }: { event: FeedEvent; onSelect: (e: Fe
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────── */
-/*  Embedded Tool Card                                                 */
-/* ─────────────────────────────────────────────────────────────────── */
+/* EmbeddedToolCard removed — replaced by FeedToolCard */
 
-function EmbeddedToolCard({ tool }: { tool: FeedTool }) {
-  return (
-    <Link href={`/t/${tool.id}`} className="group block rounded-2xl border border-white/[0.06] bg-[#080808] p-4 hover:border-[#FFD700]/10 hover:bg-[#FFD700]/[0.02] transition-all duration-200">
-      <div className="flex items-center justify-between mb-2.5">
-        <span className="flex items-center gap-1.5 text-[11px] text-[#FFD700]/60 font-medium">
-          <span className="text-sm leading-none">{categoryIcon(tool.category)}</span>
-          <span className="font-sans uppercase tracking-[0.12em]">Creation</span>
-          {tool.spaceOriginName && (
-            <span className="text-white/20 font-normal normal-case tracking-normal">· {tool.spaceOriginName}</span>
-          )}
-        </span>
-        <ChevronRight className="w-3.5 h-3.5 text-white/10 group-hover:text-[#FFD700]/30 transition-colors" />
-      </div>
-
-      <h3 className="text-[15px] font-semibold text-white leading-snug group-hover:text-white/90">{tool.title}</h3>
-      {tool.description && (
-        <p className="mt-1.5 text-[12px] text-white/25 line-clamp-2 leading-relaxed">{tool.description}</p>
-      )}
-
-      <div className="flex items-center gap-4 mt-3 text-[11px] text-white/20">
-        {tool.useCount > 0 && (
-          <span className="flex items-center gap-1"><Play className="w-3 h-3" />{tool.useCount} uses</span>
-        )}
-        {tool.forkCount > 0 && (
-          <span className="flex items-center gap-1"><GitFork className="w-3 h-3" />{tool.forkCount} forks</span>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────── */
-/*  Activity Strip                                                     */
-/* ─────────────────────────────────────────────────────────────────── */
-
-function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
-
-function ActivityStrip({ items }: { items: ActivityItem[] }) {
-  if (items.length === 0) return null;
-
-  return (
-    <div className="mt-7">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="w-3 h-3 text-[#FFD700]/40" />
-        <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">Recent creations</span>
-      </div>
-      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-        {items.map((item, i) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, x: 8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <Link
-              href={item.toolId ? `/t/${item.toolId}` : '#'}
-              className="shrink-0 w-[180px] rounded-xl border border-white/[0.06] bg-[#080808] p-3 flex flex-col gap-1.5 hover:border-[#FFD700]/10 hover:bg-[#FFD700]/[0.02] transition-all duration-200 block"
-            >
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-[#FFD700]/50" />
-                <span className="text-[10px] text-white/25">{relativeTime(item.timestamp)}</span>
-              </div>
-              <p className="text-[12px] font-medium text-white/80 leading-snug line-clamp-2">{item.headline}</p>
-              {item.toolName && (
-                <span className="text-[10px] text-[#FFD700]/35 truncate">{item.toolName}</span>
-              )}
-            </Link>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
+/* ActivityStrip removed — activity now renders inline via FeedActivityCard */
 
 /* ─────────────────────────────────────────────────────────────────── */
 /*  Right Rail                                                         */
@@ -795,18 +704,21 @@ function ActivityStrip({ items }: { items: ActivityItem[] }) {
 function FeedRightRail({
   events,
   spaces,
+  tools,
   todayCount,
   totalCount,
   onSelectEvent,
 }: {
   events: FeedEvent[];
   spaces: FeedSpace[];
+  tools: FeedTool[];
   todayCount: number;
   totalCount: number;
   onSelectEvent: (e: FeedEvent) => void;
 }) {
   const upcoming = events.filter(e => !isToday(e.startDate)).slice(0, 4);
   const topSpaces = spaces.slice(0, 5);
+  const trending = tools.slice(0, 3);
 
   return (
     <aside className="hidden lg:flex flex-col w-[260px] flex-shrink-0 sticky top-6 self-start order-2 gap-0">
@@ -912,22 +824,37 @@ function FeedRightRail({
         )}
       </div>
 
-      <div className="h-px bg-white/[0.05] mb-5" />
-
-      {/* Create CTA */}
-      <Link
-        href="/lab"
-        className="group flex items-center gap-3 rounded-xl border border-[#FFD700]/[0.08] bg-[#FFD700]/[0.03] px-3.5 py-3 hover:border-[#FFD700]/[0.15] hover:bg-[#FFD700]/[0.05] transition-all duration-200"
-      >
-        <div className="w-8 h-8 rounded-lg bg-[#FFD700]/10 flex items-center justify-center shrink-0">
-          <Zap className="w-4 h-4 text-[#FFD700]/70" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-medium text-white/70 group-hover:text-white/90 transition-colors">Build something</p>
-          <p className="text-[10px] text-white/25">AI-powered creation in 30s</p>
-        </div>
-        <ChevronRight className="w-3.5 h-3.5 text-white/15 group-hover:text-[#FFD700]/40 transition-colors shrink-0" />
-      </Link>
+      {trending.length > 0 && (
+        <>
+          <div className="h-px bg-white/[0.05] mb-5" />
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
+                <TrendingUp className="w-3 h-3 text-[#FFD700]/70" />
+              </div>
+              <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">Trending</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              {trending.map(t => (
+                <Link
+                  key={t.id}
+                  href={`/t/${t.id}`}
+                  className="group flex items-start gap-2.5 rounded-lg px-2 py-2 -mx-2 hover:bg-white/[0.03] transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] text-white/60 group-hover:text-white/90 transition-colors truncate leading-snug">
+                      {t.title}
+                    </p>
+                    <span className="text-[10px] text-white/20">
+                      {t.useCount > 0 ? `${t.useCount} uses` : 'New'}{t.creatorName ? ` · ${t.creatorName}` : ''}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </aside>
   );
 }
@@ -1047,14 +974,13 @@ function EmptyState({ onSelectEvent }: { onSelectEvent: (e: FeedEvent) => void }
         </motion.div>
       ))}
       {fallbackTools.map((tool, i) => (
-        <motion.div
+        <FeedToolCard
           key={tool.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: (fallbackEvents.length + i) * 0.04, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <EmbeddedToolCard tool={tool} />
-        </motion.div>
+          tool={tool}
+          onRemix={() => {}}
+          isRemixing={false}
+          index={fallbackEvents.length + i}
+        />
       ))}
     </div>
   );
@@ -1100,11 +1026,12 @@ function FeedSkeleton() {
 type FeedItem =
   | { type: 'event'; data: FeedEvent }
   | { type: 'tool'; data: FeedTool }
+  | { type: 'activity'; data: ActivityItem }
   | { type: 'space'; data: FeedSpace };
 
 const TODAY_STRIP_MAX = 5;
 
-function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], heroId: string, todayStripCount: number = 0): FeedItem[] {
+function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], heroId: string, todayStripCount: number = 0, activityItems: ActivityItem[] = []): FeedItem[] {
   const todayIds = events
     .filter(e => isToday(e.startDate) && e.id !== heroId)
     .slice(0, todayStripCount)
@@ -1114,15 +1041,22 @@ function buildFeed(events: FeedEvent[], tools: FeedTool[], spaces: FeedSpace[], 
 
   const items: FeedItem[] = [];
   let toolIdx = 0;
+  let actIdx = 0;
 
   for (let i = 0; i < remaining.length; i++) {
     items.push({ type: 'event', data: remaining[i] });
-    if ((i + 1) % 3 === 0 && toolIdx < tools.length) {
+    // Tool every 2 events
+    if ((i + 1) % 2 === 0 && toolIdx < tools.length) {
       items.push({ type: 'tool', data: tools[toolIdx++] });
+    }
+    // Activity every 4 feed items
+    if ((i + 1) % 4 === 0 && actIdx < activityItems.length) {
+      items.push({ type: 'activity', data: activityItems[actIdx++] });
     }
   }
 
   while (toolIdx < tools.length) items.push({ type: 'tool', data: tools[toolIdx++] });
+  while (actIdx < activityItems.length) items.push({ type: 'activity', data: activityItems[actIdx++] });
   return items;
 }
 
@@ -1135,6 +1069,8 @@ export default function DiscoverPage() {
   const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [selectedEvent, setSelectedEvent] = useState<FeedEvent | null>(null);
+  const [expandedToolId, setExpandedToolId] = useState<string | null>(null);
+  const [remixingToolId, setRemixingToolId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/enter?redirect=/discover');
@@ -1149,6 +1085,33 @@ export default function DiscoverPage() {
     mutationFn: ({ eventId, spaceId }: { eventId: string; spaceId: string }) => rsvpToEvent(spaceId, eventId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['feed-events'] }),
   });
+
+  const remixMutation = useMutation({
+    mutationFn: async (toolId: string) => {
+      setRemixingToolId(toolId);
+      const res = await fetch(`/api/tools/${toolId}/clone`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'remix' }),
+      });
+      if (!res.ok) throw new Error('Remix failed');
+      return res.json();
+    },
+    onSuccess: (data) => {
+      const newId = data?.data?.toolId || data?.toolId;
+      if (newId) router.push(`/lab/${newId}`);
+    },
+    onSettled: () => setRemixingToolId(null),
+  });
+
+  const handleRemix = useCallback((toolId: string) => {
+    remixMutation.mutate(toolId);
+  }, [remixMutation]);
+
+  const handleToggleExpand = useCallback((toolId: string) => {
+    setExpandedToolId(prev => prev === toolId ? null : toolId);
+  }, []);
 
   const handleRsvp = useCallback((eventId: string, spaceId: string) => {
     rsvpMutation.mutate({ eventId, spaceId });
@@ -1173,8 +1136,8 @@ export default function DiscoverPage() {
   , [events, heroEvent]);
 
   const feed = useMemo(() =>
-    buildFeed(events, tools, spaces, heroEvent?.id || '', todayEvents.length)
-  , [events, tools, spaces, heroEvent, todayEvents.length]);
+    buildFeed(events, tools, spaces, heroEvent?.id || '', todayEvents.length, activity)
+  , [events, tools, spaces, heroEvent, todayEvents.length, activity]);
 
   const isLoading = eventsQuery.isLoading || spacesQuery.isLoading;
 
@@ -1206,6 +1169,7 @@ export default function DiscoverPage() {
         <FeedRightRail
           events={events}
           spaces={spaces}
+          tools={tools}
           todayCount={todayCount}
           totalCount={events.length}
           onSelectEvent={handleSelectEvent}
@@ -1236,7 +1200,6 @@ export default function DiscoverPage() {
             <div className="space-y-3">
               {heroEvent && <HeroEvent event={heroEvent} onSelect={handleSelectEvent} />}
               {todayEvents.length > 0 && <TodayStrip events={todayEvents} onSelect={handleSelectEvent} />}
-              {activity.length > 0 && <ActivityStrip items={activity} />}
 
               {feed.length > 0 && (
                 <div className="space-y-3 pt-2">
@@ -1259,14 +1222,29 @@ export default function DiscoverPage() {
                       return (
                         <div key={`${item.type}-${item.data.id}`}>
                           {dayDivider}
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
-                          >
-                            {item.type === 'event' && <FeedEventCard event={item.data} onSelect={handleSelectEvent} />}
-                            {item.type === 'tool' && <EmbeddedToolCard tool={item.data} />}
-                          </motion.div>
+                          {item.type === 'event' && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
+                            >
+                              <FeedEventCard event={item.data} onSelect={handleSelectEvent} />
+                            </motion.div>
+                          )}
+                          {item.type === 'tool' && (
+                            <FeedToolCard
+                              tool={item.data}
+                              onRemix={handleRemix}
+                              isRemixing={remixingToolId === item.data.id}
+                              index={i}
+                              isExpanded={expandedToolId === item.data.id}
+                              onToggleExpand={handleToggleExpand}
+                              expandedContent={<ToolCanvasInline toolId={item.data.id} />}
+                            />
+                          )}
+                          {item.type === 'activity' && (
+                            <FeedActivityCard item={item.data} index={i} />
+                          )}
                         </div>
                       );
                     });

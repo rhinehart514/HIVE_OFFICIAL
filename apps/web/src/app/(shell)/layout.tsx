@@ -1,6 +1,7 @@
 import { LeftSidebar, MobileBottomBar, PageTransition, RightRail } from '@/components/shell';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { AdminToolbarLazy } from '@/components/admin/AdminToolbarLazy';
+import { ShellCreateBar } from '@/components/shell/ShellCreateBar';
 
 export default function ShellLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
       </div>
 
       <AdminToolbarLazy />
+      <ShellCreateBar />
     </div>
   );
 }
