@@ -13,7 +13,7 @@ import { withCache } from '../../../../../lib/cache-headers';
 const DeployToolSchema = z.object({
   spaceId: z.string().optional(),
   targetId: z.string().optional(),
-  targetType: z.enum(['space', 'profile']).optional(),
+  targetType: z.enum(['space', 'profile', 'campus']).optional(),
   surface: z.string().optional(),
   configuration: z.record(z.any()).default({}),
   permissions: z.record(z.any()).default({}),
@@ -111,6 +111,86 @@ export const POST = withAuthValidationAndErrors(
         logger.error('Deploy profile error', error instanceof Error ? error : new Error(String(error)));
         return respond.error(
           `Profile deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          "UNKNOWN_ERROR",
+          { status: 500 }
+        );
+      }
+    }
+
+    // Campus deployments — submit tool to campus directory
+    if (targetType === 'campus') {
+      try {
+        if (!campusId) {
+          return respond.error("Campus context required for deployment", "INVALID_INPUT", { status: 400 });
+        }
+
+        const toolDoc = await db.collection("tools").doc(toolId).get();
+        if (!toolDoc.exists) {
+          return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
+        }
+        const toolData = toolDoc.data();
+
+        const isOwner = toolData?.ownerId === userId || toolData?.createdBy === userId;
+        if (!isOwner) {
+          return respond.error("You can only deploy your own tools to campus", "FORBIDDEN", { status: 403 });
+        }
+
+        const deploymentId = `campus_${campusId}_${toolId}`;
+
+        // Extract slug — from config or generate from tool name
+        const slug: string = (configuration?.slug as string) ||
+          (toolData?.name as string || 'tool').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50);
+        const category: string = (configuration?.category as string) || 'utility';
+
+        // Check slug uniqueness in campus_tools
+        const slugCheck = await db
+          .collection("campuses")
+          .doc(campusId)
+          .collection("campus_tools")
+          .where("slug", "==", slug)
+          .where("isActive", "==", true)
+          .limit(1)
+          .get();
+
+        if (!slugCheck.empty) {
+          return respond.error("A tool with this slug already exists on campus", "CONFLICT", { status: 409 });
+        }
+
+        // Write campus tool document
+        await db
+          .collection("campuses")
+          .doc(campusId)
+          .collection("campus_tools")
+          .doc(deploymentId)
+          .set({
+            toolId,
+            slug,
+            category,
+            badge: 'community',
+            status: 'pending_review',
+            placedBy: userId,
+            placedAt: admin.firestore.FieldValue.serverTimestamp(),
+            campusId,
+            toolName: toolData?.name || 'Untitled',
+            toolDescription: toolData?.description || '',
+            usageStats: { weeklyUsers: 0, totalUses: 0 },
+            version: toolData?.version || 1,
+            isActive: true,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+        // Update tool doc with campus deployment reference
+        await db.collection("tools").doc(toolId).update({
+          campusDeployment: { slug, status: 'pending_review', deploymentId },
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        return respond.success({ deploymentId, slug });
+      } catch (error) {
+        logger.error('Deploy campus error', error instanceof Error ? error : new Error(String(error)));
+        return respond.error(
+          `Campus deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
           "UNKNOWN_ERROR",
           { status: 500 }
         );

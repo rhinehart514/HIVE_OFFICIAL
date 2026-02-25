@@ -1,15 +1,16 @@
 /**
  * Shared Navigation Config
  *
- * 4-tab model: Feed · Spaces · Lab · Profile
+ * 5-tab model: Feed · Spaces · Campus · Lab · Profile
  *
- * Feed   — campus discover, events, activity
- * Spaces — your communities, browse, /s/[handle]
- * Lab    — creation home, your creations, templates
+ * Feed    — campus discover, events, activity
+ * Spaces  — your communities, browse, /s/[handle]
+ * Campus  — campus tools directory, deployed tools
+ * Lab     — creation home, your creations, templates
  * Profile — you, settings, account
  */
 
-import { CompassIcon, SpacesIcon, UserIcon, BeakerIcon } from '@hive/ui';
+import { CompassIcon, SpacesIcon, CampusIcon, UserIcon, BeakerIcon } from '@hive/ui';
 
 export interface NavItem {
   id: string;
@@ -34,6 +35,13 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/spaces',
     icon: SpacesIcon,
     matchPattern: /^\/spaces(\/|$)|^\/s\//,
+  },
+  {
+    id: 'campus',
+    label: 'Campus',
+    href: '/campus',
+    icon: CampusIcon,
+    matchPattern: /^\/campus(\/|$)/,
   },
   {
     id: 'lab',

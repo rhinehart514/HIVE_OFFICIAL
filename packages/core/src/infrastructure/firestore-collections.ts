@@ -48,6 +48,8 @@ export const COLLECTIONS = {
   // HiveLab automation tracking
   SENT_REMINDERS: 'sentReminders',
   AUTOMATIONS: 'automations',
+  // Campus-wide tool deployments
+  CAMPUS_TOOLS: 'campus_tools',
 
   // Legacy flat collections (to be migrated)
   /** @deprecated Use getPostsCollection(spaceId) for nested access */
@@ -381,4 +383,23 @@ export function buildUserMembershipsQuery(db: Firestore, userId: string, campusI
   }
   return db.collection(COLLECTIONS.SPACE_MEMBERS_FLAT)
     .where('userId', '==', userId);
+}
+
+// -----------------------------------------------------------------------------
+// Campus Tools (nested under campuses)
+// -----------------------------------------------------------------------------
+
+/**
+ * Get campus tools collection for a campus
+ * Path: campuses/{campusId}/campus_tools
+ */
+export function getCampusToolsCollection(db: Firestore, campusId: string): CollectionReference {
+  return db.collection('campuses').doc(campusId).collection(COLLECTIONS.CAMPUS_TOOLS);
+}
+
+/**
+ * Get a specific campus tool document
+ */
+export function getCampusToolDoc(db: Firestore, campusId: string, placementId: string): DocumentReference {
+  return db.collection('campuses').doc(campusId).collection(COLLECTIONS.CAMPUS_TOOLS).doc(placementId);
 }

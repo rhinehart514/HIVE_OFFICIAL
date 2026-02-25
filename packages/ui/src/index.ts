@@ -606,6 +606,7 @@ export {
   CompassIcon,
   SpacesIcon,
   BeakerIcon,
+  CampusIcon,
   BellIcon,
   CalendarIcon,
   SettingsIcon,

@@ -537,6 +537,31 @@ export const HashIcon: React.FC<ShellIconProps> = ({
   </svg>
 );
 
+/**
+ * Campus/Building icon
+ */
+export const CampusIcon: React.FC<ShellIconProps> = ({
+  className,
+  size = defaultProps.size,
+  strokeWidth = defaultProps.strokeWidth,
+}) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={strokeWidth}
+      d="M12 21V7m0 0L7 10V21m5-14l5 3v11M3 21h18M7 21v-4h3v4m4-4h3v4M9 11h.01M15 14h.01M9 14h.01M15 17h.01M9 17h.01M12 3l-1 2m1-2l1 2"
+    />
+  </svg>
+);
+
 // ============================================
 // ICON MAP
 // ============================================
@@ -555,6 +580,7 @@ export const NAV_ICONS: Record<string, React.FC<ShellIconProps>> = {
   lab: BeakerIcon,
   hivelab: BeakerIcon,
   build: BeakerIcon,
+  campus: CampusIcon,
   notifications: BellIcon,
   calendar: CalendarIcon,
   schedules: CalendarIcon,

@@ -28,6 +28,7 @@ import {
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import { ToolAnalyticsPanel } from './components/analytics-panel';
 import { AutomationAwarenessPanel } from './components/automation-awareness-panel';
+import { CampusPromotePanel } from './components/campus-promote-panel';
 
 // Feature flag: Automations are now enabled
 const AUTOMATIONS_ENABLED = true;
@@ -270,6 +271,7 @@ export default function ToolStudioPage({ params }: Props) {
   const [deployModalOpen, setDeployModalOpen] = useState(showDeployOnMount);
   const [analyticsOpen, setAnalyticsOpen] = useState(showAnalyticsOnMount);
   const [automationsOpen, setAutomationsOpen] = useState(false);
+  const [promoteOpen, setPromoteOpen] = useState(false);
 
   // Queries
   const {
@@ -623,6 +625,7 @@ export default function ToolStudioPage({ params }: Props) {
         onDeploy={() => setDeployModalOpen(true)}
         onAnalytics={() => setAnalyticsOpen(true)}
         onAutomations={AUTOMATIONS_ENABLED ? () => setAutomationsOpen(true) : undefined}
+        onPromote={() => setPromoteOpen(true)}
         mode={pageMode}
         onModeChange={handleModeChange}
         canEdit={true}
@@ -795,6 +798,15 @@ export default function ToolStudioPage({ params }: Props) {
           toolName={composition.name || 'Untitled Tool'}
           elementIds={composition.elements.map((el) => el.instanceId)}
           onClose={() => setAutomationsOpen(false)}
+        />
+      )}
+
+      {/* Campus Promote Panel */}
+      {promoteOpen && (
+        <CampusPromotePanel
+          toolId={toolId}
+          toolName={composition.name || 'Untitled Tool'}
+          onClose={() => setPromoteOpen(false)}
         />
       )}
 
