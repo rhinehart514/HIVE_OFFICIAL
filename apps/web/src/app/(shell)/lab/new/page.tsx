@@ -1,69 +1,40 @@
 'use client';
 
 /**
- * /lab/new — Conversational Tool Creation
+ * /lab/new — Redirects to /lab with query params preserved.
  *
- * The primary creation experience for HiveLab.
- * Students describe what they want, AI builds it.
- *
- * Accepts URL params:
- * - ?prompt=X    Pre-fill and auto-submit the prompt
- * - ?spaceId=X   Space context for generation
- * - ?spaceType=X Space type for context
- * - ?spaceName=X Space name for display
+ * The conversational creation experience now lives directly on /lab.
+ * This redirect preserves backwards compatibility for any deep links.
  */
 
-import { Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useAuth } from '@hive/auth-logic';
+import { Suspense, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BrandSpinner } from '@hive/ui';
 
-import { ConversationalCreator } from '@/components/hivelab/conversational/ConversationalCreator';
-
-function NewToolPageInner() {
-  const searchParams = useSearchParams();
+function RedirectInner() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
 
-  const prompt = searchParams.get('prompt') || undefined;
-  const spaceId = searchParams.get('spaceId');
-  const spaceType = searchParams.get('spaceType') || undefined;
-  const spaceName = searchParams.get('spaceName') || undefined;
+  useEffect(() => {
+    const params = new URLSearchParams();
+    const prompt = searchParams.get('prompt');
+    const spaceId = searchParams.get('spaceId');
 
-  // Build space context if params exist
-  const spaceContext = spaceId && spaceName
-    ? { spaceId, spaceName, spaceType }
-    : undefined;
+    if (prompt) params.set('prompt', prompt);
+    if (spaceId) params.set('spaceId', spaceId);
 
-  // Auth loading
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <BrandSpinner size="md" variant="gold" />
-      </div>
-    );
-  }
-
-  // Not authenticated - redirect to login
-  if (!user) {
-    const returnUrl = `/lab/new${prompt ? `?prompt=${encodeURIComponent(prompt)}` : ''}`;
-    router.push(`/enter?redirect=${encodeURIComponent(returnUrl)}`);
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <BrandSpinner size="md" variant="gold" />
-      </div>
-    );
-  }
+    const query = params.toString();
+    router.replace(`/lab${query ? `?${query}` : ''}`);
+  }, [router, searchParams]);
 
   return (
-    <ConversationalCreator
-      initialPrompt={prompt}
-      spaceContext={spaceContext}
-    />
+    <div className="min-h-screen flex items-center justify-center bg-black">
+      <BrandSpinner size="md" variant="gold" />
+    </div>
   );
 }
 
-export default function NewToolPage() {
+export default function NewToolRedirectPage() {
   return (
     <Suspense
       fallback={
@@ -72,7 +43,7 @@ export default function NewToolPage() {
         </div>
       }
     >
-      <NewToolPageInner />
+      <RedirectInner />
     </Suspense>
   );
 }

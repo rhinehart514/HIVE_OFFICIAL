@@ -16,6 +16,7 @@ import { logger } from '@/lib/logger';
 import {
   ArrowLeft, Loader2, BarChart3, CalendarDays, ClipboardList,
   MessageSquare, Trophy, Megaphone, CheckSquare, Users,
+  ShoppingBag, Sparkles, GitMerge, Table2,
 } from 'lucide-react';
 import { MOTION } from '@hive/tokens';
 import { createToolFromTemplateApi } from '@/lib/hivelab/create-tool';
@@ -94,6 +95,51 @@ const CORE_TEMPLATES: CoreTemplate[] = [
   },
 ];
 
+const INFRASTRUCTURE_TEMPLATES: CoreTemplate[] = [
+  {
+    id: 'textbook-exchange',
+    emoji: '',
+    name: 'Textbook Exchange',
+    description: 'Buy, sell, and trade textbooks',
+    templateId: 'textbook-exchange',
+  },
+  {
+    id: 'campus-marketplace',
+    emoji: '',
+    name: 'Campus Marketplace',
+    description: 'Buy and sell anything on campus',
+    templateId: 'campus-marketplace',
+  },
+  {
+    id: 'study-group-matcher',
+    emoji: '',
+    name: 'Study Group Matcher',
+    description: 'Match into groups by course and schedule',
+    templateId: 'study-group-matcher',
+  },
+  {
+    id: 'budget-request',
+    emoji: '',
+    name: 'Budget Requests',
+    description: 'Submit and approve funding requests',
+    templateId: 'budget-request',
+  },
+  {
+    id: 'mentorship-pairing',
+    emoji: '',
+    name: 'Mentorship Pairing',
+    description: 'Match mentors with mentees',
+    templateId: 'mentorship-pairing',
+  },
+  {
+    id: 'club-roster',
+    emoji: '',
+    name: 'Club Roster',
+    description: 'Member directory with roles',
+    templateId: 'club-roster',
+  },
+];
+
 const TEMPLATE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   'quick-poll': BarChart3,
   'event-rsvp': CalendarDays,
@@ -103,6 +149,12 @@ const TEMPLATE_ICONS: Record<string, React.ComponentType<{ className?: string }>
   'announcement': Megaphone,
   'checklist': CheckSquare,
   'member-directory': Users,
+  'textbook-exchange': ShoppingBag,
+  'campus-marketplace': ShoppingBag,
+  'study-group-matcher': Sparkles,
+  'budget-request': GitMerge,
+  'mentorship-pairing': Sparkles,
+  'club-roster': Table2,
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -520,17 +572,51 @@ export default function TemplatesPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-3"
             >
-              {CORE_TEMPLATES.map((template, index) => (
-                <TemplateTile
-                  key={template.id}
-                  template={template}
-                  index={index}
-                  onSelect={handleSelectTemplate}
-                  disabled={false}
-                />
-              ))}
+              {/* Infrastructure / Campus templates */}
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <div
+                    className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: 'rgba(255, 215, 0, 0.1)', color: COLORS.accent }}
+                  >
+                    Build for Campus
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {INFRASTRUCTURE_TEMPLATES.map((template, index) => (
+                    <TemplateTile
+                      key={template.id}
+                      template={template}
+                      index={index}
+                      onSelect={handleSelectTemplate}
+                      disabled={false}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex-1 h-px" style={{ backgroundColor: COLORS.border }} />
+                <span className="text-[11px] uppercase tracking-wider" style={{ color: COLORS.textTertiary }}>
+                  essentials
+                </span>
+                <div className="flex-1 h-px" style={{ backgroundColor: COLORS.border }} />
+              </div>
+
+              {/* Core templates */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {CORE_TEMPLATES.map((template, index) => (
+                  <TemplateTile
+                    key={template.id}
+                    template={template}
+                    index={index + INFRASTRUCTURE_TEMPLATES.length}
+                    onSelect={handleSelectTemplate}
+                    disabled={false}
+                  />
+                ))}
+              </div>
             </motion.div>
           )}
 
