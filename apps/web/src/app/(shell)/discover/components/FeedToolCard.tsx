@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { GitFork, Play } from 'lucide-react';
+import { GitFork, Play, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +32,7 @@ function relativeTime(iso: string): string {
 export interface FeedToolCardProps {
   tool: FeedTool;
   onRemix: (id: string) => void;
+  onAddToSpace?: (toolId: string) => void;
   isRemixing: boolean;
   index: number;
   isExpanded?: boolean;
@@ -39,7 +40,7 @@ export interface FeedToolCardProps {
   expandedContent?: React.ReactNode;
 }
 
-export function FeedToolCard({ tool, onRemix, isRemixing, index, isExpanded, onToggleExpand, expandedContent }: FeedToolCardProps) {
+export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, isExpanded, onToggleExpand, expandedContent }: FeedToolCardProps) {
   const [localExpanded, setLocalExpanded] = useState(false);
   const expanded = isExpanded ?? localExpanded;
 
@@ -119,6 +120,18 @@ export function FeedToolCard({ tool, onRemix, isRemixing, index, isExpanded, onT
             <GitFork className="w-3.5 h-3.5" />
             {isRemixing ? 'Remixing...' : 'Remix'}
           </button>
+          {onAddToSpace && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToSpace(tool.id);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium bg-white/[0.04] border border-white/[0.06] text-white/40 hover:bg-white/[0.06] hover:border-white/[0.10] hover:text-white/60 transition-all duration-150 active:scale-[0.97]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add to space
+            </button>
+          )}
         </div>
       </div>
 

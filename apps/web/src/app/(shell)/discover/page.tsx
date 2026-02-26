@@ -24,6 +24,8 @@ import { cn } from '@/lib/utils';
 import { FeedToolCard } from './components/FeedToolCard';
 import { FeedActivityCard } from './components/FeedActivityCard';
 import { ToolCanvasInline } from './components/ToolCanvasInline';
+import { SpacePickerSheet } from './components/SpacePickerSheet';
+import { ToolsFilterBar } from './components/ToolsFilterBar';
 
 /* ─────────────────────────────────────────────────────────────────── */
 /*  Types                                                              */
@@ -116,8 +118,10 @@ async function fetchFeedSpaces(): Promise<FeedSpace[]> {
     }));
 }
 
-async function fetchFeedTools(): Promise<FeedTool[]> {
-  const params = new URLSearchParams({ sort: 'trending', limit: '15' });
+async function fetchFeedTools(q?: string, category?: string, sort?: string): Promise<FeedTool[]> {
+  const params = new URLSearchParams({ sort: sort || 'trending', limit: '15' });
+  if (q) params.set('q', q);
+  if (category) params.set('category', category);
   const res = await fetch(`/api/tools/discover?${params}`, { credentials: 'include' });
   if (!res.ok) return [];
   const data = await res.json();
@@ -1071,14 +1075,33 @@ export default function DiscoverPage() {
   const [selectedEvent, setSelectedEvent] = useState<FeedEvent | null>(null);
   const [expandedToolId, setExpandedToolId] = useState<string | null>(null);
   const [remixingToolId, setRemixingToolId] = useState<string | null>(null);
+  const [installTarget, setInstallTarget] = useState<{ toolId: string } | null>(null);
+  const [deployingSpaceId, setDeployingSpaceId] = useState<string | null>(null);
+  const [deployedSpaceId, setDeployedSpaceId] = useState<string | null>(null);
+  const [toolSearch, setToolSearch] = useState('');
+  const [toolCategory, setToolCategory] = useState('');
+  const [toolSort, setToolSort] = useState<'trending' | 'popular' | 'recent'>('trending');
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/enter?redirect=/discover');
   }, [authLoading, user, router]);
 
+  const handleSearchChange = useCallback((value: string) => {
+    setToolSearch(value);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 300);
+  }, []);
+
   const eventsQuery = useQuery({ queryKey: ['feed-events'], queryFn: fetchFeedEvents, staleTime: 60_000, enabled: !authLoading && !!user });
   const spacesQuery = useQuery({ queryKey: ['feed-spaces'], queryFn: fetchFeedSpaces, staleTime: 5 * 60_000, enabled: !authLoading && !!user });
-  const toolsQuery = useQuery({ queryKey: ['feed-tools'], queryFn: fetchFeedTools, staleTime: 5 * 60_000, enabled: !authLoading && !!user });
+  const toolsQuery = useQuery({
+    queryKey: ['feed-tools', debouncedSearch, toolCategory, toolSort],
+    queryFn: () => fetchFeedTools(debouncedSearch || undefined, toolCategory || undefined, toolSort),
+    staleTime: 5 * 60_000,
+    enabled: !authLoading && !!user,
+  });
   const activityQuery = useQuery({ queryKey: ['global-activity'], queryFn: fetchGlobalActivity, staleTime: 60_000, enabled: !authLoading && !!user });
 
   const rsvpMutation = useMutation({
@@ -1104,6 +1127,44 @@ export default function DiscoverPage() {
     },
     onSettled: () => setRemixingToolId(null),
   });
+
+  const deployMutation = useMutation({
+    mutationFn: async ({ toolId, spaceId }: { toolId: string; spaceId: string }) => {
+      setDeployingSpaceId(spaceId);
+      const res = await fetch(`/api/tools/${toolId}/deploy`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetType: 'space', targetId: spaceId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Deploy failed');
+      }
+      return res.json();
+    },
+    onSuccess: (_data, { spaceId }) => {
+      setDeployedSpaceId(spaceId);
+      setDeployingSpaceId(null);
+      setTimeout(() => {
+        setInstallTarget(null);
+        setDeployedSpaceId(null);
+      }, 1500);
+    },
+    onError: () => {
+      setDeployingSpaceId(null);
+    },
+  });
+
+  const handleAddToSpace = useCallback((toolId: string) => {
+    setInstallTarget({ toolId });
+    setDeployedSpaceId(null);
+    setDeployingSpaceId(null);
+  }, []);
+
+  const handleDeployToSpace = useCallback((toolId: string, spaceId: string) => {
+    deployMutation.mutate({ toolId, spaceId });
+  }, [deployMutation]);
 
   const handleRemix = useCallback((toolId: string) => {
     remixMutation.mutate(toolId);
@@ -1139,6 +1200,7 @@ export default function DiscoverPage() {
     buildFeed(events, tools, spaces, heroEvent?.id || '', todayEvents.length, activity)
   , [events, tools, spaces, heroEvent, todayEvents.length, activity]);
 
+  const filtersActive = !!(debouncedSearch || toolCategory || toolSort !== 'trending');
   const isLoading = eventsQuery.isLoading || spacesQuery.isLoading;
 
   if (authLoading || !user) {
@@ -1160,6 +1222,19 @@ export default function DiscoverPage() {
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
             onRsvp={handleRsvp}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Space picker for install */}
+      <AnimatePresence>
+        {installTarget && (
+          <SpacePickerSheet
+            toolId={installTarget.toolId}
+            onDeploy={handleDeployToSpace}
+            onClose={() => setInstallTarget(null)}
+            deployingSpaceId={deployingSpaceId}
+            deployedSpaceId={deployedSpaceId}
           />
         )}
       </AnimatePresence>
@@ -1192,8 +1267,54 @@ export default function DiscoverPage() {
             )}
           </motion.div>
 
+          {/* Tools filter bar */}
+          <div className="mb-5">
+            <ToolsFilterBar
+              search={toolSearch}
+              onSearchChange={handleSearchChange}
+              category={toolCategory}
+              onCategoryChange={setToolCategory}
+              sort={toolSort}
+              onSortChange={setToolSort}
+            />
+          </div>
+
           {isLoading ? (
             <FeedSkeleton />
+          ) : filtersActive ? (
+            /* Filtered tools view — tools only, no interleaving */
+            <div className="space-y-3">
+              {toolsQuery.isLoading ? (
+                <div className="space-y-3">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="rounded-2xl bg-white/[0.02] border border-white/[0.04] p-4 animate-pulse">
+                      <div className="h-3 w-32 bg-white/[0.04] rounded mb-3" />
+                      <div className="h-4 w-48 bg-white/[0.04] rounded mb-2" />
+                      <div className="h-3 w-full bg-white/[0.03] rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : tools.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-[14px] text-white/40">No tools found</p>
+                  <p className="text-[12px] text-white/20 mt-1">Try a different search or category</p>
+                </div>
+              ) : (
+                tools.map((tool, i) => (
+                  <FeedToolCard
+                    key={tool.id}
+                    tool={tool}
+                    onRemix={handleRemix}
+                    onAddToSpace={handleAddToSpace}
+                    isRemixing={remixingToolId === tool.id}
+                    index={i}
+                    isExpanded={expandedToolId === tool.id}
+                    onToggleExpand={handleToggleExpand}
+                    expandedContent={<ToolCanvasInline toolId={tool.id} onAddToSpace={handleAddToSpace} />}
+                  />
+                ))
+              )}
+            </div>
           ) : !heroEvent && feed.length === 0 ? (
             <EmptyState onSelectEvent={handleSelectEvent} />
           ) : (
@@ -1235,11 +1356,12 @@ export default function DiscoverPage() {
                             <FeedToolCard
                               tool={item.data}
                               onRemix={handleRemix}
+                              onAddToSpace={handleAddToSpace}
                               isRemixing={remixingToolId === item.data.id}
                               index={i}
                               isExpanded={expandedToolId === item.data.id}
                               onToggleExpand={handleToggleExpand}
-                              expandedContent={<ToolCanvasInline toolId={item.data.id} />}
+                              expandedContent={<ToolCanvasInline toolId={item.data.id} onAddToSpace={handleAddToSpace} />}
                             />
                           )}
                           {item.type === 'activity' && (

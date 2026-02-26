@@ -106,6 +106,39 @@ export const PATCH = withAuthValidationAndErrors(
 
     await toolRef.update(updates);
 
+    // Notify the tool owner about the review decision
+    const toolData = doc.data();
+    const ownerId = toolData?.placedBy as string | undefined;
+    if (ownerId && (action === 'approve' || action === 'reject')) {
+      try {
+        const { createNotification } = await import('@/lib/notification-service');
+        const toolName = (toolData?.toolName as string) || 'your tool';
+        if (action === 'approve') {
+          await createNotification({
+            userId: ownerId,
+            type: 'system',
+            category: 'tools',
+            title: `${toolName} approved for campus`,
+            body: 'Your tool is now live in the campus directory.',
+            actionUrl: `/campus/tools/${slug}`,
+            metadata: { campusToolApproved: true, slug },
+          });
+        } else {
+          await createNotification({
+            userId: ownerId,
+            type: 'system',
+            category: 'tools',
+            title: `${toolName} not approved`,
+            body: 'Your campus tool submission was not approved. You can edit and resubmit.',
+            actionUrl: `/lab?toolId=${toolData?.toolId}`,
+            metadata: { campusToolRejected: true, slug },
+          });
+        }
+      } catch {
+        // Non-blocking — don't fail the review action if notification fails
+      }
+    }
+
     return respond.success({ slug, action, updated: true });
   }
 );

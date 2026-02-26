@@ -1618,8 +1618,358 @@ interface ExecuteResult {
   };
   userStateUpdate?: {
     selections?: Record<string, unknown>;
-    participation?: Record<string, boolean>;
+    participation?: Record<string, unknown>;
   };
+}
+
+// ============================================================================
+// Tag Cloud Handler
+// ============================================================================
+
+async function handleTagCloudAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+  const tagName = data.tagName as string;
+  if (!tagName) throw new Error("tagName is required");
+
+  const userDoc = await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).get();
+  const existingParticipation = (userDoc.data() ?? {}) as Record<string, unknown>;
+  const selectedTags: string[] = (existingParticipation[`participation.${elementId}:selectedTags`] as string[]) ?? [];
+
+  if (action === "select_tag") {
+    if (selectedTags.includes(tagName)) return { sharedStateUpdate: undefined };
+    const updatedTags = [...selectedTags, tagName];
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:tag:${tagName}`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      { [`participation.${elementId}:selectedTags`]: updatedTags, lastModified: now },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: { counterDeltas: { [`${elementId}:tag:${tagName}`]: 1 } },
+      userStateUpdate: { participation: { [`${elementId}:selectedTags`]: updatedTags } },
+    };
+  }
+
+  if (action === "deselect_tag") {
+    const updatedTags = selectedTags.filter((t) => t !== tagName);
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:tag:${tagName}`]: admin.firestore.FieldValue.increment(-1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      { [`participation.${elementId}:selectedTags`]: updatedTags, lastModified: now },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: { counterDeltas: { [`${elementId}:tag:${tagName}`]: -1 } },
+      userStateUpdate: { participation: { [`${elementId}:selectedTags`]: updatedTags } },
+    };
+  }
+
+  return { sharedStateUpdate: undefined };
+}
+
+// ============================================================================
+// Photo Gallery Handler
+// ============================================================================
+
+async function handlePhotoGalleryAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+
+  if (action === "like_photo") {
+    const photoId = data.photoId as string;
+    if (!photoId) throw new Error("photoId is required");
+
+    const userDoc = await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).get();
+    const existingParticipation = (userDoc.data() ?? {}) as Record<string, unknown>;
+    const likedPhotos: string[] = (existingParticipation[`participation.${elementId}:likedPhotos`] as string[]) ?? [];
+
+    if (likedPhotos.includes(photoId)) throw new Error("Already liked this photo");
+    const updatedLiked = [...likedPhotos, photoId];
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:likes:${photoId}`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      { [`participation.${elementId}:likedPhotos`]: updatedLiked, lastModified: now },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: { counterDeltas: { [`${elementId}:likes:${photoId}`]: 1 } },
+      userStateUpdate: { participation: { [`${elementId}:likedPhotos`]: updatedLiked } },
+    };
+  }
+
+  if (action === "add_comment") {
+    const photoId = data.photoId as string;
+    const text = data.text as string;
+    if (!photoId) throw new Error("photoId is required");
+    if (!text || !text.trim()) throw new Error("comment text is required");
+
+    const commentsKey = `${elementId}:comments`;
+    const commentId = `${userId}:${Date.now()}`;
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`collections.${commentsKey}.${commentId}`]: {
+          id: commentId,
+          userId,
+          photoId,
+          text: text.trim(),
+          timestamp: now,
+        },
+        [`counters.${elementId}:commentCount`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: {
+        collectionUpserts: {
+          [commentsKey]: {
+            [commentId]: { id: commentId, userId, photoId, text: text.trim(), timestamp: now },
+          },
+        },
+        counterDeltas: { [`${elementId}:commentCount`]: 1 },
+      },
+    };
+  }
+
+  return { sharedStateUpdate: undefined };
+}
+
+// ============================================================================
+// Directory List Handler
+// ============================================================================
+
+async function handleDirectoryListAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+
+  if (action === "contact") {
+    const listingId = data.listingId as string;
+    if (!listingId) throw new Error("listingId is required");
+
+    await db.collection("tool_states").doc(sharedDocId(toolId, deploymentId)).set(
+      {
+        [`counters.${elementId}:contacts:${listingId}`]: admin.firestore.FieldValue.increment(1),
+        version: admin.firestore.FieldValue.increment(1),
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return {
+      sharedStateUpdate: { counterDeltas: { [`${elementId}:contacts:${listingId}`]: 1 } },
+    };
+  }
+
+  if (action === "bookmark") {
+    const listingId = data.listingId as string;
+    if (!listingId) throw new Error("listingId is required");
+
+    const userDoc = await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).get();
+    const existingParticipation = (userDoc.data() ?? {}) as Record<string, unknown>;
+    const bookmarks: string[] = (existingParticipation[`participation.${elementId}:bookmarks`] as string[]) ?? [];
+
+    const isBookmarked = bookmarks.includes(listingId);
+    const updatedBookmarks = isBookmarked
+      ? bookmarks.filter((b) => b !== listingId)
+      : [...bookmarks, listingId];
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      { [`participation.${elementId}:bookmarks`]: updatedBookmarks, lastModified: now },
+      { merge: true }
+    );
+
+    return {
+      userStateUpdate: { participation: { [`${elementId}:bookmarks`]: updatedBookmarks } },
+    };
+  }
+
+  return { sharedStateUpdate: undefined };
+}
+
+// ============================================================================
+// Filter Selector Handler
+// ============================================================================
+
+async function handleFilterSelectorAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+
+  if (action === "apply_filters") {
+    const activeFilters = data.activeFilters ?? data.filters ?? data;
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      { [`participation.${elementId}:activeFilters`]: activeFilters, lastModified: now },
+      { merge: true }
+    );
+
+    return {
+      userStateUpdate: { participation: { [`${elementId}:activeFilters`]: activeFilters } },
+    };
+  }
+
+  return { sharedStateUpdate: undefined };
+}
+
+// ============================================================================
+// User Selector Handler
+// ============================================================================
+
+async function handleUserSelectorAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+  const selectedUserId = data.userId as string;
+  if (!selectedUserId) throw new Error("userId is required");
+
+  const userDoc = await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).get();
+  const existingParticipation = (userDoc.data() ?? {}) as Record<string, unknown>;
+  const selectedUsers: string[] = (existingParticipation[`participation.${elementId}:selectedUsers`] as string[]) ?? [];
+
+  if (action === "select_user") {
+    if (selectedUsers.includes(selectedUserId)) return { sharedStateUpdate: undefined };
+    const updatedUsers = [...selectedUsers, selectedUserId];
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      { [`participation.${elementId}:selectedUsers`]: updatedUsers, lastModified: now },
+      { merge: true }
+    );
+
+    return {
+      userStateUpdate: { participation: { [`${elementId}:selectedUsers`]: updatedUsers } },
+    };
+  }
+
+  if (action === "deselect_user") {
+    const updatedUsers = selectedUsers.filter((u) => u !== selectedUserId);
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      { [`participation.${elementId}:selectedUsers`]: updatedUsers, lastModified: now },
+      { merge: true }
+    );
+
+    return {
+      userStateUpdate: { participation: { [`${elementId}:selectedUsers`]: updatedUsers } },
+    };
+  }
+
+  return { sharedStateUpdate: undefined };
+}
+
+// ============================================================================
+// Result List Handler
+// ============================================================================
+
+async function handleResultListAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+  const itemId = data.itemId as string;
+  if (!itemId) throw new Error("itemId is required");
+
+  const userDoc = await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).get();
+  const existingParticipation = (userDoc.data() ?? {}) as Record<string, unknown>;
+
+  if (action === "select_item") {
+    const selections: string[] = (existingParticipation[`participation.${elementId}:selections`] as string[]) ?? [];
+    const updatedSelections = selections.includes(itemId)
+      ? selections.filter((s) => s !== itemId)
+      : [...selections, itemId];
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      { [`participation.${elementId}:selections`]: updatedSelections, lastModified: now },
+      { merge: true }
+    );
+
+    return {
+      userStateUpdate: { participation: { [`${elementId}:selections`]: updatedSelections } },
+    };
+  }
+
+  if (action === "bookmark_item") {
+    const bookmarks: string[] = (existingParticipation[`participation.${elementId}:bookmarks`] as string[]) ?? [];
+    const updatedBookmarks = bookmarks.includes(itemId)
+      ? bookmarks.filter((b) => b !== itemId)
+      : [...bookmarks, itemId];
+
+    await db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId)).set(
+      { [`participation.${elementId}:bookmarks`]: updatedBookmarks, lastModified: now },
+      { merge: true }
+    );
+
+    return {
+      userStateUpdate: { participation: { [`${elementId}:bookmarks`]: updatedBookmarks } },
+    };
+  }
+
+  return { sharedStateUpdate: undefined };
 }
 
 // ============================================================================
@@ -1632,6 +1982,7 @@ export const POST = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest) || '';
 
   // Validate body
   const body = await request.json().catch(() => null);
@@ -1837,6 +2188,60 @@ export const POST = withAuthAndErrors(async (
         );
         break;
 
+      // Registry ID: tag-cloud
+      case "tag-cloud":
+      case "tag_cloud":
+        result = await handleTagCloudAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId
+        );
+        break;
+
+      // Registry ID: photo-gallery
+      case "photo-gallery":
+      case "photo_gallery":
+        result = await handlePhotoGalleryAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId
+        );
+        break;
+
+      // Registry ID: directory-list
+      case "directory-list":
+      case "directory_list":
+        result = await handleDirectoryListAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId
+        );
+        break;
+
+      // Registry ID: filter-selector
+      case "filter-selector":
+      case "filter_selector":
+        result = await handleFilterSelectorAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId
+        );
+        break;
+
+      // Registry ID: user-selector
+      case "user-selector":
+      case "user_selector":
+        result = await handleUserSelectorAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId
+        );
+        break;
+
+      // Registry ID: result-list
+      case "result-list":
+      case "result_list":
+        result = await handleResultListAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId
+        );
+        break;
+
       default:
         // Generic fallback: record action in timeline
         result = {
@@ -1854,6 +2259,65 @@ export const POST = withAuthAndErrors(async (
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Action failed";
     return respond.error(message, "ACTION_FAILED", { status: 400 });
+  }
+
+  // Broadcast shared state to Firebase RTDB for real-time listeners (non-blocking)
+  if (effectiveDeploymentId !== "standalone") {
+    try {
+      const rtdb = admin.database();
+      const rtdbRef = rtdb.ref(`tool_state/${effectiveDeploymentId}`);
+
+      // Read the updated shared state (just counters + collections — the hot path)
+      const updatedShared = await getSharedState(toolId, effectiveDeploymentId);
+      const counters = (updatedShared as Record<string, unknown>).counters ?? {};
+      const collections = (updatedShared as Record<string, unknown>).collections ?? {};
+
+      await rtdbRef.update({
+        counters,
+        collections,
+        metadata: {
+          version: (updatedShared as Record<string, unknown>).version ?? 1,
+          lastModified: new Date().toISOString(),
+          broadcastAt: Date.now(),
+          deploymentId: effectiveDeploymentId,
+          toolId,
+        },
+      });
+    } catch {
+      // RTDB broadcast failed — don't block the action response
+    }
+  }
+
+  // Emit event for Inngest automation engine (non-blocking)
+  try {
+    const { inngest } = await import('@/lib/inngest/client');
+    await inngest.send({
+      name: 'tool/action.executed',
+      data: {
+        toolId,
+        deploymentId: effectiveDeploymentId,
+        elementId,
+        action,
+        userId,
+        spaceId: parsed.data.spaceId || '',
+        campusId,
+        sharedStateUpdate: result?.sharedStateUpdate,
+        userStateUpdate: result?.userStateUpdate,
+      },
+    });
+  } catch {
+    // Inngest not configured or unavailable — don't block the action
+  }
+
+  // Track generation outcome — increment usedByOthers for non-owner interactions
+  const toolOwnerId = (tool.ownerId || tool.createdBy) as string | undefined;
+  const generationOutcomeId = tool.generationOutcomeId as string | undefined;
+  if (generationOutcomeId && toolOwnerId && userId !== toolOwnerId) {
+    import('@/lib/goose-server').then(({ updateGenerationOutcome }) => {
+      updateGenerationOutcome(generationOutcomeId, {
+        'outcome.usedByOthers': admin.firestore.FieldValue.increment(1),
+      }).catch(() => {});
+    }).catch(() => {});
   }
 
   return respond.success({ result });

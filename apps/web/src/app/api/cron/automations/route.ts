@@ -47,6 +47,9 @@ export async function POST(request: Request) {
     // 3. Process tool_state_change automations (bridge space↔tool)
     await processToolStateTriggers(now, results);
 
+    // 4. Process tool-level automations (schedule + threshold from tool_automations collection)
+    await processToolAutomations(now, results);
+
     const successCount = results.filter(r => r.success).length;
     const failCount = results.filter(r => !r.success).length;
 
@@ -602,12 +605,14 @@ async function processToolStateTriggers(
       }
 
       try {
-        // Read the deployment's shared state
+        // Read the deployment's shared state (same collection as execute route)
+        // Resolve toolId from deployment if available
+        const deploymentDoc = await dbAdmin.collection('tool_deployments').doc(deploymentId).get();
+        const toolId = deploymentDoc.exists ? (deploymentDoc.data()?.toolId as string || deploymentId) : deploymentId;
+        const stateDocId = `${toolId}_${deploymentId}_shared`;
         const stateDoc = await dbAdmin
-          .collection('deployedTools')
-          .doc(deploymentId)
-          .collection('sharedState')
-          .doc('current')
+          .collection('tool_states')
+          .doc(stateDocId)
           .get();
 
         if (!stateDoc.exists) continue;
@@ -665,6 +670,161 @@ async function processToolStateTriggers(
           error: error instanceof Error ? error.message : String(error),
         });
       }
+    }
+  }
+}
+
+/**
+ * Process tool-level automations from the tool_automations collection.
+ * Handles schedule and threshold trigger types that the Inngest event handler doesn't cover.
+ */
+async function processToolAutomations(
+  now: Date,
+  results: AutomationResult[]
+): Promise<void> {
+  // Fetch enabled schedule automations
+  const scheduleSnapshot = await dbAdmin
+    .collection('tool_automations')
+    .where('enabled', '==', true)
+    .where('isActive', '!=', false)
+    .where('trigger.type', 'in', ['schedule', 'threshold'])
+    .get();
+
+  if (scheduleSnapshot.empty) return;
+
+  for (const automationDoc of scheduleSnapshot.docs) {
+    const automation = automationDoc.data();
+    const trigger = automation.trigger || {};
+    const toolId = automation.toolId as string;
+    const deploymentId = (automation.deploymentId || toolId) as string;
+
+    // Cooldown check
+    const lastRunAt = automation.lastRunAt;
+    const cooldownSeconds = (automation.cooldownSeconds as number) || 60;
+    if (lastRunAt) {
+      const lastTime = typeof lastRunAt === 'string' ? new Date(lastRunAt) : (lastRunAt.toDate ? lastRunAt.toDate() : new Date(lastRunAt));
+      if (now.getTime() - lastTime.getTime() < cooldownSeconds * 1000) continue;
+    }
+
+    // Daily run limit
+    const maxRunsPerDay = (automation.maxRunsPerDay as number) || 100;
+    const runCount = (automation.runCount as number) || 0;
+    if (runCount >= maxRunsPerDay) continue;
+
+    try {
+      if (trigger.type === 'schedule') {
+        if (!shouldRunSchedule(trigger, now, automation.lastRunAt)) continue;
+
+        // Fire Inngest event or execute directly
+        try {
+          const { inngest } = await import('@/lib/inngest/client');
+          await inngest.send({
+            name: 'tool/action.executed',
+            data: {
+              toolId,
+              deploymentId,
+              elementId: trigger.elementId || 'scheduled',
+              action: 'scheduled_trigger',
+              userId: 'system',
+              campusId: automation.campusId || '',
+            },
+          });
+        } catch {
+          // Direct execution fallback
+          const { executeAutomationActions } = await import('@/lib/automation-executor');
+          await executeAutomationActions(automation.actions || [], {
+            toolId,
+            deploymentId,
+            elementId: 'scheduled',
+            userId: 'system',
+            campusId: automation.campusId || '',
+          });
+        }
+      } else if (trigger.type === 'threshold') {
+        const watchPath = trigger.path as string;
+        const operator = trigger.operator as string;
+        const threshold = trigger.value;
+
+        if (!watchPath || !operator || threshold === undefined) continue;
+
+        // Read shared state using same path as execute route
+        const stateDoc = await dbAdmin
+          .collection('tool_states')
+          .doc(`${toolId}_${deploymentId}_shared`)
+          .get();
+
+        if (!stateDoc.exists) continue;
+        const state = stateDoc.data() || {};
+        const currentValue = resolveDotPath(state, watchPath);
+        if (currentValue === undefined) continue;
+        if (!evaluateCondition(currentValue, operator, threshold)) continue;
+
+        // Threshold met — execute
+        try {
+          const { inngest } = await import('@/lib/inngest/client');
+          await inngest.send({
+            name: 'tool/action.executed',
+            data: {
+              toolId,
+              deploymentId,
+              elementId: trigger.elementId || 'threshold',
+              action: 'threshold_trigger',
+              userId: 'system',
+              campusId: automation.campusId || '',
+            },
+          });
+        } catch {
+          const { executeAutomationActions } = await import('@/lib/automation-executor');
+          await executeAutomationActions(automation.actions || [], {
+            toolId,
+            deploymentId,
+            elementId: 'threshold',
+            userId: 'system',
+            campusId: automation.campusId || '',
+          });
+        }
+      }
+
+      // Record run in subcollection
+      await automationDoc.ref.collection('runs').add({
+        timestamp: now.toISOString(),
+        triggerType: trigger.type,
+        status: 'success',
+        duration: 0,
+      });
+
+      // Update stats
+      await automationDoc.ref.update({
+        runCount: FieldValue.increment(1),
+        lastRunAt: now.toISOString(),
+      });
+
+      results.push({
+        automationId: automationDoc.id,
+        spaceId: automation.spaceId || toolId,
+        type: `tool_${trigger.type}`,
+        success: true,
+      });
+    } catch (error) {
+      // Record failure
+      await automationDoc.ref.collection('runs').add({
+        timestamp: now.toISOString(),
+        triggerType: trigger.type,
+        status: 'error',
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      await automationDoc.ref.update({
+        errorCount: FieldValue.increment(1),
+      });
+
+      results.push({
+        automationId: automationDoc.id,
+        spaceId: automation.spaceId || toolId,
+        type: `tool_${trigger.type}`,
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 }

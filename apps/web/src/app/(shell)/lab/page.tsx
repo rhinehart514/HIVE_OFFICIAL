@@ -73,7 +73,12 @@ export default function BuilderDashboard() {
   const [showAllTools, setShowAllTools] = useState(false);
 
   const originSpaceId = searchParams.get('spaceId');
+  const spaceNameParam = searchParams.get('spaceName');
   const autoPrompt = searchParams.get('prompt') || undefined;
+
+  const spaceContext = originSpaceId
+    ? { spaceId: originSpaceId, spaceName: spaceNameParam || 'Space' }
+    : undefined;
 
   // Templates for chips
   const allTemplates = useMemo(() => getAvailableTemplates().slice(0, 8), []);
@@ -204,6 +209,7 @@ export default function BuilderDashboard() {
               <LabChatView
                 templates={allTemplates}
                 originSpaceId={originSpaceId}
+                spaceContext={spaceContext}
                 autoPrompt={autoPrompt}
                 onViewAllTemplates={handleViewAllTemplates}
                 onToolCreated={handleToolCreated}
@@ -281,6 +287,7 @@ export default function BuilderDashboard() {
           <LabChatView
             templates={allTemplates}
             originSpaceId={originSpaceId}
+            spaceContext={spaceContext}
             autoPrompt={autoPrompt}
             onViewAllTemplates={handleViewAllTemplates}
             onToolCreated={handleToolCreated}

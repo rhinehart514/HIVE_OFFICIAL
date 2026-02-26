@@ -8,7 +8,8 @@ import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, getMobileNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
-import { useUnreadCount } from '@/hooks/queries/use-unread-count';
+import { useUnreadNotifications } from '@/hooks/use-unread-notifications';
+import { useAuth } from '@hive/auth-logic';
 import { useMySpaces, type MySpace } from '@/hooks/queries/use-my-spaces';
 import { SPRING_SNAP_NAV, MOTION, durationSeconds } from '@hive/tokens';
 
@@ -418,7 +419,8 @@ export function LeftSidebar() {
   const pathname = usePathname();
   const { hasCampus } = useCampusMode();
   const navItems = getNavItems(hasCampus);
-  const { data: unreadCount = 0 } = useUnreadCount();
+  const { user } = useAuth();
+  const { unreadCount } = useUnreadNotifications({ userId: user?.uid });
   const { data: mySpaces = [] } = useMySpaces();
   const [expanded, setExpanded] = useState(false);
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -593,7 +595,8 @@ export function MobileBottomBar() {
   const pathname = usePathname();
   const { hasCampus } = useCampusMode();
   const navItems = getMobileNavItems(hasCampus);
-  const { data: unreadCount = 0 } = useUnreadCount();
+  const { user } = useAuth();
+  const { unreadCount } = useUnreadNotifications({ userId: user?.uid });
 
   return (
     <nav

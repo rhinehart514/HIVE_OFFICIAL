@@ -126,6 +126,11 @@ export async function POST(request: NextRequest) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             existingComposition: validated.existingComposition as any,
             isIteration: validated.isIteration,
+            spaceContext: validated.spaceContext ? {
+              type: validated.spaceContext.spaceType,
+              memberCount: validated.spaceContext.memberCount,
+              name: validated.spaceContext.spaceName,
+            } : undefined,
           }) as AsyncGenerator<StreamMessage>;
 
           const mode = validated.isIteration ? 'iteration' : 'new';

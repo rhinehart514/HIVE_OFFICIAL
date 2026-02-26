@@ -9,38 +9,43 @@ const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
 
 export function CTASection() {
   const searchParams = useSearchParams();
-  const enterHref = buildUbEnterUrl(searchParams.get('redirect'));
-  const browseHref = buildUbEnterUrl(searchParams.get('redirect'), '/discover');
+  const enterHref = buildUbEnterUrl(searchParams.get('redirect'), '/lab');
 
   return (
-    <section className="py-32 md:py-48 px-6 bg-black">
-      <div className="max-w-3xl mx-auto text-center">
+    <section className="relative overflow-hidden bg-black px-6 py-32 md:py-44">
+      {/* Warm ambient glow */}
+      <div
+        className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full opacity-[0.06]"
+        style={{
+          background: 'radial-gradient(ellipse, #FFD700 0%, transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="relative mx-auto max-w-2xl text-center">
         <h2
-          className={`${clashDisplay} text-[clamp(32px,6vw,56px)] font-semibold leading-tight text-white mb-6`}
+          className={`${clashDisplay} mb-5 text-[clamp(32px,6vw,56px)] font-semibold leading-tight tracking-tight text-white`}
         >
-          Your club&apos;s already here.
+          Your next creation is one prompt away.
         </h2>
 
-        <p className="text-lg text-white/40 mb-10 max-w-xl mx-auto">
-          Claim your space, verify leadership, and start running your org before the next meeting.
+        <p className="mx-auto mb-10 max-w-md text-base text-white/40">
+          Join students already building tools their orgs actually use. Free, instant, no code.
         </p>
 
-        {/* Two pills */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href={enterHref}
-            className="px-8 py-4 bg-[#FFD700] text-black text-base font-medium rounded-full hover:opacity-90 transition-opacity flex items-center gap-2"
+            className="flex items-center gap-2 rounded-full bg-[#FFD700] px-8 py-4 text-base font-medium text-black transition-opacity hover:opacity-90"
           >
-            Get started
-            <ArrowRight className="w-5 h-5" />
-          </Link>
-          <Link
-            href={browseHref}
-            className="px-8 py-4 bg-white/[0.06] text-white text-base font-medium rounded-full hover:bg-white/[0.1] transition-colors"
-          >
-            Browse spaces
+            Start building
+            <ArrowRight className="h-5 w-5" />
           </Link>
         </div>
+
+        <p className="mt-6 font-mono text-[11px] text-white/15">
+          @buffalo.edu · takes 30 seconds
+        </p>
       </div>
     </section>
   );

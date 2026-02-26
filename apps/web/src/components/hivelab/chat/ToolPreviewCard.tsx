@@ -10,6 +10,24 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link2, Pencil, Rocket, Check } from 'lucide-react';
 import { ToolCanvas, type ToolElement } from '@hive/ui';
+import { useAuth } from '@hive/auth-logic';
+import { useToolRuntime } from '@/hooks/use-tool-runtime';
+
+const EMPTY_SHARED_STATE: {
+  counters: Record<string, number>;
+  collections: Record<string, Record<string, { id: string; createdAt: string; createdBy: string; data: Record<string, unknown> }>>;
+  timeline: Array<{ id: string; type: string; timestamp: string; userId: string; action: string; data?: Record<string, unknown> }>;
+  computed: Record<string, unknown>;
+  version: number;
+  lastModified: string;
+} = {
+  counters: {},
+  collections: {},
+  timeline: [],
+  computed: {},
+  version: 0,
+  lastModified: '',
+};
 
 interface ToolPreviewCardProps {
   toolId: string;
@@ -30,7 +48,23 @@ export function ToolPreviewCard({
   onEdit,
   onShare,
 }: ToolPreviewCardProps) {
+  const { user } = useAuth();
   const [linkCopied, setLinkCopied] = useState(false);
+
+  const runtime = useToolRuntime({
+    toolId,
+    enabled: phase === 'complete',
+    autoSave: true,
+    enableRealtime: false,
+  });
+
+  const handleElementChange = useCallback((instanceId: string, data: unknown) => {
+    runtime.updateState({ [instanceId]: data });
+  }, [runtime]);
+
+  const handleElementAction = useCallback((instanceId: string, action: string, payload: unknown) => {
+    runtime.executeAction(instanceId, action, payload as Record<string, unknown>);
+  }, [runtime]);
 
   const handleShare = useCallback(() => {
     onShare?.();
@@ -53,7 +87,23 @@ export function ToolPreviewCard({
             </motion.span>
           </div>
         ) : elements.length > 0 ? (
-          <ToolCanvas elements={elements} state={{}} layout="flow" />
+          <ToolCanvas
+            elements={elements}
+            state={phase === 'complete' ? runtime.state : {}}
+            sharedState={phase === 'complete' ? runtime.sharedState : EMPTY_SHARED_STATE}
+            userState={phase === 'complete' ? runtime.userState : {}}
+            layout="flow"
+            onElementChange={handleElementChange}
+            onElementAction={handleElementAction}
+            isLoading={runtime.isLoading || runtime.isExecuting}
+            error={runtime.error?.message || null}
+            context={{
+              userId: user?.uid,
+              userDisplayName: user?.displayName || user?.fullName || undefined,
+              userRole: 'member',
+              isSpaceLeader: false,
+            }}
+          />
         ) : (
           <div className="flex items-center justify-center py-12">
             <p className="text-red-400/50 text-sm">Generation failed</p>

@@ -392,10 +392,12 @@ export const POST = withAuthValidationAndErrors(
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp() });
 
-    // Notify space members about deployment (non-blocking)
+    // Emit deployment event to Inngest for durable notification delivery
     try {
-      // campusId filter omitted on spaceMembers — index exempted; spaceId scopes query
-    const [deployerDoc, membersByStatus, membersByIsActive] = await Promise.all([
+      const { inngest } = await import('@/lib/inngest/client');
+
+      // Gather member IDs for notification targeting
+      const [deployerDoc, membersByStatus, membersByIsActive] = await Promise.all([
         db.collection('users').doc(userId).get(),
         db
           .collection('spaceMembers')
@@ -423,22 +425,59 @@ export const POST = withAuthValidationAndErrors(
           (deployerDoc.data()?.fullName as string | undefined) ||
           'Someone';
 
-        await notifyToolDeployed({
-          memberIds: Array.from(memberIds),
-          deployedByUserId: userId,
-          deployedByName: deployerName,
-          toolId,
-          toolName: (toolData?.name as string | undefined) || 'Untitled Tool',
-          spaceId,
-          spaceName: (spaceData?.name as string | undefined) || 'a space',
+        await inngest.send({
+          name: 'tool/deployed',
+          data: {
+            toolId,
+            toolName: (toolData?.name as string | undefined) || 'Untitled Tool',
+            spaceId,
+            spaceName: (spaceData?.name as string | undefined) || 'a space',
+            deployedByUserId: userId,
+            deployedByName: deployerName,
+            campusId: campusId!,
+            memberIds: Array.from(memberIds),
+          },
         });
       }
     } catch (notifyError) {
-      logger.warn('Failed to send deployment notifications', {
-        toolId,
-        spaceId,
-        error: notifyError instanceof Error ? notifyError.message : String(notifyError),
-      });
+      // Fall back to direct notification if Inngest unavailable
+      try {
+        const [deployerDoc, membersByStatus, membersByIsActive] = await Promise.all([
+          db.collection('users').doc(userId).get(),
+          db.collection('spaceMembers').where('spaceId', '==', spaceId).where('status', '==', 'active').get(),
+          db.collection('spaceMembers').where('spaceId', '==', spaceId).where('isActive', '==', true).get(),
+        ]);
+        const memberIds = new Set<string>();
+        for (const doc of [...membersByStatus.docs, ...membersByIsActive.docs]) {
+          const memberId = doc.data()?.userId as string | undefined;
+          if (memberId) memberIds.add(memberId);
+        }
+        if (memberIds.size > 0) {
+          const deployerName = (deployerDoc.data()?.displayName as string | undefined) || (deployerDoc.data()?.fullName as string | undefined) || 'Someone';
+          await notifyToolDeployed({
+            memberIds: Array.from(memberIds),
+            deployedByUserId: userId,
+            deployedByName: deployerName,
+            toolId,
+            toolName: (toolData?.name as string | undefined) || 'Untitled Tool',
+            spaceId,
+            spaceName: (spaceData?.name as string | undefined) || 'a space',
+          });
+        }
+      } catch (fallbackError) {
+        logger.warn('Failed to send deployment notifications', {
+          toolId, spaceId,
+          error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+        });
+      }
+    }
+
+    // Track generation outcome — mark as deployed
+    const generationOutcomeId = toolData?.generationOutcomeId as string | undefined;
+    if (generationOutcomeId) {
+      import('@/lib/goose-server').then(({ updateGenerationOutcome }) => {
+        updateGenerationOutcome(generationOutcomeId, { 'outcome.deployed': true }).catch(() => {});
+      }).catch(() => {});
     }
 
     return respond.success({

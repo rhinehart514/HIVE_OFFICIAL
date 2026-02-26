@@ -15,6 +15,9 @@ import {
   buildCompactSystemPrompt,
   type ToolComposition,
 } from '@hive/core/hivelab/goose';
+import { generateObject } from 'ai';
+import { createGroq } from '@ai-sdk/groq';
+import { z } from 'zod';
 import { logger } from './logger';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -29,10 +32,17 @@ export interface GooseConfig {
   groqModel: string;
 }
 
+export interface SpaceContext {
+  type?: string;       // e.g. 'social', 'academic', 'project', 'club'
+  memberCount?: number;
+  name?: string;
+}
+
 export interface GenerateRequest {
   prompt: string;
   existingComposition?: ToolComposition;
   isIteration?: boolean;
+  spaceContext?: SpaceContext;
 }
 
 export interface StreamMessage {
@@ -78,12 +88,17 @@ function sanitizeElementConfigs(composition: ToolComposition): ToolComposition {
 
 export function getGooseConfig(): GooseConfig {
   const requestedBackend = process.env.GOOSE_BACKEND;
-  const backend: GooseBackend = requestedBackend === 'groq' ? 'groq' : 'rules';
+  // Default to groq when API key is available, rules otherwise
+  const hasGroqKey = !!process.env.GROQ_API_KEY;
+  const backend: GooseBackend =
+    requestedBackend === 'rules' ? 'rules' :
+    requestedBackend === 'groq' ? 'groq' :
+    hasGroqKey ? 'groq' : 'rules';
 
   return {
     backend,
     groqApiKey: process.env.GROQ_API_KEY,
-    groqModel: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+    groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
   };
 }
 
@@ -113,7 +128,181 @@ void groqConfigValidAtStartup;
 // GROQ BACKEND (Cloud Fallback)
 // ═══════════════════════════════════════════════════════════════════
 
-async function callGroq(
+// ═══════════════════════════════════════════════════════════════════
+// AI SDK STRUCTURED OUTPUT
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Zod schema for structured tool composition output.
+ * Guarantees valid JSON from any model via grammar-constrained generation.
+ */
+const ToolCompositionSchema = z.object({
+  reasoning: z.string().describe(
+    'Think about what the student actually needs. What social dynamics are at play? Who are the actors? What trust, timing, or structure is required? 2-4 sentences.'
+  ),
+  elements: z.array(z.object({
+    type: z.string().describe('Element type from the catalog'),
+    instanceId: z.string().describe('Unique instance ID like poll_element_1'),
+    config: z.record(z.unknown()).describe('Element-specific configuration'),
+    position: z.object({ x: z.number(), y: z.number() }),
+    size: z.object({ width: z.number(), height: z.number() }),
+  })).min(1).max(8),
+  connections: z.array(z.object({
+    from: z.object({ instanceId: z.string(), port: z.string() }),
+    to: z.object({ instanceId: z.string(), port: z.string() }),
+  })).default([]),
+  name: z.string().describe('Short tool name'),
+  description: z.string().describe('Brief description of what the tool does'),
+  layout: z.enum(['grid', 'flow', 'tabs', 'sidebar']).default('grid'),
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// AI VALIDATION + REVISION
+// ═══════════════════════════════════════════════════════════════════
+
+const ValidationSchema = z.object({
+  passes: z.boolean().describe('Does the composition serve the original need well?'),
+  issues: z.array(z.object({
+    problem: z.string().describe('What is wrong or missing'),
+    fix: z.string().describe('Specific change to make'),
+  })).describe('Empty if passes=true. Otherwise, specific issues to fix.'),
+});
+
+async function validateWithAI(
+  config: GooseConfig,
+  composition: ToolComposition,
+  reasoning: string,
+  originalPrompt: string,
+): Promise<{ passes: boolean; issues: Array<{ problem: string; fix: string }> }> {
+  const groq = createGroq({ apiKey: config.groqApiKey! });
+
+  const { object } = await generateObject({
+    model: groq(config.groqModel),
+    schema: ValidationSchema,
+    system: `You review campus tools. Given a student's request and a generated tool composition, check:
+- Does the composition actually serve what the student asked for?
+- Are there obvious mismatches (e.g., student wants anonymous feedback but tool collects names)?
+- Are elements connected that should be (e.g., poll exists with chart but no connection)?
+- Is anything critical missing for the tool to work for its intended purpose?
+- Is anything unnecessary that adds complexity without value?
+
+Be concise. Only flag real issues, not style preferences.`,
+    prompt: `Student request: "${originalPrompt}"
+AI reasoning: "${reasoning}"
+Composition: ${JSON.stringify(composition, null, 2)}
+
+Does this tool serve the student's need? If not, what specific issues need fixing?`,
+    temperature: 0.1,
+    maxOutputTokens: 512,
+  });
+
+  return object;
+}
+
+async function reviseComposition(
+  config: GooseConfig,
+  original: ToolComposition,
+  issues: Array<{ problem: string; fix: string }>,
+  originalPrompt: string,
+): Promise<ToolComposition> {
+  const groq = createGroq({ apiKey: config.groqApiKey! });
+  const issueText = issues.map(i => `- Problem: ${i.problem}. Fix: ${i.fix}`).join('\n');
+
+  const { object } = await generateObject({
+    model: groq(config.groqModel),
+    schema: ToolCompositionSchema,
+    system: buildSystemPrompt(),
+    prompt: `Fix this tool composition.
+
+Original request: "${originalPrompt}"
+Current composition: ${JSON.stringify(original, null, 2)}
+
+Issues found:
+${issueText}
+
+Generate the corrected composition. Keep what works, fix what doesn't.`,
+    temperature: 0.3,
+    maxOutputTokens: 2048,
+  });
+
+  return {
+    name: object.name,
+    description: object.description,
+    elements: object.elements.map(el => ({
+      type: el.type,
+      instanceId: el.instanceId,
+      config: el.config,
+      position: el.position,
+      size: el.size,
+    })),
+    connections: object.connections.map(conn => ({
+      from: { instanceId: conn.from.instanceId, port: conn.from.port },
+      to: { instanceId: conn.to.instanceId, port: conn.to.port },
+    })),
+    layout: object.layout,
+    pages: [],
+  };
+}
+
+/**
+ * Generate a tool composition using AI SDK with structured output.
+ * Uses Groq for fast, cost-effective structured generation.
+ */
+interface StructuredResult {
+  composition: ToolComposition;
+  reasoning: string;
+}
+
+async function callGroqStructured(
+  config: GooseConfig,
+  prompt: string,
+  systemPrompt: string
+): Promise<StructuredResult> {
+  if (!config.groqApiKey) {
+    throw new Error('GROQ_API_KEY not configured');
+  }
+
+  const groq = createGroq({ apiKey: config.groqApiKey });
+
+  const { object } = await generateObject({
+    model: groq(config.groqModel),
+    schema: ToolCompositionSchema,
+    system: systemPrompt,
+    prompt,
+    temperature: 0.3,
+    maxOutputTokens: 2048,
+  });
+
+  // Capture reasoning before stripping
+  const reasoning = object.reasoning || '';
+
+  // Map AI SDK output to ToolComposition format (strip reasoning)
+  return {
+    reasoning,
+    composition: {
+      name: object.name,
+      description: object.description,
+      elements: object.elements.map(el => ({
+        type: el.type,
+        instanceId: el.instanceId,
+        config: el.config,
+        position: el.position,
+        size: el.size,
+      })),
+      connections: object.connections.map(conn => ({
+        from: { instanceId: conn.from.instanceId, port: conn.from.port },
+        to: { instanceId: conn.to.instanceId, port: conn.to.port },
+      })),
+      layout: object.layout,
+      pages: [],
+    },
+  };
+}
+
+/**
+ * Legacy raw string Groq call (fallback if structured output fails).
+ */
+async function callGroqRaw(
   config: GooseConfig,
   prompt: string,
   systemPrompt: string
@@ -122,7 +311,6 @@ async function callGroq(
     throw new Error('GROQ_API_KEY not configured');
   }
 
-  // Use higher token limit for 70b model (better at complex tools)
   const is70b = config.groqModel.includes('70b');
   const maxTokens = is70b ? 2048 : 1024;
 
@@ -140,7 +328,6 @@ async function callGroq(
       ],
       temperature: 0.3,
       max_tokens: maxTokens,
-      // Groq-specific: request JSON mode for better structured output
       response_format: is70b ? { type: 'json_object' } : undefined,
     }),
   });
@@ -152,6 +339,69 @@ async function callGroq(
 
   const data = await response.json();
   return data.choices[0]?.message?.content || '';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// GROQ SEMANTIC ITERATION
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Use Groq to semantically modify an existing composition.
+ * Unlike fresh generation, this sends the current composition as context
+ * and asks the model to apply the user's modification request.
+ */
+async function callGroqIteration(
+  config: GooseConfig,
+  userPrompt: string,
+  existingComposition: ToolComposition,
+): Promise<StructuredResult> {
+  if (!config.groqApiKey) {
+    throw new Error('GROQ_API_KEY not configured');
+  }
+
+  const groq = createGroq({ apiKey: config.groqApiKey });
+
+  const iterationSystemPrompt = buildSystemPrompt({
+    existingComposition,
+    isIteration: true,
+  });
+
+  const { object } = await generateObject({
+    model: groq(config.groqModel),
+    schema: ToolCompositionSchema,
+    system: iterationSystemPrompt,
+    prompt: `User request: "${userPrompt}"\n\nApply this modification. Preserve what works, change what needs changing.`,
+    temperature: 0.3,
+    maxOutputTokens: 2048,
+  });
+
+  const reasoning = object.reasoning || '';
+
+  // Preserve instanceIds where elements match by type
+  const result: ToolComposition = {
+    name: object.name || existingComposition.name,
+    description: object.description || existingComposition.description,
+    elements: object.elements.map(el => {
+      const existing = existingComposition.elements.find(
+        e => e.instanceId === el.instanceId || (e.type === el.type && !object.elements.some(o => o.instanceId === e.instanceId && o !== el))
+      );
+      return {
+        type: el.type,
+        instanceId: existing?.instanceId || el.instanceId,
+        config: el.config,
+        position: el.position,
+        size: el.size,
+      };
+    }),
+    connections: object.connections.map(conn => ({
+      from: { instanceId: conn.from.instanceId, port: conn.from.port },
+      to: { instanceId: conn.to.instanceId, port: conn.to.port },
+    })),
+    layout: object.layout || existingComposition.layout,
+    pages: existingComposition.pages,
+  };
+
+  return { composition: result, reasoning };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -357,9 +607,330 @@ function detectMultiPageIntent(prompt: string): { isMultiPage: boolean; pageCoun
   return { isMultiPage: true, pageCount };
 }
 
-function generateWithRules(prompt: string): ToolComposition {
+// ── Iteration Intent Detection ────────────────────────────────────
+const APPEND_PATTERN = /\b(add|include|also|plus|with\s+a|and\s+a|throw\s+in|insert|put\s+in)\b/i;
+const REMOVE_PATTERN = /\b(remove|delete|take\s+out|get\s+rid\s+of|drop|lose\s+the|no\s+more)\b/i;
+const MODIFY_PATTERN = /\b(change|make\s+the|update|rename|edit|modify|switch|replace\s+the)\b/i;
+
+type IterationMode = 'append' | 'remove' | 'modify';
+
+function detectIterationMode(lowerPrompt: string): IterationMode {
+  if (REMOVE_PATTERN.test(lowerPrompt)) return 'remove';
+  if (MODIFY_PATTERN.test(lowerPrompt)) return 'modify';
+  return 'append'; // default — "add" keywords or anything unrecognized
+}
+
+/**
+ * Apply additive/subtractive/modify rules to an existing composition.
+ * Returns the updated composition, or null if no meaningful change was made
+ * (signals the caller to fall through to full generation).
+ */
+function applyIterationRules(
+  prompt: string,
+  lowerPrompt: string,
+  existing: ToolComposition,
+): ToolComposition | null {
+  const mode = detectIterationMode(lowerPrompt);
+  const workingElements = [...existing.elements];
+  const workingConnections = [...(existing.connections || [])];
+
+  if (mode === 'remove') {
+    const beforeCount = workingElements.length;
+    // Build a set of keywords from the prompt to match against element titles/types
+    const promptWords = lowerPrompt
+      .replace(REMOVE_PATTERN, '')
+      .split(/\s+/)
+      .filter(w => w.length > 2);
+
+    const filtered = workingElements.filter(el => {
+      const title = ((el.config?.title || el.config?.question || el.config?.eventName || '') as string).toLowerCase();
+      const elType = el.type.toLowerCase();
+      const elId = el.instanceId.toLowerCase();
+      return !promptWords.some(word =>
+        title.includes(word) || elType.includes(word) || elId.includes(word)
+      );
+    });
+
+    if (filtered.length < beforeCount && filtered.length > 0) {
+      // Remove connections referencing deleted elements
+      const remainingIds = new Set(filtered.map(e => e.instanceId));
+      const cleanedConnections = workingConnections.filter(
+        c => remainingIds.has(c.from.instanceId) && remainingIds.has(c.to.instanceId)
+      );
+      return {
+        ...existing,
+        elements: filtered,
+        connections: cleanedConnections,
+      };
+    }
+    // If nothing matched or would empty the tool, return null to fall through
+    return null;
+  }
+
+  if (mode === 'modify') {
+    const promptWords = lowerPrompt
+      .replace(MODIFY_PATTERN, '')
+      .split(/\s+/)
+      .filter(w => w.length > 2);
+
+    // Fuzzy element matching: "the voting thing" → poll-element, "the counter" → counter
+    const ELEMENT_ALIASES: Record<string, string[]> = {
+      'poll-element': ['poll', 'vote', 'voting', 'survey', 'ballot'],
+      'counter': ['counter', 'tally', 'count', 'number'],
+      'rsvp-button': ['rsvp', 'signup', 'register', 'attend'],
+      'countdown-timer': ['countdown', 'timer', 'deadline', 'clock'],
+      'checklist-tracker': ['checklist', 'todo', 'tasks', 'list'],
+      'leaderboard': ['leaderboard', 'scoreboard', 'ranking', 'scores'],
+      'form-builder': ['form', 'feedback', 'input', 'submission'],
+      'progress-indicator': ['progress', 'bar', 'goal', 'target'],
+      'chart-display': ['chart', 'graph', 'visual'],
+      'signup-sheet': ['sheet', 'volunteer', 'slots'],
+      'tag-cloud': ['tags', 'cloud', 'labels'],
+      'photo-gallery': ['gallery', 'photos', 'images'],
+    };
+
+    let modified = false;
+    const updatedElements = workingElements.map(el => {
+      const title = ((el.config?.title || el.config?.question || el.config?.eventName || '') as string).toLowerCase();
+      const elType = el.type.toLowerCase();
+      const aliases = ELEMENT_ALIASES[el.type] || [];
+
+      // Match by title, type, aliases, or fuzzy prompt words
+      const isTarget = promptWords.some(word =>
+        title.includes(word) ||
+        elType.includes(word) ||
+        aliases.some(alias => word.includes(alias) || alias.includes(word))
+      );
+      if (!isTarget) return el;
+
+      modified = true;
+      const newConfig = { ...el.config };
+
+      // Extract new title from patterns like "rename X to Y" or "change title to Y"
+      const renameMatch = prompt.match(/(?:rename|change(?:\s+the)?(?:\s+title)?)\s+(?:.*?\s+)?to\s+[""]?(.+?)[""]?\s*$/i);
+      if (renameMatch) {
+        const newTitle = renameMatch[1].trim();
+        if (newConfig.title !== undefined) newConfig.title = newTitle;
+        if (newConfig.question !== undefined) newConfig.question = newTitle;
+        if (newConfig.eventName !== undefined) newConfig.eventName = newTitle;
+      }
+
+      // Extract options changes: "change options to X, Y, Z" or "add more options to the poll"
+      const optionsMatch = prompt.match(/(?:options?|choices?)\s+to\s+(.+?)(?:\.|$)/i);
+      if (optionsMatch && newConfig.options !== undefined) {
+        newConfig.options = splitList(optionsMatch[1]);
+      }
+
+      // Config-level: "add more options" → append to options array
+      const addOptionsMatch = prompt.match(/add\s+(?:more\s+)?(?:options?|choices?)\s+(?:like\s+|:\s*)?(.+?)(?:\.|$)/i);
+      if (addOptionsMatch && Array.isArray(newConfig.options)) {
+        const newOptions = splitList(addOptionsMatch[1]);
+        newConfig.options = [...(newConfig.options as string[]), ...newOptions];
+      }
+
+      // Layout iteration: "make it horizontal" or "change to flow layout"
+      if (/\b(horizontal|flow|inline)\b/.test(lowerPrompt)) {
+        newConfig.layout = 'flow';
+      }
+      if (/\b(vertical|stack|grid)\b/.test(lowerPrompt)) {
+        newConfig.layout = 'grid';
+      }
+
+      // Max items: "show top 5" or "limit to 20"
+      const limitMatch = prompt.match(/(?:top|limit|show|max)\s*(\d+)/i);
+      if (limitMatch) {
+        if (newConfig.maxItems !== undefined) newConfig.maxItems = parseInt(limitMatch[1]);
+        if (newConfig.maxAttendees !== undefined) newConfig.maxAttendees = parseInt(limitMatch[1]);
+      }
+
+      return { ...el, config: newConfig };
+    });
+
+    // Layout-level iteration: "make it horizontal" changes the composition layout
+    if (/\b(horizontal|flow)\b/.test(lowerPrompt) && !modified) {
+      return { ...existing, elements: workingElements, connections: workingConnections, layout: 'flow' as const };
+    }
+    if (/\b(tabs|tabbed)\b/.test(lowerPrompt) && !modified) {
+      return { ...existing, elements: workingElements, connections: workingConnections, layout: 'tabs' as const };
+    }
+
+    if (modified) {
+      return { ...existing, elements: updatedElements, connections: workingConnections };
+    }
+    return null;
+  }
+
+  // ── Append mode ──────────────────────────────────────────────────
+  const existingTypes = new Set(workingElements.map(e => e.type));
+  const maxY = workingElements.reduce(
+    (max, el) => Math.max(max, (el.position?.y || 0) + (el.size?.height || 200)),
+    0,
+  );
+  let nextY = maxY + 20;
+
+  const newElements: ToolComposition['elements'] = [];
+  const newConnections: ToolComposition['connections'] = [];
+
+  function addNewElement(
+    type: string,
+    instanceId: string,
+    config: Record<string, unknown>,
+    width = 12,
+    height = 200,
+  ) {
+    if (existingTypes.has(type)) return; // Don't duplicate element types
+    newElements.push({
+      type,
+      instanceId,
+      config,
+      position: { x: 0, y: nextY },
+      size: { width, height },
+    });
+    nextY += height + 20;
+  }
+
+  const analysis = analyzePrompt(prompt);
+
+  // Run keyword detection — same as normal generation but only for NEW types
+  if (/\b(poll|vote|survey|ballot|rank|preference)\b/.test(lowerPrompt)) {
+    const options = analysis.options.length >= 2
+      ? analysis.options
+      : ['Option A', 'Option B', 'Option C'];
+    addNewElement('poll-element', 'poll_001', {
+      question: analysis.question || `What do you think about ${analysis.subject || 'this'}?`,
+      options,
+      showResults: true,
+      allowMultipleVotes: lowerPrompt.includes('multiple') || lowerPrompt.includes('multi'),
+    });
+  }
+
+  if (/\b(rsvp|sign\s*up|signup|register|registration|attend|going)\b/.test(lowerPrompt)) {
+    addNewElement('rsvp-button', 'rsvp_001', {
+      eventName: analysis.eventName || titleCase(analysis.subject) || 'Event',
+      showAttendeeCount: true,
+      enableWaitlist: lowerPrompt.includes('waitlist') || lowerPrompt.includes('limit'),
+      maxAttendees: extractNumber(lowerPrompt, /(?:max|limit|cap)\s*(?:of|:)?\s*(\d+)/i),
+    }, 12, 120);
+  }
+
+  if (/\b(countdown|count\s*down|time\s*left|days?\s*until|deadline)\b/.test(lowerPrompt)) {
+    const targetDate = analysis.targetDate || (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      return d;
+    })();
+    addNewElement('countdown-timer', 'countdown_001', {
+      targetDate: targetDate.toISOString(),
+      title: analysis.eventName || titleCase(analysis.subject) || 'Event',
+      showDays: true,
+      showHours: true,
+      showMinutes: true,
+    }, 12, 140);
+  }
+
+  if (/\b(leaderboard|ranking|scoreboard|top\s*\d+|competition|contest)\b/.test(lowerPrompt)) {
+    addNewElement('leaderboard', 'leaderboard_001', {
+      title: analysis.eventName || titleCase(analysis.subject) || 'Leaderboard',
+      maxItems: extractNumber(lowerPrompt, /top\s*(\d+)/i) || 10,
+      showRank: true,
+    });
+  }
+
+  if (/\b(counter|tally|count|track\s*(?:a\s+)?number|how\s*many)\b/.test(lowerPrompt) && !/\b(countdown)\b/.test(lowerPrompt)) {
+    addNewElement('counter-element', 'counter_001', {
+      label: titleCase(analysis.subject) || 'Count',
+      initialValue: 0,
+      step: 1,
+      showControls: true,
+    }, 12, 120);
+  }
+
+  if (/\b(checklist|to\s*-?\s*do|task\s*list|sign\s*-?\s*up\s*sheet|slot)\b/.test(lowerPrompt)) {
+    const items = analysis.items.length > 0
+      ? analysis.items
+      : ['Task 1', 'Task 2', 'Task 3'];
+    addNewElement('checklist-tracker', 'checklist_001', {
+      title: titleCase(analysis.subject) || 'Tasks',
+      items: items.map(item => ({ text: item, completed: false })),
+    });
+  }
+
+  if (/\b(signup\s*sheet|volunteer|bring\s*list|potluck|assign)\b/.test(lowerPrompt)) {
+    const items = analysis.items.length > 0
+      ? analysis.items
+      : ['Slot 1', 'Slot 2', 'Slot 3', 'Slot 4'];
+    addNewElement('signup-sheet', 'signup_sheet_001', {
+      title: analysis.eventName || titleCase(analysis.subject) || 'Sign-Up Sheet',
+      slots: items.map(item => ({ label: item, maxSignups: 1 })),
+    });
+  }
+
+  if (/\b(form|feedback|submission|input|collect|gather|questionnaire)\b/.test(lowerPrompt)) {
+    const fields = analysis.fields.length > 0
+      ? analysis.fields
+      : [
+          { name: 'name', label: 'Name', type: 'text' },
+          { name: 'response', label: lowerPrompt.includes('feedback') ? 'Your Feedback' : 'Response', type: 'textarea' },
+        ];
+    addNewElement('form-builder', 'form_001', {
+      fields: fields.map(f => ({ ...f, required: true })),
+      submitButtonText: lowerPrompt.includes('feedback') ? 'Send Feedback' : 'Submit',
+    });
+  }
+
+  if (/\b(progress|goal|fundrais|target|milestone)\b/.test(lowerPrompt)) {
+    const target = extractNumber(lowerPrompt, /(?:goal|target|raise)\s*(?:of|:)?\s*\$?(\d+)/i) || 100;
+    addNewElement('progress-indicator', 'progress_001', {
+      title: titleCase(analysis.subject) || 'Progress',
+      current: 0,
+      target,
+      unit: lowerPrompt.includes('$') || lowerPrompt.includes('fundrais') ? '$' : '',
+    }, 12, 100);
+  }
+
+  if (/\b(chart|graph|visual|results?\s*display|analytics)\b/.test(lowerPrompt)) {
+    addNewElement('chart-display', 'chart_001', {
+      chartType: lowerPrompt.includes('pie') ? 'pie' : lowerPrompt.includes('line') ? 'line' : 'bar',
+      title: 'Results',
+      showLegend: true,
+    }, 12, 240);
+
+    // Wire poll → chart if poll exists in either existing or new elements
+    const pollEl = workingElements.find(e => e.type === 'poll-element')
+      || newElements.find(e => e.type === 'poll-element');
+    if (pollEl) {
+      newConnections.push({
+        from: { instanceId: pollEl.instanceId, port: 'results' },
+        to: { instanceId: 'chart_001', port: 'data' },
+      });
+    }
+  }
+
+  // If no new elements were generated, return null to fall through to full generation
+  if (newElements.length === 0) return null;
+
+  return {
+    ...existing,
+    elements: [...workingElements, ...newElements],
+    connections: [...workingConnections, ...newConnections],
+  };
+}
+
+function generateWithRules(
+  prompt: string,
+  existingComposition?: ToolComposition,
+  isIteration?: boolean,
+): ToolComposition {
   const lowerPrompt = prompt.toLowerCase();
   const analysis = analyzePrompt(prompt);
+
+  // ── Additive iteration: modify existing composition instead of replacing ──
+  if (isIteration && existingComposition?.elements && existingComposition.elements.length > 0) {
+    const result = applyIterationRules(prompt, lowerPrompt, existingComposition);
+    if (result) return result;
+    // If no changes could be applied (e.g., append mode found nothing new), fall through to normal generation
+  }
+
   const multiPage = detectMultiPageIntent(prompt);
 
   // If multi-page is detected, delegate to multi-page generator
@@ -871,10 +1442,87 @@ function generateDescription(
 // MAIN GENERATION FUNCTION
 // ═══════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════
+// GENERATION OUTCOME TRACKING
+// ═══════════════════════════════════════════════════════════════════
+
+export interface GenerationOutcome {
+  id: string;
+  prompt: string;
+  reasoning: string;
+  spaceContext?: SpaceContext;
+  composition: {
+    elementTypes: string[];
+    connectionCount: number;
+    elementCount: number;
+  };
+  validated: boolean;
+  validationPassed: boolean;
+  revised: boolean;
+  outcome: {
+    kept: boolean;
+    iterationCount: number;
+    deployed: boolean;
+    usedByOthers: number;
+  };
+  createdAt: Date;
+}
+
+/** Write generation outcome to Firestore (fire-and-forget) */
+async function writeGenerationOutcome(outcome: Omit<GenerationOutcome, 'id'>): Promise<string | null> {
+  try {
+    const { dbAdmin, isFirebaseConfigured } = await import('./firebase-admin');
+    if (!isFirebaseConfigured) return null;
+
+    const ref = dbAdmin.collection('generation_outcomes').doc();
+    await ref.set({
+      ...outcome,
+      createdAt: new Date(),
+    });
+    return ref.id;
+  } catch (err) {
+    logger.warn('Failed to write generation outcome', {
+      component: 'goose-server',
+      error: err instanceof Error ? err.message : 'unknown',
+    });
+    return null;
+  }
+}
+
+/** Update a single field on a generation outcome doc */
+export async function updateGenerationOutcome(
+  outcomeId: string,
+  update: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const { dbAdmin, isFirebaseConfigured } = await import('./firebase-admin');
+    if (!isFirebaseConfigured) return;
+
+    await dbAdmin.collection('generation_outcomes').doc(outcomeId).update(update);
+  } catch {
+    // Silent fail — outcome tracking is best-effort
+  }
+}
+
 export async function generateTool(
   request: GenerateRequest
-): Promise<ToolComposition> {
+): Promise<ToolComposition & { _outcomeId?: string }> {
   const config = getGooseConfig();
+
+  // Build context-aware prompt — raw pass-through, let the model reason
+  let promptPrefix = '';
+  if (request.spaceContext) {
+    const sc = request.spaceContext;
+    const parts: string[] = [];
+    if (sc.name) parts.push(`Space: "${sc.name}"`);
+    if (sc.type) parts.push(`Type: ${sc.type}`);
+    if (sc.memberCount) parts.push(`${sc.memberCount} members`);
+    if (parts.length > 0) {
+      promptPrefix = `Context: ${parts.join(', ')}. Consider this when designing the tool.\n\n`;
+    }
+  }
+
+  const enhancedPrompt = promptPrefix + request.prompt;
   const fullSystemPrompt = buildSystemPrompt({
     existingComposition: request.existingComposition,
     isIteration: request.isIteration,
@@ -882,6 +1530,13 @@ export async function generateTool(
 
   let rawOutput: string;
   let composition: ToolComposition | null = null;
+  let reasoning = '';
+  let validated = false;
+  let validationPassed = false;
+  let revised = false;
+
+  // Groq iteration path: semantic modification of existing composition
+  const isGroqIteration = request.isIteration && request.existingComposition && config.groqApiKey;
 
   // When Groq is configured, use it as primary; rules is the free fallback.
   const backends: GooseBackend[] = [];
@@ -894,32 +1549,129 @@ export async function generateTool(
     try {
       switch (backend) {
         case 'groq': {
-          // Use full system prompt for 70b model, compact for 8b
-          const is70b = config.groqModel.includes('70b');
-          const groqSystemPrompt = is70b
-            ? fullSystemPrompt  // Full prompt for 70b - better understanding
-            : buildCompactSystemPrompt();  // Compact for smaller models
-          rawOutput = await callGroq(config, request.prompt, groqSystemPrompt);
-          composition = parseModelOutput(rawOutput);
-          if (composition) composition = sanitizeElementConfigs(composition);
+          if (isGroqIteration) {
+            // Semantic iteration: send current composition + modification request
+            const iterResult = await callGroqIteration(
+              config, request.prompt, request.existingComposition!
+            );
+            composition = iterResult.composition;
+            reasoning = iterResult.reasoning;
+            if (composition) {
+              composition = sanitizeElementConfigs(composition);
+              // Guard: warn/log if >50% of elements changed (likely misunderstood)
+              const existingCount = request.existingComposition!.elements.length;
+              const preservedCount = composition.elements.filter(el =>
+                request.existingComposition!.elements.some(
+                  existing => existing.instanceId === el.instanceId
+                )
+              ).length;
+              if (existingCount > 0 && preservedCount < existingCount * 0.5) {
+                logger.warn('Groq iteration changed >50% of elements — may have misunderstood', {
+                  component: 'goose-server',
+                  existingCount,
+                  preservedCount,
+                  newCount: composition.elements.length,
+                });
+              }
+              logger.info('Groq semantic iteration succeeded', { component: 'goose-server' });
+            }
+          } else {
+            // Primary path: AI SDK structured output with reasoning
+            try {
+              const result = await callGroqStructured(config, enhancedPrompt, fullSystemPrompt);
+              composition = result.composition;
+              reasoning = result.reasoning;
+              if (composition) composition = sanitizeElementConfigs(composition);
+
+              // AI validation: second call to check the work (only for multi-element tools)
+              if (composition && composition.elements.length > 1 && config.groqApiKey) {
+                try {
+                  const validation = await validateWithAI(config, composition, reasoning, request.prompt);
+                  validated = true;
+                  validationPassed = validation.passes;
+
+                  if (!validation.passes && validation.issues.length > 0) {
+                    logger.info('AI validation found issues, revising', {
+                      component: 'goose-server',
+                      issues: validation.issues.length,
+                    });
+                    const revisedComp = await reviseComposition(config, composition, validation.issues, request.prompt);
+                    composition = sanitizeElementConfigs(revisedComp);
+                    revised = true;
+                  }
+                } catch (valError) {
+                  logger.warn('AI validation failed, using original', {
+                    component: 'goose-server',
+                    error: valError instanceof Error ? valError.message : 'unknown',
+                  });
+                }
+              }
+
+              logger.info('Groq structured output succeeded', {
+                component: 'goose-server',
+                reasoning: reasoning.slice(0, 100),
+                validated,
+                revised,
+              });
+            } catch (structuredError) {
+              // Fallback: raw string output + parse
+              logger.warn('Structured output failed, trying raw', {
+                component: 'goose-server',
+                error: structuredError instanceof Error ? structuredError.message : 'unknown',
+              });
+              const is70b = config.groqModel.includes('70b');
+              const groqSystemPrompt = is70b ? fullSystemPrompt : buildCompactSystemPrompt();
+              rawOutput = await callGroqRaw(config, enhancedPrompt, groqSystemPrompt);
+              composition = parseModelOutput(rawOutput);
+              if (composition) composition = sanitizeElementConfigs(composition);
+            }
+          }
           break;
         }
 
         case 'rules':
-          composition = sanitizeElementConfigs(generateWithRules(request.prompt));
+          composition = sanitizeElementConfigs(
+            generateWithRules(enhancedPrompt, request.existingComposition, request.isIteration)
+          );
           break;
       }
 
       if (composition) {
         // Validate and sanitize
         const validation = validateToolComposition(composition);
+        let finalComposition: ToolComposition;
         if (validation.valid) {
-          return composition;
+          finalComposition = composition;
         } else if (validation.sanitized) {
-          return validation.sanitized;
+          finalComposition = validation.sanitized;
+        } else {
+          finalComposition = sanitizeComposition(composition);
         }
-        // If invalid, try to sanitize
-        return sanitizeComposition(composition);
+
+        // Write generation outcome (fire-and-forget)
+        const outcomeId = await writeGenerationOutcome({
+          prompt: request.prompt,
+          reasoning,
+          spaceContext: request.spaceContext,
+          composition: {
+            elementTypes: finalComposition.elements.map(e => e.type),
+            connectionCount: finalComposition.connections.length,
+            elementCount: finalComposition.elements.length,
+          },
+          validated,
+          validationPassed,
+          revised,
+          outcome: {
+            kept: true,
+            iterationCount: 0,
+            deployed: false,
+            usedByOthers: 0,
+          },
+          createdAt: new Date(),
+        });
+
+        // Attach outcome ID for downstream tracking
+        return Object.assign(finalComposition, { _outcomeId: outcomeId || undefined });
       }
     } catch {
       // Continue to next backend
@@ -927,7 +1679,9 @@ export async function generateTool(
   }
 
   // Ultimate fallback
-  return sanitizeElementConfigs(generateWithRules(request.prompt));
+  return sanitizeElementConfigs(
+    generateWithRules(enhancedPrompt, request.existingComposition, request.isIteration)
+  );
 }
 
 export async function* generateToolStream(
@@ -950,7 +1704,7 @@ export async function* generateToolStream(
       yield { type: 'connection', data: connection };
     }
 
-    // Yield completion
+    // Yield completion (include outcomeId for downstream tracking)
     yield {
       type: 'complete',
       data: {
@@ -958,6 +1712,7 @@ export async function* generateToolStream(
         description: composition.description,
         elementCount: composition.elements.length,
         pages: composition.pages,
+        generationOutcomeId: (composition as ToolComposition & { _outcomeId?: string })._outcomeId || null,
       },
     };
   } catch (error) {

@@ -2,6 +2,8 @@
 
 import { useCallback, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import { useQuery } from '@tanstack/react-query';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
@@ -62,7 +64,12 @@ async function fetchToolForInline(toolId: string): Promise<ToolData> {
   return result.data || result;
 }
 
-export function ToolCanvasInline({ toolId }: { toolId: string }) {
+interface ToolCanvasInlineProps {
+  toolId: string;
+  onAddToSpace?: (toolId: string) => void;
+}
+
+export function ToolCanvasInline({ toolId, onAddToSpace }: ToolCanvasInlineProps) {
   const { user } = useAuth();
   const interactionRef = useRef(false);
   const [, setInteracted] = useState(false);
@@ -122,27 +129,55 @@ export function ToolCanvasInline({ toolId }: { toolId: string }) {
     );
   }
 
+  const hasInteracted = interactionRef.current;
+
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0a] p-4 max-h-[400px] overflow-y-auto">
-      <LazyToolCanvas
-        elements={tool.elements}
-        pages={tool.pages}
-        state={runtime.state}
-        sharedState={runtime.sharedState}
-        userState={runtime.userState}
-        connections={tool.connections || []}
-        layout="stack"
-        onElementChange={handleElementChange}
-        onElementAction={handleElementAction}
-        isLoading={runtime.isLoading || runtime.isExecuting}
-        error={runtime.error?.message || null}
-        context={{
-          userId: user?.uid,
-          userDisplayName: user?.displayName || user?.fullName || undefined,
-          userRole: user ? 'member' : 'guest',
-          isSpaceLeader: false,
-        }}
-      />
+    <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
+      <div className="p-4 max-h-[400px] overflow-y-auto">
+        <LazyToolCanvas
+          elements={tool.elements}
+          pages={tool.pages}
+          state={runtime.state}
+          sharedState={runtime.sharedState}
+          userState={runtime.userState}
+          connections={tool.connections || []}
+          layout="stack"
+          onElementChange={handleElementChange}
+          onElementAction={handleElementAction}
+          isLoading={runtime.isLoading || runtime.isExecuting}
+          error={runtime.error?.message || null}
+          context={{
+            userId: user?.uid,
+            userDisplayName: user?.displayName || user?.fullName || undefined,
+            userRole: user ? 'member' : 'guest',
+            isSpaceLeader: false,
+          }}
+        />
+      </div>
+
+      {/* Post-interaction install nudge */}
+      <AnimatePresence>
+        {hasInteracted && onAddToSpace && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-white/[0.06] bg-white/[0.02]">
+              <span className="text-[12px] text-white/35">Like this? Add it to your space</span>
+              <button
+                onClick={() => onAddToSpace(toolId)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white/[0.06] border border-white/[0.08] text-white/50 hover:bg-white/[0.08] hover:text-white/70 transition-all active:scale-[0.97]"
+              >
+                <Plus className="w-3 h-3" />
+                Add to space
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

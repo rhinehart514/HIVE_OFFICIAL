@@ -5,7 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AtmosphereProvider, PageTransitionProvider, Toaster, useToast } from "@hive/ui";
 import { AdminToolbarProvider } from "@/components/admin/AdminToolbarProvider";
-import { useFCMRegistration } from "@/hooks/use-fcm-registration";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { initErrorMonitoring, setUserContext, clearUserContext } from "@/lib/error-monitoring";
 import { useAuth } from "@hive/auth-logic";
 
@@ -54,14 +54,17 @@ function ToastBridge() {
 }
 
 /**
- * FCMRegistration - Automatically registers FCM token for push notifications
+ * PushNotificationRegistration - Registers FCM token for push notifications
  *
- * Runs on app startup for authenticated users.
- * Token is stored in user profile for server-side push delivery.
+ * Uses the newer usePushNotifications hook which handles:
+ * - Permission state tracking
+ * - Token registration via /api/notifications/register-token
+ * - Foreground message toasts via sonner
+ * - Auto-request with localStorage gate (no spam on first visit)
  */
-function FCMRegistration() {
-  // This hook handles all the FCM logic internally
-  useFCMRegistration();
+function PushNotificationRegistration() {
+  const { user } = useAuth();
+  usePushNotifications({ userId: user?.uid, autoRequest: true });
   return null;
 }
 
@@ -125,7 +128,7 @@ export function Providers({ children }: ProvidersProps) {
             </AdminToolbarProvider>
             <Toaster />
             <ToastBridge />
-            <FCMRegistration />
+            <PushNotificationRegistration />
             <ErrorUserContextTracker />
           </PageTransitionProvider>
         </AtmosphereProvider>

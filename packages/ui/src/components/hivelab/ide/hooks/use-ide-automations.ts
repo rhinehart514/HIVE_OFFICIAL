@@ -317,6 +317,12 @@ export function useIDEAutomations({
     setEditingAutomation(null);
   }, []);
 
+  const closeAutomationLogs = useCallback(() => {
+    setAutomationLogsOpen(false);
+    setViewingAutomationId(null);
+    setAutomationRuns([]);
+  }, []);
+
   return {
     automations,
     automationsLoading,
@@ -335,5 +341,6 @@ export function useIDEAutomations({
     handleRunAutomationNow,
     handleSaveAutomation,
     closeAutomationBuilder,
+    closeAutomationLogs,
   };
 }

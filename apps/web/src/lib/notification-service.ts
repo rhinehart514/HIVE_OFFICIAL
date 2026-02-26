@@ -252,13 +252,30 @@ export async function createNotification(params: CreateNotificationParams): Prom
       category
     });
 
-    // Trigger delivery asynchronously (don't block)
-    deliverNotification(docRef.id, notificationData, userId).catch(err => {
-      logger.warn('Notification delivery failed', {
-        notificationId: docRef.id,
-        error: err instanceof Error ? err.message : String(err),
+    // Trigger durable delivery via Inngest (retries, throttling)
+    // Falls back to direct delivery if Inngest is unavailable
+    try {
+      const { inngest } = await import('@/lib/inngest/client');
+      await inngest.send({
+        name: 'notification/deliver',
+        data: {
+          notificationId: docRef.id,
+          userId,
+          title,
+          body: body || '',
+          category,
+          actionUrl: actionUrl || '',
+        },
       });
-    });
+    } catch {
+      // Inngest not configured — fall back to fire-and-forget delivery
+      deliverNotification(docRef.id, notificationData, userId).catch(err => {
+        logger.warn('Notification delivery failed', {
+          notificationId: docRef.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
 
     return docRef.id;
   } catch (error) {

@@ -24,6 +24,7 @@ const EASE = MOTION.ease.premium;
 interface LabChatViewProps {
   templates: QuickTemplate[];
   originSpaceId?: string | null;
+  spaceContext?: { spaceId: string; spaceName: string; spaceType?: string };
   autoPrompt?: string;
   onViewAllTemplates?: () => void;
   onToolCreated?: (toolId: string) => void;
@@ -32,6 +33,7 @@ interface LabChatViewProps {
 export function LabChatView({
   templates,
   originSpaceId,
+  spaceContext,
   autoPrompt,
   onViewAllTemplates,
   onToolCreated,
@@ -45,8 +47,11 @@ export function LabChatView({
     useTemplate,
     dismissTemplateSuggestion,
     publishAndCopyLink,
+    canUndo,
+    undoLastMessage,
   } = useLabChat({
     originSpaceId,
+    spaceContext,
     onToolCreated,
   });
 
@@ -163,13 +168,31 @@ export function LabChatView({
               />
             </div>
           )}
-          <ChatInput
-            onSend={sendMessage}
-            isGenerating={isGenerating}
-            isCreatingTool={isCreatingTool}
-            hasExistingTool={hasExistingTool}
-            autoFocus
-          />
+          <div className="flex items-center gap-2">
+            {canUndo && (
+              <button
+                type="button"
+                onClick={undoLastMessage}
+                className="shrink-0 p-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
+                aria-label="Undo last message"
+                title="Undo"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="1 4 1 10 7 10" />
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                </svg>
+              </button>
+            )}
+            <div className="flex-1">
+              <ChatInput
+                onSend={sendMessage}
+                isGenerating={isGenerating}
+                isCreatingTool={isCreatingTool}
+                hasExistingTool={hasExistingTool}
+                autoFocus
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

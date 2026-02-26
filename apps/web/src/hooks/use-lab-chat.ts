@@ -7,7 +7,7 @@
  * into a single reusable hook that manages the chat thread + tool generation.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import type { ToolElement, QuickTemplate } from '@hive/ui';
 
@@ -28,6 +28,7 @@ import type { StreamingChunk } from '@/lib/ai-generator';
 
 interface UseLabChatOptions {
   originSpaceId?: string | null;
+  spaceContext?: { spaceId: string; spaceName: string; spaceType?: string };
   onToolCreated?: (toolId: string) => void;
 }
 
@@ -40,13 +41,30 @@ interface UseLabChatReturn {
   dismissTemplateSuggestion: () => void;
   reset: () => void;
   publishAndCopyLink: () => Promise<void>;
+  canUndo: boolean;
+  canRedo: boolean;
+  undoLastMessage: () => void;
+  redoMessage: () => void;
 }
 
-export function useLabChat({ originSpaceId, onToolCreated }: UseLabChatOptions = {}): UseLabChatReturn {
+export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLabChatOptions = {}): UseLabChatReturn {
   const [thread, setThread] = useState<ChatThread>(createThread);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingTool, setIsCreatingTool] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Undo/redo stacks (capped at 20 entries)
+  const undoStackRef = useRef<ChatThread[]>([]);
+  const redoStackRef = useRef<ChatThread[]>([]);
+  const [undoCount, setUndoCount] = useState(0);
+  const [redoCount, setRedoCount] = useState(0);
+
+  const pushUndo = useCallback((snapshot: ChatThread) => {
+    undoStackRef.current = [...undoStackRef.current.slice(-19), snapshot];
+    redoStackRef.current = [];
+    setUndoCount(undoStackRef.current.length);
+    setRedoCount(0);
+  }, []);
   const { track, startTimer, elapsed } = useAnalytics();
 
   // Helper: append message to thread
@@ -101,6 +119,10 @@ export function useLabChat({ originSpaceId, onToolCreated }: UseLabChatOptions =
 
       try {
         const body: Record<string, unknown> = { prompt };
+
+        if (spaceContext) {
+          body.spaceContext = spaceContext;
+        }
 
         if (isIteration && existingElements) {
           body.existingComposition = {
@@ -212,6 +234,15 @@ export function useLabChat({ originSpaceId, onToolCreated }: UseLabChatOptions =
                       phase: 'complete',
                     },
                   }));
+                  // Persist generation outcome ID for downstream tracking
+                  if (chunk.data.generationOutcomeId) {
+                    fetch(`/api/tools/${toolId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({ generationOutcomeId: chunk.data.generationOutcomeId }),
+                    }).catch(() => {});
+                  }
                   break;
 
                 case 'error':
@@ -253,7 +284,7 @@ export function useLabChat({ originSpaceId, onToolCreated }: UseLabChatOptions =
         setIsGenerating(false);
       }
     },
-    [appendMessage, updateLastAssistantMessage, track, elapsed]
+    [appendMessage, updateLastAssistantMessage, track, elapsed, spaceContext]
   );
 
   // Send a message (prompt or refinement)
@@ -262,6 +293,9 @@ export function useLabChat({ originSpaceId, onToolCreated }: UseLabChatOptions =
       if (!text.trim() || isGenerating || isCreatingTool) return;
 
       const userPrompt = text.trim();
+      // Snapshot for undo before mutation
+      pushUndo(thread);
+
       appendMessage(createMessage('user', 'text', userPrompt));
       startTimer();
 
@@ -311,14 +345,13 @@ export function useLabChat({ originSpaceId, onToolCreated }: UseLabChatOptions =
     [
       isGenerating,
       isCreatingTool,
-      thread.toolId,
-      thread.currentElements,
-      thread.toolName,
+      thread,
       appendMessage,
       startTimer,
       track,
       streamGeneration,
       onToolCreated,
+      pushUndo,
     ]
   );
 
@@ -381,12 +414,39 @@ export function useLabChat({ originSpaceId, onToolCreated }: UseLabChatOptions =
     })();
   }, [thread.messages, appendMessage, track, streamGeneration, onToolCreated]);
 
+  // Undo last message(s)
+  const undoLastMessage = useCallback(() => {
+    if (undoStackRef.current.length === 0) return;
+    const snapshot = undoStackRef.current.pop()!;
+    redoStackRef.current = [...redoStackRef.current.slice(-19), thread];
+    setThread(snapshot);
+    setUndoCount(undoStackRef.current.length);
+    setRedoCount(redoStackRef.current.length);
+  }, [thread]);
+
+  // Redo
+  const redoMessage = useCallback(() => {
+    if (redoStackRef.current.length === 0) return;
+    const snapshot = redoStackRef.current.pop()!;
+    undoStackRef.current = [...undoStackRef.current.slice(-19), thread];
+    setThread(snapshot);
+    setUndoCount(undoStackRef.current.length);
+    setRedoCount(redoStackRef.current.length);
+  }, [thread]);
+
+  const canUndo = undoCount > 0;
+  const canRedo = redoCount > 0;
+
   // Reset everything
   const reset = useCallback(() => {
     abortRef.current?.abort();
     setThread(createThread());
     setIsGenerating(false);
     setIsCreatingTool(false);
+    undoStackRef.current = [];
+    redoStackRef.current = [];
+    setUndoCount(0);
+    setRedoCount(0);
   }, []);
 
   // Publish tool and copy share link
@@ -424,5 +484,9 @@ export function useLabChat({ originSpaceId, onToolCreated }: UseLabChatOptions =
     dismissTemplateSuggestion,
     reset,
     publishAndCopyLink,
+    canUndo,
+    canRedo,
+    undoLastMessage,
+    redoMessage,
   };
 }

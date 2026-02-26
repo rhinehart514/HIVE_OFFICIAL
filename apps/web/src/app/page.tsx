@@ -8,17 +8,20 @@ import {
 } from '@/components/landing';
 
 export const metadata: Metadata = {
-  title: 'HIVE — Your Club Is Already Here',
-  description: 'Find and claim your UB organization on HIVE. Events, creations, and communication — one shared space.',
+  title: 'HIVE — Describe it. Build it. Deploy it.',
+  description:
+    'The AI-powered creation platform for student orgs. Polls, signups, countdowns, leaderboards — describe what you need and HIVE builds it instantly.',
   openGraph: {
-    title: 'HIVE — Your Club Is Already Here',
-    description: 'Find and claim your UB organization on HIVE. Events, creations, and communication — one shared space.',
+    title: 'HIVE — Describe it. Build it. Deploy it.',
+    description:
+      'The AI-powered creation platform for student orgs. No code. No templates. Just describe what you need.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HIVE — Your Club Is Already Here',
-    description: 'Find and claim your UB organization on HIVE. Events, creations, and communication — one shared space.',
+    title: 'HIVE — Describe it. Build it. Deploy it.',
+    description:
+      'The AI-powered creation platform for student orgs. No code. No templates. Just describe what you need.',
   },
 };
 

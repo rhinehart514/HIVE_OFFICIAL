@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AutomationBuilderModal } from './automation-builder-modal';
+import { AutomationLogsViewer } from './automation-logs-viewer';
 import type {
   CanvasElement,
   Connection,
@@ -23,6 +24,7 @@ import { ContextRail } from './context-rail';
 import { FloatingActionBar, type FloatingActionBarRef } from './floating-action-bar';
 import { TemplateOverlay } from './template-overlay';
 import { TemplateGallery } from './template-gallery';
+import { MobilePreview } from './mobile-preview';
 import { PageTabs } from './page-tabs';
 import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
@@ -89,63 +91,6 @@ export interface HiveLabIDEProps {
 export interface ConnectionFlowControls {
   triggerFlow: (connectionIds: string[], duration?: number) => void;
   getConnectionsFrom: (instanceId: string) => string[];
-}
-
-// Mobile gate component
-function MobileGate({ onBack }: { onBack: () => void }) {
-  return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
-      style={{ backgroundColor: 'var(--hivelab-bg, #0A0A0A)' }}
-    >
-      <div className="max-w-sm">
-        <div
-          className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center"
-          style={{ backgroundColor: 'var(--hivelab-surface, #1A1A1A)' }}
-        >
-          <svg
-            className="w-8 h-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            style={{ color: 'var(--life-gold, #D4AF37)' }}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"
-            />
-          </svg>
-        </div>
-        <h1
-          className="text-xl font-semibold mb-2"
-          style={{ color: 'var(--hivelab-text-primary, #FAF9F7)' }}
-        >
-          Desktop Required
-        </h1>
-        <p
-          className="text-sm mb-6 leading-relaxed"
-          style={{ color: 'var(--hivelab-text-secondary, #8A8A8A)' }}
-        >
-          HiveLab&apos;s visual builder requires a larger screen. Open this page on
-          your laptop or desktop for the best experience.
-        </p>
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          style={{
-            backgroundColor: 'var(--hivelab-surface, #1A1A1A)',
-            color: 'var(--hivelab-text-primary, #FAF9F7)',
-            border: '1px solid var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-          }}
-        >
-          Go Back
-        </button>
-      </div>
-    </div>
-  );
 }
 
 // Deploy success celebration overlay
@@ -555,9 +500,16 @@ export function HiveLabIDE({
     zoom: canvas.zoom,
   });
 
-  // ---- Mobile gate ----
+  // ---- Mobile: read-only preview ----
   if (isMobile) {
-    return <MobileGate onBack={onCancel} />;
+    return (
+      <MobilePreview
+        toolName={toolName}
+        toolDescription={toolDescription}
+        elements={canvas.elements}
+        onBack={onCancel}
+      />
+    );
   }
 
   return (
@@ -725,6 +677,20 @@ export function HiveLabIDE({
         elements={canvas.elements}
         mode={automationHook.editingAutomation ? 'edit' : 'create'}
         deploymentId={deploymentId}
+      />
+
+      {/* Automation Logs Viewer */}
+      <AutomationLogsViewer
+        isOpen={automationHook.automationLogsOpen}
+        onClose={automationHook.closeAutomationLogs}
+        automationName={automationHook.automations.find(a => a.id === automationHook.viewingAutomationId)?.name ?? 'Automation'}
+        runs={automationHook.automationRuns as any}
+        loading={automationHook.automationRunsLoading}
+        onRefresh={() => {
+          if (automationHook.viewingAutomationId) {
+            automationHook.handleViewAutomationLogs(automationHook.viewingAutomationId);
+          }
+        }}
       />
 
       {/* Deploy Success Celebration */}

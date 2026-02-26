@@ -100,9 +100,11 @@ try {
     }
 
     if (credential) {
+      const projectId = process.env.FIREBASE_PROJECT_ID || "hive-dev-2025";
       admin.initializeApp({
         credential: credential,
-        projectId: process.env.FIREBASE_PROJECT_ID || "hive-dev-2025",
+        projectId,
+        databaseURL: process.env.FIREBASE_DATABASE_URL || `https://${projectId}-default-rtdb.firebaseio.com`,
       });
 
       dbAdmin = admin.firestore();

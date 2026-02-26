@@ -10,6 +10,25 @@ import {
 } from "@hive/core";
 import { notifyToolUpdated } from "@/lib/tool-notifications";
 import { withCache } from '../../../../lib/cache-headers';
+import { createHash } from 'crypto';
+
+/**
+ * Hash a tool composition for change detection.
+ * Deterministic — sorts keys to avoid ordering differences.
+ */
+function hashComposition(data: Record<string, unknown>): string {
+  const relevant = {
+    elements: data.elements,
+    connections: data.connections,
+    pages: data.pages,
+    layout: data.layout,
+    config: data.config,
+    name: data.name,
+    description: data.description,
+  };
+  const json = JSON.stringify(relevant, Object.keys(relevant).sort());
+  return createHash('sha256').update(json).digest('hex').slice(0, 16);
+}
 
 // GET /api/tools/[toolId] - Get tool details (public access for published tools)
 const _GET = withErrors(async (
@@ -145,9 +164,13 @@ export const PUT = withAuthAndErrors(async (
       }
     }
 
-    // Determine version change type if elements changed
+    // Determine version change via composition hash comparison
     let newVersion = (currentTool.currentVersion as string) || '1.0.0';
-    if (updateData.elements && Array.isArray(updateData.elements) && Array.isArray(currentTool.elements) && updateData.elements.length !== currentTool.elements.length) {
+    const currentHash = hashComposition(currentTool as Record<string, unknown>);
+    const incomingHash = hashComposition({ ...currentTool, ...updateData } as Record<string, unknown>);
+    const compositionChanged = currentHash !== incomingHash;
+
+    if (compositionChanged) {
       newVersion = getNextVersion(newVersion);
     }
 
@@ -156,23 +179,47 @@ export const PUT = withAuthAndErrors(async (
     const updatedTool: Record<string, unknown> = {
       ...updateData,
       currentVersion: newVersion,
+      compositionHash: incomingHash,
       updatedAt: now,
     };
 
     // Update tool document
     await toolDoc.ref.update(updatedTool);
 
-    // Create new version if version changed
-    if (newVersion !== currentTool.currentVersion) {
-      const versionData = {
+    // Create full snapshot version if composition changed
+    if (compositionChanged) {
+      const snapshot: Record<string, unknown> = {
         version: newVersion,
-        changelog: updateData.changelog || "Updated tool configuration",
+        changelog: (updateData.changelog as string) || 'Updated tool configuration',
         createdAt: now,
         createdBy: userId,
         isStable: false,
+        compositionHash: incomingHash,
+        // Full composition snapshot for restore
+        elements: updateData.elements ?? currentTool.elements ?? [],
+        connections: (updateData as Record<string, unknown>).connections ?? (currentTool as Record<string, unknown>).connections ?? [],
+        pages: (updateData as Record<string, unknown>).pages ?? (currentTool as Record<string, unknown>).pages,
+        layout: (updateData as Record<string, unknown>).layout ?? (currentTool as Record<string, unknown>).layout,
+        config: (updateData as Record<string, unknown>).config ?? (currentTool as Record<string, unknown>).config,
+        name: (updateData.name as string) ?? currentTool.name,
+        description: (updateData as Record<string, unknown>).description ?? (currentTool as Record<string, unknown>).description,
+        elementCount: Array.isArray(updateData.elements) ? updateData.elements.length : (Array.isArray(currentTool.elements) ? currentTool.elements.length : 0),
       };
 
-      await toolDoc.ref.collection("versions").doc(newVersion).set(versionData);
+      await toolDoc.ref.collection("versions").doc(newVersion).set(snapshot);
+
+      // Cap versions at 50 — delete oldest if exceeded
+      const allVersions = await toolDoc.ref
+        .collection("versions")
+        .orderBy("createdAt", "asc")
+        .get();
+
+      if (allVersions.size > 50) {
+        const toDelete = allVersions.docs.slice(0, allVersions.size - 50);
+        const batch = dbAdmin.batch();
+        toDelete.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+      }
     }
 
     // Track analytics event
@@ -353,6 +400,21 @@ export const DELETE = withAuthAndErrors(async (
       elementsCount: Array.isArray(tool.elements) ? tool.elements.length : 0,
       usageCount: tool.useCount,
     } });
+
+  // Track generation outcome — if deleted within 5 min, mark as not kept
+  const generationOutcomeId = (tool as Record<string, unknown>).generationOutcomeId as string | undefined;
+  if (generationOutcomeId) {
+    const createdAt = (tool as Record<string, unknown>).createdAt;
+    const createdTime = createdAt instanceof admin.firestore.Timestamp
+      ? createdAt.toDate().getTime()
+      : typeof createdAt === 'string' ? new Date(createdAt).getTime() : 0;
+    const fiveMinutes = 5 * 60 * 1000;
+    if (Date.now() - createdTime < fiveMinutes) {
+      import('@/lib/goose-server').then(({ updateGenerationOutcome }) => {
+        updateGenerationOutcome(generationOutcomeId, { 'outcome.kept': false }).catch(() => {});
+      }).catch(() => {});
+    }
+  }
 
   return respond.success({ success: true });
 });

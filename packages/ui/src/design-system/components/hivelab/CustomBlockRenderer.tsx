@@ -547,11 +547,42 @@ function buildIframeDocument(config: CustomBlockConfig, instanceId: string): str
 // CSP policy builder moved to ../../lib/hivelab/csp-builder.ts
 
 /**
- * Escape HTML for safe injection
+ * Sanitize HTML to prevent XSS attacks in custom blocks.
+ * Allows structural/styling HTML but strips scripts, event handlers, and dangerous elements.
  */
+import DOMPurify from 'dompurify';
+
+const ALLOWED_TAGS = [
+  'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  'a', 'b', 'i', 'em', 'strong', 'code', 'pre', 'br', 'hr',
+  'img', 'svg', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon',
+  'section', 'article', 'header', 'footer', 'nav', 'main', 'aside',
+  'details', 'summary', 'figure', 'figcaption', 'blockquote', 'label',
+  'input', 'select', 'option', 'textarea', 'button',
+];
+
+const ALLOWED_ATTR = [
+  'class', 'style', 'id', 'data-*',
+  'href', 'target', 'rel',
+  'src', 'alt', 'width', 'height', 'loading',
+  'viewBox', 'fill', 'stroke', 'stroke-width', 'd', 'cx', 'cy', 'r', 'x', 'y',
+  'type', 'value', 'placeholder', 'disabled', 'checked', 'name', 'for',
+  'role', 'aria-label', 'aria-hidden', 'tabindex',
+];
+
 function escapeHTML(html: string): string {
-  // Basic escaping - will be enhanced with proper sanitization
-  return html;
+  if (typeof window === 'undefined') {
+    // SSR fallback: strip all tags
+    return html.replace(/<[^>]*>/g, '');
+  }
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS,
+    ALLOWED_ATTR,
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'meta', 'link', 'base'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onsubmit', 'onchange', 'oninput', 'onkeydown', 'onkeyup', 'onkeypress'],
+    ALLOW_DATA_ATTR: true,
+  });
 }
 
 export default CustomBlockRenderer;
