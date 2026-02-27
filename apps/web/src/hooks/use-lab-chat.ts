@@ -334,7 +334,7 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
           currentCode: generatedCode || prev.currentCode,
         }));
 
-        // Auto-save generated elements to the tool doc so deploy/share/discover work
+        // Auto-save and auto-publish so sharing works immediately
         if (collected.length > 0) {
           fetch(`/api/tools/${toolId}`, {
             method: 'PUT',
@@ -350,6 +350,8 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
                 size: el.size,
               })),
               type: generatedCode ? 'code' : 'visual',
+              status: 'published',
+              visibility: 'public',
             }),
           }).catch(err => {
             console.warn('[useLabChat] Failed to auto-save generated elements:', err);

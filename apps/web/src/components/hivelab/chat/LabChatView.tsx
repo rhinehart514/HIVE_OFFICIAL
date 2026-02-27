@@ -60,11 +60,11 @@ export function LabChatView({
   const hasExistingTool = !!thread.toolId;
 
   const handleDeploy = useCallback(
-    (toolId: string) => {
-      const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
-      router.push(`/lab/${toolId}/deploy${spaceParam}`);
+    (_toolId: string) => {
+      // No separate deploy flow — share link is the deploy
+      publishAndCopyLink();
     },
-    [router, originSpaceId]
+    [publishAndCopyLink]
   );
 
   const handleEdit = useCallback(

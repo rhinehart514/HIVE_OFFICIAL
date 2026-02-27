@@ -8,7 +8,7 @@
 
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link2, Pencil, Rocket, Check } from 'lucide-react';
+import { Link2, Pencil, Check } from 'lucide-react';
 import { ToolCanvas, type ToolElement } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
@@ -163,19 +163,10 @@ export function ToolPreviewCard({
                 {linkCopied ? 'Copied!' : 'Share'}
               </button>
               <button
-                onClick={onDeploy}
+                onClick={onEdit}
                 className="flex items-center justify-center gap-1.5 px-3 py-2
                   rounded-xl bg-white/[0.06] text-white/60 text-sm border border-white/[0.06]
                   hover:bg-white/[0.08] hover:text-white/80 transition-all"
-              >
-                <Rocket className="w-3.5 h-3.5" />
-                Deploy
-              </button>
-              <button
-                onClick={onEdit}
-                className="flex items-center justify-center gap-1.5 px-3 py-2
-                  rounded-xl text-white/40 text-sm
-                  hover:text-white/60 hover:bg-white/[0.04] transition-all"
               >
                 <Pencil className="w-3.5 h-3.5" />
                 Edit

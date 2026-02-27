@@ -1,212 +1,48 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { use, useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Link2, Check, Send } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  HiveLabIDE,
-  HeaderBar,
-  Skeleton,
-  BrandSpinner,
-  ToolDeployModal,
-  ToolCanvas,
-  BuilderOnboarding,
-  SimpleEditor,
-  detectEditorLevel,
-  useConfirmDialog,
-  type HiveLabComposition,
-  type IDECanvasElement,
-  type IDEConnection,
-  type UserContext,
-  type ToolDeploymentTarget as DeploymentTarget,
-  type ToolDeploymentConfig as DeploymentConfig,
-  type PageMode,
-  type EditorLevel,
-} from '@hive/ui';
+import { useQuery } from '@tanstack/react-query';
+import { ToolCanvas, BrandSpinner } from '@hive/ui';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
-import { ToolAnalyticsPanel } from './components/analytics-panel';
-import { AutomationAwarenessPanel } from './components/automation-awareness-panel';
-import { CampusPromotePanel } from './components/campus-promote-panel';
-import {
-  fetchTool,
-  fetchUserSpaces,
-  saveTool,
-  deployToolToTarget,
-  transformToCanvasElements,
-} from './lib';
+import { fetchTool } from './lib';
 
 interface Props {
   params: Promise<{ toolId: string }>;
 }
 
-export default function ToolStudioPage({ params }: Props) {
+export default function ToolPage({ params }: Props) {
   const { toolId } = use(params);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
+  const [copied, setCopied] = useState(false);
+  const [iterateInput, setIterateInput] = useState('');
+  const [isIterating, setIsIterating] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const isNewTool = searchParams.get('new') === 'true';
-  const showDeployOnMount = searchParams.get('deploy') === 'true';
-  const showAnalyticsOnMount = searchParams.get('analytics') === 'true';
-  const preselectedSpaceId = searchParams.get('spaceId');
-  const initialMode = searchParams.get('mode') as PageMode | null;
-  const initialPrompt = searchParams.get('prompt');
-
-  // Page mode state - edit (IDE) or use (runtime)
-  const [pageMode, setPageMode] = useState<PageMode>(initialMode === 'use' ? 'use' : 'edit');
-
-  // Editor level — URL param ?editor=ide forces full IDE
-  const forceIDE = searchParams.get('editor') === 'ide';
-  const [editorLevel, setEditorLevel] = useState<EditorLevel>('flow');
-
-  // State
-  const [composition, setComposition] = useState<{
-    id: string;
-    name: string;
-    description: string;
-    elements: IDECanvasElement[];
-    connections: IDEConnection[];
-  } | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  // Modal states
-  const [deployModalOpen, setDeployModalOpen] = useState(showDeployOnMount);
-  const [analyticsOpen, setAnalyticsOpen] = useState(showAnalyticsOnMount);
-  const [automationsOpen, setAutomationsOpen] = useState(false);
-  const [promoteOpen, setPromoteOpen] = useState(false);
-
-  // Queries
   const {
     data: tool,
     isLoading: toolLoading,
     error: toolError,
+    refetch,
   } = useQuery({
     queryKey: ['tool', toolId],
     queryFn: () => fetchTool(toolId),
-    enabled: !!user && !!toolId && !isNewTool,
+    enabled: !!user && !!toolId,
     staleTime: 60000,
   });
 
-  const { data: userSpaces = [] } = useQuery({
-    queryKey: ['user-spaces'],
-    queryFn: fetchUserSpaces,
-    enabled: !!user,
-    staleTime: 300000,
-  });
-
-  // Confirm dialog for unsaved changes
-  const { confirm, Dialog: ConfirmDialogEl } = useConfirmDialog();
-
-  // Runtime hook for "use" mode - manages tool state and actions
-  // Only active when in "use" mode and we have a composition
   const runtime = useToolRuntime({
     toolId,
-    enabled: pageMode === 'use' && !isNewTool,
+    enabled: !!tool,
     autoSave: true,
     autoSaveDelay: 1500,
-    enableRealtime: false, // Single user preview - no need for real-time
+    enableRealtime: false,
   });
-
-  // Handle mode change - update URL and reset runtime if switching to use
-  const handleModeChange = useCallback((newMode: PageMode) => {
-    setPageMode(newMode);
-    // Update URL without navigation
-    const url = new URL(window.location.href);
-    if (newMode === 'use') {
-      url.searchParams.set('mode', 'use');
-    } else {
-      url.searchParams.delete('mode');
-    }
-    window.history.replaceState({}, '', url.toString());
-  }, []);
-
-  // Check if user is a space leader — use actual role from API response
-  const isSpaceLeader = userSpaces.some(
-    (s) => s.membership?.role === 'owner' || s.membership?.role === 'admin' || s.membership?.role === 'leader'
-  );
-  const leadingSpaceIds = userSpaces
-    .filter((s) => s.membership?.role === 'owner' || s.membership?.role === 'admin' || s.membership?.role === 'leader')
-    .map((s) => s.id);
-
-  // User context for element permissions
-  const userContext: UserContext = {
-    userId: user?.uid || 'anonymous',
-    campusId: user?.campusId || '',
-    isSpaceLeader,
-    leadingSpaceIds,
-  };
-
-  // Build deployment targets from user's spaces + profile
-  const deploymentTargets: DeploymentTarget[] = [
-    {
-      id: 'profile',
-      name: 'My Profile',
-      type: 'profile',
-      description: 'Add to your personal profile',
-    },
-    ...userSpaces.map((space) => ({
-      id: space.id,
-      name: space.name,
-      type: 'space' as const,
-      description: space.description || `Deploy to ${space.name}`,
-    })),
-  ];
-
-  // Initialize composition from tool or blank
-  useEffect(() => {
-    if (isNewTool) {
-      // New tool - start with blank canvas
-      setComposition({
-        id: toolId,
-        name: '',
-        description: '',
-        elements: [],
-        connections: [],
-      });
-
-      // Show onboarding for new tools (unless dismissed)
-      const hasSeenOnboarding = localStorage.getItem(
-        'hivelab_onboarding_dismissed'
-      );
-      if (!hasSeenOnboarding) {
-        setShowOnboarding(true);
-      }
-
-      // Clean up URL
-      window.history.replaceState({}, '', `/lab/${toolId}`);
-      return;
-    }
-
-    if (tool) {
-      const { elements, connections } = transformToCanvasElements(tool);
-      setComposition({
-        id: tool.id,
-        name: tool.name || 'Untitled Tool',
-        description: tool.description || '',
-        elements,
-        connections,
-      });
-    }
-  }, [tool, toolId, isNewTool]);
-
-  // Detect editor level when composition changes
-  useEffect(() => {
-    if (!composition || forceIDE) {
-      setEditorLevel('flow');
-      return;
-    }
-    const level = detectEditorLevel({
-      elements: composition.elements,
-      connections: composition.connections,
-    });
-    setEditorLevel(level);
-  }, [composition, forceIDE]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -215,169 +51,139 @@ export default function ToolStudioPage({ params }: Props) {
     }
   }, [authLoading, user, router]);
 
-  // Handle save
-  const handleSave = useCallback(
-    async (comp: HiveLabComposition) => {
-      setSaving(true);
+  const handleShare = useCallback(async () => {
+    const url = `${window.location.origin}/t/${toolId}`;
+
+    // Publish if still draft
+    if (tool?.status === 'draft') {
       try {
-        await saveTool(toolId, comp);
-        setHasUnsavedChanges(false);
-        queryClient.invalidateQueries({ queryKey: ['tool', toolId] });
-        // Show "just saved" animation
-        setJustSaved(true);
-        setTimeout(() => setJustSaved(false), 2000);
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : 'Failed to save tool'
-        );
-        throw error;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [toolId, queryClient]
-  );
-
-  // Handle preview - now just toggles to Use mode on same page
-  const handlePreview = useCallback(
-    (_comp: HiveLabComposition) => {
-      handleModeChange('use');
-    },
-    [handleModeChange]
-  );
-
-  // Handle cancel/back
-  const handleCancel = useCallback(async () => {
-    if (hasUnsavedChanges) {
-      const confirmed = await confirm({
-        title: 'Unsaved changes',
-        description: 'You have unsaved changes. Are you sure you want to leave?',
-        variant: 'warning',
-        confirmText: 'Leave',
-        cancelText: 'Stay',
-      });
-      if (!confirmed) return;
-    }
-    router.push('/lab');
-  }, [router, hasUnsavedChanges, confirm]);
-
-  // Handle deploy via modal
-  const handleDeploy = useCallback(
-    async (config: DeploymentConfig) => {
-      // Save first if there are unsaved changes
-      if (hasUnsavedChanges && composition) {
-        await saveTool(toolId, {
-          id: composition.id,
-          name: composition.name,
-          description: composition.description,
-          elements: composition.elements,
-          connections: composition.connections,
-          layout: 'flow',
+        await fetch(`/api/tools/${toolId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ status: 'published', visibility: 'public' }),
         });
+      } catch {
+        // Non-blocking — link still works
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast.success('Link copied!');
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      toast.success(`Share: ${url}`);
+    }
+  }, [toolId, tool?.status]);
+
+  const handleIterate = useCallback(async () => {
+    const prompt = iterateInput.trim();
+    if (!prompt || isIterating) return;
+
+    setIsIterating(true);
+    setIterateInput('');
+
+    try {
+      const response = await fetch('/api/tools/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          prompt,
+          mode: 'code',
+          existingCode: tool?.elements?.[0]?.config?.code || undefined,
+          existingName: tool?.name,
+          isIteration: true,
+        }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error('Generation failed');
       }
 
-      await deployToolToTarget(toolId, config);
-      setHasUnsavedChanges(false);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-      // Show success toast with space info
-      const targetSpace = userSpaces.find((s) => s.id === config.targetId);
-      const targetName = config.targetType === 'profile'
-        ? 'your profile'
-        : targetSpace?.name || 'the space';
-      const toolName = composition?.name || 'Your tool';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      toast.success(`${toolName} is live!`, {
-        description: `Deployed to ${targetName}. ${config.targetType === 'space' ? 'Space members can now use it.' : 'Visible on your profile.'}`,
-        action: config.targetType === 'space' ? {
-          label: 'View',
-          onClick: () => {
-            const handle = targetSpace?.handle || config.targetId;
-            router.push(`/s/${handle}`);
-          },
-        } : undefined,
-      });
-    },
-    [toolId, hasUnsavedChanges, composition, userSpaces, router]
-  );
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-  // Handle view in space after deployment
-  const handleViewInSpace = useCallback(
-    (spaceId: string) => {
-      const space = userSpaces.find((s) => s.id === spaceId);
-      const handle = space?.handle || spaceId;
-      router.push(`/s/${handle}`);
-    },
-    [router, userSpaces]
-  );
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const chunk = JSON.parse(trimmed);
+            if (chunk.type === 'code' && chunk.data?.code) {
+              // Save updated code
+              await fetch(`/api/tools/${toolId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                  name: chunk.data.name || tool?.name,
+                  elements: [{
+                    elementId: 'custom-block',
+                    instanceId: 'code_app_1',
+                    config: {
+                      code: chunk.data.code,
+                      metadata: {
+                        name: chunk.data.name || tool?.name || '',
+                        description: chunk.data.description || '',
+                        createdBy: 'ai',
+                      },
+                    },
+                  }],
+                  type: 'code',
+                }),
+              });
+            }
+            if (chunk.type === 'error') {
+              throw new Error(chunk.data?.error || 'Generation failed');
+            }
+          } catch (e) {
+            if (e instanceof SyntaxError) continue;
+            throw e;
+          }
+        }
+      }
 
-  // Loading state
-  if (authLoading || (toolLoading && !isNewTool)) {
+      toast.success('Updated!');
+      refetch();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to iterate');
+    } finally {
+      setIsIterating(false);
+    }
+  }, [iterateInput, isIterating, toolId, tool, refetch]);
+
+  // Loading
+  if (authLoading || toolLoading) {
     return (
-      <div className="h-screen bg-[var(--hivelab-bg)] flex flex-col">
-        {/* Header skeleton */}
-        <div className="h-12 bg-[var(--hivelab-panel)] border-b border-[var(--hivelab-border)] flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-7 w-7 rounded-lg" />
-            <Skeleton className="h-5 w-16" />
-          </div>
-          <Skeleton className="h-5 w-32" />
-          <div className="flex gap-2">
-            <Skeleton className="h-8 w-20 rounded-lg" />
-            <Skeleton className="h-8 w-16 rounded-lg" />
-          </div>
-        </div>
-
-        {/* Main content skeleton */}
-        <div className="flex-1 flex">
-          {/* Left rail */}
-          <div className="w-12 bg-[var(--hivelab-panel)] border-r border-[var(--hivelab-border)] p-2 space-y-2">
-            <Skeleton className="h-8 w-8 rounded-lg" />
-            <Skeleton className="h-8 w-8 rounded-lg" />
-            <Skeleton className="h-8 w-8 rounded-lg" />
-          </div>
-
-          {/* Canvas */}
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <Skeleton className="h-16 w-16 mx-auto rounded-lg" />
-              <Skeleton className="h-6 w-32 mx-auto" />
-              <Skeleton className="h-4 w-48 mx-auto" />
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <BrandSpinner size="md" variant="gold" />
       </div>
     );
   }
 
-  // Error state
-  if (toolError && !isNewTool) {
+  // Error
+  if (toolError || !tool) {
     return (
-      <div className="h-screen bg-[var(--hivelab-bg)] flex items-center justify-center">
-        <div className="bg-[var(--hivelab-panel)] rounded-lg p-8 max-w-md text-center border border-[var(--hivelab-border)]">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-red-500/10 flex items-center justify-center">
-            <svg
-              className="w-8 h-8 text-red-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-[var(--hivelab-text-primary)] mb-2">
-            Not found
-          </h2>
-          <p className="text-[var(--hivelab-text-secondary)] mb-6">
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <h2 className="text-xl font-semibold text-white mb-2">Not found</h2>
+          <p className="text-white/50 text-sm mb-6">
             This may have been deleted or you don&apos;t have access.
           </p>
           <button
             onClick={() => router.push('/lab')}
-            className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-full font-medium hover:bg-[var(--life-gold)]/90 transition-colors"
+            className="px-6 py-2.5 bg-white text-black text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
           >
             Back to Lab
           </button>
@@ -386,246 +192,117 @@ export default function ToolStudioPage({ params }: Props) {
     );
   }
 
-  // No composition yet
-  if (!composition) {
-    return (
-      <div className="h-screen bg-[var(--hivelab-bg)] flex items-center justify-center">
-        <div className="text-center">
-          <BrandSpinner size="md" variant="gold" />
-          <p className="text-[var(--hivelab-text-secondary)]">Preparing canvas...</p>
-        </div>
-      </div>
-    );
-  }
+  const isOwner = user?.uid === tool.ownerId;
+  const hasElements = (tool.elements?.length ?? 0) > 0;
 
   return (
-    <div className="h-screen flex flex-col bg-[var(--hivelab-bg)]">
-      {/* Header Bar */}
-      <HeaderBar
-        toolName={composition.name || 'Untitled Tool'}
-        onToolNameChange={(name: string) => {
-          setComposition((prev) => (prev ? { ...prev, name } : null));
-          setHasUnsavedChanges(true);
-        }}
-        onPreview={() =>
-          handlePreview({
-            id: composition.id,
-            name: composition.name,
-            description: composition.description,
-            elements: composition.elements,
-            connections: composition.connections,
-            layout: 'flow',
-          })
-        }
-        onSave={() =>
-          handleSave({
-            id: composition.id,
-            name: composition.name,
-            description: composition.description,
-            elements: composition.elements,
-            connections: composition.connections,
-            layout: 'flow',
-          })
-        }
-        saving={saving}
-        justSaved={justSaved}
-        onBack={handleCancel}
-        hasUnsavedChanges={hasUnsavedChanges}
-        onDeploy={() => setDeployModalOpen(true)}
-        onAnalytics={() => setAnalyticsOpen(true)}
-        onAutomations={() => setAutomationsOpen(true)}
-        onPromote={() => setPromoteOpen(true)}
-        mode={pageMode}
-        onModeChange={handleModeChange}
-        canEdit={true}
-      />
+    <div className="min-h-screen bg-black flex flex-col">
+      {/* Header */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+        <button
+          onClick={() => router.push('/lab')}
+          className="flex items-center gap-2 text-white/40 hover:text-white/60 transition-colors text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Lab
+        </button>
 
-      {/* Remix attribution banner - persistent, cannot be dismissed */}
-      {tool?.remixedFrom && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-[var(--hivelab-panel)] border-b border-[var(--hivelab-border)] text-xs text-[var(--hivelab-text-secondary)]">
-          <svg className="w-3.5 h-3.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><circle cx="18" cy="6" r="3" /><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9" /><path d="M12 12v3" />
-          </svg>
-          <span>
-            Based on{' '}
-            <a
-              href={`/lab/${tool.remixedFrom.toolId}?mode=use`}
-              className="text-[var(--life-gold)] hover:underline"
-            >
-              {tool.remixedFrom.toolName}
-            </a>
-            {' '}by {tool.remixedFrom.creatorName}
-          </span>
-        </div>
-      )}
+        <h1 className="text-sm font-medium text-white truncate max-w-[200px]">
+          {tool.name || 'Untitled'}
+        </h1>
 
-      {/* Main content area - IDE, Simple Editor, or Runtime based on mode + complexity */}
-      <div className="flex-1 overflow-hidden">
-        {pageMode === 'edit' ? (
-          editorLevel === 'flow' ? (
-            /* Flow: Full HiveLab IDE */
-            <HiveLabIDE
-              initialComposition={composition}
-              showOnboarding={showOnboarding}
-              onSave={handleSave}
-              onPreview={handlePreview}
-              onCancel={handleCancel}
-              userId={user?.uid || 'anonymous'}
-              userContext={userContext}
-              initialPrompt={isNewTool ? initialPrompt : null}
-            />
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-black text-sm font-medium hover:bg-white/90 transition-colors"
+        >
+          {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
+          {copied ? 'Copied' : 'Share'}
+        </button>
+      </header>
+
+      {/* Tool preview */}
+      <main className="flex-1 flex flex-col items-center px-4 py-6 overflow-auto">
+        <div className="w-full max-w-[520px]">
+          {hasElements ? (
+            <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-5 sm:p-6">
+              <ToolCanvas
+                elements={tool.elements!.map(el => ({
+                  elementId: el.elementId,
+                  instanceId: el.instanceId || `${el.elementId}_0`,
+                  config: (el.config as Record<string, unknown>) || {},
+                  position: el.position,
+                  size: el.size,
+                }))}
+                state={runtime.state}
+                sharedState={runtime.sharedState}
+                userState={runtime.userState}
+                connections={tool.connections || []}
+                layout="stack"
+                onElementChange={(instanceId, data) => {
+                  runtime.updateState({ [instanceId]: data });
+                }}
+                onElementAction={(instanceId, action, payload) => {
+                  runtime.executeAction(instanceId, action, payload as Record<string, unknown>);
+                }}
+                isLoading={runtime.isLoading || runtime.isExecuting}
+                error={runtime.error?.message || null}
+                context={{
+                  userId: user?.uid,
+                  userDisplayName: user?.displayName || user?.fullName || undefined,
+                  userRole: 'member',
+                  isSpaceLeader: false,
+                }}
+              />
+            </div>
           ) : (
-            /* Embed / Configure / Compose: Simple Editor */
-            <SimpleEditor
-              editorMode={editorLevel}
-              toolId={toolId}
-              composition={composition}
-              onSave={handleSave}
-              onDeploy={() => setDeployModalOpen(true)}
-              onEscalateToIDE={() => setEditorLevel('flow')}
-              onUpdateComposition={(updates) => {
-                setComposition((prev) => prev ? { ...prev, ...updates } : null);
-                setHasUnsavedChanges(true);
-              }}
-              userContext={userContext}
-              saving={saving}
-              justSaved={justSaved}
-            />
-          )
-        ) : (
-          /* Use Mode: Interactive ToolCanvas */
-          <div className="h-full bg-[var(--hivelab-bg)] p-4 md:p-8 overflow-auto">
-            <div className="max-w-4xl mx-auto">
-              {/* Tool info header */}
-              <div className="mb-6">
-                <h1 className="text-xl font-semibold text-[var(--hivelab-text-primary)]">
-                  {composition.name || 'Untitled Tool'}
-                </h1>
-                {composition.description && (
-                  <p className="text-sm text-[var(--hivelab-text-secondary)] mt-1">
-                    {composition.description}
-                  </p>
-                )}
-              </div>
+            <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-8 text-center">
+              <p className="text-white/40 text-sm mb-4">This creation is empty</p>
+              <p className="text-white/25 text-xs">Describe what you want below</p>
+            </div>
+          )}
+        </div>
+      </main>
 
-              {/* Runtime status indicator */}
-              <div className="mb-4 flex items-center gap-2 text-xs text-[var(--hivelab-text-tertiary)]">
-                <div className="w-2 h-2 rounded-full bg-[var(--life-gold)]" />
-                <span>Live Preview</span>
-                {runtime.isSaving && <span className="text-[var(--life-gold)]">Saving...</span>}
-              </div>
-
-              {/* Tool Canvas with runtime */}
-              <div className="bg-[var(--hivelab-panel)] rounded-lg p-6 border border-[var(--hivelab-border)]">
-                {composition.elements.length > 0 ? (
-                  <ToolCanvas
-                    elements={composition.elements.map(el => ({
-                      elementId: el.elementId,
-                      instanceId: el.instanceId,
-                      config: el.config,
-                      position: el.position,
-                      size: el.size,
-                    }))}
-                    state={runtime.state}
-                    sharedState={runtime.sharedState}
-                    userState={runtime.userState}
-                    connections={composition.connections}
-                    layout="stack"
-                    onElementChange={(instanceId, data) => {
-                      runtime.updateState({ [instanceId]: data });
-                    }}
-                    onElementAction={(instanceId, action, payload) => {
-                      runtime.executeAction(instanceId, action, payload as Record<string, unknown>);
-                    }}
-                    isLoading={runtime.isLoading || runtime.isExecuting}
-                    error={runtime.error?.message || null}
-                    context={{
-                      userId: user?.uid,
-                      userDisplayName: user?.displayName || user?.fullName || undefined,
-                      userRole: isSpaceLeader ? 'admin' : user ? 'member' : 'guest',
-                      isSpaceLeader,
-                      spaceId: preselectedSpaceId || undefined,
-                    }}
-                  />
+      {/* Iterate input — owner only */}
+      {isOwner && (
+        <div className="border-t border-white/[0.06] bg-black/80 backdrop-blur-sm px-4 py-3">
+          <div className="max-w-[520px] mx-auto">
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={inputRef}
+                value={iterateInput}
+                onChange={(e) => setIterateInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleIterate();
+                  }
+                }}
+                placeholder={isIterating ? 'Updating...' : 'Change something...'}
+                disabled={isIterating}
+                rows={1}
+                className="flex-1 resize-none bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5
+                  text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-white/[0.15]
+                  disabled:opacity-40 transition-colors"
+              />
+              <button
+                onClick={handleIterate}
+                disabled={!iterateInput.trim() || isIterating}
+                className="p-2.5 rounded-xl bg-white text-black disabled:opacity-30 disabled:bg-white/50
+                  hover:bg-white/90 transition-all shrink-0"
+              >
+                {isIterating ? (
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                    <Send className="w-4 h-4" />
+                  </motion.div>
                 ) : (
-                  /* Empty state */
-                  <div className="text-center py-16">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-[var(--life-gold)]/10 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-[var(--life-gold)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-[var(--hivelab-text-primary)] mb-2">
-                      No elements yet
-                    </h3>
-                    <p className="text-sm text-[var(--hivelab-text-secondary)] mb-4">
-                      Switch to Edit mode to add elements.
-                    </p>
-                    <button
-                      onClick={() => handleModeChange('edit')}
-                      className="px-4 py-2 text-sm font-medium text-black bg-[var(--life-gold)] rounded-full hover:bg-[var(--life-gold)]/90 transition-colors"
-                    >
-                      Switch to Edit
-                    </button>
-                  </div>
+                  <Send className="w-4 h-4" />
                 )}
-              </div>
+              </button>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* Deploy Modal */}
-      <ToolDeployModal
-        open={deployModalOpen}
-        onOpenChange={setDeployModalOpen}
-        toolName={composition.name || 'Untitled Tool'}
-        availableTargets={deploymentTargets}
-        onDeploy={handleDeploy}
-        onViewInSpace={handleViewInSpace}
-        initialConfig={
-          preselectedSpaceId
-            ? { targetType: 'space', targetId: preselectedSpaceId }
-            : undefined
-        }
-      />
-
-      {/* Analytics Panel */}
-      {analyticsOpen && (
-        <ToolAnalyticsPanel
-          toolId={toolId}
-          toolName={composition.name || 'Untitled Tool'}
-          onClose={() => setAnalyticsOpen(false)}
-        />
+        </div>
       )}
-
-      {/* Automation Awareness Panel */}
-      {automationsOpen && (
-        <AutomationAwarenessPanel
-          toolId={toolId}
-          toolName={composition.name || 'Untitled Tool'}
-          elementIds={composition.elements.map((el) => el.instanceId)}
-          onClose={() => setAutomationsOpen(false)}
-        />
-      )}
-
-      {/* Campus Promote Panel */}
-      {promoteOpen && (
-        <CampusPromotePanel
-          toolId={toolId}
-          toolName={composition.name || 'Untitled Tool'}
-          onClose={() => setPromoteOpen(false)}
-        />
-      )}
-
-      {/* Builder Onboarding — 3-step tour for first-time builders */}
-      <BuilderOnboarding
-        show={showOnboarding}
-        onDismiss={() => setShowOnboarding(false)}
-      />
-
-      {/* Confirm dialog for unsaved changes */}
-      {ConfirmDialogEl}
     </div>
   );
 }
