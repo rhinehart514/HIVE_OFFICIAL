@@ -43,6 +43,7 @@ export function LabChatView({
     thread,
     isGenerating,
     isCreatingTool,
+    isThinking,
     sendMessage,
     useTemplate,
     dismissTemplateSuggestion,
@@ -131,7 +132,7 @@ export function LabChatView({
         >
           <ChatInput
             onSend={sendMessage}
-            isGenerating={isGenerating}
+            isGenerating={isGenerating || isThinking}
             isCreatingTool={isCreatingTool}
             autoFocus
             initialValue={autoPrompt}
@@ -146,6 +147,7 @@ export function LabChatView({
     <div className="flex flex-col h-full min-h-[50vh]">
       <ChatMessageList
         messages={thread.messages}
+        isThinking={isThinking}
         onDeploy={handleDeploy}
         onEdit={handleEdit}
         onShare={handleShare}
@@ -157,7 +159,7 @@ export function LabChatView({
       <div className="sticky bottom-0 bg-black/80 backdrop-blur-sm border-t border-white/[0.04] px-4 py-3">
         <div className="max-w-2xl mx-auto">
           {/* Template chips when no tool yet */}
-          {!hasExistingTool && !isGenerating && !isCreatingTool && (
+          {!hasExistingTool && !isGenerating && !isCreatingTool && !isThinking && (
             <div className="mb-3">
               <QuickStartChips
                 templates={templates.slice(0, 4)}
@@ -186,7 +188,7 @@ export function LabChatView({
             <div className="flex-1">
               <ChatInput
                 onSend={sendMessage}
-                isGenerating={isGenerating}
+                isGenerating={isGenerating || isThinking}
                 isCreatingTool={isCreatingTool}
                 hasExistingTool={hasExistingTool}
                 autoFocus

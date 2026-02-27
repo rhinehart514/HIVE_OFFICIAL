@@ -24,6 +24,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { springPresets } from '@hive/tokens';
 import type { CustomBlockConfig, BlockContext } from '@hive/core';
+import type { HiveRuntimeContext } from '@hive/core';
 import {
   generateHiveSDK,
   validateIframeMessage,
@@ -51,6 +52,9 @@ export interface CustomBlockRendererProps {
 
   /** User and space context */
   context?: BlockContext;
+
+  /** Runtime context injected into window.HIVE_RUNTIME (preloaded, no async round-trip) */
+  runtimeContext?: HiveRuntimeContext | null;
 
   /** Callback when block is ready */
   onReady?: () => void;
@@ -83,6 +87,7 @@ export function CustomBlockRenderer({
   config,
   initialState,
   context,
+  runtimeContext,
   onReady,
   onMessage,
   onError,
@@ -112,8 +117,8 @@ export function CustomBlockRenderer({
 
   // Build iframe source document
   const iframeDocument = React.useMemo(() => {
-    return buildIframeDocument(config, instanceId);
-  }, [config, instanceId]);
+    return buildIframeDocument(config, instanceId, runtimeContext);
+  }, [config, instanceId, runtimeContext]);
 
   // Handle messages from iframe
   React.useEffect(() => {
@@ -468,7 +473,7 @@ function generateDesignTokensCSS(): string {
 /**
  * Build the complete iframe HTML document
  */
-function buildIframeDocument(config: CustomBlockConfig, instanceId: string): string {
+function buildIframeDocument(config: CustomBlockConfig, instanceId: string, runtimeContext?: HiveRuntimeContext | null): string {
   const { code, csp } = config;
 
   // Build CSP header
@@ -521,7 +526,7 @@ function buildIframeDocument(config: CustomBlockConfig, instanceId: string): str
 
   <!-- HIVE SDK -->
   <script id="hive-sdk">
-    ${generateHiveSDK(instanceId)}
+    ${generateHiveSDK(instanceId, runtimeContext)}
   </script>
 
   <!-- Custom Block JavaScript -->
@@ -563,7 +568,7 @@ const ALLOWED_TAGS = [
   'img', 'svg', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon',
   'section', 'article', 'header', 'footer', 'nav', 'main', 'aside',
   'details', 'summary', 'figure', 'figcaption', 'blockquote', 'label',
-  'input', 'select', 'option', 'textarea', 'button',
+  'input', 'select', 'option', 'textarea', 'button', 'form',
 ];
 
 const ALLOWED_ATTR = [
@@ -583,7 +588,7 @@ function escapeHTML(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
-    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'meta', 'link', 'base'],
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'meta', 'link', 'base'],
     FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onsubmit', 'onchange', 'oninput', 'onkeydown', 'onkeyup', 'onkeypress'],
     ALLOW_DATA_ATTR: true,
   });

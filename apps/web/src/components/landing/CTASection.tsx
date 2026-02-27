@@ -9,7 +9,7 @@ const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
 
 export function CTASection() {
   const searchParams = useSearchParams();
-  const enterHref = buildUbEnterUrl(searchParams.get('redirect'), '/lab');
+  const enterHref = buildUbEnterUrl(searchParams.get('redirect'));
 
   return (
     <section className="relative overflow-hidden bg-black px-6 py-32 md:py-44">
@@ -26,11 +26,11 @@ export function CTASection() {
         <h2
           className={`${clashDisplay} mb-5 text-[clamp(32px,6vw,56px)] font-semibold leading-tight tracking-tight text-white`}
         >
-          Your next creation is one prompt away.
+          Your campus is already here.
         </h2>
 
         <p className="mx-auto mb-10 max-w-md text-base text-white/40">
-          Join students already building apps their orgs actually use. Free, instant, no code.
+          Join the students who stopped missing out. Events, spaces, and apps — all in one place, built for your campus.
         </p>
 
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -38,7 +38,7 @@ export function CTASection() {
             href={enterHref}
             className="flex items-center gap-2 rounded-full bg-[#FFD700] px-8 py-4 text-base font-medium text-black transition-opacity hover:opacity-90"
           >
-            Start building
+            Join your campus
             <ArrowRight className="h-5 w-5" />
           </Link>
         </div>

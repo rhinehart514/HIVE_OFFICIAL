@@ -254,7 +254,9 @@ export type IframeMessage =
   | { type: 'emit_output'; outputId: string; data: unknown }
   | { type: 'get_context'; requestId: string }
   | { type: 'notify'; message: string; notifyType?: 'success' | 'error' | 'info' }
-  | { type: 'log'; args: unknown[] };
+  | { type: 'log'; args: unknown[] }
+  | { type: 'create_post'; requestId: string; content: string; postType?: string }
+  | { type: 'get_members'; requestId: string; limit?: number; cursor?: string | null };
 
 /**
  * postMessage envelope (adds origin validation)

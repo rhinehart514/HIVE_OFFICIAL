@@ -141,6 +141,34 @@
       }
     },
 
+    "tool_state": {
+      // Real-time tool state broadcasting (polls, RSVPs, leaderboards)
+      // Server (Admin SDK) writes after each tool action execution
+      // Clients subscribe for instant updates across all users
+      "$deploymentId": {
+        ".read": "auth != null",
+        // Only server (admin SDK) can write tool state
+        // Client reads only — Firestore is source of truth
+        ".write": false,
+
+        "counters": {
+          ".read": "auth != null"
+        },
+
+        "collections": {
+          ".read": "auth != null"
+        },
+
+        "timeline": {
+          ".read": "auth != null"
+        },
+
+        "metadata": {
+          ".read": "auth != null"
+        }
+      }
+    },
+
     "spacePresence": {
       // Real-time presence for spaces (typing indicators, online members)
       "$spaceId": {

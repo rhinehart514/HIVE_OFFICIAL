@@ -10,6 +10,7 @@
 import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthAndErrors, getUserId, getCampusId } from '@/lib/middleware';
+import { createNotification } from '@/lib/notification-service';
 
 const FieldValue = admin.firestore.FieldValue;
 
@@ -58,6 +59,21 @@ export const POST = withAuthAndErrors(async (request, context: { params: Promise
       await commentRef.update({
         likeCount: FieldValue.increment(1),
       });
+
+      // Notify comment author
+      const commentData = (await commentRef.get()).data();
+      const authorId = commentData?.authorId || commentData?.userId;
+      if (authorId && authorId !== userId) {
+        createNotification({
+          userId: authorId,
+          type: 'like',
+          category: 'social',
+          title: 'Someone liked your comment',
+          actionUrl: `/post/${postId}`,
+          metadata: { actorId: userId, postId, commentId },
+        }).catch(() => {});
+      }
+
       return respond.success({ liked: true });
     }
   }
@@ -96,6 +112,21 @@ export const POST = withAuthAndErrors(async (request, context: { params: Promise
         await commentRef.update({
           likeCount: FieldValue.increment(1),
         });
+
+        // Notify comment author
+        const fallbackCommentData = commentDoc.data();
+        const fallbackAuthorId = fallbackCommentData?.authorId || fallbackCommentData?.userId;
+        if (fallbackAuthorId && fallbackAuthorId !== userId) {
+          createNotification({
+            userId: fallbackAuthorId,
+            type: 'like',
+            category: 'social',
+            title: 'Someone liked your comment',
+            actionUrl: `/post/${postDoc.id}`,
+            metadata: { actorId: userId, postId: postDoc.id, commentId },
+          }).catch(() => {});
+        }
+
         return respond.success({ liked: true });
       }
     }

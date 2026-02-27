@@ -7,7 +7,7 @@ import { buildUbEnterUrl } from './entry-url';
 
 export function LandingHeader() {
   const searchParams = useSearchParams();
-  const enterHref = buildUbEnterUrl(searchParams.get('redirect'), '/lab');
+  const enterHref = buildUbEnterUrl(searchParams.get('redirect'));
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export function LandingHeader() {
           href={enterHref}
           className="rounded-full bg-[#FFD700] px-5 py-2 text-[13px] font-medium text-black transition-opacity hover:opacity-90"
         >
-          Start building
+          Join your campus
         </Link>
       </div>
     </header>

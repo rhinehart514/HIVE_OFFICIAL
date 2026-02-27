@@ -7,7 +7,7 @@
  * into a single reusable hook that manages the chat thread + tool generation.
  */
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import type { ToolElement, QuickTemplate } from '@hive/ui';
 
@@ -43,6 +43,7 @@ interface UseLabChatReturn {
   thread: ChatThread;
   isGenerating: boolean;
   isCreatingTool: boolean;
+  isThinking: boolean;
   sendMessage: (text: string) => Promise<void>;
   useTemplate: (template: QuickTemplate, overrides?: Record<string, string>) => Promise<void>;
   dismissTemplateSuggestion: () => void;
@@ -58,6 +59,7 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
   const [thread, setThread] = useState<ChatThread>(createThread);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingTool, setIsCreatingTool] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   // Undo/redo stacks (capped at 20 entries)
@@ -373,20 +375,87 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
     [appendMessage, updateLastAssistantMessage, track, elapsed, spaceContext]
   );
 
+  // Helper: create tool and run generation (used by chat flow and fallback)
+  const createAndGenerate = useCallback(
+    async (prompt: string) => {
+      setIsCreatingTool(true);
+      track('creation_started', { source: 'ai' });
+
+      try {
+        const name = generateToolName(prompt);
+        const id = await createBlankTool(name, prompt);
+        setThread(prev => ({ ...prev, toolId: id, toolName: name }));
+        setIsCreatingTool(false);
+        onToolCreated?.(id);
+        await streamGeneration(prompt, id);
+      } catch {
+        toast.error('Failed to create. Please try again.');
+        setIsCreatingTool(false);
+      }
+    },
+    [track, streamGeneration, onToolCreated]
+  );
+
+  // Conversational chat: call /api/tools/chat for pre-generation conversation
+  const chatWithAI = useCallback(
+    async (allMessages: ChatMessage[]): Promise<boolean> => {
+      setIsThinking(true);
+
+      try {
+        const chatHistory = allMessages
+          .filter(m => m.role === 'user' || (m.role === 'assistant' && m.type === 'text'))
+          .slice(-10)
+          .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+        const body: Record<string, unknown> = { messages: chatHistory };
+        if (spaceContext) body.spaceContext = spaceContext;
+
+        const response = await fetch('/api/tools/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) return false;
+
+        const json = await response.json();
+        const data = json.data as {
+          response: string;
+          readyToBuild: boolean;
+          buildPrompt?: string;
+        };
+
+        appendMessage(createMessage('assistant', 'text', data.response));
+
+        if (data.readyToBuild && data.buildPrompt) {
+          startTimer();
+          await createAndGenerate(data.buildPrompt);
+        }
+
+        return true;
+      } catch {
+        return false;
+      } finally {
+        setIsThinking(false);
+      }
+    },
+    [spaceContext, appendMessage, startTimer, createAndGenerate]
+  );
+
   // Send a message (prompt or refinement)
   const sendMessage = useCallback(
     async (text: string) => {
-      if (!text.trim() || isGenerating || isCreatingTool) return;
+      if (!text.trim() || isGenerating || isCreatingTool || isThinking) return;
 
       const userPrompt = text.trim();
-      // Snapshot for undo before mutation
       pushUndo(thread);
 
       appendMessage(createMessage('user', 'text', userPrompt));
-      startTimer();
 
-      // First message: check for template match
+      // Pre-generation conversation: no tool created yet
       if (!thread.toolId) {
+        // Template matching is still a fast-path
         const match = matchTemplate(userPrompt);
         if (match) {
           appendMessage(
@@ -401,25 +470,40 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
           return;
         }
 
-        // No template — create tool and generate
-        setIsCreatingTool(true);
-        track('creation_started', { source: 'ai' });
+        // Specificity check: if the prompt is clearly actionable, skip conversation
+        // and generate immediately. Only route vague/short prompts through chat.
+        const isSpecificPrompt = (() => {
+          if (userPrompt.length < 25) return false;
+          const actionWords = /\b(build|create|make|design|generate|add|set up|implement)\b/i;
+          const hasNoun = /\b(app|page|form|poll|timer|countdown|tracker|list|board|chart|quiz|survey|calculator|game|signup|leaderboard|dashboard|widget|card|schedule|calendar|counter|viewer|gallery|editor|menu|feed|chat)\b/i;
+          return actionWords.test(userPrompt) && hasNoun.test(userPrompt);
+        })();
 
-        try {
-          const name = generateToolName(userPrompt);
-          const id = await createBlankTool(name, userPrompt);
-          setThread(prev => ({ ...prev, toolId: id, toolName: name }));
-          setIsCreatingTool(false);
-          onToolCreated?.(id);
-          await streamGeneration(userPrompt, id);
-        } catch {
-          toast.error('Failed to create. Please try again.');
-          setIsCreatingTool(false);
+        if (isSpecificPrompt) {
+          startTimer();
+          await createAndGenerate(userPrompt);
+          return;
+        }
+
+        // Conversational phase — chat with AI to refine the idea
+        // Build the message list including the new user message
+        const updatedMessages = [
+          ...thread.messages,
+          createMessage('user', 'text', userPrompt),
+        ];
+
+        const chatSucceeded = await chatWithAI(updatedMessages);
+
+        // Fallback: if chat endpoint fails, go straight to generation (old behavior)
+        if (!chatSucceeded) {
+          startTimer();
+          await createAndGenerate(userPrompt);
         }
         return;
       }
 
       // Refinement: tool already exists
+      startTimer();
       track('refinement_started', { toolId: thread.toolId });
       await streamGeneration(
         userPrompt,
@@ -432,13 +516,15 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
     [
       isGenerating,
       isCreatingTool,
+      isThinking,
       thread,
       appendMessage,
       startTimer,
       track,
       streamGeneration,
-      onToolCreated,
       pushUndo,
+      chatWithAI,
+      createAndGenerate,
     ]
   );
 
@@ -469,7 +555,6 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
 
   // Dismiss template suggestion and generate with AI instead
   const dismissTemplateSuggestion = useCallback(() => {
-    // Find the original user prompt (message before the template suggestion)
     const msgs = thread.messages;
     let userPrompt = '';
     for (let i = msgs.length - 1; i >= 0; i--) {
@@ -482,24 +567,9 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
     if (!userPrompt) return;
 
     appendMessage(createMessage('system', 'status', 'Building with AI instead...'));
-
-    (async () => {
-      setIsCreatingTool(true);
-      track('creation_started', { source: 'ai' });
-
-      try {
-        const name = generateToolName(userPrompt);
-        const id = await createBlankTool(name, userPrompt);
-        setThread(prev => ({ ...prev, toolId: id, toolName: name }));
-        setIsCreatingTool(false);
-        onToolCreated?.(id);
-        await streamGeneration(userPrompt, id);
-      } catch {
-        toast.error('Failed to create. Please try again.');
-        setIsCreatingTool(false);
-      }
-    })();
-  }, [thread.messages, appendMessage, track, streamGeneration, onToolCreated]);
+    startTimer();
+    createAndGenerate(userPrompt);
+  }, [thread.messages, appendMessage, startTimer, createAndGenerate]);
 
   // Undo last message(s)
   const undoLastMessage = useCallback(() => {
@@ -530,6 +600,7 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
     setThread(createThread());
     setIsGenerating(false);
     setIsCreatingTool(false);
+    setIsThinking(false);
     undoStackRef.current = [];
     redoStackRef.current = [];
     setUndoCount(0);
@@ -539,18 +610,30 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
   // Publish tool and copy share link
   const publishAndCopyLink = useCallback(async () => {
     if (!thread.toolId) return;
+
+    // Validate tool has generated content before publishing
+    if (!thread.currentElements?.length && !thread.currentCode) {
+      toast.error('Generate your app first before sharing.');
+      return;
+    }
+
     const url = `${window.location.origin}/t/${thread.toolId}`;
 
     try {
-      await fetch(`/api/tools/${thread.toolId}`, {
+      const res = await fetch(`/api/tools/${thread.toolId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ status: 'published' }),
+        body: JSON.stringify({ status: 'published', visibility: 'public' }),
       });
+      if (!res.ok) {
+        toast.error('Failed to publish. Try again.');
+        return;
+      }
       track('creation_published', { toolId: thread.toolId });
     } catch {
-      /* non-critical */
+      toast.error('Failed to publish. Try again.');
+      return;
     }
 
     try {
@@ -560,12 +643,13 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
     } catch {
       toast.success(`Share link: ${url}`);
     }
-  }, [thread.toolId, track]);
+  }, [thread.toolId, thread.currentElements, thread.currentCode, track]);
 
   return {
     thread,
     isGenerating,
     isCreatingTool,
+    isThinking,
     sendMessage,
     useTemplate,
     dismissTemplateSuggestion,

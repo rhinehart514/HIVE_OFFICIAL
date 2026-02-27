@@ -43,6 +43,7 @@ export function CustomBlockElement({
 }: CustomBlockElementProps) {
   const [isReady, setIsReady] = React.useState(false);
   const messageRef = React.useRef<((message: any) => void) | null>(null);
+  const lastPostTimeRef = React.useRef(0);
 
   // Extract block state from element state
   const blockState = React.useMemo(() => {
@@ -72,8 +73,10 @@ export function CustomBlockElement({
 
     return {
       userId: resolvedUserId,
+      displayName: resolvedDisplayName,
       userDisplayName: resolvedDisplayName,
       userRole: mappedRole,
+      role: mappedRole,
       spaceId: resolvedSpaceId,
       spaceName: resolvedSpaceName,
     };
@@ -230,6 +233,92 @@ export function CustomBlockElement({
           toast.info(message.message);
         }
         break;
+
+      case 'create_post': {
+        if (!blockContextBase.spaceId) {
+          sendResponse({
+            type: 'create_post_response',
+            requestId: message.requestId,
+            error: 'No space context available',
+          });
+          break;
+        }
+        const now = Date.now();
+        if (now - lastPostTimeRef.current < 5000) {
+          sendResponse({
+            type: 'create_post_response',
+            requestId: message.requestId,
+            error: 'Rate limited: wait 5 seconds between posts',
+          });
+          break;
+        }
+        lastPostTimeRef.current = now;
+        fetch(`/api/spaces/${blockContextBase.spaceId}/posts`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: message.content,
+            type: message.postType || 'tool_output',
+            toolId: id,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            sendResponse({
+              type: 'create_post_response',
+              requestId: message.requestId,
+              result: { postId: data.post?.id || data.data?.id || data.id },
+            });
+          })
+          .catch(() => {
+            sendResponse({
+              type: 'create_post_response',
+              requestId: message.requestId,
+              error: 'Failed to create post',
+            });
+          });
+        break;
+      }
+
+      case 'get_members': {
+        if (!blockContextBase.spaceId) {
+          sendResponse({
+            type: 'get_members_response',
+            requestId: message.requestId,
+            error: 'No space context available',
+          });
+          break;
+        }
+        const limit = message.limit || 20;
+        fetch(`/api/spaces/${blockContextBase.spaceId}/members?limit=${limit}`, {
+          credentials: 'include',
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            const rawMembers = data.members || data.data?.members || [];
+            const strippedMembers = rawMembers.map((m: any) => ({
+              id: m.id || m.userId,
+              name: m.name || m.displayName,
+              avatar: m.avatar || m.avatarUrl || null,
+              role: m.role || 'member',
+              isOnline: m.isOnline || false,
+            }));
+            sendResponse({
+              type: 'get_members_response',
+              requestId: message.requestId,
+              result: { members: strippedMembers, hasMore: false },
+            });
+          })
+          .catch(() => {
+            sendResponse({
+              type: 'get_members_response',
+              requestId: message.requestId,
+              error: 'Failed to get members',
+            });
+          });
+        break;
+      }
 
       default:
         console.warn('[CustomBlock] Unknown message type:', (message as any).type);

@@ -37,5 +37,7 @@ export { SearchOverlay } from './search-overlay';
 export { LeaderCreateFAB } from './leader-create-fab';
 export { LeaderDashboard } from './leader-dashboard';
 export { SpacePostsTab } from './space-posts-tab';
+export { SpaceAppsTab } from './space-apps-tab';
+export { CreationCard } from './creation-card';
 export { SpaceTabs } from './space-tabs';
 export type { SpaceTab } from './space-tabs';

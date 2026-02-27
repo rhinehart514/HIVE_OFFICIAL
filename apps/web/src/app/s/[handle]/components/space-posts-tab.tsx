@@ -10,12 +10,13 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   MoreHorizontal,
+  Sparkles,
 } from 'lucide-react';
 import { Button, Input } from '@hive/ui/design-system/primitives';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { cn } from '@/lib/utils';
 
-type PostType = 'text' | 'image' | 'link' | 'tool';
+type PostType = 'text' | 'image' | 'link' | 'tool' | 'tool_output';
 
 interface SpacePostAuthor {
   id?: string;
@@ -33,6 +34,10 @@ interface SpacePost {
   imageUrl?: string | null;
   linkUrl?: string | null;
   toolId?: string | null;
+  deploymentId?: string | null;
+  toolName?: string | null;
+  toolIcon?: string | null;
+  outputType?: 'deploy' | 'milestone' | 'result' | null;
   reactions?: Record<string, number>;
   reactedUsers?: Record<string, string[]>;
   commentCount?: number;
@@ -81,6 +86,7 @@ interface ReactionResult {
 
 export interface SpacePostsTabProps {
   spaceId: string;
+  spaceHandle?: string;
   currentUserId?: string;
 }
 
@@ -97,6 +103,7 @@ const POST_TYPE_META: Record<
   image: { label: 'Image', icon: ImageIcon },
   link: { label: 'Link', icon: LinkIcon },
   tool: { label: 'App', icon: MoreHorizontal },
+  tool_output: { label: 'App', icon: Sparkles },
 };
 
 const REACTION_EMOJI_MAP: Record<string, string> = {
@@ -469,7 +476,7 @@ function PostCommentsThread({
   );
 }
 
-export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
+export function SpacePostsTab({ spaceId, spaceHandle, currentUserId }: SpacePostsTabProps) {
   const queryClient = useQueryClient();
   const queryKey = React.useMemo(() => ['space-posts', spaceId] as const, [spaceId]);
 
@@ -901,6 +908,26 @@ export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
                         <span className="truncate">{post.linkUrl}</span>
                       </div>
                       <p className="text-xs text-white/50">{formatLinkHost(post.linkUrl)}</p>
+                    </a>
+                  )}
+
+                  {post.type === 'tool_output' && post.toolId && (
+                    <a
+                      href={spaceHandle ? `/s/${spaceHandle}/tools/${post.toolId}` : `/t/${post.toolId}`}
+                      className="mt-3 flex items-center gap-3 rounded-xl border border-white/[0.06] bg-black/30 p-3 transition hover:border-[#FFD700]/30 hover:bg-white/[0.04]"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFD700]/10">
+                        <Sparkles className="h-5 w-5 text-[#FFD700]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-white">
+                          {post.toolName || 'App'}
+                        </p>
+                        <p className="text-xs text-white/50">Tap to try it out</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-[#FFD700]/10 px-3 py-1 text-xs font-medium text-[#FFD700]">
+                        Try it
+                      </span>
                     </a>
                   )}
 

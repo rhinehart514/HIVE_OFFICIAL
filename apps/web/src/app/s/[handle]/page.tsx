@@ -41,6 +41,7 @@ import {
   MessageFeed,
   SpaceEventsTab,
   SpacePostsTab,
+  SpaceAppsTab,
   type SpaceTab,
   TypingIndicator,
   type OnlineMember,
@@ -355,8 +356,8 @@ export default function SpacePageUnified() {
 
   // Handle navigating to full page tool view
   const handleToolViewFull = React.useCallback((tool: PlacedToolDTO) => {
-    router.push(`/t/${tool.toolId}`);
-  }, [router]);
+    router.push(`/s/${handle}/tools/${tool.toolId}`);
+  }, [router, handle]);
 
   // Sync thread state with URL on mount and URL changes
   React.useEffect(() => {
@@ -776,6 +777,7 @@ export default function SpacePageUnified() {
             unreadCount={unreadCount}
             eventCount={upcomingEvents.length}
             postCount={postCount}
+            appCount={sidebarTools.length}
           />
 
           {/* Tab Content */}
@@ -852,7 +854,9 @@ export default function SpacePageUnified() {
                     ? space.name
                     : activeTab === 'events'
                       ? 'Events'
-                      : 'Posts'
+                      : activeTab === 'apps'
+                        ? 'Apps'
+                        : 'Posts'
                 }
                 contentKey={activeTab}
                 isLoading={activeTab === 'chat' ? isLoadingMessages : false}
@@ -951,9 +955,19 @@ export default function SpacePageUnified() {
                       onEventClick={(eventId) => setSelectedEventId(eventId)}
                     />
                   </SpaceContextProvider>
+                ) : activeTab === 'apps' ? (
+                  <SpaceAppsTab
+                    tools={sidebarTools}
+                    isLoading={isLoadingTools}
+                    spaceId={space.id}
+                    spaceHandle={handle}
+                    isLeader={space.isLeader}
+                    onToolRun={handleToolRun}
+                  />
                 ) : (
                   <SpacePostsTab
                     spaceId={space.id}
+                    spaceHandle={handle}
                     currentUserId={user?.id}
                   />
                 )}

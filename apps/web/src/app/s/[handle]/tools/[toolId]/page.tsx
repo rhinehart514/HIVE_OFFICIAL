@@ -349,6 +349,18 @@ function ToolContent({
     autoSave: true,
     autoSaveDelay: 1500,
     enableRealtime: true,
+    spaceContext: context?.space ? {
+      spaceName: context.space.spaceName || '',
+      campusId: user?.campusId || '',
+      handle: null,
+    } : undefined,
+    viewerContext: user ? {
+      userId: user.uid,
+      displayName: user.displayName || user.fullName || null,
+      role: (context?.member?.role as 'owner' | 'admin' | 'leader' | 'moderator' | 'member' | 'guest') || 'member',
+      isMember: !!context?.member,
+    } : undefined,
+    surface: 'tab',
   });
 
   const handleShare = React.useCallback(async () => {

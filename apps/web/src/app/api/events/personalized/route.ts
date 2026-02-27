@@ -227,12 +227,18 @@ async function handler(
     // Step 1: Get user data (interests, connections, space memberships)
     // Fetch user data, connections, and space memberships in parallel.
     // Each query is wrapped so one failure doesn't crash the whole request.
-    const [userDoc, connectionsSnapshot, membershipsSnapshot] = await Promise.all([
+    const [userDoc, connectionsSnapshot1, connectionsSnapshot2, membershipsSnapshot] = await Promise.all([
       dbAdmin.collection('users').doc(userId).get(),
-      // connections live in the top-level 'connections' collection, not a subcollection
+      // connections use profileId1/profileId2 schema — query both sides
       dbAdmin.collection('connections')
-        .where('userId', '==', userId)
-        .where('status', '==', 'connected')
+        .where('profileId1', '==', userId)
+        .where('isActive', '==', true)
+        .limit(100)
+        .get()
+        .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
+      dbAdmin.collection('connections')
+        .where('profileId2', '==', userId)
+        .where('isActive', '==', true)
         .limit(100)
         .get()
         .catch(() => ({ docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] })),
@@ -245,13 +251,16 @@ async function handler(
 
     const userData = userDoc.data() || {};
     const userInterests: string[] = userData.interests || [];
-    // connections collection stores connectedUserId — extract that for friend matching
-    const friendIds = new Set(
-      connectionsSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return (data.connectedUserId || data.friendId || doc.id) as string;
-      })
-    );
+    // Extract the *other* profileId as the friendId from both query results
+    const friendIds = new Set<string>();
+    for (const doc of connectionsSnapshot1.docs) {
+      const data = doc.data();
+      friendIds.add(data.profileId2 as string);
+    }
+    for (const doc of connectionsSnapshot2.docs) {
+      const data = doc.data();
+      friendIds.add(data.profileId1 as string);
+    }
     const userSpaceIds = new Set(membershipsSnapshot.docs.map(doc => doc.data().spaceId));
 
     // Step 2: Fetch events in time range (supports both startDate + startAt schemas)

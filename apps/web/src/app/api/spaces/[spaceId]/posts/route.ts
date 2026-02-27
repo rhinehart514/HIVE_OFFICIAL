@@ -29,10 +29,14 @@ const GetPostsSchema = z.object({
 
 const CreatePostSchema = z.object({
   content: z.string().min(1).max(2000),
-  type: z.enum(["text", "image", "link", "tool"]).default("text"),
+  type: z.enum(["text", "image", "link", "tool", "tool_output"]).default("text"),
   imageUrl: z.string().url().optional(),
   linkUrl: z.string().url().optional(),
   toolId: z.string().optional(),
+  deploymentId: z.string().optional(),
+  toolName: z.string().optional(),
+  toolIcon: z.string().optional(),
+  outputType: z.enum(["deploy", "milestone", "result"]).optional(),
 });
 
 async function ensureSpaceAndMembership(spaceId: string, userId: string, userCampusId: string) {
@@ -246,7 +250,7 @@ export const POST = withAuthValidationAndErrors(
       }
 
       const now = new Date();
-      const postData = {
+      const postData: Record<string, unknown> = {
         authorId: userId,
         content: body.content,
         type: body.type,
@@ -264,6 +268,14 @@ export const POST = withAuthValidationAndErrors(
         isDeleted: false,
         campusId,
       };
+
+      // Add tool_output specific fields
+      if (body.type === 'tool_output') {
+        postData.deploymentId = body.deploymentId || null;
+        postData.toolName = body.toolName || null;
+        postData.toolIcon = body.toolIcon || null;
+        postData.outputType = body.outputType || 'deploy';
+      }
 
       const postRef = await dbAdmin
         .collection("spaces")

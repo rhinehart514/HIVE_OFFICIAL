@@ -8,20 +8,20 @@ import {
 } from '@/components/landing';
 
 export const metadata: Metadata = {
-  title: 'HIVE — Describe it. Build it. Deploy it.',
+  title: 'HIVE — Your campus, connected.',
   description:
-    'The AI-powered creation platform for student orgs. Polls, signups, countdowns, leaderboards — describe what you need and HIVE builds it instantly.',
+    'The social platform built for your campus. Discover events, join spaces, build apps for your org — all in one place.',
   openGraph: {
-    title: 'HIVE — Describe it. Build it. Deploy it.',
+    title: 'HIVE — Your campus, connected.',
     description:
-      'The AI-powered creation platform for student orgs. No code. No templates. Just describe what you need.',
+      'The social platform built for your campus. Discover events, join spaces, build apps for your org — all in one place.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HIVE — Describe it. Build it. Deploy it.',
+    title: 'HIVE — Your campus, connected.',
     description:
-      'The AI-powered creation platform for student orgs. No code. No templates. Just describe what you need.',
+      'The social platform built for your campus. Discover events, join spaces, build apps for your org — all in one place.',
   },
 };
 

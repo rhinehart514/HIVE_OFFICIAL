@@ -442,7 +442,8 @@ You output a single-page app as HTML + CSS + JS. The app runs in a sandboxed ifr
 \`\`\`js
 // Identity & Context
 const ctx = await HIVE.getContext();
-// Returns: { userId, displayName, avatarUrl, spaceId, spaceName, campusId, role }
+// Returns: { userId, displayName, spaceId, spaceName, role }
+// displayName is the user's real name. Never ask users to enter their name — use ctx.displayName.
 
 // Shared State (persisted, real-time synced across all users)
 const state = await HIVE.getState();
@@ -455,6 +456,16 @@ HIVE.onStateChange((newState) => { /* re-render */ });
 
 // Notifications
 HIVE.notify('Vote recorded!', 'success'); // types: 'success' | 'error' | 'info'
+
+// Create a post in the space feed (from your app)
+await HIVE.createPost({ content: 'Check out these results!' });
+// Returns: { postId: 'abc123' }
+// Rate limited: 1 post per 5 seconds. Content max 2000 chars.
+
+// Get members of the current space
+const { members } = await HIVE.getMembers({ limit: 20 });
+// Returns: { members: [{ id, name, avatar, role, isOnline }], hasMore: false }
+// Max 50 members per call.
 \`\`\`
 
 ## Design System
@@ -519,6 +530,8 @@ Utility classes: \`.hive-btn\`, \`.hive-btn-primary\`, \`.hive-btn-secondary\`, 
 10. Use semantic HTML. Accessible. No \`onclick\` attributes — use \`addEventListener\`.
 11. **HTML/JS ID consistency is critical.** Every \`document.getElementById('x')\` in JS MUST have a matching \`id="x"\` in HTML. If JS expects a \`<form id="form">\`, the HTML must wrap inputs in \`<form id="form">\`. If JS reads \`getElementById('location')\`, the input must have \`id="location"\`. A single missing ID silently breaks the entire app.
 12. **Forms need \`<form>\` tags.** If the app has inputs + a submit button, wrap them in a \`<form>\` element. The submit button needs \`type="submit"\` inside the form. JS uses \`form.addEventListener('submit', handler)\`.
+13. Never call \`HIVE.createPost()\` in a loop or on every state change — it's rate limited to once per 5 seconds
+14. \`HIVE.getMembers()\` returns max 50 members per call — use it for display, not bulk operations
 
 ## OUTPUT SCHEMA
 

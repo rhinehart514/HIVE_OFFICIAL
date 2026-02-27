@@ -16,9 +16,15 @@
  * - Phase S3: Real-time updates via Firebase RTDB (counters, collections, timeline)
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import type { ToolSharedState, ToolConnection, DataTransform } from "@hive/core/client";
 import { applyTransform, getValueAtPath } from "@hive/core/client";
+import type { HiveRuntimeContext } from "@hive/core";
+import {
+  buildSpaceRuntimeContext,
+  buildStandaloneRuntimeContext,
+  buildPreviewRuntimeContext,
+} from "@hive/core";
 import { useToolStateRealtime } from "./use-tool-state-realtime";
 import { useToolStateStream } from "./use-tool-state-stream";
 import { logger } from '@/lib/logger';
@@ -93,6 +99,23 @@ interface UseToolRuntimeOptions {
   onCascade?: (cascadedElementIds: string[]) => void;
   /** Callback when real-time counter updates arrive */
   onRealtimeCounterUpdate?: (counters: Record<string, number>) => void;
+  /** Space context for RuntimeContext injection */
+  spaceContext?: {
+    spaceName: string;
+    campusId: string;
+    handle: string | null;
+  };
+  /** Viewer context for RuntimeContext injection */
+  viewerContext?: {
+    userId: string;
+    displayName?: string | null;
+    role: 'owner' | 'admin' | 'leader' | 'moderator' | 'member' | 'guest';
+    isMember: boolean;
+  };
+  /** Surface where the tool is rendered */
+  surface?: 'sidebar' | 'inline' | 'modal' | 'tab' | 'standalone';
+  /** Mode: 'runtime' for deployed tools, 'preview' for HiveLab preview */
+  mode?: 'runtime' | 'preview';
 }
 
 interface UseToolRuntimeReturn {
@@ -103,6 +126,8 @@ interface UseToolRuntimeReturn {
   userState: ToolState;
   /** Shared state visible to all users (counters, collections, timeline) */
   sharedState: ToolSharedState;
+  /** Runtime context for injection into tool iframes */
+  runtimeContext: HiveRuntimeContext | null;
   isLoading: boolean;
   isExecuting: boolean;
   isSaving: boolean;
@@ -218,6 +243,10 @@ export function useToolRuntime(
     enableRealtime = false,
     onCascade,
     onRealtimeCounterUpdate,
+    spaceContext,
+    viewerContext,
+    surface,
+    mode = 'runtime',
   } = options;
 
   // Calculate effective deployment ID
@@ -1177,6 +1206,47 @@ export function useToolRuntime(
   }, [isSynced, effectiveDeploymentId, toolId, spaceId]);
 
   // ============================================================================
+  // Runtime Context
+  // ============================================================================
+
+  const runtimeContext = useMemo((): HiveRuntimeContext | null => {
+    if (!tool || !effectiveDeploymentId) return null;
+
+    if (mode === 'preview') {
+      return buildPreviewRuntimeContext({
+        toolId: tool.id,
+        toolVersion: tool.version != null ? String(tool.version) : null,
+        viewerId: viewerContext?.userId ?? 'preview-user',
+      });
+    }
+
+    if (spaceId && spaceContext && viewerContext) {
+      return buildSpaceRuntimeContext({
+        space: {
+          spaceId,
+          spaceName: spaceContext.spaceName,
+          campusId: spaceContext.campusId,
+          handle: spaceContext.handle,
+        },
+        deployment: {
+          deploymentId: effectiveDeploymentId,
+          surface: surface ?? 'sidebar',
+          stateMode: effectiveDeploymentId.startsWith('tool:') ? 'shared' : 'isolated',
+          toolId: tool.id,
+          toolVersion: tool.version != null ? String(tool.version) : null,
+        },
+        viewer: viewerContext,
+      });
+    }
+
+    return buildStandaloneRuntimeContext({
+      toolId: tool.id,
+      toolVersion: tool.version != null ? String(tool.version) : null,
+      viewerId: viewerContext?.userId ?? 'anonymous',
+    });
+  }, [tool, effectiveDeploymentId, mode, spaceId, spaceContext, viewerContext, surface]);
+
+  // ============================================================================
   // Return
   // ============================================================================
 
@@ -1185,6 +1255,7 @@ export function useToolRuntime(
     state,         // Legacy: maps to userState for backward compatibility
     userState: state, // Per-user state (selections, participation, personal data)
     sharedState,   // Shared state visible to all users (counters, collections, timeline)
+    runtimeContext,
     isLoading,
     isExecuting,
     isSaving,

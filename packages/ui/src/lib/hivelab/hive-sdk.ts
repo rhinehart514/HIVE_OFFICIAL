@@ -14,12 +14,18 @@ import type {
   IframeMessage,
   ParentMessage,
 } from '@hive/core';
+import type { HiveRuntimeContext } from '@hive/core';
 
 /**
  * Generate HIVE SDK code to inject into iframe
  * This returns a string of JavaScript that creates window.HIVE
+ *
+ * @param instanceId - Unique ID for this iframe instance
+ * @param runtimeContext - Optional HiveRuntimeContext to preload (avoids async round-trip)
  */
-export function generateHiveSDK(instanceId: string): string {
+export function generateHiveSDK(instanceId: string, runtimeContext?: HiveRuntimeContext | null): string {
+  const contextJson = runtimeContext ? JSON.stringify(runtimeContext) : 'null';
+
   return `
 (function() {
   'use strict';
@@ -33,7 +39,7 @@ export function generateHiveSDK(instanceId: string): string {
   const pendingRequests = new Map();
   const stateChangeCallbacks = new Set();
   let currentState = null;
-  let currentContext = null;
+  let currentContext = ${contextJson};
 
   /**
    * Generate unique request ID
@@ -68,7 +74,7 @@ export function generateHiveSDK(instanceId: string): string {
             timestamp: Date.now(),
             payload: message
           },
-          '*'
+          window.location.origin || '*'
         );
 
         if (!waitForResponse) {
@@ -125,6 +131,8 @@ export function generateHiveSDK(instanceId: string): string {
       case 'state_response':
       case 'input_response':
       case 'context_response':
+      case 'create_post_response':
+      case 'get_members_response':
         // Handle async request response
         if (payload.requestId) {
           const request = pendingRequests.get(payload.requestId);
@@ -303,8 +311,46 @@ export function generateHiveSDK(instanceId: string): string {
         args: args
       }, false);
       console.error('[Custom Block]', ...args);
+    },
+
+    /**
+     * Create a post in the space feed
+     * @param options - { content: string, postType?: 'text' | 'tool_output' }
+     */
+    createPost: function(options) {
+      if (!options || typeof options.content !== 'string' || !options.content.trim()) {
+        return Promise.reject(new Error('content is required'));
+      }
+      if (options.content.length > 2000) {
+        return Promise.reject(new Error('content must be under 2000 characters'));
+      }
+      return sendMessage({
+        type: 'create_post',
+        content: options.content.trim(),
+        postType: options.postType || 'tool_output'
+      }, true);
+    },
+
+    /**
+     * Get members of the current space
+     * @param options - { limit?: number, cursor?: string }
+     */
+    getMembers: function(options) {
+      var opts = options || {};
+      var limit = Math.min(Math.max(opts.limit || 20, 1), 50);
+      return sendMessage({
+        type: 'get_members',
+        limit: limit,
+        cursor: opts.cursor || null
+      }, true);
     }
   };
+
+  // ============================================================
+  // Runtime Context (preloaded, no async round-trip needed)
+  // ============================================================
+
+  window.HIVE_RUNTIME = currentContext;
 
   // ============================================================
   // Initialization
@@ -355,6 +401,8 @@ export interface HIVESDKInterface {
   notify(message: string, type?: 'success' | 'error' | 'info'): void;
   log(...args: unknown[]): void;
   error(...args: unknown[]): void;
+  createPost(options: { content: string; postType?: 'text' | 'tool_output' }): Promise<{ postId: string }>;
+  getMembers(options?: { limit?: number; cursor?: string }): Promise<{ members: Array<{ id: string; name: string; avatar: string | null; role: string; isOnline: boolean }>; hasMore: boolean }>;
 }
 
 /**

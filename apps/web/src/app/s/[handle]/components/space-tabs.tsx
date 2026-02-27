@@ -7,11 +7,11 @@
  */
 
 import { motion } from 'framer-motion';
-import { Calendar, FileText, MessageSquare } from 'lucide-react';
+import { Calendar, FileText, MessageSquare, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MOTION } from '@hive/ui/design-system/primitives';
 
-export type SpaceTab = 'chat' | 'events' | 'posts';
+export type SpaceTab = 'chat' | 'events' | 'posts' | 'apps';
 
 interface SpaceTabsProps {
   activeTab: SpaceTab;
@@ -19,6 +19,7 @@ interface SpaceTabsProps {
   unreadCount?: number;
   eventCount?: number;
   postCount?: number;
+  appCount?: number;
 }
 
 export function SpaceTabs({
@@ -27,6 +28,7 @@ export function SpaceTabs({
   unreadCount = 0,
   eventCount,
   postCount,
+  appCount,
 }: SpaceTabsProps) {
   const tabs: Array<{
     id: SpaceTab;
@@ -51,6 +53,12 @@ export function SpaceTabs({
       label: 'Posts',
       icon: <FileText className="w-4 h-4" />,
       count: postCount,
+    },
+    {
+      id: 'apps',
+      label: 'Apps',
+      icon: <Sparkles className="w-4 h-4" />,
+      count: appCount,
     },
   ];
 

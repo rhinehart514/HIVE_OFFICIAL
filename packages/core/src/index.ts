@@ -814,3 +814,14 @@ export type {
 
 // HiveLab Intelligence Module (Rules-Based, Free)
 export * from "./hivelab/intelligence";
+
+// HiveLab Runtime Context (iframe injection contract)
+export type { HiveRuntimeContext } from "./domain/creation/runtime-context";
+export {
+  HiveRuntimeContextSchema,
+  RUNTIME_CONTEXT_VERSION,
+  buildSpaceRuntimeContext,
+  buildStandaloneRuntimeContext,
+  buildPreviewRuntimeContext,
+  validateRuntimeContext,
+} from "./domain/creation/runtime-context";

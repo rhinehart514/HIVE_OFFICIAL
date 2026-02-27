@@ -389,9 +389,9 @@ export async function middleware(request: NextRequest) {
 
   // === NO SESSION: Redirect to landing page ===
   if (!sessionCookie) {
-    const landingUrl = new URL('/', request.url);
-    landingUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(landingUrl);
+    const enterUrl = new URL('/enter', request.url);
+    enterUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(enterUrl);
   }
 
   // === HAS SESSION: Verify and check permissions ===
@@ -409,10 +409,10 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // No valid refresh token either — redirect to landing
-    const landingUrl = new URL('/', request.url);
-    landingUrl.searchParams.set('redirect', pathname);
-    const response = NextResponse.redirect(landingUrl);
+    // No valid refresh token either — redirect to enter
+    const enterUrl = new URL('/enter', request.url);
+    enterUrl.searchParams.set('redirect', pathname);
+    const response = NextResponse.redirect(enterUrl);
     // Clear invalid session cookie
     response.cookies.delete('hive_session');
     return response;

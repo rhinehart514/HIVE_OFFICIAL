@@ -40,6 +40,19 @@ export interface FeedToolCardProps {
   expandedContent?: React.ReactNode;
 }
 
+const CATEGORY_GRADIENTS: Record<string, string> = {
+  productivity: 'from-blue-500/40 to-indigo-500/40',
+  social: 'from-pink-500/40 to-rose-500/40',
+  game: 'from-green-500/40 to-emerald-500/40',
+  utility: 'from-amber-500/40 to-orange-500/40',
+  creative: 'from-purple-500/40 to-violet-500/40',
+};
+
+function getCategoryGradient(category?: string): string {
+  if (!category) return 'from-white/10 to-white/5';
+  return CATEGORY_GRADIENTS[category.toLowerCase()] || 'from-white/10 to-white/5';
+}
+
 export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, isExpanded, onToggleExpand, expandedContent }: FeedToolCardProps) {
   const [localExpanded, setLocalExpanded] = useState(false);
   const expanded = isExpanded ?? localExpanded;
@@ -61,6 +74,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
       transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
       className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden hover:border-white/[0.10] transition-all duration-200"
     >
+      <div className={cn('h-10 bg-gradient-to-r', getCategoryGradient(tool.category))} />
       <div className="p-4">
         {/* Builder byline */}
         <div className="flex items-center gap-2 mb-3">

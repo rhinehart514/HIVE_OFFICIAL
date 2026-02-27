@@ -2,6 +2,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin as db } from '@/lib/firebase-admin';
 import { withCache } from '../../../../../lib/cache-headers';
+import { createNotification } from '@/lib/notification-service';
 
 /**
  * POST /api/profile/[userId]/follow
@@ -62,6 +63,32 @@ export const POST = withAuthAndErrors(async (
       });
       await batch.commit();
 
+      // Notify both users about the mutual connection
+      const currentUserDoc = await db.collection('users').doc(currentUserId).get();
+      const currentUserData = currentUserDoc.data();
+      const currentHandle = currentUserData?.handle || currentUserData?.fullName || 'Someone';
+      const targetUserData = targetUserDoc.data();
+      const targetHandle = targetUserData?.handle || targetUserData?.fullName || 'Someone';
+
+      createNotification({
+        userId: targetUserId,
+        type: 'connection_new',
+        category: 'connections',
+        title: `${currentHandle} followed you back`,
+        body: 'You\'re now mutual friends!',
+        actionUrl: `/u/${currentHandle}`,
+        metadata: { actorId: currentUserId, actorName: currentHandle },
+      }).catch(() => {});
+
+      createNotification({
+        userId: currentUserId,
+        type: 'connection_new',
+        category: 'connections',
+        title: `You and ${targetHandle} are now mutual friends!`,
+        actionUrl: `/u/${targetHandle}`,
+        metadata: { actorId: targetUserId, actorName: targetHandle },
+      }).catch(() => {});
+
       return respond.success({
         type: 'friend',
         message: 'You are now mutual friends!',
@@ -103,6 +130,20 @@ export const POST = withAuthAndErrors(async (
     followerCount: FieldValue.increment(1),
   });
   await batch.commit();
+
+  // Notify the target user about the new follow
+  const currentUserDoc = await db.collection('users').doc(currentUserId).get();
+  const currentUserData = currentUserDoc.data();
+  const currentHandle = currentUserData?.handle || currentUserData?.fullName || 'Someone';
+
+  createNotification({
+    userId: targetUserId,
+    type: 'connection_new',
+    category: 'connections',
+    title: `${currentHandle} started following you`,
+    actionUrl: `/u/${currentHandle}`,
+    metadata: { actorId: currentUserId, actorName: currentHandle },
+  }).catch(() => {});
 
   return respond.success({
     type: 'following',

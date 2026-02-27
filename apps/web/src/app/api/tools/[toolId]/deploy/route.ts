@@ -459,6 +459,39 @@ export const POST = withAuthValidationAndErrors(
       }
     }
 
+    // Auto-post tool_output entry in the Space feed so members see it
+    db.collection("spaces")
+      .doc(spaceId)
+      .collection("posts")
+      .add({
+        authorId: userId,
+        content: `${(toolData?.name as string) || 'An app'} is now available in this space`,
+        type: 'tool_output',
+        toolId,
+        deploymentId,
+        toolName: (toolData?.name as string) || null,
+        toolIcon: (toolData?.icon as string) || null,
+        outputType: 'deploy',
+        imageUrl: null,
+        linkUrl: null,
+        replyCount: 0,
+        commentCount: 0,
+        reactions: { heart: 0 },
+        reactedUsers: { heart: [] as string[] },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastActivity: admin.firestore.FieldValue.serverTimestamp(),
+        isPinned: false,
+        isDeleted: false,
+        campusId,
+      })
+      .catch((postErr: unknown) => {
+        logger.warn('Failed to create deploy feed post', {
+          toolId, spaceId,
+          error: postErr instanceof Error ? postErr.message : String(postErr),
+        });
+      });
+
     // Track generation outcome — mark as deployed
     const generationOutcomeId = toolData?.generationOutcomeId as string | undefined;
     if (generationOutcomeId) {
