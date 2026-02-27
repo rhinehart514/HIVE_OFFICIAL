@@ -517,6 +517,8 @@ Utility classes: \`.hive-btn\`, \`.hive-btn-primary\`, \`.hive-btn-secondary\`, 
 8. The "reasoning" field is mandatory — think about the social dynamics before coding
 9. Keep code concise. One file, one purpose. No frameworks, no build tools.
 10. Use semantic HTML. Accessible. No \`onclick\` attributes — use \`addEventListener\`.
+11. **HTML/JS ID consistency is critical.** Every \`document.getElementById('x')\` in JS MUST have a matching \`id="x"\` in HTML. If JS expects a \`<form id="form">\`, the HTML must wrap inputs in \`<form id="form">\`. If JS reads \`getElementById('location')\`, the input must have \`id="location"\`. A single missing ID silently breaks the entire app.
+12. **Forms need \`<form>\` tags.** If the app has inputs + a submit button, wrap them in a \`<form>\` element. The submit button needs \`type="submit"\` inside the form. JS uses \`form.addEventListener('submit', handler)\`.
 
 ## OUTPUT SCHEMA
 

@@ -1875,7 +1875,7 @@ export async function generateCodeTool(
           ? `User request: "${enhancedPrompt}"\n\nApply this modification. Preserve what works, change what needs changing.`
           : enhancedPrompt,
         temperature: 0.3,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
       });
 
       // Parse JSON from response (strip markdown fences if present)
@@ -1945,18 +1945,18 @@ export async function generateCodeTool(
     code: {
       html: `<div id="app">
   <h2>${name}</h2>
-  <p id="status" class="hive-text-sm">Loading...</p>
-  <div id="content" class="hive-card" style="padding: var(--hive-space-lg); margin-top: var(--hive-space-md);"></div>
+  <p id="status">Loading...</p>
+  <div id="content" class="hive-card" style="padding: var(--hive-spacing-6); margin-top: var(--hive-spacing-4);"></div>
 </div>`,
       css: `#app {
   max-width: 480px;
   margin: 0 auto;
-  padding: var(--hive-space-lg);
+  padding: var(--hive-spacing-6);
   font-family: var(--hive-font-sans);
 }
 h2 {
-  color: var(--hive-color-text);
-  margin-bottom: var(--hive-space-sm);
+  color: var(--hive-text-primary);
+  margin-bottom: var(--hive-spacing-2);
 }`,
       js: `(async function() {
   const ctx = await HIVE.getContext();
