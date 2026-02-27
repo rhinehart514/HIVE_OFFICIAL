@@ -99,7 +99,7 @@ export function CustomBlockRenderer({
   const sendToIframe = React.useCallback((message: any) => {
     if (iframeRef.current?.contentWindow && loadingState === 'ready') {
       const wrappedMessage = createParentMessage(message);
-      iframeRef.current.contentWindow.postMessage(wrappedMessage, '*');
+      iframeRef.current.contentWindow.postMessage(wrappedMessage, window.location.origin);
     }
   }, [loadingState]);
 
@@ -319,6 +319,10 @@ function generateDesignTokensCSS(): string {
       --hive-text-tertiary: rgba(255, 255, 255, 0.5);
       --hive-text-disabled: rgba(255, 255, 255, 0.3);
 
+      /* Semantic - Status */
+      --hive-color-success: #22C55E;
+      --hive-color-error: #EF4444;
+
       /* Semantic - Borders */
       --hive-border-default: rgba(255, 255, 255, 0.06);
       --hive-border-subtle: rgba(255, 255, 255, 0.04);
@@ -348,6 +352,7 @@ function generateDesignTokensCSS(): string {
       --hive-radius-full: 9999px;
 
       /* Typography */
+      --hive-font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       --hive-font-size-xs: 0.75rem;
       --hive-font-size-sm: 0.875rem;
       --hive-font-size-base: 1rem;
@@ -530,8 +535,7 @@ function buildIframeDocument(config: CustomBlockConfig, instanceId: string): str
         window.parent.postMessage({
           type: 'error',
           instanceId: '${instanceId}',
-          error: error.message,
-          stack: error.stack
+          error: error.message
         }, '*');
       }
     })();

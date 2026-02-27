@@ -154,7 +154,7 @@ export default function CampusToolPage() {
     const url = `${window.location.origin}/campus/${slug}`;
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({ title: tool?.name || 'Campus Tool', url });
+        await navigator.share({ title: tool?.name || 'Campus App', url });
       } catch {
         // User cancelled
       }
@@ -186,13 +186,13 @@ export default function CampusToolPage() {
         >
           <h2 className="text-xl font-semibold text-white mb-2">Not Found</h2>
           <p className="text-white/50 text-sm mb-6">
-            This campus tool may have been removed or the link is incorrect.
+            This campus app may have been removed or the link is incorrect.
           </p>
           <button
             onClick={() => router.push('/campus')}
             className="px-6 py-2.5 bg-white text-black text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
           >
-            Browse Campus Tools
+            Browse Campus Apps
           </button>
         </motion.div>
       </div>
@@ -300,7 +300,7 @@ export default function CampusToolPage() {
             />
           ) : (
             <div className="text-center py-12">
-              <p className="text-white/40 text-sm">This tool has no elements yet.</p>
+              <p className="text-white/40 text-sm">This app has no elements yet.</p>
             </div>
           )}
         </motion.div>

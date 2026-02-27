@@ -207,7 +207,7 @@ function DeploymentSection({ deployment }: { deployment: ToolDeployment }) {
         >
           <Zap className="h-6 w-6 mx-auto mb-2" style={{ color: COLORS.textTertiary }} />
           <p className="text-xs" style={{ color: COLORS.textTertiary }}>
-            No automations using this tool
+            No automations using this app
           </p>
           <Link
             href={`/spaces/${deployment.targetId}/automations/new`}
@@ -296,7 +296,7 @@ export function AutomationAwarenessPanel({ toolId, toolName, elementIds: _elemen
                   Not deployed yet
                 </p>
                 <p className="text-sm mb-4" style={{ color: COLORS.textSecondary }}>
-                  Deploy this tool to a space to create automations that trigger its elements.
+                  Deploy this app to a space to create automations that trigger its elements.
                 </p>
               </div>
             ) : (
@@ -312,7 +312,7 @@ export function AutomationAwarenessPanel({ toolId, toolName, elementIds: _elemen
                         {data.totalAutomations}
                       </p>
                       <p className="text-xs" style={{ color: COLORS.textSecondary }}>
-                        automation{data.totalAutomations !== 1 ? 's' : ''} using this tool
+                        automation{data.totalAutomations !== 1 ? 's' : ''} using this app
                       </p>
                     </div>
                     <div className="flex-1">

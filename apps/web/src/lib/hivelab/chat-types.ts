@@ -41,6 +41,8 @@ export interface ChatThread {
   toolId: string | null;
   toolName: string;
   currentElements: ToolElement[];
+  /** Generated code for code-mode tools */
+  currentCode?: { html: string; css: string; js: string };
 }
 
 export function createMessage(

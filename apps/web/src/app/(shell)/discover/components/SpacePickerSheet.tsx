@@ -50,7 +50,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
           <div>
             <h3 className="text-[15px] font-semibold text-white">Add to space</h3>
-            <p className="text-[12px] text-white/30 mt-0.5">Pick a space to install this tool</p>
+            <p className="text-[12px] text-white/30 mt-0.5">Pick a space to install this app</p>
           </div>
           <button
             onClick={onClose}
@@ -78,7 +78,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
             <div className="py-10 px-6 text-center">
               <p className="text-[14px] text-white/40 font-medium">No spaces yet</p>
               <p className="text-[12px] text-white/25 mt-1.5 leading-relaxed">
-                Join a space to start adding tools
+                Join a space to start adding apps
               </p>
               <Link
                 href="/spaces"

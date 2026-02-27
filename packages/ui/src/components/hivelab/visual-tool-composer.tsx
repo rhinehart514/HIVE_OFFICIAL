@@ -201,7 +201,7 @@ export function VisualToolComposer({
 
   const handleSave = async () => {
     if (!toolName.trim()) {
-      alert('Please enter a tool name');
+      alert('Please enter an app name');
       return;
     }
 
@@ -234,13 +234,13 @@ export function VisualToolComposer({
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <Box className="h-6 w-6 text-hive-brand-primary" />
-            <h1 className="text-xl font-bold">Tool Composer</h1>
+            <h1 className="text-xl font-bold">App Composer</h1>
           </div>
           <div className="flex items-center space-x-2">
             <Input
               value={toolName}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setToolName(e.target.value)}
-              placeholder="Tool name..."
+              placeholder="App name..."
               className="w-48 bg-hive-background-secondary border-hive-border-default"
             />
             <Badge variant="outline" className="border-hive-border-default text-xs">

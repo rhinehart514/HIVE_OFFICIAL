@@ -283,7 +283,7 @@ export function IDEToolbar({
         <button
           type="button"
           onClick={onPreview}
-          aria-label="Preview tool"
+          aria-label="Preview app"
           className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--hivelab-surface)] hover:bg-[var(--hivelab-surface-hover)] text-[var(--hivelab-text-primary)] transition-colors duration-[var(--workshop-duration)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-bg)]"
         >
           <PlayIcon className="h-4 w-4" aria-hidden="true" />

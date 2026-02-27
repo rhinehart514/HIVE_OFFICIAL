@@ -69,7 +69,7 @@ export function ToolsFilterBar({
                 type="text"
                 value={search}
                 onChange={e => onSearchChange(e.target.value)}
-                placeholder="Search tools..."
+                placeholder="Search apps..."
                 className="flex-1 bg-transparent text-[13px] text-white/70 placeholder:text-white/25 outline-none"
               />
               <button onClick={handleSearchClose} className="text-white/30 hover:text-white/50 transition-colors">

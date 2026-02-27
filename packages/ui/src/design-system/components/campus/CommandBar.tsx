@@ -223,7 +223,7 @@ function QuickCreateMenu({
     { label: 'Post', onClick: onCreatePost, icon: '📝' },
     { label: 'Event', onClick: onCreateEvent, icon: '📅' },
     ...(isBuilder
-      ? [{ label: 'Tool', onClick: onCreateTool, icon: '🛠' }]
+      ? [{ label: 'App', onClick: onCreateTool, icon: '🛠' }]
       : []),
     { label: 'Space', onClick: onCreateSpace, icon: '✨' },
   ];

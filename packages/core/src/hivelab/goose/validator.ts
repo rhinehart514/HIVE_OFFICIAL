@@ -118,8 +118,6 @@ export const VALID_ELEMENT_TYPES = [
   'availability-heatmap',
   'space-feed',
   'space-stats',
-  'announcement',
-  'availability-heatmap',
 ] as const;
 
 export type ValidElementType = typeof VALID_ELEMENT_TYPES[number];

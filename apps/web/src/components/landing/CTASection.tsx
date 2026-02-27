@@ -30,7 +30,7 @@ export function CTASection() {
         </h2>
 
         <p className="mx-auto mb-10 max-w-md text-base text-white/40">
-          Join students already building tools their orgs actually use. Free, instant, no code.
+          Join students already building apps their orgs actually use. Free, instant, no code.
         </p>
 
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">

@@ -387,7 +387,7 @@ export function TemplateGallery({ isOpen, onClose, onSelectTemplate }: TemplateG
                       <div className="flex items-center gap-2 mb-4">
                         <span className="text-lg">⚡</span>
                         <h3 className="text-sm font-semibold text-white">Featured Apps</h3>
-                        <span className="text-xs text-white/30">Multi-element power tools</span>
+                        <span className="text-xs text-white/30">Multi-element power apps</span>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {appTemplates.slice(0, 6).map((template, i) => (

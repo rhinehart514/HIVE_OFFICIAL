@@ -459,7 +459,7 @@ function ActionsBuilder({
               <span className="text-xs font-medium" style={{ color: PANEL_COLORS.textPrimary }}>
                 {action.type === 'notify' && 'Send Notification'}
                 {action.type === 'mutate' && 'Update Element'}
-                {action.type === 'triggerTool' && 'Trigger Tool'}
+                {action.type === 'triggerTool' && 'Trigger App'}
               </span>
             </div>
             <button

@@ -261,7 +261,7 @@ function CollapsedRail({
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
             </svg>
           }
-          label="Space Tools"
+          label="Space Apps"
           active={activeTab === 'spaceTools'}
           onClick={() => { onTabChange('spaceTools'); onExpand(); }}
         />
@@ -746,7 +746,7 @@ function ToolsPanel({
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
         </svg>
-        New Tool
+        New App
       </button>
 
       {/* Tools List */}
@@ -763,13 +763,13 @@ function ToolsPanel({
             className="text-sm font-medium mb-1"
             style={{ color: 'var(--hivelab-text-primary)' }}
           >
-            Create your first tool
+            Create your first app
           </p>
           <p
             className="text-xs leading-relaxed mb-4"
             style={{ color: 'var(--hivelab-text-tertiary)' }}
           >
-            Build tools your community will love — polls, signups, countdowns, and more.
+            Build apps your community will love — polls, signups, countdowns, and more.
           </p>
           {/* CTA Button */}
           <button
@@ -824,7 +824,7 @@ function ToolsPanel({
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium truncate">
-                    {tool.name || 'Untitled Tool'}
+                    {tool.name || 'Untitled App'}
                   </span>
                   <span
                     className="text-label-xs px-1.5 py-0.5 rounded-full shrink-0"

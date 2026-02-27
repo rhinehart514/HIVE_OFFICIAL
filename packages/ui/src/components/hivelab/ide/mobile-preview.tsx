@@ -75,7 +75,7 @@ export function MobilePreview({ toolName, toolDescription, elements, onBack }: M
               className="text-sm"
               style={{ color: 'var(--hivelab-text-secondary, #8A8A8A)' }}
             >
-              This tool has no elements yet
+              This app has no elements yet
             </p>
           </div>
         ) : (

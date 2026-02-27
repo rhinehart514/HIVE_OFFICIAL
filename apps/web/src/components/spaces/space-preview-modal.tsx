@@ -220,7 +220,7 @@ export function SpacePreviewModal({
           {space.toolCount !== undefined && space.toolCount > 0 && (
             <div className="flex items-center justify-center gap-2 mb-6 text-sm text-white/50">
               <WrenchScrewdriverIcon className="w-4 h-4" />
-              <span>{space.toolCount} {space.toolCount === 1 ? 'tool' : 'tools'} available</span>
+              <span>{space.toolCount} {space.toolCount === 1 ? 'app' : 'apps'} available</span>
             </div>
           )}
 

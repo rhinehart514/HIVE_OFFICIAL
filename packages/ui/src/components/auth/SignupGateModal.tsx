@@ -118,7 +118,7 @@ export function SignupGateModal({
             <DialogHeader className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
                 <AcademicCapIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">Campus Tool Builder</span>
+                <span className="text-xs font-medium text-muted-foreground">Campus App Builder</span>
               </div>
 
               <DialogTitle className="text-2xl">
@@ -156,7 +156,7 @@ export function SignupGateModal({
               <div className="mt-6 p-4 rounded-lg border border-border bg-background/50">
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                  <span className="font-medium">Tool ready to deploy:</span>
+                  <span className="font-medium">App ready to deploy:</span>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground font-sans">
                   {toolName}

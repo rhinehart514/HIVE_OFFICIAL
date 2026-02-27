@@ -99,7 +99,7 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-[var(--hivelab-text-primary)]">Welcome to HiveLab</h2>
-                <p className="text-sm text-[var(--hivelab-text-tertiary)]">Build visual tools for your campus</p>
+                <p className="text-sm text-[var(--hivelab-text-tertiary)]">Build apps for your campus</p>
               </div>
             </div>
           </div>

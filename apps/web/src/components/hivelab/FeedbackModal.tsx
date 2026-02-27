@@ -108,7 +108,7 @@ export function FeedbackModal({
       toast.success(
         isReport ? 'Issue reported' : 'Feedback submitted',
         isReport
-          ? 'The tool creator has been notified.'
+          ? 'The app creator has been notified.'
           : 'Thanks for your feedback!',
       );
 
@@ -231,7 +231,7 @@ export function FeedbackModal({
                 <Textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="Share your thoughts about this tool..."
+                  placeholder="Share your thoughts about this app..."
                   rows={3}
                   maxLength={1000}
                 />

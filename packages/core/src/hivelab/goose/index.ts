@@ -30,6 +30,7 @@ export {
 export {
   buildSystemPrompt,
   buildCompactSystemPrompt,
+  buildCodeGenSystemPrompt,
   buildUserPrompt,
   ELEMENT_CATALOG,
 } from './system-prompt';

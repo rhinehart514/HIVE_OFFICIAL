@@ -107,7 +107,7 @@ export function AIPromptInput({
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border">
             <SparklesIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">AI-Powered Tool Builder</span>
+            <span className="text-sm font-medium text-muted-foreground">AI-Powered App Builder</span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight">
             Build campus tools in seconds

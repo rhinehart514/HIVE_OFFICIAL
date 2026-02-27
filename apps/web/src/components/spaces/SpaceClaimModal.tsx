@@ -554,7 +554,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                           As admin, you&apos;ll be able to:
                         </Text>
                         <ul className="space-y-2">
-                          {['Create official events', 'Pin announcements', 'Deploy tools', 'Manage members'].map((benefit) => (
+                          {['Create official events', 'Pin announcements', 'Deploy apps', 'Manage members'].map((benefit) => (
                             <li key={benefit} className="flex items-center gap-3">
                               <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
                               <Text size="sm" className="text-white/50">{benefit}</Text>

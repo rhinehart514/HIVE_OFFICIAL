@@ -12,7 +12,7 @@
 
 import { NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, type QuerySnapshot, type DocumentData } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
 import { createBulkNotifications } from '@/lib/notification-service';
 import { withCache } from '../../../../lib/cache-headers';
@@ -38,14 +38,18 @@ export async function POST(request: Request) {
   const now = new Date();
 
   try {
+    // Fetch spaces once and share across processors
+    // TODO: Optimize at scale — add denormalized `hasAutomations` field on spaces to avoid full scan
+    const spacesSnapshot = await dbAdmin.collection('spaces').limit(500).get();
+
     // 1. Process event_reminder automations
-    await processEventReminders(now, results);
+    await processEventReminders(now, results, spacesSnapshot);
 
     // 2. Process scheduled automations
-    await processScheduledAutomations(now, results);
+    await processScheduledAutomations(now, results, spacesSnapshot);
 
     // 3. Process tool_state_change automations (bridge space↔tool)
-    await processToolStateTriggers(now, results);
+    await processToolStateTriggers(now, results, spacesSnapshot);
 
     // 4. Process tool-level automations (schedule + threshold from tool_automations collection)
     await processToolAutomations(now, results);
@@ -84,11 +88,9 @@ export async function POST(request: Request) {
  */
 async function processEventReminders(
   now: Date,
-  results: AutomationResult[]
+  results: AutomationResult[],
+  spacesSnapshot: QuerySnapshot<DocumentData>,
 ): Promise<void> {
-  // Get all spaces with event_reminder automations
-  const spacesSnapshot = await dbAdmin.collection('spaces').get();
-
   for (const spaceDoc of spacesSnapshot.docs) {
     const spaceId = spaceDoc.id;
     const spaceData = spaceDoc.data();
@@ -190,11 +192,9 @@ async function processEventReminders(
  */
 async function processScheduledAutomations(
   now: Date,
-  results: AutomationResult[]
+  results: AutomationResult[],
+  spacesSnapshot: QuerySnapshot<DocumentData>,
 ): Promise<void> {
-  // Get all spaces
-  const spacesSnapshot = await dbAdmin.collection('spaces').get();
-
   for (const spaceDoc of spacesSnapshot.docs) {
     const spaceId = spaceDoc.id;
 
@@ -567,10 +567,9 @@ function formatTimeUntil(eventStart: Date): string {
  */
 async function processToolStateTriggers(
   now: Date,
-  results: AutomationResult[]
+  results: AutomationResult[],
+  spacesSnapshot: QuerySnapshot<DocumentData>,
 ): Promise<void> {
-  const spacesSnapshot = await dbAdmin.collection('spaces').get();
-
   for (const spaceDoc of spacesSnapshot.docs) {
     const spaceId = spaceDoc.id;
 
@@ -597,11 +596,12 @@ async function processToolStateTriggers(
 
       if (!deploymentId || !watchPath || !operator || threshold === undefined) continue;
 
-      // Cooldown: 1 hour between triggers
+      // Cooldown between triggers (use config or default to 1 hour)
+      const cooldownMs = ((automation.cooldownSeconds as number) || 3600) * 1000;
       const lastTriggered = automation.stats?.lastTriggered;
       if (lastTriggered) {
         const lastTime = lastTriggered.toDate ? lastTriggered.toDate() : new Date(lastTriggered);
-        if (now.getTime() - lastTime.getTime() < 60 * 60 * 1000) continue;
+        if (now.getTime() - lastTime.getTime() < cooldownMs) continue;
       }
 
       try {
@@ -686,7 +686,7 @@ async function processToolAutomations(
   const scheduleSnapshot = await dbAdmin
     .collection('tool_automations')
     .where('enabled', '==', true)
-    .where('isActive', '!=', false)
+    .where('isActive', '==', true)
     .where('trigger.type', 'in', ['schedule', 'threshold'])
     .get();
 

@@ -28,11 +28,11 @@ export default function ToolDetailError({
         </div>
 
         <h2 className="mb-2 text-xl font-semibold text-[var(--hivelab-text-primary)]">
-          Unable to load tool
+          Unable to load app
         </h2>
 
         <p className="mb-6 text-sm text-[var(--hivelab-text-tertiary)]">
-          We had trouble loading this tool. It may have been moved or deleted.
+          We had trouble loading this app. It may have been moved or deleted.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -50,7 +50,7 @@ export default function ToolDetailError({
             className="workshop-btn gap-2"
           >
             <ArrowLeftIcon className="h-4 w-4" />
-            Browse tools
+            Browse apps
           </button>
         </div>
 

@@ -295,7 +295,7 @@ export function SetupDashboard({
         >
           <div className="flex items-center gap-2">
             <Wrench className="h-4 w-4 text-[var(--hive-text-secondary)]" />
-            <span className="font-medium text-[var(--hive-text-primary)]">Tools</span>
+            <span className="font-medium text-[var(--hive-text-primary)]">Apps</span>
             <span className="text-xs text-[var(--hive-text-subtle)]">
               {deployment.tools.filter(t => t.isVisible).length}/{deployment.tools.length} visible
             </span>

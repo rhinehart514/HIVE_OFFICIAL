@@ -147,7 +147,7 @@ function HoverActions({
             'hover:bg-[var(--color-accent-gold,#FFD700)]/20',
             'text-[var(--color-accent-gold,#FFD700)]'
           )}
-          title="Run tool"
+          title="Run app"
         >
           <PlayIcon className="w-3.5 h-3.5" />
         </button>

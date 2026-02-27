@@ -25,7 +25,12 @@ export const handleToolAction = inngest.createFunction(
   },
   { event: 'tool/action.executed' },
   async ({ event, step }) => {
-    const { toolId, deploymentId, elementId, action, userId, spaceId, campusId } = event.data;
+    const { toolId, deploymentId, elementId, action, userId, spaceId, campusId, depth } = event.data;
+
+    // Refuse to process if recursion depth exceeds limit
+    if (typeof depth === 'number' && depth > 5) {
+      return { triggered: 0, reason: 'max_depth_exceeded' };
+    }
 
     // Find automations for this deployment that match this event
     const automations = await step.run('fetch-automations', async () => {
@@ -51,23 +56,31 @@ export const handleToolAction = inngest.createFunction(
       if (trigger.elementId && trigger.elementId !== elementId) continue;
       if (trigger.eventName && trigger.eventName !== action) continue;
 
-      // Check rate limits
+      // Check rate limits using runs subcollection
       const canRun = await step.run(`check-rate-limit-${automation.id}`, async () => {
-        const runHistory = auto.runHistory as Array<{ timestamp: string }> | undefined;
         const maxRunsPerDay = (auto.maxRunsPerDay as number) || 100;
         const cooldownSeconds = (auto.cooldownSeconds as number) || 60;
 
         const now = Date.now();
-        const oneDayAgo = now - 86400000;
-        const recentRuns = (runHistory || []).filter(
-          r => new Date(r.timestamp).getTime() > oneDayAgo
-        );
+        const oneDayAgo = new Date(now - 86400000).toISOString();
 
-        if (recentRuns.length >= maxRunsPerDay) return false;
+        const docRef = dbAdmin.collection('tool_automations').doc(automation.id as string);
 
-        const lastRun = recentRuns[recentRuns.length - 1];
-        if (lastRun && now - new Date(lastRun.timestamp).getTime() < cooldownSeconds * 1000) {
-          return false;
+        // Count runs in the last 24 hours from the runs subcollection
+        const recentRunsSnapshot = await docRef
+          .collection('runs')
+          .where('timestamp', '>', oneDayAgo)
+          .orderBy('timestamp', 'desc')
+          .get();
+
+        if (recentRunsSnapshot.size >= maxRunsPerDay) return false;
+
+        // Check cooldown against most recent run
+        if (!recentRunsSnapshot.empty) {
+          const lastRunTimestamp = recentRunsSnapshot.docs[0].data().timestamp as string;
+          if (now - new Date(lastRunTimestamp).getTime() < cooldownSeconds * 1000) {
+            return false;
+          }
         }
 
         return true;
@@ -105,6 +118,7 @@ export const handleToolAction = inngest.createFunction(
             userId,
             spaceId,
             campusId,
+            depth: typeof depth === 'number' ? depth : 0,
           });
         });
       }
@@ -271,6 +285,7 @@ async function executeAutomationAction(
     userId: string;
     spaceId?: string;
     campusId: string;
+    depth?: number;
   }
 ): Promise<void> {
   const type = actionDef.type as string;
@@ -354,6 +369,7 @@ async function executeAutomationAction(
           action: eventName,
           userId: 'system',
           campusId: context.campusId,
+          depth: (context.depth ?? 0) + 1,
         },
       });
       break;

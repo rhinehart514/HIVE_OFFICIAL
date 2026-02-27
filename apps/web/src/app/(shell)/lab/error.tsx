@@ -29,11 +29,11 @@ export default function ToolsError({
         </div>
 
         <h2 className="mb-2 text-xl font-semibold text-foreground">
-          Unable to load tools
+          Unable to load apps
         </h2>
 
         <p className="mb-6 text-sm text-muted-foreground">
-          We had trouble loading HiveLab tools. This might be a temporary issue.
+          We had trouble loading HiveLab. This might be a temporary issue.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -47,7 +47,7 @@ export default function ToolsError({
             className="gap-2"
           >
             <WrenchIcon className="h-4 w-4" />
-            Create new tool
+            Create new app
           </Button>
         </div>
 

@@ -549,7 +549,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
               active={activeSection === 'tools'}
               onClick={() => setActiveSection('tools')}
               icon={<Wrench className="w-4 h-4" />}
-              label="Tools"
+              label="Apps"
             />
           )}
           {isLeader && (
@@ -1316,10 +1316,10 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                 className="text-title-lg font-semibold text-white mb-2"
                 style={{ fontFamily: 'var(--font-clash)' }}
               >
-                Tools
+                Apps
               </h2>
               <Text size="sm" tone="muted" className="mb-8">
-                Add tools to engage your members
+                Add apps to engage your members
               </Text>
 
               {/* Deployed tools list */}
@@ -1394,7 +1394,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       href={`/lab/new?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
                       className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/50 transition-colors"
                     >
-                      Build custom tools in HiveLab
+                      Build custom apps in HiveLab
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
@@ -1488,7 +1488,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                           Leave Space
                         </Text>
                         <Text size="sm" className="text-orange-400/70">
-                          You will lose access to this space's chat, events, and tools.
+                          You will lose access to this space's chat, events, and apps.
                           You can rejoin at any time if the space is public.
                         </Text>
                       </div>

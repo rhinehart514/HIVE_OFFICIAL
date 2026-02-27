@@ -169,7 +169,7 @@ const AddWidgetModal: React.FC<AddWidgetModalProps> = ({
     <Modal open={open} onOpenChange={handleOpenChange}>
       <ModalContent className="max-w-lg">
         <ModalHeader>
-          <ModalTitle>Add Tool</ModalTitle>
+          <ModalTitle>Add App</ModalTitle>
           <ModalDescription>
             Deploy a tool to enhance your space
           </ModalDescription>

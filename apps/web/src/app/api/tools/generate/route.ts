@@ -8,8 +8,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import {
   generateToolStream,
+  generateCodeToolStream,
   getAvailableBackend,
   type StreamMessage,
+  type CodeStreamMessage,
 } from '@/lib/goose-server';
 import { canGenerate, recordGeneration } from '@/lib/ai-usage-tracker';
 import { validateApiAuth } from '@/lib/middleware/auth';
@@ -22,6 +24,7 @@ import { z } from 'zod';
  */
 const GenerateToolRequestSchema = z.object({
   prompt: z.string().min(1).max(1000),
+  mode: z.enum(['composition', 'code']).default('code'),
   templateId: z.string().optional(),
   constraints: z.object({
     maxElements: z.number().optional(),
@@ -31,16 +34,23 @@ const GenerateToolRequestSchema = z.object({
   spaceContext: z.object({
     spaceId: z.string(),
     spaceName: z.string(),
-    spaceType: z.string().optional(), // 'club', 'dorm', 'class', 'organization', etc.
+    spaceType: z.string().optional(),
     category: z.string().optional(),
     memberCount: z.number().optional(),
     description: z.string().optional(),
   }).optional(),
-  // Iteration support - modify existing tool
+  // Iteration support - modify existing tool (composition mode)
   existingComposition: z.object({
     elements: z.array(z.any()),
     name: z.string().optional(),
   }).optional(),
+  // Iteration support - modify existing code (code mode)
+  existingCode: z.object({
+    html: z.string(),
+    css: z.string(),
+    js: z.string(),
+  }).optional(),
+  existingName: z.string().optional(),
   isIteration: z.boolean().optional(),
 });
 
@@ -118,43 +128,51 @@ export async function POST(request: NextRequest) {
 
     // Create streaming response
     const encoder = new TextEncoder();
+    const isCodeMode = validated.mode === 'code';
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const generator = generateToolStream({
-            prompt: validated.prompt,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            existingComposition: validated.existingComposition as any,
-            isIteration: validated.isIteration,
-            spaceContext: validated.spaceContext ? {
-              type: validated.spaceContext.spaceType,
-              memberCount: validated.spaceContext.memberCount,
-              name: validated.spaceContext.spaceName,
-            } : undefined,
-          }) as AsyncGenerator<StreamMessage>;
+          const generator: AsyncGenerator<StreamMessage | CodeStreamMessage> = isCodeMode
+            ? generateCodeToolStream({
+                prompt: validated.prompt,
+                existingCode: validated.existingCode,
+                existingName: validated.existingName,
+                isIteration: validated.isIteration,
+                spaceContext: validated.spaceContext ? {
+                  type: validated.spaceContext.spaceType,
+                  memberCount: validated.spaceContext.memberCount,
+                  name: validated.spaceContext.spaceName,
+                } : undefined,
+              })
+            : generateToolStream({
+                prompt: validated.prompt,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                existingComposition: validated.existingComposition as any,
+                isIteration: validated.isIteration,
+                spaceContext: validated.spaceContext ? {
+                  type: validated.spaceContext.spaceType,
+                  memberCount: validated.spaceContext.memberCount,
+                  name: validated.spaceContext.spaceName,
+                } : undefined,
+              }) as AsyncGenerator<StreamMessage>;
 
-          const mode = validated.isIteration ? 'iteration' : 'new';
-          logger.info(`Tool generation (${mode})`, {
+          const genMode = validated.isIteration ? 'iteration' : 'new';
+          logger.info(`Tool generation (${genMode}, ${validated.mode})`, {
             component: 'tools-generate',
-            provider: 'Rules-based generator',
-            backend: 'rules',
+            mode: validated.mode,
             groqAvailable,
             userId: userId || 'anonymous',
-            cost: '$0',
           });
 
           // Start streaming generation
           for await (const chunk of generator) {
-            // Format as newline-delimited JSON
             const data = JSON.stringify(chunk) + '\n';
             controller.enqueue(encoder.encode(data));
 
-            // If generation is complete, record usage and close stream
             if (chunk.type === 'complete') {
-              // Record usage for authenticated users
               if (userId) {
                 try {
-                  await recordGeneration(userId, 500); // Estimate ~500 tokens
+                  await recordGeneration(userId, isCodeMode ? 1000 : 500);
                   logger.debug('Recorded generation', { component: 'tools-generate', userId });
                 } catch (err) {
                   logger.error('Failed to record usage', { component: 'tools-generate' }, err instanceof Error ? err : undefined);
@@ -165,19 +183,16 @@ export async function POST(request: NextRequest) {
               return;
             }
 
-            // If error, close stream (don't count as usage)
             if (chunk.type === 'error') {
               controller.close();
               return;
             }
           }
 
-          // Close stream if loop exits without completion
           controller.close();
         } catch (error) {
           logger.error('Generation error', { component: 'tools-generate' }, error instanceof Error ? error : undefined);
 
-          // Send error chunk
           const errorChunk: StreamMessage = {
             type: 'error',
             data: { error: error instanceof Error ? error.message : 'Unknown error' }
@@ -233,7 +248,7 @@ export async function GET() {
   const { DEMO_PROMPTS } = await import('@hive/core');
   const availableBackend = await getAvailableBackend();
   const groqAvailable = availableBackend === 'groq';
-  const groqModel = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+  const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
   const is70b = groqModel.includes('70b');
 
   return NextResponse.json({

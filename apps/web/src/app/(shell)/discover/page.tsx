@@ -1296,7 +1296,7 @@ export default function DiscoverPage() {
                 </div>
               ) : tools.length === 0 ? (
                 <div className="py-12 text-center">
-                  <p className="text-[14px] text-white/40">No tools found</p>
+                  <p className="text-[14px] text-white/40">No apps found</p>
                   <p className="text-[12px] text-white/20 mt-1">Try a different search or category</p>
                 </div>
               ) : (

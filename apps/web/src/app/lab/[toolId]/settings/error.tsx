@@ -25,7 +25,7 @@ export default function ToolSettingsError({
           </div>
         </div>
         <h2 className="mb-2 text-xl font-semibold text-white">Settings unavailable</h2>
-        <p className="mb-6 text-sm text-white/50">Could not load tool settings.</p>
+        <p className="mb-6 text-sm text-white/50">Could not load app settings.</p>
         <Button onClick={() => reset()} className="gap-2">
           <ArrowPathIcon className="h-4 w-4" />
           Try again

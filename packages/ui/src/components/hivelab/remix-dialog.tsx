@@ -87,7 +87,7 @@ export function RemixDialog({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create tool');
+        throw new Error(data.error || 'Failed to create app');
       }
 
       const data = await response.json();
@@ -99,7 +99,7 @@ export function RemixDialog({
         onSuccess?.(data.tool.id, data.redirectUrl);
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create tool');
+      setError(err instanceof Error ? err.message : 'Failed to create app');
     } finally {
       setLoading(false);
     }
@@ -155,8 +155,8 @@ export function RemixDialog({
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
                 <CheckCircleIcon className="w-8 h-8 text-emerald-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Tool Created!</h3>
-              <p className="text-white/60 mb-4">Your tool is ready to customize.</p>
+              <h3 className="text-lg font-semibold text-white mb-2">App Created!</h3>
+              <p className="text-white/60 mb-4">Your app is ready to customize.</p>
               <button
                 onClick={() => {
                   if (createdToolId) {
@@ -249,7 +249,7 @@ export function RemixDialog({
                         'focus:outline-none focus:border-white/20'
                       )}
                     >
-                      <option value="">No space (personal tool)</option>
+                      <option value="">No space (personal app)</option>
                       {availableSpaces.map(space => (
                         <option key={space.id} value={space.id}>
                           {space.name}

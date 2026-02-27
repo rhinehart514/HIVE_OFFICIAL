@@ -10,6 +10,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import {
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 
@@ -93,6 +94,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
+  const campusId = getCampusId(req);
   const { toolId } = await params;
 
   const hasAccess = await verifyToolAccess(toolId, userId);
@@ -100,10 +102,19 @@ export const GET = withAuthAndErrors(async (
     return respond.error('Access denied', 'FORBIDDEN', { status: 403 });
   }
 
+  // Verify the tool belongs to the user's campus
+  const toolDoc = await dbAdmin.collection('tools').doc(toolId).get();
+  if (toolDoc.exists) {
+    const toolCampus = toolDoc.data()?.campusId;
+    if (campusId && toolCampus && toolCampus !== campusId) {
+      return respond.error('Access denied', 'FORBIDDEN', { status: 403 });
+    }
+  }
+
   const snapshot = await dbAdmin
     .collection('tool_automations')
     .where('toolId', '==', toolId)
-    .where('isActive', '!=', false)
+    .where('isActive', '==', true)
     .orderBy('createdAt', 'desc')
     .get();
 
@@ -126,6 +137,7 @@ export const POST = withAuthAndErrors(async (
 ) => {
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
+  const campusId = getCampusId(req);
   const { toolId } = await params;
 
   const hasAccess = await verifyToolAccess(toolId, userId);
@@ -145,22 +157,12 @@ export const POST = withAuthAndErrors(async (
 
   const { name, trigger, conditions, actions, limits } = parsed.data;
 
-  // Cap automations per tool at 20
-  const existingCount = await dbAdmin
-    .collection('tool_automations')
-    .where('toolId', '==', toolId)
-    .where('isActive', '!=', false)
-    .count()
-    .get();
-
-  if (existingCount.data().count >= 20) {
-    return respond.error('Maximum 20 automations per tool', 'LIMIT_EXCEEDED', { status: 400 });
-  }
-
+  // Atomic limit check + insert via transaction to prevent race conditions
   const now = new Date().toISOString();
   const automationData = {
     toolId,
     deploymentId: toolId, // Use toolId as default deploymentId for non-deployed tools
+    campusId,
     name,
     enabled: true,
     trigger,
@@ -171,14 +173,36 @@ export const POST = withAuthAndErrors(async (
     runCount: 0,
     errorCount: 0,
     isActive: true,
+    runHistory: [] as Array<{ timestamp: string }>,
     createdBy: userId,
     createdAt: now,
     updatedAt: now,
   };
 
-  const docRef = await dbAdmin.collection('tool_automations').add(automationData);
+  const newDocRef = dbAdmin.collection('tool_automations').doc();
+
+  let limitExceeded = false;
+  await dbAdmin.runTransaction(async (tx) => {
+    const existingSnapshot = await tx.get(
+      dbAdmin
+        .collection('tool_automations')
+        .where('toolId', '==', toolId)
+        .where('isActive', '==', true)
+    );
+
+    if (existingSnapshot.size >= 20) {
+      limitExceeded = true;
+      return;
+    }
+
+    tx.set(newDocRef, automationData);
+  });
+
+  if (limitExceeded) {
+    return respond.error('Maximum 20 automations per tool', 'LIMIT_EXCEEDED', { status: 400 });
+  }
 
   return respond.success({
-    automation: { id: docRef.id, ...automationData },
+    automation: { id: newDocRef.id, ...automationData },
   });
 });

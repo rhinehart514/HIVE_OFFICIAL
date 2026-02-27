@@ -464,7 +464,7 @@ export function HiveLabIDE({
 
       canvas.setElements(newElements);
       canvas.setConnections(newConnections);
-      setToolName(composition.name || 'Untitled Tool');
+      setToolName(composition.name || 'Untitled App');
       canvas.selectElements([]);
       pushHistory(`Load template: ${composition.name}`);
       setTemplateGalleryOpen(false);

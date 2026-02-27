@@ -15,7 +15,8 @@ import {
  */
 export async function createBlankTool(
   name: string,
-  description?: string
+  description?: string,
+  toolType: 'visual' | 'code' = 'code'
 ): Promise<string> {
   const response = await fetch('/api/tools', {
     method: 'POST',
@@ -25,7 +26,7 @@ export async function createBlankTool(
       name: name || 'Untitled Tool',
       description: description || '',
       status: 'draft',
-      type: 'visual',
+      type: toolType,
     }),
   });
 

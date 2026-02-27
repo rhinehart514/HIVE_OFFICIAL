@@ -19,13 +19,13 @@ const steps = [
   {
     num: '02',
     title: 'HIVE builds it instantly',
-    body: 'AI generates a fully functional tool — styled, interactive, ready to use. No dragging boxes around.',
+    body: 'AI generates a fully functional app — styled, interactive, ready to use. No dragging boxes around.',
     icon: Zap,
   },
   {
     num: '03',
     title: 'Deploy to your space',
-    body: 'One tap. Your tool is live in your org\'s space. Members see it, use it, and it just works.',
+    body: 'One tap. Your app is live in your org\'s space. Members see it, use it, and it just works.',
     icon: Share2,
   },
 ] as const;
@@ -138,10 +138,10 @@ export function ProductSection() {
               What you can build
             </span>
             <h2 className={`${clashDisplay} max-w-lg text-[clamp(28px,5vw,48px)] font-semibold tracking-tight text-white`}>
-              Real tools. Not templates.
+              Real apps. Not templates.
             </h2>
             <p className="mt-4 max-w-lg text-base text-white/40">
-              Every tool is generated from your description, fully interactive, and instantly deployable to your org&apos;s space.
+              Every app is generated from your description, fully interactive, and instantly deployable to your org&apos;s space.
             </p>
           </motion.div>
 

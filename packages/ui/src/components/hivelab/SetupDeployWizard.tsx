@@ -377,7 +377,7 @@ export function SetupDeployWizard({
         </div>
 
         <div>
-          <h4 className="text-sm font-medium text-[var(--hive-text-primary)] mb-2">Tools to Deploy</h4>
+          <h4 className="text-sm font-medium text-[var(--hive-text-primary)] mb-2">Apps to Deploy</h4>
           <div className="space-y-2">
             {selectedTemplate?.tools.map((tool) => (
               <div

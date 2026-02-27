@@ -99,7 +99,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
       await onDeploy(deploymentConfig);
       setStep('success');
     } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : 'Failed to deploy tool';
+      const errorMsg = e instanceof Error ? e.message : 'Failed to deploy app';
       setError(errorMsg);
       // Try to parse validation errors from the error message
       if (e instanceof Error && 'validationErrors' in (e as any)) {
@@ -361,7 +361,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
               </div>
               <div className="flex-1">
                 <p className="text-red-400 text-sm font-medium">
-                  {validationErrors.length > 0 ? 'Tool needs fixes before deploying' : 'Deployment failed'}
+                  {validationErrors.length > 0 ? 'App needs fixes before deploying' : 'Deployment failed'}
                 </p>
                 {validationErrors.length === 0 && (
                   <p className="text-red-400/80 text-sm mt-1">{error}</p>
@@ -391,7 +391,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
         <Card className="p-4">
           <h4 className="font-semibold text-[var(--hivelab-text-primary)] mb-2">Deployment Summary</h4>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-[var(--hivelab-text-secondary)]">Tool:</span><span className="text-[var(--hivelab-text-primary)] font-medium">{toolName}</span></div>
+            <div className="flex justify-between"><span className="text-[var(--hivelab-text-secondary)]">App:</span><span className="text-[var(--hivelab-text-primary)] font-medium">{toolName}</span></div>
             <div className="flex justify-between"><span className="text-[var(--hivelab-text-secondary)]">Target:</span><span className="text-[var(--hivelab-text-primary)] font-medium">{target?.name}</span></div>
             <div className="flex justify-between"><span className="text-[var(--hivelab-text-secondary)]">Visibility:</span><span className="text-[var(--hivelab-text-primary)] font-medium">{deploymentConfig.targetType === 'profile' ? (deploymentConfig.privacy?.inheritFromProfile ? 'Inherits from profile' : (deploymentConfig.privacy?.visibility || 'Public')) : (deploymentConfig.settings.showInDirectory ? 'Public' : 'Private')}</span></div>
           </div>
@@ -458,8 +458,8 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
           </div>
           <p className="text-sm text-[var(--hivelab-text-secondary)] mt-1">
             {isSpaceDeployment
-              ? 'Space members can now use this tool.'
-              : 'This tool is now visible on your profile.'}
+              ? 'Space members can now use this app.'
+              : 'This app is now visible on your profile.'}
           </p>
         </div>
 

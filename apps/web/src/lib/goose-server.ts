@@ -13,12 +13,58 @@ import {
   sanitizeComposition,
   buildSystemPrompt,
   buildCompactSystemPrompt,
+  buildCodeGenSystemPrompt,
   type ToolComposition,
 } from '@hive/core/hivelab/goose';
-import { generateObject } from 'ai';
+import { generateObject, generateText } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { z } from 'zod';
 import { logger } from './logger';
+
+// ═══════════════════════════════════════════════════════════════════
+// ELEMENT TYPE NORMALIZATION
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Maps common AI-hallucinated element type names to valid catalog types.
+ * Groq's structured output uses z.string() for type, so models can invent
+ * shorthand or suffixed variants. This catches them post-generation.
+ */
+const ELEMENT_TYPE_ALIASES: Record<string, string> = {
+  'counter-element': 'counter',
+  'poll': 'poll-element',
+  'rsvp': 'rsvp-button',
+  'countdown': 'countdown-timer',
+  'timer-element': 'timer',
+  'search': 'search-input',
+  'date': 'date-picker',
+  'chart': 'chart-display',
+  'gallery': 'photo-gallery',
+  'progress': 'progress-indicator',
+  'checklist': 'checklist-tracker',
+  'qr': 'qr-code-generator',
+  'qr-code': 'qr-code-generator',
+  'signup': 'signup-sheet',
+  'directory': 'directory-list',
+  'results': 'result-list',
+  'tags': 'tag-cloud',
+  'map': 'map-view',
+  'notifications': 'notification-center',
+  'members': 'member-list',
+  'events': 'space-events',
+  'listings': 'listing-board',
+  'matcher': 'match-maker',
+  'workflow': 'workflow-pipeline',
+  'table': 'data-table',
+  'custom': 'custom-block',
+  'stats': 'space-stats',
+  'feed': 'space-feed',
+  'heatmap': 'availability-heatmap',
+};
+
+function normalizeElementType(type: string): string {
+  return ELEMENT_TYPE_ALIASES[type] || type;
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -229,7 +275,7 @@ Generate the corrected composition. Keep what works, fix what doesn't.`,
     name: object.name,
     description: object.description,
     elements: object.elements.map(el => ({
-      type: el.type,
+      type: normalizeElementType(el.type),
       instanceId: el.instanceId,
       config: el.config,
       position: el.position,
@@ -283,7 +329,7 @@ async function callGroqStructured(
       name: object.name,
       description: object.description,
       elements: object.elements.map(el => ({
-        type: el.type,
+        type: normalizeElementType(el.type),
         instanceId: el.instanceId,
         config: el.config,
         position: el.position,
@@ -740,6 +786,7 @@ function applyIterationRules(
       const limitMatch = prompt.match(/(?:top|limit|show|max)\s*(\d+)/i);
       if (limitMatch) {
         if (newConfig.maxItems !== undefined) newConfig.maxItems = parseInt(limitMatch[1]);
+        if (newConfig.maxEntries !== undefined) newConfig.maxEntries = parseInt(limitMatch[1]);
         if (newConfig.maxAttendees !== undefined) newConfig.maxAttendees = parseInt(limitMatch[1]);
       }
 
@@ -831,13 +878,13 @@ function applyIterationRules(
   if (/\b(leaderboard|ranking|scoreboard|top\s*\d+|competition|contest)\b/.test(lowerPrompt)) {
     addNewElement('leaderboard', 'leaderboard_001', {
       title: analysis.eventName || titleCase(analysis.subject) || 'Leaderboard',
-      maxItems: extractNumber(lowerPrompt, /top\s*(\d+)/i) || 10,
+      maxEntries: extractNumber(lowerPrompt, /top\s*(\d+)/i) || 10,
       showRank: true,
     });
   }
 
   if (/\b(counter|tally|count|track\s*(?:a\s+)?number|how\s*many)\b/.test(lowerPrompt) && !/\b(countdown)\b/.test(lowerPrompt)) {
-    addNewElement('counter-element', 'counter_001', {
+    addNewElement('counter', 'counter_001', {
       label: titleCase(analysis.subject) || 'Count',
       initialValue: 0,
       step: 1,
@@ -1007,7 +1054,7 @@ function generateWithRules(
   if (wantsLeaderboard) {
     addElement('leaderboard', 'leaderboard_001', {
       title: analysis.eventName || titleCase(analysis.subject) || 'Leaderboard',
-      maxItems: extractNumber(lowerPrompt, /top\s*(\d+)/i) || 10,
+      maxEntries: extractNumber(lowerPrompt, /top\s*(\d+)/i) || 10,
       showRank: true,
     });
   }
@@ -1015,7 +1062,7 @@ function generateWithRules(
   // ── Counter ───────────────────────────────────────────────────
   const wantsCounter = /\b(counter|tally|count|track\s*(?:a\s+)?number|how\s*many)\b/.test(lowerPrompt);
   if (wantsCounter && !wantsCountdown) {
-    addElement('counter-element', 'counter_001', {
+    addElement('counter', 'counter_001', {
       label: titleCase(analysis.subject) || 'Count',
       initialValue: 0,
       step: 1,
@@ -1284,7 +1331,7 @@ function generateMultiPageWithRules(
     // Page 3: Confirmation
     if (pageCount >= 3) {
       const confirmPage = makePage(2, 'Confirmation');
-      addToPage(confirmPage, 'counter-element', 'confirm_counter', {
+      addToPage(confirmPage, 'counter', 'confirm_counter', {
         label: 'Registered',
         initialValue: 0,
         step: 1,
@@ -1338,7 +1385,7 @@ function generateMultiPageWithRules(
 
       if (i === 0) {
         // First page: informational element
-        addToPage(page, 'counter-element', `counter_p${i}`, {
+        addToPage(page, 'counter', `counter_p${i}`, {
           label: titleCase(analysis.subject) || 'Step 1',
           initialValue: 0,
           step: 1,
@@ -1423,7 +1470,7 @@ function generateDescription(
   if (types.includes('rsvp-button')) parts.push('RSVP');
   if (types.includes('countdown-timer')) parts.push('countdown');
   if (types.includes('leaderboard')) parts.push('leaderboard');
-  if (types.includes('counter-element')) parts.push('counter');
+  if (types.includes('counter')) parts.push('counter');
   if (types.includes('form-builder')) parts.push('form');
   if (types.includes('checklist-tracker')) parts.push('checklist');
   if (types.includes('signup-sheet')) parts.push('sign-up sheet');
@@ -1733,4 +1780,247 @@ export async function* generateToolStream(
 export async function getAvailableBackend(): Promise<GooseBackend> {
   const config = getGooseConfig();
   return config.groqApiKey ? 'groq' : 'rules';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CODE GENERATION (Generative App Platform)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Zod schema for code-based tool output.
+ * AI generates HTML/CSS/JS that runs inside CustomBlockRenderer.
+ */
+const CodeToolSchema = z.object({
+  reasoning: z.string().describe(
+    'Think about what the student actually needs. What social dynamics are at play? Who are the actors? 2-4 sentences.'
+  ),
+  name: z.string().describe('Short app name, 2-4 words'),
+  description: z.string().describe('One sentence: what it does for the group'),
+  code: z.object({
+    html: z.string().describe('Semantic HTML — the app UI'),
+    css: z.string().describe('Styles using HIVE design tokens (CSS custom properties)'),
+    js: z.string().describe('App logic using HIVE SDK (window.HIVE)'),
+  }),
+});
+
+export interface CodeGenerateRequest {
+  prompt: string;
+  existingCode?: { html: string; css: string; js: string };
+  existingName?: string;
+  isIteration?: boolean;
+  spaceContext?: SpaceContext;
+}
+
+export interface CodeStreamMessage {
+  type: 'thinking' | 'code' | 'complete' | 'error';
+  data: unknown;
+}
+
+interface CodeToolResult {
+  reasoning: string;
+  name: string;
+  description: string;
+  code: { html: string; css: string; js: string };
+  _outcomeId?: string;
+}
+
+/**
+ * Generate a code-based tool using Groq structured output.
+ * Falls back to a starter template if Groq is unavailable.
+ */
+export async function generateCodeTool(
+  request: CodeGenerateRequest
+): Promise<CodeToolResult> {
+  const config = getGooseConfig();
+
+  let promptPrefix = '';
+  if (request.spaceContext) {
+    const sc = request.spaceContext;
+    const parts: string[] = [];
+    if (sc.name) parts.push(`Space: "${sc.name}"`);
+    if (sc.type) parts.push(`Type: ${sc.type}`);
+    if (sc.memberCount) parts.push(`${sc.memberCount} members`);
+    if (parts.length > 0) {
+      promptPrefix = `Context: ${parts.join(', ')}. Consider this when designing.\n\n`;
+    }
+  }
+
+  const enhancedPrompt = promptPrefix + request.prompt;
+  const systemPrompt = buildCodeGenSystemPrompt({
+    existingCode: request.existingCode,
+    isIteration: request.isIteration,
+  });
+
+  // Try Groq text generation with JSON parsing
+  if (config.groqApiKey) {
+    try {
+      const groq = createGroq({ apiKey: config.groqApiKey });
+
+      const jsonInstructions = `\n\nRespond with ONLY a valid JSON object (no markdown, no code fences) matching this exact structure:
+{
+  "reasoning": "your reasoning about the design",
+  "name": "short app name",
+  "description": "one-line description",
+  "code": {
+    "html": "the HTML markup",
+    "css": "the CSS styles",
+    "js": "the JavaScript code"
+  }
+}`;
+
+      const { text } = await generateText({
+        model: groq(config.groqModel),
+        system: systemPrompt + jsonInstructions,
+        prompt: request.isIteration
+          ? `User request: "${enhancedPrompt}"\n\nApply this modification. Preserve what works, change what needs changing.`
+          : enhancedPrompt,
+        temperature: 0.3,
+        maxOutputTokens: 4096,
+      });
+
+      // Parse JSON from response (strip markdown fences if present)
+      const jsonStr = text.replace(/^```(?:json)?\s*/m, '').replace(/\s*```$/m, '').trim();
+      const object = CodeToolSchema.parse(JSON.parse(jsonStr));
+
+      const result: CodeToolResult = {
+        reasoning: object.reasoning,
+        name: object.name || request.existingName || 'Untitled',
+        description: object.description,
+        code: {
+          html: object.code.html,
+          css: object.code.css,
+          js: object.code.js,
+        },
+      };
+
+      // Write outcome tracking
+      const outcomeId = await writeGenerationOutcome({
+        prompt: request.prompt,
+        reasoning: object.reasoning,
+        spaceContext: request.spaceContext,
+        composition: {
+          elementTypes: ['code-app'],
+          connectionCount: 0,
+          elementCount: 1,
+        },
+        validated: false,
+        validationPassed: false,
+        revised: false,
+        outcome: {
+          kept: true,
+          iterationCount: 0,
+          deployed: false,
+          usedByOthers: 0,
+        },
+        createdAt: new Date(),
+      });
+
+      if (outcomeId) result._outcomeId = outcomeId;
+
+      logger.info('Code generation succeeded', {
+        component: 'goose-server',
+        mode: 'code',
+        name: result.name,
+        isIteration: !!request.isIteration,
+      });
+
+      return result;
+    } catch (err) {
+      logger.warn('Code generation via Groq failed, using starter template', {
+        component: 'goose-server',
+        error: err instanceof Error ? err.message : 'unknown',
+      });
+    }
+  }
+
+  // Fallback: generate a starter template when Groq is unavailable
+  const name = request.existingName || titleCase(
+    request.prompt.split(/\s+/).slice(0, 4).join(' ')
+  ) || 'New App';
+
+  return {
+    reasoning: 'Groq unavailable — generated starter template. Edit the code to build your app.',
+    name,
+    description: `App for: ${request.prompt.slice(0, 100)}`,
+    code: {
+      html: `<div id="app">
+  <h2>${name}</h2>
+  <p id="status" class="hive-text-sm">Loading...</p>
+  <div id="content" class="hive-card" style="padding: var(--hive-space-lg); margin-top: var(--hive-space-md);"></div>
+</div>`,
+      css: `#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--hive-space-lg);
+  font-family: var(--hive-font-sans);
+}
+h2 {
+  color: var(--hive-color-text);
+  margin-bottom: var(--hive-space-sm);
+}`,
+      js: `(async function() {
+  const ctx = await HIVE.getContext();
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+
+  statusEl.textContent = 'Welcome, ' + (ctx.displayName || 'friend') + '!';
+
+  function render(state) {
+    const data = state?.shared || {};
+    contentEl.textContent = JSON.stringify(data, null, 2) || 'No data yet';
+  }
+
+  HIVE.onStateChange(render);
+  const state = await HIVE.getState();
+  render(state);
+})();`,
+    },
+  };
+}
+
+/**
+ * Streaming wrapper for code generation.
+ * Yields thinking → code → complete messages.
+ */
+export async function* generateCodeToolStream(
+  request: CodeGenerateRequest
+): AsyncGenerator<CodeStreamMessage> {
+  yield { type: 'thinking', data: { message: 'Designing your app...' } };
+
+  try {
+    const result = await generateCodeTool(request);
+
+    yield {
+      type: 'thinking',
+      data: { message: result.reasoning },
+    };
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    yield {
+      type: 'code',
+      data: {
+        name: result.name,
+        description: result.description,
+        code: result.code,
+      },
+    };
+
+    yield {
+      type: 'complete',
+      data: {
+        name: result.name,
+        description: result.description,
+        generationOutcomeId: result._outcomeId || null,
+      },
+    };
+  } catch (error) {
+    yield {
+      type: 'error',
+      data: {
+        message: error instanceof Error ? error.message : 'Code generation failed',
+        code: 'CODE_GENERATION_ERROR',
+      },
+    };
+  }
 }

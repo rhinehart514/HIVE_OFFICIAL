@@ -25,7 +25,7 @@ export default function ToolAnalyticsError({
           </div>
         </div>
         <h2 className="mb-2 text-xl font-semibold text-white">Analytics unavailable</h2>
-        <p className="mb-6 text-sm text-white/50">Could not load tool analytics.</p>
+        <p className="mb-6 text-sm text-white/50">Could not load analytics.</p>
         <Button onClick={() => reset()} className="gap-2">
           <ArrowPathIcon className="h-4 w-4" />
           Try again

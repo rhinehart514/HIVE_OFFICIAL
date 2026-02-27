@@ -53,9 +53,9 @@ type GenerationPhase =
 const PHASE_MESSAGES: Record<GenerationPhase, string> = {
   idle: '',
   understanding: 'Understanding your request...',
-  designing: 'Designing your tool...',
+  designing: 'Designing your app...',
   adding: '', // Dynamic: "Adding [Element Name]..."
-  completing: 'Your tool is ready.',
+  completing: 'Your app is ready.',
   complete: 'Edit to refine.',
 };
 

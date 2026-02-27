@@ -58,8 +58,14 @@ interface ToolData {
 }
 
 async function fetchToolForInline(toolId: string): Promise<ToolData> {
-  const res = await fetch(`/api/tools/${toolId}`, { credentials: 'include' });
-  if (!res.ok) throw new Error('Failed to load');
+  let res: Response;
+  try {
+    res = await fetch(`/api/tools/${toolId}`, { credentials: 'include' });
+  } catch {
+    throw new Error('network');
+  }
+  if (res.status === 404) throw new Error('not_found');
+  if (!res.ok) throw new Error('server');
   const result = await res.json();
   return result.data || result;
 }
@@ -114,9 +120,14 @@ export function ToolCanvasInline({ toolId, onAddToSpace }: ToolCanvasInlineProps
   }
 
   if (error || !tool) {
+    const errMsg = error instanceof Error ? error.message : '';
+    const label =
+      errMsg === 'not_found' ? 'This app no longer exists' :
+      errMsg === 'network' ? 'Network error — check your connection' :
+      'Something went wrong loading this app';
     return (
       <div className="py-6 text-center">
-        <p className="text-[13px] text-white/30">Couldn&apos;t load this one</p>
+        <p className="text-[13px] text-white/30">{label}</p>
       </div>
     );
   }

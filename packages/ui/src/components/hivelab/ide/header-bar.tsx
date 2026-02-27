@@ -100,7 +100,7 @@ export function HeaderBar({
   const handleNameSubmit = () => {
     setEditingName(false);
     if (localName.trim() !== toolName) {
-      onToolNameChange(localName.trim() || 'Untitled Tool');
+      onToolNameChange(localName.trim() || 'Untitled App');
     }
   };
 
@@ -226,7 +226,7 @@ export function HeaderBar({
                   color: 'var(--hivelab-text-primary)',
                 }}
                 autoFocus
-                placeholder="Tool name..."
+                placeholder="App name..."
               />
             </motion.div>
           ) : (
@@ -253,7 +253,7 @@ export function HeaderBar({
               }}
             >
               <span className="font-medium text-sm truncate max-w-[200px]">
-                {toolName || 'Untitled Tool'}
+                {toolName || 'Untitled App'}
               </span>
               {hasUnsavedChanges && (
                 <span
@@ -512,7 +512,7 @@ export function HeaderBar({
                       }}
                     >
                       <Cog6ToothIcon className="h-4 w-4" />
-                      Tool Settings
+                      App Settings
                     </button>
                   )}
 

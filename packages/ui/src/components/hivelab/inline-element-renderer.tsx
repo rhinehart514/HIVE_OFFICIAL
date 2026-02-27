@@ -699,7 +699,7 @@ function DeploymentRenderer({
           >
             <BoltIcon className="h-5 w-5 text-muted-foreground/50" />
           </motion.div>
-          <span className="text-sm text-muted-foreground">This tool is no longer active</span>
+          <span className="text-sm text-muted-foreground">This app is no longer active</span>
         </div>
       </motion.div>
     );

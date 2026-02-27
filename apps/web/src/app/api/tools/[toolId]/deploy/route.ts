@@ -392,38 +392,38 @@ export const POST = withAuthValidationAndErrors(
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp() });
 
-    // Emit deployment event to Inngest for durable notification delivery
-    try {
-      const { inngest } = await import('@/lib/inngest/client');
+    // Gather member IDs for notification targeting (fetched once, used by both Inngest and fallback paths)
+    const [deployerDoc, membersByStatus, membersByIsActive] = await Promise.all([
+      db.collection('users').doc(userId).get(),
+      db
+        .collection('spaceMembers')
+        .where('spaceId', '==', spaceId)
+        .where('status', '==', 'active')
+        .get(),
+      db
+        .collection('spaceMembers')
+        .where('spaceId', '==', spaceId)
+        .where('isActive', '==', true)
+        .get(),
+    ]);
 
-      // Gather member IDs for notification targeting
-      const [deployerDoc, membersByStatus, membersByIsActive] = await Promise.all([
-        db.collection('users').doc(userId).get(),
-        db
-          .collection('spaceMembers')
-          .where('spaceId', '==', spaceId)
-          .where('status', '==', 'active')
-          .get(),
-        db
-          .collection('spaceMembers')
-          .where('spaceId', '==', spaceId)
-          .where('isActive', '==', true)
-          .get(),
-      ]);
-
-      const memberIds = new Set<string>();
-      for (const doc of [...membersByStatus.docs, ...membersByIsActive.docs]) {
-        const memberId = doc.data()?.userId as string | undefined;
-        if (memberId) {
-          memberIds.add(memberId);
-        }
+    const memberIds = new Set<string>();
+    for (const doc of [...membersByStatus.docs, ...membersByIsActive.docs]) {
+      const memberId = doc.data()?.userId as string | undefined;
+      if (memberId) {
+        memberIds.add(memberId);
       }
+    }
 
-      if (memberIds.size > 0) {
-        const deployerName =
-          (deployerDoc.data()?.displayName as string | undefined) ||
-          (deployerDoc.data()?.fullName as string | undefined) ||
-          'Someone';
+    const deployerName =
+      (deployerDoc.data()?.displayName as string | undefined) ||
+      (deployerDoc.data()?.fullName as string | undefined) ||
+      'Someone';
+
+    // Emit deployment event to Inngest for durable notification delivery
+    if (memberIds.size > 0) {
+      try {
+        const { inngest } = await import('@/lib/inngest/client');
 
         await inngest.send({
           name: 'tool/deployed',
@@ -438,22 +438,9 @@ export const POST = withAuthValidationAndErrors(
             memberIds: Array.from(memberIds),
           },
         });
-      }
-    } catch (notifyError) {
-      // Fall back to direct notification if Inngest unavailable
-      try {
-        const [deployerDoc, membersByStatus, membersByIsActive] = await Promise.all([
-          db.collection('users').doc(userId).get(),
-          db.collection('spaceMembers').where('spaceId', '==', spaceId).where('status', '==', 'active').get(),
-          db.collection('spaceMembers').where('spaceId', '==', spaceId).where('isActive', '==', true).get(),
-        ]);
-        const memberIds = new Set<string>();
-        for (const doc of [...membersByStatus.docs, ...membersByIsActive.docs]) {
-          const memberId = doc.data()?.userId as string | undefined;
-          if (memberId) memberIds.add(memberId);
-        }
-        if (memberIds.size > 0) {
-          const deployerName = (deployerDoc.data()?.displayName as string | undefined) || (deployerDoc.data()?.fullName as string | undefined) || 'Someone';
+      } catch (notifyError) {
+        // Fall back to direct notification if Inngest unavailable
+        try {
           await notifyToolDeployed({
             memberIds: Array.from(memberIds),
             deployedByUserId: userId,
@@ -463,12 +450,12 @@ export const POST = withAuthValidationAndErrors(
             spaceId,
             spaceName: (spaceData?.name as string | undefined) || 'a space',
           });
+        } catch (fallbackError) {
+          logger.warn('Failed to send deployment notifications', {
+            toolId, spaceId,
+            error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+          });
         }
-      } catch (fallbackError) {
-        logger.warn('Failed to send deployment notifications', {
-          toolId, spaceId,
-          error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
-        });
       }
     }
 

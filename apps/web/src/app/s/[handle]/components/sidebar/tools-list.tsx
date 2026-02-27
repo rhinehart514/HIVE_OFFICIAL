@@ -82,7 +82,7 @@ export function ToolsList({
           )}
         >
           <Plus className="w-4 h-4" />
-          <span className="text-sm">Add tool</span>
+          <span className="text-sm">Add app</span>
         </button>
       )}
 
@@ -90,7 +90,7 @@ export function ToolsList({
       {tools.length === 0 && isLeader && (
         <div className="text-center py-4">
           <Wrench className="w-5 h-5 text-white/50 mx-auto mb-2" />
-          <p className="text-xs text-white mb-2">Build tools for your org</p>
+          <p className="text-xs text-white mb-2">Build apps for your org</p>
           <p className="text-xs text-white/50">Track dues, collect RSVPs, run polls...</p>
         </div>
       )}
@@ -99,7 +99,7 @@ export function ToolsList({
       {tools.length === 0 && !isLeader && (
         <div className="text-center py-4">
           <Wrench className="w-5 h-5 text-white/50 mx-auto mb-2" />
-          <p className="text-xs text-white/50">No tools yet</p>
+          <p className="text-xs text-white/50">No apps yet</p>
         </div>
       )}
 
@@ -115,7 +115,7 @@ export function ToolsList({
         )}
       >
         <Compass className="w-3.5 h-3.5" />
-        <span>Browse more tools</span>
+        <span>Browse more apps</span>
       </Link>
     </div>
   );

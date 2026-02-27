@@ -66,47 +66,58 @@ async function handlePollVote(
   if (!optionId) throw new Error("optionId is required for vote action");
 
   const allowChangeVote = toolConfig?.allowChangeVote === true;
-  const selections = (userState.selections ?? {}) as Record<string, unknown>;
-  const prevVote = selections[`${elementId}:selectedOption`] as string | undefined;
-
-  if (prevVote && !allowChangeVote) {
-    throw new Error("You have already voted and changing vote is not allowed");
-  }
 
   const db = dbAdmin;
   const now = new Date().toISOString();
 
-  // Build counter deltas
-  const counterDeltas: Record<string, number> = {};
-  counterDeltas[`${elementId}:${optionId}`] = 1;
-  if (prevVote && prevVote !== optionId) {
-    counterDeltas[`${elementId}:${prevVote}`] = -1;
-  }
-
-  // Persist shared state (atomic counter increments)
   const sharedRef = db.collection("tool_states").doc(sharedDocId(toolId, deploymentId));
-  const counterUpdates: Record<string, admin.firestore.FieldValue> = {};
-  for (const [key, delta] of Object.entries(counterDeltas)) {
-    counterUpdates[`counters.${key}`] = admin.firestore.FieldValue.increment(delta);
-  }
-  await sharedRef.set(
-    { ...counterUpdates, version: admin.firestore.FieldValue.increment(1), lastModified: now },
-    { merge: true }
-  );
-
-  // Persist user state
   const userRef = db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId));
-  await userRef.set(
-    {
-      [`selections.${elementId}:selectedOption`]: optionId,
-      [`participation.${elementId}:voted`]: true,
-      lastModified: now,
-    },
-    { merge: true }
-  );
+
+  // Wrap entire poll vote in a transaction so prevVote check + counter updates are atomic
+  const result = await db.runTransaction(async (tx) => {
+    const userDoc = await tx.get(userRef);
+    const userData = userDoc.exists ? (userDoc.data() ?? {}) : {};
+    const selections = (userData.selections ?? {}) as Record<string, unknown>;
+    const prevVote = selections[`${elementId}:selectedOption`] as string | undefined;
+
+    if (prevVote && !allowChangeVote) {
+      throw new Error("You have already voted and changing vote is not allowed");
+    }
+
+    // Build counter deltas
+    const counterDeltas: Record<string, number> = {};
+    counterDeltas[`${elementId}:${optionId}`] = 1;
+    if (prevVote && prevVote !== optionId) {
+      counterDeltas[`${elementId}:${prevVote}`] = -1;
+    }
+
+    // Update shared state counters atomically
+    const counterUpdates: Record<string, admin.firestore.FieldValue> = {};
+    for (const [key, delta] of Object.entries(counterDeltas)) {
+      counterUpdates[`counters.${key}`] = admin.firestore.FieldValue.increment(delta);
+    }
+    tx.set(
+      sharedRef,
+      { ...counterUpdates, version: admin.firestore.FieldValue.increment(1), lastModified: now },
+      { merge: true }
+    );
+
+    // Update user state
+    tx.set(
+      userRef,
+      {
+        [`selections.${elementId}:selectedOption`]: optionId,
+        [`participation.${elementId}:voted`]: true,
+        lastModified: now,
+      },
+      { merge: true }
+    );
+
+    return { counterDeltas };
+  });
 
   return {
-    sharedStateUpdate: { counterDeltas },
+    sharedStateUpdate: { counterDeltas: result.counterDeltas },
     userStateUpdate: {
       selections: { [`${elementId}:selectedOption`]: optionId },
       participation: { [`${elementId}:voted`]: true },
@@ -1623,6 +1634,101 @@ interface ExecuteResult {
 }
 
 // ============================================================================
+// Custom Block Handler (Code Apps)
+// ============================================================================
+
+/**
+ * Generic state handler for custom-block / code-generated apps.
+ * The HIVE SDK calls setState({ personal: {...}, shared: {...} }) —
+ * we persist both to Firestore and return proper deltas so the client
+ * merges them into React state and pushes back to the iframe.
+ */
+async function handleCustomBlockAction(
+  toolId: string,
+  deploymentId: string,
+  elementId: string,
+  action: string,
+  data: Record<string, unknown>,
+  userId: string,
+): Promise<ExecuteResult> {
+  const db = dbAdmin;
+  const now = new Date().toISOString();
+
+  // update_state: the primary action from HIVE.setState()
+  if (action === 'update_state') {
+    const personalUpdates = (data.personal ?? {}) as Record<string, unknown>;
+    const sharedUpdates = (data.shared ?? {}) as Record<string, unknown>;
+
+    const result: ExecuteResult = {};
+
+    // Write shared state updates
+    if (Object.keys(sharedUpdates).length > 0) {
+      const sharedRef = db.collection("tool_states").doc(sharedDocId(toolId, deploymentId));
+
+      // Flatten shared updates into counter-style keys for RTDB compatibility
+      const counterDeltas: Record<string, number> = {};
+      const computedUpdates: Record<string, unknown> = {};
+
+      for (const [key, value] of Object.entries(sharedUpdates)) {
+        if (typeof value === 'number') {
+          counterDeltas[`${elementId}:${key}`] = value;
+        } else {
+          computedUpdates[`${elementId}:${key}`] = value;
+        }
+      }
+
+      // Write all shared updates as a flat merge under the element's namespace
+      const firestoreUpdates: Record<string, unknown> = { lastModified: now };
+      for (const [key, value] of Object.entries(sharedUpdates)) {
+        firestoreUpdates[`counters.${elementId}:${key}`] = value;
+      }
+      await sharedRef.set(firestoreUpdates, { merge: true });
+
+      result.sharedStateUpdate = {};
+      if (Object.keys(counterDeltas).length > 0) {
+        result.sharedStateUpdate.counterDeltas = counterDeltas;
+      }
+      if (Object.keys(computedUpdates).length > 0) {
+        result.sharedStateUpdate.computedUpdates = computedUpdates;
+      }
+    }
+
+    // Write personal state updates
+    if (Object.keys(personalUpdates).length > 0) {
+      const userRef = db.collection("tool_states").doc(userDocId(toolId, deploymentId, userId));
+
+      const userFirestoreUpdates: Record<string, unknown> = { lastModified: now };
+      for (const [key, value] of Object.entries(personalUpdates)) {
+        userFirestoreUpdates[`selections.${elementId}:${key}`] = value;
+      }
+      await userRef.set(userFirestoreUpdates, { merge: true });
+
+      result.userStateUpdate = {
+        selections: Object.fromEntries(
+          Object.entries(personalUpdates).map(([k, v]) => [`${elementId}:${k}`, v])
+        ),
+      };
+    }
+
+    return result;
+  }
+
+  // execute_action: custom actions defined in the app's manifest
+  // Fall through to timeline recording
+  return {
+    sharedStateUpdate: {
+      timelineAppend: [{
+        elementInstanceId: elementId,
+        eventType: action,
+        userId,
+        timestamp: now,
+        data,
+      }],
+    },
+  };
+}
+
+// ============================================================================
 // Tag Cloud Handler
 // ============================================================================
 
@@ -2242,6 +2348,15 @@ export const POST = withAuthAndErrors(async (
         );
         break;
 
+      // Registry ID: custom-block (code apps)
+      case "custom-block":
+      case "custom_block":
+        result = await handleCustomBlockAction(
+          toolId, effectiveDeploymentId, elementId,
+          action, data as Record<string, unknown>, userId
+        );
+        break;
+
       default:
         // Generic fallback: record action in timeline
         result = {
@@ -2261,37 +2376,46 @@ export const POST = withAuthAndErrors(async (
     return respond.error(message, "ACTION_FAILED", { status: 400 });
   }
 
-  // Broadcast shared state to Firebase RTDB for real-time listeners (non-blocking)
+  // Broadcast shared state to Firebase RTDB for real-time listeners (fire-and-forget with timeout)
   if (effectiveDeploymentId !== "standalone") {
-    try {
-      const rtdb = admin.database();
-      const rtdbRef = rtdb.ref(`tool_state/${effectiveDeploymentId}`);
+    const rtdbBroadcast = async () => {
+      try {
+        const rtdb = admin.database();
+        const rtdbRef = rtdb.ref(`tool_state/${effectiveDeploymentId}`);
 
-      // Read the updated shared state (just counters + collections — the hot path)
-      const updatedShared = await getSharedState(toolId, effectiveDeploymentId);
-      const counters = (updatedShared as Record<string, unknown>).counters ?? {};
-      const collections = (updatedShared as Record<string, unknown>).collections ?? {};
+        const updatedShared = await getSharedState(toolId, effectiveDeploymentId);
+        const counters = (updatedShared as Record<string, unknown>).counters ?? {};
+        const collections = (updatedShared as Record<string, unknown>).collections ?? {};
 
-      await rtdbRef.update({
-        counters,
-        collections,
-        metadata: {
-          version: (updatedShared as Record<string, unknown>).version ?? 1,
-          lastModified: new Date().toISOString(),
-          broadcastAt: Date.now(),
-          deploymentId: effectiveDeploymentId,
-          toolId,
-        },
-      });
-    } catch {
-      // RTDB broadcast failed — don't block the action response
-    }
+        const timeoutMs = 3000;
+        await Promise.race([
+          rtdbRef.update({
+            counters,
+            collections,
+            metadata: {
+              version: (updatedShared as Record<string, unknown>).version ?? 1,
+              lastModified: new Date().toISOString(),
+              broadcastAt: Date.now(),
+              deploymentId: effectiveDeploymentId,
+              toolId,
+            },
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('RTDB timeout')), timeoutMs)),
+        ]);
+      } catch {
+        // RTDB broadcast failed — don't block the action response
+      }
+    };
+    // Don't await — fire and forget
+    rtdbBroadcast();
   }
 
-  // Emit event for Inngest automation engine (non-blocking)
-  try {
-    const { inngest } = await import('@/lib/inngest/client');
-    await inngest.send({
+  // Return response immediately — all post-action work is fire-and-forget
+  const response = respond.success({ result });
+
+  // Emit event for Inngest automation engine (fire-and-forget)
+  import('@/lib/inngest/client').then(({ inngest }) => {
+    inngest.send({
       name: 'tool/action.executed',
       data: {
         toolId,
@@ -2304,10 +2428,8 @@ export const POST = withAuthAndErrors(async (
         sharedStateUpdate: result?.sharedStateUpdate,
         userStateUpdate: result?.userStateUpdate,
       },
-    });
-  } catch {
-    // Inngest not configured or unavailable — don't block the action
-  }
+    }).catch(() => {});
+  }).catch(() => {});
 
   // Track generation outcome — increment usedByOthers for non-owner interactions
   const toolOwnerId = (tool.ownerId || tool.createdBy) as string | undefined;
@@ -2320,5 +2442,5 @@ export const POST = withAuthAndErrors(async (
     }).catch(() => {});
   }
 
-  return respond.success({ result });
+  return response;
 });

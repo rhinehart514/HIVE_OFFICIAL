@@ -160,7 +160,7 @@ function EmptyState({
       {isLeader ? (
         <>
           <Text size="sm" className="text-white/50 mb-1">
-            Add tools for your space
+            Add apps for your space
           </Text>
           <Text size="xs" className="text-white/50 mb-3">
             Polls, RSVPs, countdowns, and more
@@ -178,13 +178,13 @@ function EmptyState({
               )}
             >
               <PlusIcon className="w-3.5 h-3.5" />
-              Build a tool
+              Build an app
             </button>
           )}
         </>
       ) : (
         <Text size="sm" className="text-white/50">
-          No tools yet
+          No apps yet
         </Text>
       )}
     </div>
@@ -218,7 +218,7 @@ function SectionHeader({
           weight="medium"
           className="uppercase tracking-wider text-white/50 group-hover:text-white/50 transition-colors"
         >
-          Pinned Tools
+          Pinned Apps
         </Text>
         {toolCount > 0 && (
           <span className="px-1.5 py-0.5 text-label-xs font-medium rounded bg-white/[0.06] text-white/50">
@@ -388,7 +388,7 @@ export function SidebarToolSection({
                 whileTap={{ scale: 0.98 }}
               >
                 <PlusIcon className="w-4 h-4" />
-                <Text size="sm">Add tool</Text>
+                <Text size="sm">Add app</Text>
               </motion.button>
             )}
           </motion.div>

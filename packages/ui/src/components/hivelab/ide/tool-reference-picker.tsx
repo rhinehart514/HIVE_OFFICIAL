@@ -359,7 +359,7 @@ export function ToolReferencePicker({
                     <div className="p-2 space-y-1">
                       {tools.length === 0 ? (
                         <div className="py-6 text-center text-xs" style={{ color: COLORS.textTertiary }}>
-                          No tools available
+                          No apps available
                         </div>
                       ) : (
                         tools.map((tool) => (
@@ -411,7 +411,7 @@ export function ToolReferencePicker({
                         )}
                         style={{ color: COLORS.textTertiary }}
                       >
-                        ← Back to tools
+                        ← Back to apps
                       </button>
 
                       {/* Tool name header */}

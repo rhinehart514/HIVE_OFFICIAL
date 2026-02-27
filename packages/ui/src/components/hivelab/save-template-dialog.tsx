@@ -192,7 +192,7 @@ export function SaveTemplateDialog({
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-white">Save as Template</h2>
-                <p className="text-sm text-white/50">Share this tool with the community</p>
+                <p className="text-sm text-white/50">Share this app with the community</p>
               </div>
             </div>
             <button
@@ -210,7 +210,7 @@ export function SaveTemplateDialog({
                 <CheckCircleIcon className="w-8 h-8 text-emerald-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Template Published!</h3>
-              <p className="text-white/60">Your tool is now available in the template gallery.</p>
+              <p className="text-white/60">Your app is now available in the template gallery.</p>
             </div>
           ) : (
             <>

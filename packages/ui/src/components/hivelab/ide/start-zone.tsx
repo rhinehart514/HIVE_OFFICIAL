@@ -127,7 +127,7 @@ export function StartZone({
             What would you like to build?
           </h2>
           <p className="text-[var(--hivelab-text-secondary)] text-base">
-            Create tools your community will love
+            Create apps your community will love
           </p>
         </motion.div>
 
@@ -141,7 +141,7 @@ export function StartZone({
           <WorkflowCard
             icon={<SparklesIcon className="h-6 w-6 text-[var(--life-gold)]" />}
             title="Describe it"
-            subtitle="AI creates your tool"
+            subtitle="AI creates your app"
             shortcut="⌘K"
             onClick={onOpenAI}
             primary

@@ -375,7 +375,7 @@ function DefaultMobileNav({
     },
     {
       id: 'tools',
-      label: 'Tools',
+      label: 'Apps',
       icon: <ToolsIcon />,
       isActive: pathname?.startsWith('/lab'),
       onClick: onToolsClick,

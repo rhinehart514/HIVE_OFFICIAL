@@ -66,11 +66,34 @@ export function ToolPreviewCard({
     runtime.executeAction(instanceId, action, payload as Record<string, unknown>);
   }, [runtime]);
 
-  const handleShare = useCallback(() => {
+  const handleShare = useCallback(async () => {
+    const url = `${window.location.origin}/t/${toolId}`;
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(url);
+      copied = true;
+    } catch {
+      // Fallback for insecure contexts
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        copied = true;
+      } catch {
+        // Both methods failed — don't show "Copied!"
+      }
+    }
     onShare?.();
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  }, [onShare]);
+    if (copied) {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    }
+  }, [toolId, onShare]);
 
   return (
     <div className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden">

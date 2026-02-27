@@ -285,8 +285,8 @@ export function QuickCreateSheet({
         { component: 'QuickCreateSheet', templateId: selected.templateId, spaceId },
         err instanceof Error ? err : undefined
       );
-      setError(err instanceof Error ? err.message : 'Failed to create tool');
-      toast.error('Failed to create tool');
+      setError(err instanceof Error ? err.message : 'Failed to create app');
+      toast.error('Failed to create app');
       setStep('name');
     }
   }, [selected, toolName, spaceId, spaceName, onCreated, onOpenChange, shouldReduceMotion]);
@@ -315,7 +315,7 @@ export function QuickCreateSheet({
             >
               <div className="mb-5">
                 <h2 className="text-lg font-medium" style={{ color: COLORS.text }}>
-                  Add a tool to {spaceName}
+                  Add an app to {spaceName}
                 </h2>
                 <p className="text-[13px] mt-1" style={{ color: COLORS.textSecondary }}>
                   Pick a template to get started
@@ -362,7 +362,7 @@ export function QuickCreateSheet({
                   className="block text-[13px] font-medium mb-2"
                   style={{ color: COLORS.textSecondary }}
                 >
-                  Name your tool
+                  Name your app
                 </label>
                 <input
                   ref={inputRef}

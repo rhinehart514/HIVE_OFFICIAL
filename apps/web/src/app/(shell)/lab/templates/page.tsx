@@ -490,7 +490,7 @@ export default function TemplatesPage() {
           { component: 'TemplatesPage', templateId: selected.templateId },
           err instanceof Error ? err : undefined
         );
-        setError(err instanceof Error ? err.message : 'Failed to create tool');
+        setError(err instanceof Error ? err.message : 'Failed to create app');
         toast.error('Failed to create. Please try again.');
         setState('naming');
       }

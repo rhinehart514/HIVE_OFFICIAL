@@ -404,7 +404,7 @@ function ToolFeedItem({
               size="sm"
               onClick={() => onRun(item.toolId, item.placementId)}
             >
-              Run Tool
+              Run App
             </Button>
           )}
         </div>
@@ -558,7 +558,7 @@ function EmptyState() {
         No activity yet
       </h3>
       <p className="text-body text-white/50 max-w-sm mx-auto">
-        Start a conversation, create an event, or deploy a tool to get things moving.
+        Start a conversation, create an event, or deploy an app to get things moving.
       </p>
     </motion.div>
   );

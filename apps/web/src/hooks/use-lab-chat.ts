@@ -26,6 +26,13 @@ import { matchTemplate } from '@/components/hivelab/conversational/template-matc
 import { useAnalytics } from '@/hooks/use-analytics';
 import type { StreamingChunk } from '@/lib/ai-generator';
 
+/** Code output from code generation mode */
+export interface CodeOutput {
+  html: string;
+  css: string;
+  js: string;
+}
+
 interface UseLabChatOptions {
   originSpaceId?: string | null;
   spaceContext?: { spaceId: string; spaceName: string; spaceType?: string };
@@ -98,13 +105,14 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
       prompt: string,
       toolId: string,
       existingElements?: ToolElement[],
-      existingName?: string
+      existingName?: string,
+      existingCode?: CodeOutput
     ) => {
       const controller = new AbortController();
       abortRef.current = controller;
       setIsGenerating(true);
 
-      const isIteration = !!existingElements && existingElements.length > 0;
+      const isIteration = !!(existingElements?.length || existingCode);
 
       // Add streaming assistant message
       const streamMsg = createMessage('assistant', 'tool-preview', 'Building...', {
@@ -118,16 +126,26 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
       appendMessage(streamMsg);
 
       try {
-        const body: Record<string, unknown> = { prompt };
+        const body: Record<string, unknown> = {
+          prompt,
+          mode: 'code',
+        };
 
         if (spaceContext) {
           body.spaceContext = spaceContext;
         }
 
-        if (isIteration && existingElements) {
+        // Code mode iteration: pass existing code
+        if (isIteration && existingCode) {
+          body.existingCode = existingCode;
+          body.existingName = existingName;
+          body.isIteration = true;
+        } else if (isIteration && existingElements) {
+          // Legacy composition mode fallback
+          body.mode = 'composition';
           body.existingComposition = {
             elements: existingElements.map(el => ({
-              elementId: el.elementId,
+              type: el.elementId,
               instanceId: el.instanceId,
               config: el.config,
               position: el.position,
@@ -155,8 +173,9 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
-        const collected: ToolElement[] = isIteration ? [...existingElements!] : [];
+        const collected: ToolElement[] = isIteration && existingElements ? [...existingElements] : [];
         let completeName = '';
+        let generatedCode: CodeOutput | undefined;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -181,6 +200,40 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
                   }));
                   break;
 
+                // Code generation mode: receive full code output
+                case 'code': {
+                  const codeData = chunk.data as { name?: string; description?: string; code?: CodeOutput };
+                  generatedCode = codeData.code;
+                  completeName = (codeData.name as string) || '';
+
+                  // Wrap code as a single custom-block element for the preview
+                  const codeElement: ToolElement = {
+                    elementId: 'custom-block',
+                    instanceId: 'code_app_1',
+                    config: {
+                      code: generatedCode,
+                      metadata: {
+                        name: completeName,
+                        description: codeData.description || '',
+                        createdBy: 'ai',
+                      },
+                    },
+                  };
+                  collected.length = 0;
+                  collected.push(codeElement);
+
+                  updateLastAssistantMessage(msg => ({
+                    ...msg,
+                    content: `Building ${completeName || 'your app'}...`,
+                    toolPreview: {
+                      ...msg.toolPreview!,
+                      elements: [...collected],
+                    },
+                  }));
+                  break;
+                }
+
+                // Legacy composition mode: receive elements one by one
                 case 'element': {
                   const elData = chunk.data;
                   if (elData.refinementAction) {
@@ -223,10 +276,10 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
                   break;
 
                 case 'complete':
-                  completeName = (chunk.data.name as string) || '';
+                  completeName = (chunk.data.name as string) || completeName;
                   updateLastAssistantMessage(msg => ({
                     ...msg,
-                    content: completeName ? `Here's your ${completeName}` : 'Your creation is ready',
+                    content: completeName ? `Here's your ${completeName}` : 'Your app is ready',
                     toolPreview: {
                       ...msg.toolPreview!,
                       toolName: completeName,
@@ -236,12 +289,21 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
                   }));
                   // Persist generation outcome ID for downstream tracking
                   if (chunk.data.generationOutcomeId) {
-                    fetch(`/api/tools/${toolId}`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include',
-                      body: JSON.stringify({ generationOutcomeId: chunk.data.generationOutcomeId }),
-                    }).catch(() => {});
+                    const patchOutcome = (retries = 1) => {
+                      fetch(`/api/tools/${toolId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ generationOutcomeId: chunk.data.generationOutcomeId }),
+                      }).catch((err) => {
+                        if (retries > 0) {
+                          setTimeout(() => patchOutcome(retries - 1), 2000);
+                        } else {
+                          console.warn('[useLabChat] Failed to persist generationOutcomeId:', err);
+                        }
+                      });
+                    };
+                    patchOutcome();
                   }
                   break;
 
@@ -260,11 +322,35 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
           ...prev,
           toolName: completeName || prev.toolName,
           currentElements: [...collected],
+          currentCode: generatedCode || prev.currentCode,
         }));
+
+        // Auto-save generated elements to the tool doc so deploy/share/discover work
+        if (collected.length > 0) {
+          fetch(`/api/tools/${toolId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              name: completeName || undefined,
+              elements: collected.map(el => ({
+                elementId: el.elementId,
+                instanceId: el.instanceId,
+                config: el.config,
+                position: el.position,
+                size: el.size,
+              })),
+              type: generatedCode ? 'code' : 'visual',
+            }),
+          }).catch(err => {
+            console.warn('[useLabChat] Failed to auto-save generated elements:', err);
+          });
+        }
 
         track('creation_completed', {
           toolId,
           source: 'ai',
+          mode: generatedCode ? 'code' : 'composition',
           durationMs: elapsed(),
           isIteration,
         });
@@ -339,7 +425,8 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
         userPrompt,
         thread.toolId,
         thread.currentElements,
-        thread.toolName
+        thread.toolName,
+        thread.currentCode
       );
     },
     [
@@ -455,11 +542,11 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
     const url = `${window.location.origin}/t/${thread.toolId}`;
 
     try {
-      await fetch('/api/tools', {
+      await fetch(`/api/tools/${thread.toolId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ toolId: thread.toolId, status: 'published' }),
+        body: JSON.stringify({ status: 'published' }),
       });
       track('creation_published', { toolId: thread.toolId });
     } catch {

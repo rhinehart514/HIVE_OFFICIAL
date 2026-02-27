@@ -213,7 +213,7 @@ export function ToolRuntimeModal({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <DialogTitle className="text-base font-semibold text-white truncate">
-                {toolName || tool?.name || 'Tool'}
+                {toolName || tool?.name || 'App'}
               </DialogTitle>
               {runtime && (
                 <SyncIndicator
@@ -263,7 +263,7 @@ export function ToolRuntimeModal({
                     <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse w-3/4" />
                     <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse w-1/2" />
                   </div>
-                  <p className="text-sm text-gray-400">Loading tool...</p>
+                  <p className="text-sm text-gray-400">Loading app...</p>
                 </div>
               </motion.div>
             ) : error ? (

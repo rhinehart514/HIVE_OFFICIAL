@@ -566,7 +566,7 @@ export function ConnectionBuilderModal({
                         color: COLORS.textPrimary,
                       }}
                     >
-                      <option value="">Select a tool...</option>
+                      <option value="">Select an app...</option>
                       {sourceTools.map((tool) => (
                         <option key={tool.deploymentId} value={tool.deploymentId}>
                           {tool.name}

@@ -96,7 +96,7 @@ const POST_TYPE_META: Record<
   text: { label: 'Text', icon: FileText },
   image: { label: 'Image', icon: ImageIcon },
   link: { label: 'Link', icon: LinkIcon },
-  tool: { label: 'Tool', icon: MoreHorizontal },
+  tool: { label: 'App', icon: MoreHorizontal },
 };
 
 const REACTION_EMOJI_MAP: Record<string, string> = {
@@ -730,7 +730,7 @@ export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
                   <option value="text">Text</option>
                   <option value="image">Image</option>
                   <option value="link">Link</option>
-                  <option value="tool">Tool</option>
+                  <option value="tool">App</option>
                 </select>
 
                 {(composerType === 'image' || composerType === 'link') && (
@@ -748,7 +748,7 @@ export function SpacePostsTab({ spaceId, currentUserId }: SpacePostsTabProps) {
 
                 {composerType === 'tool' && (
                   <Input
-                    placeholder="Tool ID (optional)"
+                    placeholder="App ID (optional)"
                     value={composerToolId}
                     onChange={(event) => setComposerToolId(event.target.value)}
                   />

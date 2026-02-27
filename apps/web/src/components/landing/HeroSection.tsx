@@ -57,7 +57,7 @@ export function HeroSection() {
               {...motionProps(0.1)}
               className="mb-8 max-w-md text-base leading-relaxed text-white/45"
             >
-              Polls, signups, countdowns, leaderboards — real tools for your student org.
+              Polls, signups, countdowns, leaderboards — real apps for your student org.
               No code. No templates. Just describe what you need.
             </motion.p>
 
@@ -135,7 +135,7 @@ function CreationMockup() {
         <div className="p-5">
           <div className="mb-3 flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-[#22C55E] animate-pulse" />
-            <span className="text-[10px] font-mono text-[#22C55E]/70">Building your tool...</span>
+            <span className="text-[10px] font-mono text-[#22C55E]/70">Building your app...</span>
           </div>
 
           {/* Generated poll preview */}

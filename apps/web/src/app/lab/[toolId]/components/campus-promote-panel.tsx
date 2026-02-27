@@ -94,7 +94,7 @@ export function CampusPromotePanel({ toolId, toolName, onClose }: CampusPromoteP
             </div>
             <div>
               <h2 className="text-[15px] font-semibold text-white">Promote to Campus</h2>
-              <p className="text-[11px] text-white/40">Make this tool available campus-wide</p>
+              <p className="text-[11px] text-white/40">Make this app available campus-wide</p>
             </div>
           </div>
           <button
@@ -155,7 +155,7 @@ export function CampusPromotePanel({ toolId, toolName, onClose }: CampusPromoteP
                     <div>
                       <p className="text-[13px] font-medium text-white/70 mb-1">Not eligible yet</p>
                       <p className="text-[12px] text-white/40 leading-relaxed">
-                        Tools need {status?.thresholds.minTotalUses ?? 50}+ total uses and{' '}
+                        Apps need {status?.thresholds.minTotalUses ?? 50}+ total uses and{' '}
                         {status?.thresholds.minSpaceDeployments ?? 3}+ space deployments before
                         campus promotion. Deploy to more spaces and grow usage to unlock.
                       </p>

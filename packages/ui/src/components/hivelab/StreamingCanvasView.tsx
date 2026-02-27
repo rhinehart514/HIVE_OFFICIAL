@@ -145,7 +145,7 @@ export function StreamingCanvasView({
           <div className="flex items-center gap-2 text-emerald-400 text-sm">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-medium">Test Mode</span>
-            <span className="text-emerald-400/70">- Interact with your tool to try it out</span>
+            <span className="text-emerald-400/70">- Interact with your app to try it out</span>
           </div>
         </div>
       )}

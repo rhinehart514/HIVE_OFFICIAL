@@ -405,7 +405,7 @@ export function OtherToolsPanel({
               focusRing
             )}
             style={{ color: COLORS.textTertiary }}
-            title="Refresh tool list"
+            title="Refresh app list"
           >
             <ArrowPathIcon className="w-3.5 h-3.5" />
           </button>

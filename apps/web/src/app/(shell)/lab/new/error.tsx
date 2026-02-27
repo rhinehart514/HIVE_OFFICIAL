@@ -29,11 +29,11 @@ export default function NewToolError({
         </div>
 
         <h2 className="mb-2 text-xl font-semibold text-foreground">
-          Unable to create tool
+          Unable to create app
         </h2>
 
         <p className="mb-6 text-sm text-muted-foreground">
-          We had trouble starting the tool creator. This might be a temporary issue.
+          We had trouble starting the app creator. This might be a temporary issue.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">

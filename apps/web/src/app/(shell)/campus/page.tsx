@@ -180,10 +180,10 @@ export default function CampusToolsDirectory() {
           className="text-center max-w-lg"
         >
           <h1 className="text-3xl font-semibold text-white mb-4">
-            Campus Tools
+            Campus Apps
           </h1>
           <p className="text-white/50 mb-8">
-            Sign in to browse and use tools built for your campus.
+            Sign in to browse and use apps built for your campus.
           </p>
           <button
             onClick={() => router.push('/enter?redirect=/campus')}
@@ -205,9 +205,9 @@ export default function CampusToolsDirectory() {
         transition={{ duration: durationSeconds.standard, ease: EASE }}
         className="mb-6"
       >
-        <h1 className="text-xl font-medium text-white/80">Campus Tools</h1>
+        <h1 className="text-xl font-medium text-white/80">Campus Apps</h1>
         <p className="text-sm text-white/35 mt-1">
-          Tools built and deployed for your campus
+          Apps built and deployed for your campus
         </p>
       </motion.header>
 
@@ -245,7 +245,7 @@ export default function CampusToolsDirectory() {
       {error && (
         <div className="text-center py-16">
           <p className="text-white/40 text-sm">
-            Failed to load campus tools. Try refreshing.
+            Failed to load campus apps. Try refreshing.
           </p>
         </div>
       )}
@@ -290,7 +290,7 @@ export default function CampusToolsDirectory() {
             {filteredTools.length > 0 && (
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xs font-medium text-white/40 tracking-wide uppercase">
-                  {activeCategory === 'All' ? 'All Tools' : activeCategory}
+                  {activeCategory === 'All' ? 'All Apps' : activeCategory}
                 </h2>
                 <span className="text-xs text-white/25">{filteredTools.length}</span>
               </div>
@@ -317,8 +317,8 @@ export default function CampusToolsDirectory() {
               <div className="text-center py-20">
                 <p className="text-white/40 text-sm mb-2">
                   {activeCategory === 'All'
-                    ? 'No campus tools yet. Be the first to build something your campus needs.'
-                    : `No ${activeCategory.toLowerCase()} tools yet.`}
+                    ? 'No campus apps yet. Be the first to build something your campus needs.'
+                    : `No ${activeCategory.toLowerCase()} apps yet.`}
                 </p>
                 <button
                   onClick={() => router.push('/lab')}

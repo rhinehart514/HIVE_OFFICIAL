@@ -4,9 +4,7 @@ import { withAuthAndErrors, withErrors, getUserId, type AuthenticatedRequest } f
 import { getSession } from "@/lib/session";
 import { logger } from "@/lib/structured-logger";
 import {
-  UpdateToolSchema,
   getNextVersion,
-  validateToolStructure,
 } from "@hive/core";
 import { notifyToolUpdated } from "@/lib/tool-notifications";
 import { withCache } from '../../../../lib/cache-headers';
@@ -116,19 +114,9 @@ export const PUT = withAuthAndErrors(async (
     const campusId = req.user.campusId || null;
     const { toolId } = await params;
     const body = await request.json();
-    // Best-effort validation using core's lightweight schema helpers
-    let updateData: Record<string, unknown> = body as Record<string, unknown>;
-    try {
-      const maybeSafeParse = (UpdateToolSchema as unknown as Record<string, unknown>)?.safeParse;
-      if (typeof maybeSafeParse === 'function') {
-        const parsed = maybeSafeParse(body) as { success?: boolean; data?: Record<string, unknown> };
-        if (parsed && parsed.success) {
-          updateData = parsed.data ?? body as Record<string, unknown>;
-        }
-      }
-    } catch {
-      // If validation helper fails, proceed with raw body and rely on further checks
-    }
+    // Pass through all fields — ToolSchema is too narrow (missing elements, type, etc.)
+    // Validation happens below for specific fields like elements
+    const updateData: Record<string, unknown> = body as Record<string, unknown>;
     const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
 
     if (!toolDoc.exists) {
@@ -156,10 +144,10 @@ export const PUT = withAuthAndErrors(async (
       return respond.error("Access denied", "FORBIDDEN", { status: 403 });
     }
 
-    // Validate tool structure if elements are being updated
+    // Validate elements array if being updated
     if (updateData.elements) {
-      const isValid = !!validateToolStructure(updateData.elements as Array<unknown>);
-      if (!isValid) {
+      const elements = updateData.elements as Array<Record<string, unknown>>;
+      if (!Array.isArray(elements) || elements.some(el => !el.elementId && !el.type)) {
         return respond.error("Invalid tool structure", "INVALID_INPUT", { status: 400 });
       }
     }
@@ -198,9 +186,9 @@ export const PUT = withAuthAndErrors(async (
         // Full composition snapshot for restore
         elements: updateData.elements ?? currentTool.elements ?? [],
         connections: (updateData as Record<string, unknown>).connections ?? (currentTool as Record<string, unknown>).connections ?? [],
-        pages: (updateData as Record<string, unknown>).pages ?? (currentTool as Record<string, unknown>).pages,
-        layout: (updateData as Record<string, unknown>).layout ?? (currentTool as Record<string, unknown>).layout,
-        config: (updateData as Record<string, unknown>).config ?? (currentTool as Record<string, unknown>).config,
+        pages: (updateData as Record<string, unknown>).pages ?? (currentTool as Record<string, unknown>).pages ?? null,
+        layout: (updateData as Record<string, unknown>).layout ?? (currentTool as Record<string, unknown>).layout ?? null,
+        config: (updateData as Record<string, unknown>).config ?? (currentTool as Record<string, unknown>).config ?? null,
         name: (updateData.name as string) ?? currentTool.name,
         description: (updateData as Record<string, unknown>).description ?? (currentTool as Record<string, unknown>).description,
         elementCount: Array.isArray(updateData.elements) ? updateData.elements.length : (Array.isArray(currentTool.elements) ? currentTool.elements.length : 0),
@@ -379,6 +367,16 @@ export const DELETE = withAuthAndErrors(async (
   // Delete data records
   const recordsSnapshot = await toolDoc.ref.collection("records").get();
   recordsSnapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+
+  // Delete tool_states docs matching this toolId (shared + per-user state)
+  const toolStatesSnapshot = await dbAdmin
+    .collection("tool_states")
+    .where(admin.firestore.FieldPath.documentId(), '>=', `${toolId}_`)
+    .where(admin.firestore.FieldPath.documentId(), '<', `${toolId}_\uf8ff`)
+    .get();
+  toolStatesSnapshot.docs.forEach((doc) => {
     batch.delete(doc.ref);
   });
 

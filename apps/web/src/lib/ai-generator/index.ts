@@ -25,7 +25,7 @@ import { composeElements, type ElementSpec } from './element-composition';
 import { generateToolName } from './tool-naming';
 
 export interface StreamingChunk {
-  type: 'thinking' | 'element' | 'connection' | 'complete' | 'error';
+  type: 'thinking' | 'element' | 'connection' | 'code' | 'complete' | 'error';
   data: Record<string, unknown>;
 }
 

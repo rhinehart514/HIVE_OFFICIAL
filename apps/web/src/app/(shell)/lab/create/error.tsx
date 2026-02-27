@@ -28,11 +28,11 @@ export default function CreateToolError({
         </div>
 
         <h2 className="mb-2 text-xl font-semibold text-[var(--hivelab-text-primary)]">
-          Tool creation failed
+          Creation failed
         </h2>
 
         <p className="mb-6 text-sm text-[var(--hivelab-text-tertiary)]">
-          Something went wrong while loading the tool builder. This might be a temporary issue.
+          Something went wrong while loading the builder. This might be a temporary issue.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -50,7 +50,7 @@ export default function CreateToolError({
             className="workshop-btn gap-2"
           >
             <HomeIcon className="h-4 w-4" />
-            Back to tools
+            Back to apps
           </button>
         </div>
 

@@ -117,7 +117,7 @@ export default function AboutPage() {
               </p>
             </div>
             <div>
-              <h3 className="text-[15px] font-medium text-white mb-2">Tool Builder</h3>
+              <h3 className="text-[15px] font-medium text-white mb-2">App Builder</h3>
               <p className="text-base text-white leading-relaxed">
                 Describe what you need in plain language. The AI scaffolds an application.
                 Polls, sign-ups, countdowns, RSVP forms — deploy directly to your Space.

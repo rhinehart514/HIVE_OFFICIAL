@@ -7,6 +7,8 @@
 
 import { dbAdmin } from '@/lib/firebase-admin';
 
+const MAX_TRIGGER_DEPTH = 5;
+
 interface ActionContext {
   toolId: string;
   deploymentId: string;
@@ -14,6 +16,8 @@ interface ActionContext {
   userId: string;
   spaceId?: string;
   campusId: string;
+  /** Tracks recursive triggerTool depth to prevent circular automation chains */
+  depth?: number;
 }
 
 interface ActionDef {
@@ -114,6 +118,15 @@ export async function executeAutomationActions(
         const eventName = actionDef.eventName;
         if (!targetDeploymentId || !eventName) break;
 
+        const currentDepth = context.depth ?? 0;
+        if (currentDepth >= MAX_TRIGGER_DEPTH) {
+          console.warn(
+            `[automation-executor] triggerTool refused: depth ${currentDepth} exceeds max ${MAX_TRIGGER_DEPTH}. ` +
+            `Deployment ${targetDeploymentId}, event ${eventName}`
+          );
+          break;
+        }
+
         try {
           const { inngest } = await import('@/lib/inngest/client');
           await inngest.send({
@@ -125,6 +138,7 @@ export async function executeAutomationActions(
               action: eventName,
               userId: 'system',
               campusId: context.campusId,
+              depth: currentDepth + 1,
             },
           });
         } catch (err) {

@@ -42,6 +42,7 @@ interface ToolRecord {
     name: string | null;
     type: DiscoverySpaceType | null;
   };
+  type: string;
   forkCount: number;
   useCount: number;
   createdAt: string;
@@ -303,6 +304,7 @@ const _GET = withAuthAndErrors(async (
           ? (spaceMeta.get(originSpaceId)?.type || fallbackSpaceType)
           : fallbackSpaceType,
       },
+      type: (tool.type as string | undefined) || 'visual',
       forkCount,
       useCount,
       createdAt: createdAtDate.toISOString(),
@@ -375,6 +377,7 @@ const _GET = withAuthAndErrors(async (
       id: tool.id,
       title: tool.name,
       description: tool.description,
+      type: tool.type || 'visual',
       category: tool.category,
       creator: {
         id: tool.creatorId || null,

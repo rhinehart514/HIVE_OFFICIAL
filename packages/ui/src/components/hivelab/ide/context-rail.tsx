@@ -208,7 +208,7 @@ const TOOL_CATEGORIES = [
   },
   {
     id: 'tools',
-    name: 'Tools',
+    name: 'Apps',
     sections: [
       {
         name: 'TRIGGERS',

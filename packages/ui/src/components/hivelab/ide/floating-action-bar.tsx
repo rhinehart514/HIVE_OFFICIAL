@@ -353,7 +353,7 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
                 : 'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
               FOCUS_RING
             )}
-            title="More tools"
+            title="More apps"
           >
             <EllipsisHorizontalIcon className="h-4 w-4" />
           </button>

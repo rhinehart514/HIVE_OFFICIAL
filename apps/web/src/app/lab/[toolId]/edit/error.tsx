@@ -25,7 +25,7 @@ export default function ToolEditError({
           </div>
         </div>
         <h2 className="mb-2 text-xl font-semibold text-white">Editor unavailable</h2>
-        <p className="mb-6 text-sm text-white/50">Could not load the tool editor.</p>
+        <p className="mb-6 text-sm text-white/50">Could not load the editor.</p>
         <Button onClick={() => reset()} className="gap-2">
           <ArrowPathIcon className="h-4 w-4" />
           Try again

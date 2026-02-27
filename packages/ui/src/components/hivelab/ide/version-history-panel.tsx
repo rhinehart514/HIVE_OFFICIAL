@@ -59,19 +59,24 @@ export function VersionHistoryPanel({
 }: VersionHistoryPanelProps) {
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [restoring, setRestoring] = useState<string | null>(null);
   const [confirmRestore, setConfirmRestore] = useState<string | null>(null);
 
   const fetchVersions = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const res = await fetch(`/api/tools/${toolId}/versions`);
       if (res.ok) {
         const data = await res.json();
         setVersions(data.versions || []);
+      } else {
+        setFetchError('Failed to load version history');
       }
     } catch (err) {
       console.error('Failed to fetch versions:', err);
+      setFetchError('Network error — could not load versions');
     } finally {
       setLoading(false);
     }
@@ -155,6 +160,23 @@ export function VersionHistoryPanel({
                 <div className="h-2 rounded w-32" style={{ backgroundColor: PANEL_COLORS.bgHover }} />
               </div>
             ))}
+          </div>
+        ) : fetchError ? (
+          <div className="p-6 text-center">
+            <p className="text-sm" style={{ color: PANEL_COLORS.textSecondary }}>
+              {fetchError}
+            </p>
+            <button
+              type="button"
+              onClick={fetchVersions}
+              className={cn('mt-2 px-3 py-1 text-xs rounded-md transition-colors', FOCUS_RING)}
+              style={{
+                color: PANEL_COLORS.textSecondary,
+                border: `1px solid ${PANEL_COLORS.border}`,
+              }}
+            >
+              Retry
+            </button>
           </div>
         ) : versions.length === 0 ? (
           <div className="p-6 text-center">

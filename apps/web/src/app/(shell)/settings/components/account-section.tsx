@@ -172,8 +172,8 @@ export function AccountSection({
           </Button>
           <p className="text-xs text-white/50 mt-2">
             {isDownloading
-              ? 'Gathering your profile, spaces, connections, tools, and calendar...'
-              : 'Get a complete copy of all your data including spaces, connections, tools, and events'}
+              ? 'Gathering your profile, spaces, connections, apps, and calendar...'
+              : 'Get a complete copy of all your data including spaces, connections, apps, and events'}
           </p>
         </div>
       </Card>
