@@ -7,7 +7,7 @@
  * into a single reusable hook that manages the chat thread + tool generation.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { ToolElement, QuickTemplate } from '@hive/ui';
 
@@ -61,6 +61,13 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
   const [isCreatingTool, setIsCreatingTool] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight generation on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   // Undo/redo stacks (capped at 20 entries)
   const undoStackRef = useRef<ChatThread[]>([]);

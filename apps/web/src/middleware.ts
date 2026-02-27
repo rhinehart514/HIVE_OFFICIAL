@@ -65,7 +65,7 @@ const ADMIN_ROUTES = ['/admin', '/design-system'];
 export const ROUTE_REDIRECTS: Record<string, string> = {
   // Alias routes
   '/browse': '/spaces',
-  '/build': '/lab/create',
+  '/build': '/lab',
   '/explore': '/discover',
   // Dead route consolidation
   '/home': '/discover',
@@ -106,6 +106,8 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/notifications/settings': '/me/settings?section=notifications',
   // HiveLab → Lab consolidation
   '/hivelab': '/lab',
+  // Dead lab routes — creation lives on /lab now (handled above with query param preservation)
+  // '/lab/new' and '/lab/create' are redirected by the special handler above
 };
 
 function getClientIdentifier(request: NextRequest): string {
@@ -308,6 +310,13 @@ export async function middleware(request: NextRequest) {
 
   // Handle route redirects (from deleted client-side redirect pages)
   // These are PERMANENT (301) per IA_INVARIANTS.md - canonical route changes
+
+  // Handle /lab/new and /lab/create -> /lab and preserve query params
+  if (pathname === '/lab/new' || pathname === '/lab/create') {
+    const target = new URL('/lab', request.url);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target, 301);
+  }
 
   // Handle /explore -> /discover and preserve query params
   if (pathname === '/explore') {

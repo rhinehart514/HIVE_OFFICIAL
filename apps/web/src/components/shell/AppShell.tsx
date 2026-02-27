@@ -16,7 +16,7 @@ const NO_SHELL_EXACT_ROUTES = new Set(['/']);
 const NO_SHELL_PREFIX_ROUTES = ['/enter', '/landing', '/about', '/login', '/legal', '/t/', '/verify', '/s/'];
 
 // Lab tool routes (IDE, preview, deploy, etc.) hide shell for immersive experience.
-// But /lab, /lab/templates, /lab/new keep shell since they're browse pages.
+// But /lab and /lab/templates keep shell since they're browse pages.
 const LAB_TOOL_ROUTE = /^\/lab\/[^/]+/;
 
 interface AppShellProps {
@@ -30,7 +30,7 @@ export function AppShell({ children }: AppShellProps) {
     if (NO_SHELL_EXACT_ROUTES.has(pathname)) return true;
     if (NO_SHELL_PREFIX_ROUTES.some((prefix) => pathname.startsWith(prefix))) return true;
     // /lab/[toolId]/* hides shell, but /lab, /lab/templates, /lab/new keep it
-    if (LAB_TOOL_ROUTE.test(pathname) && pathname !== '/lab/templates' && pathname !== '/lab/new') return true;
+    if (LAB_TOOL_ROUTE.test(pathname) && pathname !== '/lab/templates') return true;
     return false;
   }, [pathname]);
 

@@ -1346,7 +1346,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       Add Creation
                     </Button>
                     <a
-                      href={`/lab/new?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
+                      href={`/lab?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
                       className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white/50 hover:text-white transition-colors"
                     >
                       Build something new
@@ -1391,7 +1391,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                   </div>
                   <div className="pt-4 border-t border-white/[0.06]">
                     <a
-                      href={`/lab/new?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
+                      href={`/lab?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
                       className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/50 transition-colors"
                     >
                       Build custom apps in HiveLab

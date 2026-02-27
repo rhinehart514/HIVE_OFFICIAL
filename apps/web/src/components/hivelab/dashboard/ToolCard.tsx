@@ -40,7 +40,6 @@ interface ToolCardProps {
   tool: ToolData;
   onClick: (toolId: string) => void;
   onDelete?: (toolId: string) => void;
-  index?: number;
   variant?: 'compact' | 'full';
 }
 
@@ -71,7 +70,7 @@ const STATUS_CONFIG = {
   },
 };
 
-export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant = 'full' }: ToolCardProps) {
+export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCardProps) {
   const router = useRouter();
   const status = STATUS_CONFIG[tool.status] || STATUS_CONFIG.draft;
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -83,12 +82,12 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
 
   const handleAnalytics = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/lab/${tool.id}/analytics`);
+    router.push(`/lab/${tool.id}?analytics=true`);
   }, [router, tool.id]);
 
   const handleDeploy = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/lab/${tool.id}/deploy`);
+    router.push(`/lab/${tool.id}?deploy=true`);
   }, [router, tool.id]);
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
@@ -243,34 +242,3 @@ export function ToolCard({ tool, onClick, onDelete, index: _index = 0, variant =
   );
 }
 
-/**
- * NewToolCard -- The "+ New" card at the end of the tools grid
- */
-interface NewToolCardProps {
-  onClick: () => void;
-  index?: number;
-}
-
-export function NewToolCard({ onClick, index: _index = 0 }: NewToolCardProps) {
-  return (
-    <motion.button
-      whileHover={{ opacity: 0.96 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      className="group flex flex-col items-center justify-center p-4 rounded-lg
-       border-dashed border-white/[0.06] bg-transparent
-        hover:border-white/[0.15] hover:bg-white/[0.06]
-        transition-all duration-200 min-h-[140px]"
-    >
-      <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center
-        group-hover:bg-white/[0.06] transition-colors mb-2">
-        <span className="text-white/50 group-hover:text-white/50 text-xl transition-colors">
-          +
-        </span>
-      </div>
-      <span className="text-white/50 text-xs group-hover:text-white/50 transition-colors">
-        Create New
-      </span>
-    </motion.button>
-  );
-}

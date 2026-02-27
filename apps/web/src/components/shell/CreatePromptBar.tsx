@@ -84,7 +84,7 @@ export function CreatePromptBar({
         params.set('space', spaceHandle);
       }
 
-      router.push(`/lab/new?${params.toString()}`);
+      router.push(`/lab?${params.toString()}`);
       setIsFocused(false);
       setInputValue('');
       inputRef.current?.blur();

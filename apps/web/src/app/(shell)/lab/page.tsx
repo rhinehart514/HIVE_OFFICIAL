@@ -12,9 +12,9 @@ export const dynamic = 'force-dynamic';
  * The IDE at /lab/[toolId] becomes the "Advanced Editor" escape hatch.
  */
 
-import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@hive/auth-logic';
@@ -37,6 +37,7 @@ import { useAnalytics } from '@/hooks/use-analytics';
 import { apiClient } from '@/lib/api-client';
 
 const EASE = MOTION.ease.premium;
+const ALL_TEMPLATES = getAvailableTemplates().slice(0, 8);
 
 const fadeInUpVariants = {
   initial: { opacity: 0, y: 10 },
@@ -48,12 +49,6 @@ const fadeInUpVariants = {
 };
 
 const staggerItemVariants = {
-  initial: { opacity: 0, y: 8 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: durationSeconds.quick, ease: EASE },
-  },
   hidden: { opacity: 0, y: 8 },
   visible: {
     opacity: 1,
@@ -79,9 +74,6 @@ export default function BuilderDashboard() {
   const spaceContext = originSpaceId
     ? { spaceId: originSpaceId, spaceName: spaceNameParam || 'Space' }
     : undefined;
-
-  // Templates for chips
-  const allTemplates = useMemo(() => getAvailableTemplates().slice(0, 8), []);
 
   // Fetch user's tools with aggregated stats
   const { data, isLoading: toolsLoading } = useMyTools();
@@ -207,7 +199,7 @@ export default function BuilderDashboard() {
               className="mb-8"
             >
               <LabChatView
-                templates={allTemplates}
+                templates={ALL_TEMPLATES}
                 originSpaceId={originSpaceId}
                 spaceContext={spaceContext}
                 autoPrompt={autoPrompt}
@@ -285,7 +277,7 @@ export default function BuilderDashboard() {
         {/* ============================================================ */}
         {isNewUser && (
           <LabChatView
-            templates={allTemplates}
+            templates={ALL_TEMPLATES}
             originSpaceId={originSpaceId}
             spaceContext={spaceContext}
             autoPrompt={autoPrompt}

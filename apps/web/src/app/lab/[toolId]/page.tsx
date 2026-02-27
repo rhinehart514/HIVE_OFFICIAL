@@ -29,205 +29,13 @@ import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import { ToolAnalyticsPanel } from './components/analytics-panel';
 import { AutomationAwarenessPanel } from './components/automation-awareness-panel';
 import { CampusPromotePanel } from './components/campus-promote-panel';
-
-// Feature flag: Automations are now enabled
-const AUTOMATIONS_ENABLED = true;
-
-/**
- * Tool Studio Page - Full HiveLabIDE Experience
- *
- * Canvas-first IDE with:
- * - Element palette (drag-drop)
- * - Properties panel
- * - Layers panel
- * - AI Command Palette (⌘K)
- * - Smart guides & grid snapping
- * - Undo/redo history
- * - Auto-save
- * - Deploy modal with space selection
- * - Analytics panel
- */
-
-interface ToolApiResponse {
-  tool: {
-    id: string;
-    name: string;
-    description: string;
-    status: 'draft' | 'published' | 'archived';
-    visibility?: 'public' | 'private' | 'space';
-    category?: string;
-    config?: {
-      composition?: {
-        elements?: Array<{
-          id?: string;
-          elementId: string;
-          instanceId?: string;
-          config?: Record<string, unknown>;
-          position?: { x: number; y: number };
-          size?: { width: number; height: number };
-        }>;
-        connections?: Array<{
-          from: { instanceId: string; port?: string; output?: string };
-          to: { instanceId: string; port?: string; input?: string };
-        }>;
-      };
-    };
-    elements?: Array<{
-      id?: string;
-      elementId: string;
-      instanceId?: string;
-      config?: Record<string, unknown>;
-      position?: { x: number; y: number };
-      size?: { width: number; height: number };
-    }>;
-    connections?: Array<{
-      from: { instanceId: string; port?: string; output?: string };
-      to: { instanceId: string; port?: string; input?: string };
-    }>;
-    createdAt: string;
-    updatedAt: string;
-    remixedFrom?: {
-      toolId: string;
-      toolName: string;
-      creatorId: string;
-      creatorName: string;
-    } | null;
-  };
-}
-
-interface Space {
-  id: string;
-  name: string;
-  handle?: string;
-  memberCount?: number;
-  description?: string;
-}
-
-// Fetch tool data
-async function fetchTool(toolId: string): Promise<ToolApiResponse['tool']> {
-  const response = await fetch(`/api/tools/${toolId}`, {
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('Tool not found');
-    }
-    throw new Error('Failed to load tool');
-  }
-  const result = await response.json();
-  // API returns { success: true, data: { ...tool } }
-  return result.data || result.tool || result;
-}
-
-// Fetch user's spaces for deployment
-async function fetchUserSpaces(): Promise<Space[]> {
-  const response = await fetch('/api/profile/my-spaces?limit=50', {
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    return [];
-  }
-  const data = await response.json();
-  return data.spaces || [];
-}
-
-// Save tool
-async function saveTool(
-  toolId: string,
-  composition: HiveLabComposition
-): Promise<void> {
-  const response = await fetch(`/api/tools/${toolId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      name: composition.name,
-      description: composition.description,
-      elements: composition.elements.map((el) => ({
-        elementId: el.elementId,
-        instanceId: el.instanceId,
-        config: el.config,
-        position: el.position,
-        size: el.size,
-      })),
-      connections: composition.connections.map((conn) => ({
-        from: conn.from,
-        to: conn.to,
-      })),
-      layout: composition.layout,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to save tool');
-  }
-}
-
-// Deploy tool to space
-async function deployToolToTarget(
-  toolId: string,
-  config: DeploymentConfig
-): Promise<void> {
-  const response = await fetch(`/api/tools/${toolId}/deploy`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      targetType: config.targetType,
-      targetId: config.targetId,
-      surface: config.surface,
-      permissions: config.permissions,
-      settings: config.settings,
-      privacy: config.privacy,
-    }),
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const err = new Error(errorData.error || errorData.message || 'Failed to deploy tool');
-    if (errorData.validationErrors) {
-      (err as unknown as Record<string, unknown>).validationErrors = errorData.validationErrors;
-    }
-    throw err;
-  }
-}
-
-// Transform API tool data to IDE canvas elements
-function transformToCanvasElements(
-  tool: ToolApiResponse['tool']
-): { elements: IDECanvasElement[]; connections: IDEConnection[] } {
-  // Get elements from either nested composition or flat structure
-  const rawElements =
-    tool.config?.composition?.elements || tool.elements || [];
-  const rawConnections =
-    tool.config?.composition?.connections || tool.connections || [];
-
-  const elements: IDECanvasElement[] = rawElements.map((el, index) => ({
-    id: el.id || `element_${index}`,
-    elementId: el.elementId,
-    instanceId: el.instanceId || `${el.elementId}_${index}`,
-    position: el.position || { x: 100 + index * 50, y: 100 + index * 50 },
-    size: el.size || { width: 240, height: 120 },
-    config: el.config || {},
-    zIndex: index + 1,
-    locked: false,
-    visible: true,
-  }));
-
-  const connections: IDEConnection[] = rawConnections.map((conn, index) => ({
-    id: `conn_${index}`,
-    from: {
-      instanceId: conn.from.instanceId,
-      port: conn.from.port || conn.from.output || 'output',
-    },
-    to: {
-      instanceId: conn.to.instanceId,
-      port: conn.to.port || conn.to.input || 'input',
-    },
-  }));
-
-  return { elements, connections };
-}
+import {
+  fetchTool,
+  fetchUserSpaces,
+  saveTool,
+  deployToolToTarget,
+  transformToCanvasElements,
+} from './lib';
 
 interface Props {
   params: Promise<{ toolId: string }>;
@@ -318,9 +126,13 @@ export default function ToolStudioPage({ params }: Props) {
     window.history.replaceState({}, '', url.toString());
   }, []);
 
-  // Check if user is a space leader (for gated elements)
-  const isSpaceLeader = userSpaces.length > 0;
-  const leadingSpaceIds = userSpaces.map((s) => s.id);
+  // Check if user is a space leader — use actual role from API response
+  const isSpaceLeader = userSpaces.some(
+    (s) => s.membership?.role === 'owner' || s.membership?.role === 'admin' || s.membership?.role === 'leader'
+  );
+  const leadingSpaceIds = userSpaces
+    .filter((s) => s.membership?.role === 'owner' || s.membership?.role === 'admin' || s.membership?.role === 'leader')
+    .map((s) => s.id);
 
   // User context for element permissions
   const userContext: UserContext = {
@@ -414,7 +226,6 @@ export default function ToolStudioPage({ params }: Props) {
         // Show "just saved" animation
         setJustSaved(true);
         setTimeout(() => setJustSaved(false), 2000);
-        // No toast - the header shows saved state
       } catch (error) {
         toast.error(
           error instanceof Error ? error.message : 'Failed to save tool'
@@ -430,8 +241,6 @@ export default function ToolStudioPage({ params }: Props) {
   // Handle preview - now just toggles to Use mode on same page
   const handlePreview = useCallback(
     (_comp: HiveLabComposition) => {
-      // Instead of navigating away, toggle to Use mode on this page
-      // The composition is already in state, no need for localStorage
       handleModeChange('use');
     },
     [handleModeChange]
@@ -624,7 +433,7 @@ export default function ToolStudioPage({ params }: Props) {
         hasUnsavedChanges={hasUnsavedChanges}
         onDeploy={() => setDeployModalOpen(true)}
         onAnalytics={() => setAnalyticsOpen(true)}
-        onAutomations={AUTOMATIONS_ENABLED ? () => setAutomationsOpen(true) : undefined}
+        onAutomations={() => setAutomationsOpen(true)}
         onPromote={() => setPromoteOpen(true)}
         mode={pageMode}
         onModeChange={handleModeChange}
@@ -735,7 +544,6 @@ export default function ToolStudioPage({ params }: Props) {
                       userDisplayName: user?.displayName || user?.fullName || undefined,
                       userRole: isSpaceLeader ? 'admin' : user ? 'member' : 'guest',
                       isSpaceLeader,
-                      // Wire spaceId from URL param so T2 elements fetch real data
                       spaceId: preselectedSpaceId || undefined,
                     }}
                   />
@@ -791,8 +599,8 @@ export default function ToolStudioPage({ params }: Props) {
         />
       )}
 
-      {/* Automation Awareness Panel (hidden until backend ready) */}
-      {AUTOMATIONS_ENABLED && automationsOpen && (
+      {/* Automation Awareness Panel */}
+      {automationsOpen && (
         <AutomationAwarenessPanel
           toolId={toolId}
           toolName={composition.name || 'Untitled Tool'}

@@ -29,7 +29,6 @@ import { getQuickTemplate } from '@hive/ui';
 
 interface CoreTemplate {
   id: string;
-  emoji: string;
   name: string;
   description: string;
   /** The quick-template ID from the registry */
@@ -39,56 +38,56 @@ interface CoreTemplate {
 const CORE_TEMPLATES: CoreTemplate[] = [
   {
     id: 'quick-poll',
-    emoji: '',
+
     name: 'Quick Poll',
     description: 'Gather opinions in one tap',
     templateId: 'quick-poll',
   },
   {
     id: 'event-rsvp',
-    emoji: '',
+
     name: 'Event RSVP',
     description: 'Let members RSVP instantly',
     templateId: 'event-rsvp',
   },
   {
     id: 'signup-sheet',
-    emoji: '',
+
     name: 'Signup Sheet',
     description: 'Slot-based signups for anything',
     templateId: 'resource-signup',
   },
   {
     id: 'feedback-form',
-    emoji: '',
+
     name: 'Feedback Form',
     description: 'Collect structured feedback',
     templateId: 'feedback-form',
   },
   {
     id: 'leaderboard',
-    emoji: '',
+
     name: 'Leaderboard',
     description: 'Track points and rankings',
     templateId: 'member-leaderboard',
   },
   {
     id: 'announcement',
-    emoji: '',
+
     name: 'Announcement',
     description: 'Pin important updates',
     templateId: 'announcements',
   },
   {
     id: 'checklist',
-    emoji: '',
+
     name: 'Meeting Notes',
     description: 'Collaborative notes with checklist',
     templateId: 'meeting-notes',
   },
   {
     id: 'member-directory',
-    emoji: '',
+
     name: 'Group Signup',
     description: 'Collect signups for study groups',
     templateId: 'study-group-signup',
@@ -98,42 +97,42 @@ const CORE_TEMPLATES: CoreTemplate[] = [
 const INFRASTRUCTURE_TEMPLATES: CoreTemplate[] = [
   {
     id: 'textbook-exchange',
-    emoji: '',
+
     name: 'Textbook Exchange',
     description: 'Buy, sell, and trade textbooks',
     templateId: 'textbook-exchange',
   },
   {
     id: 'campus-marketplace',
-    emoji: '',
+
     name: 'Campus Marketplace',
     description: 'Buy and sell anything on campus',
     templateId: 'campus-marketplace',
   },
   {
     id: 'study-group-matcher',
-    emoji: '',
+
     name: 'Study Group Matcher',
     description: 'Match into groups by course and schedule',
     templateId: 'study-group-matcher',
   },
   {
     id: 'budget-request',
-    emoji: '',
+
     name: 'Budget Requests',
     description: 'Submit and approve funding requests',
     templateId: 'budget-request',
   },
   {
     id: 'mentorship-pairing',
-    emoji: '',
+
     name: 'Mentorship Pairing',
     description: 'Match mentors with mentees',
     templateId: 'mentorship-pairing',
   },
   {
     id: 'club-roster',
-    emoji: '',
+
     name: 'Club Roster',
     description: 'Member directory with roles',
     templateId: 'club-roster',
@@ -170,10 +169,8 @@ const COLORS = {
   textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
   surface: 'var(--hivelab-surface, #0D0D14)',
   border: 'var(--hivelab-border, rgba(255, 255, 255, 0.06))',
-  borderHover: 'rgba(255, 255, 255, 0.14)',
   accent: 'var(--life-gold, #FFD700)',
   shadowBase: '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 8px rgba(0,0,0,0.4)',
-  shadowHover: '0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 20px rgba(0,0,0,0.5), 0 0 24px rgba(255,215,0,0.06)',
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -187,12 +184,10 @@ function TemplateTile({
   template,
   index,
   onSelect,
-  disabled,
 }: {
   template: CoreTemplate;
   index: number;
   onSelect: (template: CoreTemplate) => void;
-  disabled: boolean;
 }) {
   const shouldReduceMotion = useReducedMotion();
 
@@ -205,27 +200,15 @@ function TemplateTile({
         delay: shouldReduceMotion ? 0 : index * 0.05,
         ease: EASE,
       }}
-      whileHover={!disabled ? { scale: 1.02 } : undefined}
-      whileTap={!disabled ? { scale: 0.98 } : undefined}
-      onClick={() => !disabled && onSelect(template)}
-      disabled={disabled}
-      className="text-left p-5 rounded-2xl border transition-all duration-150 group relative overflow-hidden"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => onSelect(template)}
+      className="text-left p-5 rounded-2xl border transition-all duration-150 group relative overflow-hidden
+        cursor-pointer hover:border-white/[0.14] hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_4px_20px_rgba(0,0,0,0.5),0_0_24px_rgba(255,215,0,0.06)]"
       style={{
         backgroundColor: COLORS.surface,
         borderColor: COLORS.border,
         boxShadow: COLORS.shadowBase,
-        opacity: disabled ? 0.5 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-      }}
-      onMouseEnter={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.borderColor = COLORS.borderHover;
-          e.currentTarget.style.boxShadow = COLORS.shadowHover;
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = COLORS.border;
-        e.currentTarget.style.boxShadow = COLORS.shadowBase;
       }}
     >
       {(() => {
@@ -341,7 +324,7 @@ function NameDialog({
               color: COLORS.text,
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = COLORS.borderHover;
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.14)';
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = COLORS.border;
@@ -354,14 +337,7 @@ function NameDialog({
               type="button"
               onClick={onBack}
               disabled={isCreating}
-              className="text-[13px] font-medium transition-colors duration-150"
-              style={{ color: COLORS.textSecondary }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = COLORS.text;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = COLORS.textSecondary;
-              }}
+              className="text-[13px] font-medium transition-colors duration-150 text-[var(--hivelab-text-secondary,#8A8A8A)] hover:text-[var(--hivelab-text-primary,#FAF9F7)]"
             >
               Back
             </button>
@@ -495,7 +471,7 @@ export default function TemplatesPage() {
         setState('naming');
       }
     },
-    [selected, originSpaceId, originSpaceName, router]
+    [selected, originSpaceId, originSpaceName, originSpaceHandle, router, track, elapsed]
   );
 
   return (
@@ -509,14 +485,8 @@ export default function TemplatesPage() {
         >
           <Link
             href="/lab"
-            className="inline-flex items-center gap-2 text-[13px] transition-colors duration-150 mb-8"
-            style={{ color: COLORS.textSecondary }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = COLORS.text;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = COLORS.textSecondary;
-            }}
+            className="inline-flex items-center gap-2 text-[13px] transition-colors duration-150 mb-8
+              text-[var(--hivelab-text-secondary,#8A8A8A)] hover:text-[var(--hivelab-text-primary,#FAF9F7)]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to Lab
@@ -590,7 +560,7 @@ export default function TemplatesPage() {
                       template={template}
                       index={index}
                       onSelect={handleSelectTemplate}
-                      disabled={false}
+
                     />
                   ))}
                 </div>
@@ -613,7 +583,6 @@ export default function TemplatesPage() {
                     template={template}
                     index={index + INFRASTRUCTURE_TEMPLATES.length}
                     onSelect={handleSelectTemplate}
-                    disabled={false}
                   />
                 ))}
               </div>
@@ -655,15 +624,9 @@ export default function TemplatesPage() {
           className="mt-8 text-center"
         >
           <Link
-            href="/lab/new"
-            className="text-[13px] transition-colors duration-150"
-            style={{ color: COLORS.textTertiary }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = COLORS.textSecondary;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = COLORS.textTertiary;
-            }}
+            href="/lab"
+            className="text-[13px] transition-colors duration-150
+              text-[var(--hivelab-text-tertiary,#5A5A5A)] hover:text-[var(--hivelab-text-secondary,#8A8A8A)]"
           >
             or describe what you need →
           </Link>
