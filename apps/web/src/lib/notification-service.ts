@@ -7,7 +7,6 @@
 
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { deliverNotification } from '@/lib/notification-delivery-service';
 
 // Notification types that can be generated
@@ -58,12 +57,22 @@ interface CreateNotificationParams {
     actorName?: string;
     spaceId?: string;
     spaceName?: string;
+    spaceHandle?: string;
     postId?: string;
     commentId?: string;
     eventId?: string;
     toolId?: string;
     [key: string]: unknown;
   };
+}
+
+/**
+ * Build a space URL using handle (preferred) or spaceId fallback.
+ * App routes are /s/[handle], so prefer handle when available.
+ */
+function spaceUrl(spaceId: string, spaceHandle?: string, suffix?: string): string {
+  const base = spaceHandle ? `/s/${spaceHandle}` : `/s/${spaceId}`;
+  return suffix ? `${base}${suffix}` : base;
 }
 
 interface NotificationPreferences {
@@ -95,21 +104,24 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 };
 
 /**
- * Get user's notification preferences
+ * Get user's notification preferences and campusId from their user doc.
  */
-async function getUserPreferences(userId: string): Promise<NotificationPreferences> {
+async function getUserPreferencesAndCampus(userId: string): Promise<{ preferences: NotificationPreferences; campusId: string | null }> {
   try {
     const userDoc = await dbAdmin.collection('users').doc(userId).get();
-    if (!userDoc.exists) return DEFAULT_PREFERENCES;
+    if (!userDoc.exists) return { preferences: DEFAULT_PREFERENCES, campusId: null };
 
     const userData = userDoc.data();
-    return userData?.notificationPreferences || DEFAULT_PREFERENCES;
+    return {
+      preferences: userData?.notificationPreferences || DEFAULT_PREFERENCES,
+      campusId: userData?.campusId || null,
+    };
   } catch (error) {
-    logger.error('Error getting notification preferences', {
+    logger.error('Error getting user preferences/campus', {
       error: error instanceof Error ? error.message : String(error),
       userId
     });
-    return DEFAULT_PREFERENCES;
+    return { preferences: DEFAULT_PREFERENCES, campusId: null };
   }
 }
 
@@ -197,8 +209,8 @@ export async function createNotification(params: CreateNotificationParams): Prom
       return null;
     }
 
-    // Check user preferences
-    const preferences = await getUserPreferences(userId);
+    // Check user preferences + get campusId from user doc
+    const { preferences, campusId: userCampusId } = await getUserPreferencesAndCampus(userId);
     if (!shouldSendNotification(preferences, category)) {
       logger.debug('Notification blocked by preferences', { userId, type, category });
       return null;
@@ -239,7 +251,7 @@ export async function createNotification(params: CreateNotificationParams): Prom
       actionUrl: actionUrl || '',
       isRead: false,
       timestamp: new Date().toISOString(),
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: userCampusId ?? null,
       metadata: metadata || {},
     };
 
@@ -325,6 +337,7 @@ export async function notifyNewComment(params: {
   commenterName: string;
   postId: string;
   spaceId: string;
+  spaceHandle?: string;
   spaceName: string;
   commentPreview: string;
 }): Promise<string | null> {
@@ -334,7 +347,7 @@ export async function notifyNewComment(params: {
     category: 'social',
     title: `${params.commenterName} commented on your post`,
     body: params.commentPreview.slice(0, 100) + (params.commentPreview.length > 100 ? '...' : ''),
-    actionUrl: `/spaces/${params.spaceId}/posts/${params.postId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle, `/posts/${params.postId}`),
     metadata: {
       actorId: params.commenterId,
       actorName: params.commenterName,
@@ -355,6 +368,7 @@ export async function notifyCommentReply(params: {
   postId: string;
   commentId: string;
   spaceId: string;
+  spaceHandle?: string;
   replyPreview: string;
 }): Promise<string | null> {
   return createNotification({
@@ -363,7 +377,7 @@ export async function notifyCommentReply(params: {
     category: 'social',
     title: `${params.replierName} replied to your comment`,
     body: params.replyPreview.slice(0, 100) + (params.replyPreview.length > 100 ? '...' : ''),
-    actionUrl: `/spaces/${params.spaceId}/posts/${params.postId}#comment-${params.commentId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle, `/posts/${params.postId}#comment-${params.commentId}`),
     metadata: {
       actorId: params.replierId,
       actorName: params.replierName,
@@ -383,13 +397,14 @@ export async function notifyPostLike(params: {
   likerName: string;
   postId: string;
   spaceId: string;
+  spaceHandle?: string;
 }): Promise<string | null> {
   return createNotification({
     userId: params.postAuthorId,
     type: 'like',
     category: 'social',
     title: `${params.likerName} liked your post`,
-    actionUrl: `/spaces/${params.spaceId}/posts/${params.postId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle, `/posts/${params.postId}`),
     metadata: {
       actorId: params.likerId,
       actorName: params.likerName,
@@ -409,6 +424,7 @@ export async function notifyMention(params: {
   contextType: 'post' | 'comment';
   contextId: string;
   spaceId: string;
+  spaceHandle?: string;
   contextPreview: string;
 }): Promise<string | null> {
   return createNotification({
@@ -417,7 +433,7 @@ export async function notifyMention(params: {
     category: 'social',
     title: `${params.mentionerName} mentioned you`,
     body: params.contextPreview.slice(0, 100) + (params.contextPreview.length > 100 ? '...' : ''),
-    actionUrl: `/spaces/${params.spaceId}/${params.contextType}s/${params.contextId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle, `/${params.contextType}s/${params.contextId}`),
     metadata: {
       actorId: params.mentionerId,
       actorName: params.mentionerName,
@@ -436,6 +452,7 @@ export async function notifySpaceInvite(params: {
   inviterId: string;
   inviterName: string;
   spaceId: string;
+  spaceHandle?: string;
   spaceName: string;
 }): Promise<string | null> {
   return createNotification({
@@ -444,7 +461,7 @@ export async function notifySpaceInvite(params: {
     category: 'spaces',
     title: `${params.inviterName} invited you to ${params.spaceName}`,
     body: 'Click to view the space and accept the invite',
-    actionUrl: `/spaces/${params.spaceId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle),
     metadata: {
       actorId: params.inviterId,
       actorName: params.inviterName,
@@ -462,6 +479,7 @@ export async function notifySpaceJoin(params: {
   newMemberId: string;
   newMemberName: string;
   spaceId: string;
+  spaceHandle?: string;
   spaceName: string;
 }): Promise<string | null> {
   return createNotification({
@@ -469,7 +487,7 @@ export async function notifySpaceJoin(params: {
     type: 'space_join',
     category: 'spaces',
     title: `${params.newMemberName} joined ${params.spaceName}`,
-    actionUrl: `/spaces/${params.spaceId}/members`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle),
     metadata: {
       actorId: params.newMemberId,
       actorName: params.newMemberName,
@@ -487,6 +505,7 @@ export async function notifyRoleChange(params: {
   changerId: string;
   changerName: string;
   spaceId: string;
+  spaceHandle?: string;
   spaceName: string;
   newRole: string;
 }): Promise<string | null> {
@@ -496,7 +515,7 @@ export async function notifyRoleChange(params: {
     category: 'spaces',
     title: `Your role in ${params.spaceName} changed to ${params.newRole}`,
     body: `Changed by ${params.changerName}`,
-    actionUrl: `/spaces/${params.spaceId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle),
     metadata: {
       actorId: params.changerId,
       actorName: params.changerName,
@@ -515,6 +534,7 @@ export async function notifyBuilderApproved(params: {
   adminId: string;
   adminName: string;
   spaceId: string;
+  spaceHandle?: string;
   spaceName: string;
 }): Promise<string | null> {
   return createNotification({
@@ -523,7 +543,7 @@ export async function notifyBuilderApproved(params: {
     category: 'spaces',
     title: `You're now a leader of ${params.spaceName}!`,
     body: 'Your builder request has been approved',
-    actionUrl: `/spaces/${params.spaceId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle),
     metadata: {
       actorId: params.adminId,
       actorName: params.adminName,
@@ -541,6 +561,7 @@ export async function notifyBuilderRejected(params: {
   adminId: string;
   adminName: string;
   spaceId: string;
+  spaceHandle?: string;
   spaceName: string;
   reason?: string;
 }): Promise<string | null> {
@@ -550,7 +571,7 @@ export async function notifyBuilderRejected(params: {
     category: 'spaces',
     title: `Builder request for ${params.spaceName} was not approved`,
     body: params.reason || 'Contact support for more information',
-    actionUrl: `/spaces/${params.spaceId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle),
     metadata: {
       actorId: params.adminId,
       actorName: params.adminName,
@@ -571,6 +592,7 @@ export async function notifyEventRsvp(params: {
   eventId: string;
   eventTitle: string;
   spaceId: string;
+  spaceHandle?: string;
   rsvpStatus: 'going' | 'interested' | 'not_going';
 }): Promise<string | null> {
   if (params.rsvpStatus === 'not_going') return null;
@@ -580,7 +602,7 @@ export async function notifyEventRsvp(params: {
     type: 'event_rsvp',
     category: 'events',
     title: `${params.attendeeName} is ${params.rsvpStatus === 'going' ? 'attending' : 'interested in'} ${params.eventTitle}`,
-    actionUrl: `/spaces/${params.spaceId}/events/${params.eventId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle, `/events/${params.eventId}`),
     metadata: {
       actorId: params.attendeeId,
       actorName: params.attendeeName,
@@ -602,6 +624,7 @@ export async function notifySpaceEventCreated(params: {
   eventId: string;
   eventTitle: string;
   spaceId: string;
+  spaceHandle?: string;
   spaceName: string;
 }): Promise<number> {
   const notificationParams: Omit<CreateNotificationParams, 'userId'> = {
@@ -609,7 +632,7 @@ export async function notifySpaceEventCreated(params: {
     category: 'events',
     title: `New event in ${params.spaceName}: ${params.eventTitle}`,
     body: `Created by ${params.creatorName}`,
-    actionUrl: `/s/${params.spaceId}/events/${params.eventId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle, `/events/${params.eventId}`),
     metadata: {
       actorId: params.creatorId,
       actorName: params.creatorName,
@@ -633,6 +656,7 @@ export async function notifyRsvpConfirmation(params: {
   eventId: string;
   eventTitle: string;
   spaceId: string;
+  spaceHandle?: string;
   spaceName: string;
   rsvpStatus: 'going' | 'maybe';
   eventStart?: Date;
@@ -648,7 +672,7 @@ export async function notifyRsvpConfirmation(params: {
     category: 'events',
     title: `${statusText} ${params.eventTitle}`,
     body: `${params.spaceName}${eventTime}. We'll remind you before it starts.`,
-    actionUrl: `/s/${params.spaceId}/events/${params.eventId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle, `/events/${params.eventId}`),
     metadata: {
       eventId: params.eventId,
       eventTitle: params.eventTitle,
@@ -696,6 +720,7 @@ export async function notifyToolDeployment(params: {
   toolId: string;
   toolName: string;
   spaceId: string;
+  spaceHandle?: string;
   spaceName: string;
 }): Promise<number> {
   const notificationParams: Omit<CreateNotificationParams, 'userId'> = {
@@ -703,7 +728,7 @@ export async function notifyToolDeployment(params: {
     category: 'tools',
     title: `New tool in ${params.spaceName}: ${params.toolName}`,
     body: `Deployed by ${params.deployerName}`,
-    actionUrl: `/spaces/${params.spaceId}?tool=${params.toolId}`,
+    actionUrl: spaceUrl(params.spaceId, params.spaceHandle, `?tool=${params.toolId}`),
     metadata: {
       actorId: params.deployerId,
       actorName: params.deployerName,

@@ -21,7 +21,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import { logger } from '@/lib/logger';
-import { SpaceContextProvider } from '@/contexts/space';
 import { usePermissions } from '@/hooks/use-permissions';
 import {
   Button,
@@ -37,17 +36,15 @@ import {
   SpaceLayout,
   SpaceSidebar,
   MainContent,
-  SpaceTabs,
   MessageFeed,
-  SpaceEventsTab,
-  SpacePostsTab,
-  SpaceAppsTab,
-  type SpaceTab,
   TypingIndicator,
   type OnlineMember,
   LeaderDashboard,
 } from './components';
 import { LeaderCreateFAB } from './components/leader-create-fab';
+import { ContextBar } from './components/context-bar';
+import { HeaderMenu } from './components/header-menu';
+import { SparkleCreateSheet } from './components/sparkle-create-sheet';
 import { useLeaderDashboard } from '@/hooks/use-leader-dashboard';
 import { useTypingIndicator } from '@/hooks/use-presence';
 import { useClaimSpace } from '@/hooks/mutations/use-claim-space';
@@ -118,8 +115,9 @@ export default function SpacePageUnified() {
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<SpaceTab>('chat');
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = React.useState(false);
+  const [sparkleSheetOpen, setSparkleSheetOpen] = React.useState(false);
   const [reportModal, setReportModal] = React.useState<{
     messageId: string;
     authorName: string;
@@ -703,15 +701,33 @@ export default function SpacePageUnified() {
               />
           </div>
 
-          <SpaceTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            unreadCount={unreadCount}
-            eventCount={upcomingEvents.length}
-            appCount={sidebarTools.length}
+          {/* Context Bar — shows next event, active poll, or pinned announcement */}
+          <ContextBar
+            nextEvent={upcomingEvents.length > 0 ? {
+              id: upcomingEvents[0].id,
+              title: upcomingEvents[0].title,
+              startDate: upcomingEvents[0].time || new Date().toISOString(),
+              rsvpCount: upcomingEvents[0].goingCount || 0,
+            } : null}
+            onEventClick={(eventId) => setSelectedEventId(eventId)}
           />
 
-          {/* Tab Content */}
+          {/* Space History Line */}
+          <div className="px-4 py-1.5 flex items-center gap-2 text-[11px] text-white/25 border-b border-white/[0.04]">
+            <span>
+              {space.activatedAt
+                ? `Active since ${new Date(space.activatedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
+                : space.foundedDate
+                  ? `Founded ${new Date(space.foundedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
+                  : 'New space'}
+            </span>
+            <span className="text-white/15">&middot;</span>
+            <span>{upcomingEvents.length} {upcomingEvents.length === 1 ? 'event' : 'events'}</span>
+            <span className="text-white/15">&middot;</span>
+            <span>{sidebarTools.length} {sidebarTools.length === 1 ? 'app' : 'apps'} made</span>
+          </div>
+
+          {/* Unified Stream — one stream, no tabs */}
           <div className="flex-1 overflow-hidden">
             <SpaceLayout
               mobileSidebarOpen={mobileSidebarOpen}
@@ -765,7 +781,7 @@ export default function SpacePageUnified() {
                   }}
                 />
               }
-              input={activeTab === 'chat' ? (
+              input={
                 <div>
                   <TypingIndicator typingUsers={typingUsers} />
                   <ChatInput
@@ -775,137 +791,147 @@ export default function SpacePageUnified() {
                     onTypingChange={setTyping}
                     prefill={chatPrefill}
                     onPrefillConsumed={() => setChatPrefill(null)}
+                    onSparkleClick={() => setSparkleSheetOpen(true)}
                   />
                 </div>
-              ) : undefined}
+              }
             >
               <MainContent
-                boardName={
-                  activeTab === 'chat'
-                    ? space.name
-                    : activeTab === 'events'
-                      ? 'Events'
-                      : activeTab === 'apps'
-                        ? 'Apps'
-                        : 'Posts'
-                }
-                contentKey={activeTab}
-                isLoading={activeTab === 'chat' ? isLoadingMessages : false}
+                boardName={space.name}
+                contentKey="stream"
+                isLoading={isLoadingMessages}
               >
-                {activeTab === 'chat' ? (
-                  feedMessages.length === 0 && !isLoadingMessages ? (
-                    <div className="flex-1 flex flex-col gap-5 px-4 py-8 max-w-lg mx-auto w-full">
-                      {/* Space description */}
-                      {space.description && (
-                        <p className="text-[14px] text-white/50 leading-relaxed">
-                          {space.description}
-                        </p>
-                      )}
+                {feedMessages.length === 0 && !isLoadingMessages ? (
+                  <div className="flex-1 flex flex-col gap-5 px-4 py-8 max-w-lg mx-auto w-full">
+                    {/* Space description */}
+                    {space.description && (
+                      <p className="text-[14px] text-white/50 leading-relaxed">
+                        {space.description}
+                      </p>
+                    )}
 
-                      {/* Upcoming events */}
-                      {upcomingEvents.length > 0 && (
-                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                          <p className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30 mb-3">Upcoming</p>
-                          <div className="flex flex-col gap-2">
-                            {upcomingEvents.slice(0, 2).map((event) => (
-                              <div key={event.id} className="flex items-center justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="text-[14px] font-medium text-white truncate">{event.title}</p>
-                                  <p className="text-[12px] text-white/40">
-                                    {new Date(event.time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                  </p>
-                                </div>
+                    {/* Upcoming events */}
+                    {upcomingEvents.length > 0 && (
+                      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                        <p className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30 mb-3">Upcoming</p>
+                        <div className="flex flex-col gap-2">
+                          {upcomingEvents.slice(0, 2).map((event) => (
+                            <div key={event.id} className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-[14px] font-medium text-white truncate">{event.title}</p>
+                                <p className="text-[12px] text-white/40">
+                                  {new Date(event.time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                </p>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
-                      )}
-
-                      {/* Tools */}
-                      {sidebarTools.length > 0 && (
-                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                          <p className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30 mb-3">Apps</p>
-                          <div className="flex flex-wrap gap-2">
-                            {sidebarTools.slice(0, 3).map((tool) => (
-                              <span
-                                key={tool.toolId}
-                                className="px-3 py-1 rounded-full border border-white/[0.06] text-[13px] text-white/60 bg-white/[0.03]"
-                              >
-                                {tool.titleOverride || tool.name}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* CTA */}
-                      <div className="text-center pt-2">
-                        <p className="text-[13px] text-white/30 mb-1">
-                          {space.isLeader ? 'Set the tone for your space.' : `${space.memberCount ?? ''} ${(space.memberCount ?? 0) === 1 ? 'member is' : 'members are'} here.`}
-                        </p>
-                        <p className="text-[13px] text-white/20">Send the first message ↓</p>
                       </div>
+                    )}
+
+                    {/* Apps */}
+                    {sidebarTools.length > 0 && (
+                      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                        <p className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30 mb-3">Apps</p>
+                        <div className="flex flex-wrap gap-2">
+                          {sidebarTools.slice(0, 3).map((tool) => (
+                            <span
+                              key={tool.toolId}
+                              className="px-3 py-1 rounded-full border border-white/[0.06] text-[13px] text-white/60 bg-white/[0.03]"
+                            >
+                              {tool.titleOverride || tool.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* CTA */}
+                    <div className="text-center pt-2">
+                      <p className="text-[13px] text-white/30 mb-1">
+                        {space.isLeader ? 'Set the tone for your space.' : `${space.memberCount ?? ''} ${(space.memberCount ?? 0) === 1 ? 'member is' : 'members are'} here.`}
+                      </p>
+                      <p className="text-[13px] text-white/20">Send the first message ↓</p>
                     </div>
-                  ) : (
-                    <MessageFeed
-                      messages={feedMessages}
-                      currentUserId={user?.id}
-                      lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
-                      unreadCount={unreadCount}
-                      isLoading={isLoadingMessages}
-                      isLoadingMore={isLoadingMoreMessages}
-                      hasMore={hasMoreMessages}
-                      onLoadMore={loadMoreMessages}
-                      onReact={async (messageId, emoji) => {
-                        if (!space?.id) return;
-                        try {
-                          await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ emoji }),
-                          });
-                        } catch (error) {
-                          logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
-                        }
-                      }}
-                      onReply={(messageId) => handleOpenThread(messageId)}
-                      onDelete={handleDeleteMessage}
-                      onEdit={handleEditMessage}
-                      canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
-                      onReport={handleReportMessage}
-                      onComponentVote={handleComponentVote}
-                      onComponentRsvp={handleComponentRsvp}
-                    />
-                  )
-                ) : activeTab === 'events' ? (
-                  <SpaceContextProvider spaceId={space.id}>
-                    <SpaceEventsTab
-                      spaceId={space.id}
-                      isLeader={space.isLeader}
-                      onCreateEvent={() => setShowEventModal(true)}
-                      onEventClick={(eventId) => setSelectedEventId(eventId)}
-                    />
-                  </SpaceContextProvider>
-                ) : activeTab === 'apps' ? (
-                  <SpaceAppsTab
-                    tools={sidebarTools}
-                    isLoading={isLoadingTools}
-                    spaceId={space.id}
-                    spaceHandle={handle}
-                    isLeader={space.isLeader}
-                    onToolRun={handleToolRun}
-                  />
+                  </div>
                 ) : (
-                  <SpacePostsTab
-                    spaceId={space.id}
-                    spaceHandle={handle}
+                  <MessageFeed
+                    messages={feedMessages}
                     currentUserId={user?.id}
+                    lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
+                    unreadCount={unreadCount}
+                    isLoading={isLoadingMessages}
+                    isLoadingMore={isLoadingMoreMessages}
+                    hasMore={hasMoreMessages}
+                    onLoadMore={loadMoreMessages}
+                    onReact={async (messageId, emoji) => {
+                      if (!space?.id) return;
+                      try {
+                        await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ emoji }),
+                        });
+                      } catch (error) {
+                        logger.error('React failed', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
+                      }
+                    }}
+                    onReply={(messageId) => handleOpenThread(messageId)}
+                    onDelete={handleDeleteMessage}
+                    onEdit={handleEditMessage}
+                    canDeleteMessage={(_msgId, authorId) => canDeleteMessage(authorId)}
+                    onReport={handleReportMessage}
+                    onComponentVote={handleComponentVote}
+                    onComponentRsvp={handleComponentRsvp}
                   />
                 )}
               </MainContent>
             </SpaceLayout>
           </div>
         </div>
+
+        {/* Header Menu Drawer */}
+        <HeaderMenu
+          isOpen={headerMenuOpen}
+          onClose={() => setHeaderMenuOpen(false)}
+          isLeader={space.isLeader}
+          onAllEvents={() => setShowEventModal(true)}
+          onAllApps={() => {
+            const params = new URLSearchParams({
+              spaceId: space.id,
+              spaceName: space.name,
+              spaceHandle: space.handle,
+            });
+            router.push(`/build?${params.toString()}`);
+          }}
+          onMembers={() => { loadMembers(); setShowMembersPanel(true); }}
+          onSettings={space.isLeader ? () => setShowSettingsModal(true) : undefined}
+        />
+
+        {/* Sparkle Create Sheet */}
+        <SparkleCreateSheet
+          open={sparkleSheetOpen}
+          onOpenChange={setSparkleSheetOpen}
+          spaceId={space.id}
+          spaceName={space.name}
+          onFormatSelect={(format) => {
+            const prefills: Record<string, string> = {
+              poll: '/poll ',
+              bracket: '/bracket ',
+              rsvp: '/rsvp ',
+            };
+            setChatPrefill(prefills[format] || `/${format} `);
+          }}
+          onCustomCreate={(prompt) => {
+            const params = new URLSearchParams({
+              spaceId: space.id,
+              spaceName: space.name,
+              spaceHandle: space.handle,
+              prompt,
+            });
+            router.push(`/build?${params.toString()}`);
+          }}
+        />
 
         {/* Event Creation Modal */}
         <CreateEventModal
@@ -1174,7 +1200,7 @@ export default function SpacePageUnified() {
                       try {
                         await leaveSpace();
                         setShowSettingsModal(false);
-                        router.push('/spaces');
+                        router.push('/discover');
                       } catch (error) {
                         logger.error('Failed to leave space', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
                       }
@@ -1206,7 +1232,7 @@ export default function SpacePageUnified() {
               setShowDeleteSpaceConfirm(false);
               setShowSettingsModal(false);
               toast.success('Space deleted');
-              router.push('/spaces');
+              router.push('/discover');
             } catch (error) {
               logger.error('Failed to delete space', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
               toast.error('Failed to delete space');

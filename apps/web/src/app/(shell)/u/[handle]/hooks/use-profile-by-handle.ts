@@ -201,8 +201,9 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
     currentStreak: number;
   }>({ contributions: [], totalCount: 0, currentStreak: 0 });
 
-  // Viewer interests for shared interests computation
+  // Viewer context for shared interests/spaces computation
   const [viewerInterests, setViewerInterests] = React.useState<string[]>([]);
+  const [viewerSpaceIds, setViewerSpaceIds] = React.useState<Set<string>>(new Set());
 
   // Connection state — fetched from API
   const [connectionState, setConnectionState] = React.useState<ConnectionState>('none');
@@ -349,13 +350,18 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
             role: s.role || 'member',
             memberCount: (s.memberCount as number) || 0,
           })),
-          connections: (apiProfile.connections || []).map((c: Record<string, unknown>) => ({
-            id: c.id || c.userId || '',
-            name: c.name || c.fullName || '',
-            avatarUrl: c.avatarUrl ?? null,
-            isFriend: c.isFriend ?? false,
-            mutualConnections: (c.mutualConnections as number) || 0,
-          })),
+          connections: (apiProfile.connections || []).map((c: string | Record<string, unknown>) => {
+            if (typeof c === 'string') {
+              return { id: c, name: '', avatarUrl: null, isFriend: false, mutualConnections: 0 };
+            }
+            return {
+              id: c.id || c.userId || '',
+              name: c.name || c.fullName || '',
+              avatarUrl: c.avatarUrl ?? null,
+              isFriend: c.isFriend ?? false,
+              mutualConnections: (c.mutualConnections as number) || 0,
+            };
+          }),
           activities: [],
           viewer: {
             relationship: json.data?.viewerType === 'connection' ? 'connection' : json.data?.viewerType === 'campus' ? 'campus' : 'self',
@@ -592,7 +598,7 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
   React.useEffect(() => {
     if (!currentUser?.id || isOwnProfile) return;
 
-    const fetchViewerInterests = async () => {
+    const fetchViewerContext = async () => {
       try {
         const response = await fetch(`/api/profile/v2?id=${currentUser.id}`, {
           credentials: 'include',
@@ -601,16 +607,18 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
           const result = await response.json();
           const interests = result.data?.profile?.interests || [];
           setViewerInterests(interests);
+          const spaces = result.data?.spaces || [];
+          setViewerSpaceIds(new Set(spaces.map((s: { id: string }) => s.id)));
         }
       } catch (err) {
-        logger.warn('Failed to fetch viewer interests', {
+        logger.warn('Failed to fetch viewer context', {
           component: 'ProfileByHandle',
           error: err instanceof Error ? err.message : String(err),
         });
       }
     };
 
-    fetchViewerInterests();
+    fetchViewerContext();
   }, [currentUser?.id, isOwnProfile]);
 
   // ============================================================================
@@ -747,9 +755,9 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
       name: space.name,
       emoji: undefined,
       isLeader: space.role === 'owner' || space.role === 'admin' || space.role === 'Lead',
-      isShared: (space as unknown as { isShared?: boolean }).isShared ?? false,
+      isShared: viewerSpaceIds.has(space.id),
     }));
-  }, [profileData?.spaces]);
+  }, [profileData?.spaces, viewerSpaceIds]);
 
   const profileTools: ProfileTool[] = React.useMemo(() => {
     return userTools.map((tool) => ({
@@ -775,7 +783,9 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
       }));
   }, [profileData?.connections]);
 
-  const totalConnections = profileData?.connections?.length ?? 0;
+  const totalConnections = Array.isArray(profileData?.connections)
+    ? profileData.connections.length
+    : (profileData?.stats?.connections ?? 0);
 
   const interests = profileData?.profile.interests ?? [];
 

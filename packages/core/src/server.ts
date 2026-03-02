@@ -453,34 +453,4 @@ export function canRemoveLeaders(category: string): boolean {
   return rules.maxLeaders > 1;
 }
 
-// ============================================================================
-// Template Repository & DTOs (Real DDD implementation)
-// ============================================================================
-
-export {
-  // Entity
-  Template,
-  // Types
-  type TemplateProps,
-  type TemplateCategory,
-  type TemplateVisibility,
-  type TemplateSource,
-  type TemplateElement,
-  type TemplateConnection,
-  type TemplateComposition,
-  // DTOs
-  type TemplateListItemDTO,
-  type TemplateDetailDTO,
-  toTemplateListItemDTO,
-  toTemplateDetailDTO,
-} from './domain/hivelab/templates/template.entity';
-
-export {
-  // Repository
-  type ITemplateRepository,
-  type TemplateQueryOptions,
-  type PaginatedResult,
-  FirebaseAdminTemplateRepository,
-  getServerTemplateRepository,
-  resetServerTemplateRepository,
-} from './domain/hivelab/templates/template.repository'; 
+// Template Repository & DTOs — REMOVED (templates directory deleted)

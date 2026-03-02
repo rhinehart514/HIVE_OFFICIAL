@@ -10,6 +10,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
+import { emitValueMoment } from "@/lib/pwa-triggers";
 
 /**
  * SpaceMetadataContext
@@ -191,6 +192,7 @@ export function SpaceMetadataProvider({
 
       if (res.ok) {
         await fetchSpace();
+        emitValueMoment({ type: 'space-join', spaceId, spaceName: space?.name });
         return true;
       }
 

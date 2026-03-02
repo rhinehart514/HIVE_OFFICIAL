@@ -464,64 +464,9 @@ export {
   ElementConnectionSchema,
   PositionSchema,
   SizeSchema,
-  CompositionValidatorService,
-  validateComposition,
-  getCompositionValidator,
-  QualityGateService,
-  gateComposition,
-  getQualityGateService,
-  DEFAULT_GATE_THRESHOLDS,
-  type GateResult,
-  type GateDecision,
-  type GateThresholds,
-  type AutoFix,
-  type AutoFixType,
-  GenerationTrackerService,
-  getGenerationTrackerService,
-  initializeGenerationTracker,
-  type GenerationInput,
-  type GenerationOutput,
-  type GenerationTrackingData,
-  type GenerationMetrics,
-  FailureClassifierService,
-  getFailureClassifierService,
-  initializeFailureClassifier,
-  classifyFailureType,
-  type FailureInput,
-  type FailureStats,
-  EditTrackerService,
-  getEditTrackerService,
-  initializeEditTracker,
-  type EditTrackingInput,
-  type EditPatterns,
-  AIQualityPipeline,
-  getAIQualityPipeline,
-  processComposition,
-  validateOnly,
-  initializeAIQualityPipeline,
-  CURRENT_PROMPT_VERSION,
-  type PipelineContext,
-  type PipelineResult,
 } from './hivelab/validation';
 
-// System Tool Templates
-export {
-  SYSTEM_TOOL_TEMPLATES,
-  UNIVERSAL_DEFAULT_TEMPLATE,
-  ACADEMIC_TEMPLATE,
-  SOCIAL_TEMPLATE,
-  PROFESSIONAL_TEMPLATE,
-  INTEREST_TEMPLATE,
-  ALL_TEMPLATES as ALL_SYSTEM_TEMPLATES,
-  getSystemTool,
-  getSystemToolsByCategory,
-  getTemplateForCategory as getSystemTemplateForCategory,
-  isSystemTool as isSystemToolTemplate,
-  getEssentialTools,
-  getEngagementTools,
-  type SystemToolTemplate,
-  type UniversalTemplate,
-} from './hivelab/system-tool-templates';
+// System Tool Templates — REMOVED (deleted)
 
 // Setup System (removed)
 
@@ -555,40 +500,7 @@ export {
   setValueAtPath,
 } from './hivelab/tool-connection.types';
 
-// Sprint 4: Tool Automations
-export type {
-  ToolAutomation,
-  ToolAutomationTrigger,
-  ToolAutomationAction,
-  ToolAutomationCondition,
-  ToolAutomationLimits,
-  ToolAutomationRun,
-  ToolAutomationRunStatus,
-  NotifyEmailAction,
-  NotifyPushAction,
-  MutateAction,
-  TriggerToolAction,
-  ToolEventTrigger,
-  ToolScheduleTrigger,
-  ToolThresholdTrigger,
-  ConditionOperator as AutomationConditionOperator,
-  CreateToolAutomationDTO,
-  UpdateToolAutomationDTO,
-} from './hivelab/tool-automation.types';
-export {
-  evaluateCondition as evaluateAutomationCondition,
-  evaluateAllConditions,
-  canRunAutomation,
-  isValidCron,
-  getNextRunTime,
-  DEFAULT_AUTOMATION_LIMITS,
-  MAX_AUTOMATIONS_PER_TOOL,
-  MAX_ACTIONS_PER_AUTOMATION,
-  MAX_CONDITIONS_PER_AUTOMATION,
-  MAX_AUTOMATION_RUNS_HISTORY,
-  AUTOMATIONS_COLLECTION,
-  AUTOMATION_RUNS_COLLECTION,
-} from './hivelab/tool-automation.types';
+// Sprint 4: Tool Automations — REMOVED (deleted)
 
 // Sprint 5: Theme Inheritance
 export type {
@@ -626,26 +538,7 @@ export {
   isToolError,
 } from './hivelab/tool-error.types';
 
-// Sprint 5: Audit Trail
-export type {
-  AuditEventType,
-  AuditActor,
-  AuditChanges,
-  AuditEntry,
-  AuditLogQuery,
-  AuditLogResponse,
-  AuditSummary,
-} from './hivelab/tool-audit.types';
-export {
-  AUDIT_COLLECTION,
-  MAX_AUDIT_ENTRIES,
-  AUDIT_RETENTION_DAYS,
-  generateAuditId,
-  createAuditEntry,
-  createSystemActor,
-  createUserActor,
-  getEventDescription,
-} from './hivelab/tool-audit.types';
+// Sprint 5: Audit Trail — REMOVED (deleted)
 
 // =============================================================================
 // Webhooks Domain

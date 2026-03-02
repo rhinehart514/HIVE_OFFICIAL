@@ -4,29 +4,12 @@ import { withCache } from '../../../../lib/cache-headers';
 
 /**
  * GET /api/profile/connections
- * Returns the authenticated user's connections/friends list.
- * Checks both `connections` and `friends` collections.
+ * Returns the authenticated user's connections list from the `connections` collection.
  */
 const _GET = withAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
 
-  // Query connections collection (both directions)
-  const [connAsUser, connAsConnected, friendsAsUser, friendsAsFriend] = await Promise.all([
-    dbAdmin.collection('connections')
-      .where('userId', '==', userId)
-      .get(),
-    dbAdmin.collection('connections')
-      .where('connectedUserId', '==', userId)
-      .get(),
-    dbAdmin.collection('friends')
-      .where('userId', '==', userId)
-      .get(),
-    dbAdmin.collection('friends')
-      .where('friendId', '==', userId)
-      .get(),
-  ]);
-
-  // Also check the profileId1/profileId2 pattern used elsewhere
+  // Query connections using canonical schema (profileId1/profileId2, isActive)
   const [connAsProfile1, connAsProfile2] = await Promise.all([
     dbAdmin.collection('connections')
       .where('profileId1', '==', userId)
@@ -49,49 +32,19 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
 
   const connectionsMap = new Map<string, ConnectionItem>();
 
-  // Process connections (userId/connectedUserId pattern)
-  for (const doc of connAsUser.docs) {
-    const data = doc.data();
-    const otherId = data.connectedUserId as string;
-    if (otherId && !connectionsMap.has(otherId)) {
-      connectionsMap.set(otherId, {
-        id: doc.id,
-        userId: otherId,
-        status: (data.status as string) || 'accepted',
-        type: (data.type as string) || 'connection',
-        source: 'connections',
-        createdAt: data.createdAt?.toDate?.()?.toISOString() ||
-          (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString()),
-      });
-    }
-  }
-
-  for (const doc of connAsConnected.docs) {
-    const data = doc.data();
-    const otherId = data.userId as string;
-    if (otherId && !connectionsMap.has(otherId)) {
-      connectionsMap.set(otherId, {
-        id: doc.id,
-        userId: otherId,
-        status: (data.status as string) || 'accepted',
-        type: (data.type as string) || 'connection',
-        source: 'connections',
-        createdAt: data.createdAt?.toDate?.()?.toISOString() ||
-          (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString()),
-      });
-    }
-  }
-
-  // Process connections (profileId1/profileId2 pattern)
+  // Process connections (canonical profileId1/profileId2 schema)
+  // Canonical schema has `type` ('following'|'friend'), not `status`.
+  // Since we query isActive:true, all results are active. Map to status for API response.
   for (const doc of connAsProfile1.docs) {
     const data = doc.data();
     const otherId = data.profileId2 as string;
+    const connType = (data.type as string) || 'following';
     if (otherId && !connectionsMap.has(otherId)) {
       connectionsMap.set(otherId, {
         id: doc.id,
         userId: otherId,
-        status: (data.status as string) || 'accepted',
-        type: (data.type as string) || 'friend',
+        status: 'accepted', // isActive:true means accepted
+        type: connType,
         source: 'connections',
         createdAt: data.createdAt?.toDate?.()?.toISOString() ||
           (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString()),
@@ -102,46 +55,14 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
   for (const doc of connAsProfile2.docs) {
     const data = doc.data();
     const otherId = data.profileId1 as string;
+    const connType = (data.type as string) || 'following';
     if (otherId && !connectionsMap.has(otherId)) {
       connectionsMap.set(otherId, {
         id: doc.id,
         userId: otherId,
-        status: (data.status as string) || 'accepted',
-        type: (data.type as string) || 'friend',
+        status: 'accepted', // isActive:true means accepted
+        type: connType,
         source: 'connections',
-        createdAt: data.createdAt?.toDate?.()?.toISOString() ||
-          (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString()),
-      });
-    }
-  }
-
-  // Process friends collection
-  for (const doc of friendsAsUser.docs) {
-    const data = doc.data();
-    const otherId = data.friendId as string;
-    if (otherId && !connectionsMap.has(otherId)) {
-      connectionsMap.set(otherId, {
-        id: doc.id,
-        userId: otherId,
-        status: (data.status as string) || 'accepted',
-        type: 'friend',
-        source: 'friends',
-        createdAt: data.createdAt?.toDate?.()?.toISOString() ||
-          (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString()),
-      });
-    }
-  }
-
-  for (const doc of friendsAsFriend.docs) {
-    const data = doc.data();
-    const otherId = data.userId as string;
-    if (otherId && !connectionsMap.has(otherId)) {
-      connectionsMap.set(otherId, {
-        id: doc.id,
-        userId: otherId,
-        status: (data.status as string) || 'accepted',
-        type: 'friend',
-        source: 'friends',
         createdAt: data.createdAt?.toDate?.()?.toISOString() ||
           (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString()),
       });

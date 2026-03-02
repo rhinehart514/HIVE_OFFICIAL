@@ -23,7 +23,13 @@ import {
   Trophy,
   ClipboardList,
 } from 'lucide-react';
-import { type QuickTemplate } from '@hive/ui';
+/** Minimal template shape — QuickTemplate was removed from @hive/ui */
+interface QuickTemplate {
+  id: string;
+  name: string;
+  icon: string;
+  description?: string;
+}
 import { MOTION } from '@hive/tokens';
 
 const EASE = MOTION.ease.premium;

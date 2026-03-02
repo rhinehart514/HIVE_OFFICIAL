@@ -13,7 +13,7 @@ import {
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 import { rateLimit } from "@/lib/rate-limit-simple";
 import { validateToolContext } from "@hive/core/infrastructure/api/validate-tool-context";
-import { getQuickTemplate } from "@hive/ui";
+// getQuickTemplate removed — quick-templates deleted
 import { withCache } from '../../../lib/cache-headers';
 
 // Define tool schemas locally (not in core package)
@@ -296,27 +296,12 @@ export const POST = withAuthValidationAndErrors(
           const templateData = templateDoc.data();
           templateElements = templateData?.elements || [];
           templateConfig = templateData?.config || {};
-        } else {
-          // Fallback: Try code-defined quick templates
-          const codeTemplate = getQuickTemplate(templateIdStr);
-          if (codeTemplate) {
-            templateElements = codeTemplate.composition.elements || [];
-            templateConfig = {};
-            logger.info('Using code-defined template', { templateId: templateIdStr });
-          }
         }
       } catch (error) {
         logger.warn(
           `Failed to load template at /api/tools`,
           { error: error instanceof Error ? error.message : String(error) }
         );
-        // Fallback: Try code-defined quick templates
-        const codeTemplate = getQuickTemplate(templateIdStr);
-        if (codeTemplate) {
-          templateElements = codeTemplate.composition.elements || [];
-          templateConfig = {};
-          logger.info('Using code-defined template after Firestore error', { templateId: templateIdStr });
-        }
       }
     }
 

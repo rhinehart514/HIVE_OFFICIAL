@@ -762,7 +762,7 @@ export default function SpaceToolPage() {
           <p className="text-white/50 mb-6">
             The space @{handle} doesn't exist or is no longer available.
           </p>
-          <Button variant="default" onClick={() => router.push('/spaces')}>
+          <Button variant="default" onClick={() => router.push('/discover')}>
             Browse Spaces
           </Button>
         </motion.div>

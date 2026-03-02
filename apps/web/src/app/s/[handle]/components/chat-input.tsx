@@ -9,7 +9,7 @@
  */
 
 import * as React from 'react';
-import { Send, X, Image as ImageIcon, Loader2, Command } from 'lucide-react';
+import { Send, X, Image as ImageIcon, Loader2, Command, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@hive/ui/design-system/primitives';
 import {
@@ -35,6 +35,8 @@ interface ChatInputProps {
   prefill?: string | null;
   /** Callback to clear prefill after consuming */
   onPrefillConsumed?: () => void;
+  /** Sparkle button click handler — opens creation sheet */
+  onSparkleClick?: () => void;
 }
 
 export function ChatInput({
@@ -46,6 +48,7 @@ export function ChatInput({
   onTypingChange,
   prefill,
   onPrefillConsumed,
+  onSparkleClick,
 }: ChatInputProps) {
   const [value, setValue] = React.useState('');
   const [isSending, setIsSending] = React.useState(false);
@@ -234,10 +237,10 @@ export function ChatInput({
         clearTimeout(typingTimeoutRef.current);
       }
 
-      // Stop typing indicator after 2 seconds of inactivity
+      // Stop typing indicator after 3 seconds of inactivity
       typingTimeoutRef.current = setTimeout(() => {
         onTypingChange(false);
-      }, 2000);
+      }, 3000);
     }
   }, [onTypingChange]);
 
@@ -368,6 +371,20 @@ export function ChatInput({
             style={{ minHeight: 40, maxHeight: 120 }}
           />
         </div>
+
+        {/* Sparkle/Create button */}
+        {onSparkleClick && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 w-9 p-0 flex-shrink-0 text-[var(--color-gold)] hover:bg-[var(--color-gold)]/10"
+            onClick={onSparkleClick}
+            disabled={disabled}
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="sr-only">Create</span>
+          </Button>
+        )}
 
         {/* Send button */}
         <Button

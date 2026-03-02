@@ -51,7 +51,7 @@ export function SpaceThreshold({
       {/* Minimal top bar — back to discover */}
       <div className="h-14 flex items-center px-4 flex-shrink-0">
         <a
-          href="/spaces"
+          href="/discover"
           className="flex items-center gap-1 text-[13px] text-white/40 hover:text-white/60 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />

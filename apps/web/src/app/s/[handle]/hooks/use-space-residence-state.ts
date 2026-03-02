@@ -18,6 +18,7 @@ import { useAuth } from '@hive/auth-logic';
 import type { SpacePanelOnlineMember, UpcomingEvent } from '@hive/ui';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 import { logger } from '@/lib/logger';
+import { emitValueMoment } from '@/lib/pwa-triggers';
 import { isSlashCommand } from '@/lib/slash-command-parser';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import type { InlineComponentData } from '@/components/spaces/chat/inline-components';
@@ -693,6 +694,9 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
 
         throw new Error(userFriendlyError);
       }
+
+      // Signal value moment for PWA prompts
+      emitValueMoment({ type: 'space-join', spaceId: space.id, spaceName: space.name });
 
       // Reload members after joining
       const membersResponse = await fetch(`/api/spaces/${space.id}/members`);

@@ -1,8 +1,9 @@
 {
+  "id": "/",
   "name": "HIVE - Campus Community Platform",
   "short_name": "HIVE",
   "description": "Connect with your campus community through spaces, events, and tools",
-  "start_url": "/",
+  "start_url": "/discover",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#D4AF37",
@@ -19,6 +20,44 @@
       "type": "image/svg+xml",
       "sizes": "any",
       "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Discover Spaces",
+      "short_name": "Discover",
+      "url": "/discover",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Feed",
+      "short_name": "Feed",
+      "url": "/feed",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
     }
   ],
   "categories": ["social", "education", "lifestyle"],

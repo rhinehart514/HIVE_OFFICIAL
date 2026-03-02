@@ -1349,7 +1349,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       href={`/lab?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
                       className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white/50 hover:text-white transition-colors"
                     >
-                      Build something new
+                      Make something new
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
@@ -1394,7 +1394,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       href={`/lab?spaceId=${space.id}&spaceName=${encodeURIComponent(space.name)}`}
                       className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/50 transition-colors"
                     >
-                      Build custom apps in HiveLab
+                      Make custom apps in HiveLab
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>

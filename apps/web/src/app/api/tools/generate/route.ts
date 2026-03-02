@@ -245,14 +245,13 @@ export async function POST(request: NextRequest) {
  * Get generation info and demo prompts
  */
 export async function GET() {
-  const { DEMO_PROMPTS } = await import('@hive/core');
   const availableBackend = await getAvailableBackend();
   const groqAvailable = availableBackend === 'groq';
   const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
   const is70b = groqModel.includes('70b');
 
   return NextResponse.json({
-    demoPrompts: Array.from(DEMO_PROMPTS),
+    demoPrompts: [],
     model: 'rules-based-v1',
     backend: 'rules-based',
     maxPromptLength: 1000,

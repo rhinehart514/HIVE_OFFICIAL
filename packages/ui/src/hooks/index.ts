@@ -4,11 +4,7 @@ export { useShell } from "./use-shell"
 
 // HiveLab hooks
 export { useToolState, type UseToolStateOptions, type UseToolStateReturn } from "./hivelab/use-tool-state"
-export {
-  useConnectionCascade,
-  type CascadeContext,
-  type CascadeResult,
-} from "./hivelab/use-connection-cascade"
+// useConnectionCascade — REMOVED (IDE dead code)
 export { useSpaceContext } from "./hivelab/use-space-context"
 export { useMemberContext } from "./hivelab/use-member-context"
 export {

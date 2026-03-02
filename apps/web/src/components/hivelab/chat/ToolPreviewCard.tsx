@@ -106,7 +106,7 @@ export function ToolPreviewCard({
               transition={{ duration: 2, repeat: Infinity }}
               className="text-white/25 text-sm"
             >
-              Building...
+              Making...
             </motion.span>
           </div>
         ) : elements.length > 0 ? (

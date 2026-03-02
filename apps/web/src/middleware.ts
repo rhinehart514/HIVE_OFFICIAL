@@ -56,8 +56,8 @@ const ADMIN_ROUTES = ['/admin', '/design-system'];
 // These are PERMANENT (301) redirects per IA_INVARIANTS.md
 // Auth/session redirects elsewhere use temporary (307) redirects
 export const ROUTE_REDIRECTS: Record<string, string> = {
-  // Alias routes
-  '/browse': '/spaces',
+  // Alias routes (/spaces handled by catch-all middleware)
+  '/browse': '/discover',
   '/explore': '/discover',
   // Dead route consolidation
   '/home': '/discover',
@@ -80,12 +80,9 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/privacy': '/legal/privacy',
   '/terms': '/legal/terms',
   // IA Consolidation: Convert pages to modals
-  '/spaces/browse': '/discover',
-  '/spaces/claim': '/spaces?claim=true',
-  '/spaces/new': '/spaces?create=true',
-  '/spaces/create': '/spaces?create=true',
+  // /spaces/* routes handled by catch-all middleware above
   '/people': '/discover?tab=people',
-  '/leaders': '/spaces?claim=true',
+  '/leaders': '/discover',
   // Profile redirects — old /profile/* routes consolidated
   '/you': '/me',
   '/profile': '/me',
@@ -336,32 +333,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(target, 301);
   }
 
-  // Handle /spaces/claim -> /spaces?claim=true (preserve handle param)
-  if (pathname === '/spaces/claim') {
-    const handle = request.nextUrl.searchParams.get('handle');
-    const target = handle
-      ? `/spaces?claim=true&handle=${encodeURIComponent(handle)}`
-      : '/spaces?claim=true';
-    return NextResponse.redirect(new URL(target, request.url), 301);
+  // All /spaces/* routes are dead — redirect to /discover
+  if (pathname === '/spaces' || pathname.startsWith('/spaces/')) {
+    return NextResponse.redirect(new URL('/discover', request.url), 301);
   }
 
   const redirectTarget = ROUTE_REDIRECTS[pathname];
   if (redirectTarget) {
     return NextResponse.redirect(new URL(redirectTarget, request.url), 301);
-  }
-
-  // Handle dynamic route redirects: /spaces/join/:code -> /spaces?join=:code
-  // PERMANENT (301) - canonical route pattern
-  const joinMatch = pathname.match(/^\/spaces\/join\/([^/]+)$/);
-  if (joinMatch) {
-    const code = joinMatch[1];
-    return NextResponse.redirect(new URL(`/spaces?join=${encodeURIComponent(code)}`, request.url), 301);
-  }
-
-  // Handle /spaces/new/* paths -> /spaces?create=true (pages are now modals)
-  // PERMANENT (301) - canonical route pattern
-  if (pathname.startsWith('/spaces/new/')) {
-    return NextResponse.redirect(new URL('/spaces?create=true', request.url), 301);
   }
 
   // Handle /profile/[id] → /u/[id] (old profile routes)

@@ -61,7 +61,7 @@ export function SpaceHeader({
       {/* Left: Back + Space name */}
       <div className="flex items-center gap-1 min-w-0">
         <Link
-          href="/spaces"
+          href="/discover"
           className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-colors flex-shrink-0"
           aria-label="Back to Spaces"
         >

@@ -12,7 +12,6 @@ import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { MOTION } from '@hive/tokens';
-import type { QuickTemplate } from '@hive/ui';
 
 import { useLabChat } from '@/hooks/use-lab-chat';
 import { QuickStartChips } from '@/components/hivelab/dashboard/QuickStartChips';
@@ -22,7 +21,7 @@ import { ChatInput } from './ChatInput';
 const EASE = MOTION.ease.premium;
 
 interface LabChatViewProps {
-  templates: QuickTemplate[];
+  templates: { id: string; name: string; icon: string; description?: string }[];
   originSpaceId?: string | null;
   spaceContext?: { spaceId: string; spaceName: string; spaceType?: string };
   autoPrompt?: string;
@@ -82,7 +81,7 @@ export function LabChatView({
   );
 
   const handleTemplateClick = useCallback(
-    (template: QuickTemplate) => {
+    (template: { name: string }) => {
       // Templates with fields — just send a message about it to trigger AI generation
       sendMessage(`Create a ${template.name.toLowerCase()}`);
     },

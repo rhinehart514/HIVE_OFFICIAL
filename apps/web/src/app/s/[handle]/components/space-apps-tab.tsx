@@ -60,11 +60,11 @@ export function SpaceAppsTab({
           <Sparkles className="h-8 w-8 text-white/50" />
         </div>
         <h3 className="mb-1 text-xl font-semibold text-white">No apps in this space yet</h3>
-        <p className="mb-6 text-sm text-white/50">Be the first to build one</p>
+        <p className="mb-6 text-sm text-white/50">Be the first to make one</p>
         {isLeader && (
           <Link href={`/lab?spaceId=${spaceId}`}>
             <Button variant="primary" size="sm">
-              Build an app
+              Make an app
             </Button>
           </Link>
         )}

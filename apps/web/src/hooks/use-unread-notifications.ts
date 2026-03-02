@@ -51,9 +51,9 @@ export function useUnreadNotifications({
     // Real-time listener for unread notifications
     const q = query(
       collection(db, 'notifications'),
-      where('recipientId', '==', userId),
+      where('userId', '==', userId),
       where('isRead', '==', false),
-      orderBy('createdAt', 'desc'),
+      orderBy('timestamp', 'desc'),
       limit(maxCount)
     );
 
@@ -68,7 +68,7 @@ export function useUnreadNotifications({
               id: doc.id,
               title: data.title || '',
               category: data.category || 'system',
-              timestamp: data.createdAt?.toDate?.()?.toISOString?.() || data.createdAt || '',
+              timestamp: data.timestamp?.toDate?.()?.toISOString?.() || data.timestamp || '',
               actionUrl: data.actionUrl,
             };
           })

@@ -297,31 +297,9 @@ export {
   initializeElementSystem,
 } from "./lib/hivelab/element-system";
 
-// Quick templates for one-click tool deployment
-export {
-  QUICK_TEMPLATES,
-  getQuickTemplate,
-  getTemplatesByCategory,
-  getTemplatesByComplexity,
-  getAppTemplates,
-  getAvailableTemplates,
-  getCategoriesWithCounts,
-  createToolFromTemplate,
-  getQuickDeployTemplates,
-  getTemplatesForInterests,
-  getTemplatesForSpaceType,
-  getTemplatesSortedByRelevance,
-  SPACE_TYPE_LABELS,
-} from "./lib/hivelab/quick-templates";
-export type { QuickTemplate, TemplateCategory, TemplateComplexity, TemplateStatus, SpaceType } from "./lib/hivelab/quick-templates";
+// Quick templates — REMOVED (deleted files)
 
-// HiveLab UI Components
-export { QuickCreateWizard, QUICK_CREATE_INTENTS } from "./design-system/components/hivelab";
-export type { QuickCreateIntent, QuickCreateField, QuickCreateResult, QuickCreateWizardProps } from "./design-system/components/hivelab";
-export { BuilderOnboarding, useBuilderOnboarding } from "./design-system/components/hivelab";
-export type { BuilderOnboardingProps } from "./design-system/components/hivelab";
-export { QuickDeployModal } from "./design-system/components/hivelab";
-export type { QuickDeployModalProps, QuickDeployResult } from "./design-system/components/hivelab";
+// HiveLab UI Components — REMOVED (QuickCreateWizard, BuilderOnboarding, QuickDeployModal deleted)
 
 export {
   VisuallyHidden,
@@ -1098,9 +1076,7 @@ export type {
   UseGestureActionsReturn,
 } from "./hooks/use-gesture-actions";
 
-// HiveLab: Visual composer (desktop-first)
-export { VisualToolComposer } from "./components/hivelab/visual-tool-composer";
-export type { VisualToolComposerProps } from "./components/hivelab/visual-tool-composer";
+// HiveLab: Visual composer — REMOVED (deleted)
 
 // HiveLab: Tool Canvas (runtime rendering)
 export { ToolCanvas, ToolErrorBoundary } from "./components/hivelab/tool-canvas";
@@ -1131,28 +1107,8 @@ export {
 
 // HiveLab: Element Showcase (removed)
 
-// HiveLab: Modern @dnd-kit Studio Components (Nov 2025)
-export { DndStudioProvider } from "./components/hivelab/studio/DndStudioProvider";
-export type { DndStudioProviderProps } from "./components/hivelab/studio/DndStudioProvider";
-
-export { DraggablePaletteItem } from "./components/hivelab/studio/DraggablePaletteItem";
-export type { DraggablePaletteItemProps } from "./components/hivelab/studio/DraggablePaletteItem";
-
-export { SortableCanvasElement } from "./components/hivelab/studio/SortableCanvasElement";
-export type { SortableCanvasElementProps } from "./components/hivelab/studio/SortableCanvasElement";
-
-export { CanvasDropZone } from "./components/hivelab/studio/CanvasDropZone";
-export type { CanvasDropZoneProps } from "./components/hivelab/studio/CanvasDropZone";
-
-export { ToolStudioExample } from "./components/hivelab/studio/ToolStudioExample";
-export type { ToolStudioExampleProps } from "./components/hivelab/studio/ToolStudioExample";
-
-// HiveLab: Setups (Orchestrated Tool Bundles)
-export { SetupDeployWizard } from "./components/hivelab/SetupDeployWizard";
-export type { SetupDeployWizardProps, SetupTemplateItem, SetupDeployConfig } from "./components/hivelab/SetupDeployWizard";
-
-export { SetupDashboard } from "./components/hivelab/SetupDashboard";
-export type { SetupDashboardProps, SetupDeploymentItem, SetupToolItem, OrchestrationRuleItem, OrchestrationLogItem } from "./components/hivelab/SetupDashboard";
+// HiveLab: Studio Components — REMOVED (deleted)
+// HiveLab: Setups — REMOVED (deleted)
 
 // HiveLab: State Management (Immer-based with undo/redo)
 export {
@@ -1181,11 +1137,7 @@ export type {
   UseToolStateReturn,
 } from "./hooks/hivelab/use-tool-state";
 
-export { useConnectionCascade } from "./hooks/hivelab/use-connection-cascade";
-export type {
-  CascadeContext,
-  CascadeResult,
-} from "./hooks/hivelab/use-connection-cascade";
+// useConnectionCascade — REMOVED (IDE dead code)
 
 // Space Molecules - REMOVED (Use design-system components)
 // NOTE: SpaceAboutWidget, SpaceToolsWidget, LeaderSetupProgress were in atomic/ (now deleted)
@@ -1387,29 +1339,10 @@ export type { PageHeaderProps, SectionHeaderProps } from "./layout/page-header";
 export { CollapsiblePageHeader } from "./layout/collapsible-page-header";
 export type { CollapsiblePageHeaderProps, TabItem as HeaderTabItem } from "./layout/collapsible-page-header";
 
-// HiveLab: Editor Level Detection
-export { detectEditorLevel, isEmbedElement } from "./lib/hivelab/detect-editor-level";
-export type { EditorLevel } from "./lib/hivelab/detect-editor-level";
-
-// HiveLab: Simple Editors (Adaptive complexity)
-export { SimpleEditor } from "./components/hivelab/editors";
-export type { SimpleEditorProps } from "./components/hivelab/editors";
-export { ElementPickerModal } from "./components/hivelab/editors";
-export type { ElementPickerModalProps } from "./components/hivelab/editors";
-
-// HiveLab: Shared Config Fields (extracted from PropertiesPanel)
-export { ELEMENT_SCHEMAS, PropertyField } from "./components/hivelab/ide/config-fields";
-export type { PropertySchema, PropertyFieldProps } from "./components/hivelab/ide/config-fields";
-
-// HiveLab: Deployment modal
-export {
-  ToolDeployModal,
-} from "./components/hivelab/ToolDeployModal";
-export type {
-  ToolDeployModalProps,
-  DeploymentConfig as ToolDeploymentConfig,
-  DeploymentTarget as ToolDeploymentTarget,
-} from "./components/hivelab/ToolDeployModal";
+// HiveLab: Editor Level Detection — REMOVED (deleted)
+// HiveLab: Simple Editors — REMOVED (deleted)
+// HiveLab: IDE Config Fields — REMOVED (deleted)
+// HiveLab: Deployment modal — REMOVED (deleted)
 
 // HiveLab: Runtime modal (for in-context tool execution in Spaces)
 export { ToolRuntimeModal } from "./components/hivelab/tool-runtime-modal";
@@ -1540,75 +1473,10 @@ export interface SlashCommandData {
   error?: string;
 }
 
-// Chat-based Landing Page - DISABLED (type mismatches)
-// export { AILandingPageChat } from "./pages/hivelab/AILandingPageChat";
-// export type { AILandingPageChatProps } from "./pages/hivelab/AILandingPageChat";
-
-// HiveLab: Local Tool Storage (localStorage migration helpers)
-export {
-  getLocalTools,
-  getLocalTool,
-  saveLocalTool,
-  updateLocalTool,
-  deleteLocalTool,
-  clearLocalTools,
-  getLocalToolCount,
-  hasLocalTool,
-  exportLocalTools,
-  importLocalTools,
-  useLocalToolStorage,
-  // WIP (Work In Progress) storage
-  saveWIPTool,
-  getWIPTool,
-  clearWIPTool,
-  hasRecentWIPTool,
-} from "./lib/hivelab/local-tool-storage";
-export type { LocalTool, WIPToolData } from "./lib/hivelab/local-tool-storage";
-
-// HiveLab IDE (Figma/VS Code-style - Dec 2025)
-export {
-  // Main IDE Component
-  HiveLabIDE,
-  // Sub-components
-  IDEToolbar,
-  IDECanvas,
-  AICommandPalette,
-  ElementPalette,
-  LayersPanel,
-  PropertiesPanel,
-  HeaderBar,
-  // Hooks
-  useIDEKeyboard,
-  formatShortcut,
-  SHORTCUTS,
-  // Types
-  DEFAULT_CANVAS_STATE,
-  DEFAULT_IDE_STATE,
-} from "./components/hivelab/ide";
-export type {
-  HiveLabIDEProps,
-  HiveLabComposition,
-  Page as IDEPage,
-  NavigationAction,
-  CanvasElement as IDECanvasElement,
-  Connection as IDEConnection,
-  ToolMode,
-  PageMode,
-  CanvasState,
-  HistoryEntry,
-  IDEState,
-  IDEActions,
-  KeyboardShortcut,
-} from "./components/hivelab/ide";
-
-// HiveLab: Deploy Takeover (Full-screen deployment experience)
-export {
-  DeployTakeover,
-  ToolCard as DeployToolCard,
-  FlightAnimation,
-  SuccessRecap,
-} from "./components/hivelab/deploy";
-export type { DeployPhase } from "./components/hivelab/deploy";
+// Chat-based Landing Page — REMOVED (deleted)
+// HiveLab: Local Tool Storage — REMOVED (deleted)
+// HiveLab IDE — REMOVED (deleted)
+// HiveLab: Deploy Takeover — REMOVED (deleted)
 
 // ============================================
 // ATMOSPHERE SYSTEM (Jan 2026 - Global Context)
@@ -1756,20 +1624,12 @@ export type {
 // ============================================
 
 export {
-  ToolAnalyticsPage,
-  ToolPreviewPage,
   // Page Skeletons - Premium loading states with staggered animations
   FeedLoadingSkeleton,
   ProfileViewLoadingSkeleton,
   SpacesDiscoverySkeleton,
   SpaceDetailSkeleton,
   SpaceCreationSkeleton,
-} from "./pages";
-
-export type {
-  ToolAnalyticsPageProps,
-  ToolAnalyticsData,
-  ToolPreviewPageProps,
 } from "./pages";
 
 // ============================================

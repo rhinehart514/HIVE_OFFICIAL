@@ -20,16 +20,11 @@ import {
   PlacementVisibility,
 } from '../../domain/spaces/entities/placed-tool';
 import { ISpaceRepository } from '../../infrastructure/repositories/interfaces';
-import {
-  SYSTEM_TOOL_TEMPLATES,
-  UNIVERSAL_DEFAULT_TEMPLATE,
-  getTemplateForCategory,
-  getTemplateById,
-  getSystemTool,
-  isSystemTool,
-  type SystemToolTemplate,
-  type UniversalTemplate,
-} from '../../domain/hivelab/system-tool-templates';
+// System tool templates removed — all tools are now AI-generated.
+// Stubs preserve the placement service interface.
+interface SystemToolTemplate { id: string; toolId: string; }
+const isSystemTool = (_toolId: string) => false;
+const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [];
 
 // ============================================================
 // Types
@@ -396,10 +391,8 @@ export class SpaceDeploymentService extends BaseApplicationService {
       }
       const space = spaceResult.getValue();
 
-      // Get the appropriate template
-      const template = input.templateId
-        ? getTemplateById(input.templateId) ?? UNIVERSAL_DEFAULT_TEMPLATE
-        : getTemplateForCategory(input.spaceCategory);
+      // System tool templates removed — auto-deploy is a no-op
+      const template = { id: 'none', slots: [] as { toolId: string; order: number; config: Record<string, unknown> }[] };
 
       const placedTools: PlaceToolResult[] = [];
 
@@ -483,8 +476,8 @@ export class SpaceDeploymentService extends BaseApplicationService {
   /**
    * Get system tool template by ID
    */
-  getSystemToolTemplate(toolId: string): SystemToolTemplate | undefined {
-    return getSystemTool(toolId);
+  getSystemToolTemplate(_toolId: string): SystemToolTemplate | undefined {
+    return undefined;
   }
 
   // ============================================================

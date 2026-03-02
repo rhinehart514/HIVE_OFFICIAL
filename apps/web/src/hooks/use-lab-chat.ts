@@ -9,7 +9,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import type { ToolElement, QuickTemplate } from '@hive/ui';
+import type { ToolElement } from '@hive/ui';
 
 import {
   type ChatThread,
@@ -19,10 +19,9 @@ import {
 } from '@/lib/hivelab/chat-types';
 import {
   createBlankTool,
-  createToolFromTemplateApi,
   generateToolName,
 } from '@/lib/hivelab/create-tool';
-import { matchTemplate } from '@/components/hivelab/conversational/template-matcher';
+// template-matcher removed — all creation goes through AI generation
 import { useAnalytics } from '@/hooks/use-analytics';
 import type { StreamingChunk } from '@/lib/ai-generator';
 
@@ -45,7 +44,7 @@ interface UseLabChatReturn {
   isCreatingTool: boolean;
   isThinking: boolean;
   sendMessage: (text: string) => Promise<void>;
-  useTemplate: (template: QuickTemplate, overrides?: Record<string, string>) => Promise<void>;
+  useTemplate: (template: unknown, overrides?: Record<string, string>) => Promise<void>;
   dismissTemplateSuggestion: () => void;
   reset: () => void;
   publishAndCopyLink: () => Promise<void>;
@@ -124,7 +123,7 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
       const isIteration = !!(existingElements?.length || existingCode);
 
       // Add streaming assistant message
-      const streamMsg = createMessage('assistant', 'tool-preview', 'Building...', {
+      const streamMsg = createMessage('assistant', 'tool-preview', 'Making...', {
         toolPreview: {
           toolId,
           toolName: existingName || '',
@@ -233,7 +232,7 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
 
                   updateLastAssistantMessage(msg => ({
                     ...msg,
-                    content: `Building ${completeName || 'your app'}...`,
+                    content: `Making ${completeName || 'your app'}...`,
                     toolPreview: {
                       ...msg.toolPreview!,
                       elements: [...collected],
@@ -464,21 +463,6 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
 
       // Pre-generation conversation: no tool created yet
       if (!thread.toolId) {
-        // Template matching is still a fast-path
-        const match = matchTemplate(userPrompt);
-        if (match) {
-          appendMessage(
-            createMessage('assistant', 'template-suggestion', `I found a template that matches: ${match.template.name}`, {
-              templateSuggestion: {
-                templateId: match.template.id,
-                templateName: match.template.name,
-                matchScore: match.score,
-              },
-            })
-          );
-          return;
-        }
-
         // Specificity check: if the prompt is clearly actionable, skip conversation
         // and generate immediately. Only route vague/short prompts through chat.
         const isSpecificPrompt = (() => {
@@ -539,25 +523,9 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
 
   // Use a matched template
   const useTemplate = useCallback(
-    async (template: QuickTemplate, overrides?: Record<string, string>) => {
-      setIsCreatingTool(true);
-      appendMessage(
-        createMessage('system', 'status', `Creating ${template.name}...`)
-      );
-
-      try {
-        const toolId = await createToolFromTemplateApi(template, overrides);
-        setThread(prev => ({
-          ...prev,
-          toolId,
-          toolName: template.name,
-        }));
-        onToolCreated?.(toolId);
-      } catch {
-        toast.error('Failed to create from template');
-      } finally {
-        setIsCreatingTool(false);
-      }
+    async (_template: unknown, _overrides?: Record<string, string>) => {
+      // Template-based creation removed — use AI chat instead
+      toast.error('Templates are no longer available. Use the chat to create.');
     },
     [appendMessage, onToolCreated]
   );
@@ -575,7 +543,7 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
 
     if (!userPrompt) return;
 
-    appendMessage(createMessage('system', 'status', 'Building with AI instead...'));
+    appendMessage(createMessage('system', 'status', 'Making with AI instead...'));
     startTimer();
     createAndGenerate(userPrompt);
   }, [thread.messages, appendMessage, startTimer, createAndGenerate]);

@@ -6,7 +6,6 @@
 
 import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import type { QuickTemplate } from '@hive/ui';
 import type { ChatMessage } from '@/lib/hivelab/chat-types';
 import { ChatMessageBubble } from './ChatMessageBubble';
 
@@ -16,7 +15,7 @@ interface ChatMessageListProps {
   onDeploy?: (toolId: string) => void;
   onEdit?: (toolId: string) => void;
   onShare?: (toolId: string) => void;
-  onUseTemplate?: (template: QuickTemplate) => void;
+  onUseTemplate?: (template: unknown) => void;
   onBuildWithAI?: () => void;
 }
 

@@ -8,6 +8,7 @@ import { useAuth } from '@hive/auth-logic';
 import { useQuery } from '@tanstack/react-query';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import { useAnalytics } from '@/hooks/use-analytics';
+import { Shuffle, Users, X } from 'lucide-react';
 
 const LazyToolCanvas = dynamic(
   () => import('@hive/ui').then(mod => ({ default: mod.ToolCanvas })),
@@ -67,6 +68,12 @@ interface ToolData {
   createdAt: string;
   updatedAt?: string;
   viewCount?: number;
+  useCount?: number;
+  deployedSpaces?: string[];
+  provenance?: {
+    spaceId?: string;
+    spaceName?: string;
+  };
 }
 
 async function fetchTool(toolId: string): Promise<ToolData> {
@@ -84,6 +91,18 @@ async function fetchTool(toolId: string): Promise<ToolData> {
   return result.data || result;
 }
 
+async function fetchSpaceName(spaceId: string): Promise<string | null> {
+  try {
+    const response = await fetch(`/api/spaces/${spaceId}`, { credentials: 'include' });
+    if (!response.ok) return null;
+    const result = await response.json();
+    const space = result.data || result;
+    return space.name || null;
+  } catch {
+    return null;
+  }
+}
+
 export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: string; baseUrl: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -91,7 +110,10 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
   const { track } = useAnalytics();
   const [hasInteracted, setHasInteracted] = useState(false);
   const [showCreatedBanner, setShowCreatedBanner] = useState(false);
+  const [showConvertBanner, setShowConvertBanner] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isRemixing, setIsRemixing] = useState(false);
+  const [spaceName, setSpaceName] = useState<string | null>(null);
   const interactionRef = useRef(false);
 
   // Show share banner when arriving from creation flow
@@ -100,7 +122,6 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       setShowCreatedBanner(true);
     }
   }, [searchParams]);
-
 
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}/t/${toolId}`;
@@ -133,6 +154,15 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     },
   });
 
+  // Fetch space name for provenance
+  useEffect(() => {
+    if (!tool) return;
+    const spaceId = tool.provenance?.spaceId || tool.deployedSpaces?.[0];
+    if (spaceId) {
+      fetchSpaceName(spaceId).then(setSpaceName);
+    }
+  }, [tool]);
+
   const runtime = useToolRuntime({
     toolId,
     enabled: !!tool,
@@ -155,8 +185,12 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     if (!interactionRef.current) {
       interactionRef.current = true;
       setHasInteracted(true);
+      // Show conversion banner for unauthenticated users after interaction
+      if (!user) {
+        setTimeout(() => setShowConvertBanner(true), 2000);
+      }
     }
-  }, [runtime]);
+  }, [runtime, user]);
 
   const handleElementAction = useCallback((instanceId: string, action: string, payload: unknown) => {
     runtime.executeAction(instanceId, action, payload as Record<string, unknown>);
@@ -164,8 +198,39 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       interactionRef.current = true;
       setHasInteracted(true);
       track('standalone_interacted', { toolId, action });
+      if (!user) {
+        setTimeout(() => setShowConvertBanner(true), 2000);
+      }
     }
-  }, [runtime, toolId, track]);
+  }, [runtime, toolId, track, user]);
+
+  const handleRemix = useCallback(async () => {
+    if (!user) {
+      router.push(`/enter?redirect=${encodeURIComponent(`/t/${toolId}`)}`);
+      return;
+    }
+
+    setIsRemixing(true);
+    try {
+      const response = await fetch(`/api/tools/${toolId}/clone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ mode: 'remix' }),
+      });
+
+      if (!response.ok) throw new Error('Failed to remix');
+
+      const result = await response.json();
+      const newToolId = result.data?.toolId || result.toolId;
+      track('tool_remixed', { sourceToolId: toolId, newToolId });
+      router.push(`/build/${newToolId}`);
+    } catch {
+      // Silently fail, user can retry
+    } finally {
+      setIsRemixing(false);
+    }
+  }, [user, toolId, router, track]);
 
   // Loading
   if (isLoading) {
@@ -227,6 +292,8 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     );
   }
 
+  const usageCount = tool.useCount || tool.viewCount || 0;
+
   return (
     <div className="min-h-screen bg-black flex flex-col">
       {/* Minimal header — way back to HIVE */}
@@ -240,11 +307,22 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             HIVE
           </span>
         </Link>
-        {tool.ownerName && (
-          <span className="text-[12px] text-white/25 font-sans tracking-wide">
-            by {tool.ownerName}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {tool.ownerName && (
+            <span className="text-[12px] text-white/25 font-sans tracking-wide">
+              by {tool.ownerName}
+            </span>
+          )}
+          {/* Remix button */}
+          <button
+            onClick={handleRemix}
+            disabled={isRemixing}
+            className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[12px] font-medium text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white/70 disabled:opacity-50"
+          >
+            <Shuffle className="h-3 w-3" />
+            {isRemixing ? 'Remixing...' : 'Remix this'}
+          </button>
+        </div>
       </header>
 
       {/* Tool — centered, frameless */}
@@ -262,6 +340,24 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                   {tool.description}
                 </p>
               )}
+
+              {/* Usage counter + space context */}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {usageCount > 0 && (
+                  <span className="flex items-center gap-1 text-[11px] text-white/30">
+                    <Users className="h-3 w-3" />
+                    {usageCount} {usageCount === 1 ? 'person' : 'people'} used this
+                  </span>
+                )}
+                {spaceName && (
+                  <>
+                    {usageCount > 0 && <span className="text-white/15 text-[11px]">·</span>}
+                    <span className="text-[11px] text-white/30">
+                      Built for {spaceName}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Tool canvas */}
@@ -290,7 +386,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                 <p className="text-white/50 text-sm mb-4">This creation is empty</p>
                 {user && tool.ownerId === user.uid && (
                   <button
-                    onClick={() => router.push(`/lab/${toolId}`)}
+                    onClick={() => router.push(`/build/${toolId}`)}
                     className="px-4 py-2 text-sm font-medium text-black bg-[var(--life-gold,#FFD700)] rounded-xl hover:opacity-90 transition-opacity"
                   >
                     Open in editor
@@ -317,7 +413,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                   {copied ? 'Copied!' : 'Share link'}
                 </button>
                 <button
-                  onClick={() => router.push(`/lab/${toolId}`)}
+                  onClick={() => router.push(`/build/${toolId}`)}
                   className="px-4 py-2.5 bg-white/[0.06] text-white/60 text-sm font-medium rounded-xl hover:bg-white/[0.08] transition-colors"
                 >
                   Edit
@@ -326,7 +422,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             </div>
           )}
 
-          {/* Post-interaction CTA — appears after user engages */}
+          {/* Post-interaction CTA — appears after user engages (unauthenticated only) */}
           {hasInteracted && !user && (
             <div className="mt-6 text-center animate-in fade-in duration-300">
               <Link
@@ -339,6 +435,33 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           )}
         </div>
       </main>
+
+      {/* Non-blocking bottom conversion banner — after interaction, unauthenticated only */}
+      {showConvertBanner && !user && (
+        <div className="fixed bottom-0 inset-x-0 z-40 animate-in slide-in-from-bottom duration-300">
+          <div className="mx-auto max-w-[480px] px-4 pb-4">
+            <div className="flex items-center gap-3 rounded-2xl border border-[#FFD700]/15 bg-[#111]/95 backdrop-blur-lg px-5 py-3.5">
+              <div className="flex-1">
+                <p className="text-[13px] font-medium text-white/80">Like this?</p>
+                <p className="text-[11px] text-white/40">Create your own in seconds.</p>
+              </div>
+              <Link
+                href="/enter"
+                className="shrink-0 rounded-full bg-[#FFD700] px-4 py-2 text-[12px] font-medium text-black transition-opacity hover:opacity-90"
+              >
+                Create
+              </Link>
+              <button
+                onClick={() => setShowConvertBanner(false)}
+                className="shrink-0 rounded-full p-1.5 text-white/30 hover:text-white/50 transition-colors"
+                aria-label="Dismiss"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Made with HIVE — acquisition surface */}
       <footer className="pb-8 pt-4 text-center space-y-2">

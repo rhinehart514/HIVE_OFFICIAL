@@ -106,28 +106,30 @@ async function fetchMutualEnrichment(
   }
 
   try {
-    // Step 1: Get user's connections (accepted)
-    const [outgoing, incoming] = await Promise.all([
+    // Step 1: Get user's connections using canonical schema (profileId1/profileId2)
+    // The follow route writes sorted IDs: profileId1 < profileId2
+    // type: 'following' (one-way) or 'friend' (mutual), isActive: true
+    const [connAsId1, connAsId2] = await Promise.all([
       dbAdmin
         .collection('connections')
-        .where('fromProfileId', '==', userId)
-        .where('status', '==', 'accepted')
+        .where('profileId1', '==', userId)
+        .where('isActive', '==', true)
         .get(),
       dbAdmin
         .collection('connections')
-        .where('toProfileId', '==', userId)
-        .where('status', '==', 'accepted')
+        .where('profileId2', '==', userId)
+        .where('isActive', '==', true)
         .get()
     ]);
 
     const connectionIds = new Set<string>();
-    outgoing.docs.forEach(doc => {
-      const toId = doc.data().toProfileId;
-      if (toId) connectionIds.add(toId);
+    connAsId1.docs.forEach(doc => {
+      const otherId = doc.data().profileId2;
+      if (otherId) connectionIds.add(otherId);
     });
-    incoming.docs.forEach(doc => {
-      const fromId = doc.data().fromProfileId;
-      if (fromId) connectionIds.add(fromId);
+    connAsId2.docs.forEach(doc => {
+      const otherId = doc.data().profileId1;
+      if (otherId) connectionIds.add(otherId);
     });
 
     if (connectionIds.size === 0) {

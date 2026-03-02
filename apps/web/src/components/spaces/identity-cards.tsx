@@ -187,7 +187,7 @@ function IdentityCard({
       className="w-full h-full"
     >
       <Link
-        href={`/spaces/${claim.spaceId}`}
+        href={`/s/${claim.spaceId}`}
         className={cn(
           'group relative flex flex-col items-start p-4',
           'rounded-lg',

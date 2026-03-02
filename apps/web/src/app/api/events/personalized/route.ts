@@ -208,7 +208,10 @@ async function handler(
   _respond: unknown
 ): Promise<Response> {
   const userId = getUserId(request);
-  const campusId = getCampusId(request) || 'ub-buffalo';
+  const campusId = getCampusId(request);
+  if (!campusId) {
+    return Response.json({ error: 'Campus context required' }, { status: 401 });
+  }
 
   try {
     // Parse query params
@@ -227,9 +230,13 @@ async function handler(
     // Step 1: Get user data (interests, connections, space memberships)
     // Fetch user data, connections, and space memberships in parallel.
     // Each query is wrapped so one failure doesn't crash the whole request.
-    const [userDoc, connectionsSnapshot1, connectionsSnapshot2, membershipsSnapshot] = await Promise.all([
+    // Canonical schema: profileId1/profileId2 + isActive (written by follow route)
+    const [
+      userDoc,
+      connAsId1, connAsId2,
+      membershipsSnapshot,
+    ] = await Promise.all([
       dbAdmin.collection('users').doc(userId).get(),
-      // connections use profileId1/profileId2 schema — query both sides
       dbAdmin.collection('connections')
         .where('profileId1', '==', userId)
         .where('isActive', '==', true)
@@ -251,15 +258,14 @@ async function handler(
 
     const userData = userDoc.data() || {};
     const userInterests: string[] = userData.interests || [];
-    // Extract the *other* profileId as the friendId from both query results
     const friendIds = new Set<string>();
-    for (const doc of connectionsSnapshot1.docs) {
+    for (const doc of connAsId1.docs) {
       const data = doc.data();
-      friendIds.add(data.profileId2 as string);
+      if (data.profileId2) friendIds.add(data.profileId2 as string);
     }
-    for (const doc of connectionsSnapshot2.docs) {
+    for (const doc of connAsId2.docs) {
       const data = doc.data();
-      friendIds.add(data.profileId1 as string);
+      if (data.profileId1) friendIds.add(data.profileId1 as string);
     }
     const userSpaceIds = new Set(membershipsSnapshot.docs.map(doc => doc.data().spaceId));
 

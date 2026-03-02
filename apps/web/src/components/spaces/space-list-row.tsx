@@ -319,7 +319,7 @@ export function SpaceListRow({
   // Wrap in Link if onClick not provided
   if (!onClick) {
     return (
-      <Link href={`/spaces/${space.id}`} className="block">
+      <Link href={`/s/${space.id}`} className="block">
         {content}
       </Link>
     );

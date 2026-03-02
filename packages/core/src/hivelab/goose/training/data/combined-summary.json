@@ -1,9 +1,0 @@
-{
-  "total_examples": 391,
-  "source": "synthetic + templates (fixed)",
-  "format": "jsonl",
-  "fields": [
-    "prompt",
-    "output"
-  ]
-}

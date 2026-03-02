@@ -3,6 +3,9 @@
  *
  * Handles push notification permission, token registration,
  * and foreground message handling.
+ *
+ * SW registration is independent of push permission so users
+ * who deny push still get offline caching via the service worker.
  */
 
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
@@ -10,6 +13,31 @@ import { app } from './firebase';
 import { logger } from './logger';
 
 let messaging: Messaging | null = null;
+let swRegistrationPromise: Promise<ServiceWorkerRegistration> | null = null;
+
+/**
+ * Register the service worker independently of push permission.
+ * Safe to call multiple times — returns the same promise.
+ */
+export function ensureServiceWorker(): Promise<ServiceWorkerRegistration> | null {
+  if (typeof window === 'undefined') return null;
+  if (!('serviceWorker' in navigator)) return null;
+
+  if (!swRegistrationPromise) {
+    swRegistrationPromise = navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        logger.info('Service worker registered');
+        return registration;
+      })
+      .catch((error) => {
+        logger.error('Service worker registration failed', { error });
+        swRegistrationPromise = null;
+        throw error;
+      });
+  }
+
+  return swRegistrationPromise;
+}
 
 /**
  * Get or initialize Firebase Messaging instance
@@ -46,6 +74,14 @@ export async function requestFCMToken(): Promise<string | null> {
   try {
     // Check current permission
     const permission = await Notification.requestPermission();
+
+    // Mark that we've prompted regardless of result
+    try {
+      localStorage.setItem('hive:push-prompted', '1');
+    } catch {
+      // localStorage may be unavailable in some contexts
+    }
+
     if (permission !== 'granted') {
       logger.info('Notification permission denied');
       return null;
@@ -58,8 +94,11 @@ export async function requestFCMToken(): Promise<string | null> {
       return null;
     }
 
-    // Register service worker first
-    const registration = await navigator.serviceWorker.register('/sw.js');
+    // Ensure SW is registered
+    const registrationPromise = ensureServiceWorker();
+    if (!registrationPromise) return null;
+
+    const registration = await registrationPromise;
     await navigator.serviceWorker.ready;
 
     // Get token with service worker registration

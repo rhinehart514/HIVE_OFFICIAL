@@ -76,22 +76,27 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
     const userDoc = await dbAdmin.collection('users').doc(userId).get();
     const userData = userDoc.data() ?? {}; // Empty object if no profile
 
-    // Get user's connections for social proof
-    // SCALING FIX: Add limit to prevent loading thousands of connections
-    const connectionsSnapshot = await dbAdmin
-      .collection('connections')
-      .where('userId', '==', userId)
-      .where('status', '==', 'connected')
-      .limit(500)
-      .get();
-    const connectionIds = connectionsSnapshot.docs.map(doc => doc.data().connectedUserId);
-
-    // Get user's friends
-    // SCALING FIX: Add limit to prevent loading thousands of friends
+    // Get user's connections using canonical schema (profileId1/profileId2 + isActive)
+    const [connAsId1, connAsId2] = await Promise.all([
+      dbAdmin.collection('connections')
+        .where('profileId1', '==', userId)
+        .where('isActive', '==', true)
+        .limit(500)
+        .get(),
+      dbAdmin.collection('connections')
+        .where('profileId2', '==', userId)
+        .where('isActive', '==', true)
+        .limit(500)
+        .get(),
+    ]);
+    const connectionIds = [
+      ...connAsId1.docs.map(doc => doc.data().profileId2 as string),
+      ...connAsId2.docs.map(doc => doc.data().profileId1 as string),
+    ];
+    // Legacy friends collection fallback
     const friendsSnapshot = await dbAdmin
       .collection('friends')
       .where('userId', '==', userId)
-      .where('status', '==', 'accepted')
       .limit(500)
       .get();
     const friendIds = friendsSnapshot.docs.map(doc => doc.data().friendId);

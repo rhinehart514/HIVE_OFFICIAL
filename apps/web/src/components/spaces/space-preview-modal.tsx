@@ -98,7 +98,7 @@ export function SpacePreviewModal({
 
       // Navigate to space after brief delay
       setTimeout(() => {
-        router.push(`/spaces/${space.id}`);
+        router.push(`/s/${space.id}`);
         onClose();
       }, 1500);
     } catch {
@@ -108,7 +108,7 @@ export function SpacePreviewModal({
 
   const handleEnter = () => {
     if (!space) return;
-    router.push(`/spaces/${space.id}`);
+    router.push(`/s/${space.id}`);
     onClose();
   };
 

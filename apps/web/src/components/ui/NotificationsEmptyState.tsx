@@ -45,7 +45,7 @@ const VARIANT_CONFIG: Record<
     subtitle: 'Join spaces and participate to start receiving updates about activity that matters to you.',
     showCta: true,
     ctaLabel: 'Browse Spaces',
-    ctaHref: '/spaces',
+    ctaHref: '/discover',
   },
   filtered: {
     icon: Inbox,

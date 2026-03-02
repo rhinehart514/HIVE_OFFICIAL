@@ -49,7 +49,7 @@ export function LandingHeader() {
           href={enterHref}
           className="rounded-full bg-white px-5 py-2 text-[13px] font-medium text-black transition-opacity hover:opacity-90"
         >
-          Start building
+          Start making
         </Link>
       </div>
     </header>

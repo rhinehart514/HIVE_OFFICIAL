@@ -130,7 +130,7 @@ const _GET = withOptionalAuth(async (
 
   return respond.success({
     connectionCount: targetFriendIds.size,
-    friendCount: friendConnections.length / 2, // Divided by 2 since we query both directions
+    friendCount: friendConnections.length,
     mutualCount,
     mutualConnectionIds: mutualIds.slice(0, 5), // First 5 for preview
   });

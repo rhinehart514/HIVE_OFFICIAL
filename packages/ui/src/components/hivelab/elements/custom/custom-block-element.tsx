@@ -11,8 +11,19 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { CustomBlockRenderer } from '../../../../design-system/components/hivelab/CustomBlockRenderer';
 import type { ElementProps } from '../../../../lib/hivelab/element-system';
-import { extractOutputValue } from '@hive/core';
 import type { BlockContext, CustomBlockConfig, IframeMessage } from '@hive/core';
+
+/** Inline replacement for deleted extractOutputValue from @hive/core */
+function extractOutputValue(
+  state: Record<string, unknown>,
+  outputId: string,
+  _elementId?: string,
+): unknown {
+  if (outputId in state) return state[outputId];
+  if ('value' in state) return state.value;
+  if ('data' in state) return state.data;
+  return undefined;
+}
 import type { ElementMode } from '../core';
 
 // ============================================================

@@ -77,9 +77,8 @@ async function validateSpaceAndMembership(spaceId: string, userId: string, campu
 }
 
 async function loadEvent(spaceId: string, eventId: string, campusId: string) {
+  // Events are stored in the flat `events` collection with a `spaceId` field
   const eventDoc = await dbAdmin
-    .collection('spaces')
-    .doc(spaceId)
     .collection('events')
     .doc(eventId)
     .get();
@@ -91,6 +90,11 @@ async function loadEvent(spaceId: string, eventId: string, campusId: string) {
   const eventData = eventDoc.data();
   if (!eventData) {
     return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Event data missing' };
+  }
+
+  // Verify event belongs to the requested space
+  if (eventData.spaceId && eventData.spaceId !== spaceId) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Event not found' };
   }
 
   if (eventData.campusId && eventData.campusId !== campusId) {
@@ -120,15 +124,14 @@ async function serializeEvent(
   const organizerDoc = await dbAdmin.collection('users').doc(eventData.organizerId).get();
   const organizer = organizerDoc.exists ? organizerDoc.data() : null;
 
-  const rsvpCollection = dbAdmin
-    .collection('spaces')
-    .doc(spaceId)
-    .collection('events')
-    .doc(eventDoc.id)
-    .collection('rsvps');
+  const rsvpSnapshot = await dbAdmin
+    .collection('rsvps')
+    .where('eventId', '==', eventDoc.id)
+    .where('status', '==', 'going')
+    .get();
 
-  const rsvpSnapshot = await rsvpCollection.where('status', '==', 'going').get();
-  const userRsvpDoc = await rsvpCollection.doc(userId).get();
+  const userRsvpId = `${eventDoc.id}_${userId}`;
+  const userRsvpDoc = await dbAdmin.collection('rsvps').doc(userRsvpId).get();
 
   return {
     id: eventDoc.id,
@@ -355,11 +358,8 @@ export const DELETE = withAuthAndErrors(async (
     }
 
     const rsvps = await dbAdmin
-      .collection('spaces')
-      .doc(spaceId)
-      .collection('events')
-      .doc(eventId)
       .collection('rsvps')
+      .where('eventId', '==', eventId)
       .get();
 
     const batch = dbAdmin.batch();

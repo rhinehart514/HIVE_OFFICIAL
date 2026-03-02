@@ -166,7 +166,7 @@ export const POST = withAuthValidationAndErrors(
         category: 'spaces',
         title: `${userName} wants to join ${spaceName}`,
         body: body.message || 'Review their request in the space settings.',
-        actionUrl: `/spaces/${spaceId}/settings?tab=requests`,
+        actionUrl: `/s/${spaceId}?tab=requests`,
         metadata: {
           actorId: userId,
           actorName: userName,

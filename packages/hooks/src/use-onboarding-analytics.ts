@@ -6,6 +6,7 @@ import { useAnalytics } from './use-analytics'
 export type OnboardingStepName =
   | 'welcome'
   | 'verify'
+  | 'branch'
   | 'name'
   | 'academics'
   | 'handle'
@@ -15,7 +16,12 @@ export type OnboardingStepName =
   | 'spaces'
   | 'photo'
   | 'builder'
-  | 'legal';
+  | 'legal'
+  | 'leader_search'
+  | 'leader_customize'
+  | 'leader_create'
+  | 'leader_invite'
+  | 'leader_done';
 
 interface OnboardingStepTiming {
   stepName: OnboardingStepName

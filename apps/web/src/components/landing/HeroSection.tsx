@@ -65,7 +65,7 @@ export function HeroSection() {
               <br />
               runs on what
               <br />
-              <span style={{ color: colors.accentGreen }}>you build.</span>
+              <span style={{ color: colors.accentGreen }}>you make.</span>
             </motion.h1>
 
             <motion.p
@@ -73,7 +73,7 @@ export function HeroSection() {
               className="mb-8 max-w-md text-base leading-relaxed text-white/45"
             >
               Every campus has problems no one&apos;s solved yet. HIVE gives you the tools
-              to build the apps your campus actually needs — and share them with everyone.
+              to make the apps your campus actually needs — and share them with everyone.
             </motion.p>
 
             <motion.div {...motionProps(0.15)} className="flex flex-col items-start gap-5">
@@ -82,7 +82,7 @@ export function HeroSection() {
                   href={enterHref}
                   className="flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-medium text-black transition-opacity hover:opacity-90"
                 >
-                  Start building
+                  Start making
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
@@ -98,7 +98,7 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* What you can build — template ideas */}
+          {/* What you can make — template ideas */}
           <motion.div {...motionProps(0.2)} className="flex justify-center lg:justify-end">
             <BuildPreview />
           </motion.div>
@@ -136,7 +136,7 @@ function BuildPreview() {
         <div className="border-b border-white/[0.10] px-5 py-4">
           <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] px-4 py-3">
             <span className="text-[12px] text-white/50">
-              &quot;Build a rush RSVP tracker for my fraternity&quot;
+              &quot;Make a rush RSVP tracker for my fraternity&quot;
             </span>
             <span className="ml-0.5 inline-block h-3 w-[2px] animate-pulse bg-emerald-500" />
           </div>
@@ -145,7 +145,7 @@ function BuildPreview() {
         {/* Template ideas grid */}
         <div className="px-5 py-4">
           <div className="mb-3 text-[11px] font-medium text-white/30 uppercase tracking-[0.1em]">
-            What students are building
+            What students are making
           </div>
           <div className="grid grid-cols-2 gap-2">
             {TEMPLATE_IDEAS.map((idea) => (
@@ -203,11 +203,11 @@ function SocialProofBar() {
             </span>
             <span className="text-[10px] text-white/15">|</span>
             <span className="text-[10px] text-white/40">
-              <span className="text-white/60 font-medium">{stats.apps}</span> apps built
+              <span className="text-white/60 font-medium">{stats.apps}</span> apps made
             </span>
           </>
         ) : (
-          <span className="text-[10px] text-white/25">Be the first to build at your campus</span>
+          <span className="text-[10px] text-white/25">Be the first to make something for your campus</span>
         )}
       </div>
     </div>

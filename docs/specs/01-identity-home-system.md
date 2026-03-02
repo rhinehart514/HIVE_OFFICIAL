@@ -823,3 +823,46 @@ Per 2026 Standards, students can always see what data informs their experience a
 | Connection/follow graph | Communication & Social | Profile actions, "warm intro" recommendations |
 | Activity feed items | Spaces & Events | "Recent Activity" section on home |
 | Search index updates | Discovery & Intelligence | Profile appears in search after onboarding |
+
+---
+
+## Evals
+
+Depth evals for this system. Each eval runs the feature through multiple user perspectives (see `docs/PERSPECTIVES.md`). Run with:
+```bash
+npx tsx scripts/eval/eval-feature.ts docs/specs/01-identity-home-system.md
+```
+
+Or in a Claude session: "Run perspectives on [eval name]"
+
+### onboarding-to-first-space: Onboarding leads to belonging, not just an account
+
+**Value prop:** A new student goes from "I just got a code" to "I'm in a space with people like me" in under 60 seconds. No dead ends, no empty screens.
+**Scenario:** A UB student opens HIVE for the first time with an access code. They complete the entry flow. By the time they land on the home screen, they have at least 1 space they didn't manually search for, and that space has visible activity.
+**Perspectives:** lonely-freshman, commuter-student, transfer-student
+**Files:**
+- `apps/web/src/components/entry/hooks/useEntry.ts`
+- `apps/web/src/app/home/page.tsx`
+- `packages/core/src/domain/identity/aggregates/profile.aggregate.ts`
+- `apps/web/src/app/api/onboarding/complete/route.ts`
+
+### home-screen-alive: Home screen feels alive at 50 users
+
+**Value prop:** A student who opens HIVE sees a living campus, not an empty app. Even at 50 total users, the home screen surfaces enough signal to feel worth coming back to.
+**Scenario:** HIVE has 50 users on campus. A student opens the app on a Wednesday afternoon. What do they see? Is there enough to make them come back tomorrow?
+**Perspectives:** thursday-night-sophomore, returning-skeptic, commuter-student
+**Files:**
+- `apps/web/src/app/home/page.tsx`
+- `packages/core/src/domain/feed/services/feed-ranking.service.ts`
+- `apps/web/src/app/api/feed/route.ts`
+
+### profile-identity-exploration: Profile supports trying identities, not declaring them
+
+**Value prop:** A student's profile reflects who they're becoming, not a static bio. Joining photography and pre-med simultaneously is normal, not contradictory.
+**Scenario:** A sophomore joins 3 wildly different spaces over 2 weeks. Their profile should reflect this breadth without forcing self-description.
+**Perspectives:** lonely-freshman, thursday-night-sophomore, transfer-student
+**Files:**
+- `packages/core/src/domain/profile/completion-config.ts`
+- `packages/core/src/domain/identity/aggregates/profile.aggregate.ts`
+- `packages/core/src/domain/profile/services/ghost-mode.service.ts`
+- `apps/web/src/components/profile/ProfileContextProvider.tsx`

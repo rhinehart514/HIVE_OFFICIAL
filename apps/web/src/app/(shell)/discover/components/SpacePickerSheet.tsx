@@ -81,7 +81,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
                 Join a space to start adding apps
               </p>
               <Link
-                href="/spaces"
+                href="/discover"
                 onClick={onClose}
                 className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] text-white/60 hover:text-white/80 hover:bg-white/[0.08] transition-all font-medium"
               >

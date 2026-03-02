@@ -19,6 +19,7 @@ import {
   MOTION,
   ThresholdReveal,
 } from '@hive/ui/design-system/primitives';
+import { emitValueMoment } from '@/lib/pwa-triggers';
 import { Avatar, AvatarImage, AvatarFallback } from '@hive/ui';
 
 interface SpacePreview {
@@ -96,6 +97,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
       }
 
       setStatus('success');
+      emitValueMoment({ type: 'space-join', spaceId: space.id, spaceName: space.name });
     } catch {
       setError('Failed to join space');
       setStatus('error');

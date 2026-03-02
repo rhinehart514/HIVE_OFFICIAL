@@ -6,6 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AtmosphereProvider, PageTransitionProvider, Toaster, useToast } from "@hive/ui";
 import { AdminToolbarProvider } from "@/components/admin/AdminToolbarProvider";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
+import { ensureServiceWorker } from "@/lib/fcm-client";
+import { onValueMoment } from "@/lib/pwa-triggers";
 import { initErrorMonitoring, setUserContext, clearUserContext } from "@/lib/error-monitoring";
 import { useAuth } from "@hive/auth-logic";
 
@@ -69,6 +72,37 @@ function PushNotificationRegistration() {
 }
 
 /**
+ * InstallPromptHandler - Shows install prompt after value moments
+ *
+ * Listens for 'hive:value-moment' events (fired after space join, etc.)
+ * and triggers the deferred install prompt if available.
+ * Also re-triggers push notification auto-request since the localStorage
+ * gate is now set.
+ */
+function InstallPromptHandler() {
+  const { canInstall, promptInstall } = useInstallPrompt();
+  const { user } = useAuth();
+  const { requestPermission, permissionState } = usePushNotifications({ userId: user?.uid });
+
+  useEffect(() => {
+    return onValueMoment(() => {
+      // After a value moment, show install prompt if available (slight delay for UX)
+      if (canInstall) {
+        const timer = setTimeout(() => { promptInstall(); }, 2000);
+        return () => clearTimeout(timer);
+      }
+
+      // If push permission is still default, request it now that the gate is set
+      if (permissionState === 'default' && user?.uid) {
+        requestPermission();
+      }
+    });
+  }, [canInstall, promptInstall, permissionState, user?.uid, requestPermission]);
+
+  return null;
+}
+
+/**
  * ErrorUserContextTracker - Tracks user context for error monitoring
  *
  * Updates Sentry/error monitoring with user info when they log in/out.
@@ -108,9 +142,11 @@ export function Providers({ children }: ProvidersProps) {
       })
   );
 
-  // Initialize error monitoring on mount
+  // Initialize error monitoring and service worker on mount
   useEffect(() => {
     initErrorMonitoring();
+    // Register SW independently of push permission so all users get offline caching
+    ensureServiceWorker();
   }, []);
 
   return (
@@ -129,6 +165,7 @@ export function Providers({ children }: ProvidersProps) {
             <Toaster />
             <ToastBridge />
             <PushNotificationRegistration />
+            <InstallPromptHandler />
             <ErrorUserContextTracker />
           </PageTransitionProvider>
         </AtmosphereProvider>

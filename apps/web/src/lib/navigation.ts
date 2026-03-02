@@ -1,12 +1,12 @@
 /**
  * Shared Navigation Config
  *
- * 4-tab model: Home · Spaces · Build · You
+ * 4-tab model: Home · Spaces · Make · You
  *
  * Home    — campus pulse, events, trending apps, activity
  * Spaces  — your communities, /s/[handle]
- * Build   — creation hub + campus app marketplace
- * You     — builder portfolio, settings
+ * Make    — creation hub + campus app marketplace
+ * You     — portfolio, settings
  */
 
 import { HomeIcon, SpacesIcon, UserIcon, BuildIcon } from '@hive/ui';
@@ -32,13 +32,13 @@ export const NAV_ITEMS: NavItem[] = [
   {
     id: 'spaces',
     label: 'Spaces',
-    href: '/spaces',
+    href: '/discover',
     icon: SpacesIcon,
-    matchPattern: /^\/spaces(\/|$)|^\/s\//,
+    matchPattern: /^\/s\//,
   },
   {
     id: 'build',
-    label: 'Build',
+    label: 'Make',
     href: '/build',
     icon: BuildIcon,
     matchPattern: /^\/build(\/|$)|^\/lab(\/|$)/,

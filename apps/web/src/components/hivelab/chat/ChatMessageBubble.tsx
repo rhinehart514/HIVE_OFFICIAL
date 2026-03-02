@@ -8,8 +8,6 @@
 
 import { motion } from 'framer-motion';
 import { Sparkles, Check, AlertCircle } from 'lucide-react';
-import type { QuickTemplate } from '@hive/ui';
-import { getQuickTemplate } from '@hive/ui';
 import type { ChatMessage } from '@/lib/hivelab/chat-types';
 import { ToolPreviewCard } from './ToolPreviewCard';
 
@@ -20,7 +18,7 @@ interface ChatMessageBubbleProps {
   onDeploy?: (toolId: string) => void;
   onEdit?: (toolId: string) => void;
   onShare?: (toolId: string) => void;
-  onUseTemplate?: (template: QuickTemplate) => void;
+  onUseTemplate?: (template: unknown) => void;
   onBuildWithAI?: () => void;
 }
 
@@ -29,8 +27,8 @@ export function ChatMessageBubble({
   onDeploy,
   onEdit,
   onShare,
-  onUseTemplate,
-  onBuildWithAI,
+  onUseTemplate: _onUseTemplate,
+  onBuildWithAI: _onBuildWithAI,
 }: ChatMessageBubbleProps) {
   // User messages
   if (message.role === 'user') {
@@ -72,42 +70,7 @@ export function ChatMessageBubble({
     );
   }
 
-  // Template suggestion
-  if (message.type === 'template-suggestion' && message.templateSuggestion) {
-    const template = getQuickTemplate(message.templateSuggestion.templateId);
-    if (!template) return null;
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: EASE }}
-        className="max-w-md"
-      >
-        <div className="rounded-2xl border border-white/[0.06] bg-[#080808] p-4">
-          <p className="text-white/60 text-sm mb-3">{message.content}</p>
-
-          <button
-            onClick={() => onUseTemplate?.(template)}
-            className="w-full text-left p-3 rounded-xl border border-white/[0.08] bg-white/[0.03]
-              hover:bg-white/[0.06] transition-all mb-2 group"
-          >
-            <p className="text-sm font-medium text-white group-hover:text-white">
-              {template.name}
-            </p>
-            <p className="text-xs text-white/40 mt-0.5">{template.description}</p>
-          </button>
-
-          <button
-            onClick={onBuildWithAI}
-            className="w-full text-center py-2 text-xs text-white/30 hover:text-white/50 transition-colors"
-          >
-            Build with AI instead
-          </button>
-        </div>
-      </motion.div>
-    );
-  }
+  // Template suggestion (template system removed — fall through to default text)
 
   // Tool preview (streaming / complete / error)
   if (message.type === 'tool-preview' && message.toolPreview) {

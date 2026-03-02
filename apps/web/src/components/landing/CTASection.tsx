@@ -27,14 +27,14 @@ export function CTASection() {
         <h2
           className={`${clashDisplay} mb-5 text-[clamp(32px,6vw,56px)] font-semibold leading-tight tracking-[-0.03em] text-white`}
         >
-          Nothing&apos;s been built yet.
+          Nothing&apos;s been made yet.
           <br />
           <span style={{ color: colors.accentGreen }}>You&apos;re early.</span>
         </h2>
 
         <p className="mx-auto mb-10 max-w-md text-base text-white/40">
-          Your campus is a blank canvas. The first builders shape what everyone uses.
-          Be the one who built the thing everyone needed.
+          Your campus is a blank canvas. The first makers shape what everyone uses.
+          Be the one who made the thing everyone needed.
         </p>
 
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -42,7 +42,7 @@ export function CTASection() {
             href={enterHref}
             className="flex items-center gap-2 rounded-full bg-white px-8 py-4 text-base font-medium text-black transition-opacity hover:opacity-90"
           >
-            Build something
+            Make something
             <ArrowRight className="h-5 w-5" />
           </Link>
         </div>

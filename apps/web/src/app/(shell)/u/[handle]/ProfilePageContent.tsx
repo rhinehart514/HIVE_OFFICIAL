@@ -399,7 +399,7 @@ export default function ProfilePageContent() {
           <div className="flex items-center justify-between">
             <ZoneHeader>Campus Identity</ZoneHeader>
             {hasSpaces && isOwnProfile && (
-              <Link href="/spaces" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
+              <Link href="/discover" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
                 Browse spaces <ArrowRight className="w-3 h-3" />
               </Link>
             )}
@@ -428,7 +428,7 @@ export default function ProfilePageContent() {
                   <p className="text-[13px] font-medium text-white/50">Join spaces to show where you belong</p>
                   <p className="text-[11px] text-white/25 mt-0.5">Greek life, clubs, dorms — your campus community</p>
                 </div>
-                <Link href="/spaces" className="inline-flex items-center gap-1 text-[12px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors shrink-0">
+                <Link href="/discover" className="inline-flex items-center gap-1 text-[12px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors shrink-0">
                   Browse <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>

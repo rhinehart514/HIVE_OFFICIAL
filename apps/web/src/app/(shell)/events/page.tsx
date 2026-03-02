@@ -69,8 +69,11 @@ async function fetchEvents(): Promise<CampusEvent[]> {
   return (data.events || []) as CampusEvent[];
 }
 
-async function rsvpEvent(spaceId: string, eventId: string, status: 'going' | 'maybe' | 'not_going') {
-  const res = await secureApiFetch(`/api/spaces/${spaceId}/events/${eventId}/rsvp`, {
+async function rsvpEvent(eventId: string, status: 'going' | 'maybe' | 'not_going', spaceId?: string) {
+  const url = spaceId
+    ? `/api/spaces/${spaceId}/events/${eventId}/rsvp`
+    : `/api/events/${eventId}/rsvp`;
+  const res = await secureApiFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
@@ -178,7 +181,7 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
             )}
 
             {event.rsvpCount > 0 && (
-              <span className="flex items-center gap-1 text-[12px] text-white/40">
+              <span className="flex items-center gap-1 text-[12px] text-white/60">
                 <Users className="w-3 h-3 flex-shrink-0" />
                 {event.rsvpCount} going
               </span>
@@ -194,27 +197,25 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
         </div>
 
         {/* Right: RSVP */}
-        {event.spaceId && (
-          <button
-            type="button"
-            onClick={() => onRsvp(isGoing ? 'not_going' : 'going')}
-            className={cn(
-              'flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-medium transition-all duration-150',
-              isGoing
-                ? 'bg-white/[0.08] text-white/70 border border-white/[0.08]'
-                : 'bg-white text-black hover:bg-white/90'
-            )}
-          >
-            {isGoing ? (
-              <>
-                <Check className="w-3.5 h-3.5" />
-                Going
-              </>
-            ) : (
-              'RSVP'
-            )}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => onRsvp(isGoing ? 'not_going' : 'going')}
+          className={cn(
+            'flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-medium transition-all duration-150',
+            isGoing
+              ? 'bg-white/[0.08] text-white/70 border border-white/[0.08]'
+              : 'bg-white text-black hover:bg-white/90'
+          )}
+        >
+          {isGoing ? (
+            <>
+              <Check className="w-3.5 h-3.5" />
+              Going
+            </>
+          ) : (
+            'RSVP'
+          )}
+        </button>
       </div>
     </motion.div>
   );
@@ -227,7 +228,7 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
 function EventGroup({ label, events, onRsvp }: {
   label: TimeGroup;
   events: CampusEvent[];
-  onRsvp: (eventId: string, spaceId: string, status: 'going' | 'not_going') => void;
+  onRsvp: (eventId: string, spaceId: string | undefined, status: 'going' | 'not_going') => void;
 }) {
   if (events.length === 0) return null;
 
@@ -244,7 +245,7 @@ function EventGroup({ label, events, onRsvp }: {
           <EventCard
             key={event.id}
             event={event}
-            onRsvp={(status) => onRsvp(event.id, event.spaceId!, status)}
+            onRsvp={(status) => onRsvp(event.id, event.spaceId, status)}
           />
         ))}
       </div>
@@ -265,7 +266,7 @@ function EmptyState() {
         Join spaces to see events from your campus orgs
       </p>
       <Link
-        href="/spaces"
+        href="/discover"
         className="flex items-center gap-1.5 text-[13px] font-medium text-white/50 hover:text-white transition-colors"
       >
         Browse spaces
@@ -296,8 +297,8 @@ export default function EventsPage() {
   });
 
   const rsvpMutation = useMutation({
-    mutationFn: ({ eventId, spaceId, status }: { eventId: string; spaceId: string; status: 'going' | 'not_going' }) =>
-      rsvpEvent(spaceId, eventId, status),
+    mutationFn: ({ eventId, spaceId, status }: { eventId: string; spaceId?: string; status: 'going' | 'not_going' }) =>
+      rsvpEvent(eventId, status, spaceId),
     onMutate: async ({ eventId, status }) => {
       await queryClient.cancelQueries({ queryKey: ['campus-events'] });
       const prev = queryClient.getQueryData<CampusEvent[]>(['campus-events']);

@@ -37,7 +37,7 @@ export function ChatInput({
 
   const defaultPlaceholder = hasExistingTool
     ? 'Want to change anything?'
-    : 'Describe what you want to build...';
+    : 'Describe what you want to make...';
 
   useEffect(() => {
     if (autoFocus && textareaRef.current) {

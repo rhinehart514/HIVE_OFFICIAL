@@ -19,12 +19,12 @@ const pillars = [
   {
     icon: Users,
     title: 'Spaces',
-    body: 'Every org, club, and group gets a space. Chat, share, plan events, and build apps — all in one place.',
+    body: 'Every org, club, and group gets a space. Chat, share, plan events, and make apps — all in one place.',
     color: '#3B82F6',
   },
   {
     icon: Sparkles,
-    title: 'Build',
+    title: 'Make',
     body: 'Describe what your org needs in plain English. HIVE generates a real app — polls, signups, leaderboards — instantly.',
     color: '#FFD700',
   },
@@ -49,7 +49,7 @@ const steps = [
   },
   {
     num: '02',
-    title: 'HIVE builds it instantly',
+    title: 'HIVE makes it instantly',
     body: 'AI generates a fully functional app — styled, interactive, ready to use.',
     icon: Zap,
   },
@@ -62,7 +62,7 @@ const steps = [
 ] as const;
 
 /* ────────────────────────────────────────────────────── */
-/* What you can build                                     */
+/* What you can make                                      */
 /* ────────────────────────────────────────────────────── */
 
 const tools = [
@@ -138,7 +138,7 @@ export function ProductSection() {
               AI-powered creation
             </span>
             <h2 className={`${clashDisplay} max-w-lg text-[clamp(28px,5vw,48px)] font-semibold tracking-tight text-white`}>
-              Describe it. HIVE builds it.
+              Describe it. HIVE makes it.
             </h2>
             <p className="mt-4 max-w-lg text-base text-white/40">
               Your org needs tools — polls, signups, leaderboards. Describe what you need and HIVE generates a real app in seconds.

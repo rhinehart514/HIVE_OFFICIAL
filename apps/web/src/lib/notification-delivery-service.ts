@@ -19,7 +19,7 @@ interface NotificationDocument {
   actionUrl: string;
   isRead: boolean;
   timestamp: string;
-  campusId: string;
+  campusId: string | null;
   metadata: Record<string, unknown>;
 }
 

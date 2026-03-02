@@ -227,7 +227,7 @@ async function searchSpaces(
         description: data.description,
         type: 'space',
         category: 'spaces',
-        url: data.slug ? `/s/${data.slug}` : `/spaces/${doc.id}`,
+        url: `/s/${data.slug || doc.id}`,
         metadata: {
           memberCount,
           category: data.category,
@@ -280,7 +280,7 @@ async function searchSpaces(
           description: data.description,
           type: 'space',
           category: 'spaces',
-          url: data.slug ? `/s/${data.slug}` : `/spaces/${doc.id}`,
+          url: `/s/${data.slug || doc.id}`,
           metadata: {
             memberCount,
             category: data.category,
@@ -533,7 +533,7 @@ async function searchPosts(
         description: data.content?.substring(0, 150),
         type: 'post',
         category: 'posts',
-        url: data.spaceId ? `/spaces/${data.spaceId}?post=${doc.id}` : `/posts/${doc.id}`,
+        url: data.spaceId ? `/s/${data.spaceId}?post=${doc.id}` : `/posts/${doc.id}`,
         metadata: {
           authorId: data.authorId,
           authorName: data.authorName,
@@ -587,7 +587,7 @@ async function searchPosts(
           description: data.content?.substring(0, 150),
           type: 'post',
           category: 'posts',
-          url: data.spaceId ? `/spaces/${data.spaceId}?post=${doc.id}` : `/posts/${doc.id}`,
+          url: data.spaceId ? `/s/${data.spaceId}?post=${doc.id}` : `/posts/${doc.id}`,
           metadata: {
             authorId: data.authorId,
             tags: data.tags,
@@ -839,7 +839,7 @@ async function searchTools(
         description: data.description,
         type: 'tool',
         category: 'tools',
-        url: `/lab/${doc.id}`,
+        url: `/build/${doc.id}`,
         metadata: {
           type: data.type,
           creatorId: data.creatorId,
@@ -895,7 +895,7 @@ async function searchTools(
           description: data.description,
           type: 'tool',
           category: 'tools',
-          url: `/lab/${doc.id}`,
+          url: `/build/${doc.id}`,
           metadata: {
             type: data.type,
             creatorId: data.creatorId,

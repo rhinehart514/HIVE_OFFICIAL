@@ -173,15 +173,16 @@ export function useOnlineUsers(spaceId?: string) {
     }
 
     const campusId = user.campusId;
-    // campusId single-field index is exempted — skip Firestore filter
-    const constraints = [
-      where('status', 'in', ['online', 'away'])
-    ];
-
-    if (spaceId) {
-      // For space-specific presence, we'd need to track that separately
-      // For now, just get campus-wide presence
+    if (!campusId) {
+      setOnlineUsers([]);
+      setLoading(false);
+      return;
     }
+
+    const constraints = [
+      where('campusId', '==', campusId),
+      where('status', 'in', ['online', 'away']),
+    ];
 
     const presenceRef = collection(db, 'presence');
     const q = query(presenceRef, ...constraints);
@@ -362,8 +363,7 @@ export function useActiveTodayCount() {
 
     const campusId = user.campusId;
     const presenceRef = collection(db, 'presence');
-    // campusId single-field index is exempted — skip Firestore filter
-    const q = query(presenceRef);
+    const q = query(presenceRef, where('campusId', '==', campusId));
 
     const unsubscribe = onSnapshot(
       q,
@@ -407,14 +407,17 @@ export function useActiveTodayCount() {
 
 /**
  * Get user's current online status
+ * Only subscribes if the target user is on the same campus as the current user
  */
 export function useUserStatus(userId: string) {
+  const { user } = useAuth();
   const [status, setStatus] = useState<'online' | 'away' | 'offline'>('offline');
   const [lastSeen, setLastSeen] = useState<Date | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !user?.campusId) return;
 
+    const campusId = user.campusId;
     const presenceRef = doc(db, 'presence', userId);
 
     const unsubscribe = onSnapshot(
@@ -422,6 +425,13 @@ export function useUserStatus(userId: string) {
       (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data() as PresenceData;
+
+          // Campus isolation: only show status for users on the same campus
+          if (data.campusId !== campusId) {
+            setStatus('offline');
+            setLastSeen(null);
+            return;
+          }
 
           const heartbeatField = data.lastHeartbeat || data.lastSeen;
           let heartbeatTime: number;
@@ -456,7 +466,7 @@ export function useUserStatus(userId: string) {
     );
 
     return () => unsubscribe();
-  }, [userId]);
+  }, [userId, user?.campusId]);
 
   return { status, lastSeen };
 }

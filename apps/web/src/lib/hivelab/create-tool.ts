@@ -1,14 +1,8 @@
 /**
  * HiveLab Tool Creation Utilities
  *
- * Shared logic for creating tools from templates and AI prompts.
- * Used by both the Builder Dashboard and Templates Gallery.
+ * Shared logic for creating tools from AI prompts.
  */
-
-import {
-  createToolFromTemplate,
-  type QuickTemplate,
-} from '@hive/ui';
 
 /**
  * Create a new blank tool via API
@@ -36,62 +30,6 @@ export async function createBlankTool(
   }
 
   const result = await response.json();
-  // API returns { success: true, data: { tool: {...} } }
-  const data = result.data || result;
-  return data.tool.id;
-}
-
-/**
- * Create a tool from a template via API
- *
- * This creates the tool with pre-composed elements from the template.
- * Accepts optional configOverrides to merge user input into element configs.
- * Returns the tool ID for immediate redirect to the IDE.
- */
-export async function createToolFromTemplateApi(
-  template: QuickTemplate,
-  configOverrides?: Record<string, string>
-): Promise<string> {
-  const composition = createToolFromTemplate(template, configOverrides);
-
-  // Use a meaningful name from config if available (e.g., poll question, event name)
-  const nameFromConfig = configOverrides?.title || configOverrides?.eventTitle || configOverrides?.question;
-  const toolName = nameFromConfig ? nameFromConfig.slice(0, 80) : template.name;
-
-  const response = await fetch('/api/tools', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      name: toolName,
-      description: template.description,
-      status: 'draft',
-      type: 'visual',
-      templateId: template.id,
-      elements: composition.elements.map(el => ({
-        elementId: el.elementId,
-        instanceId: el.instanceId,
-        config: el.config,
-        position: el.position,
-        size: el.size,
-      })),
-      connections: composition.connections?.map(conn => ({
-        id: `conn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        sourceElementId: conn.from.instanceId,
-        sourceOutput: conn.from.output || 'output',
-        targetElementId: conn.to.instanceId,
-        targetInput: conn.to.input || 'input',
-      })) || [],
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || error.message || 'Failed to create tool from template');
-  }
-
-  const result = await response.json();
-  // API returns { success: true, data: { tool: {...} } }
   const data = result.data || result;
   return data.tool.id;
 }

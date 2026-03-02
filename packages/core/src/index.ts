@@ -234,24 +234,7 @@ export {
   type TemplateSettings,
 } from "./domain/spaces/templates";
 
-// System Tool Templates (HiveLab → Spaces Integration)
-export {
-  SYSTEM_TOOL_TEMPLATES,
-  UNIVERSAL_DEFAULT_TEMPLATE,
-  ACADEMIC_TEMPLATE,
-  SOCIAL_TEMPLATE,
-  PROFESSIONAL_TEMPLATE,
-  INTEREST_TEMPLATE,
-  ALL_TEMPLATES as ALL_SYSTEM_TEMPLATES,
-  getSystemTool,
-  getSystemToolsByCategory,
-  getTemplateForCategory as getSystemTemplateForCategory,
-  isSystemTool as isSystemToolTemplate,
-  getEssentialTools,
-  getEngagementTools,
-  type SystemToolTemplate,
-  type UniversalTemplate,
-} from "./domain/hivelab/system-tool-templates";
+// System Tool Templates — REMOVED (deleted)
 
 // HiveLab Domain Types
 export type {
@@ -340,42 +323,7 @@ export {
   setValueAtPath,
 } from "./domain/hivelab/tool-connection.types";
 
-// Sprint 4: Tool Automation Types
-export type {
-  ToolEventTrigger,
-  ToolScheduleTrigger,
-  ToolThresholdTrigger,
-  ToolAutomationTrigger,
-  ConditionOperator as AutomationConditionOperator,
-  ToolAutomationCondition,
-  NotifyEmailAction,
-  NotifyPushAction,
-  MutateAction,
-  TriggerToolAction,
-  ToolAutomationAction,
-  ToolAutomationLimits,
-  ToolAutomation,
-  CreateToolAutomationDTO,
-  UpdateToolAutomationDTO,
-  ToolAutomationRunStatus,
-  ToolAutomationRun,
-} from "./domain/hivelab/tool-automation.types";
-export {
-  DEFAULT_AUTOMATION_LIMITS,
-  MAX_AUTOMATIONS_PER_TOOL,
-  MAX_ACTIONS_PER_AUTOMATION,
-  MAX_CONDITIONS_PER_AUTOMATION,
-  MAX_AUTOMATION_RUNS_HISTORY,
-  AUTOMATIONS_COLLECTION,
-  AUTOMATION_RUNS_COLLECTION,
-  isValidCron,
-  getNextRunTime,
-  evaluateCondition as evaluateAutomationCondition,
-  evaluateAllConditions,
-  canRunAutomation,
-} from "./domain/hivelab/tool-automation.types";
-
-// Sprint 4: Automation Runner Service (removed)
+// Sprint 4: Tool Automation Types — REMOVED (deleted)
 
 // Sprint 2: Tool Runtime Context Types
 export type {
@@ -496,16 +444,7 @@ export {
   type NotifyAction,
 } from "./domain/hivelab/entities";
 
-// HiveLab Automation Templates (Phase 3.5)
-export {
-  AUTOMATION_TEMPLATES,
-  getAllTemplates as getAllAutomationTemplates,
-  getTemplatesByCategory as getAutomationTemplatesByCategory,
-  getTemplateById as getAutomationTemplateById,
-  createFromTemplate,
-  getTemplateCategories as getAutomationTemplateCategories,
-  type AutomationTemplate,
-} from "./domain/hivelab/automation-templates";
+// HiveLab Automation Templates — REMOVED (deleted)
 
 // HiveLab Element Registry
 export {
@@ -535,15 +474,7 @@ export {
 } from "./domain/hivelab/element-registry";
 export type { ElementSpec } from "./domain/hivelab/element-registry";
 
-// HiveLab Element Ports (Single Source of Truth for Output Mappings)
-export {
-  OUTPUT_MAPPINGS,
-  ACTION_OUTPUT_MAPPINGS,
-  extractOutputValue,
-  getAffectedOutputs,
-  hasOutputPort,
-  getOutputPorts,
-} from "./domain/hivelab/element-ports";
+// HiveLab Element Ports — REMOVED (deleted)
 
 // HiveLab AI Quality Validation
 // Note: Explicit exports to avoid conflicts with element-schemas validateElementConfig
@@ -588,63 +519,9 @@ export {
   type CompositionWarning,
   type CompositionErrorCode,
   type CompositionWarningCode,
-  // Services
-  CompositionValidatorService,
-  validateComposition,
-  getCompositionValidator,
-  QualityGateService,
-  gateComposition,
-  getQualityGateService,
-  DEFAULT_GATE_THRESHOLDS,
-  type GateResult,
-  type GateDecision,
-  type GateThresholds,
-  type AutoFix,
-  type AutoFixType,
-  GenerationTrackerService,
-  getGenerationTrackerService,
-  initializeGenerationTracker,
-  type GenerationInput,
-  type GenerationOutput,
-  type GenerationTrackingData,
-  type GenerationMetrics,
-  FailureClassifierService,
-  getFailureClassifierService,
-  initializeFailureClassifier,
-  classifyFailureType,
-  type FailureInput,
-  type FailureStats,
-  EditTrackerService,
-  getEditTrackerService,
-  initializeEditTracker,
-  type EditTrackingInput,
-  type EditPatterns,
-  AIQualityPipeline,
-  getAIQualityPipeline,
-  processComposition,
-  validateOnly,
-  initializeAIQualityPipeline,
-  CURRENT_PROMPT_VERSION,
-  type PipelineContext,
-  type PipelineResult,
 } from "./domain/hivelab/validation";
 
-// HiveLab Services - MOVED TO @hive/core/server for client/server separation
-// Import from '@hive/core/server' for server-side usage
-// export { AIToolGeneratorService, createAIToolGenerator } from "./application/hivelab/ai-tool-generator.service";
-// export type {
-//   AIGeneratorConfig,
-//   GenerateToolOptions,
-//   GenerateToolResult,
-//   StreamingChunk
-// } from "./application/hivelab/ai-tool-generator.service";
-export {
-  ELEMENT_CATALOG,
-  SYSTEM_PROMPT,
-  DEMO_PROMPTS,
-  generateInstanceId,
-  type StreamingMessage
-} from "./application/hivelab/prompts/tool-generation.prompt";
+// HiveLab Services — REMOVED (application/hivelab/ deleted)
 
 // HiveLab AI Learning System (removed)
 
@@ -688,26 +565,7 @@ export {
   isToolError,
 } from "./domain/hivelab/tool-error.types";
 
-// Sprint 5: Audit Trail
-export type {
-  AuditEventType,
-  AuditActor,
-  AuditChanges,
-  AuditEntry,
-  AuditLogQuery,
-  AuditLogResponse,
-  AuditSummary,
-} from "./domain/hivelab/tool-audit.types";
-export {
-  AUDIT_COLLECTION,
-  MAX_AUDIT_ENTRIES,
-  AUDIT_RETENTION_DAYS,
-  generateAuditId,
-  createAuditEntry,
-  createSystemActor,
-  createUserActor,
-  getEventDescription,
-} from "./domain/hivelab/tool-audit.types";
+// Sprint 5: Audit Trail — REMOVED (deleted)
 
 // Application Services - Use Case Orchestration
 export * from "./application";

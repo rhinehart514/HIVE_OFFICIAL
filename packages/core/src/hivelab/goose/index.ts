@@ -34,8 +34,3 @@ export {
   buildUserPrompt,
   ELEMENT_CATALOG,
 } from './system-prompt';
-
-// Re-export training data generators (for CLI usage)
-export type {
-  TrainingExample,
-} from './training/generate-dataset';

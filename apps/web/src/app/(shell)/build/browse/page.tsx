@@ -183,7 +183,7 @@ export default function CampusToolsDirectory() {
             Campus Apps
           </h1>
           <p className="text-white/50 mb-8">
-            Sign in to browse and use apps built for your campus.
+            Sign in to browse and use apps made for your campus.
           </p>
           <button
             onClick={() => router.push('/enter?redirect=/build/browse')}
@@ -207,7 +207,7 @@ export default function CampusToolsDirectory() {
       >
         <h1 className="text-xl font-medium text-white/80">Campus Apps</h1>
         <p className="text-sm text-white/35 mt-1">
-          Apps built and deployed for your campus
+          Apps made and deployed for your campus
         </p>
       </motion.header>
 
@@ -317,14 +317,14 @@ export default function CampusToolsDirectory() {
               <div className="text-center py-20">
                 <p className="text-white/40 text-sm mb-2">
                   {activeCategory === 'All'
-                    ? 'No campus apps yet. Be the first to build something your campus needs.'
+                    ? 'No campus apps yet. Be the first to make something your campus needs.'
                     : `No ${activeCategory.toLowerCase()} apps yet.`}
                 </p>
                 <button
                   onClick={() => router.push('/lab')}
                   className="inline-flex items-center gap-1.5 text-[#FFD700]/70 hover:text-[#FFD700] text-sm font-medium transition-colors mt-2"
                 >
-                  Build one in Lab
+                  Make one in Lab
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>

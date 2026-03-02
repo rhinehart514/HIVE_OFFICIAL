@@ -211,7 +211,7 @@ function SpacesQuickAccess({
         ))}
         {spaces.length > 4 && (
           <Link
-            href="/spaces"
+            href="/discover"
             className="flex items-center justify-center w-7 h-7 rounded-lg text-[10px] font-sans font-medium text-white/25 hover:text-white/40 transition-colors border border-white/[0.06] hover:border-white/[0.1]"
           >
             +{spaces.length - 4}
@@ -528,7 +528,7 @@ export function LeftSidebar() {
         <div className="flex flex-col shrink-0 pb-3 pt-1 border-t border-white/[0.04]">
           <UtilityButton
             onClick={() => {
-              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+              window.dispatchEvent(new Event('hive:open-search'));
             }}
             label="Search (⌘K)"
             displayLabel="Search"
@@ -572,7 +572,7 @@ function MobileNavItem({
         <Icon className={cn('h-[22px] w-[22px]', item.id === 'build' && 'h-[24px] w-[24px]')} />
         {isActive && (
           <span
-            className="absolute -bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full"
+            className="absolute -bottom-1.5 left-1/2 h-[3px] w-4 -translate-x-1/2 rounded-full"
             style={{ backgroundColor: accent || '#FFFFFF' }}
             aria-hidden
           />
@@ -586,7 +586,7 @@ function MobileNavItem({
       <span
         className={cn(
           'font-sans text-[10px] uppercase tracking-[0.1em] transition-colors',
-          !accent && (isActive ? 'text-white' : 'text-white/35'),
+          !accent && (isActive ? 'text-white font-semibold' : 'text-white/35'),
         )}
         style={accent ? { color: isActive ? accent : hexToRgba(accent, 0.4) } : undefined}
       >
@@ -617,10 +617,65 @@ export function MobileBottomBar() {
           key={item.id}
           item={item}
           isActive={isNavItemActive(item, pathname)}
-          badge={item.id === 'profile' ? unreadCount : undefined}
+          badge={item.id === 'you' ? unreadCount : undefined}
         />
       ))}
     </nav>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mobile header — search + notifications (md:hidden)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function MobileHeader() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { unreadCount } = useUnreadNotifications({ userId: user?.uid });
+
+  return (
+    <header
+      className="sticky top-0 z-30 flex items-center justify-between h-12 px-4 border-b border-white/[0.06] md:hidden"
+      style={{
+        background: 'rgba(0,0,0,0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
+    >
+      {/* HIVE mark */}
+      <Link href="/discover" className="flex items-center gap-2" aria-label="Home">
+        <HiveLogoGold size={18} />
+        <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">
+          HIVE
+        </span>
+      </Link>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1">
+        {/* Search */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event('hive:open-search'))}
+          className="flex items-center justify-center h-10 w-10 text-white/35 active:text-white/60 transition-colors"
+          aria-label="Search"
+        >
+          <Search className="h-[20px] w-[20px]" strokeWidth={1.5} />
+        </button>
+
+        {/* Notifications */}
+        <button
+          type="button"
+          onClick={() => router.push('/me/notifications')}
+          className="relative flex items-center justify-center h-10 w-10 text-white/35 active:text-white/60 transition-colors"
+          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+        >
+          <Bell className="h-[20px] w-[20px]" strokeWidth={1.5} />
+          {unreadCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full bg-[#FFD700]" />
+          )}
+        </button>
+      </div>
+    </header>
   );
 }
 

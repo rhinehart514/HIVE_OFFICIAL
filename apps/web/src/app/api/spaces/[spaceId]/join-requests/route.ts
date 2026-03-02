@@ -393,7 +393,7 @@ export const PATCH = withAuthValidationAndErrors(
         category: 'spaces',
         title: `Welcome to ${spaceName}!`,
         body: 'Your request to join has been approved.',
-        actionUrl: `/spaces/${spaceId}`,
+        actionUrl: `/s/${spaceId}`,
         metadata: {
           spaceId,
           spaceName,
