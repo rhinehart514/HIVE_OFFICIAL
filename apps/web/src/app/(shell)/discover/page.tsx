@@ -21,11 +21,14 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import { cn } from '@/lib/utils';
+import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { FeedToolCard } from './components/FeedToolCard';
 import { FeedActivityCard } from './components/FeedActivityCard';
 import { ToolCanvasInline } from './components/ToolCanvasInline';
 import { SpacePickerSheet } from './components/SpacePickerSheet';
 import { ToolsFilterBar } from './components/ToolsFilterBar';
+import { GRAIN_SVG, colors } from '@hive/tokens';
+import { TEMPLATE_IDEAS } from '@/lib/build-prompt-ideas';
 
 /* ─────────────────────────────────────────────────────────────────── */
 /*  Types                                                              */
@@ -160,9 +163,8 @@ async function fetchGlobalActivity(): Promise<ActivityItem[]> {
 }
 
 async function rsvpToEvent(spaceId: string, eventId: string): Promise<void> {
-  const res = await fetch(`/api/spaces/${spaceId}/events/${eventId}/rsvp`, {
+  const res = await secureApiFetch(`/api/spaces/${spaceId}/events/${eventId}/rsvp`, {
     method: 'POST',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: 'going' }),
   });
@@ -812,9 +814,9 @@ function FeedRightRail({
                 {sp.isVerified && <span className="text-[10px] text-[#FFD700]/50">✓</span>}
                 {sp.upcomingEventCount && sp.upcomingEventCount > 0 ? (
                   <span className="text-[10px] text-white/20 tabular-nums">{sp.upcomingEventCount} events</span>
-                ) : (
+                ) : sp.memberCount > 0 ? (
                   <span className="text-[10px] text-white/15 tabular-nums">{sp.memberCount}</span>
-                )}
+                ) : null}
               </Link>
             ))}
           </div>
@@ -878,7 +880,7 @@ function EmptyState({ onSelectEvent }: { onSelectEvent: (e: FeedEvent) => void }
     (async () => {
       try {
         const [evRes, toolRes] = await Promise.allSettled([
-          fetch('/api/events?campusId=ub-buffalo&upcoming=true&limit=5&sort=soonest', { credentials: 'include' }),
+          fetch('/api/events?upcoming=true&limit=5&sort=soonest', { credentials: 'include' }),
           fetch('/api/tools/discover?sort=trending&limit=4', { credentials: 'include' }),
         ]);
 
@@ -936,22 +938,64 @@ function EmptyState({ onSelectEvent }: { onSelectEvent: (e: FeedEvent) => void }
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="flex flex-col items-center justify-center py-20 px-6 text-center"
+        className="space-y-6"
       >
-        <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-5">
-          <Globe className="w-6 h-6 text-white/20" />
+        {/* Genesis hero */}
+        <div className="relative rounded-2xl border border-white/[0.10] bg-white/[0.02] p-8 text-center overflow-hidden">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              background: `radial-gradient(ellipse at center, ${colors.accentGreen} 0%, transparent 70%)`,
+            }}
+            aria-hidden
+          />
+          {/* Grain texture overlay */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.03] mix-blend-overlay"
+            style={{ backgroundImage: GRAIN_SVG, backgroundSize: '256px 256px' }}
+            aria-hidden
+          />
+          <div className="relative">
+            <p className="text-[24px] font-medium text-white/80 tracking-[-0.02em] mb-2">
+              Nothing&apos;s been built yet.
+            </p>
+            <p className="text-[15px] text-white/35 mb-6">
+              You&apos;re early. The first builders shape what everyone uses.
+            </p>
+            <Link
+              href="/build"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[14px] font-medium text-black hover:opacity-90 transition-opacity"
+            >
+              <Zap className="w-4 h-4" />
+              Build the first app
+            </Link>
+          </div>
         </div>
-        <p className="text-[16px] text-white/60 font-medium">Your campus feed is warming up</p>
-        <p className="text-[13px] text-white/25 mt-2 max-w-[280px] leading-relaxed">
-          Join spaces and RSVP to events — your personalized feed builds from there
-        </p>
-        <div className="flex items-center gap-3 mt-6">
-          <Link href="/spaces" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] text-white/60 hover:text-white/80 hover:bg-white/[0.08] transition-all font-medium">
+
+        {/* What could exist — template ideas */}
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.12em] text-white/20 font-medium mb-3">
+            What could exist here
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {TEMPLATE_IDEAS.map((idea) => (
+              <Link
+                key={idea.label}
+                href={`/build?prompt=${encodeURIComponent(idea.label)}`}
+                className="flex items-center gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 hover:bg-white/[0.05] hover:border-white/[0.12] transition-all group"
+              >
+                <span className="text-base">{idea.emoji}</span>
+                <span className="text-[12px] text-white/45 group-hover:text-white/65 transition-colors">{idea.label}</span>
+                <ArrowRight className="w-3 h-3 text-white/15 group-hover:text-white/30 ml-auto shrink-0 transition-colors" />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Browse spaces */}
+        <div className="flex items-center gap-3">
+          <Link href="/spaces" className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] text-white/50 hover:text-white/70 hover:bg-white/[0.08] transition-all font-medium">
             Browse spaces
-          </Link>
-          <Link href="/lab" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FFD700]/10 border border-[#FFD700]/[0.12] text-[13px] text-[#FFD700]/70 hover:text-[#FFD700] hover:bg-[#FFD700]/15 transition-all font-medium">
-            <Zap className="w-3.5 h-3.5" />
-            Create something
           </Link>
         </div>
       </motion.div>
@@ -1112,9 +1156,8 @@ export default function DiscoverPage() {
   const remixMutation = useMutation({
     mutationFn: async (toolId: string) => {
       setRemixingToolId(toolId);
-      const res = await fetch(`/api/tools/${toolId}/clone`, {
+      const res = await secureApiFetch(`/api/tools/${toolId}/clone`, {
         method: 'POST',
-        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: 'remix' }),
       });
@@ -1123,7 +1166,7 @@ export default function DiscoverPage() {
     },
     onSuccess: (data) => {
       const newId = data?.data?.toolId || data?.toolId;
-      if (newId) router.push(`/lab/${newId}`);
+      if (newId) router.push(`/build/${newId}`);
     },
     onSettled: () => setRemixingToolId(null),
   });
@@ -1131,9 +1174,8 @@ export default function DiscoverPage() {
   const deployMutation = useMutation({
     mutationFn: async ({ toolId, spaceId }: { toolId: string; spaceId: string }) => {
       setDeployingSpaceId(spaceId);
-      const res = await fetch(`/api/tools/${toolId}/deploy`, {
+      const res = await secureApiFetch(`/api/tools/${toolId}/deploy`, {
         method: 'POST',
-        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetType: 'space', targetId: spaceId }),
       });
@@ -1258,7 +1300,7 @@ export default function DiscoverPage() {
             transition={{ duration: 0.4 }}
             className="mb-6 flex items-center justify-between"
           >
-            <h1 className="text-[13px] font-sans uppercase tracking-[0.14em] text-white/25">Feed</h1>
+            <h1 className="text-[13px] font-sans uppercase tracking-[0.14em] text-white/25">Home</h1>
             {todayCount > 0 && (
               <span className="text-[11px] text-white/20 flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-emerald-500/60" />

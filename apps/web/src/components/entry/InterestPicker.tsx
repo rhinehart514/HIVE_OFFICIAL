@@ -47,16 +47,16 @@ const MAX_INTERESTS = 6;
 
 // Hardcoded fallback categories
 const FALLBACK_INTEREST_CATEGORIES: InterestCategory[] = [
-  { id: 'academic_identity', title: 'Academic identity', icon: '📚', items: [] },
-  { id: 'study_style', title: 'How you do school', icon: '🧠', items: [] },
-  { id: 'food_behaviors', title: 'Food behavior', icon: '🍴', items: [] },
-  { id: 'campus_events', title: 'Events / culture', icon: '🎉', items: [] },
-  { id: 'gaming_and_game_night', title: 'Gamers & game night', icon: '🎮', items: [] },
-  { id: 'creative_scene', title: 'Artsy / creative', icon: '🧵', items: [] },
-  { id: 'builders_and_hustle', title: 'Build / hustle', icon: '🛠️', items: [] },
-  { id: 'social_energy', title: 'Social energy', icon: '🧍', items: [] },
-  { id: 'health_wellness', title: 'Health & wellness', icon: '🧘', items: [] },
-  { id: 'media_and_content', title: 'Media & content', icon: '💻', items: [] },
+  { id: 'academic_identity', title: 'Academic identity', icon: '📚', items: ['Study Groups', 'Research', 'Tutoring', 'Office Hours', 'Academic Clubs'] },
+  { id: 'study_style', title: 'How you do school', icon: '🧠', items: ['Library Regular', 'Late Night Cramming', 'Group Projects', 'Coffee Shop Studying', 'Lecture Nerd'] },
+  { id: 'food_behaviors', title: 'Food behavior', icon: '🍴', items: ['Dining Hall Regular', 'Cooking at Home', 'Late Night Eats', 'Food Adventures', 'Meal Prep'] },
+  { id: 'campus_events', title: 'Events / culture', icon: '🎉', items: ['Parties', 'Concerts', 'Networking Events', 'Guest Speakers', 'Cultural Festivals'] },
+  { id: 'gaming_and_game_night', title: 'Gamers & game night', icon: '🎮', items: ['Board Games', 'Video Games', 'Card Games', 'Trivia Nights', 'D&D / TTRPGs'] },
+  { id: 'creative_scene', title: 'Artsy / creative', icon: '🧵', items: ['Music', 'Film', 'Theater', 'Photography', 'Design'] },
+  { id: 'builders_and_hustle', title: 'Build / hustle', icon: '🛠️', items: ['Internships', 'Startups', 'Hackathons', 'Side Projects', 'Freelancing'] },
+  { id: 'social_energy', title: 'Social energy', icon: '🧍', items: ['Hangouts', 'Greek Life', 'Dating', 'Networking', 'Volunteering'] },
+  { id: 'health_wellness', title: 'Health & wellness', icon: '🧘', items: ['Gym', 'Intramural Sports', 'Running', 'Yoga', 'Mental Health'] },
+  { id: 'media_and_content', title: 'Media & content', icon: '💻', items: ['Podcasts', 'YouTube', 'TikTok', 'Blogging', 'Streaming'] },
 ];
 
 // Fallback Greek councils for UB

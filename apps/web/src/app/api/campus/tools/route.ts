@@ -118,7 +118,8 @@ export const POST = withAuthValidationAndErrors(
         slug,
         category,
         badge: 'community',
-        status: 'pending_review',
+        // Auto-approve for launch — add review flow when needed
+        status: 'active',
         placedBy: userId,
         placedAt: admin.firestore.FieldValue.serverTimestamp(),
         campusId,

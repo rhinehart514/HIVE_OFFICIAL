@@ -310,7 +310,7 @@ export function EntryFlowV2() {
 
     (async () => {
       try {
-        const res = await fetch('/api/events?campusId=ub-buffalo&upcoming=true&limit=10', {
+        const res = await fetch('/api/events?upcoming=true&limit=10', {
           credentials: 'include',
         });
         if (res.ok) {

@@ -15,7 +15,6 @@ import {
   ExclamationTriangleIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import { SettingRow } from './ui-primitives';
 import { logger } from '@/lib/structured-logger';
 import type { AccountSettings, CalendarStatus, ExportProgress } from '../types';
 
@@ -92,24 +91,6 @@ export function AccountSection({
               <span className="text-xs text-white/50">(Locked to dark for vBETA)</span>
             </div>
           </div>
-          <div>
-            <label className="text-sm font-medium text-white mb-2 block">Email Frequency</label>
-            <div className="flex flex-wrap gap-2">
-              {(['immediate', 'daily', 'weekly', 'never'] as const).map((freq) => (
-                <button
-                  key={freq}
-                  onClick={() => onAccountChange('emailFrequency', freq)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition ${
-                    accountSettings.emailFrequency === freq
-                      ? 'bg-[var(--hive-brand-primary)] text-black'
-                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.06]'
-                  }`}
-                >
-                  {freq}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </Card>
 
@@ -118,37 +99,7 @@ export function AccountSection({
           <ShieldCheckIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Data Management
         </h3>
-        <SettingRow
-          label="Auto-Delete Old Activity"
-          description="Automatically delete your old posts and activity after a set period"
-          checked={accountSettings.dataRetention.autoDelete}
-          onCheckedChange={(v) =>
-            onAccountChange('dataRetention', { ...accountSettings.dataRetention, autoDelete: v })
-          }
-        />
-        {accountSettings.dataRetention.autoDelete && (
-          <div className="mt-4 pt-4 border-t border-white/[0.06]">
-            <label className="text-sm font-medium text-white mb-2 block">Keep Data For</label>
-            <div className="flex gap-2">
-              {([90, 180, 365] as const).map((days) => (
-                <button
-                  key={days}
-                  onClick={() =>
-                    onAccountChange('dataRetention', { ...accountSettings.dataRetention, retentionDays: days })
-                  }
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                    accountSettings.dataRetention.retentionDays === days
-                      ? 'bg-[var(--hive-brand-primary)] text-black'
-                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.06]'
-                  }`}
-                >
-                  {days === 365 ? '1 year' : `${days} days`}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        <div className="mt-4 pt-4 border-t border-white/[0.06]">
+        <div>
           <Button
             variant="secondary"
             onClick={onDownloadData}

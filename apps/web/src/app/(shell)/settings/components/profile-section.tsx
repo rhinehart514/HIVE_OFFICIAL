@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button, Card, toast } from '@hive/ui';
-import { ArrowTopRightOnSquareIcon, ArrowPathIcon, CameraIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, CameraIcon } from '@heroicons/react/24/outline';
 import { ImageCropper } from '@/components/ui/image-cropper';
 import { logger } from '@/lib/structured-logger';
 
@@ -34,7 +33,6 @@ export function ProfileSection({
   hasChanges,
   onSave,
 }: ProfileSectionProps) {
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -210,16 +208,7 @@ export function ProfileSection({
           />
         </div>
       </div>
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/[0.06]">
-        <Button
-          variant="secondary"
-          onClick={() => router.push('/profile/edit')}
-          aria-label="Open profile layout editor"
-          className="border-white/[0.06] text-white hover:bg-white/[0.06]"
-        >
-          <ArrowTopRightOnSquareIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-          Customize Layout
-        </Button>
+      <div className="flex items-center justify-end mt-6 pt-4 border-t border-white/[0.06]">
         <Button
           onClick={onSave}
           disabled={isSaving || !hasChanges}

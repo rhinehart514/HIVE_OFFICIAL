@@ -1,15 +1,15 @@
 /**
  * Shared Navigation Config
  *
- * 4-tab model: Feed · Spaces · Lab · Profile
+ * 4-tab model: Home · Spaces · Build · You
  *
- * Feed    — campus discover, events, activity, creations
- * Spaces  — your communities, browse, /s/[handle]
- * Lab     — creation home, your creations, templates
- * Profile — you, settings, account
+ * Home    — campus pulse, events, trending apps, activity
+ * Spaces  — your communities, /s/[handle]
+ * Build   — creation hub + campus app marketplace
+ * You     — builder portfolio, settings
  */
 
-import { CompassIcon, SpacesIcon, UserIcon, BeakerIcon } from '@hive/ui';
+import { HomeIcon, SpacesIcon, UserIcon, BuildIcon } from '@hive/ui';
 
 export interface NavItem {
   id: string;
@@ -17,15 +17,16 @@ export interface NavItem {
   href: string;
   icon: React.ElementType;
   matchPattern?: RegExp;
+  /** Accent color for active state (Build tab gets green) */
+  accentColor?: string;
 }
 
 export const NAV_ITEMS: NavItem[] = [
   {
-    id: 'feed',
-    label: 'Feed',
+    id: 'home',
+    label: 'Home',
     href: '/discover',
-    icon: CompassIcon,
-    // Events and feed both live under this tab
+    icon: HomeIcon,
     matchPattern: /^\/discover(\/|$)|^\/feed(\/|$)|^\/events(\/|$)/,
   },
   {
@@ -36,27 +37,28 @@ export const NAV_ITEMS: NavItem[] = [
     matchPattern: /^\/spaces(\/|$)|^\/s\//,
   },
   {
-    id: 'lab',
-    label: 'Lab',
-    href: '/lab',
-    icon: BeakerIcon,
-    matchPattern: /^\/lab(\/|$)/,
+    id: 'build',
+    label: 'Build',
+    href: '/build',
+    icon: BuildIcon,
+    matchPattern: /^\/build(\/|$)|^\/lab(\/|$)/,
+    accentColor: '#10B981', // accent green — creation energy
   },
   {
-    id: 'profile',
-    label: 'Profile',
+    id: 'you',
+    label: 'You',
     href: '/me',
     icon: UserIcon,
     matchPattern: /^\/me(\/|$)|^\/profile(\/|$)|^\/settings(\/|$)|^\/u\//,
   },
 ];
 
-export function getNavItems(_hasCampus: boolean): NavItem[] {
+export function getNavItems(): NavItem[] {
   return NAV_ITEMS;
 }
 
-export function getMobileNavItems(hasCampus: boolean): NavItem[] {
-  return getNavItems(hasCampus);
+export function getMobileNavItems(): NavItem[] {
+  return getNavItems();
 }
 
 export function isNavItemActive(item: NavItem, pathname: string): boolean {

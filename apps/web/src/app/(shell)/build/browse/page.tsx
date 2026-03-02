@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
  * Campus Tools Directory
  *
  * Browse deployed campus tools — filterable by category with a Rising section
- * for trending tools. Cards click through to /campus/[slug].
+ * for trending tools. Cards click through to /build/browse/[slug].
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -51,7 +51,7 @@ async function fetchCampusTools(): Promise<CampusTool[]> {
     throw new Error('Failed to load campus tools');
   }
   const result = await response.json();
-  return result.data || result.tools || [];
+  return result.data?.tools || result.tools || [];
 }
 
 function CategoryPill({
@@ -157,7 +157,7 @@ export default function CampusToolsDirectory() {
 
   const handleToolClick = useCallback(
     (slug: string) => {
-      router.push(`/campus/${slug}`);
+      router.push(`/build/browse/${slug}`);
     },
     [router]
   );
@@ -186,7 +186,7 @@ export default function CampusToolsDirectory() {
             Sign in to browse and use apps built for your campus.
           </p>
           <button
-            onClick={() => router.push('/enter?redirect=/campus')}
+            onClick={() => router.push('/enter?redirect=/build/browse')}
             className="px-6 py-3 bg-white text-black rounded-2xl font-medium text-sm hover:bg-white/90 transition-colors"
           >
             Sign in

@@ -11,11 +11,11 @@
  */
 
 import * as React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { usePresence, useOnlineUsers } from '@/hooks/use-presence';
 import { useAuth } from '@hive/auth-logic';
-import type { SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@hive/ui';
+import type { SpacePanelOnlineMember, UpcomingEvent } from '@hive/ui';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 import { logger } from '@/lib/logger';
 import { isSlashCommand } from '@/lib/slash-command-parser';
@@ -139,11 +139,11 @@ interface UseSpaceResidenceStateReturn {
   // Panel data
   onlineMembers: OnlineMember[];
   upcomingEvents: UpcomingEvent[];
-  pinnedItems: PinnedItem[];
 
   // Members
   allMembers: SpaceMember[];
   isLoadingMembers: boolean;
+  loadMembers: () => Promise<void>;
 
   // Panel state
   panelCollapsed: boolean;
@@ -183,7 +183,6 @@ interface UseSpaceResidenceStateReturn {
 
 export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateReturn {
   const router = useRouter();
-  const _searchParams = useSearchParams();
   const { toast } = useToast();
   const { user: authUser } = useAuth();
 
@@ -209,7 +208,6 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
   // Initialize with empty arrays - real data comes from API
   const [onlineMembers, setOnlineMembers] = React.useState<OnlineMember[]>([]);
   const [upcomingEvents, setUpcomingEvents] = React.useState<UpcomingEvent[]>([]);
-  const [pinnedItems] = React.useState<PinnedItem[]>([]);
   const [allMembers, setAllMembers] = React.useState<SpaceMember[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = React.useState(false);
 
@@ -498,29 +496,30 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     }
   }, [space?.id, hasMoreMessages, isLoadingMoreMessages, messages, toast]);
 
-  // Load all members when space loads
-  React.useEffect(() => {
-    async function loadMembers() {
-      if (!space?.id || !space.isMember) return;
+  // Lazy members loading — call loadMembers() when Members panel opens
+  const membersLoadedRef = React.useRef(false);
+  // Reset when space changes
+  React.useEffect(() => { membersLoadedRef.current = false; }, [space?.id]);
 
-      setIsLoadingMembers(true);
+  const loadMembers = React.useCallback(async () => {
+    if (!space?.id || !space.isMember || membersLoadedRef.current || isLoadingMembers) return;
+    membersLoadedRef.current = true;
 
-      try {
-        const response = await fetch(`/api/spaces/${space.id}/members`);
-        if (response.ok) {
-          const data = await response.json();
-          setAllMembers(data.members || []);
-        } else {
-          setAllMembers([]);
-        }
-      } catch {
+    setIsLoadingMembers(true);
+
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/members`);
+      if (response.ok) {
+        const data = await response.json();
+        setAllMembers(data.members || []);
+      } else {
         setAllMembers([]);
-      } finally {
-        setIsLoadingMembers(false);
       }
+    } catch {
+      setAllMembers([]);
+    } finally {
+      setIsLoadingMembers(false);
     }
-
-    loadMembers();
   }, [space?.id, space?.isMember]);
 
   // Derive online members from campus-wide presence data crossed with space members
@@ -1027,11 +1026,11 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     // Panel data
     onlineMembers,
     upcomingEvents,
-    pinnedItems,
 
     // Members
     allMembers,
     isLoadingMembers,
+    loadMembers,
 
     // Panel state
     panelCollapsed,

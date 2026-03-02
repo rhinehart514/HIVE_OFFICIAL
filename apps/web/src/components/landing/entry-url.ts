@@ -1,18 +1,18 @@
-const UB_ENTER_BASE = '/enter?schoolId=ub-buffalo&domain=buffalo.edu';
+export const ENTER_URL = '/enter';
 
 /**
- * Build a UB entry URL while preserving explicit redirect intent.
+ * Build an entry URL while preserving explicit redirect intent.
  * If no redirect is present, falls back to the provided path.
  */
-export function buildUbEnterUrl(
+export function buildEnterUrl(
   redirectParam: string | null,
   fallbackRedirect?: string
 ): string {
   const redirect = redirectParam ?? fallbackRedirect;
 
   if (!redirect) {
-    return UB_ENTER_BASE;
+    return ENTER_URL;
   }
 
-  return `${UB_ENTER_BASE}&redirect=${encodeURIComponent(redirect)}`;
+  return `${ENTER_URL}?redirect=${encodeURIComponent(redirect)}`;
 }

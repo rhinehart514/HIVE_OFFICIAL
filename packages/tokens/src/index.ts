@@ -1,5 +1,6 @@
 // Design System V2 - Comprehensive token exports
 export {
+  colors,
   scale,
   cssVariables,
   componentTokens,
@@ -123,6 +124,16 @@ export type {
   ToastPattern,
 } from './patterns';
 
+// Texture tokens — grain, noise, scanlines
+export {
+  texture,
+  textureClasses,
+  textureCSSVariables,
+  GRAIN_SVG,
+} from './texture';
+
+export type { TextureLevel } from './texture';
+
 // Motion tokens
 export {
   MOTION,
@@ -150,6 +161,12 @@ export {
   dropdownVariants,
   selectionVariants,
   reducedMotionVariants,
+  // Creation celebration motions
+  creationPublishVariants,
+  creationRemixVariants,
+  milestoneVariants,
+  deployRippleVariants,
+  counterVariants,
 } from './motion';
 
 export type {

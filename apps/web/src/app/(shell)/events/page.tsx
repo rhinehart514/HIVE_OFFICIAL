@@ -50,7 +50,7 @@ interface CampusEvent {
   friendsAttending?: number;
 }
 
-type TimeGroup = 'Tonight' | 'Tomorrow' | 'This Week' | 'Later';
+type TimeGroup = 'Today' | 'Tonight' | 'Tomorrow' | 'This Week' | 'Later';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data fetching
@@ -89,8 +89,14 @@ function getTimeGroup(dateStr: string): TimeGroup {
   const startOfTomorrow = new Date(startOfToday.getTime() + 86400000);
   const startOfDayAfter = new Date(startOfTomorrow.getTime() + 86400000);
   const startOfNextWeek = new Date(startOfToday.getTime() + 7 * 86400000);
+  const fivePm = new Date(startOfToday.getTime() + 17 * 3600000);
 
-  if (date >= startOfToday && date < startOfTomorrow) return 'Tonight';
+  if (date >= startOfToday && date < startOfTomorrow) {
+    // Event is today — decide "Today" vs "Tonight"
+    if (now.getTime() >= fivePm.getTime()) return 'Tonight';
+    if (date.getTime() >= fivePm.getTime()) return 'Tonight';
+    return 'Today';
+  }
   if (date >= startOfTomorrow && date < startOfDayAfter) return 'Tomorrow';
   if (date >= startOfDayAfter && date < startOfNextWeek) return 'This Week';
   return 'Later';
@@ -229,7 +235,7 @@ function EventGroup({ label, events, onRsvp }: {
     <section>
       <div className="flex items-center gap-3 mb-3">
         <h2 className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/40">{label}</h2>
-        {label === 'Tonight' && (
+        {(label === 'Today' || label === 'Tonight') && (
           <span className="h-1.5 w-1.5 rounded-full bg-[#FFD700] animate-pulse" />
         )}
       </div>
@@ -273,7 +279,12 @@ function EmptyState() {
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
-const GROUP_ORDER: TimeGroup[] = ['Tonight', 'Tomorrow', 'This Week', 'Later'];
+function getGroupOrder(): TimeGroup[] {
+  const hour = new Date().getHours();
+  // After 3pm, lead with Tonight so the "what's happening now" moment hits first
+  if (hour >= 15) return ['Tonight', 'Today', 'Tomorrow', 'This Week', 'Later'];
+  return ['Today', 'Tonight', 'Tomorrow', 'This Week', 'Later'];
+}
 
 export default function EventsPage() {
   const queryClient = useQueryClient();
@@ -312,6 +323,7 @@ export default function EventsPage() {
   // Group events
   const grouped = React.useMemo(() => {
     const groups: Record<TimeGroup, CampusEvent[]> = {
+      Today: [],
       Tonight: [],
       Tomorrow: [],
       'This Week': [],
@@ -357,7 +369,7 @@ export default function EventsPage() {
         ) : (
           <AnimatePresence>
             <div className="flex flex-col gap-7">
-              {GROUP_ORDER.map((label) => (
+              {getGroupOrder().map((label) => (
                 <EventGroup
                   key={label}
                   label={label}

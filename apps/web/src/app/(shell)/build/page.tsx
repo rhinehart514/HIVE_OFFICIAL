@@ -3,24 +3,28 @@
 export const dynamic = 'force-dynamic';
 
 /**
- * /lab — HiveLab Creator Dashboard
+ * /build — Creation Hub + Campus App Marketplace (Unified)
  *
- * Chat-first creation experience:
- * - New User (0 tools): Full-screen chat with hero + template chips
- * - Active Builder (1+ tools): Chat + tool grid
+ * Chat-first creation experience with inline campus app discovery:
+ * - New User (0 apps): Full-screen creation prompt + "See what others built"
+ * - Active Builder (1+ apps): Your apps grid + creation prompt + Campus Apps section
  *
- * The IDE at /lab/[toolId] becomes the "Advanced Editor" escape hatch.
+ * The IDE at /build/[toolId] becomes the "Advanced Editor" escape hatch.
+ * Full browse experience at /build/browse
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@hive/auth-logic';
 import {
   Sparkles,
   LayoutGrid,
+  TrendingUp,
+  ArrowRight,
+  Users,
 } from 'lucide-react';
 import { MOTION, durationSeconds } from '@hive/tokens';
 import {
@@ -57,6 +61,133 @@ const staggerItemVariants = {
   },
 };
 
+/* ------------------------------------------------------------------ */
+/*  Campus App Card — inline component for the preview grid           */
+/* ------------------------------------------------------------------ */
+
+interface CampusAppPreview {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  creatorName?: string;
+  weeklyUsers: number;
+  category?: string;
+}
+
+function CampusAppCard({
+  app,
+  onClick,
+}: {
+  app: CampusAppPreview;
+  onClick: (slug: string) => void;
+}) {
+  return (
+    <motion.button
+      onClick={() => onClick(app.slug)}
+      className="group text-left w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06]
+        hover:bg-white/[0.06] hover:border-white/[0.1] transition-all duration-150"
+      whileHover={{ y: -1 }}
+      transition={{ duration: 0.15 }}
+    >
+      <h3 className="text-[15px] font-medium text-white/80 group-hover:text-white transition-colors truncate mb-1">
+        {app.name}
+      </h3>
+
+      {app.description && (
+        <p className="text-[13px] text-white/35 line-clamp-2 mb-3 leading-relaxed">
+          {app.description}
+        </p>
+      )}
+
+      <div className="flex items-center justify-between text-[11px]">
+        <span className="text-white/30 truncate">
+          {app.creatorName || 'Anonymous'}
+        </span>
+        <span className="flex items-center gap-1 text-white/25 shrink-0">
+          <Users className="w-3 h-3" />
+          {app.weeklyUsers > 0 ? `${app.weeklyUsers}/wk` : 'New'}
+        </span>
+      </div>
+    </motion.button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Campus Apps Section                                                */
+/* ------------------------------------------------------------------ */
+
+function CampusAppsSection({
+  apps,
+  isLoading,
+  onAppClick,
+  onSeeAll,
+  heading,
+}: {
+  apps: CampusAppPreview[];
+  isLoading: boolean;
+  onAppClick: (slug: string) => void;
+  onSeeAll: () => void;
+  heading: string;
+}) {
+  if (isLoading) {
+    return (
+      <div className="mt-2">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="w-4 h-4 text-[#FFD700]/40" />
+          <span className="text-xs font-medium text-white/40">{heading}</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-[110px] rounded-2xl bg-white/[0.03] animate-pulse"
+              style={{ animationDelay: `${i * 80}ms` }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!apps.length) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: EASE }}
+      className="mt-2"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-[#FFD700]/50" />
+          <span className="text-xs font-medium text-white/50 tracking-wide">
+            {heading}
+          </span>
+        </div>
+        <button
+          onClick={onSeeAll}
+          className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/50 transition-colors"
+        >
+          See all
+          <ArrowRight className="w-3 h-3" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {apps.map((app) => (
+          <CampusAppCard key={app.id} app={app} onClick={onAppClick} />
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main Page                                                          */
+/* ------------------------------------------------------------------ */
+
 export default function BuilderDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -64,7 +195,6 @@ export default function BuilderDashboard() {
   const { user, isLoading: authLoading } = useAuth();
   const { data: currentProfile } = useCurrentProfile({ enabled: !!user });
   const { track } = useAnalytics();
-  const shouldReduceMotion = useReducedMotion();
   const [showAllTools, setShowAllTools] = useState(false);
 
   const originSpaceId = searchParams.get('spaceId');
@@ -83,6 +213,19 @@ export default function BuilderDashboard() {
   const hasTools = userTools.length > 0;
   const isNewUser = !toolsLoading && !hasTools;
 
+  // Fetch campus tools for inline preview
+  const { data: campusTools = [], isLoading: campusToolsLoading } = useQuery({
+    queryKey: ['campus-tools-preview'],
+    queryFn: async () => {
+      const res = await fetch('/api/campus/tools', { credentials: 'include' });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return ((data?.data?.tools || data?.tools || []) as CampusAppPreview[]).slice(0, 6);
+    },
+    staleTime: 5 * 60_000,
+    enabled: !!user,
+  });
+
   // Track lab_viewed
   const hasTrackedView = useRef(false);
   useEffect(() => {
@@ -94,7 +237,12 @@ export default function BuilderDashboard() {
 
   // Handle tool click — go to IDE (advanced editor)
   const handleToolClick = useCallback((toolId: string) => {
-    router.push(`/lab/${toolId}`);
+    router.push(`/build/${toolId}`);
+  }, [router]);
+
+  // Handle campus app click — go to browse detail
+  const handleCampusAppClick = useCallback((slug: string) => {
+    router.push(`/build/browse/${slug}`);
   }, [router]);
 
   // Handle delete tool
@@ -119,8 +267,12 @@ export default function BuilderDashboard() {
 
   const handleViewAllTemplates = useCallback(() => {
     const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
-    router.push(`/lab/templates${spaceParam}`);
+    router.push(`/build/templates${spaceParam}`);
   }, [router, originSpaceId]);
+
+  const handleSeeAllCampusApps = useCallback(() => {
+    router.push('/build/browse');
+  }, [router]);
 
   // Guest state
   if (!authLoading && !user) {
@@ -139,7 +291,7 @@ export default function BuilderDashboard() {
             Sign in to create polls, RSVPs, countdowns, and more for your spaces.
           </p>
           <button
-            onClick={() => router.push('/enter?redirect=/lab')}
+            onClick={() => router.push('/enter?redirect=/build')}
             className="px-6 py-3 bg-white text-black rounded-2xl font-medium text-sm
               hover:bg-white/90 transition-colors"
           >
@@ -177,8 +329,8 @@ export default function BuilderDashboard() {
               className="flex items-center justify-between mb-6"
             >
               <div className="flex items-center gap-3">
-                <LayoutGrid className="w-5 h-5 text-white/50" />
-                <h1 className="text-xl font-medium text-white">Your Lab</h1>
+                <LayoutGrid className="w-5 h-5 text-[#10B981]/60" />
+                <h1 className="text-xl font-medium text-white">Build</h1>
               </div>
               <button
                 onClick={handleViewAllTemplates}
@@ -269,6 +421,18 @@ export default function BuilderDashboard() {
                 </motion.button>
               )}
             </motion.div>
+
+            {/* Divider before campus apps */}
+            <div className="h-px bg-white/[0.06] mb-6" />
+
+            {/* Campus Apps — inline marketplace preview */}
+            <CampusAppsSection
+              apps={campusTools}
+              isLoading={campusToolsLoading}
+              onAppClick={handleCampusAppClick}
+              onSeeAll={handleSeeAllCampusApps}
+              heading="Campus Apps"
+            />
           </>
         )}
 
@@ -276,14 +440,27 @@ export default function BuilderDashboard() {
         {/* NEW USER STATE (0 tools) — Full-screen chat                  */}
         {/* ============================================================ */}
         {isNewUser && (
-          <LabChatView
-            templates={ALL_TEMPLATES}
-            originSpaceId={originSpaceId}
-            spaceContext={spaceContext}
-            autoPrompt={autoPrompt}
-            onViewAllTemplates={handleViewAllTemplates}
-            onToolCreated={handleToolCreated}
-          />
+          <>
+            <LabChatView
+              templates={ALL_TEMPLATES}
+              originSpaceId={originSpaceId}
+              spaceContext={spaceContext}
+              autoPrompt={autoPrompt}
+              onViewAllTemplates={handleViewAllTemplates}
+              onToolCreated={handleToolCreated}
+            />
+
+            {/* Campus apps discovery for new users */}
+            <div className="mt-10">
+              <CampusAppsSection
+                apps={campusTools}
+                isLoading={campusToolsLoading}
+                onAppClick={handleCampusAppClick}
+                onSeeAll={handleSeeAllCampusApps}
+                heading="See what others built"
+              />
+            </div>
+          </>
         )}
 
         {/* Loading tools state - skeleton grid */}

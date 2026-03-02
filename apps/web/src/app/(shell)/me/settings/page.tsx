@@ -25,7 +25,6 @@ import { NotificationSections } from '@/app/(shell)/settings/components/notifica
 import { PrivacySection } from '@/app/(shell)/settings/components/privacy-section';
 import { AccountSection } from '@/app/(shell)/settings/components/account-section';
 import { ConfirmModal } from '@/app/(shell)/settings/components/ui-primitives';
-import { CompletionCard } from '@/app/(shell)/settings/components/completion-card';
 import { useSettingsState } from '@/app/(shell)/settings/hooks/use-settings-state';
 import { useProfileForm } from '@/app/(shell)/settings/hooks/use-profile-form';
 import { useDataExport } from '@/app/(shell)/settings/hooks/use-data-export';
@@ -264,7 +263,7 @@ function SettingsContent() {
 
       if (!response.ok) throw new Error('Failed to initiate account deletion');
 
-      toast.success('Account deletion initiated. You will receive an email confirmation within 24 hours.');
+      toast.success('Account deletion requested. This may take up to 30 days.');
       setShowDeleteModal(false);
     } catch (error) {
       logger.error('Delete account error', { component: 'SettingsPage' }, error instanceof Error ? error : undefined);
@@ -390,8 +389,6 @@ function SettingsContent() {
             Account preferences and security
           </p>
         </motion.section>
-
-        <CompletionCard />
 
         <motion.section className="mb-16" initial="hidden" animate="visible">
           <motion.div

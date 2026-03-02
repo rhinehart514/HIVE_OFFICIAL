@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { buildUbEnterUrl } from './entry-url';
+import { buildEnterUrl } from './entry-url';
+import { colors } from '@hive/tokens';
 
 export function LandingHeader() {
   const searchParams = useSearchParams();
-  const enterHref = buildUbEnterUrl(searchParams.get('redirect'));
+  const enterHref = buildEnterUrl(searchParams.get('redirect'));
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -20,7 +21,7 @@ export function LandingHeader() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-black/80 backdrop-blur-2xl border-b border-white/[0.06]'
+          ? 'bg-black/80 backdrop-blur-2xl border-b border-white/[0.10]'
           : 'bg-transparent'
       }`}
     >
@@ -35,7 +36,7 @@ export function LandingHeader() {
           >
             <path
               d="M12 2L3 7v10l9 5 9-5V7l-9-5z"
-              fill="#FFD700"
+              fill={colors.accentGreen}
               fillOpacity="0.9"
             />
           </svg>
@@ -46,9 +47,9 @@ export function LandingHeader() {
 
         <Link
           href={enterHref}
-          className="rounded-full bg-[#FFD700] px-5 py-2 text-[13px] font-medium text-black transition-opacity hover:opacity-90"
+          className="rounded-full bg-white px-5 py-2 text-[13px] font-medium text-black transition-opacity hover:opacity-90"
         >
-          Join your campus
+          Start building
         </Link>
       </div>
     </header>

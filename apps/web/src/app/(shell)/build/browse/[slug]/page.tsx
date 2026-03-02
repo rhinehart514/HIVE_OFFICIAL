@@ -295,6 +295,7 @@ export default function CampusToolPage() {
                 userId: user?.uid,
                 userDisplayName: user?.displayName || user?.fullName || undefined,
                 userRole: user ? 'member' : 'guest',
+                // Campus tools are standalone — no space context, so no leader role
                 isSpaceLeader: false,
               }}
             />

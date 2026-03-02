@@ -16,7 +16,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-// Simple in-memory rate limiting for edge runtime
+// NOTE: Per-instance on Vercel Edge — not globally enforced. Migrate to Upstash Redis for real rate limiting.
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 // Rate limit configuration
@@ -45,15 +45,8 @@ const PUBLIC_ROUTES = [
   '/enter',         // Entry flow (creates session during verification)
   '/about',         // Marketing/info page
   '/legal',         // Legal pages (/legal/privacy, /legal/terms, etc.)
-  '/login',         // Login page
   '/t',             // Standalone tool pages (shareable links for published tools)
   '/verify',        // Public leadership record pages
-];
-
-// Routes that require session but NOT completed onboarding
-// (user has entered code but hasn't finished profile)
-const PARTIAL_AUTH_ROUTES: string[] = [
-  // /enter is now fully public - session created during flow
 ];
 
 // Admin-only routes
@@ -65,15 +58,18 @@ const ADMIN_ROUTES = ['/admin', '/design-system'];
 export const ROUTE_REDIRECTS: Record<string, string> = {
   // Alias routes
   '/browse': '/spaces',
-  '/build': '/lab',
   '/explore': '/discover',
   // Dead route consolidation
   '/home': '/discover',
   '/feed': '/discover',
   '/calendar': '/discover?tab=events',
-  '/elements': '/lab',
+  '/elements': '/build',
   '/schools': '/enter',
-  '/templates': '/lab',
+  '/templates': '/build/templates',
+  // Lab → Build migration
+  '/lab': '/build',
+  // Campus → Build/Browse migration
+  '/campus': '/build/browse',
   // Settings — /settings is now a redirect page, these go to /me/settings sections
   '/settings/privacy': '/me/settings?section=privacy',
   '/settings/security': '/me/settings?section=account',
@@ -89,7 +85,6 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/spaces/new': '/spaces?create=true',
   '/spaces/create': '/spaces?create=true',
   '/people': '/discover?tab=people',
-  '/events': '/discover?tab=events',
   '/leaders': '/spaces?claim=true',
   // Profile redirects — old /profile/* routes consolidated
   '/you': '/me',
@@ -104,8 +99,8 @@ export const ROUTE_REDIRECTS: Record<string, string> = {
   '/me/reports': '/me/settings',
   // Killed standalone notifications route (in-app panel)
   '/notifications/settings': '/me/settings?section=notifications',
-  // HiveLab → Lab consolidation
-  '/hivelab': '/lab',
+  // HiveLab → Build consolidation
+  '/hivelab': '/build',
   // Dead lab routes — creation lives on /lab now (handled above with query param preservation)
   // '/lab/new' and '/lab/create' are redirected by the special handler above
 };
@@ -144,7 +139,11 @@ function checkRateLimit(clientId: string, config: typeof GLOBAL_RATE_LIMIT): {
   }
 
   if (!record || now > record.resetTime) {
-    // New window
+    // New window — cap map size to prevent unbounded growth in edge memory
+    if (rateLimitStore.size > 10_000) {
+      const toDelete = [...rateLimitStore.keys()].slice(0, 2_000);
+      for (const k of toDelete) rateLimitStore.delete(k);
+    }
     const resetTime = now + config.windowMs;
     rateLimitStore.set(clientId, { count: 1, resetTime });
     return { allowed: true, remaining: config.maxRequests - 1, resetTime };
@@ -169,11 +168,6 @@ function isSensitiveEndpoint(pathname: string): boolean {
 function isPublicRoute(pathname: string): boolean {
   // Only exact matches or prefix matches for explicitly public routes
   return PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
-}
-
-function isPartialAuthRoute(pathname: string): boolean {
-  // Routes that need session but not completed onboarding
-  return PARTIAL_AUTH_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
 }
 
 function isAdminRoute(pathname: string): boolean {
@@ -311,9 +305,26 @@ export async function middleware(request: NextRequest) {
   // Handle route redirects (from deleted client-side redirect pages)
   // These are PERMANENT (301) per IA_INVARIANTS.md - canonical route changes
 
-  // Handle /lab/new and /lab/create -> /lab and preserve query params
+  // Handle /lab/new and /lab/create -> /build and preserve query params
   if (pathname === '/lab/new' || pathname === '/lab/create') {
-    const target = new URL('/lab', request.url);
+    const target = new URL('/build', request.url);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target, 301);
+  }
+
+  // Handle /lab/[toolId] -> /build/[toolId]
+  const labToolMatch = pathname.match(/^\/lab\/([^/]+)(\/.*)?$/);
+  if (labToolMatch && labToolMatch[1] !== 'new' && labToolMatch[1] !== 'create' && labToolMatch[1] !== 'templates') {
+    const rest = labToolMatch[2] || '';
+    const target = new URL(`/build/${labToolMatch[1]}${rest}`, request.url);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target, 301);
+  }
+
+  // Handle /campus/[slug] -> /build/browse/[slug]
+  const campusSlugMatch = pathname.match(/^\/campus\/([^/]+)$/);
+  if (campusSlugMatch) {
+    const target = new URL(`/build/browse/${campusSlugMatch[1]}`, request.url);
     target.search = request.nextUrl.search;
     return NextResponse.redirect(target, 301);
   }
@@ -359,15 +370,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/u/${profileMatch[1]}`, request.url), 301);
   }
 
-  // Handle /hivelab/* → /lab
+  // Handle /hivelab/* → /build
   if (pathname.startsWith('/hivelab')) {
-    return NextResponse.redirect(new URL('/lab', request.url), 301);
+    return NextResponse.redirect(new URL('/build', request.url), 301);
   }
 
-  // Public routes - no auth required (but redirect completed users away from landing/enter/login)
+  // Public routes - no auth required (but redirect completed users away from landing/enter)
   if (isPublicRoute(pathname)) {
-    // Check if authenticated user is on landing, enter, or login pages
-    if (pathname === '/' || pathname === '/enter' || pathname.startsWith('/enter/') || pathname === '/login') {
+    // Check if authenticated user is on landing or enter pages
+    if (pathname === '/' || pathname === '/enter' || pathname.startsWith('/enter/')) {
       const sessionCookie = request.cookies.get('hive_session')?.value;
       const refreshCookie = request.cookies.get('hive_refresh')?.value;
 
@@ -432,18 +443,6 @@ export async function middleware(request: NextRequest) {
     if (!session.isAdmin) {
       return NextResponse.redirect(new URL('/', request.url));
     }
-  }
-
-  // Partial auth routes (like /enter) - allow even without completed onboarding
-  if (isPartialAuthRoute(pathname)) {
-    // If already completed onboarding and visiting /enter, redirect to spaces
-    if (session.onboardingCompleted && pathname === '/enter') {
-      const stateParam = request.nextUrl.searchParams.get('state');
-      if (stateParam === 'identity') {
-        return NextResponse.redirect(new URL('/discover', request.url));
-      }
-    }
-    return NextResponse.next();
   }
 
   // All other routes require completed onboarding

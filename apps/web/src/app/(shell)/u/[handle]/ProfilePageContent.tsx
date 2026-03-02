@@ -370,20 +370,20 @@ export default function ProfilePageContent() {
               transition={{ duration: 0.4, ease: EASE_PREMIUM }}
               className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-8"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.04] to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.04] to-transparent pointer-events-none" />
               <div className="relative flex flex-col items-center text-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#FFD700]/[0.08] flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-[#FFD700]/50" />
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/[0.08] flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-emerald-500/50" />
                 </div>
                 <div>
-                  <p className="text-[15px] font-medium text-white/60 mb-1">What will you build first?</p>
-                  <p className="text-[13px] text-white/30 max-w-xs">Your profile fills up as you create. Polls, forms, signups — whatever your campus needs.</p>
+                  <p className="text-[15px] font-medium text-white/60 mb-1">Build your first app to unlock your portfolio</p>
+                  <p className="text-[13px] text-white/30 max-w-xs">Your builder profile fills up as you create. Ship something your campus actually needs.</p>
                 </div>
                 <Link
-                  href="/lab"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#FFD700]/10 border border-[#FFD700]/30 text-[13px] font-medium text-[#FFD700] hover:bg-[#FFD700]/15 transition-colors"
+                  href="/build"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[13px] font-medium text-emerald-500 hover:bg-emerald-500/15 transition-colors"
                 >
-                  <Zap className="w-3.5 h-3.5" />Start creating <ArrowRight className="w-3.5 h-3.5" />
+                  <Zap className="w-3.5 h-3.5" />Start building <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </motion.div>
@@ -476,7 +476,7 @@ export default function ProfilePageContent() {
               <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6 md:col-span-2">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-white/30">No activity yet</p>
-                  <Link href="/lab" className="text-[11px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors flex items-center gap-1">
+                  <Link href="/build" className="text-[11px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors flex items-center gap-1">
                     Build something <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -488,7 +488,6 @@ export default function ProfilePageContent() {
               <ProfileConnectionsCard
                 totalConnections={totalConnections}
                 mutualConnections={profileConnections}
-                onViewAll={isOwnProfile ? () => window.location.assign('/me/connections') : undefined}
               />
             )}
 

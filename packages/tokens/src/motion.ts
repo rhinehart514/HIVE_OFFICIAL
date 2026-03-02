@@ -599,6 +599,73 @@ export const surfaceVariants = {
   },
 } as const;
 
+// ============================================
+// CREATION CELEBRATION MOTIONS
+// ============================================
+// Used when students build, publish, remix, or hit milestones.
+// These are the "magic moments" that make creation feel rewarding.
+
+/** App published — scale pop + glow pulse */
+export const creationPublishVariants = {
+  initial: { scale: 0.9, opacity: 0 },
+  animate: {
+    scale: [0.9, 1.08, 1],
+    opacity: 1,
+    transition: {
+      scale: { type: 'spring', stiffness: 400, damping: 12, duration: 0.5 },
+      opacity: { duration: 0.2 },
+    },
+  },
+} as const;
+
+/** Remix fork — slide + split effect */
+export const creationRemixVariants = {
+  initial: { x: 0, opacity: 1 },
+  fork: {
+    x: [-4, 4, 0],
+    transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+  },
+} as const;
+
+/** Milestone hit (10 users, 100 users, etc.) — pulse ring expansion */
+export const milestoneVariants = {
+  initial: { scale: 1 },
+  celebrate: {
+    scale: [1, 1.05, 1],
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1],
+      repeat: 1,
+    },
+  },
+} as const;
+
+/** Deploy to space — ripple outward from source */
+export const deployRippleVariants = {
+  initial: { scale: 0, opacity: 0.6 },
+  animate: {
+    scale: [0, 2.5],
+    opacity: [0.6, 0],
+    transition: {
+      duration: 0.8,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+} as const;
+
+/** Counter increment animation — for live stats */
+export const counterVariants = {
+  initial: { y: 0, opacity: 1 },
+  increment: {
+    y: [-16, 0],
+    opacity: [0, 1],
+    transition: {
+      duration: 0.3,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+} as const;
+
 // Types
 export type MotionToken = keyof typeof motion;
 export type MotionEasing = keyof typeof motion.easing;

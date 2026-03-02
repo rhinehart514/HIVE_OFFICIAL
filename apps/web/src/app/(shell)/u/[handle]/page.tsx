@@ -25,13 +25,13 @@ interface Props {
 // Fetch profile data server-side for metadata
 async function fetchProfileForMetadata(handle: string) {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('session')?.value;
+  const sessionCookie = cookieStore.get('hive_session')?.value;
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.college';
 
   try {
     const response = await fetch(`${baseUrl}/api/profile/handle/${encodeURIComponent(handle)}`, {
-      headers: sessionCookie ? { Cookie: `session=${sessionCookie}` } : {},
+      headers: sessionCookie ? { Cookie: `hive_session=${sessionCookie}` } : {},
       cache: 'no-store',
     });
 

@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { useCampusMode } from '@/hooks/use-campus-mode';
 import { getNavItems, getMobileNavItems, isNavItemActive, type NavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { useUnreadNotifications } from '@/hooks/use-unread-notifications';
@@ -16,6 +15,13 @@ import { SPRING_SNAP_NAV, MOTION, durationSeconds } from '@hive/tokens';
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
 const RAIL_W = 56;
 const EXPANDED_W = 240;
@@ -87,27 +93,26 @@ const NAV_ITEM_H = 40; // h-10 = 40px
 function NavRailItem({
   item,
   isActive,
-  isLab,
   expanded,
 }: {
   item: NavItem;
   isActive: boolean;
-  isLab: boolean;
   expanded: boolean;
 }) {
   const Icon = item.icon;
   const prefersReduced = useReducedMotion();
+  const accent = item.accentColor;
 
-  const glowGradient = isLab
-    ? 'radial-gradient(circle, rgba(255,215,0,0.06) 0%, transparent 70%)'
+  const glowGradient = accent
+    ? `radial-gradient(circle, ${hexToRgba(accent, 0.06)} 0%, transparent 70%)`
     : 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)';
 
-  const iconColor = isLab
-    ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/45 group-hover:text-[#FFD700]/75'
+  const iconColor = accent
+    ? ''
     : isActive ? 'text-white' : 'text-white/30 group-hover:text-white/55';
 
-  const labelColor = isLab
-    ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/45 group-hover:text-[#FFD700]/75'
+  const labelColor = accent
+    ? ''
     : isActive ? 'text-white' : 'text-white/35 group-hover:text-white/60';
 
   return (
@@ -123,12 +128,17 @@ function NavRailItem({
 
       <motion.span
         className={cn('relative z-10 flex items-center justify-center shrink-0', iconColor)}
-        style={{ width: ICON_SLOT, minWidth: ICON_SLOT }}
+        style={{
+          width: ICON_SLOT,
+          minWidth: ICON_SLOT,
+          ...(accent && isActive ? { color: accent } : {}),
+          ...(accent && !isActive ? { color: hexToRgba(accent!, 0.45) } : {}),
+        }}
         whileTap={prefersReduced ? undefined : { y: 1 }}
         transition={SPRING_SNAP_NAV}
       >
         <Icon
-          className={cn('shrink-0 transition-colors', isLab ? 'h-[20px] w-[20px]' : 'h-[18px] w-[18px]')}
+          className={cn('shrink-0 transition-colors', item.id === 'build' ? 'h-[20px] w-[20px]' : 'h-[18px] w-[18px]')}
           strokeWidth={1.5}
           style={{ transitionDuration: `${MOTION.duration.quick}ms` }}
         />
@@ -137,9 +147,10 @@ function NavRailItem({
       <span
         className={cn(
           'text-[13px] font-sans font-medium whitespace-nowrap transition-opacity duration-150',
-          labelColor,
+          !accent && labelColor,
           expanded ? 'opacity-100' : 'opacity-0',
         )}
+        style={accent ? { color: isActive ? accent : hexToRgba(accent, 0.45) } : undefined}
       >
         {item.label}
       </span>
@@ -362,7 +373,7 @@ function NotificationBell({ unreadCount, expanded }: { unreadCount: number; expa
   return (
     <button
       type="button"
-      onClick={() => router.push('/notifications')}
+      onClick={() => router.push('/me/notifications')}
       className="group relative w-full flex items-center h-10"
       aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
     >
@@ -417,8 +428,7 @@ function NotificationBell({ unreadCount, expanded }: { unreadCount: number; expa
 
 export function LeftSidebar() {
   const pathname = usePathname();
-  const { hasCampus } = useCampusMode();
-  const navItems = getNavItems(hasCampus);
+  const navItems = getNavItems();
   const { user } = useAuth();
   const { unreadCount } = useUnreadNotifications({ userId: user?.uid });
   const { data: mySpaces = [] } = useMySpaces();
@@ -456,7 +466,7 @@ export function LeftSidebar() {
         transition={{ type: 'spring', stiffness: 500, damping: 32, mass: 0.5 }}
       >
         {/* HIVE mark */}
-        <Link href="/discover" className="flex items-center h-12 shrink-0" aria-label="HIVE home">
+        <Link href="/discover" className="flex items-center h-12 shrink-0" aria-label="Home">
           <span
             className="flex items-center justify-center shrink-0"
             style={{ width: ICON_SLOT, minWidth: ICON_SLOT }}
@@ -479,13 +489,13 @@ export function LeftSidebar() {
           {(() => {
             const activeIdx = navItems.findIndex(item => isNavItemActive(item, pathname));
             if (activeIdx === -1) return null;
-            const isLabActive = navItems[activeIdx]?.id === 'lab';
+            const activeItem = navItems[activeIdx];
             return (
               <motion.span
                 className="absolute left-0 w-[2px] h-5 rounded-r-full z-20"
                 animate={{
                   top: activeIdx * NAV_ITEM_H + (NAV_ITEM_H - 20) / 2,
-                  backgroundColor: isLabActive ? '#FFD700' : '#FFFFFF',
+                  backgroundColor: activeItem?.accentColor || '#FFFFFF',
                 }}
                 transition={SPRING_SNAP_NAV}
               />
@@ -497,7 +507,6 @@ export function LeftSidebar() {
               key={item.id}
               item={item}
               isActive={isNavItemActive(item, pathname)}
-              isLab={item.id === 'lab'}
               expanded={expanded}
             />
           ))}
@@ -548,26 +557,23 @@ function MobileNavItem({
   badge?: number;
 }) {
   const Icon = item.icon;
-  const isLab = item.id === 'lab';
+  const accent = item.accentColor;
 
   return (
     <Link
       href={item.href}
       className={cn(
         'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors',
-        isLab
-          ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/40'
-          : isActive ? 'text-white' : 'text-white/35'
+        !accent && (isActive ? 'text-white' : 'text-white/35'),
       )}
+      style={accent ? { color: isActive ? accent : hexToRgba(accent, 0.4) } : undefined}
     >
       <div className="relative">
-        <Icon className={cn('h-[22px] w-[22px]', isLab && 'h-[24px] w-[24px]')} />
+        <Icon className={cn('h-[22px] w-[22px]', item.id === 'build' && 'h-[24px] w-[24px]')} />
         {isActive && (
           <span
-            className={cn(
-              'absolute -bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full',
-              isLab ? 'bg-[#FFD700]' : 'bg-white'
-            )}
+            className="absolute -bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full"
+            style={{ backgroundColor: accent || '#FFFFFF' }}
             aria-hidden
           />
         )}
@@ -580,10 +586,9 @@ function MobileNavItem({
       <span
         className={cn(
           'font-sans text-[10px] uppercase tracking-[0.1em] transition-colors',
-          isLab
-            ? isActive ? 'text-[#FFD700]' : 'text-[#FFD700]/40'
-            : isActive ? 'text-white' : 'text-white/35'
+          !accent && (isActive ? 'text-white' : 'text-white/35'),
         )}
+        style={accent ? { color: isActive ? accent : hexToRgba(accent, 0.4) } : undefined}
       >
         {item.label}
       </span>
@@ -593,8 +598,7 @@ function MobileNavItem({
 
 export function MobileBottomBar() {
   const pathname = usePathname();
-  const { hasCampus } = useCampusMode();
-  const navItems = getMobileNavItems(hasCampus);
+  const navItems = getMobileNavItems();
   const { user } = useAuth();
   const { unreadCount } = useUnreadNotifications({ userId: user?.uid });
 

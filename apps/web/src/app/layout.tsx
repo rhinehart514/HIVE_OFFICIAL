@@ -63,7 +63,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FACC15' },
+    { media: '(prefers-color-scheme: light)', color: '#FFD700' },
     { media: '(prefers-color-scheme: dark)', color: '#000000' },
   ],
 };
@@ -79,7 +79,6 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
     >
-      <head />
       <body className="bg-[var(--bg-ground)] text-[var(--text-primary)] min-h-screen">
         <Providers>
           {children}

@@ -34,9 +34,9 @@ export const colors = {
   textSubtle: 'rgba(255, 255, 255, 0.3)',    // Timestamps, metadata
   textDisabled: 'rgba(255, 255, 255, 0.25)', // Disabled states
 
-  // Borders
-  borderDefault: 'rgba(255, 255, 255, 0.06)', // Standard borders
-  borderHover: 'rgba(255, 255, 255, 0.08)',   // Hover state borders
+  // Borders — increased opacity for more visible structure
+  borderDefault: 'rgba(255, 255, 255, 0.10)', // Standard borders (was 0.06)
+  borderHover: 'rgba(255, 255, 255, 0.14)',   // Hover state borders (was 0.08)
   borderFocus: 'rgba(255, 255, 255, 0.50)', // Focus rings (white, NOT gold)
 
   // Brand - Gold
@@ -48,6 +48,12 @@ export const colors = {
   success: '#22C55E',       // Green
   error: '#EF4444',         // Red
   warning: '#F59E0B',       // Amber
+
+  // Accent palette — creation energy, categories, creator badges
+  accentBlue: '#3B82F6',       // Electric blue — spaces, community
+  accentPink: '#EC4899',       // Hot pink — events, social
+  accentGreen: '#10B981',      // Acid green — creation, building
+  accentPurple: '#8B5CF6',     // Electric purple — trending, discovery
 
   // Pure
   white: '#FFFFFF',
@@ -102,6 +108,32 @@ export const scale = {
   amber: {
     9: '#F59E0B',   // Warning
     10: '#FBBF24',  // Warning hover
+  },
+
+  // Accent scales — for creator badges, categories, creation energy
+  blue: {
+    5: '#1E40AF',
+    9: '#3B82F6',
+    10: '#60A5FA',
+    11: '#93C5FD',
+  },
+  pink: {
+    5: '#9D174D',
+    9: '#EC4899',
+    10: '#F472B6',
+    11: '#F9A8D4',
+  },
+  emerald: {
+    5: '#047857',
+    9: '#10B981',
+    10: '#34D399',
+    11: '#6EE7B7',
+  },
+  purple: {
+    5: '#5B21B6',
+    9: '#8B5CF6',
+    10: '#A78BFA',
+    11: '#C4B5FD',
   },
 } as const;
 
@@ -176,6 +208,12 @@ export const cssVariables = {
     '--hive-success': colors.success,
     '--hive-error': colors.error,
     '--hive-warning': colors.warning,
+
+    // Accent palette — creation energy
+    '--hive-accent-blue': colors.accentBlue,
+    '--hive-accent-pink': colors.accentPink,
+    '--hive-accent-green': colors.accentGreen,
+    '--hive-accent-purple': colors.accentPurple,
   },
 } as const;
 
@@ -369,10 +407,11 @@ export const typography = {
     mono: ['Geist Mono', 'SF Mono', 'monospace'],
   },
   fontSize: {
-    // HIVE Type Scale - aligned with design principles
-    'display': ['2.5rem', { lineHeight: '1.1', fontWeight: '600' }],      // 40px - Hero titles
-    'title-xl': ['2rem', { lineHeight: '1.2', fontWeight: '400' }],       // 32px - Page titles
-    'title-lg': ['1.5rem', { lineHeight: '1.3', fontWeight: '500' }],     // 24px - Section headers
+    // HIVE Type Scale — bolder, tighter headlines. Display type makes statements.
+    'display': ['3rem', { lineHeight: '1.05', fontWeight: '600', letterSpacing: '-0.03em' }],     // 48px - Hero titles (was 40px)
+    'display-lg': ['3.75rem', { lineHeight: '1.0', fontWeight: '600', letterSpacing: '-0.04em' }], // 60px - Landing heroes
+    'title-xl': ['2.25rem', { lineHeight: '1.15', fontWeight: '500', letterSpacing: '-0.02em' }],  // 36px - Page titles (was 32px)
+    'title-lg': ['1.75rem', { lineHeight: '1.25', fontWeight: '500', letterSpacing: '-0.02em' }],  // 28px - Section headers (was 24px)
     'title': ['1.25rem', { lineHeight: '1.4', fontWeight: '500' }],       // 20px - Card titles
     'body-lg': ['1.0625rem', { lineHeight: '1.5', fontWeight: '400' }],   // 17px - Large body
     'body': ['0.9375rem', { lineHeight: '1.6', fontWeight: '400' }],      // 15px - Default body
@@ -452,6 +491,11 @@ export const shadows = {
   '2xl': '0 24px 48px rgba(0, 0, 0, 0.5)',
   glow: '0 0 20px rgba(255, 215, 0, 0.15)',
   'glow-strong': '0 0 30px rgba(255, 215, 0, 0.25)',
+  // Colored ambient glow — creation energy behind interactive elements
+  'glow-blue': '0 0 24px rgba(59, 130, 246, 0.15)',
+  'glow-pink': '0 0 24px rgba(236, 72, 153, 0.15)',
+  'glow-green': '0 0 24px rgba(16, 185, 129, 0.15)',
+  'glow-purple': '0 0 24px rgba(139, 92, 246, 0.15)',
   inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
   none: 'none',
 } as const;
@@ -542,32 +586,36 @@ export const cognitiveBudgets = {
 // ============================================================================
 
 export const guidelines = {
-  // GOLD IS RARE - Only for earned distinction, never for actions
+  // GOLD IS EARNED - Builder status only, not decorative
   goldUsage: {
     allowed: [
       'Logo/brand mark (always)',
-      'Leader status indicators (earned distinction)',
+      'Builder status indicators (shipped apps, remix milestones)',
+      'Creation celebration moments (app published, milestone hit)',
     ],
     forbidden: [
-      'CTAs or buttons', // White is for CTAs
+      'Generic CTAs (use white or accent colors)',
       'Focus rings',     // White focus rings
       'Hover states',
-      'Borders',
       'Decorative elements',
       'Body text',
-      'Everything else',
     ],
+  },
+  // Accent color usage — creation energy
+  accentUsage: {
+    blue: 'Spaces, community, social connections',
+    pink: 'Events, social, attendance',
+    green: 'Creation, building, success states',
+    purple: 'Trending, discovery, featured',
   },
   // Anti-patterns - NEVER do these
   antiPatterns: [
     'Corporate/enterprise UI (we serve students)',
-    'Gamification (badges, streaks) - we are infrastructure',
-    'Skeleton loaders (use spinners instead)',
-    'Heavy borders (>15% opacity)',
+    'Heavy borders (>20% opacity)',
     'Bold/black typography (700+)',
-    'Gold for CTAs (use white)',
     'Solid filled secondary buttons (keep ghost)',
     'Light mode',
+    'Empty whitespace without purpose (density matters)',
   ],
   accessibility: {
     minContrastText: 4.5,

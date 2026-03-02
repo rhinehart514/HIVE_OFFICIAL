@@ -51,9 +51,6 @@ import { LeaderCreateFAB } from './components/leader-create-fab';
 import { useLeaderDashboard } from '@/hooks/use-leader-dashboard';
 import { useTypingIndicator } from '@/hooks/use-presence';
 import { useClaimSpace } from '@/hooks/mutations/use-claim-space';
-import {
-  type FeedItem,
-} from '@/components/spaces';
 import type { CreateEventData } from '@/components/events/create-event-modal';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
@@ -117,13 +114,11 @@ export default function SpacePageUnified() {
   const [showInfoDrawer, setShowInfoDrawer] = React.useState(false);
   const [showEventModal, setShowEventModal] = React.useState(false);
   const [selectedEventId, setSelectedEventId] = React.useState<string | null>(null);
-  const [, setIsFirstEntry] = React.useState(true);
   const [showDeleteSpaceConfirm, setShowDeleteSpaceConfirm] = React.useState(false);
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<SpaceTab>('chat');
-  const [postCount, _setPostCount] = React.useState<number | undefined>(undefined);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
   const [reportModal, setReportModal] = React.useState<{
     messageId: string;
@@ -142,13 +137,6 @@ export default function SpacePageUnified() {
 
   // Thread panel state - driven by URL param
   const [activeThreadId, setActiveThreadId] = React.useState<string | null>(null);
-
-  // Detect first entry to this space for ArrivalTransition
-  React.useEffect(() => {
-    const visited = sessionStorage.getItem(`visited-${handle}`);
-    setIsFirstEntry(!visited);
-    sessionStorage.setItem(`visited-${handle}`, 'true');
-  }, [handle]);
 
   const {
     space,
@@ -169,6 +157,7 @@ export default function SpacePageUnified() {
     navigateToSettings: _navigateToSettings,
     allMembers,
     isLoadingMembers,
+    loadMembers,
     // Tools (HiveLab Sprint 1)
     sidebarTools,
     isLoadingTools,
@@ -443,61 +432,6 @@ export default function SpacePageUnified() {
     }));
   }, [messages]);
 
-  // Transform messages to unified feed items (for legacy compatibility)
-  const _feedItems: FeedItem[] = React.useMemo(() => {
-    // Combine messages, events, and tools into unified feed
-    const items: FeedItem[] = [];
-
-    // Add messages
-    messages.forEach((msg) => {
-      items.push({
-        id: msg.id,
-        type: 'message',
-        timestamp: new Date(msg.timestamp).toISOString(),
-        authorId: msg.authorId,
-        authorName: msg.authorName,
-        authorAvatarUrl: msg.authorAvatarUrl,
-        content: msg.content,
-        reactions: msg.reactions?.map(r => ({
-          emoji: r.emoji,
-          count: r.count,
-          userReacted: r.hasReacted,
-        })),
-        threadCount: msg.replyCount,
-      });
-    });
-
-    // Add events
-    upcomingEvents.forEach((event) => {
-      // Extended event type with userRsvp from API
-      const extendedEvent = event as typeof event & {
-        userRsvp?: 'going' | 'maybe' | 'not_going' | null;
-        description?: string;
-        startTime?: string;
-        isOnline?: boolean;
-        location?: string;
-      };
-      items.push({
-        id: event.id,
-        type: 'event',
-        timestamp: extendedEvent.startTime || event.time || new Date().toISOString(),
-        eventId: event.id,
-        title: event.title,
-        description: extendedEvent.description || event.title,
-        startDate: extendedEvent.startTime || event.time || new Date().toISOString(),
-        location: extendedEvent.location,
-        isOnline: extendedEvent.isOnline,
-        rsvpCount: event.goingCount || 0,
-        userRsvp: extendedEvent.userRsvp || null, // P1.4: Use userRsvp from API
-      });
-    });
-
-    // Sort by timestamp (most recent first)
-    return items.sort((a, b) => {
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-    });
-  }, [messages, upcomingEvents]);
-
   // Handle join with inline error display
   const handleJoin = async () => {
     setIsJoining(true);
@@ -569,7 +503,7 @@ export default function SpacePageUnified() {
     }
   };
 
-  // Handle message deletion
+  // Handle message deletion — optimistic local removal, SSE stream confirms
   const handleDeleteMessage = async (messageId: string) => {
     if (!space?.id) return;
 
@@ -583,8 +517,7 @@ export default function SpacePageUnified() {
         throw new Error(data.error?.message || 'Failed to delete message');
       }
 
-      // Refresh to update the feed
-      await refreshSpace();
+      // SSE stream handles local state removal via handleMessageDelete callback
       toast.success('Message deleted');
     } catch (error) {
       logger.error('Failed to delete message', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
@@ -592,7 +525,7 @@ export default function SpacePageUnified() {
     }
   };
 
-  // Handle message editing
+  // Handle message editing — optimistic local update, SSE stream confirms
   const handleEditMessage = async (messageId: string, newContent: string) => {
     if (!space?.id) return;
 
@@ -610,8 +543,7 @@ export default function SpacePageUnified() {
         throw new Error(data.error?.message || 'Failed to edit message');
       }
 
-      // Refresh to update the feed
-      await refreshSpace();
+      // SSE stream handles local state update via handleMessageUpdate callback
       toast.success('Message updated');
     } catch (error) {
       logger.error('Failed to edit message', { component: 'SpacePage' }, error instanceof Error ? error : undefined);
@@ -738,7 +670,7 @@ export default function SpacePageUnified() {
                 }}
                 isLeader={space.isLeader}
                 isMember={space.isMember}
-                onMembersClick={() => setShowMembersPanel(true)}
+                onMembersClick={() => { loadMembers(); setShowMembersPanel(true); }}
                 onSettingsClick={() => setShowSettingsModal(true)}
                 onSpaceInfoClick={() => setShowInfoDrawer(true)}
                 onBuildToolClick={() => {
@@ -747,7 +679,7 @@ export default function SpacePageUnified() {
                     spaceName: space.name,
                     spaceHandle: space.handle,
                   });
-                  router.push(`/lab/templates?${params.toString()}`);
+                  router.push(`/build?${params.toString()}`);
                 }}
                 onCreateEventClick={() => setShowEventModal(true)}
                 onModerationClick={() => setShowModerationPanel(true)}
@@ -762,7 +694,7 @@ export default function SpacePageUnified() {
                     spaceName: space.name,
                     spaceHandle: space.handle,
                   });
-                  router.push(`/lab/templates?${params.toString()}`);
+                  router.push(`/build?${params.toString()}`);
                 }}
                 canModerate={space.isLeader || space.userRole === 'moderator' || space.userRole === 'admin'}
                 isMuted={isSpaceMuted}
@@ -776,7 +708,6 @@ export default function SpacePageUnified() {
             onTabChange={setActiveTab}
             unreadCount={unreadCount}
             eventCount={upcomingEvents.length}
-            postCount={postCount}
             appCount={sidebarTools.length}
           />
 
@@ -830,7 +761,7 @@ export default function SpacePageUnified() {
                     onlineCount: space.onlineCount,
                     totalCount: space.memberCount,
                     onlineMembers: onlineMembersPreview,
-                    onClick: () => setShowMembersPanel(true),
+                    onClick: () => { loadMembers(); setShowMembersPanel(true); },
                   }}
                 />
               }
