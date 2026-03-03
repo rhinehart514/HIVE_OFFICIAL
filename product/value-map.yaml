@@ -1,0 +1,374 @@
+schema_version: 1
+
+product:
+  name: HIVE
+  north_star: "50 weekly active creators at UB within 2 weeks of launch"
+  stage: pre-launch
+  campus: UB (University at Buffalo)
+  pre_seeded_spaces: 650+
+  target_users:
+    primary: org leaders (creators)
+    secondary: students (members/consumers)
+
+  primary_workflows:
+    - workflow_id: create_app
+      description: "Leader types a prompt and gets a working app"
+      surface: build
+    - workflow_id: place_in_space
+      description: "App gets placed in a space where members can find it"
+      surface: build_to_space
+    - workflow_id: share_with_members
+      description: "Members get notified and the link works externally"
+      surface: space_and_external
+    - workflow_id: member_engages
+      description: "Member interacts with the app (votes, RSVPs, submits)"
+      surface: space
+    - workflow_id: see_impact
+      description: "Creator sees engagement numbers on their profile"
+      surface: profile
+    - workflow_id: discover_via_feed
+      description: "Student finds events, spaces, or apps on the feed"
+      surface: feed
+    - workflow_id: standalone_viral
+      description: "Non-user opens a shared link and uses the app without auth"
+      surface: standalone
+
+features:
+
+  # ============================================================
+  # FEED SURFACE
+  # ============================================================
+
+  sectioned_feed:
+    surface: feed
+    user_segment: all students
+    jtbd: "Know what's happening on campus right now"
+    current_friction: "Check 4 GroupMe chats, scroll Instagram stories, ask a friend"
+    transformation: "Open one app, see everything happening today, sorted by time"
+    value_mechanisms: [aliveness]
+    workflow_id: discover_via_feed
+    thresholds:
+      pass:
+        feed_never_empty: true
+        time_to_useful_content: "<=2s"
+      transformational:
+        first_interaction_within: "<=10s"
+        returning_user_sees_new_content: true
+    required_evals:
+      feature:
+        - "feed_renders_with_pre_seeded_data"
+        - "sections_hide_when_empty"
+      workflow:
+        - "scenario_freshman_first_open"
+        - "scenario_returning_skeptic_second_visit"
+      perspectives: [lonely-freshman, commuter-student, returning-skeptic]
+
+  new_apps_feed_section:
+    surface: feed
+    user_segment: all students
+    jtbd: "See what apps people are creating on campus"
+    current_friction: "No visibility into campus creativity"
+    transformation: "Apps created by spaces you follow show up in your feed"
+    value_mechanisms: [aliveness, loop_closure]
+    workflow_id: discover_via_feed
+    thresholds:
+      pass:
+        section_hidden_when_no_apps: true
+        card_links_to_space_context: true
+      transformational:
+        make_your_own_cta_visible: true
+    required_evals:
+      feature:
+        - "api_tools_recent_returns_campus_apps"
+        - "feed_app_card_renders"
+      perspectives: [thursday-night-sophomore, returning-skeptic]
+
+  # ============================================================
+  # SPACES SURFACE
+  # ============================================================
+
+  space_storefront:
+    surface: spaces
+    user_segment: all students
+    jtbd: "Decide whether to join a space in 10 seconds"
+    current_friction: "CampusLabs pages are static, outdated, and ugly"
+    transformation: "See member count, upcoming events, live apps, and online presence before joining"
+    value_mechanisms: [aliveness]
+    workflow_id: discover_via_feed
+    thresholds:
+      pass:
+        renders_for_unclaimed: true
+        renders_for_claimed_non_member: true
+        join_works_with_optimistic_update: true
+      transformational:
+        join_decision_within: "<=10s"
+        social_proof_visible: true
+    required_evals:
+      feature:
+        - "unclaimed_space_shows_interest_count"
+        - "claimed_storefront_shows_events_and_apps"
+      perspectives: [lonely-freshman, transfer-student]
+
+  freshly_claimed_onboarding:
+    surface: spaces
+    user_segment: org leaders
+    jtbd: "Know what to do in the first 30 seconds after claiming"
+    current_friction: "Empty chat screen, no guidance, leader closes the app"
+    transformation: "SparkleCreateSheet auto-opens with format chips; first app in 15 seconds"
+    value_mechanisms: [speed, loop_closure]
+    workflow_id: create_app
+    thresholds:
+      pass:
+        sparkle_sheet_auto_opens: true
+        first_creation_within: "<=60s"
+      transformational:
+        first_creation_within: "<=15s"
+        guided_empty_state_behind_sheet: true
+    required_evals:
+      feature:
+        - "sparkle_sheet_opens_for_leader_with_0_apps"
+        - "format_chips_create_inline_components"
+      workflow:
+        - "scenario_leader_claims_and_creates_first_app"
+      perspectives: [overwhelmed-org-leader]
+
+  space_leader_creation_flow:
+    surface: spaces
+    user_segment: org leaders
+    jtbd: "Create apps for my space without leaving the space"
+    current_friction: "Navigate to Build, create app, come back, place it — too many steps"
+    transformation: "Slash commands create inline components instantly; 'Make an app' CTAs pass spaceId to Build"
+    value_mechanisms: [speed, loop_closure]
+    workflow_id: create_app
+    thresholds:
+      pass:
+        slash_commands_work: true
+        space_id_passed_to_build: true
+      transformational:
+        inline_poll_creation: "<=5s"
+    required_evals:
+      feature:
+        - "slash_command_creates_poll_in_chat"
+        - "make_an_app_button_passes_space_id"
+      perspectives: [overwhelmed-org-leader]
+
+  # ============================================================
+  # BUILD SURFACE
+  # ============================================================
+
+  creation_pipeline:
+    surface: build
+    user_segment: org leaders
+    jtbd: "Turn an idea into a working app"
+    current_friction: "Google Forms takes 10 minutes and looks terrible; custom code requires a developer"
+    transformation: "Type what you need, get a working app in seconds"
+    value_mechanisms: [speed, reach]
+    workflow_id: create_app
+    thresholds:
+      pass:
+        classification_accuracy: ">=0.80"
+        shell_preview_latency: "<=3s"
+        code_gen_latency: "<=15s"
+        zero_dead_ends: true
+      transformational:
+        classification_accuracy: ">=0.90"
+        shell_preview_latency: "<=1s"
+        first_try_correct_format: ">=0.85"
+    required_evals:
+      feature:
+        - "classify_returns_correct_format_for_poll_prompts"
+        - "classify_returns_correct_format_for_rsvp_prompts"
+        - "classify_falls_back_to_custom_gracefully"
+        - "code_gen_produces_renderable_html"
+      workflow:
+        - "scenario_leader_creates_poll_from_messy_prompt"
+        - "scenario_leader_creates_rsvp_with_slang"
+      perspectives: [overwhelmed-org-leader, commuter-student]
+
+  place_in_space:
+    surface: build
+    user_segment: org leaders
+    jtbd: "Get my app into a space where members can find it"
+    current_friction: "App exists but nobody knows about it; no distribution step"
+    transformation: "After creation, one-tap placement with auto-selected space (if context present)"
+    value_mechanisms: [reach, loop_closure]
+    workflow_id: place_in_space
+    thresholds:
+      pass:
+        placement_sheet_shows_after_creation: true
+        auto_select_when_space_id_present: true
+        navigate_to_space_after_placement: true
+      transformational:
+        placement_rate: ">=0.70"
+        one_tap_when_context_present: true
+    required_evals:
+      feature:
+        - "space_placement_sheet_renders"
+        - "auto_selects_space_from_query_param"
+        - "navigates_to_space_apps_tab_after_placement"
+      workflow:
+        - "scenario_leader_creates_and_places_from_space"
+        - "scenario_leader_creates_from_build_home_places_in_space"
+      perspectives: [overwhelmed-org-leader]
+
+  share_and_notify:
+    surface: build
+    user_segment: org leaders
+    jtbd: "Get members to actually open and use my app"
+    current_friction: "Copy link into GroupMe manually; members don't click; messages get buried"
+    transformation: "Push notification to all space members after placement; standalone link works for non-users"
+    value_mechanisms: [reach]
+    workflow_id: share_with_members
+    thresholds:
+      pass:
+        notification_sent_after_placement: true
+        standalone_url_works_without_auth: true
+      transformational:
+        notification_tap_rate: ">=0.30"
+        standalone_interaction_rate: ">=0.50"
+    required_evals:
+      feature:
+        - "fcm_notification_sent_to_space_members"
+        - "standalone_url_renders_and_allows_interaction"
+        - "og_meta_tags_generate_rich_preview"
+      workflow:
+        - "scenario_leader_shares_poll_in_groupme"
+        - "scenario_member_taps_notification_and_votes"
+      perspectives: [overwhelmed-org-leader, thursday-night-sophomore]
+
+  my_apps_dashboard:
+    surface: build
+    user_segment: org leaders
+    jtbd: "See what I've built and whether anyone is using it"
+    current_friction: "No visibility into created apps or their engagement"
+    transformation: "'My Apps' section on Build home shows each app with engagement metric and placement status"
+    value_mechanisms: [loop_closure]
+    workflow_id: see_impact
+    thresholds:
+      pass:
+        shows_created_apps: true
+        shows_engagement_per_app: true
+        not_placed_indicator_visible: true
+      transformational:
+        click_through_to_edit: true
+        engagement_contextual: true
+    required_evals:
+      feature:
+        - "my_apps_query_returns_user_tools"
+        - "my_app_card_shows_metric_and_space"
+        - "not_placed_amber_indicator_shows"
+      perspectives: [overwhelmed-org-leader, returning-skeptic]
+
+  # ============================================================
+  # PROFILE SURFACE
+  # ============================================================
+
+  creator_feedback_loop:
+    surface: profile
+    user_segment: org leaders (creators)
+    jtbd: "See proof that building apps works and that people used them"
+    current_friction: "No feedback on whether anyone engaged; effort feels wasted"
+    transformation: "Profile shows participation count, per-app impact lines, and Reach stat"
+    value_mechanisms: [loop_closure]
+    workflow_id: see_impact
+    thresholds:
+      pass:
+        participation_count_visible: true
+        per_app_impact_labels: true
+      transformational:
+        reach_stat_in_stats_row: true
+        creator_makes_third_app: true
+    required_evals:
+      feature:
+        - "participation_count_renders_for_creators"
+        - "impact_line_shows_votes_for_polls"
+        - "impact_line_shows_rsvps_for_events"
+      workflow:
+        - "scenario_leader_checks_profile_after_two_apps"
+      perspectives: [overwhelmed-org-leader, returning-skeptic]
+
+  sparse_profile_dignity:
+    surface: profile
+    user_segment: all students
+    jtbd: "My profile looks like a starting point, not a wasteland, even on day 1"
+    current_friction: "Empty profiles feel broken or abandoned"
+    transformation: "Every empty zone has a warm CTA; profile looks dignified with just name + 2 spaces"
+    value_mechanisms: [aliveness]
+    workflow_id: discover_via_feed
+    thresholds:
+      pass:
+        empty_states_have_ctas: true
+        profile_renders_with_zero_apps: true
+      transformational:
+        feels_like_starting_point: true
+    required_evals:
+      feature:
+        - "profile_renders_with_zero_apps_zero_connections"
+        - "empty_builder_showcase_links_to_build"
+      perspectives: [lonely-freshman, transfer-student]
+
+  # ============================================================
+  # CONNECTIVE TISSUE
+  # ============================================================
+
+  space_to_build_context:
+    surface: connective_tissue
+    user_segment: org leaders
+    jtbd: "When I tap 'Make an app' in my space, Build knows which space I came from"
+    current_friction: "Build opens without context; placement requires manual space selection"
+    transformation: "?spaceId in URL pre-fills context pill and auto-selects space in placement"
+    value_mechanisms: [speed, loop_closure]
+    workflow_id: create_app
+    thresholds:
+      pass:
+        space_id_read_from_query_param: true
+        context_pill_visible: true
+        auto_select_in_placement: true
+      transformational:
+        full_round_trip_under_60s: true
+    required_evals:
+      feature:
+        - "build_page_reads_spaceId_param"
+        - "context_pill_renders_with_space_name"
+      workflow:
+        - "scenario_full_loop_from_space_and_back"
+
+  notification_driven_returns:
+    surface: connective_tissue
+    user_segment: all students
+    jtbd: "Get pulled back into the app when something happens"
+    current_friction: "No notifications; no reason to return; feed looks the same"
+    transformation: "8 notification types drive returns to the right surface"
+    value_mechanisms: [reach, aliveness]
+    workflow_id: share_with_members
+    thresholds:
+      pass:
+        app_placed_notif_works: true
+        notification_lands_on_correct_surface: true
+      transformational:
+        creator_feedback_notifs_work: true
+        milestone_notifs_work: true
+    required_evals:
+      feature:
+        - "notification_target_urls_resolve_correctly"
+        - "notification_rate_limiting_prevents_spam"
+      perspectives: [returning-skeptic, lonely-freshman]
+
+  bottom_nav_badges:
+    surface: connective_tissue
+    user_segment: all students
+    jtbd: "Know at a glance which tab has something new"
+    current_friction: "No pull mechanism; no visual signal of new activity"
+    transformation: "Spaces tab shows unread count; You tab shows notification count"
+    value_mechanisms: [aliveness, loop_closure]
+    workflow_id: discover_via_feed
+    thresholds:
+      pass:
+        spaces_badge_shows_unread_sum: true
+        you_badge_shows_notification_count: true
+      transformational:
+        badge_updates_in_realtime: true
+    required_evals:
+      feature:
+        - "spaces_tab_badge_computes_unread_sum"
+        - "you_tab_badge_reflects_notification_count"
