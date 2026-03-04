@@ -138,7 +138,7 @@ Every surface must have at least one outbound link to every other surface. No su
 | Builder Showcase empty state (own profile) | "Build your first app" | `/build` |
 | After viewing own apps | "Create your next app" | `/build` |
 
-**Implementation:** Existing links in `ProfilePageContent.tsx`. Verify they point to `/build` (not `/lab`).
+**Implementation:** Existing links in `ProfilePageContent.tsx`. Verified: points to `/build`.
 
 ### Profile -> Space
 
@@ -326,7 +326,7 @@ Four tabs: **Home** | **Spaces** | **Make** | **You**
 |-----|-------|------|--------------|--------------|
 | Home | Home | `/discover` | `/discover`, `/feed`, `/events` | White |
 | Spaces | Spaces | `/discover` | `/s/` | White |
-| Make | Make | `/build` | `/build`, `/lab` | Green (#10B981) |
+| Make | Make | `/build` | `/build` | Green (#10B981) |
 | You | You | `/me` | `/me`, `/profile`, `/settings`, `/u/` | White |
 
 ### The Spaces Tab Problem

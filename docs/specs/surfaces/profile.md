@@ -34,10 +34,10 @@ Routes: `/u/[handle]` (canonical), `/me` (redirects to own `/u/[handle]`)
 |-----------|----------------|
 | Builder Showcase section | Add per-app impact line: "47 votes", "12 RSVPs" — not just total runs |
 | Stats Row | Replace "Streak" and "Rep" with "Reach" (total unique users who engaged with your apps) |
-| Own-profile empty states | Tighter copy, link to `/build` not `/lab` |
+| Own-profile empty states | Tighter copy, link to `/build` |
 | `/me` route | Create redirect to `/u/[currentUser.handle]` |
 | Edit profile flow | Currently pushes to `/me/edit` — verify this route exists and works |
-| Tool click handler | Currently routes own-profile clicks to `/lab/{toolId}` — should route to `/build/{toolId}` |
+| Tool click handler | Routes own-profile clicks to `/build/{toolId}` |
 
 ---
 

@@ -604,7 +604,7 @@ Mobile: (identical but full width, no split pane)
 
 ---
 
-## Lab (`/lab`)
+## Build (`/build`)
 
 **Job:** Build tools. IDE energy.
 
