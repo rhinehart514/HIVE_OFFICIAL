@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Clock, MapPin, Plus, Users, Video } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Sparkles, Users, Video } from 'lucide-react';
 import { Button, MOTION } from '@hive/ui/design-system/primitives';
 import { toast } from '@hive/ui';
 import { cn } from '@/lib/utils';
@@ -271,6 +271,8 @@ interface EventCardProps {
   event: SpaceEvent;
   isPast?: boolean;
   isRsvpPending: boolean;
+  isLeader: boolean;
+  spaceId: string;
   onEventClick: (eventId: string) => void;
   onRsvp: (eventId: string, status: 'going' | 'maybe') => void;
 }
@@ -279,6 +281,8 @@ function EventCard({
   event,
   isPast = false,
   isRsvpPending,
+  isLeader,
+  spaceId,
   onEventClick,
   onRsvp,
 }: EventCardProps) {
@@ -328,6 +332,21 @@ function EventCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          {isLeader && !isPast && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-[#FFD700]/60 hover:text-[#FFD700]"
+              onClick={(clickEvent) => {
+                clickEvent.stopPropagation();
+                const prompt = encodeURIComponent(`What should we discuss at ${event.title}?`);
+                window.location.href = `/build?spaceId=${spaceId}&spaceName=${encodeURIComponent(event.title)}&prompt=${prompt}`;
+              }}
+              title="Make an app for this event"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button
             variant={rsvp === 'going' ? 'secondary' : 'ghost'}
             size="sm"
@@ -532,6 +551,8 @@ export function SpaceEventsTab({
                       <EventCard
                         key={event.id}
                         event={event}
+                        isLeader={isLeader}
+                        spaceId={spaceId}
                         isRsvpPending={Boolean(pendingRsvpByEvent[event.id])}
                         onEventClick={onEventClick}
                         onRsvp={handleRsvp}
@@ -563,6 +584,8 @@ export function SpaceEventsTab({
                     key={event.id}
                     event={event}
                     isPast
+                    isLeader={isLeader}
+                    spaceId={spaceId}
                     isRsvpPending={Boolean(pendingRsvpByEvent[event.id])}
                     onEventClick={onEventClick}
                     onRsvp={handleRsvp}

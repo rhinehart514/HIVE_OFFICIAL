@@ -20,11 +20,20 @@ import type { PollConfig, BracketConfig, RSVPConfig } from '@/lib/shells/types';
 // TYPES
 // ============================================================================
 
+export interface UpcomingEvent {
+  title: string;
+  date?: string;
+  type?: string;
+}
+
 export interface SpaceContext {
   name: string;
   description?: string;
   type?: string;
   category?: string;
+  tags?: string[];
+  orgTypeName?: string;
+  upcomingEvent?: UpcomingEvent;
 }
 
 export interface SpaceCreationResult {
@@ -72,17 +81,30 @@ export function buildSpaceCreationPrompt(space: {
   description?: string;
   type?: string;
   category?: string;
+  tags?: string[];
+  orgTypeName?: string;
+  upcomingEvent?: UpcomingEvent;
 }): string {
   const spaceInfo = [
     `Space name: "${space.name}"`,
     space.description ? `Description: "${space.description}"` : null,
     space.type ? `Type: ${space.type}` : null,
     space.category ? `Category: ${space.category}` : null,
+    space.orgTypeName ? `Org type: ${space.orgTypeName}` : null,
+    space.tags?.length ? `Tags: ${space.tags.join(', ')}` : null,
+    space.upcomingEvent ? `Upcoming event: "${space.upcomingEvent.title}"${space.upcomingEvent.date ? ` on ${space.upcomingEvent.date}` : ''}${space.upcomingEvent.type ? ` (${space.upcomingEvent.type})` : ''}` : null,
   ]
     .filter(Boolean)
     .join('\n');
 
-  return `You are a creation generator for HIVE, a campus social platform. Given a student organization or space, generate ONE interactive creation that would be engaging and relevant for that community.
+  return `You are a creation generator for HIVE, a campus social platform at the University at Buffalo (UB), Buffalo NY.
+
+Campus context:
+- Dining: Crossroads, C3, Governor's, Sizzles, Tikka House, Moe's, Tim Hortons, Au Bon Pain, Hubie's (late night)
+- Study spots: Lockwood Library, Silverman, Capen Hall, NSC, Student Union
+- Hangouts: Student Union, Ellicott Complex, Center for Tomorrow
+
+Given a student organization or space, generate ONE interactive creation that would be engaging and relevant for that community.
 
 Choose the BEST format for this space:
 - "poll": A question with 2-6 multiple choice options. Best for opinions, preferences, decisions.
@@ -97,6 +119,7 @@ RULES:
 - For polls: ask a question members would actually debate
 - For brackets: pick entries members would have strong opinions about
 - For RSVP: suggest a realistic event the space might host
+- If an upcoming event is listed, strongly prefer creating something related to it (e.g. an agenda poll, RSVP, or bracket for the event)
 - The title should be catchy and short (what appears as the app name)
 - The description should be one sentence explaining the creation
 

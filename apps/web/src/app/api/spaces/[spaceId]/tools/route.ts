@@ -610,6 +610,49 @@ export const POST = withAuthValidationAndErrors(
         lastDeployedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
+      // Fire-and-forget: notify space members about the new tool
+      (async () => {
+        try {
+          const { notifyToolDeployment } = await import("@/lib/notification-service");
+
+          // Get deployer name
+          const deployerDoc = await dbAdmin.collection("users").doc(userId).get();
+          const deployerName =
+            deployerDoc.data()?.displayName ||
+            deployerDoc.data()?.fullName ||
+            "A leader";
+
+          // Get active space member IDs
+          const membersSnap = await dbAdmin
+            .collection("spaceMembers")
+            .where("spaceId", "==", spaceId)
+            .where("isActive", "==", true)
+            .select("userId")
+            .get();
+
+          const memberIds = membersSnap.docs.map((d) => d.data().userId as string);
+
+          if (memberIds.length > 0) {
+            await notifyToolDeployment({
+              memberIds,
+              deployerId: userId,
+              deployerName,
+              toolId: body.toolId,
+              toolName: (toolData?.name as string) || "New app",
+              spaceId,
+              spaceHandle: validation.space.slug?.value,
+              spaceName: validation.space.name.value,
+            });
+          }
+        } catch (notifyErr) {
+          logger.warn("Tool deployment notification failed", {
+            spaceId,
+            toolId: body.toolId,
+            error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+          });
+        }
+      })();
+
       return respond.created({
         placement: {
           placementId: placement.placementId,

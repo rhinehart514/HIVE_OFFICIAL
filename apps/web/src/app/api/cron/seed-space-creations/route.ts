@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const weekAgo = new Date(now.getTime() - STALENESS_DAYS * 24 * 60 * 60 * 1000);
 
     // 2. Filter to spaces needing seeding
-    const spacesToSeed: Array<{ id: string; name: string; description?: string; type?: string; category?: string; campusId: string }> = [];
+    const spacesToSeed: Array<{ id: string; name: string; description?: string; type?: string; category?: string; campusId: string; tags?: string[]; orgTypeName?: string; upcomingEvent?: { title: string; date?: string; type?: string } }> = [];
 
     for (const doc of spacesSnapshot.docs) {
       if (spacesToSeed.length >= MAX_SPACES_PER_RUN) break;
@@ -87,6 +87,29 @@ export async function POST(request: Request) {
         if (deployedAt && deployedAt > weekAgo) continue;
       }
 
+      // Check for upcoming events in this space
+      let upcomingEvent: { title: string; date?: string; type?: string } | undefined;
+      try {
+        const eventsSnapshot = await dbAdmin
+          .collection('events')
+          .where('spaceId', '==', doc.id)
+          .where('startDate', '>=', now)
+          .orderBy('startDate', 'asc')
+          .limit(1)
+          .get();
+        if (!eventsSnapshot.empty) {
+          const eventData = eventsSnapshot.docs[0].data();
+          const startDate = eventData.startDate?.toDate?.() ?? (eventData.startDate ? new Date(eventData.startDate) : null);
+          upcomingEvent = {
+            title: eventData.title || 'Upcoming event',
+            date: startDate ? startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : undefined,
+            type: eventData.type ?? undefined,
+          };
+        }
+      } catch {
+        // Non-blocking — skip event context if query fails
+      }
+
       spacesToSeed.push({
         id: doc.id,
         name: data.name || 'Unnamed Space',
@@ -94,6 +117,9 @@ export async function POST(request: Request) {
         type: data.type ?? undefined,
         category: data.category ?? undefined,
         campusId: data.campusId || 'ub',
+        tags: Array.isArray(data.tags) ? data.tags : undefined,
+        orgTypeName: data.orgTypeName ?? undefined,
+        upcomingEvent,
       });
     }
 
@@ -105,6 +131,9 @@ export async function POST(request: Request) {
           description: space.description,
           type: space.type,
           category: space.category,
+          tags: space.tags,
+          orgTypeName: space.orgTypeName,
+          upcomingEvent: space.upcomingEvent,
         });
 
         if (!creation) {

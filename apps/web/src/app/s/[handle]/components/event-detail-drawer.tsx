@@ -7,6 +7,7 @@ import {
   Clock,
   ExternalLink,
   MapPin,
+  MessageCircle,
   Users,
   Video,
   X,
@@ -27,6 +28,7 @@ type RSVPStatus = 'going' | 'maybe' | 'not_going';
 interface EventDetailDrawerProps {
   eventId: string | null;
   spaceId: string;
+  spaceHandle?: string;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -59,6 +61,12 @@ interface EventDetail {
   organizerName?: string;
   organizerHandle?: string;
   organizerAvatarUrl?: string;
+  linkedBoard?: {
+    id?: string;
+    boardId?: string;
+    name?: string;
+    boardName?: string;
+  } | null;
 }
 
 const RSVP_OPTIONS: Array<{ status: RSVPStatus; label: string }> = [
@@ -154,6 +162,7 @@ function getEventFromPayload(payload: unknown): EventDetail | null {
 export function EventDetailDrawer({
   eventId,
   spaceId,
+  spaceHandle,
   isOpen,
   onClose,
 }: EventDetailDrawerProps) {
@@ -451,6 +460,16 @@ export function EventDetailDrawer({
                     >
                       <Calendar className="w-4 h-4" />
                       Add to Google Calendar
+                    </a>
+                  )}
+
+                  {event.linkedBoard && (event.linkedBoard.id || event.linkedBoard.boardId) && (
+                    <a
+                      href={spaceHandle ? `/s/${spaceHandle}?tab=chat` : '#'}
+                      className="w-full p-3 rounded-xl border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-[13px] text-[#FFD700]/60 hover:text-[#FFD700]"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Chat about this event
                     </a>
                   )}
 

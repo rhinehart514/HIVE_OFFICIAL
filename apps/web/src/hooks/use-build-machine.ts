@@ -232,12 +232,22 @@ function buildReducer(state: BuildState, action: BuildAction): BuildState {
 // HOOK
 // ============================================================================
 
+interface SpaceContextForGenerate {
+  spaceId: string;
+  spaceName: string;
+  spaceType?: string;
+  category?: string;
+  memberCount?: number;
+  description?: string;
+}
+
 interface UseBuildMachineOptions {
   spaceId?: string | null;
+  spaceContext?: SpaceContextForGenerate | null;
   onToolCreated?: (toolId: string) => void;
 }
 
-export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptions = {}) {
+export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBuildMachineOptions = {}) {
   const [state, dispatch] = useReducer(buildReducer, initialState);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -292,7 +302,11 @@ export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptio
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ prompt, mode: 'code' }),
+          body: JSON.stringify({
+            prompt,
+            mode: 'code',
+            ...(spaceContext ? { spaceContext } : {}),
+          }),
           signal: controller.signal,
         });
 
@@ -383,7 +397,7 @@ export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptio
         toast.error(message);
       }
     },
-    [onToolCreated]
+    [onToolCreated, spaceContext]
   );
 
   // ---- Public API ----

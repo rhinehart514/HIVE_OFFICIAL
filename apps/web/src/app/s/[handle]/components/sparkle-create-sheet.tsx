@@ -62,12 +62,8 @@ export function SparkleCreateSheet({
   }, [open]);
 
   const handleFormatSelect = (format: FormatChip) => {
+    onFormatSelect(format);
     onOpenChange(false);
-    // Navigate to Build with format + space context
-    const params = new URLSearchParams({ spaceId, spaceName });
-    const chip = FORMAT_CHIPS.find(c => c.id === format);
-    if (chip) params.set('prompt', chip.slash.trim());
-    router.push(`/build?${params.toString()}`);
   };
 
   const handleCustomSubmit = async () => {

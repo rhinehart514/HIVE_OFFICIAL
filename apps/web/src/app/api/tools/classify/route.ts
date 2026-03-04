@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { generateObject } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { logger } from '@/lib/logger';
+import { dbAdmin } from '@/lib/firebase-admin';
 import {
   withAuthAndErrors,
   getUserId,
@@ -56,10 +57,21 @@ const ClassifyResponseSchema = z.object({
 });
 
 // ============================================================================
+// UB CAMPUS KNOWLEDGE
+// ============================================================================
+
+const UB_CAMPUS_CONTEXT = `Campus: University at Buffalo (UB), Buffalo NY
+Dining: Crossroads, C3, Governor's, Sizzles, Tikka House, Moe's, Tim Hortons, Au Bon Pain, Hubie's (late night), Starbucks (Student Union & Lockwood)
+Study spots: Lockwood Library, Silverman Library, Capen Hall, NSC, Student Union, Ellicott 24hr lounges
+Landmarks: Student Union, Ellicott Complex, Center for Tomorrow, Governors Complex, Harriman Hall`;
+
+// ============================================================================
 // SYSTEM PROMPT
 // ============================================================================
 
-const CLASSIFY_SYSTEM_PROMPT = `You are a format classifier for a campus social platform called HIVE.
+const CLASSIFY_SYSTEM_PROMPT = `You are a format classifier for a campus social platform called HIVE at the University at Buffalo.
+
+${UB_CAMPUS_CONTEXT}
 
 Given a user's natural language prompt, classify it into one of these formats:
 - "poll": The user wants to ask a question with multiple choice options. Extract the question and options.
@@ -72,9 +84,9 @@ RULES:
 - If the prompt mentions "bracket", "tournament", "march madness", or head-to-head competition → bracket
 - If the prompt mentions "coming", "attending", "RSVP", "who's in", "party", "meeting", or event-like language → rsvp
 - If unsure or the prompt is too vague, classify as "custom" with confidence < 0.5
-- For polls, always extract 2-6 options. If the user lists items, those are the options. If no explicit options, generate reasonable ones from context.
-- For brackets, extract 4-16 entries. Pad to next power of 2 if needed.
-- For RSVP, extract any date/time and location mentioned.
+- For polls, always extract 2-6 options. If the user lists items, those are the options. If no explicit options, generate reasonable ones from context. Use campus-specific options when relevant (e.g. dining hall names, study spots).
+- For brackets, extract 4-16 entries. Pad to next power of 2 if needed. Use real campus names when the prompt is about campus topics.
+- For RSVP, extract any date/time and location mentioned. Use real UB locations when applicable.
 - confidence should be 0.0-1.0 where 1.0 means very certain
 
 Return JSON matching this exact schema:
@@ -83,6 +95,27 @@ Return JSON matching this exact schema:
   "confidence": number,
   "config": { ... } | null
 }`;
+
+// ============================================================================
+// SPACE CONTEXT HELPER
+// ============================================================================
+
+async function fetchSpaceContext(spaceId: string): Promise<string | null> {
+  try {
+    const doc = await dbAdmin.collection('spaces').doc(spaceId).get();
+    if (!doc.exists) return null;
+    const data = doc.data()!;
+    const parts = [
+      `Space: "${data.name || 'Unnamed'}"`,
+      data.category ? `Category: ${data.category}` : null,
+      data.orgTypeName ? `Org type: ${data.orgTypeName}` : null,
+      data.tags?.length ? `Tags: ${data.tags.join(', ')}` : null,
+    ].filter(Boolean);
+    return parts.join(' | ');
+  } catch {
+    return null;
+  }
+}
 
 // ============================================================================
 // ROUTE HANDLER
@@ -101,7 +134,10 @@ export const POST = withAuthAndErrors(
       });
     }
 
-    const { prompt } = parsed.data;
+    const { prompt, spaceId } = parsed.data;
+
+    // Fetch space context if spaceId provided
+    const spaceContext = spaceId ? await fetchSpaceContext(spaceId) : null;
 
     // Check Groq API key
     const apiKey = process.env.GROQ_API_KEY;
@@ -131,11 +167,15 @@ export const POST = withAuthAndErrors(
 
       const groq = createGroq({ apiKey });
 
+      const userPrompt = spaceContext
+        ? `Context: ${spaceContext}\n\nClassify this prompt: "${prompt}"`
+        : `Classify this prompt: "${prompt}"`;
+
       const result = await generateObject({
         model: groq('llama-3.3-70b-versatile'),
         schema: ClassifyResponseSchema,
         system: CLASSIFY_SYSTEM_PROMPT,
-        prompt: `Classify this prompt: "${prompt}"`,
+        prompt: userPrompt,
         temperature: 0.1,
         maxRetries: 1,
       });

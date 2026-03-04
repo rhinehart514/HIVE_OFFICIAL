@@ -185,12 +185,44 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
   const isShellTool = tool?.type === 'shell' || !!tool?.shellFormat;
   const shellState = useShellState(isShellTool ? toolId : null);
 
+  // Session-scoped anonymous ID for unauthenticated interactions
+  const anonIdRef = useRef<string | null>(null);
+  const getAnonId = useCallback(() => {
+    if (anonIdRef.current) return anonIdRef.current;
+    const key = 'hive_anon_session';
+    let id = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(key) : null;
+    if (!id) {
+      id = crypto.randomUUID();
+      try { sessionStorage.setItem(key, id); } catch {}
+    }
+    anonIdRef.current = id;
+    return id;
+  }, []);
+
   const handleShellAction = useCallback((action: ShellAction) => {
-    if (!user) return; // Require auth for shell interactions (or use anonymous ID)
-    shellState.dispatch(action, user.uid, {
-      displayName: user.displayName || user.fullName || 'Member',
-      photoURL: user.photoURL || '',
-    });
+    if (user) {
+      // Authenticated: use direct RTDB client write
+      shellState.dispatch(action, user.uid, {
+        displayName: user.displayName || user.fullName || 'Member',
+        photoURL: user.photoURL || '',
+      });
+    } else {
+      // Anonymous: optimistic local update + API persist (Admin SDK bypasses RTDB auth rules)
+      const sessionId = getAnonId();
+      const anonUserId = `anon:${sessionId}`;
+      // Optimistic update for immediate UI feedback (RTDB write will fail silently, that's fine)
+      shellState.dispatch(action, anonUserId, {
+        displayName: 'Guest',
+        photoURL: '',
+      });
+      // Persist via server
+      fetch(`/api/tools/${toolId}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...action, sessionId }),
+      }).catch(() => {});
+    }
+
     if (!interactionRef.current) {
       interactionRef.current = true;
       setHasInteracted(true);
@@ -199,7 +231,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
         setTimeout(() => setShowConvertBanner(true), 2000);
       }
     }
-  }, [shellState, user, toolId, track]);
+  }, [shellState, user, toolId, track, getAnonId]);
 
   const runtime = useToolRuntime({
     toolId,
@@ -405,7 +437,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                 shellId={toolId}
                 config={tool.shellConfig}
                 state={shellState.state}
-                currentUserId={user?.uid || 'anonymous'}
+                currentUserId={user?.uid || `anon:${getAnonId()}`}
                 creatorId={tool.ownerId}
                 isCreator={!!user && tool.ownerId === user.uid}
                 onAction={handleShellAction}
@@ -530,7 +562,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           </Link>
           <span className="text-white/15">·</span>
           <Link
-            href={`/enter?from=tool&toolType=${tool.shellFormat || tool.elements?.[0]?.elementId || 'poll'}`}
+            href={`/enter?from_tool=${tool.shellFormat || tool.elements?.[0]?.elementId || 'poll'}`}
             className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 hover:text-[#FFD700]/60 transition-colors"
           >
             Create your own

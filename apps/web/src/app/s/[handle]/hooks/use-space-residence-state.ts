@@ -566,7 +566,6 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     const tempId = `temp-${Date.now()}`;
     const optimisticMessage: ChatMessage = {
       id: tempId,
-      // Removed boardId (single feed per space)
       authorId: authUser?.id || 'current-user',
       authorName: authUser?.fullName || authUser?.displayName || 'You',
       authorHandle: authUser?.handle || 'you',
@@ -578,69 +577,101 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     setMessages((prev) => [...prev, optimisticMessage]);
 
     try {
-      // If slash command, call intent API first
       if (isCommand) {
-        const intentResponse = await fetch(`/api/spaces/${space.id}/chat/intent`, {
+        // Step 1: Preview the command (don't create yet — we need the real messageId first)
+        const previewResponse = await fetch(`/api/spaces/${space.id}/chat/intent`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: content,
-            // Removed boardId (single feed per space)
-            createIfDetected: true,
-            messageId: tempId,
+            createIfDetected: false,
           }),
         });
 
-        if (intentResponse.ok) {
-          const intentData = await intentResponse.json();
+        if (previewResponse.ok) {
+          const previewData = await previewResponse.json();
 
-          // If component was created, also send the message with componentData
-          if (intentData.created && intentData.component) {
-            // Send message with component reference
+          // Handle help command — no message to send
+          if (previewData.helpText) {
+            toast.info("Command Help", previewData.helpText);
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
+            return;
+          }
+
+          // Handle invalid command
+          if (previewData.isValid === false) {
+            toast.error("Invalid Command", previewData.error || "Check command syntax");
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
+            return;
+          }
+
+          // If a valid component intent was detected, send message then create component
+          if (previewData.hasIntent && previewData.canCreate) {
+            // Step 2: Send a human-readable chat message describing the creation
+            const displayContent = previewData.preview || content;
             const messageResponse = await fetch(`/api/spaces/${space.id}/chat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                // Removed boardId (single feed per space)
-                content,
-                componentId: intentData.component.id,
+                content: displayContent,
                 attachments,
               }),
             });
 
             if (!messageResponse.ok) {
-              // Revert optimistic update on failure
               setMessages((prev) => prev.filter((m) => m.id !== tempId));
-              throw new Error('Failed to send message with component');
+              throw new Error('Failed to send message');
             }
 
-            await messageResponse.json();
+            const messageData = await messageResponse.json();
+            const realMessageId = messageData.messageId;
 
-            // Refetch messages to get the full component data
-            const messagesResponse = await fetch(
-              `/api/spaces/${space.id}/chat?limit=${INITIAL_MESSAGE_LIMIT}`
+            // Update optimistic message with real ID and display content
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === tempId
+                  ? { ...m, id: realMessageId, content: displayContent, timestamp: messageData.timestamp }
+                  : m
+              )
             );
-            if (messagesResponse.ok) {
-              const messagesData = await messagesResponse.json();
-              setMessages(messagesData.messages || []);
+
+            // Step 3: Create the component linked to the real message ID
+            const createResponse = await fetch(`/api/spaces/${space.id}/chat/intent`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                message: content,
+                createIfDetected: true,
+                messageId: realMessageId,
+              }),
+            });
+
+            if (createResponse.ok) {
+              const createData = await createResponse.json();
+              if (createData.created && createData.component) {
+                // Attach the inline component to the message optimistically
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === realMessageId
+                      ? {
+                          ...m,
+                          inlineComponent: {
+                            id: createData.component.id,
+                            type: createData.component.type,
+                            config: createData.component.config,
+                            sharedState: { totalResponses: 0 },
+                          } as InlineComponentData,
+                        }
+                      : m
+                  )
+                );
+              }
             }
-            return;
-          }
-
-          // If it was a help command, show help text
-          if (intentData.helpText) {
-            toast.info("Command Help", intentData.helpText);
-            setMessages((prev) => prev.filter((m) => m.id !== tempId));
-            return;
-          }
-
-          // If invalid command, show error
-          if (!intentData.isValid) {
-            toast.error("Invalid Command", intentData.error || "Check command syntax");
-            setMessages((prev) => prev.filter((m) => m.id !== tempId));
             return;
           }
         }
+
+        // Intent API failed or no intent — fall through to send as regular message
       }
 
       // Regular message send
@@ -648,14 +679,12 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // Removed boardId (single feed per space)
           content,
           attachments,
         }),
       });
 
       if (!response.ok) {
-        // Revert optimistic update on failure
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to send message');

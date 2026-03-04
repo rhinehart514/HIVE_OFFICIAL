@@ -364,7 +364,8 @@ function ToolContent({
   });
 
   const handleShare = React.useCallback(async () => {
-    const url = window.location.href;
+    // Share the viral standalone URL, not the space-embedded URL
+    const url = `${window.location.origin}/t/${toolId}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -379,7 +380,7 @@ function ToolContent({
     setLinkCopied(true);
     toast.success('Link copied!');
     setTimeout(() => setLinkCopied(false), 2000);
-  }, []);
+  }, [toolId]);
 
   // Transform deployment elements to ToolCanvas format
   const elements: ToolElement[] = React.useMemo(() => {

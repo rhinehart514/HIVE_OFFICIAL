@@ -710,6 +710,10 @@ export default function BuildPage() {
     reset,
   } = useBuildMachine({
     spaceId: originSpaceId,
+    spaceContext: originSpaceId && originSpaceName ? {
+      spaceId: originSpaceId,
+      spaceName: originSpaceName,
+    } : null,
     onToolCreated: (toolId) => {
       track('creation_completed', { toolId, source: 'build-page' });
     },

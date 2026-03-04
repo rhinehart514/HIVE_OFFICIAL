@@ -184,24 +184,40 @@ const _GET = withAuthAndErrors(async (
   }
 
   // Fetch inline components for these messages
+  // Firestore 'in' queries are limited to 10 values, so batch into chunks
   const messageIds = messages.map(msg => msg.id);
   const componentsMap = new Map<string, unknown>();
 
   if (messageIds.length > 0) {
     try {
-      const componentsSnapshot = await dbAdmin
-        .collection('spaces')
-        .doc(spaceId)
-        .collection('boards')
-        .doc(boardId)
-        .collection('inline_components')
-        .where('messageId', 'in', messageIds.slice(0, 10)) // Firestore 'in' limit is 10
-        .get();
+      // Batch message IDs into groups of 10 for Firestore 'in' query limit
+      const batches: string[][] = [];
+      for (let i = 0; i < messageIds.length; i += 10) {
+        batches.push(messageIds.slice(i, i + 10));
+      }
 
-      for (const doc of componentsSnapshot.docs) {
-        const data = doc.data();
-        if (data.messageId) {
-          // Fetch user's participation record
+      const batchResults = await Promise.all(
+        batches.map((batch) =>
+          dbAdmin
+            .collection('spaces')
+            .doc(spaceId)
+            .collection('boards')
+            .doc(boardId)
+            .collection('inline_components')
+            .where('messageId', 'in', batch)
+            .get()
+        )
+      );
+
+      // Collect all component docs from all batches
+      const allDocs = batchResults.flatMap((snapshot) => snapshot.docs);
+
+      // Fetch user participation for each component in parallel
+      await Promise.all(
+        allDocs.map(async (doc) => {
+          const data = doc.data();
+          if (!data.messageId) return;
+
           let userVote: string[] | undefined;
           let userResponse: 'yes' | 'no' | 'maybe' | undefined;
 
@@ -228,8 +244,8 @@ const _GET = withAuthAndErrors(async (
             userVote,
             userResponse,
           });
-        }
-      }
+        })
+      );
     } catch (error) {
       logger.warn('Failed to fetch inline components', { error, spaceId, boardId });
     }

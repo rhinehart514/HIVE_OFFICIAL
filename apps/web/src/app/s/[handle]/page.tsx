@@ -432,6 +432,7 @@ export default function SpacePageUnified() {
       attachments: msg.attachments,
       isEdited: msg.isEdited,
       editedAt: msg.editedAt,
+      inlineComponent: msg.inlineComponent,
     }));
   }, [messages]);
 
@@ -959,6 +960,7 @@ export default function SpacePageUnified() {
         <EventDetailDrawer
           eventId={selectedEventId}
           spaceId={space.id}
+          spaceHandle={space.handle}
           isOpen={!!selectedEventId}
           onClose={() => setSelectedEventId(null)}
         />
