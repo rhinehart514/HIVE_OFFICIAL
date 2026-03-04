@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
-  ArrowRight, Zap, Calendar, MapPin, Video, Users, Sparkles,
+  ArrowRight, Zap, Calendar, MapPin, Video, Users, Sparkles, Check, Camera, FileText, Globe,
 } from 'lucide-react';
 import {
   ProfileIdentityHero,
@@ -259,7 +259,7 @@ export default function ProfilePageContent() {
 
   // Add dynamic badges from computed data
   if (heroBadges.isBuilder && !profileBadges.some(b => b.type === 'builder')) {
-    profileBadges.push({ id: 'dynamic-builder', type: 'builder', name: 'Builder', description: 'Creates tools for campus', displayOrder: 100 });
+    profileBadges.push({ id: 'dynamic-builder', type: 'builder', name: 'Builder', description: 'Creates apps for campus', displayOrder: 100 });
   }
 
   // ── Profile completeness ──
@@ -337,6 +337,70 @@ export default function ProfilePageContent() {
           activity={totalActivityCount}
         />
       </div>
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          Get Started Checklist — own profile, incomplete
+          ════════════════════════════════════════════════════════════════════════ */}
+      {isOwnProfile && profileIncomplete && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE_PREMIUM }}
+          className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-5"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[13px] font-medium text-white/60">Make your profile yours</p>
+            <span className="text-[11px] text-white/25 tabular-nums">{completenessScore}%</span>
+          </div>
+          <div className="w-full h-1 rounded-full bg-white/[0.06] mb-4 overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-emerald-500/60"
+              initial={{ width: 0 }}
+              animate={{ width: `${completenessScore}%` }}
+              transition={{ duration: 0.6, ease: EASE_PREMIUM, delay: 0.2 }}
+            />
+          </div>
+          <div className="space-y-2">
+            {[
+              { done: !!heroUser.avatarUrl, label: 'Add a profile photo', icon: Camera, href: '/me/edit' },
+              { done: !!heroUser.bio, label: 'Write a short bio', icon: FileText, href: '/me/edit' },
+              { done: interests.length > 0, label: 'Pick your interests', icon: Sparkles, href: '/me/edit' },
+              { done: profileSpaces.length > 0, label: 'Join a space', icon: Globe, href: '/discover' },
+              { done: dedupedTools.length > 0, label: 'Create your first app', icon: Zap, href: '/build' },
+            ].map(item => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  item.done
+                    ? 'opacity-50 pointer-events-none'
+                    : 'hover:bg-white/[0.04] cursor-pointer'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                  item.done
+                    ? 'bg-emerald-500/20'
+                    : 'border border-white/[0.12]'
+                }`}>
+                  {item.done ? (
+                    <Check className="w-3 h-3 text-emerald-500" />
+                  ) : (
+                    <item.icon className="w-2.5 h-2.5 text-white/25" />
+                  )}
+                </div>
+                <span className={`text-[13px] ${
+                  item.done ? 'text-white/30 line-through' : 'text-white/50'
+                }`}>
+                  {item.label}
+                </span>
+                {!item.done && (
+                  <ArrowRight className="w-3 h-3 text-white/20 ml-auto" />
+                )}
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* ════════════════════════════════════════════════════════════════════════
           Zone 2: Builder Showcase

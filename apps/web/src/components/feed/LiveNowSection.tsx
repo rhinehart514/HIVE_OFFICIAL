@@ -25,7 +25,21 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
     (e) => isHappeningNow(e.startDate, e.endDate) || startsWithinHour(e.startDate),
   );
 
-  if (liveEvents.length === 0) return null;
+  if (liveEvents.length === 0) {
+    return (
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
+          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+            Live now
+          </span>
+        </div>
+        <p className="text-sm text-white/25 py-2">
+          No events live right now. Check back soon.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section>

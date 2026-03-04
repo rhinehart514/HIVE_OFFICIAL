@@ -208,7 +208,7 @@ const ProfileToolModal: React.FC<ProfileToolModalProps> = ({
                     Public Visibility
                   </Text>
                   <Text size="xs" tone="muted">
-                    Allow others to discover this tool
+                    Allow others to discover this app
                   </Text>
                 </div>
                 <button
@@ -245,12 +245,12 @@ const ProfileToolModal: React.FC<ProfileToolModalProps> = ({
                   onClick={() => setShowRemoveConfirm(true)}
                   className="w-full text-red-400 hover:text-red-300 hover:bg-red-500/10"
                 >
-                  Remove Tool
+                  Remove App
                 </Button>
               ) : (
                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                   <Text size="sm" className="text-red-400 mb-3">
-                    Are you sure? This will remove the tool from all spaces.
+                    Are you sure? This will remove the app from all spaces.
                   </Text>
                   <div className="flex gap-2">
                     <Button

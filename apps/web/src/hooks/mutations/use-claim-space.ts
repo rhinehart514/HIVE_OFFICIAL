@@ -38,8 +38,8 @@ async function claimSpace(params: ClaimSpaceParams): Promise<ClaimSpaceResponse>
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to claim space');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || errorData.message || 'Failed to claim space');
   }
 
   return response.json();

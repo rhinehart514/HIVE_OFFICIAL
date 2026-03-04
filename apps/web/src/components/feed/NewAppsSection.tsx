@@ -174,7 +174,28 @@ export function NewAppsSection() {
     enabled: !!user,
   });
 
-  if (tools.length === 0 || !user) return null;
+  if (!user) return null;
+
+  if (tools.length === 0) {
+    return (
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+            New Apps
+          </span>
+        </div>
+        <p className="text-sm text-white/25 py-2">
+          No new apps yet.{' '}
+          <Link
+            href="/build"
+            className="text-white/40 hover:text-white/60 transition-colors underline underline-offset-2"
+          >
+            Create one
+          </Link>
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section>

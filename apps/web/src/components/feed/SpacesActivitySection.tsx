@@ -48,7 +48,20 @@ export function SpacesActivitySection() {
     staleTime: 60_000,
   });
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+            Your Spaces
+          </span>
+        </div>
+        <p className="text-sm text-white/25 py-2">
+          No recent activity in your spaces. Join some below to get started.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section>

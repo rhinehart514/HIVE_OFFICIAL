@@ -361,7 +361,7 @@ function SettingsContent() {
             open={showDeleteModal}
             onOpenChange={setShowDeleteModal}
             title="Delete Your Account?"
-            description="This will permanently delete your HIVE account, all your data, tools, and connections. This cannot be undone."
+            description="This will permanently delete your HIVE account, all your data, apps, and connections. This cannot be undone."
             confirmText="Delete Forever"
             cancelText="Keep Account"
             onConfirm={handleDeleteAccount}
@@ -514,7 +514,7 @@ function SettingsContent() {
           open={showDeleteModal}
           onOpenChange={setShowDeleteModal}
           title="Delete Your Account?"
-          description="This will permanently delete your HIVE account, all your data, tools, and connections. This cannot be undone."
+          description="This will permanently delete your HIVE account, all your data, apps, and connections. This cannot be undone."
           confirmText="Delete Forever"
           cancelText="Keep Account"
           onConfirm={handleDeleteAccount}

@@ -46,9 +46,9 @@ export function ProfileStatsWidget({
       isHighlighted: false,
     },
     {
-      label: 'Tools',
+      label: 'Apps',
       value: toolsCount,
-      icon: '🛠️',
+      icon: '⚡',
       isHighlighted: toolsCount >= 3,
     },
     {

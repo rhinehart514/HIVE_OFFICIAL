@@ -181,8 +181,15 @@ export function SpaceMetadataProvider({
 
     setIsJoiningOrLeaving(true);
     const previousMemberCount = space.memberCount;
+
+    // Optimistic update
     setMembership((prev) => ({ ...prev, isMember: true, role: "member" as MemberRole }));
     setSpace((prev) => (prev ? { ...prev, memberCount: previousMemberCount + 1 } : prev));
+
+    const rollback = () => {
+      setMembership((prev) => ({ ...prev, isMember: false, role: undefined }));
+      setSpace((prev) => (prev ? { ...prev, memberCount: previousMemberCount } : prev));
+    };
 
     try {
       const res = await secureApiFetch("/api/spaces/join-v2", {
@@ -196,13 +203,18 @@ export function SpaceMetadataProvider({
         return true;
       }
 
-      setMembership((prev) => ({ ...prev, isMember: false, role: undefined }));
-      setSpace((prev) => (prev ? { ...prev, memberCount: previousMemberCount } : prev));
-      return false;
-    } catch {
-      setMembership((prev) => ({ ...prev, isMember: false, role: undefined }));
-      setSpace((prev) => (prev ? { ...prev, memberCount: previousMemberCount } : prev));
-      return false;
+      // Read specific error message from the API response
+      const errorData = await res.json().catch(() => null);
+      const errorMessage = errorData?.error || "Failed to join space";
+      rollback();
+      throw new Error(errorMessage);
+    } catch (err) {
+      if (err instanceof Error) {
+        rollback();
+        throw err;
+      }
+      rollback();
+      throw new Error("Failed to join space. Check your connection and try again.");
     } finally {
       setIsJoiningOrLeaving(false);
     }

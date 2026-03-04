@@ -54,7 +54,7 @@ export function ContextBanner({
 
   // Builder context
   if (bothBuilders && toolRuns > 0) {
-    parts.push(`Their tools have ${formatNumber(toolRuns)} runs`);
+    parts.push(`Their apps have ${formatNumber(toolRuns)} runs`);
   }
 
   // Don't render if no context
@@ -63,7 +63,7 @@ export function ContextBanner({
   }
 
   // Determine icon based on context type
-  const icon = bothBuilders && toolRuns > 0 ? '🛠️' : '✨';
+  const icon = bothBuilders && toolRuns > 0 ? '⚡' : '✨';
   const message = parts.join(' · ');
 
   return (

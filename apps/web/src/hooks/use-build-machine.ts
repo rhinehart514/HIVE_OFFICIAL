@@ -411,6 +411,40 @@ export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptio
   const acceptShell = useCallback(async () => {
     if (!state.shellConfig || !state.classification) return;
 
+    // Validate shell config before proceeding with deploy
+    const format = state.classification.format as ShellFormat;
+    const config = state.shellConfig;
+
+    if (format === 'poll') {
+      const pollConfig = config as PollConfig;
+      if (!pollConfig.question?.trim()) {
+        toast.error('Your poll needs a question');
+        return;
+      }
+      const validOptions = pollConfig.options.filter((o) => o.trim());
+      if (validOptions.length < 2) {
+        toast.error('Add at least 2 options to your poll');
+        return;
+      }
+    } else if (format === 'bracket') {
+      const bracketConfig = config as BracketConfig;
+      if (!bracketConfig.topic?.trim()) {
+        toast.error('Your bracket needs a topic');
+        return;
+      }
+      const validEntries = bracketConfig.entries.filter((e) => e.trim());
+      if (validEntries.length < 4) {
+        toast.error('Add at least 4 entries to your bracket');
+        return;
+      }
+    } else if (format === 'rsvp') {
+      const rsvpConfig = config as RSVPConfig;
+      if (!rsvpConfig.title?.trim()) {
+        toast.error('Your RSVP needs a title');
+        return;
+      }
+    }
+
     try {
       const name = generateToolName(state.prompt);
       const toolId = await createBlankTool(name, state.prompt);
@@ -434,11 +468,11 @@ export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptio
       }
 
       // Write initial state to RTDB so shell components can render
-      const format = state.classification.format as ShellFormat;
-      if (format !== 'custom' && state.shellConfig) {
+      const shellFormat = state.classification.format as ShellFormat;
+      if (shellFormat !== 'custom' && state.shellConfig) {
         const database = getDatabase(app);
         const stateRef = ref(database, `shell_states/${toolId}`);
-        const initialState = buildInitialShellState(format, state.shellConfig);
+        const initialState = buildInitialShellState(shellFormat, state.shellConfig);
         await set(stateRef, initialState);
       }
 

@@ -73,7 +73,21 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
     [rsvpMutation],
   );
 
-  if (todayEvents.length === 0) return null;
+  if (todayEvents.length === 0) {
+    return (
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/30" />
+          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+            Today
+          </span>
+        </div>
+        <p className="text-sm text-white/25 py-2">
+          No events scheduled for today.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section>

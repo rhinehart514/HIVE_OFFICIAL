@@ -59,7 +59,7 @@ export function ProfileToolsCard({
 }: ProfileToolsCardProps) {
   if (tools.length === 0) {
     return (
-      <ProfileCard icon="🛠️" title="Creations" className={className}>
+      <ProfileCard icon="⚡" title="Creations" className={className}>
         <div className="py-8 text-center">
           <p
             className="text-sm mb-1"
@@ -80,7 +80,7 @@ export function ProfileToolsCard({
 
   return (
     <ProfileCard
-      icon="🛠️"
+      icon="⚡"
       title="Creations"
       action={{ label: 'See all', onClick: onViewAll || (() => {}) }}
       className={className}

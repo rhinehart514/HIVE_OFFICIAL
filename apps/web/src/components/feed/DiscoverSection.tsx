@@ -130,7 +130,20 @@ export function DiscoverSection() {
     );
   }
 
-  if (visibleSpaces.length === 0) return null;
+  if (visibleSpaces.length === 0) {
+    return (
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+            Discover
+          </span>
+        </div>
+        <p className="text-sm text-white/25 py-2">
+          You&apos;ve explored all available spaces. Nice.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section>
