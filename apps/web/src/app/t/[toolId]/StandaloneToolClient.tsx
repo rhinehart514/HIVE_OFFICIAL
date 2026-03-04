@@ -7,8 +7,23 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@hive/auth-logic';
 import { useQuery } from '@tanstack/react-query';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
+import { useShellState } from '@/hooks/useShellState';
 import { useAnalytics } from '@/hooks/use-analytics';
 import { Shuffle, Users, X } from 'lucide-react';
+import type { ShellFormat, ShellConfig, ShellAction } from '@/lib/shells/types';
+
+const LazyShellRenderer = dynamic(
+  () => import('@/components/shells/ShellRenderer'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-2 animate-pulse">
+        <div className="h-10 bg-white/[0.03] rounded-xl" />
+        <div className="h-10 bg-white/[0.03] rounded-xl" />
+      </div>
+    ),
+  }
+);
 
 const LazyToolCanvas = dynamic(
   () => import('@hive/ui').then(mod => ({ default: mod.ToolCanvas })),
@@ -65,6 +80,9 @@ interface ToolData {
     to: { instanceId: string; port: string };
   }>;
   pages?: ToolPage[];
+  shellFormat?: ShellFormat;
+  shellConfig?: ShellConfig;
+  type?: 'shell' | 'code';
   createdAt: string;
   updatedAt?: string;
   viewCount?: number;
@@ -163,9 +181,29 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     }
   }, [tool]);
 
+  // Shell tools use RTDB state, not the element runtime
+  const isShellTool = tool?.type === 'shell' || !!tool?.shellFormat;
+  const shellState = useShellState(isShellTool ? toolId : null);
+
+  const handleShellAction = useCallback((action: ShellAction) => {
+    if (!user) return; // Require auth for shell interactions (or use anonymous ID)
+    shellState.dispatch(action, user.uid, {
+      displayName: user.displayName || user.fullName || 'Member',
+      photoURL: user.photoURL || '',
+    });
+    if (!interactionRef.current) {
+      interactionRef.current = true;
+      setHasInteracted(true);
+      track('standalone_interacted', { toolId, action: action.type });
+      if (!user) {
+        setTimeout(() => setShowConvertBanner(true), 2000);
+      }
+    }
+  }, [shellState, user, toolId, track]);
+
   const runtime = useToolRuntime({
     toolId,
-    enabled: !!tool,
+    enabled: !!tool && !isShellTool,
     autoSave: true,
     autoSaveDelay: 1500,
     enableRealtime: true,
@@ -360,8 +398,20 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               </div>
             </div>
 
-            {/* Tool canvas */}
-            {tool.elements.length > 0 ? (
+            {/* Tool canvas — shell tools or element-based tools */}
+            {isShellTool && tool.shellFormat && tool.shellConfig ? (
+              <LazyShellRenderer
+                format={tool.shellFormat}
+                shellId={toolId}
+                config={tool.shellConfig}
+                state={shellState.state}
+                currentUserId={user?.uid || 'anonymous'}
+                creatorId={tool.ownerId}
+                isCreator={!!user && tool.ownerId === user.uid}
+                onAction={handleShellAction}
+                compact={false}
+              />
+            ) : tool.elements && tool.elements.length > 0 ? (
               <LazyToolCanvas
                 elements={tool.elements}
                 pages={tool.pages}
@@ -480,7 +530,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           </Link>
           <span className="text-white/15">·</span>
           <Link
-            href={`/enter?from=tool&toolType=${tool.elements[0]?.elementId || 'poll'}`}
+            href={`/enter?from=tool&toolType=${tool.shellFormat || tool.elements?.[0]?.elementId || 'poll'}`}
             className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 hover:text-[#FFD700]/60 transition-colors"
           >
             Create your own

@@ -24,6 +24,17 @@ export interface ProfileTool {
   deployedSpaces: number | string[];
   usageCount?: number;
   deployedToSpaces?: number | string[];
+  shellFormat?: string;
+}
+
+function interactionLabel(count: number, shellFormat?: string, formatted?: string): string {
+  const display = formatted ?? String(count);
+  switch (shellFormat) {
+    case 'poll': return `${display} vote${count !== 1 ? 's' : ''}`;
+    case 'rsvp': return `${display} RSVP${count !== 1 ? 's' : ''}`;
+    case 'bracket': return `${display} completion${count !== 1 ? 's' : ''}`;
+    default: return `${display} interaction${count !== 1 ? 's' : ''}`;
+  }
 }
 
 export interface ProfileToolsCardProps {
@@ -134,7 +145,7 @@ export function ProfileToolsCard({
                       color: isHighPerformer ? 'var(--life-gold)' : 'var(--text-secondary)',
                     }}
                   >
-                    {formatNumber(tool.runs)} runs
+                    {interactionLabel(tool.runs, tool.shellFormat, formatNumber(tool.runs))}
                   </span>
                   {' · '}
                   {deployedCount} space{deployedCount !== 1 ? 's' : ''}

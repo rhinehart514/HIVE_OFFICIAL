@@ -24,6 +24,16 @@ export interface FeaturedTool {
   runs: number;
   deployedSpaces: number;
   createdAt?: Date;
+  shellFormat?: string;
+}
+
+function interactionUnit(count: number, shellFormat?: string): string {
+  switch (shellFormat) {
+    case 'poll': return count === 1 ? 'vote' : 'votes';
+    case 'rsvp': return count === 1 ? 'RSVP' : 'RSVPs';
+    case 'bracket': return count === 1 ? 'completion' : 'completions';
+    default: return count === 1 ? 'use' : 'uses';
+  }
 }
 
 export interface ProfileFeaturedToolCardProps {
@@ -219,7 +229,7 @@ export function ProfileFeaturedToolCard({
                   className="text-xs uppercase tracking-wider"
                   style={{ color: 'var(--text-tertiary)' }}
                 >
-                  {tool.runs === 1 ? 'use' : 'uses'}
+                  {interactionUnit(tool.runs, tool.shellFormat)}
                 </span>
               </div>
             )}

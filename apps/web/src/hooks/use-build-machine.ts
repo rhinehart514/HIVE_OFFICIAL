@@ -13,11 +13,68 @@
 
 import { useReducer, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import type { ShellFormat, ShellConfig, ClassificationResult } from '@/lib/shells/types';
+import type { ShellFormat, ShellConfig, ClassificationResult, PollConfig, BracketConfig, RSVPConfig, PollState, BracketState, RSVPState } from '@/lib/shells/types';
 import type { CodeOutput } from '@/hooks/use-lab-chat';
 import type { StreamingChunk } from '@/lib/ai-generator';
 import { isNativeFormat } from '@/lib/shells';
 import { createBlankTool, generateToolName } from '@/lib/hivelab/create-tool';
+import { getDatabase, ref, set } from 'firebase/database';
+import { app } from '@hive/core';
+
+// ============================================================================
+// RTDB INITIAL STATE BUILDERS
+// ============================================================================
+
+function buildInitialPollState(config: PollConfig): PollState {
+  return {
+    votes: {},
+    voteCounts: config.options.map(() => 0),
+    closed: false,
+  };
+}
+
+function buildInitialBracketState(config: BracketConfig): BracketState {
+  const entries = config.entries;
+  const matchups = [];
+  for (let i = 0; i < entries.length; i += 2) {
+    if (i + 1 < entries.length) {
+      matchups.push({
+        id: `r1-m${Math.floor(i / 2)}`,
+        round: 1,
+        entryA: entries[i],
+        entryB: entries[i + 1],
+        votes: {},
+      });
+    }
+  }
+  const totalRounds = Math.ceil(Math.log2(entries.length));
+  return {
+    matchups,
+    currentRound: 1,
+    totalRounds,
+    completed: false,
+  };
+}
+
+function buildInitialRSVPState(): RSVPState {
+  return {
+    attendees: {},
+    count: 0,
+  };
+}
+
+function buildInitialShellState(format: ShellFormat, config: PollConfig | BracketConfig | RSVPConfig): PollState | BracketState | RSVPState {
+  switch (format) {
+    case 'poll':
+      return buildInitialPollState(config as PollConfig);
+    case 'bracket':
+      return buildInitialBracketState(config as BracketConfig);
+    case 'rsvp':
+      return buildInitialRSVPState();
+    default:
+      throw new Error(`Unknown shell format: ${format}`);
+  }
+}
 
 // ============================================================================
 // STATE
@@ -373,6 +430,27 @@ export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptio
         }),
       });
 
+      // Write initial state to RTDB so shell components can render
+      const format = state.classification.format as ShellFormat;
+      if (format !== 'custom' && state.shellConfig) {
+        const database = getDatabase(app);
+        const stateRef = ref(database, `shell_states/${toolId}`);
+        const initialState = buildInitialShellState(format, state.shellConfig);
+        await set(stateRef, initialState);
+      }
+
+      // Place in space if spaceId is set
+      if (spaceId) {
+        await fetch(`/api/spaces/${spaceId}/tools`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ toolId }),
+        }).catch(() => {
+          // Space placement is non-blocking — tool still works standalone
+        });
+      }
+
       dispatch({ type: 'ACCEPT_SHELL' });
       dispatch({ type: 'DEPLOY_COMPLETE', toolId });
       onToolCreated?.(toolId);
@@ -381,7 +459,7 @@ export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptio
       dispatch({ type: 'ERROR', error: message });
       toast.error(message);
     }
-  }, [state.shellConfig, state.classification, state.prompt, onToolCreated]);
+  }, [state.shellConfig, state.classification, state.prompt, spaceId, onToolCreated]);
 
   const escalateToCustom = useCallback(async () => {
     dispatch({ type: 'ESCALATE_TO_CUSTOM' });

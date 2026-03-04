@@ -43,6 +43,8 @@ interface ToolRecord {
     type: DiscoverySpaceType | null;
   };
   type: string;
+  shellFormat: string | null;
+  shellConfig: Record<string, unknown> | null;
   forkCount: number;
   useCount: number;
   createdAt: string;
@@ -305,6 +307,8 @@ const _GET = withAuthAndErrors(async (
           : fallbackSpaceType,
       },
       type: (tool.type as string | undefined) || 'visual',
+      shellFormat: (tool.shellFormat as string | undefined) ?? null,
+      shellConfig: (tool.shellConfig as Record<string, unknown> | undefined) ?? null,
       forkCount,
       useCount,
       createdAt: createdAtDate.toISOString(),
@@ -378,6 +382,8 @@ const _GET = withAuthAndErrors(async (
       title: tool.name,
       description: tool.description,
       type: tool.type || 'visual',
+      shellFormat: tool.shellFormat,
+      shellConfig: tool.shellConfig,
       category: tool.category,
       creator: {
         id: tool.creatorId || null,

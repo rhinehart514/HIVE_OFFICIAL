@@ -149,7 +149,7 @@ export function SpaceThreshold({
                 loading={isClaiming}
                 className="w-full justify-center text-white/40"
               >
-                {isClaiming ? 'Claiming...' : 'Claim This Space'}
+                {isClaiming ? 'Claiming...' : 'Become the Leader'}
               </Button>
             )}
           </div>

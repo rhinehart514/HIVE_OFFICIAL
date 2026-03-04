@@ -35,6 +35,9 @@ interface ToolConnection {
 
 interface ToolData {
   name?: string;
+  type?: string;
+  shellFormat?: string;
+  shellConfig?: Record<string, unknown> | null;
   elements?: ToolElement[];
   connections?: ToolConnection[];
   config?: {
@@ -59,6 +62,17 @@ function normalizeElementId(elementId: string): string {
  */
 export function validateToolForPublish(tool: ToolData): ValidationResult {
   const errors: ValidationError[] = [];
+
+  // Shell tools (poll/bracket/rsvp) don't use elements — they use shellFormat/shellConfig
+  if (tool.type === 'shell' || tool.shellFormat) {
+    if (!tool.name || tool.name.trim().length === 0) {
+      errors.push({ field: 'name', message: 'Tool must have a name', severity: 'error' });
+    }
+    if (!tool.shellConfig) {
+      errors.push({ field: 'shellConfig', message: 'Shell tool must have a config', severity: 'error' });
+    }
+    return { valid: errors.filter(e => e.severity === 'error').length === 0, errors };
+  }
 
   // Get elements from either nested composition or flat structure
   const elements = tool.config?.composition?.elements || tool.elements || [];

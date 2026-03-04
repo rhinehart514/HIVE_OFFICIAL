@@ -2,6 +2,7 @@ export { CampusHeader } from './CampusHeader';
 export { LiveNowSection } from './LiveNowSection';
 export { TodayEventsSection } from './TodayEventsSection';
 export { SpacesActivitySection } from './SpacesActivitySection';
+export { NewAppsSection } from './NewAppsSection';
 export { DiscoverSection } from './DiscoverSection';
 export { EventDetailDrawer } from './EventDetailDrawer';
 export { FeedSkeleton } from './FeedSkeleton';

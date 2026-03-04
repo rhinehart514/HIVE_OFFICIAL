@@ -38,7 +38,7 @@ const ParseIntentSchema = z.object({
   message: z.string().min(1).max(4000),
   // boardId is optional — defaults to "main" for single-feed spaces
   boardId: z.string().min(1).default('main'),
-  // If true, actually create the component (requires leader role)
+  // If true, actually create the component (requires space membership)
   createIfDetected: z.boolean().default(false),
   // Optional message ID if creating inline with a message
   messageId: z.string().optional(),
@@ -115,17 +115,8 @@ export const POST = withAuthValidationAndErrors(
       });
     }
 
-    // If user is not a leader, they can't create components
-    if (!isLeader) {
-      return respond.success({
-        hasIntent: true,
-        intentType: intent.type,
-        confidence: intent.confidence,
-        preview: getIntentConfirmation(intent),
-        canCreate: false,
-        message: 'Only space leaders can create inline components',
-      });
-    }
+    // Any space member can create components
+    // (membership already validated above via checkSpacePermission)
 
     // If not creating, just return the preview
     if (!data.createIfDetected) {
@@ -268,17 +259,8 @@ async function handleSlashCommand(
     });
   }
 
-  // Check if user can create components
-  if (!isLeader) {
-    return respond.success({
-      hasIntent: true,
-      intentType: command.command,
-      isCommand: true,
-      isValid: true,
-      canCreate: false,
-      message: 'Only space leaders can create inline components',
-    });
-  }
+  // Any space member can create components
+  // (membership already validated in the caller via checkSpacePermission)
 
   // If not creating, just return the preview
   if (!data.createIfDetected) {

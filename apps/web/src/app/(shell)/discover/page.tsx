@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
@@ -9,6 +9,7 @@ import {
   CampusHeader,
   LiveNowSection,
   TodayEventsSection,
+  NewAppsSection,
   SpacesActivitySection,
   DiscoverSection,
   EventDetailDrawer,
@@ -60,8 +61,10 @@ async function fetchFeedEvents(): Promise<FeedEvent[]> {
 
 export default function DiscoverPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState<FeedEvent | null>(null);
+  const spacesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/enter?redirect=/discover');
@@ -80,6 +83,14 @@ export default function DiscoverPage() {
   }, []);
 
   const events = eventsQuery.data || [];
+
+  // Auto-scroll to spaces section when navigating via Spaces tab
+  const viewParam = searchParams.get('view');
+  useEffect(() => {
+    if (viewParam === 'spaces' && spacesRef.current) {
+      spacesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [viewParam, eventsQuery.isLoading]);
 
   if (authLoading || !user) {
     return (
@@ -117,10 +128,15 @@ export default function DiscoverPage() {
             {/* 2. Today's Events — time-sorted, inline RSVP */}
             <TodayEventsSection events={events} onSelectEvent={handleSelectEvent} />
 
-            {/* 3. Your Spaces Activity — hidden for new users */}
-            <SpacesActivitySection />
+            {/* 3. New Apps — shell tools with inline engagement */}
+            <NewAppsSection />
 
-            {/* 4. Discover — unjoined spaces, cursor-paginated */}
+            {/* 4. Your Spaces Activity — hidden for new users */}
+            <div ref={spacesRef}>
+              <SpacesActivitySection />
+            </div>
+
+            {/* 5. Discover — unjoined spaces, cursor-paginated */}
             <DiscoverSection />
           </div>
         )}

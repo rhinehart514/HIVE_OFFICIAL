@@ -461,13 +461,14 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
           const result = await response.json();
           const tools = result.data?.tools || result.tools || [];
           if (tools.length > 0) {
-            setUserTools(tools.map((tool: { id: string; name: string; deployments?: { spaceId: string }[]; usageCount?: number; status?: string; updatedAt?: string }) => ({
+            setUserTools(tools.map((tool: { id: string; name: string; deployments?: { spaceId: string }[]; usageCount?: number; status?: string; updatedAt?: string; shellFormat?: string }) => ({
               id: tool.id,
               name: tool.name,
               deployedToSpaces: tool.deployments?.length ?? 0,
               usageCount: tool.usageCount ?? 0,
               status: tool.status ?? 'draft',
               lastUpdatedAt: tool.updatedAt,
+              shellFormat: tool.shellFormat,
             })));
           }
         }
@@ -768,6 +769,7 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
       runs: tool.usageCount ?? 0,
       deployedSpaces: tool.deployedToSpaces ?? 0,
       spaceName: (tool as unknown as { primarySpaceName?: string }).primarySpaceName,
+      shellFormat: (tool as unknown as { shellFormat?: string }).shellFormat,
     }));
   }, [userTools]);
 
@@ -908,9 +910,9 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
   }, [router]);
 
   const handleToolClick = React.useCallback((toolId: string) => {
-    // Own profile → edit in IDE; other profiles → public standalone page
-    router.push(isOwnProfile ? `/lab/${toolId}` : `/t/${toolId}`);
-  }, [router, isOwnProfile]);
+    // Both own and other profiles → public standalone page (lab routes don't exist)
+    router.push(`/t/${toolId}`);
+  }, [router]);
 
   // Social handlers — connected to /api/profile/[userId]/follow
   const handleConnect = React.useCallback(async () => {

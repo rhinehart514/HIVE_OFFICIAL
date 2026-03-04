@@ -32,7 +32,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     id: 'spaces',
     label: 'Spaces',
-    href: '/discover',
+    href: '/discover?view=spaces',
     icon: SpacesIcon,
     matchPattern: /^\/s\//,
   },

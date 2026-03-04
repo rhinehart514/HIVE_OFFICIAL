@@ -759,7 +759,7 @@ export async function notifyToolMilestone(params: {
     category: 'tools',
     title: `Your tool "${params.toolName}" just hit ${params.milestone} users!`,
     body: `${params.milestone} people have used your tool. Keep building!`,
-    actionUrl: `/tools/${params.toolId}/analytics`,
+    actionUrl: `/t/${params.toolId}`,
     metadata: {
       toolId: params.toolId,
       toolName: params.toolName,

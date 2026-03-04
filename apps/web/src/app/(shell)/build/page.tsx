@@ -640,19 +640,19 @@ export default function BuildPage() {
 
                   <div className="flex gap-2">
                     <button
-                      onClick={handleShare}
+                      onClick={() => router.push(`/t/${state.toolId}?just_created=true`)}
                       className="flex-1 flex items-center justify-center gap-2 h-10 rounded-2xl
                         bg-white text-black font-medium text-sm hover:bg-white/90 transition-colors"
                     >
-                      Copy link
+                      View & Share
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => router.push(`/build/${state.toolId}`)}
+                      onClick={handleShare}
                       className="flex items-center justify-center gap-1.5 h-10 px-4 rounded-2xl
                         text-sm text-white/50 bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
                     >
-                      Edit
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      Copy link
                     </button>
                   </div>
 

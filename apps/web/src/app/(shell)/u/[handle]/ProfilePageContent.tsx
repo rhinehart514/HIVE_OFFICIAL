@@ -216,6 +216,7 @@ export default function ProfilePageContent() {
       : Array.isArray(sortedTools[0].deployedSpaces)
         ? sortedTools[0].deployedSpaces.length
         : 0,
+    shellFormat: sortedTools[0].shellFormat,
   } : null;
 
   // ── Map remaining tools for grid ──
