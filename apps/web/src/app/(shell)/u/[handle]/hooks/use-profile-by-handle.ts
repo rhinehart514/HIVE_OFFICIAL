@@ -10,7 +10,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter, notFound } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@hive/auth-logic';
 import { db } from '@hive/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -290,10 +290,8 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
     let cancelled = false;
     const loadProfile = async () => {
       if (!profileId) {
-        // If handle resolution finished but produced no profileId, stop loading
-        if (!isResolvingHandle) {
-          setIsLoading(false);
-        }
+        // Don't touch isLoading here — Step 1 owns it until profileId is available.
+        // The safety net timeout (12s) handles the case where Step 1 never resolves.
         return;
       }
 
@@ -306,7 +304,8 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
         });
 
         if (response.status === 404) {
-          notFound();
+          setHandleError('not_found');
+          setIsLoading(false);
           return;
         }
 
@@ -393,7 +392,7 @@ export function useProfileByHandle(): UseProfileByHandleReturn {
 
     loadProfile();
     return () => { cancelled = true; };
-  }, [profileId, handle, isResolvingHandle]);
+  }, [profileId, handle]);
 
   // Loading safety net — if still loading after 12s, bail with error
   React.useEffect(() => {

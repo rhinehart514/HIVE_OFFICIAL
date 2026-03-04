@@ -253,7 +253,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         // Calculate activation status from API data or derive from member count
         const memberCount = spaceData.memberCount || 0;
         const threshold = spaceData.activationThreshold || 10;
-        const isClaimed = Boolean(spaceData.createdBy || spaceData.creatorId);
+        // Exclude system/seed accounts from claim detection
+        const SYSTEM_CREATORS = ['system', 'campuslabs-import', 'campuslabs-sync', 'hive-system', 'demo-seed'];
+        const creator = spaceData.createdBy || spaceData.creatorId || '';
+        const isClaimed = Boolean(creator) && !SYSTEM_CREATORS.includes(creator);
         let activationStatus: 'ghost' | 'gathering' | 'open' = spaceData.activationStatus;
         if (!activationStatus) {
           // Derive from member count if not provided
@@ -522,6 +525,13 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       setIsLoadingMembers(false);
     }
   }, [space?.id, space?.isMember]);
+
+  // Auto-load members on mount so online count populates without panel open
+  React.useEffect(() => {
+    if (space?.id && space.isMember) {
+      loadMembers();
+    }
+  }, [space?.id, space?.isMember, loadMembers]);
 
   // Derive online members from campus-wide presence data crossed with space members
   React.useEffect(() => {

@@ -11,7 +11,6 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 export type ProofType = 'email' | 'document' | 'social' | 'referral' | 'none';
 
@@ -46,21 +45,18 @@ async function claimSpace(params: ClaimSpaceParams): Promise<ClaimSpaceResponse>
   return response.json();
 }
 
-export function useClaimSpace() {
+export function useClaimSpace(options?: { onClaimSuccess?: () => void }) {
   const { toast } = useToast();
-  const router = useRouter();
 
   return useMutation({
     mutationFn: claimSpace,
     onSuccess: (data) => {
       if (data.data?.claimStatus === 'approved') {
         toast.success('Space claimed!', 'You now have leader access');
-        // Redirect to the space to see leader view
-        if (data.data?.spaceId) {
-          router.refresh(); // Refresh to update auth state
-        }
+        options?.onClaimSuccess?.();
       } else {
         toast.success('Claim submitted', 'You have provisional access while we verify');
+        options?.onClaimSuccess?.();
       }
     },
     onError: (error: Error) => {

@@ -497,6 +497,19 @@ export const POST = withValidation(
         return respond.error("Request validation failed", "INVALID_INPUT", { status: 400 });
       }
 
+      // UB launch gate: enforce @buffalo.edu domain
+      // Remove or gate behind env var when expanding to other campuses
+      if (!isGlobalMode) {
+        const emailDomain = email.toLowerCase().trim().split('@')[1];
+        if (emailDomain !== 'buffalo.edu') {
+          return respond.error(
+            "HIVE is currently only available to @buffalo.edu email addresses.",
+            "FORBIDDEN",
+            { status: 403 }
+          );
+        }
+      }
+
       // Optional: Try to lookup school from email domain (for campusId association)
       // Skip in global mode (non-campus onboarding).
       let schoolLookup: SchoolLookupResult | null = null;

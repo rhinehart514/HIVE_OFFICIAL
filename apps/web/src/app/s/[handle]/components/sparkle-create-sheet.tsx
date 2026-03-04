@@ -11,6 +11,7 @@
  */
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, ArrowLeft, Send, BarChart3, Trophy, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -39,10 +40,12 @@ const FORMAT_CHIPS: Array<{ id: FormatChip; label: string; icon: React.Component
 export function SparkleCreateSheet({
   open,
   onOpenChange,
+  spaceId,
   spaceName,
   onFormatSelect,
   onCustomCreate,
 }: SparkleCreateSheetProps) {
+  const router = useRouter();
   const [mode, setMode] = React.useState<SheetMode>('quick');
   const [prompt, setPrompt] = React.useState('');
   const [isGenerating, setIsGenerating] = React.useState(false);
@@ -59,15 +62,19 @@ export function SparkleCreateSheet({
   }, [open]);
 
   const handleFormatSelect = (format: FormatChip) => {
-    onFormatSelect(format);
     onOpenChange(false);
+    // Navigate to Build with format + space context
+    const params = new URLSearchParams({ spaceId, spaceName });
+    const chip = FORMAT_CHIPS.find(c => c.id === format);
+    if (chip) params.set('prompt', chip.slash.trim());
+    router.push(`/build?${params.toString()}`);
   };
 
   const handleCustomSubmit = async () => {
-    if (!prompt.trim() || !onCustomCreate) return;
-    setIsGenerating(true);
-    onCustomCreate(prompt.trim());
-    // Parent handles the async generation; sheet stays open for feedback
+    if (!prompt.trim()) return;
+    onOpenChange(false);
+    const params = new URLSearchParams({ spaceId, spaceName, prompt: prompt.trim() });
+    router.push(`/build?${params.toString()}`);
   };
 
   if (!open) return null;

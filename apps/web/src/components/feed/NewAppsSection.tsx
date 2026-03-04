@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
 import ShellRenderer from '@/components/shells/ShellRenderer';
 import { useShellState } from '@/hooks/useShellState';
@@ -187,6 +189,14 @@ export function NewAppsSection() {
           <AppCard key={tool.id} tool={tool} userId={user.uid} index={i} />
         ))}
       </div>
+
+      <Link
+        href="/build"
+        className="flex items-center gap-1.5 mt-4 text-[13px] text-white/30 hover:text-white/50 transition-colors"
+      >
+        Make your own
+        <ArrowRight className="w-3.5 h-3.5" />
+      </Link>
     </section>
   );
 }

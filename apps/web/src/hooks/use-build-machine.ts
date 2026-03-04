@@ -416,7 +416,7 @@ export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptio
       const toolId = await createBlankTool(name, state.prompt);
 
       // Save as a shell-format tool
-      await fetch(`/api/tools/${toolId}`, {
+      const putRes = await fetch(`/api/tools/${toolId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -429,6 +429,9 @@ export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptio
           visibility: 'public',
         }),
       });
+      if (!putRes.ok) {
+        throw new Error('Failed to save app configuration');
+      }
 
       // Write initial state to RTDB so shell components can render
       const format = state.classification.format as ShellFormat;
@@ -451,8 +454,8 @@ export function useBuildMachine({ spaceId, onToolCreated }: UseBuildMachineOptio
         });
       }
 
-      dispatch({ type: 'ACCEPT_SHELL' });
       dispatch({ type: 'DEPLOY_COMPLETE', toolId });
+      dispatch({ type: 'ACCEPT_SHELL' });
       onToolCreated?.(toolId);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to deploy';

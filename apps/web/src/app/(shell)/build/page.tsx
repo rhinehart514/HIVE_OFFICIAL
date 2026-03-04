@@ -28,6 +28,8 @@ import {
   Wand2,
   Check,
   Zap,
+  MapPin,
+  ExternalLink,
 } from 'lucide-react';
 import { MOTION, durationSeconds, CARD } from '@hive/tokens';
 import { BrandSpinner } from '@hive/ui';
@@ -457,6 +459,235 @@ function loadPendingDeploy(): { prompt: string; format?: string; config?: ShellC
 }
 
 // ============================================================================
+// MY APPS SECTION
+// ============================================================================
+
+interface MyTool {
+  id: string;
+  name: string;
+  status: string;
+  updatedAt: string;
+  deployments: number;
+  useCount: number;
+}
+
+function MyAppsSection() {
+  const router = useRouter();
+  const [tools, setTools] = useState<MyTool[]>([]);
+  const [stats, setStats] = useState<{ totalTools: number; totalUsers: number; weeklyInteractions: number } | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/tools/my-tools', { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => {
+        if (data?.data?.tools) {
+          setTools(data.data.tools);
+          setStats(data.data.stats);
+        }
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, []);
+
+  if (!loaded || tools.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.3 }}
+      className="mt-6"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-white/25 uppercase tracking-wider">Your Apps</span>
+        {stats && stats.totalUsers > 0 && (
+          <span className="text-[10px] text-white/20">
+            {stats.totalUsers} user{stats.totalUsers !== 1 ? 's' : ''} reached
+          </span>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        {tools.slice(0, 5).map(tool => (
+          <button
+            key={tool.id}
+            onClick={() => router.push(`/build/${tool.id}`)}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg
+              bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left group"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-white/60 group-hover:text-white/80 truncate transition-colors">
+                {tool.name}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] text-white/20 flex-shrink-0">
+              {tool.deployments > 0 && (
+                <span>{tool.deployments} space{tool.deployments !== 1 ? 's' : ''}</span>
+              )}
+              {tool.useCount > 0 && (
+                <span>{tool.useCount} use{tool.useCount !== 1 ? 's' : ''}</span>
+              )}
+              <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================================================
+// SPACE PLACEMENT FLOW
+// ============================================================================
+
+interface UserSpace {
+  id: string;
+  name: string;
+  handle: string;
+  iconURL?: string | null;
+  membership: { role: string };
+}
+
+function SpacePlacementFlow({
+  toolId,
+  toolName,
+  originSpaceId,
+  onSkip,
+  onPlaced,
+}: {
+  toolId: string;
+  toolName: string;
+  originSpaceId: string | null;
+  onSkip: () => void;
+  onPlaced: (spaceHandle: string) => void;
+}) {
+  const [spaces, setSpaces] = useState<UserSpace[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deploying, setDeploying] = useState<string | null>(null);
+  const [deployed, setDeployed] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/profile/my-spaces', { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => {
+        const all: UserSpace[] = (data.spaces || []).map((s: UserSpace) => ({
+          id: s.id,
+          name: s.name,
+          handle: s.handle,
+          iconURL: s.iconURL,
+          membership: s.membership,
+        }));
+        setSpaces(all);
+        setLoading(false);
+
+        // Auto-deploy if originSpaceId matches
+        if (originSpaceId) {
+          const match = all.find(s => s.id === originSpaceId);
+          if (match) {
+            handleDeploy(match);
+          }
+        }
+      })
+      .catch(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleDeploy = async (space: UserSpace) => {
+    setDeploying(space.id);
+    try {
+      const res = await fetch(`/api/tools/${toolId}/deploy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ spaceId: space.id }),
+      });
+
+      if (res.ok) {
+        setDeployed(space.id);
+        toast.success(`${toolName} placed in ${space.name}`);
+        setTimeout(() => onPlaced(space.handle), 800);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        const msg = err?.error?.message || err?.message || 'Deploy failed';
+        // Already deployed is fine — treat as success
+        if (res.status === 409) {
+          setDeployed(space.id);
+          toast.success(`Already in ${space.name}`);
+          setTimeout(() => onPlaced(space.handle), 800);
+        } else {
+          toast.error(msg);
+          setDeploying(null);
+        }
+      }
+    } catch {
+      toast.error('Failed to place app');
+      setDeploying(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 py-4 text-sm text-white/40">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Loading your spaces...
+      </div>
+    );
+  }
+
+  if (spaces.length === 0) {
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-white/40">
+          Join or create a space to place your app where people can find it.
+        </p>
+        <button
+          onClick={onSkip}
+          className="text-xs text-white/30 hover:text-white/50 transition-colors"
+        >
+          Skip for now
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 max-h-48 overflow-y-auto">
+      {spaces.map(space => (
+        <button
+          key={space.id}
+          onClick={() => handleDeploy(space)}
+          disabled={!!deploying}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl
+            bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06]
+            disabled:opacity-50 transition-colors text-left"
+        >
+          <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {space.iconURL ? (
+              <img src={space.iconURL} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-[11px] text-white/40 font-medium">
+                {space.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-white/80 truncate">{space.name}</p>
+            <p className="text-[11px] text-white/30">{space.membership.role}</p>
+          </div>
+          {deploying === space.id ? (
+            <Loader2 className="w-4 h-4 animate-spin text-white/40 flex-shrink-0" />
+          ) : deployed === space.id ? (
+            <Check className="w-4 h-4 text-[#10B981] flex-shrink-0" />
+          ) : (
+            <MapPin className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================================
 // MAIN PAGE
 // ============================================================================
 
@@ -467,6 +698,7 @@ export default function BuildPage() {
   const { track } = useAnalytics();
 
   const originSpaceId = searchParams.get('spaceId');
+  const originSpaceName = searchParams.get('spaceName');
   const autoPrompt = searchParams.get('prompt') || undefined;
 
   const {
@@ -556,6 +788,13 @@ export default function BuildPage() {
               <p className="text-sm text-white/35">
                 Describe it. We figure out the format.
               </p>
+              {originSpaceName && (
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                  bg-white/[0.04] border border-white/[0.06] text-xs text-white/50"
+                >
+                  Creating for <span className="text-white/70 font-medium">{originSpaceName}</span>
+                </div>
+              )}
             </motion.div>
 
             {/* Prompt input */}
@@ -629,7 +868,7 @@ export default function BuildPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 space-y-3"
+                  className="mt-6 space-y-4"
                 >
                   <div className="flex items-center gap-2 text-sm text-[#10B981]/70">
                     <Check className="w-4 h-4" />
@@ -638,31 +877,46 @@ export default function BuildPage() {
                     </span>
                   </div>
 
-                  <div className="flex gap-2">
+                  {/* Place in a Space */}
+                  {user && (
+                    <div>
+                      <p className="text-xs text-white/40 mb-2 flex items-center gap-1.5">
+                        <MapPin className="w-3 h-3" />
+                        Place in a space so people can find it
+                      </p>
+                      <SpacePlacementFlow
+                        toolId={state.toolId}
+                        toolName={state.toolName || 'Your app'}
+                        originSpaceId={originSpaceId}
+                        onSkip={() => router.push(`/t/${state.toolId}?just_created=true`)}
+                        onPlaced={(handle) => router.push(`/s/${handle}`)}
+                      />
+                    </div>
+                  )}
+
+                  {/* Secondary actions */}
+                  <div className="flex gap-2 pt-1">
                     <button
                       onClick={() => router.push(`/t/${state.toolId}?just_created=true`)}
-                      className="flex-1 flex items-center justify-center gap-2 h-10 rounded-2xl
-                        bg-white text-black font-medium text-sm hover:bg-white/90 transition-colors"
+                      className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/50 transition-colors"
                     >
-                      View & Share
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <ExternalLink className="w-3 h-3" />
+                      View standalone
                     </button>
                     <button
                       onClick={handleShare}
-                      className="flex items-center justify-center gap-1.5 h-10 px-4 rounded-2xl
-                        text-sm text-white/50 bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
+                      className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/50 transition-colors"
                     >
                       Copy link
                     </button>
+                    <button
+                      onClick={reset}
+                      className="flex items-center gap-1.5 text-xs text-white/25 hover:text-white/40 transition-colors"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Make another
+                    </button>
                   </div>
-
-                  <button
-                    onClick={reset}
-                    className="flex items-center gap-1.5 text-xs text-white/25 hover:text-white/40 transition-colors mt-2"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    Make another
-                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -688,7 +942,7 @@ export default function BuildPage() {
             {/* Spacer to push help text to bottom */}
             <div className="flex-1" />
 
-            {/* Help text */}
+            {/* Help text + My Apps */}
             {state.phase === 'idle' && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -715,6 +969,8 @@ export default function BuildPage() {
                     </button>
                   ))}
                 </div>
+
+                {user && <MyAppsSection />}
               </motion.div>
             )}
           </div>

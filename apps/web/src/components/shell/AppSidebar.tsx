@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Bell, Search } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
@@ -428,6 +428,8 @@ function NotificationBell({ unreadCount, expanded }: { unreadCount: number; expa
 
 export function LeftSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchString = searchParams.toString();
   const navItems = getNavItems();
   const { user } = useAuth();
   const { unreadCount } = useUnreadNotifications({ userId: user?.uid });
@@ -487,7 +489,7 @@ export function LeftSidebar() {
         <nav className="relative flex flex-col shrink-0" aria-label="Main navigation">
           {/* Active indicator — single element, positioned by index */}
           {(() => {
-            const activeIdx = navItems.findIndex(item => isNavItemActive(item, pathname));
+            const activeIdx = navItems.findIndex(item => isNavItemActive(item, pathname, searchString));
             if (activeIdx === -1) return null;
             const activeItem = navItems[activeIdx];
             return (
@@ -506,7 +508,7 @@ export function LeftSidebar() {
             <NavRailItem
               key={item.id}
               item={item}
-              isActive={isNavItemActive(item, pathname)}
+              isActive={isNavItemActive(item, pathname, searchString)}
               expanded={expanded}
             />
           ))}
@@ -598,6 +600,8 @@ function MobileNavItem({
 
 export function MobileBottomBar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchString = searchParams.toString();
   const navItems = getMobileNavItems();
   const { user } = useAuth();
   const { unreadCount } = useUnreadNotifications({ userId: user?.uid });
@@ -616,7 +620,7 @@ export function MobileBottomBar() {
         <MobileNavItem
           key={item.id}
           item={item}
-          isActive={isNavItemActive(item, pathname)}
+          isActive={isNavItemActive(item, pathname, searchString)}
           badge={item.id === 'you' ? unreadCount : undefined}
         />
       ))}

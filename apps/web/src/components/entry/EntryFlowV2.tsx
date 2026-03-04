@@ -6,12 +6,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Check } from 'lucide-react';
 import { Button, Input } from '@hive/ui/design-system/primitives';
 import { useOnboardingAnalytics } from '@hive/hooks';
+import { InterestPicker } from './InterestPicker';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────
 
-type Step = 'email' | 'code' | 'name' | 'spaces';
+type Step = 'email' | 'code' | 'name' | 'interests' | 'spaces';
 
 const SCREEN_FADE = { duration: 0.15, ease: 'easeOut' } as const;
 
@@ -83,7 +84,7 @@ function clearState() {
 function ProgressDots({ step }: { step: Step }) {
   if (step === 'email') return null;
 
-  const steps: Step[] = ['code', 'name', 'spaces'];
+  const steps: Step[] = ['code', 'name', 'interests', 'spaces'];
   const currentIndex = steps.indexOf(step);
   if (currentIndex === -1) return null;
 
@@ -218,6 +219,12 @@ export function EntryFlowV2() {
   const [nameError, setNameError] = React.useState<string | null>(null);
   const [isSubmittingName, setIsSubmittingName] = React.useState(false);
 
+  // Interests
+  const [interestData, setInterestData] = React.useState<{
+    interests: string[];
+    major?: string;
+  }>({ interests: [] });
+
   // Spaces
   const [joinedSpaces, setJoinedSpaces] = React.useState<string[]>([]);
   const [recommendedSpaces, setRecommendedSpaces] = React.useState<RecommendedSpace[]>([]);
@@ -277,6 +284,7 @@ export function EntryFlowV2() {
       email: 'welcome',
       code: 'verify',
       name: 'name',
+      interests: 'interests',
       spaces: 'spaces',
     };
 
@@ -290,7 +298,7 @@ export function EntryFlowV2() {
       if (!flowCompletedRef.current && analyticsInitRef.current) {
         const stepMap: Record<Step, string> = {
           email: 'welcome', code: 'verify',
-          name: 'name', spaces: 'spaces',
+          name: 'name', interests: 'interests', spaces: 'spaces',
         };
         analytics.trackOnboardingAbandoned(stepMap[prevStepRef.current] as any, 'component_unmounted');
       }
@@ -575,7 +583,8 @@ export function EntryFlowV2() {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           role: 'student',
-          interests: [],
+          interests: interestData.interests,
+          major: interestData.major ?? null,
         }),
       });
 
@@ -599,7 +608,7 @@ export function EntryFlowV2() {
       analytics.trackStepCompleted('spaces', {
         spacesJoined: joinedSpaces.length,
       });
-      analytics.trackOnboardingCompleted(0, ['welcome', 'verify', 'name', 'spaces']);
+      analytics.trackOnboardingCompleted(0, ['welcome', 'verify', 'name', 'interests', 'spaces']);
 
       goToApp(result.redirect || '/discover');
     } catch (error) {
@@ -608,7 +617,7 @@ export function EntryFlowV2() {
     } finally {
       setIsSubmittingName(false);
     }
-  }, [firstName, lastName, joinedSpaces, goToApp, analytics]);
+  }, [firstName, lastName, joinedSpaces, interestData, goToApp, analytics]);
 
   // ── OTP Handlers ───────────────────────────────────────────
 
@@ -653,7 +662,7 @@ export function EntryFlowV2() {
   }, [isSendingCode, sendCode]);
 
   const onEnterName = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && validateName()) setStep('spaces');
+    if (event.key === 'Enter' && validateName()) setStep('interests');
   }, [validateName]);
 
   const toggleSpace = React.useCallback((spaceId: string) => {
@@ -935,7 +944,7 @@ export function EntryFlowV2() {
                   size="default"
                   className="w-full"
                   onClick={() => {
-                    if (validateName()) setStep('spaces');
+                    if (validateName()) setStep('interests');
                   }}
                 >
                   Next
@@ -948,7 +957,34 @@ export function EntryFlowV2() {
             </motion.div>
           )}
 
-          {/* ── Screen 4: Space Recommendations ──────────────── */}
+          {/* ── Screen 4: Interests ──────────────────────────── */}
+          {step === 'interests' && (
+            <motion.div
+              key="entry-interests"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={SCREEN_FADE}
+            >
+              <InterestPicker
+                onComplete={(data) => {
+                  setInterestData({
+                    interests: data.interests,
+                    major: data.major,
+                  });
+                  analytics.trackStepCompleted('interests', {
+                    interestCount: data.interests.length,
+                    hasMajor: !!data.major,
+                  });
+                  setStep('spaces');
+                }}
+                isSubmitting={false}
+                campusId="ub-buffalo"
+              />
+            </motion.div>
+          )}
+
+          {/* ── Screen 5: Space Recommendations ──────────────── */}
           {step === 'spaces' && (
             <motion.div
               key="entry-spaces"

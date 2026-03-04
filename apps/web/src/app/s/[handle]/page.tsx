@@ -180,7 +180,12 @@ export default function SpacePageUnified() {
   });
 
   // Claim space mutation
-  const claimSpaceMutation = useClaimSpace();
+  const claimSpaceMutation = useClaimSpace({
+    onClaimSuccess: () => {
+      // Refetch space data to transition from threshold to member view
+      refreshSpace();
+    },
+  });
 
   // Permissions hook for message deletion
   const { canDeleteMessage } = usePermissions(space?.id, user?.id);
@@ -432,6 +437,11 @@ export default function SpacePageUnified() {
 
   // Handle join with inline error display
   const handleJoin = async () => {
+    // Redirect unauthenticated users to login
+    if (!user) {
+      router.push(`/enter?redirect=/s/${handle}`);
+      return;
+    }
     setIsJoining(true);
     setJoinError(null);
     try {
@@ -456,6 +466,10 @@ export default function SpacePageUnified() {
 
   // Handle space claim
   const handleClaimSpace = () => {
+    if (!user) {
+      router.push(`/enter?redirect=/s/${handle}`);
+      return;
+    }
     if (!space?.id) return;
     claimSpaceMutation.mutate({
       spaceId: space.id,
@@ -748,9 +762,8 @@ export default function SpacePageUnified() {
                       const params = new URLSearchParams({
                         spaceId: space.id,
                         spaceName: space.name,
-                        spaceHandle: space.handle,
                       });
-                      router.push(`/lab/templates?${params.toString()}`);
+                      router.push(`/build?${params.toString()}`);
                     },
                   }}
                   events={{
@@ -1056,9 +1069,8 @@ export default function SpacePageUnified() {
                     const params = new URLSearchParams({
                       spaceId: space.id,
                       spaceName: space.name,
-                      spaceHandle: space.handle,
                     });
-                    router.push(`/lab/templates?${params.toString()}`);
+                    router.push(`/build?${params.toString()}`);
                   }}
                   onOpenSettings={() => {
                     setShowDashboardPanel(false);
@@ -1311,9 +1323,8 @@ export default function SpacePageUnified() {
               const params = new URLSearchParams({
                 spaceId: space.id,
                 spaceName: space.name,
-                spaceHandle: space.handle,
               });
-              router.push(`/lab/templates?${params.toString()}`);
+              router.push(`/build?${params.toString()}`);
             }}
             onCreateAnnouncement={() => setShowDashboardPanel(true)}
           />

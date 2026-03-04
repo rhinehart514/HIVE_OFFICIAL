@@ -70,13 +70,15 @@ export async function POST(request: NextRequest) {
                      request.headers.get('x-real-ip') ||
                      'unknown';
 
-    // Try to get authenticated user (optional)
+    // Require authenticated user
     try {
       const auth = await validateApiAuth(request, { operation: 'tool-generate' });
       userId = auth.userId;
     } catch {
-      // Unauthenticated - allow for demo but with stricter limits
-      userId = null;
+      return NextResponse.json(
+        { error: 'Authentication required', message: 'Sign in to create apps.' },
+        { status: 401 }
+      );
     }
 
     // Apply rate limiting (stricter for unauthenticated)

@@ -105,7 +105,7 @@ export function ToolsList({
 
       {/* Browse more tools link */}
       <Link
-        href="/discover?tab=tools"
+        href="/build"
         className={cn(
           'flex items-center gap-2 px-3 py-1.5 rounded-lg',
           'text-xs text-white/50 hover:text-white',
