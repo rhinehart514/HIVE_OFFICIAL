@@ -757,7 +757,8 @@ export default function BuildPage() {
   const isWorking = state.phase === 'classifying' || state.phase === 'generating';
   const showPreview = state.phase !== 'idle';
   const shellFormat = state.classification?.format;
-  const isShellMatched = state.phase === 'shell-matched' && shellFormat && isNativeFormat(shellFormat);
+  const isShellFormat = shellFormat && isNativeFormat(shellFormat);
+  const isShellMatched = state.phase === 'shell-matched' && isShellFormat;
   const registryEntry = isShellMatched ? SHELL_REGISTRY[shellFormat as Exclude<ShellFormat, 'custom'>] : null;
 
   // Loading
@@ -1022,8 +1023,8 @@ export default function BuildPage() {
                   Your creation will appear here
                 </p>
               </motion.div>
-            ) : isShellMatched ? (
-              /* Shell preview */
+            ) : isShellMatched || (isShellFormat && state.phase === 'complete') ? (
+              /* Shell preview — shown during editing AND after deploy */
               <motion.div
                 key="shell-preview"
                 initial={{ opacity: 0, scale: 0.95 }}
