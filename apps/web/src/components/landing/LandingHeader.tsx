@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { buildEnterUrl } from './entry-url';
-import { colors } from '@hive/tokens';
 
 export function LandingHeader() {
   const searchParams = useSearchParams();
@@ -36,7 +35,7 @@ export function LandingHeader() {
           >
             <path
               d="M12 2L3 7v10l9 5 9-5V7l-9-5z"
-              fill={colors.accentGreen}
+              fill="#FFD700"
               fillOpacity="0.9"
             />
           </svg>
@@ -47,9 +46,9 @@ export function LandingHeader() {
 
         <Link
           href={enterHref}
-          className="rounded-full bg-white px-5 py-2 text-[13px] font-medium text-black transition-opacity hover:opacity-90"
+          className="rounded-full bg-[#FFD700] px-5 py-2 text-[13px] font-semibold text-black transition-opacity hover:opacity-90"
         >
-          Start making
+          Get started
         </Link>
       </div>
     </header>

@@ -1,9 +1,7 @@
 export { LandingHeader } from './LandingHeader';
 export { HeroSection } from './HeroSection';
-export { CampusSection } from './CampusSection';
-export { LiveEventsSection } from './LiveEventsSection';
-export { CreationDemoSection } from './CreationDemoSection';
-export { LeaderPitchSection } from './LeaderPitchSection';
-export { ProductSection } from './ProductSection';
+export { DemoSection } from './DemoSection';
+export { SocialProofSection } from './SocialProofSection';
+export { CapabilitiesSection } from './CapabilitiesSection';
 export { CTASection } from './CTASection';
 export { LandingFooter } from './LandingFooter';
