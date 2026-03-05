@@ -92,7 +92,7 @@ export function EmptyCanvas({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{
-        duration: MOTION.duration.base,
+        duration: MOTION.duration.standard,
         ease: MOTION.ease.premium,
       }}
     >

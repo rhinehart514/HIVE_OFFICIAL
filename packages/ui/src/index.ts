@@ -149,16 +149,8 @@ export {
   GLOW_COLORS,
 } from "./components/motion-primitives";
 
-// Motion Tokens (Jan 2026 - Premium motion design tokens)
+// Motion Tokens
 export { MOTION } from "./tokens/motion";
-export type {
-  EaseType,
-  DurationType,
-  StaggerType,
-  ViewportType,
-  SpringType,
-  ParallaxType,
-} from "./tokens/motion";
 
 // Canonical Motion Variants (7 patterns)
 export {

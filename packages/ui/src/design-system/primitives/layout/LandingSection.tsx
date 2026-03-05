@@ -16,8 +16,6 @@
 import * as React from 'react';
 import { cn } from '../../../lib/utils';
 import { RevealSection, AnimatedBorder } from '../motion';
-import { MOTION } from '../../../tokens/motion';
-
 // ============================================
 // LANDING SECTION
 // ============================================
@@ -34,7 +32,7 @@ export interface LandingSectionProps {
   /** Enable scroll reveal animation. Default: true */
   reveal?: boolean;
   /** Viewport margin for reveal. Default: 'far' */
-  revealMargin?: keyof typeof MOTION.viewport;
+  revealMargin?: string;
   /** Horizontal padding. Default: 'px-6' */
   padding?: string;
   /** Render as section or div */

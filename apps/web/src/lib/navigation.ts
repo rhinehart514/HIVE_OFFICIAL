@@ -17,8 +17,6 @@ export interface NavItem {
   href: string;
   icon: React.ElementType;
   matchPattern?: RegExp;
-  /** Accent color for active state (Build tab gets green) */
-  accentColor?: string;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -32,9 +30,9 @@ export const NAV_ITEMS: NavItem[] = [
   {
     id: 'spaces',
     label: 'Spaces',
-    href: '/discover?view=spaces',
+    href: '/spaces',
     icon: SpacesIcon,
-    matchPattern: /^\/s\//,
+    matchPattern: /^\/spaces(\/|$)|^\/s\//,
   },
   {
     id: 'build',
@@ -42,7 +40,6 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/build',
     icon: BuildIcon,
     matchPattern: /^\/build(\/|$)|^\/lab(\/|$)/,
-    accentColor: '#10B981', // accent green — creation energy
   },
   {
     id: 'you',
@@ -61,17 +58,7 @@ export function getMobileNavItems(): NavItem[] {
   return getNavItems();
 }
 
-export function isNavItemActive(item: NavItem, pathname: string, searchParams?: string): boolean {
-  // Spaces tab: active on /s/* pages or /discover?view=spaces
-  if (item.id === 'spaces') {
-    if (/^\/s\//.test(pathname)) return true;
-    if (pathname === '/discover' && searchParams?.includes('view=spaces')) return true;
-    return false;
-  }
-  // Home tab: exclude when Spaces tab would be active
-  if (item.id === 'home') {
-    if (pathname === '/discover' && searchParams?.includes('view=spaces')) return false;
-  }
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
   if (item.matchPattern) {
     return item.matchPattern.test(pathname);
   }

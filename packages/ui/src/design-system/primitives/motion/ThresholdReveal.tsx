@@ -67,7 +67,7 @@ export function ThresholdReveal({
     // Phase 3: Mark complete after reveal animation
     const completeTimer = setTimeout(() => {
       setPhase('complete');
-    }, pauseDuration + (MOTION.duration.slow * 1000));
+    }, pauseDuration + (MOTION.duration.standard * 1000));
 
     return () => {
       clearTimeout(revealTimer);
@@ -90,7 +90,7 @@ export function ThresholdReveal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
+            transition={{ duration: MOTION.duration.micro, ease: MOTION.ease.premium }}
           >
             {/* Pulsing indicator */}
             <motion.div
@@ -130,7 +130,7 @@ export function ThresholdReveal({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
-              duration: MOTION.duration.slow,
+              duration: MOTION.duration.standard,
               ease: MOTION.ease.premium,
             }}
           >

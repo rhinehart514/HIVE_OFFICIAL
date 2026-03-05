@@ -143,30 +143,13 @@ export {
   durationSeconds,
   springPresets,
   staggerPresets,
-  performance,
-  tinderSprings,
-  // HIVE signature motion
   SPRING_SNAP_NAV,
-  PUNCH_TRANSITION,
-  SNAP_TRANSITION,
-  // HIVE signature variants (Design Principles)
-  surfaceVariants,
-  // Phase 5: Micro-interaction presets
-  buttonPressVariants,
-  messageEntryVariants,
-  successVariants,
-  errorShakeVariants,
+  goldPulse,
+  hoverLift,
   pageTransitionVariants,
   modalVariants,
-  dropdownVariants,
-  selectionVariants,
+  messageEntryVariants,
   reducedMotionVariants,
-  // Creation celebration motions
-  creationPublishVariants,
-  creationRemixVariants,
-  milestoneVariants,
-  deployRippleVariants,
-  counterVariants,
 } from './motion';
 
 export type {

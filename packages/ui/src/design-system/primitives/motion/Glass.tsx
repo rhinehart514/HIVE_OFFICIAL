@@ -103,7 +103,7 @@ export function GlassSurface({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
-          duration: MOTION.duration.base,
+          duration: MOTION.duration.standard,
           ease: MOTION.ease.premium,
         }}
       >
@@ -212,7 +212,7 @@ export function GlassOverlay({
       )}
       initial={{ opacity: 0 }}
       animate={{ opacity: visible ? 1 : 0 }}
-      transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
+      transition={{ duration: MOTION.duration.micro, ease: MOTION.ease.premium }}
       style={{
         backgroundColor: `rgba(0, 0, 0, ${darkness})`,
         backdropFilter: `blur(${blur}px)`,

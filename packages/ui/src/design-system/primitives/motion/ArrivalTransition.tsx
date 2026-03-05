@@ -97,7 +97,7 @@ export function ArrivalZone({
   const { skipAnimation } = React.useContext(ArrivalContext);
   const animation = zoneAnimations[zone];
   const baseDelay = zoneDelays[zone];
-  const staggerDelay = zone === 'item' ? index * MOTION.stagger.tight : 0;
+  const staggerDelay = zone === 'item' ? index * 0.05 : 0;
 
   if (skipAnimation) {
     return <div className={className}>{children}</div>;
@@ -109,7 +109,7 @@ export function ArrivalZone({
       initial={animation.initial}
       animate={animation.animate}
       transition={{
-        duration: zone === 'item' ? MOTION.duration.fast : MOTION.duration.base,
+        duration: zone === 'item' ? MOTION.duration.micro : MOTION.duration.standard,
         delay: baseDelay + staggerDelay,
         ease: MOTION.ease.premium,
       }}

@@ -147,13 +147,7 @@ export function generateCSSCustomProperties(): string {
     cssVars.push(`  --hive-duration-${key}: ${value};`);
   });
   
-  Object.entries(motion.cascade).forEach(([key, value]) => {
-    cssVars.push(`  --hive-cascade-${key}: ${value};`);
-  });
-  
-  Object.entries(motion.transform).forEach(([key, value]) => {
-    cssVars.push(`  --hive-transform-${key}: ${value};`);
-  });
+  // cascade and transform CSS vars removed — motion simplified to easing + duration only
   
   // Effects
   cssVars.push('');

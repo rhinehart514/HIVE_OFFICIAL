@@ -71,7 +71,7 @@ const defaultVariants: Variants = {
  * Default transition using HIVE motion tokens
  */
 const defaultTransition: Transition = {
-  duration: parseFloat(motionTokens.duration.liquid) || 0.35,
+  duration: parseFloat(motionTokens.duration.standard) || 0.1,
   ease: motionTokens.easing.default,
 };
 

@@ -61,7 +61,7 @@ export function AutoAnimated({
   useEffect(() => {
     if (parentRef.current && !disabled) {
       const autoAnimateOptions: Partial<AutoAnimateOptions> = {
-        duration: duration || parseFloat(motionTokens.duration.liquid) * 1000 || 350,
+        duration: duration || parseFloat(motionTokens.duration.standard) * 1000 || 100,
         easing: easing || motionTokens.easing.default,
         ...options,
       };
@@ -115,7 +115,7 @@ export function useAutoAnimate<T extends HTMLElement = HTMLDivElement>(
   useEffect(() => {
     if (ref.current) {
       const autoAnimateOptions: Partial<AutoAnimateOptions> = {
-        duration: parseFloat(motionTokens.duration.liquid) * 1000 || 350,
+        duration: parseFloat(motionTokens.duration.standard) * 1000 || 100,
         easing: motionTokens.easing.default,
         ...options,
       };

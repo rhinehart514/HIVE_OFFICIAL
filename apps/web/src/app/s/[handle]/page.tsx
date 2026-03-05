@@ -1350,18 +1350,18 @@ function SpacePageSkeleton() {
         <motion.div
           className="h-8 w-8 rounded-lg bg-white/[0.06]"
           animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.smooth }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.default }}
         />
         <div className="space-y-1.5">
           <motion.div
             className="h-4 w-28 rounded bg-white/[0.06]"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.smooth }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.default }}
           />
           <motion.div
             className="h-3 w-20 rounded bg-white/[0.06]"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.default }}
           />
         </div>
       </motion.div>
@@ -1378,7 +1378,7 @@ function SpacePageSkeleton() {
           <motion.div
             className="h-3 w-16 rounded bg-white/[0.06] mb-3"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.default }}
           />
           {[1, 2, 3].map((i) => (
             <motion.div
@@ -1389,7 +1389,7 @@ function SpacePageSkeleton() {
                 duration: 1.5,
                 repeat: Infinity,
                 delay: 0.2 + i * 0.1,
-                ease: MOTION.ease.smooth,
+                ease: MOTION.ease.default,
               }}
             />
           ))}
@@ -1397,7 +1397,7 @@ function SpacePageSkeleton() {
             <motion.div
               className="h-3 w-20 rounded bg-white/[0.06]"
               animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity, delay: 0.6, ease: MOTION.ease.smooth }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.6, ease: MOTION.ease.default }}
             />
             <div className="flex gap-1.5">
               {[1, 2, 3].map((i) => (
@@ -1409,7 +1409,7 @@ function SpacePageSkeleton() {
                     duration: 1.5,
                     repeat: Infinity,
                     delay: 0.7 + i * 0.05,
-                    ease: MOTION.ease.smooth,
+                    ease: MOTION.ease.default,
                   }}
                 />
               ))}
@@ -1429,7 +1429,7 @@ function SpacePageSkeleton() {
                   duration: 1.5,
                   repeat: Infinity,
                   delay: i * 0.1,
-                  ease: MOTION.ease.smooth,
+                  ease: MOTION.ease.default,
                 }}
               >
                 <div className="h-8 w-8 rounded-full bg-white/[0.06] flex-shrink-0" />
@@ -1444,7 +1444,7 @@ function SpacePageSkeleton() {
             <motion.div
               className="h-10 rounded-lg bg-white/[0.06]"
               animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity, delay: 0.5, ease: MOTION.ease.smooth }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.5, ease: MOTION.ease.default }}
             />
           </div>
         </div>

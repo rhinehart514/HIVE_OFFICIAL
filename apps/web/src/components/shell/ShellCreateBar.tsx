@@ -32,8 +32,7 @@ export function ShellCreateBar() {
       {/* Mobile: floating + button to trigger the overlay */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed bottom-20 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full shadow-lg shadow-black/30 active:scale-95 transition-transform md:hidden"
-        style={{ backgroundColor: colors.accentGreen }}
+        className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#FFD700] active:bg-[#FFD700]/90 transition-colors duration-100 md:hidden"
         aria-label={spaceHandle ? `Build for this space` : 'Create something'}
       >
         <Sparkles className="h-5 w-5 text-black" />

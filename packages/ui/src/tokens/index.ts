@@ -2,46 +2,24 @@
  * Design Tokens
  *
  * Central export for all HIVE design tokens.
- * Updated 2026-01-29 with density system.
  */
 
-// Core motion tokens (UI-friendly API with seconds-based durations)
+// Core motion tokens
 export { MOTION } from './motion';
-export type {
-  EaseType,
-  DurationType,
-  StaggerType,
-  ViewportType,
-  SpringType,
-  ParallaxType,
-} from './motion';
 
-// Re-export raw @hive/tokens motion exports for advanced usage
+// Re-export @hive/tokens motion exports
 export {
   easingArrays,
   durationSeconds,
   springPresets,
-  staggerPresets,
-  tinderSprings,
   motionCSS,
   motionTokens,
-  performance,
-  // HIVE signature motion
-  SPRING_SNAP_NAV,
-  PUNCH_TRANSITION,
-  SNAP_TRANSITION,
-  // HIVE signature variants (Design Principles)
-  surfaceVariants,
-  // Micro-interaction presets
-  buttonPressVariants,
-  messageEntryVariants,
-  successVariants,
-  errorShakeVariants,
   pageTransitionVariants,
   modalVariants,
-  dropdownVariants,
-  selectionVariants,
+  messageEntryVariants,
   reducedMotionVariants,
+  goldPulse,
+  hoverLift,
 } from './motion';
 
 export type {
@@ -52,8 +30,6 @@ export type {
   EasingArray,
   DurationSeconds,
   SpringPreset,
-  TinderSpring,
-  StaggerPreset,
 } from './motion';
 
 // Spaces-specific motion tokens

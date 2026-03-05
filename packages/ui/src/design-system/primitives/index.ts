@@ -11,14 +11,6 @@
 // ============================================
 
 export { MOTION } from '../../tokens';
-export type {
-  EaseType,
-  DurationType,
-  StaggerType,
-  ViewportType,
-  SpringType,
-  ParallaxType,
-} from '../../tokens';
 
 // Density tokens
 export {

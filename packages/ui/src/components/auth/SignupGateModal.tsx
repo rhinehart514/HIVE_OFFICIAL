@@ -10,7 +10,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon, BoltIcon, EnvelopeIcon, LockClosedIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { durationSeconds, staggerPresets } from '@hive/tokens';
+import { durationSeconds } from '@hive/tokens';
 
 import { Button } from '../../design-system/primitives';
 import {
@@ -137,7 +137,7 @@ export function SignupGateModal({
                   key={index}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: staggerPresets.slow * index, duration: durationSeconds.standard }}
+                  transition={{ delay: 0.1 * index, duration: durationSeconds.standard }}
                   className="flex items-start gap-3"
                 >
                   <div className="shrink-0 p-2 rounded-lg bg-background border border-border">

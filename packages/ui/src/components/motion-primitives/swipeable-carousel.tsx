@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { motion, useMotionValue, useTransform, animate, PanInfo } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { tinderSprings } from '@hive/tokens';
+import { springPresets } from '@hive/tokens';
 
 export interface SwipeableCarouselProps {
   children: React.ReactNode[];
@@ -90,7 +90,7 @@ export function SwipeableCarousel({
 
     // Animate to target position
     const targetX = -targetIndex * cardWidthWithGap;
-    animate(x, targetX, tinderSprings.snapBack);
+    animate(x, targetX, springPresets.snappy);
 
     if (targetIndex !== activeIndex) {
       setActiveIndex(targetIndex);
@@ -141,7 +141,7 @@ export function SwipeableCarousel({
               type="button"
               onClick={() => {
                 const targetX = -index * (containerWidth + gap);
-                animate(x, targetX, tinderSprings.snapBack);
+                animate(x, targetX, springPresets.snappy);
                 setActiveIndex(index);
                 onCardChange?.(index);
               }}

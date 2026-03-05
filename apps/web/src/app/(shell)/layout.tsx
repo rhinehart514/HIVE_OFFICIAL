@@ -10,7 +10,7 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
       <MobileBottomBar />
 
       {/* App grid: content pane is left-anchored */}
-      <div className="md:ml-[var(--sidebar-w,56px)] transition-[margin-left] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] min-h-screen">
+      <div className="md:ml-[200px] min-h-screen">
         <MobileHeader />
         <main className="flex-1 min-w-0">
           <ImpersonationBanner />

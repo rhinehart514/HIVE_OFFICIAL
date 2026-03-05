@@ -18,7 +18,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { SPRING_SNAP_NAV } from '@hive/tokens';
+import { springPresets } from '@hive/tokens';
 
 // ============================================
 // TOKENS
@@ -56,7 +56,7 @@ export function TopBar({ children, className, leftOffset = 0 }: TopBarProps) {
         className
       )}
       animate={{ left: leftOffset }}
-      transition={SPRING_SNAP_NAV}
+      transition={springPresets.snappy}
       style={{
         height: TOPBAR_TOKENS.height,
         background: TOPBAR_TOKENS.bg,
