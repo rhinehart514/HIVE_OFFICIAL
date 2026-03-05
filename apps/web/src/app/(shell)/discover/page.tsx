@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import {
   CampusHeader,
@@ -61,10 +60,8 @@ async function fetchFeedEvents(): Promise<FeedEvent[]> {
 
 export default function DiscoverPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState<FeedEvent | null>(null);
-  const spacesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/enter?redirect=/discover');
@@ -84,13 +81,7 @@ export default function DiscoverPage() {
 
   const events = eventsQuery.data || [];
 
-  // Auto-scroll to spaces section when navigating via Spaces tab
-  const viewParam = searchParams.get('view');
-  useEffect(() => {
-    if (viewParam === 'spaces' && spacesRef.current) {
-      spacesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [viewParam, eventsQuery.isLoading]);
+  // Removed: ?view=spaces scroll behavior (Spaces has its own page now)
 
   if (authLoading || !user) {
     return (
@@ -107,16 +98,12 @@ export default function DiscoverPage() {
       {/* Event detail drawer */}
       <EventDetailDrawer event={selectedEvent} onClose={() => setSelectedEvent(null)} />
 
-      <div className="w-full max-w-[680px] mx-auto px-4 py-6 md:px-8">
-        {/* Campus header */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
-          className="mb-6"
-        >
+      <div className="w-full max-w-[960px] mx-auto px-4 py-8 md:px-8">
+        {/* Page header */}
+        <div className="mb-6">
+          <h1 className="font-clash text-[32px] font-semibold text-white mb-1">Discover</h1>
           <CampusHeader />
-        </motion.div>
+        </div>
 
         {isLoading ? (
           <FeedSkeleton />
@@ -132,9 +119,7 @@ export default function DiscoverPage() {
             <NewAppsSection />
 
             {/* 4. Your Spaces Activity — hidden for new users */}
-            <div ref={spacesRef}>
-              <SpacesActivitySection />
-            </div>
+            <SpacesActivitySection />
 
             {/* 5. Discover — unjoined spaces, cursor-paginated */}
             <DiscoverSection />

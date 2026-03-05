@@ -102,16 +102,16 @@ function PromptInput({
           disabled={disabled}
           rows={2}
           className="w-full px-4 py-3 pr-12 rounded-2xl text-[15px] bg-white/[0.03] border border-white/[0.08]
-            text-white placeholder:text-white/25 resize-none focus:outline-none focus:ring-1 focus:ring-white/20
-            disabled:opacity-50 transition-colors"
+            text-white placeholder:text-white/25 resize-none focus:outline-none focus:ring-1 focus:ring-[#FFD700]/40
+            disabled:opacity-50 transition-colors duration-100"
           style={{ minHeight: 56, maxHeight: 160 }}
         />
         <button
           onClick={handleSubmit}
           disabled={!value.trim() || disabled}
           className="absolute right-2 bottom-2 h-9 w-9 flex items-center justify-center
-            rounded-xl bg-white text-black disabled:opacity-30 disabled:bg-white/20
-            hover:bg-white/90 transition-all"
+            rounded-full bg-[#FFD700] text-black disabled:opacity-30 disabled:bg-white/20
+            hover:bg-[#FFD700]/90 transition-colors duration-100"
         >
           {disabled ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -677,7 +677,7 @@ function SpacePlacementFlow({
           {deploying === space.id ? (
             <Loader2 className="w-4 h-4 animate-spin text-white/40 flex-shrink-0" />
           ) : deployed === space.id ? (
-            <Check className="w-4 h-4 text-[#10B981] flex-shrink-0" />
+            <Check className="w-4 h-4 text-[#FFD700] flex-shrink-0" />
           ) : (
             <MapPin className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
           )}
@@ -801,6 +801,25 @@ export default function BuildPage() {
               )}
             </motion.div>
 
+            {/* Format chips — quick-start for common formats */}
+            {state.phase === 'idle' && (
+              <div className="flex gap-2 mb-4">
+                {[
+                  { label: 'Poll', prompt: 'Create a poll' },
+                  { label: 'Bracket', prompt: 'Create a bracket' },
+                  { label: 'RSVP', prompt: 'Create an RSVP' },
+                ].map((chip) => (
+                  <button
+                    key={chip.label}
+                    onClick={() => submitPrompt(chip.prompt)}
+                    className="px-3 py-1.5 rounded-full border border-white/[0.08] text-[13px] text-white/50 hover:text-white hover:border-white/[0.15] transition-colors duration-100"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Prompt input */}
             <PromptInput
               onSubmit={submitPrompt}
@@ -846,17 +865,17 @@ export default function BuildPage() {
                   <div className="flex gap-2 mt-4">
                     <button
                       onClick={handleDeploy}
-                      className="flex-1 flex items-center justify-center gap-2 h-10 rounded-2xl
-                        bg-white text-black font-medium text-sm hover:bg-white/90 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 h-10 rounded-full
+                        bg-[#FFD700] text-black font-semibold text-sm hover:bg-[#FFD700]/90 transition-colors duration-100"
                     >
                       <Zap className="w-4 h-4" />
                       {user ? 'Deploy' : 'Sign in to deploy'}
                     </button>
                     <button
                       onClick={escalateToCustom}
-                      className="flex items-center justify-center gap-1.5 h-10 px-4 rounded-2xl
-                        text-sm text-white/40 bg-white/[0.04] hover:bg-white/[0.06] hover:text-white/60
-                        transition-colors"
+                      className="flex items-center justify-center gap-1.5 h-10 px-4 rounded-full
+                        text-sm text-white/50 bg-white/[0.04] hover:bg-white/[0.06] hover:text-white
+                        transition-colors duration-100"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       Make it custom
@@ -874,18 +893,18 @@ export default function BuildPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-6 space-y-4"
                 >
-                  <div className="flex items-center gap-2 text-sm text-[#10B981]/70">
+                  <div className="flex items-center gap-2 text-sm text-[#FFD700]">
                     <Check className="w-4 h-4" />
                     <span>
                       {state.toolName || 'Your app'} is live
                     </span>
                   </div>
 
-                  {/* Place in a Space */}
+                  {/* Place in a Space — primary post-creation action */}
                   {user && (
-                    <div>
-                      <p className="text-xs text-white/40 mb-2 flex items-center gap-1.5">
-                        <MapPin className="w-3 h-3" />
+                    <div className="rounded-2xl border border-[#FFD700]/20 bg-[#FFD700]/[0.03] p-4">
+                      <p className="text-sm font-medium text-white mb-2 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[#FFD700]" />
                         Place in a space so people can find it
                       </p>
                       <SpacePlacementFlow

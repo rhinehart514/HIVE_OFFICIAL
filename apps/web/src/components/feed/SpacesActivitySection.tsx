@@ -52,7 +52,7 @@ export function SpacesActivitySection() {
     return (
       <section>
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
             Your Spaces
           </span>
         </div>
@@ -66,7 +66,7 @@ export function SpacesActivitySection() {
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
           Your Spaces
         </span>
       </div>

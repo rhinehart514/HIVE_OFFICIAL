@@ -78,7 +78,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/30" />
-          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
             Today
           </span>
         </div>
@@ -94,7 +94,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
-          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
             Today
           </span>
         </div>

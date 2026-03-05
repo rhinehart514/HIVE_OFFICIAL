@@ -30,7 +30,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
-          <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
             Live now
           </span>
         </div>
@@ -45,7 +45,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
     <section>
       <div className="flex items-center gap-2 mb-3">
         <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-        <span className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">
+        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
           Live now
         </span>
       </div>
