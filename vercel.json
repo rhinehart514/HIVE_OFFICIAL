@@ -10,28 +10,8 @@
       "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/cron/automations",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/tool-automations",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/setup-orchestration",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/tool-lifecycle",
-      "schedule": "0 3 * * *"
-    },
-    {
       "path": "/api/cron/event-reminders",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/seed-space-creations",
-      "schedule": "0 8 * * *"
+      "schedule": "0 4 * * *"
     }
   ],
   "headers": [
