@@ -216,7 +216,7 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
               {!query.trim() && (
                 <div className="px-4 py-3 border-t border-white/[0.06]">
                   <p className="text-xs text-white/50">
-                    Search messages, members, events, and tools in this space
+                    Search messages, members, events, and apps in this space
                   </p>
                 </div>
               )}

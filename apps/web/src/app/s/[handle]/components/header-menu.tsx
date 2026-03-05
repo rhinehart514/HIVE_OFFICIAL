@@ -4,48 +4,53 @@
  * HeaderMenu — Space context drawer
  *
  * Right drawer (desktop) / bottom sheet (mobile) with:
- * - Events, Apps, Members menu items
- * - Settings (leaders only)
+ * - Inline tools list with quick-run
+ * - Upcoming events with RSVP counts
+ * - Members + Settings navigation
  *
  * Stream stays primary view; this is the secondary access point.
  */
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Sparkles, Users, Settings, X } from 'lucide-react';
+import { Calendar, Users, Settings, X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { PlacedToolDTO } from '@/hooks/use-space-tools';
+
+interface UpcomingEventItem {
+  id: string;
+  title: string;
+  time: string;
+  goingCount: number;
+}
 
 interface HeaderMenuProps {
   isOpen: boolean;
   onClose: () => void;
   isLeader?: boolean;
-  onAllEvents: () => void;
-  onAllApps: () => void;
+  // Data
+  tools?: PlacedToolDTO[];
+  events?: UpcomingEventItem[];
+  isLoadingTools?: boolean;
+  // Actions
+  onToolRun?: (tool: PlacedToolDTO) => void;
+  onEventClick?: (eventId: string) => void;
   onMembers: () => void;
   onSettings?: () => void;
 }
-
-const menuItems = [
-  { id: 'events', label: 'Events', icon: Calendar },
-  { id: 'apps', label: 'Apps', icon: Sparkles },
-  { id: 'members', label: 'Members', icon: Users },
-] as const;
 
 export function HeaderMenu({
   isOpen,
   onClose,
   isLeader,
-  onAllEvents,
-  onAllApps,
+  tools = [],
+  events = [],
+  isLoadingTools,
+  onToolRun,
+  onEventClick,
   onMembers,
   onSettings,
 }: HeaderMenuProps) {
-  const handlers: Record<string, () => void> = {
-    events: onAllEvents,
-    apps: onAllApps,
-    members: onMembers,
-  };
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -63,11 +68,9 @@ export function HeaderMenu({
           {/* Drawer — right panel on desktop, bottom sheet on mobile */}
           <motion.div
             className={cn(
-              // Mobile: bottom sheet
               'fixed bottom-0 left-0 right-0 z-50',
-              'rounded-t-2xl',
-              // Desktop: right drawer
-              'md:bottom-auto md:top-0 md:left-auto md:right-0 md:h-full md:w-64',
+              'rounded-t-2xl max-h-[80vh] overflow-y-auto',
+              'md:bottom-auto md:top-0 md:left-auto md:right-0 md:h-full md:w-72 md:max-h-none',
               'md:rounded-t-none',
               'bg-black border-t border-white/[0.05] md:border-t-0 md:border-l md:border-white/[0.05]'
             )}
@@ -94,40 +97,107 @@ export function HeaderMenu({
               </button>
             </div>
 
-            {/* Items */}
-            <div className="py-1 pb-8 md:pb-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      handlers[item.id]?.();
-                      onClose();
-                    }}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-4 py-3',
-                      'text-[14px] text-white/50 hover:text-white hover:bg-white/[0.03]',
-                      'transition-colors duration-100'
-                    )}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
-                  </button>
-                );
-              })}
+            <div className="px-4 pb-8 md:pb-4">
+              {/* ── Apps section ── */}
+              {(tools.length > 0 || isLoadingTools) && (
+                <div className="mt-3 mb-4">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-white/30 mb-2 block">
+                    Apps
+                  </span>
+                  {isLoadingTools ? (
+                    <div className="space-y-2">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="h-10 bg-white/[0.03] rounded-lg animate-pulse" />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {tools.map((tool) => (
+                        <button
+                          key={tool.placementId}
+                          onClick={() => {
+                            onToolRun?.(tool);
+                            onClose();
+                          }}
+                          className={cn(
+                            'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg',
+                            'text-left hover:bg-white/[0.03] transition-colors duration-100'
+                          )}
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center shrink-0">
+                            <Sparkles className="w-3.5 h-3.5 text-white/50" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[13px] text-white truncate block">{tool.name}</span>
+                            {tool.activityCount != null && tool.activityCount > 0 && (
+                              <span className="text-[11px] text-white/30">
+                                {tool.activityCount} interaction{tool.activityCount !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
-              {/* Settings — leaders only */}
-              {isLeader && onSettings && (
-                <>
-                  <div className="mx-4 my-1 border-t border-white/[0.05]" />
+              {/* ── Events section ── */}
+              {events.length > 0 && (
+                <div className="mb-4">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-white/30 mb-2 block">
+                    Upcoming
+                  </span>
+                  <div className="space-y-1">
+                    {events.slice(0, 3).map((event) => (
+                      <button
+                        key={event.id}
+                        onClick={() => {
+                          onEventClick?.(event.id);
+                          onClose();
+                        }}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg',
+                          'text-left hover:bg-white/[0.03] transition-colors duration-100'
+                        )}
+                      >
+                        <Calendar className="w-4 h-4 text-white/30 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[13px] text-white truncate block">{event.title}</span>
+                          <span className="text-[11px] text-white/30">
+                            {event.time}{event.goingCount > 0 ? ` · ${event.goingCount} going` : ''}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Divider ── */}
+              {(tools.length > 0 || events.length > 0) && (
+                <div className="border-t border-white/[0.05] my-2" />
+              )}
+
+              {/* ── Navigation items ── */}
+              <div className="space-y-0.5">
+                <button
+                  onClick={() => { onMembers(); onClose(); }}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg',
+                    'text-[14px] text-white/50 hover:text-white hover:bg-white/[0.03]',
+                    'transition-colors duration-100'
+                  )}
+                >
+                  <Users className="w-4 h-4" />
+                  Members
+                </button>
+
+                {isLeader && onSettings && (
                   <button
-                    onClick={() => {
-                      onSettings();
-                      onClose();
-                    }}
+                    onClick={() => { onSettings(); onClose(); }}
                     className={cn(
-                      'w-full flex items-center gap-3 px-4 py-3',
+                      'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg',
                       'text-[14px] text-white/50 hover:text-white hover:bg-white/[0.03]',
                       'transition-colors duration-100'
                     )}
@@ -135,8 +205,8 @@ export function HeaderMenu({
                     <Settings className="w-4 h-4" />
                     Settings
                   </button>
-                </>
-              )}
+                )}
+              </div>
             </div>
           </motion.div>
         </>

@@ -834,15 +834,11 @@ export default function SpacePageUnified() {
           isOpen={headerMenuOpen}
           onClose={() => setHeaderMenuOpen(false)}
           isLeader={space.isLeader}
-          onAllEvents={() => setShowEventModal(true)}
-          onAllApps={() => {
-            const params = new URLSearchParams({
-              spaceId: space.id,
-              spaceName: space.name,
-              spaceHandle: space.handle,
-            });
-            router.push(`/build?${params.toString()}`);
-          }}
+          tools={sidebarTools}
+          events={upcomingEvents}
+          isLoadingTools={isLoadingTools}
+          onToolRun={(tool) => setActiveTool({ toolId: tool.toolId, placementId: tool.placementId, name: tool.name, description: tool.description })}
+          onEventClick={(eventId) => setSelectedEventId(eventId)}
           onMembers={() => { loadMembers(); setShowMembersPanel(true); }}
           onSettings={space.isLeader ? () => setShowSettingsModal(true) : undefined}
         />
@@ -861,14 +857,8 @@ export default function SpacePageUnified() {
             };
             setChatPrefill(prefills[format] || `/${format} `);
           }}
-          onCustomCreate={(prompt) => {
-            const params = new URLSearchParams({
-              spaceId: space.id,
-              spaceName: space.name,
-              spaceHandle: space.handle,
-              prompt,
-            });
-            router.push(`/build?${params.toString()}`);
+          onToolDeployed={() => {
+            refreshSpace();
           }}
         />
 
@@ -1156,7 +1146,7 @@ export default function SpacePageUnified() {
           open={showDeleteSpaceConfirm}
           onOpenChange={setShowDeleteSpaceConfirm}
           title="Delete Space"
-          description="This cannot be undone. All messages, boards, and tools will be permanently deleted."
+          description="This cannot be undone. All messages, boards, and apps will be permanently deleted."
           variant="danger"
           confirmText="Delete"
           cancelText="Cancel"

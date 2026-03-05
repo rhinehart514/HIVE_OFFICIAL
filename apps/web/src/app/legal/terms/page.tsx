@@ -13,7 +13,7 @@ const SECTIONS = [
   { id: 'who-can-use', title: 'Who Can Use This' },
   { id: 'your-stuff', title: 'Your Stuff' },
   { id: 'dont-be-an-ass', title: "Don't Be an Ass" },
-  { id: 'tools', title: 'HiveLab Tools' },
+  { id: 'tools', title: 'HiveLab Apps' },
   { id: 'privacy', title: 'Privacy' },
   { id: 'kicking-you-out', title: 'Kicking You Out' },
   { id: 'if-things-break', title: 'If Things Break' },
@@ -90,7 +90,7 @@ export default function TermsPage() {
               <li><strong>Spaces</strong> — Your orgs, clubs, and communities. You run them, not me.</li>
               <li><strong>Feed</strong> — What's happening on campus. No algorithm deciding what you see.</li>
               <li><strong>Profiles</strong> — Your identity on HIVE. Keep it real or keep it anonymous — your call.</li>
-              <li><strong>HiveLab</strong> — Build tools for your campus. Polls, forms, whatever you need.</li>
+              <li><strong>HiveLab</strong> — Build apps for your campus. Polls, forms, whatever you need.</li>
             </ul>
             <p>
               Things will change. I'm actively building this. New features will show up,
@@ -115,7 +115,7 @@ export default function TermsPage() {
           <Section id="your-stuff" number="04" title="Your Stuff">
             <p>
               <strong>Everything you create on HIVE is yours.</strong> Your posts, your
-              events, your Tools, your memes — all yours.
+              events, your apps, your memes — all yours.
             </p>
             <p>
               But here's the thing: for HIVE to work, I need to be able to show your
@@ -150,18 +150,18 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section id="tools" number="06" title="HiveLab Tools">
+          <Section id="tools" number="06" title="HiveLab Apps">
             <p>
-              You can build Tools on HIVE — things for your campus. Cool.
+              You can build apps on HIVE — things for your campus. Cool.
               But don't:
             </p>
             <ul>
               <li>Build anything malicious (malware, phishing, etc.)</li>
-              <li>Secretly collect data from people using your Tools</li>
-              <li>Make Tools that break or slow down the platform</li>
+              <li>Secretly collect data from people using your apps</li>
+              <li>Make apps that break or slow down the platform</li>
             </ul>
             <p>
-              If your Tool is sketchy, I'll restrict or remove it. If it's actually
+              If your app is sketchy, I'll restrict or remove it. If it's actually
               dangerous, your whole account is gone.
             </p>
           </Section>

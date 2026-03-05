@@ -240,7 +240,7 @@ export default function VerifyPage() {
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 gap-3 mb-8">
           <MetricCard icon={Calendar} label="Events Created" value={record.metrics.eventsCreated} index={0} />
-          <MetricCard icon={Wrench} label="Tools Deployed" value={record.metrics.toolsDeployed} index={1} />
+          <MetricCard icon={Wrench} label="Apps Deployed" value={record.metrics.toolsDeployed} index={1} />
           <MetricCard icon={MessageSquare} label="Messages Posted" value={record.metrics.messagesPosted} index={2} />
           <MetricCard icon={Users} label="Members Led" value={record.metrics.membersLed} index={3} />
         </div>

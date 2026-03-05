@@ -322,7 +322,7 @@ export function LeaderDashboard({
           {onAddTool && (
             <QuickAction
               icon={Wrench}
-              label="Add Tool"
+              label="Add App"
               onClick={onAddTool}
             />
           )}

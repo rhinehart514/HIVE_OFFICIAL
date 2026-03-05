@@ -144,7 +144,7 @@ const CURRENT_GUIDELINES: LegalDocument = {
           questions that spark discussion
         </li>
         <li>
-          <strong>Creative Tools:</strong> Build elements that
+          <strong>Creative Apps:</strong> Build elements that
           enhance community experiences
         </li>
         <li>
@@ -211,18 +211,18 @@ const CURRENT_GUIDELINES: LegalDocument = {
         Always check and follow the specific guidelines for each Space you join.
       </p>
 
-      <h2>5. Tool Creation Guidelines</h2>
+      <h2>5. App Creation Guidelines</h2>
       <div className="mb-4 rounded border-l-4 border-[var(--hive-brand-primary)]/50 bg-[var(--hive-background-tertiary)]/50 p-4">
         <p className="mb-2 font-medium text-[var(--hive-brand-primary)]">
-          TL;DR: Create tools that are safe, functional, and add value to
+          TL;DR: Create apps that are safe, functional, and add value to
           communities.
         </p>
       </div>
 
-      <h3>Tool Standards</h3>
+      <h3>App Standards</h3>
       <ul>
         <li>
-          <strong>Functionality:</strong> Tools should work as intended and
+          <strong>Functionality:</strong> Apps should work as intended and
           provide clear value
         </li>
         <li>
@@ -238,12 +238,12 @@ const CURRENT_GUIDELINES: LegalDocument = {
         </li>
       </ul>
 
-      <h3>Prohibited Tools</h3>
+      <h3>Prohibited Apps</h3>
       <ul>
-        <li>Tools that collect unauthorized user data</li>
-        <li>Tools that spam or harass other users</li>
-        <li>Tools that violate platform security or stability</li>
-        <li>Tools that facilitate prohibited content or activities</li>
+        <li>Apps that collect unauthorized user data</li>
+        <li>Apps that spam or harass other users</li>
+        <li>Apps that violate platform security or stability</li>
+        <li>Apps that facilitate prohibited content or activities</li>
       </ul>
 
       <h2>6. Privacy and Safety</h2>
