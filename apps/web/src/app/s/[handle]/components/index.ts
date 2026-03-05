@@ -1,6 +1,5 @@
 /**
  * Space Residence Page Components
- * ENHANCED: Jan 31, 2026 — Split Panel Rebuild
  */
 
 // Core components
@@ -13,12 +12,6 @@ export { SpaceSettings } from './space-settings';
 export { SpaceInfoDrawer } from './space-info-drawer';
 export { ModerationPanel } from './moderation-panel';
 export { MemberManagement } from './member-management';
-
-// New Split Panel Components (Jan 2026)
-export { SpaceLayout } from './space-layout';
-export { SpaceSidebar } from './space-sidebar';
-export { MainContent } from './main-content';
-export { SpaceEventsTab } from './space-events-tab';
 
 // Sidebar components
 export { ToolsList, type ToolsListProps } from './sidebar/tools-list';
@@ -36,8 +29,3 @@ export { AnalyticsPanel } from './analytics-panel';
 export { SearchOverlay } from './search-overlay';
 export { LeaderCreateFAB } from './leader-create-fab';
 export { LeaderDashboard } from './leader-dashboard';
-export { SpacePostsTab } from './space-posts-tab';
-export { SpaceAppsTab } from './space-apps-tab';
-export { CreationCard } from './creation-card';
-export { SpaceTabs } from './space-tabs';
-export type { SpaceTab } from './space-tabs';

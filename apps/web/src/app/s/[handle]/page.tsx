@@ -2,24 +2,19 @@
 
 /**
  * Space Residence Page - /s/[handle]
- * SPLIT PANEL REBUILD: Jan 31, 2026
  *
- * Linear-style split panel layout:
- * - 200px sidebar (left): boards, tools, members
- * - Remaining width: chat feed + input
+ * Full-width chat stream layout:
+ * - Header → Context Bar → Message Stream → Chat Input
  *
  * Flow:
  * - Non-member → SpaceThreshold (join gate)
- * - Member → Split Panel View
- *
- * @version 4.0.0 - Split Panel Layout (Jan 2026)
+ * - Member → Chat Stream View
  */
 
 import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { usePermissions } from '@/hooks/use-permissions';
 import {
@@ -33,9 +28,6 @@ import {
   SpaceHeader,
   SpaceThreshold,
   ChatInput,
-  SpaceLayout,
-  SpaceSidebar,
-  MainContent,
   MessageFeed,
   TypingIndicator,
   type OnlineMember,
@@ -114,7 +106,6 @@ export default function SpacePageUnified() {
   const [showDeleteSpaceConfirm, setShowDeleteSpaceConfirm] = React.useState(false);
   const [showModerationPanel, setShowModerationPanel] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = React.useState(false);
   const [sparkleSheetOpen, setSparkleSheetOpen] = React.useState(false);
@@ -647,7 +638,7 @@ export default function SpacePageUnified() {
     );
   }
 
-  // Member: Show Split Panel layout
+  // Member: Full-width chat stream
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -660,14 +651,7 @@ export default function SpacePageUnified() {
       >
         <div className="h-screen flex flex-col">
           {/* Space Header */}
-          <div className="border-b border-white/[0.06] px-4 h-14 flex items-center flex-shrink-0">
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 mr-2 text-white/50 hover:text-white transition-colors"
-              aria-label="Open sidebar"
-            >
-              <Menu size={20} />
-            </button>
+          <div className="border-b border-white/[0.05] px-4 h-14 flex items-center flex-shrink-0">
             <SpaceHeader
                 space={{
                   id: space.id,
@@ -742,79 +726,8 @@ export default function SpacePageUnified() {
             <span>{sidebarTools.length} {sidebarTools.length === 1 ? 'app' : 'apps'} made</span>
           </div>
 
-          {/* Unified Stream — one stream, no tabs */}
-          <div className="flex-1 overflow-hidden">
-            <SpaceLayout
-              mobileSidebarOpen={mobileSidebarOpen}
-              onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              header={<div />}
-              sidebar={
-                <SpaceSidebar
-                  tools={{
-                    tools: sidebarTools,
-                    spaceId: space.id,
-                    isLoading: isLoadingTools,
-                    activeToolId: activeTool?.toolId,
-                    isLeader: space.isLeader,
-                    onToolClick: handleToolRun,
-                    onToolRun: handleToolRun,
-                    onViewFull: handleToolViewFull,
-                    onAddTool: () => {
-                      const params = new URLSearchParams({
-                        spaceId: space.id,
-                        spaceName: space.name,
-                      });
-                      router.push(`/build?${params.toString()}`);
-                    },
-                  }}
-                  events={{
-                    events: upcomingEvents.map(event => {
-                      const extendedEvent = event as typeof event & {
-                        location?: string;
-                        locationName?: string;
-                        isOnline?: boolean;
-                        locationType?: string;
-                      };
-                      return {
-                        id: event.id,
-                        title: event.title,
-                        startDate: event.time || new Date().toISOString(),
-                        location: extendedEvent.location || extendedEvent.locationName,
-                        isOnline: extendedEvent.isOnline || extendedEvent.locationType === 'virtual',
-                        rsvpCount: event.goingCount || 0,
-                      };
-                    }),
-                    maxEvents: 3,
-                    onClick: (event) => setSelectedEventId(event.id),
-                  }}
-                  members={{
-                    onlineCount: space.onlineCount,
-                    totalCount: space.memberCount,
-                    onlineMembers: onlineMembersPreview,
-                    onClick: () => { loadMembers(); setShowMembersPanel(true); },
-                  }}
-                />
-              }
-              input={
-                <div>
-                  <TypingIndicator typingUsers={typingUsers} />
-                  <ChatInput
-                    spaceId={space.id}
-                    onSend={sendMessage}
-                    placeholder={`Message ${space.name}`}
-                    onTypingChange={setTyping}
-                    prefill={chatPrefill}
-                    onPrefillConsumed={() => setChatPrefill(null)}
-                    onSparkleClick={() => setSparkleSheetOpen(true)}
-                  />
-                </div>
-              }
-            >
-              <MainContent
-                boardName={space.name}
-                contentKey="stream"
-                isLoading={isLoadingMessages}
-              >
+          {/* Full-width chat stream */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 {feedMessages.length === 0 && !isLoadingMessages ? (
                   <div className="flex-1 flex flex-col gap-5 px-4 py-8 max-w-lg mx-auto w-full">
                     {/* Space description */}
@@ -899,8 +812,20 @@ export default function SpacePageUnified() {
                     onComponentRsvp={handleComponentRsvp}
                   />
                 )}
-              </MainContent>
-            </SpaceLayout>
+
+            {/* Chat input — pinned bottom */}
+            <div className="shrink-0 border-t border-white/[0.05]">
+              <TypingIndicator typingUsers={typingUsers} />
+              <ChatInput
+                spaceId={space.id}
+                onSend={sendMessage}
+                placeholder={`Message ${space.name}`}
+                onTypingChange={setTyping}
+                prefill={chatPrefill}
+                onPrefillConsumed={() => setChatPrefill(null)}
+                onSparkleClick={() => setSparkleSheetOpen(true)}
+              />
+            </div>
           </div>
         </div>
 
@@ -1336,119 +1261,36 @@ export default function SpacePageUnified() {
   );
 }
 
-// Loading skeleton matching SpaceLayout: header top, sidebar LEFT (200px), content RIGHT (fluid)
+// Loading skeleton — full-width chat stream
 function SpacePageSkeleton() {
   return (
     <div className="h-screen flex flex-col bg-black">
       {/* Header skeleton */}
-      <motion.div
-        className="h-14 border-b border-white/[0.06] px-4 flex items-center gap-3 flex-shrink-0"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
-      >
-        <motion.div
-          className="h-8 w-8 rounded-lg bg-white/[0.06]"
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.default }}
-        />
+      <div className="h-14 border-b border-white/[0.05] px-4 flex items-center gap-3 flex-shrink-0">
+        <div className="h-8 w-8 rounded-lg bg-white/[0.04] animate-pulse" />
         <div className="space-y-1.5">
-          <motion.div
-            className="h-4 w-28 rounded bg-white/[0.06]"
-            animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.default }}
-          />
-          <motion.div
-            className="h-3 w-20 rounded bg-white/[0.06]"
-            animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.default }}
-          />
+          <div className="h-4 w-28 rounded bg-white/[0.04] animate-pulse" />
+          <div className="h-3 w-20 rounded bg-white/[0.04] animate-pulse" />
         </div>
-      </motion.div>
+      </div>
 
-      {/* Body: sidebar LEFT + content RIGHT */}
-      <motion.div
-        className="flex flex-1 min-h-0"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: MOTION.duration.base, delay: 0.1, ease: MOTION.ease.premium }}
-      >
-        {/* Sidebar skeleton (left, 200px) */}
-        <div className="w-[200px] border-r border-white/[0.06] p-3 space-y-2 flex-shrink-0">
-          <motion.div
-            className="h-3 w-16 rounded bg-white/[0.06] mb-3"
-            animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.default }}
-          />
-          {[1, 2, 3].map((i) => (
-            <motion.div
-              key={`board-${i}`}
-              className="h-8 rounded-lg bg-white/[0.06]"
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                delay: 0.2 + i * 0.1,
-                ease: MOTION.ease.default,
-              }}
-            />
-          ))}
-          <div className="pt-4 mt-4 border-t border-white/[0.06] space-y-2">
-            <motion.div
-              className="h-3 w-20 rounded bg-white/[0.06]"
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity, delay: 0.6, ease: MOTION.ease.default }}
-            />
-            <div className="flex gap-1.5">
-              {[1, 2, 3].map((i) => (
-                <motion.div
-                  key={`avatar-${i}`}
-                  className="h-6 w-6 rounded-full bg-white/[0.06]"
-                  animate={{ opacity: [0.3, 0.6, 0.3] }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    delay: 0.7 + i * 0.05,
-                    ease: MOTION.ease.default,
-                  }}
-                />
-              ))}
+      {/* Message stream skeleton */}
+      <div className="flex-1 p-4 space-y-4 overflow-hidden">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex gap-3">
+            <div className="h-8 w-8 rounded-full bg-white/[0.04] animate-pulse flex-shrink-0" />
+            <div className="space-y-1.5 flex-1">
+              <div className="h-3 w-24 rounded bg-white/[0.04] animate-pulse" />
+              <div className="h-4 rounded bg-white/[0.04] animate-pulse" style={{ width: `${60 + (i * 7) % 30}%` }} />
             </div>
           </div>
-        </div>
+        ))}
+      </div>
 
-        {/* Content skeleton (right, fluid) */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex-1 p-4 space-y-4 overflow-hidden">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <motion.div
-                key={`msg-${i}`}
-                className="flex gap-3"
-                animate={{ opacity: [0.3, 0.6, 0.3] }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  delay: i * 0.1,
-                  ease: MOTION.ease.default,
-                }}
-              >
-                <div className="h-8 w-8 rounded-full bg-white/[0.06] flex-shrink-0" />
-                <div className="space-y-1.5 flex-1">
-                  <div className="h-3 w-24 rounded bg-white/[0.06]" />
-                  <div className="h-4 rounded bg-white/[0.06]" style={{ width: `${60 + (i * 7) % 30}%` }} />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          <div className="p-3 border-t border-white/[0.06]">
-            <motion.div
-              className="h-10 rounded-lg bg-white/[0.06]"
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity, delay: 0.5, ease: MOTION.ease.default }}
-            />
-          </div>
-        </div>
-      </motion.div>
+      {/* Input skeleton */}
+      <div className="p-3 border-t border-white/[0.05]">
+        <div className="h-10 rounded-lg bg-white/[0.04] animate-pulse" />
+      </div>
     </div>
   );
 }
