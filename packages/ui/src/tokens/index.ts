@@ -32,16 +32,7 @@ export type {
   SpringPreset,
 } from './motion';
 
-// Spaces-specific motion tokens
-export {
-  SPACES_MOTION,
-  SPACES_GOLD,
-  AMBIENT_GLOW,
-  getWarmthLevel,
-  getWarmthConfig,
-  getEnergyDotCount,
-  getAmbientGlow,
-} from './spaces';
+// Spaces-specific tokens (deprecated — retained for internal use only)
 export type {
   WarmthLevel,
   AmbientGlowLevel,
