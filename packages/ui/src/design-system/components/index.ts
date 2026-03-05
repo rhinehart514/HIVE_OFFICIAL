@@ -212,30 +212,6 @@ export {
 } from './EventCalendar';
 
 // ============================================
-// HIVELAB IDE COMPONENTS (Re-exports)
-// Already well-built in components/hivelab/ide/
-// ============================================
-
-export {
-  IDEButton,
-  ideButtonVariants,
-  type IDEButtonProps,
-  IDEInput,
-  ideInputVariants,
-  type IDEInputProps,
-  IDEPanel,
-  IDEPanelHeader,
-  IDEPanelContent,
-  IDEPanelFooter,
-  type IDEPanelProps,
-  type IDEPanelHeaderProps,
-  type IDEPanelContentProps,
-  type IDEPanelFooterProps,
-  IDESection,
-  type IDESectionProps,
-} from '../../components/hivelab/ide/components';
-
-// ============================================
 // PROFILE COMPONENTS
 // NOTE: ProfileBentoGrid was in atomic/ (now deleted)
 // Use ProfileCard, ProfileHero, ProfileStatsRow from profile/ instead
@@ -1043,6 +1019,7 @@ export {
   ProfileToolsCard,
   ProfileConnectionsCard,
   ProfileInterestsCard,
+  ProfileActivityHeatmap,
   ProfileToolModal,
 } from './profile';
 
@@ -1084,44 +1061,33 @@ export type {
 } from './profile';
 
 // ============================================
-// SPACE THEATER MODE COMPONENTS (New Design System)
-// Hub + Modes architecture for immersive space experience
+// SPACE COMPONENTS (Simplified Feb 2026)
+// Hub/Theater/Modes/Boards architecture removed
 // ============================================
 
 export {
-  // Hub
-  SpaceHub,
-  ModeCard,
-  ChatModeCard,
-  EventsModeCard,
-  ToolsModeCard,
-  MembersModeCard,
-  // Mode Transitions
-  ModeTransition,
-  ModeHeader,
-  FullScreenMode,
   ContextPill,
   ContextPillMobile,
-  // Chat Components
   ChatRowMessage,
   SystemMessage,
   DateSeparator,
   ChatTypingDots,
   ChatTypingDotsCompact,
   ChatTypingDotsInline,
-  TheaterChatBoard,
-  // Full-Screen Modes
-  EventsMode,
-  ToolsMode,
-  MembersMode,
+  MemberInviteModal,
+  EventCreateModal,
+  EventDetailsModal,
+  ChatSearchModal,
+  PinnedMessagesWidget,
+  LeaderSetupProgress,
+  MobileActionBar,
+  MobileDrawer,
+  SpaceLeaderOnboardingModal,
+  SpaceWelcomeModal,
+  SpaceEntryAnimation,
 } from './spaces';
 
 export type {
-  // Hub Types
-  SpaceIdentity,
-  SpaceHubProps,
-  SpaceMode,
-  // Chat Types
   ChatRowMessageProps,
   ChatRowMessageAuthor,
   ChatRowMessageReaction,
@@ -1131,34 +1097,6 @@ export type {
   ChatTypingDotsCompactProps,
   ChatTypingDotsInlineProps,
   TypingUser,
-  TheaterChatBoardProps,
-  TheaterMessage,
-  // Mode Types
-  EventsModeProps,
-  SpaceEvent,
-  ToolsModeProps,
-  SpaceTool,
-  MembersModeProps,
-  SpaceMember,
-} from './spaces';
-
-// ============================================
-// SPACE MODALS (Phase 2)
-// Modal components for space management
-// ============================================
-
-export {
-  AddTabModal,
-  MemberInviteModal,
-  EventCreateModal,
-  EventDetailsModal,
-  AddWidgetModal,
-  ChatSearchModal,
-} from './spaces';
-
-export type {
-  AddTabInput,
-  AddTabModalProps,
   InviteableUser,
   MemberInviteInput,
   MemberInviteModalProps,
@@ -1167,28 +1105,9 @@ export type {
   RSVPStatus,
   SpaceEventDetails,
   EventDetailsModalProps,
-  AddWidgetInputUI,
-  ExistingTool,
-  AddWidgetModalProps,
-  QuickTemplateUI,
   ChatSearchModalProps,
   SearchResultMessage,
   ChatSearchFilters,
-} from './spaces';
-
-// ============================================
-// SPACE SIDEBAR & MOBILE (Phase 3)
-// Sidebar widgets and mobile navigation
-// ============================================
-
-export {
-  PinnedMessagesWidget,
-  LeaderSetupProgress,
-  MobileActionBar,
-  MobileDrawer,
-} from './spaces';
-
-export type {
   PinnedMessage,
   PinnedMessagesWidgetProps,
   SetupTask,
@@ -1196,30 +1115,12 @@ export type {
   MobileDrawerType,
   MobileActionBarProps,
   MobileDrawerProps,
-} from './spaces';
-
-// ============================================
-// SPACE ONBOARDING & ANIMATION (Phase 4)
-// Onboarding modals and entry animations
-// ============================================
-
-export {
-  SpaceLeaderOnboardingModal,
-  SpaceWelcomeModal,
-  SpaceEntryAnimation,
-  IntentConfirmationInline,
-} from './spaces';
-
-export type {
   QuickDeployTemplate,
   SpaceLeaderOnboardingModalProps,
   SpaceLeaderInfo,
   SpaceFeature,
   SpaceWelcomeModalProps,
   SpaceEntryAnimationProps,
-  IntentType,
-  IntentPreview,
-  IntentConfirmationInlineProps,
 } from './spaces';
 
 // ============================================

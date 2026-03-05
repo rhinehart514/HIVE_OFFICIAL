@@ -3,18 +3,11 @@
 /**
  * ProfileFeaturedToolCard - Pinnable featured tool showcase
  *
- * Design Philosophy:
- * - Apple: Premium card with depth and polish
- * - Spotify: Featured/hero content treatment
- * - HIVE: Gold accent for tool performance, warm dark palette
- *
- * @version 1.0.0 - Apple bento widget
+ * @version 2.0.0 - Stripped glass/shadows, no scale hover
  */
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
-import { easingArrays } from '@hive/tokens';
 
 export interface FeaturedTool {
   id: string;
@@ -58,141 +51,83 @@ export function ProfileFeaturedToolCard({
   onSelectTool,
   className,
 }: ProfileFeaturedToolCardProps) {
-  const [isHovered, setIsHovered] = React.useState(false);
-
-  // Empty state
   if (!tool) {
     return (
-      <motion.div
-        className={cn('relative overflow-hidden', className)}
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          borderRadius: '24px',
-          border: '1px solid var(--border-default)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-        }}
+      <div
+        className={cn(
+          'relative overflow-hidden rounded-3xl border border-[var(--border-default)]',
+          className
+        )}
+        style={{ backgroundColor: 'var(--bg-surface)' }}
       >
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 40%)',
-            borderRadius: '24px',
-          }}
-        />
-
         <div className="relative p-6 flex flex-col items-center justify-center min-h-[160px]">
           <span className="text-3xl mb-3">⭐</span>
-          <p
-            className="text-sm text-center mb-1"
-            style={{ color: 'var(--text-secondary)' }}
-          >
+          <p className="text-sm text-center mb-1" style={{ color: 'var(--text-secondary)' }}>
             Spotlight your best
           </p>
-          <p
-            className="text-xs text-center mb-4"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
+          <p className="text-xs text-center mb-4" style={{ color: 'var(--text-tertiary)' }}>
             Feature a creation you&apos;re proud of
           </p>
           {isOwnProfile && (
-            <motion.button
+            <button
               onClick={onSelectTool}
-              className="px-4 py-2 rounded-xl text-sm font-medium"
+              className="px-4 py-2 rounded-full text-sm font-medium transition-colors duration-100"
               style={{
                 backgroundColor: 'rgba(255, 215, 0, 0.1)',
                 color: 'var(--life-gold)',
                 border: '1px solid rgba(255, 215, 0, 0.3)',
               }}
-              whileHover={{
-                backgroundColor: 'rgba(255, 215, 0, 0.15)',
-              }}
-              whileTap={{ opacity: 0.8 }}
             >
               Pick a creation
-            </motion.button>
+            </button>
           )}
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   const isHighPerformer = tool.runs >= 100;
 
   return (
-    <motion.div
-      className={cn('relative overflow-hidden cursor-pointer', className)}
-      style={{
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: '24px',
-        border: isHighPerformer
-          ? '1px solid rgba(255, 215, 0, 0.3)'
-          : '1px solid var(--border-default)',
-        boxShadow: isHighPerformer
-          ? '0 4px 20px rgba(0, 0, 0, 0.2), 0 0 30px rgba(255, 215, 0, 0.08)'
-          : '0 4px 20px rgba(0, 0, 0, 0.2)',
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <div
+      className={cn(
+        'relative overflow-hidden cursor-pointer rounded-3xl transition-opacity duration-100 hover:opacity-90',
+        isHighPerformer
+          ? 'border border-[rgba(255,215,0,0.3)]'
+          : 'border border-[var(--border-default)]',
+        className
+      )}
+      style={{ backgroundColor: 'var(--bg-surface)' }}
       onClick={() => onToolClick?.(tool.id)}
-      whileHover={{ opacity: 0.96 }}
-      transition={{ duration: 0.2 }}
     >
-      {/* Gradient overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 40%)',
-          borderRadius: '24px',
-        }}
-      />
-
-      {/* Featured badge — only show when there's real traction */}
+      {/* Featured badge */}
       {(tool.runs > 0 || tool.deployedSpaces > 0) && (
-        <motion.div
+        <div
           className="absolute top-4 right-4 px-2.5 py-1 rounded-full flex items-center gap-1.5"
           style={{
             backgroundColor: 'rgba(255, 215, 0, 0.15)',
             border: '1px solid rgba(255, 215, 0, 0.3)',
           }}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
         >
           <span className="text-xs">⭐</span>
-          <span
-            className="text-xs font-medium"
-            style={{ color: 'var(--life-gold)' }}
-          >
+          <span className="text-xs font-medium" style={{ color: 'var(--life-gold)' }}>
             Featured
           </span>
-        </motion.div>
-      )}
-
-      {/* High performer glow */}
-      {isHighPerformer && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse at 50% 100%, rgba(255, 215, 0, 0.1) 0%, transparent 70%)',
-            borderRadius: '24px',
-          }}
-        />
+        </div>
       )}
 
       <div className="relative p-6">
-        {/* Tool icon and name */}
+        {/* Tool icon and name — no scale hover */}
         <div className="flex items-start gap-4 mb-4">
-          <motion.div
+          <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.06)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
             }}
-            animate={{ scale: isHovered ? 1.05 : 1 }}
-            transition={{ duration: 0.3, ease: easingArrays.default }}
           >
             {tool.emoji || '🔧'}
-          </motion.div>
+          </div>
 
           <div className="flex-1 min-w-0">
             <h3
@@ -212,7 +147,7 @@ export function ProfileFeaturedToolCard({
           </div>
         </div>
 
-        {/* Stats row — only show stats that have values */}
+        {/* Stats row */}
         {(tool.runs > 0 || tool.deployedSpaces > 0) && (
           <div className="flex items-center gap-4">
             {tool.runs > 0 && (
@@ -235,10 +170,7 @@ export function ProfileFeaturedToolCard({
             )}
 
             {tool.runs > 0 && tool.deployedSpaces > 0 && (
-              <div
-                className="w-px h-6"
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-              />
+              <div className="w-px h-6" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
             )}
 
             {tool.deployedSpaces > 0 && (
@@ -260,7 +192,7 @@ export function ProfileFeaturedToolCard({
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

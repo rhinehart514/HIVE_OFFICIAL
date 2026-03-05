@@ -170,9 +170,6 @@ export {
   MemberInviteModal, EventCreateModal, EventDetailsModal,
   PinnedMessagesWidget, LeaderSetupProgress, MobileActionBar, MobileDrawer,
   SpaceLeaderOnboardingModal, SpaceWelcomeModal, SpaceEntryAnimation,
-  // HiveLab IDE
-  IDEButton, ideButtonVariants, IDEInput, ideInputVariants,
-  IDEPanel, IDEPanelHeader, IDEPanelContent, IDEPanelFooter, IDESection,
 } from './components';
 
 // Re-export types from components
@@ -243,8 +240,6 @@ export type {
   MobileDrawerType, MobileActionBarProps, MobileDrawerProps,
   QuickDeployTemplate, SpaceLeaderOnboardingModalProps, SpaceLeaderInfo,
   SpaceFeature, SpaceWelcomeModalProps, SpaceEntryAnimationProps,
-  IDEButtonProps, IDEInputProps, IDEPanelProps, IDEPanelHeaderProps,
-  IDEPanelContentProps, IDEPanelFooterProps, IDESectionProps,
 } from './components';
 
 // ============================================

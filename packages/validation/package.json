@@ -23,7 +23,6 @@
   },
   "devDependencies": {
     "@hive/config-typescript": "workspace:*",
-    "tsup": "^8.3.5",
     "typescript": "^5.9.3"
   }
 }

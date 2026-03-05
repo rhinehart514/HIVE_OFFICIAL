@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import {
   ArrowRight, Zap, Sparkles, Check, Camera, FileText, Globe,
 } from 'lucide-react';
@@ -12,6 +11,9 @@ import {
   ProfileFeaturedToolCard,
   ProfileToolsCard,
   ProfileBelongingSpaceCard,
+  ProfileStatsRow,
+  ProfileActivityHeatmap,
+  ProfileConnectionsCard,
   ContextBanner,
   ProfileToolModal,
   ReportContentModal,
@@ -21,14 +23,10 @@ import {
   type ProfileBadge,
   type ProfileActivityTool,
   type ReportContentInput,
+  type ActivityContribution,
+  type ProfileConnection,
 } from '@hive/ui';
 import { useProfileByHandle } from './hooks';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
-
-const EASE_PREMIUM: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zone header
@@ -48,34 +46,43 @@ function ZoneHeader({ children }: { children: React.ReactNode }) {
 
 function ProfileLoadingState() {
   return (
-    <div className="w-full max-w-[480px] mx-auto px-6 py-8 pb-24 md:pb-8 space-y-8">
+    <div className="w-full max-w-[960px] mx-auto px-6 py-8 pb-24 md:pb-8 space-y-8">
       {/* Zone 1: Hero skeleton */}
       <ProfileIdentityHeroSkeleton />
 
-      {/* Zone 2: Tools skeleton */}
-      <div className="space-y-4 animate-pulse">
-        <div className="h-3 w-20 rounded bg-white/[0.06]" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-2xl bg-white/[0.06] h-[180px]" />
-          <div className="rounded-2xl bg-white/[0.06] h-[180px]" />
+      {/* Stats row skeleton */}
+      <div className="flex items-stretch py-2 px-4 animate-pulse">
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-2 py-4">
+            <div className="h-8 w-12 rounded bg-white/[0.06]" />
+            <div className="h-3 w-16 rounded bg-white/[0.06]" />
+          </div>
+        ))}
+      </div>
+
+      {/* Zone 2+3: 2-col bento skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-pulse">
+        <div className="space-y-4">
+          <div className="h-3 w-20 rounded bg-white/[0.06]" />
+          <div className="rounded-3xl bg-white/[0.06] h-[200px]" />
+          <div className="rounded-3xl bg-white/[0.06] h-[180px]" />
+        </div>
+        <div className="space-y-4">
+          <div className="h-3 w-16 rounded bg-white/[0.06]" />
+          <div className="space-y-3">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="rounded-2xl bg-white/[0.06] h-[68px]" />
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Zone 3: Spaces skeleton */}
-      <div className="space-y-4 animate-pulse">
-        <div className="h-3 w-16 rounded bg-white/[0.06]" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="rounded-2xl bg-white/[0.06] h-[68px]" />
-          ))}
-        </div>
-      </div>
+      {/* Zone 4: Activity heatmap skeleton */}
+      <div className="rounded-3xl bg-white/[0.06] h-[240px] animate-pulse" />
 
-      {/* Zone 4: Momentum skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-pulse">
-        <div className="rounded-2xl bg-white/[0.06] h-[240px] md:col-span-2" />
-        <div className="rounded-2xl bg-white/[0.06] h-[160px]" />
-        <div className="rounded-2xl bg-white/[0.06] h-[160px]" />
+      {/* Connections skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-pulse">
+        <div className="rounded-3xl bg-white/[0.06] h-[160px]" />
       </div>
     </div>
   );
@@ -126,6 +133,9 @@ export default function ProfilePageContent() {
     sharedInterests, sharedSpaceNames, viewerIsBuilder,
     connectionState, pendingRequestId, isConnectionLoading,
     handleConnect, handleAcceptRequest, handleRejectRequest, handleUnfriend, handleMessage,
+    // Restored data for stats/activity/connections
+    activityContributions, totalActivityCount, currentStreak,
+    profileConnections, totalConnections,
   } = state;
 
   const handleShare = React.useCallback(() => {
@@ -205,7 +215,6 @@ export default function ProfilePageContent() {
   });
 
   // ── Map badges from profile data ──
-  // badges come as string[] from the API (achievement names)
   const rawBadges = profileData.profile.badges || [];
   const profileBadges: ProfileBadge[] = rawBadges.map((badge: string, idx: number) => ({
     id: `badge-${idx}`,
@@ -215,7 +224,6 @@ export default function ProfilePageContent() {
     displayOrder: idx,
   }));
 
-  // Add dynamic badges from computed data
   if (heroBadges.isBuilder && !profileBadges.some(b => b.type === 'builder')) {
     profileBadges.push({ id: 'dynamic-builder', type: 'builder', name: 'Builder', description: 'Creates apps for campus', displayOrder: 100 });
   }
@@ -233,11 +241,13 @@ export default function ProfilePageContent() {
 
   const hasTools = sortedTools.length > 0;
   const hasSpaces = belongingSpaces.length > 0;
+  const hasActivity = totalActivityCount > 0 || activityContributions.length > 0;
+
   return (
-    <div className="w-full max-w-[480px] mx-auto px-6 py-8 pb-24 md:pb-8 space-y-8">
+    <div className="w-full max-w-[960px] mx-auto px-6 py-8 pb-24 md:pb-8 space-y-8">
 
       {/* ════════════════════════════════════════════════════════════════════════
-          Zone 1: Identity Hero
+          Zone 1: Identity Hero (full width)
           ════════════════════════════════════════════════════════════════════════ */}
       <div className="space-y-3">
         <ProfileIdentityHero
@@ -277,37 +287,36 @@ export default function ProfilePageContent() {
           />
         )}
 
-        {/* Participation count — the identity metric */}
+        {/* Participation count — prominent with gold number */}
         {totalToolRuns > 0 && (
-          <p className="text-[13px] text-white/40">
-            <span className="text-white/60 font-medium">{totalToolRuns.toLocaleString()}</span>
+          <p className="text-base text-white/50">
+            <span className="text-white font-medium">{totalToolRuns.toLocaleString()}</span>
             {' '}people participated in {isOwnProfile ? 'your' : `${heroUser.fullName.split(' ')[0]}'s`} creations
           </p>
         )}
 
-        {/* Stats row removed — overkill at 50 users */}
+        {/* Stats row — restored */}
+        <ProfileStatsRow
+          spaces={belongingSpaces.length}
+          friends={totalConnections}
+          tools={sortedTools.length}
+          activity={totalToolRuns}
+        />
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════════
           Get Started Checklist — own profile, incomplete
           ════════════════════════════════════════════════════════════════════════ */}
       {isOwnProfile && profileIncomplete && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: EASE_PREMIUM }}
-          className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-5"
-        >
+        <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[13px] font-medium text-white/60">Make your profile yours</p>
-            <span className="text-[11px] text-white/25 tabular-nums">{completenessScore}%</span>
+            <p className="text-[13px] font-medium text-white/50">Make your profile yours</p>
+            <span className="text-[11px] text-white/30 tabular-nums">{completenessScore}%</span>
           </div>
           <div className="w-full h-1 rounded-full bg-white/[0.06] mb-4 overflow-hidden">
-            <motion.div
+            <div
               className="h-full rounded-full bg-[#FFD700]/60"
-              initial={{ width: 0 }}
-              animate={{ width: `${completenessScore}%` }}
-              transition={{ duration: 0.6, ease: EASE_PREMIUM, delay: 0.2 }}
+              style={{ width: `${completenessScore}%` }}
             />
           </div>
           <div className="space-y-2">
@@ -321,7 +330,7 @@ export default function ProfilePageContent() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-100 ${
                   item.done
                     ? 'opacity-50 pointer-events-none'
                     : 'hover:bg-white/[0.04] cursor-pointer'
@@ -335,7 +344,7 @@ export default function ProfilePageContent() {
                   {item.done ? (
                     <Check className="w-3 h-3 text-[#FFD700]" />
                   ) : (
-                    <item.icon className="w-2.5 h-2.5 text-white/25" />
+                    <item.icon className="w-2.5 h-2.5 text-white/30" />
                   )}
                 </div>
                 <span className={`text-[13px] ${
@@ -344,120 +353,131 @@ export default function ProfilePageContent() {
                   {item.label}
                 </span>
                 {!item.done && (
-                  <ArrowRight className="w-3 h-3 text-white/20 ml-auto" />
+                  <ArrowRight className="w-3 h-3 text-white/30 ml-auto" />
                 )}
               </Link>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* ════════════════════════════════════════════════════════════════════════
-          Zone 2: Builder Showcase
+          Zone 2 + 3: 2-column bento (Creations left, Spaces right)
           ════════════════════════════════════════════════════════════════════════ */}
-      {(hasTools || isOwnProfile) && (
-        <div className="space-y-4">
-          <ZoneHeader>Builder Showcase</ZoneHeader>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Left column: Creations */}
+        {(hasTools || isOwnProfile) && (
+          <div className="space-y-4">
+            <ZoneHeader>Creations</ZoneHeader>
 
-          {hasTools ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Featured tool — hero card */}
-              <ProfileFeaturedToolCard
-                tool={featuredTool}
-                isOwnProfile={isOwnProfile}
-                onToolClick={handleToolClick}
-                className={secondaryTools.length === 0 ? 'lg:col-span-2' : ''}
-              />
-
-              {/* Secondary tools grid */}
-              {secondaryTools.length > 0 && (
-                <ProfileToolsCard
-                  tools={secondaryTools}
+            {hasTools ? (
+              <div className="space-y-4">
+                <ProfileFeaturedToolCard
+                  tool={featuredTool}
+                  isOwnProfile={isOwnProfile}
                   onToolClick={handleToolClick}
                 />
+                {secondaryTools.length > 0 && (
+                  <ProfileToolsCard
+                    tools={secondaryTools}
+                    onToolClick={handleToolClick}
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center text-center py-8 gap-4">
+                <p className="text-[15px] text-white/50">Build your first app to unlock your portfolio</p>
+                <Link
+                  href="/build"
+                  className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-[#FFD700] text-black text-sm font-semibold hover:bg-[#FFD700]/90 transition-colors duration-100"
+                >
+                  <Zap className="w-3.5 h-3.5" />Start building
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Right column: Spaces + Interests */}
+        {(hasSpaces || interests.length > 0 || isOwnProfile) && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <ZoneHeader>Spaces</ZoneHeader>
+              {hasSpaces && isOwnProfile && (
+                <Link href="/discover" className="text-[11px] text-white/30 hover:text-white/50 transition-colors duration-100 flex items-center gap-1">
+                  Browse spaces <ArrowRight className="w-3 h-3" />
+                </Link>
               )}
             </div>
-          ) : (
-            /* Empty state — own profile only */
-            <div className="flex flex-col items-center text-center py-8 gap-4">
-              <p className="text-[15px] text-white/50">Build your first app to unlock your portfolio</p>
-              <Link
-                href="/build"
-                className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-[#FFD700] text-black text-sm font-semibold hover:bg-[#FFD700]/90 transition-colors duration-100"
-              >
-                <Zap className="w-3.5 h-3.5" />Start building
-              </Link>
-            </div>
-          )}
-        </div>
+
+            {hasSpaces ? (
+              <div className="space-y-3">
+                {belongingSpaces.map(space => (
+                  <ProfileBelongingSpaceCard
+                    key={space.id}
+                    space={space}
+                    onClick={() => handleSpaceClick(space.id)}
+                  />
+                ))}
+              </div>
+            ) : isOwnProfile ? (
+              <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6">
+                <div className="relative flex items-center gap-4">
+                  <div className="flex-1">
+                    <p className="text-[13px] font-medium text-white/50">Join spaces to show where you belong</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">Greek life, clubs, dorms — your campus community</p>
+                  </div>
+                  <Link href="/discover" className="inline-flex items-center gap-1 text-[12px] text-[#FFD700]/50 hover:text-[#FFD700] transition-colors duration-100 shrink-0">
+                    Browse <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Interests pills */}
+            {interests.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {interests.slice(0, 12).map(interest => (
+                  <span
+                    key={interest}
+                    className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/50"
+                  >
+                    {interest}
+                  </span>
+                ))}
+                {sharedInterests.length > 0 && !isOwnProfile && (
+                  <span className="px-2.5 py-1 rounded-full bg-[#FFD700]/[0.06] border border-[#FFD700]/[0.15] text-[11px] text-[#FFD700]/50">
+                    {sharedInterests.length} shared
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          Zone 4: Activity heatmap (full width)
+          ════════════════════════════════════════════════════════════════════════ */}
+      {hasActivity && (
+        <ProfileActivityHeatmap
+          contributions={activityContributions}
+          totalContributions={totalActivityCount}
+          streak={currentStreak}
+        />
       )}
 
       {/* ════════════════════════════════════════════════════════════════════════
-          Zone 3: Campus Identity (spaces + interests)
+          Connections (half width)
           ════════════════════════════════════════════════════════════════════════ */}
-      {(hasSpaces || interests.length > 0 || isOwnProfile) && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <ZoneHeader>Campus Identity</ZoneHeader>
-            {hasSpaces && isOwnProfile && (
-              <Link href="/discover" className="text-[11px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-1">
-                Browse spaces <ArrowRight className="w-3 h-3" />
-              </Link>
-            )}
-          </div>
-
-          {hasSpaces ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {belongingSpaces.map(space => (
-                <ProfileBelongingSpaceCard
-                  key={space.id}
-                  space={space}
-                  onClick={() => handleSpaceClick(space.id)}
-                />
-              ))}
-            </div>
-          ) : isOwnProfile ? (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: EASE_PREMIUM }}
-              className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/[0.04] to-transparent pointer-events-none" />
-              <div className="relative flex items-center gap-4">
-                <div className="flex-1">
-                  <p className="text-[13px] font-medium text-white/50">Join spaces to show where you belong</p>
-                  <p className="text-[11px] text-white/25 mt-0.5">Greek life, clubs, dorms — your campus community</p>
-                </div>
-                <Link href="/discover" className="inline-flex items-center gap-1 text-[12px] text-[#FFD700]/60 hover:text-[#FFD700] transition-colors shrink-0">
-                  Browse <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-            </motion.div>
-          ) : null}
-
-          {/* Interests pills */}
-          {interests.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {interests.slice(0, 12).map(interest => (
-                <span
-                  key={interest}
-                  className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/50"
-                >
-                  {interest}
-                </span>
-              ))}
-              {sharedInterests.length > 0 && !isOwnProfile && (
-                <span className="px-2.5 py-1 rounded-full bg-[#FFD700]/[0.06] border border-[#FFD700]/[0.15] text-[11px] text-[#FFD700]/60">
-                  {sharedInterests.length} shared
-                </span>
-              )}
-            </div>
-          )}
+      {totalConnections > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ProfileConnectionsCard
+            totalConnections={totalConnections}
+            mutualConnections={profileConnections}
+          />
         </div>
       )}
-
-      {/* Zone 4 (Momentum) removed — activity heatmap, connections, and events overkill for 50 users */}
 
       {/* ════════════════════════════════════════════════════════════════════════
           Modals
