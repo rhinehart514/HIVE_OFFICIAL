@@ -1,6 +1,6 @@
 "use client"
 
-import { MinusIcon } from "@radix-ui/react-icons"
+import { Minus as MinusIcon } from "lucide-react"
 import * as React from "react"
 
 import { cn } from "../../lib/utils"

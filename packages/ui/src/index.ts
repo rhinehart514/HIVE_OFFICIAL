@@ -118,8 +118,7 @@ export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 export { NotificationBanner } from "./design-system/components/NotificationBanner";
 
 // Space Switcher (migrated to design-system Jan 2026)
-export { SpaceSwitcher } from "./design-system/components/SpaceSwitcher";
-export type { SpaceSwitcherProps, SpaceSwitcherSpace } from "./design-system/components/SpaceSwitcher";
+// SpaceSwitcher removed (unused)
 
 // Space Rail - REMOVED (Use Sidebar/MinimalSidebar instead)
 // NOTE: SpaceRail replaced by design-system Sidebar component
@@ -1411,7 +1410,6 @@ export {
   ProfileOverflowChip,
   // Belonging-First Profile (v2 - Profile Redesign)
   ProfileBelongingSpaceCard,
-  ProfileSharedBanner,
   // Legacy Profile Components
   ProfileCard,
   ProfileHero,
@@ -1421,7 +1419,6 @@ export {
   ProfileToolsCard,
   ProfileConnectionsCard,
   ProfileInterestsCard,
-  ProfileStatsWidget,
   ProfileFeaturedToolCard,
   ProfileActivityHeatmap,
   ProfileIdentityHeroSkeleton,
@@ -1445,7 +1442,6 @@ export type {
   // Belonging-First Profile Types (v2)
   BelongingSpace,
   ProfileBelongingSpaceCardProps,
-  ProfileSharedBannerProps,
   // Legacy Profile Types
   ProfileCardProps,
   ProfileHeroProps,
@@ -1461,7 +1457,6 @@ export type {
   ProfileConnectionsCardProps,
   ProfileConnection,
   ProfileInterestsCardProps,
-  ProfileStatsWidgetProps,
   ProfileFeaturedToolCardProps,
   FeaturedTool,
   ActivityContribution,

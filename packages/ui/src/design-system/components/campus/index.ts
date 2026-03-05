@@ -25,25 +25,4 @@ export {
   type CommandBarNotification,
 } from './CommandBar';
 
-// Campus Dock
-export {
-  CampusDock,
-  type CampusDockProps,
-  type DockSpaceItem,
-  type DockToolItem,
-} from './CampusDock';
-
-// Dock Orb
-export {
-  DockOrb,
-  type DockOrbProps,
-  type WarmthLevel,
-} from './DockOrb';
-
-// Preview Card
-export {
-  DockPreviewCard,
-  type DockPreviewCardProps,
-  type SpacePreviewData,
-  type ToolPreviewData,
-} from './DockPreviewCard';
+// CampusDock, DockOrb, DockPreviewCard removed (unused)

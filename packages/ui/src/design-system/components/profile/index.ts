@@ -68,11 +68,6 @@ export {
   type ProfileBelongingSpaceCardProps,
 } from './ProfileBelongingSpaceCard';
 
-export {
-  ProfileSharedBanner,
-  type ProfileSharedBannerProps,
-} from './ProfileSharedBanner';
-
 // Shared
 export {
   ProfileOverflowChip,
@@ -137,6 +132,10 @@ export {
 // CONNECTION COMPONENTS
 // ============================================
 
+// ============================================
+// CONNECTION COMPONENTS
+// ============================================
+
 export {
   ConnectButton,
   type ConnectButtonProps,
@@ -144,17 +143,8 @@ export {
 } from './ConnectButton';
 
 // ============================================
-// DISCOVERY COMPONENTS
-// ============================================
-
-// ============================================
 // BENTO GRID WIDGETS (New - Phase 2)
 // ============================================
-
-export {
-  ProfileStatsWidget,
-  type ProfileStatsWidgetProps,
-} from './ProfileStatsWidget';
 
 export {
   ProfileFeaturedToolCard,

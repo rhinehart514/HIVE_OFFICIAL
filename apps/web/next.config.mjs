@@ -13,7 +13,7 @@ const nextConfig = {
   reactStrictMode: true,
 
   // Redirect old auth routes to unified /enter flow
-  // IA Spec: docs/IA_PHASE1_AUTH_ONBOARDING.md
+  // Auth flow: see docs/architecture/auth-identity.md
   async redirects() {
     return [
       {
