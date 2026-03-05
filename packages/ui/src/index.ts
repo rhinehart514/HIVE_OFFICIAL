@@ -12,8 +12,6 @@ export { cn } from "./lib/utils";
 export {
   DiscoveryLayout,
   DiscoveryGrid,
-  DiscoveryList,
-  DiscoveryEmpty,
 } from "./layouts/DiscoveryLayout";
 
 export {
@@ -522,20 +520,7 @@ export type {
 } from "./design-system/primitives";
 // NOTE: SwitchField, thumbVariants - Use Switch + Label combo
 
-// Slider (Design System - Jan 2026)
-export {
-  Slider,
-  SliderWithLabels,
-  RangeSlider,
-  SliderWithMarks,
-  sliderVariants,
-} from "./design-system/components/Slider";
-export type {
-  SliderProps,
-  SliderWithLabelsProps,
-  RangeSliderProps,
-  SliderWithMarksProps,
-} from "./design-system/components/Slider";
+// Slider - REMOVED (dead export, zero imports from apps/web)
 
 // Note: Dialog components now exported from design-system above (line ~329)
 
@@ -637,25 +622,9 @@ export type {
   StatCardGroupProps,
 } from "./design-system/components/StatCard";
 
-// DataTable (Design System - Jan 2026)
-export {
-  DataTable,
-  DataTableSkeleton,
-} from "./design-system/components/DataTable";
-export type {
-  DataTableProps,
-  DataTableColumn,
-} from "./design-system/components/DataTable";
+// DataTable - REMOVED (dead export, zero imports from apps/web)
 
-// FileCard (Design System - Jan 2026)
-export {
-  FileCard,
-  FileCardSkeleton,
-  FileIcon,
-} from "./design-system/components/FileCard";
-export type {
-  FileCardProps,
-} from "./design-system/components/FileCard";
+// FileCard - REMOVED (dead export, zero imports from apps/web)
 
 // ChatComposer (Design System - Jan 2026)
 export {
@@ -705,12 +674,10 @@ export {
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
-  SimpleTooltip,
 } from "./design-system/primitives/Tooltip";
 export type {
   TooltipProps,
   TooltipContentProps,
-  SimpleTooltipProps,
 } from "./design-system/primitives/Tooltip";
 // NOTE: TooltipRich - Use Tooltip with custom content
 
@@ -798,53 +765,23 @@ export {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
-  SimpleCollapsible,
-  CollapsibleCard,
   collapsibleTriggerVariants,
 } from "./design-system/components/Collapsible";
 export type {
   CollapsibleProps,
   CollapsibleTriggerProps,
   CollapsibleContentProps,
-  SimpleCollapsibleProps,
-  CollapsibleCardProps,
 } from "./design-system/components/Collapsible";
 
 // ScrollArea - Removed: needs @radix-ui/react-scroll-area dependency
 // TODO: Install @radix-ui/react-scroll-area to re-enable
 
-// Stepper (Design System - Jan 2026)
-export {
-  Stepper,
-  DotStepper,
-  ProgressStepper,
-  stepVariants,
-  connectorVariants,
-} from "./design-system/components/Stepper";
-export type {
-  StepperProps,
-  Step,
-  DotStepperProps,
-  ProgressStepperProps,
-} from "./design-system/components/Stepper";
+// Stepper - REMOVED (dead export, zero imports from apps/web)
 
 // Callout - Removed: Type mismatch (HTMLDivElement vs HTMLQuoteElement)
 // TODO: Fix QuoteCallout ref type
 
-// NumberInput (Design System - Jan 2026)
-export {
-  NumberInput,
-  SimpleNumberInput,
-  CurrencyInput,
-  PercentInput,
-  numberInputVariants,
-} from "./design-system/components/NumberInput";
-export type {
-  NumberInputProps,
-  SimpleNumberInputProps,
-  CurrencyInputProps,
-  PercentInputProps,
-} from "./design-system/components/NumberInput";
+// NumberInput - REMOVED (dead export, zero imports from apps/web)
 
 // Combobox - Removed: depends on Popover which needs @radix-ui/react-hover-card
 // TODO: Fix Combobox dependency on Popover's hover-card
@@ -860,74 +797,25 @@ export type {
   NotificationBannerStackProps,
 } from "./design-system/components/NotificationBanner";
 
-// TabNav (Design System - Jan 2026)
-export {
-  TabNav,
-  TabPanel,
-  tabNavVariants,
-  tabItemVariants,
-} from "./design-system/components/TabNav";
-export type {
-  TabNavProps,
-  TabPanelProps,
-  TabItem,
-} from "./design-system/components/TabNav";
+// TabNav - REMOVED (dead export, zero imports from apps/web)
 
-// ProgressBar (Design System - Jan 2026)
-export {
-  ProgressBar,
-  ProgressCircle,
-  ProgressSteps as ProgressStepsNew,
-  progressFillVariants,
-} from "./design-system/components/ProgressBar";
-export type {
-  ProgressBarProps,
-  ProgressCircleProps,
-  ProgressStepsProps,
-} from "./design-system/components/ProgressBar";
+// ProgressBar - REMOVED (dead export, zero imports from apps/web)
 
-// ConfirmDialog & HiveConfirmModal (Design System - Jan 2026)
+// ConfirmDialog (Design System - Jan 2026)
 export {
   ConfirmDialog,
-  HiveConfirmModal,
   useConfirmDialog,
 } from "./design-system/components/ConfirmDialog";
 export type {
   ConfirmDialogProps,
-  HiveConfirmModalProps,
   UseConfirmDialogOptions,
 } from "./design-system/components/ConfirmDialog";
 
-// ThreadDrawer (Design System - Jan 2026)
-export {
-  ThreadDrawer,
-  type ThreadDrawerProps,
-  type ChatMessageData as ThreadMessage,
-} from "./design-system/components/ThreadDrawer";
+// ThreadDrawer - REMOVED (dead export, zero imports from apps/web)
 
-// TagInput (Design System - Jan 2026)
-export {
-  TagInput,
-  Tag,
-  tagVariants,
-} from "./design-system/components/TagInput";
-export type {
-  TagInputProps,
-  TagProps,
-} from "./design-system/components/TagInput";
+// TagInput - REMOVED (dead export, zero imports from apps/web)
 
-// ToggleGroup (Design System - Jan 2026)
-export {
-  ToggleGroup,
-  ToggleButton,
-  toggleGroupVariants,
-  toggleItemVariants,
-} from "./design-system/components/ToggleGroup";
-export type {
-  ToggleGroupProps,
-  ToggleButtonProps,
-  ToggleOption,
-} from "./design-system/components/ToggleGroup";
+// ToggleGroup - REMOVED (dead export, zero imports from apps/web)
 
 // AspectRatio - Removed: needs @radix-ui/react-aspect-ratio dependency
 // TODO: Install @radix-ui/react-aspect-ratio to re-enable
@@ -938,18 +826,7 @@ export type {
 // - "./design-system/components/Portal" (PortalWithContainer, TooltipPortal, ToastPortal)
 // - "./design-system/components/Slot" (Slottable, SlotClone, mergeProps, composeRefs, useSlot)
 
-// Pagination (Design System - Jan 2026)
-export {
-  Pagination,
-  SimplePagination,
-  CompactPagination,
-  paginationItemVariants,
-} from "./design-system/components/Pagination";
-export type {
-  PaginationProps,
-  SimplePaginationProps,
-  CompactPaginationProps,
-} from "./design-system/components/Pagination";
+// Pagination - REMOVED (dead export, zero imports from apps/web)
 
 // Grid - REMOVED (Use CSS Grid or GridLayout from recipes)
 // NOTE: Use GridLayout from recipes or native CSS Grid
@@ -965,12 +842,7 @@ export type { TextProps } from "./design-system/primitives/Text";
 export { DisplayText, displayTextVariants } from "./design-system/primitives/DisplayText";
 export type { DisplayTextProps } from "./design-system/primitives/DisplayText";
 
-export {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-  InputOTPSeparator
-} from "./components/ui/input-otp";
+// InputOTP - REMOVED (dead export, zero imports from apps/web)
 
 // Icon - Use Icon primitive from design-system
 export { Icon, iconVariants } from "./design-system/primitives/Icon";
@@ -1328,8 +1200,7 @@ export type {
 // NOTE: Shell from atomic/ replaced by Shell template from design-system
 export { PageHeader, SectionHeader } from "./layout/page-header";
 export type { PageHeaderProps, SectionHeaderProps } from "./layout/page-header";
-export { CollapsiblePageHeader } from "./layout/collapsible-page-header";
-export type { CollapsiblePageHeaderProps, TabItem as HeaderTabItem } from "./layout/collapsible-page-header";
+// CollapsiblePageHeader - REMOVED (dead export, zero imports from apps/web)
 
 // HiveLab: Editor Level Detection — REMOVED (deleted)
 // HiveLab: Simple Editors — REMOVED (deleted)

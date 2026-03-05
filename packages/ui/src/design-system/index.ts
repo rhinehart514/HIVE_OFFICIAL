@@ -98,7 +98,6 @@ export {
   MentionAutocomplete, useMentionAutocomplete,
   SearchInput, DatePicker, DateRangePicker,
   // Data
-  DataTable, DataTableSkeleton,
   EventCalendar, EventCalendarMini,
   // Feedback
   EmptyState, EmptyStatePresets,
@@ -107,30 +106,18 @@ export {
   StatCard, StatCardGroup, StatCardSkeleton, Sparkline,
   // Actions
   RSVPButton, RSVPButtonGroup,
-  // Files
-  FileCard, FileCardSkeleton, FileIcon,
   // Chat Input
   ChatComposer, ChatComposerMinimal,
-  ThreadDrawer,
-  // Input
-  TagInput, Tag, tagVariants,
-  ToggleGroup, ToggleButton, toggleGroupVariants, toggleItemVariants,
   // Overlay
-  ConfirmDialog, HiveConfirmModal, useConfirmDialog,
+  ConfirmDialog, useConfirmDialog,
   // Notification
   NotificationBanner, NotificationBannerStack, bannerVariants,
-  // Tabs
-  TabNav, TabPanel, tabNavVariants, tabItemVariants,
-  // Progress
-  ProgressBar, ProgressCircle, ProgressSteps, progressBarVariants, progressFillVariants,
   // Dropdown
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuCheckboxItem, DropdownMenuRadioItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuGroup,
   DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent,
   DropdownMenuSubTrigger, DropdownMenuRadioGroup,
-  // Slider
-  Slider, SliderWithLabels, RangeSlider, SliderWithMarks, sliderVariants,
   // Radio
   RadioGroupComposed, RadioGroupItemComposed, RadioOption, RadioCard,
   SimpleRadioGroup, radioGroupComposedVariants,
@@ -153,19 +140,13 @@ export {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent, SimpleAccordion,
   accordionVariants, accordionItemVariants, accordionTriggerVariants,
   // Collapsible
-  Collapsible, CollapsibleTrigger, CollapsibleContent, SimpleCollapsible, CollapsibleCard,
+  Collapsible, CollapsibleTrigger, CollapsibleContent,
   collapsibleTriggerVariants,
   // Combobox
   CommandLoading, Combobox, comboboxTriggerVariants,
-  // Pagination
-  Pagination, SimplePagination, CompactPagination, paginationItemVariants,
-  // Stepper
-  Stepper, DotStepper, ProgressStepper, stepVariants, connectorVariants,
   // ScrollArea
   ScrollArea, ScrollAreaRoot, ScrollAreaViewport, ScrollAreaScrollbar,
   ScrollAreaThumb, ScrollAreaCorner, scrollbarVariants, thumbVariants,
-  // NumberInput
-  NumberInput, SimpleNumberInput, CurrencyInput, PercentInput, numberInputVariants,
   // VisuallyHidden
   VisuallyHidden, VisuallyHiddenInput, FocusableVisuallyHidden, srOnlyClass, notSrOnlyClass,
   // Portal
@@ -217,21 +198,13 @@ export type {
   ImageUploaderProps, ImageUploaderCompactProps,
   MentionAutocompleteProps, MentionUser, UseMentionAutocompleteOptions, UseMentionAutocompleteReturn,
   SearchInputProps, DatePickerProps, DateRangePickerProps,
-  DataTableProps, DataTableColumn,
   EventCalendarProps, EventCalendarMiniProps, CalendarEvent,
   EmptyStateProps, ErrorStateProps,
   StatCardProps, StatCardGroupProps,
   RSVPButtonProps, RSVPButtonGroupProps,
-  FileCardProps,
   ChatComposerProps, ChatComposerMinimalProps, ChatAttachment, ChatReplyTo,
-  ThreadDrawerProps,
-  TagInputProps, TagProps,
-  ToggleGroupProps, ToggleButtonProps, ToggleOption,
-  ConfirmDialogProps, HiveConfirmModalProps, UseConfirmDialogOptions,
+  ConfirmDialogProps, UseConfirmDialogOptions,
   NotificationBannerProps, NotificationBannerStackProps,
-  TabNavProps, TabPanelProps, TabItem,
-  ProgressBarProps, ProgressCircleProps, ProgressStepsProps,
-  SliderProps, SliderWithLabelsProps, RangeSliderProps, SliderWithMarksProps,
   RadioGroupComposedProps, RadioGroupItemComposedProps, RadioOptionProps, RadioCardProps,
   SimpleRadioGroupProps, SimpleRadioOption,
   DrawerContentProps,
@@ -241,12 +214,8 @@ export type {
   AccordionProps, AccordionItemProps, AccordionTriggerProps, AccordionContentProps,
   SimpleAccordionProps, SimpleAccordionItem,
   CollapsibleProps, CollapsibleTriggerProps, CollapsibleContentProps,
-  SimpleCollapsibleProps, CollapsibleCardProps,
   ComboboxProps, ComboboxOption, ComboboxGroup,
-  PaginationProps, SimplePaginationProps, CompactPaginationProps,
-  StepperProps, Step, DotStepperProps, ProgressStepperProps,
   ScrollAreaProps,
-  NumberInputProps, SimpleNumberInputProps, CurrencyInputProps, PercentInputProps,
   VisuallyHiddenProps, VisuallyHiddenInputProps, FocusableVisuallyHiddenProps,
   PortalProps, PortalWithContainerProps, TooltipPortalProps, ToastPortalProps,
   SlotProps, SlottableProps, SlotCloneProps,

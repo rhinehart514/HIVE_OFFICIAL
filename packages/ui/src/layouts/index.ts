@@ -10,10 +10,10 @@
  * FocusFlow: wizards/forms, sequential (Shell OFF)
  */
 
-export { OrientationLayout } from './OrientationLayout';
+// OrientationLayout - REMOVED (dead export, zero imports from apps/web)
 export { DiscoveryLayout } from './DiscoveryLayout';
-export { ImmersionLayout } from './ImmersionLayout';
-export { FocusFlowLayout } from './FocusFlowLayout';
+// ImmersionLayout - REMOVED (dead export, zero imports from apps/web)
+// FocusFlowLayout - REMOVED (dead export, zero imports from apps/web)
 
 // Layout context for shell visibility control
 export { LayoutProvider, useLayout, type LayoutArchetype } from './LayoutContext';

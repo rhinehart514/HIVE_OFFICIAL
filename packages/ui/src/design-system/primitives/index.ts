@@ -138,10 +138,8 @@ export {
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
-  SimpleTooltip,
   type TooltipProps,
   type TooltipContentProps,
-  type SimpleTooltipProps,
 } from './Tooltip';
 
 export {
@@ -343,11 +341,7 @@ export {
   type GridProps,
 } from './layout/Grid';
 
-export {
-  Spacer,
-  spacerVariants,
-  type SpacerProps,
-} from './layout/Spacer';
+// Spacer - REMOVED (dead export, zero imports from apps/web)
 
 export {
   LandingSection,

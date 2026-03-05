@@ -24,19 +24,12 @@ export {
   type ScrollViewportProps,
 } from "./scroll-area";
 export { Separator, type SeparatorProps, separatorVariants } from "./separator";
-export { Spacer, type SpacerProps } from "./spacer";
+// Spacer - REMOVED (dead export, zero imports from apps/web)
 export {
   PageHeader,
   SectionHeader,
   type PageHeaderProps,
   type SectionHeaderProps,
 } from "./page-header";
-export {
-  CollapsiblePageHeader,
-  type CollapsiblePageHeaderProps,
-  type TabItem,
-} from "./collapsible-page-header";
-export {
-  ViewportSafeArea,
-  type ViewportSafeAreaProps,
-} from "./viewport-safe-area";
+// CollapsiblePageHeader - REMOVED (dead export, zero imports from apps/web)
+// ViewportSafeArea - REMOVED (dead export, zero imports from apps/web)
