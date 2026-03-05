@@ -11,7 +11,7 @@ export function CTASection() {
   const enterHref = buildEnterUrl(searchParams.get('redirect'));
 
   return (
-    <section className="relative overflow-hidden bg-black px-6 py-32 md:py-44">
+    <section className="relative overflow-hidden bg-black px-6 py-24 md:py-32">
       <div className="relative mx-auto max-w-2xl text-center">
         <h2
           className={`${clashDisplay} mb-5 text-[clamp(32px,6vw,56px)] font-semibold leading-tight tracking-[-0.03em] text-white`}

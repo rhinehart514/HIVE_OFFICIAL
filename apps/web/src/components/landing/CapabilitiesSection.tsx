@@ -30,10 +30,10 @@ export function CapabilitiesSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="bg-black px-6 py-24 md:py-32">
+    <section ref={sectionRef} className="bg-black px-6 py-16 md:py-24">
       <div className="mx-auto max-w-5xl">
         {/* Header */}
-        <div className="mb-12 text-center">
+        <div className="mb-8 text-center">
           <span className="mb-3 block font-mono text-[11px] uppercase tracking-[0.2em] text-white/50">
             What students are making
           </span>

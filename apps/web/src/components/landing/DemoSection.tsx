@@ -33,7 +33,7 @@ export function DemoSection() {
     }
   }, []);
 
-  // Intersection observer to trigger animation
+  // Intersection observer — low threshold + delay so user sees the typing
   useEffect(() => {
     if (prefersReduced) return;
     const el = sectionRef.current;
@@ -42,11 +42,12 @@ export function DemoSection() {
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && phase === 'idle') {
-          setPhase('typing');
           obs.disconnect();
+          // Small delay so the frame is in view before typing starts
+          setTimeout(() => setPhase('typing'), 400);
         }
       },
-      { threshold: 0.4 }
+      { threshold: 0.15 }
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -72,10 +73,10 @@ export function DemoSection() {
   }, [phase]);
 
   return (
-    <section ref={sectionRef} className="bg-black px-6 py-24 md:py-32">
+    <section ref={sectionRef} className="bg-black px-6 py-16 md:py-24">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
-        <div className="mb-12 text-center">
+        <div className="mb-8 text-center">
           <span className="mb-3 block font-mono text-[11px] uppercase tracking-[0.2em] text-[#FFD700]/70">
             How it works
           </span>
@@ -138,23 +139,6 @@ export function DemoSection() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="mt-8 flex items-center justify-center gap-8 text-center">
-          <div>
-            <div className={`${clashDisplay} text-[24px] font-semibold text-white`}>600+</div>
-            <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-white/30">
-              spaces
-            </div>
-          </div>
-          <div className="h-8 w-px bg-white/[0.06]" />
-          <div>
-            <div className={`${clashDisplay} text-[24px] font-semibold text-white`}>&lt;60s</div>
-            <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-white/30">
-              idea to live app
             </div>
           </div>
         </div>
