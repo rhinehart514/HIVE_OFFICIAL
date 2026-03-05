@@ -121,7 +121,7 @@ export function SparkleCreateSheet({
                     <h3 className="text-[15px] font-medium text-white mb-1">
                       Create something for {spaceName}
                     </h3>
-                    <p className="text-[13px] text-white/40 mb-4">
+                    <p className="text-[13px] text-white/50 mb-4">
                       Pick a format or describe what you need
                     </p>
 
@@ -134,11 +134,11 @@ export function SparkleCreateSheet({
                             key={chip.id}
                             onClick={() => handleFormatSelect(chip.id)}
                             className={cn(
-                              'flex items-center gap-2 px-4 py-2.5 rounded-xl',
-                              'border border-white/[0.08] bg-white/[0.02]',
-                              'text-[13px] font-medium text-white/60',
-                              'hover:bg-white/[0.06] hover:text-white hover:border-white/[0.12]',
-                              'transition-colors'
+                              'flex items-center gap-2 px-4 py-2.5 rounded-full',
+                              'border border-white/[0.08]',
+                              'text-[13px] font-medium text-white/50',
+                              'hover:text-white hover:border-white/[0.15]',
+                              'transition-colors duration-100'
                             )}
                           >
                             <Icon className="w-4 h-4" />
@@ -164,10 +164,10 @@ export function SparkleCreateSheet({
                         placeholder="Describe what you want to create..."
                         rows={2}
                         className={cn(
-                          'w-full px-4 py-3 pr-12 rounded-xl text-[14px]',
+                          'w-full px-4 py-3 pr-12 rounded-2xl text-[14px]',
                           'bg-white/[0.03] border border-white/[0.06]',
                           'text-white placeholder:text-white/30',
-                          'focus:outline-none focus:ring-1 focus:ring-white/20',
+                          'focus:outline-none focus:ring-1 focus:ring-[#FFD700]/40',
                           'resize-none'
                         )}
                       />
@@ -178,9 +178,9 @@ export function SparkleCreateSheet({
                             handleCustomSubmit();
                           }}
                           className={cn(
-                            'absolute right-3 bottom-3 p-1.5 rounded-lg',
-                            'bg-[var(--color-gold)] text-black',
-                            'hover:opacity-90 transition-opacity'
+                            'absolute right-3 bottom-3 p-1.5 rounded-full',
+                            'bg-[#FFD700] text-black',
+                            'hover:opacity-90 transition-opacity duration-100'
                           )}
                         >
                           <Send className="w-3.5 h-3.5" />
@@ -202,7 +202,7 @@ export function SparkleCreateSheet({
                         setMode('quick');
                         setIsGenerating(false);
                       }}
-                      className="flex items-center gap-1.5 text-[13px] text-white/40 hover:text-white/70 mb-3 transition-colors"
+                      className="flex items-center gap-1.5 text-[13px] text-white/50 hover:text-white mb-3 transition-colors duration-100"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       Back
@@ -219,15 +219,15 @@ export function SparkleCreateSheet({
 
                     {isGenerating ? (
                       <div className="py-8 text-center">
-                        <Loader2 className="w-6 h-6 text-white/40 animate-spin mx-auto mb-2" />
-                        <p className="text-[13px] text-white/40">
+                        <Loader2 className="w-6 h-6 text-white/50 animate-spin mx-auto mb-2" />
+                        <p className="text-[13px] text-white/50">
                           Generating...
                         </p>
                       </div>
                     ) : (
                       <div className="py-8 text-center">
-                        <p className="text-[13px] text-white/40">
-                          AI creation will appear here
+                        <p className="text-[13px] text-white/50">
+                          Opening Build page...
                         </p>
                       </div>
                     )}

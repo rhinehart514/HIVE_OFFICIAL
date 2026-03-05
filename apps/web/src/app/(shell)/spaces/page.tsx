@@ -3,6 +3,19 @@
 import Link from 'next/link';
 import { useMySpaces, type MySpace } from '@/hooks/queries/use-my-spaces';
 
+function relativeTime(dateStr?: string): string {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return `${Math.floor(days / 7)}w`;
+}
+
 function SpaceRow({ space }: { space: MySpace }) {
   return (
     <Link
@@ -20,20 +33,31 @@ function SpaceRow({ space }: { space: MySpace }) {
         )}
       </div>
 
-      {/* Name + type */}
+      {/* Name + secondary */}
       <div className="flex-1 min-w-0">
-        <span className="text-[15px] font-medium text-white truncate block">
-          {space.name}
-        </span>
-        <span className="font-mono text-[11px] text-white/30 uppercase">
-          {space.type.replace(/_/g, ' ')}
+        <div className="flex items-center gap-2">
+          <span className="text-[15px] font-medium text-white truncate">
+            {space.name}
+          </span>
+        </div>
+        <span className="text-[12px] text-white/30">
+          {space.memberCount > 0
+            ? `${space.memberCount} member${space.memberCount !== 1 ? 's' : ''}`
+            : space.type.replace(/_/g, ' ')}
         </span>
       </div>
 
-      {/* Unread dot */}
-      {space.unreadCount > 0 && (
-        <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700] shrink-0" />
-      )}
+      {/* Right side: timestamp + unread */}
+      <div className="flex items-center gap-2 shrink-0">
+        {space.updatedAt && (
+          <span className="font-mono text-[11px] text-white/30 tabular-nums">
+            {relativeTime(space.updatedAt)}
+          </span>
+        )}
+        {space.unreadCount > 0 && (
+          <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700] shrink-0" />
+        )}
+      </div>
     </Link>
   );
 }
@@ -48,9 +72,9 @@ export default function SpacesPage() {
         <h1 className="font-clash text-[32px] font-semibold text-white">Spaces</h1>
         <Link
           href="/discover"
-          className="text-[14px] text-white/50 hover:text-white transition-colors duration-100"
+          className="text-[13px] text-white/50 hover:text-white transition-colors duration-100"
         >
-          Browse all
+          Browse all spaces
         </Link>
       </div>
 
@@ -90,6 +114,14 @@ export default function SpacesPage() {
           {spaces.map((space) => (
             <SpaceRow key={space.id} space={space} />
           ))}
+
+          {/* Browse all link */}
+          <Link
+            href="/discover"
+            className="mt-4 py-3 text-center text-[13px] text-white/30 hover:text-white/50 transition-colors duration-100"
+          >
+            Browse all spaces &rarr;
+          </Link>
         </div>
       )}
     </div>
