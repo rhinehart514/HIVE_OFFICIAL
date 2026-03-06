@@ -4,6 +4,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import * as _admin from 'firebase-admin';
 import { getAuth, type DecodedIdToken } from 'firebase-admin/auth';
 import { getAuthTokenFromRequest } from '@/lib/auth';
+import { withOptionalAuth, getUserId, getUser } from '@/lib/middleware';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
@@ -27,38 +28,29 @@ const MetricsBatchSchema = z.object({
 
 const _db = dbAdmin;
 
-// POST /api/analytics/metrics - Store performance metrics
-export async function POST(request: NextRequest) {
-  try {
-    // Get auth token (optional for metrics)
-    const token = getAuthTokenFromRequest(request);
+// POST /api/analytics/metrics - Store performance metrics (optional auth + rate limit via middleware)
+export const POST = withOptionalAuth(
+  async (request, _context, respond) => {
+    // Get user ID from optional auth
     let userId: string | null = null;
-    
-    if (token) {
-      try {
-        const auth = getAuth();
-        const decodedToken = await auth.verifyIdToken(token);
-        userId = decodedToken.uid;
-      } catch (error) {
-        // Continue without user ID if token is invalid
-        logger.warn(
-      `Invalid token in metrics request at /api/analytics/metrics`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-      }
+    try {
+      const user = getUser(request as NextRequest);
+      userId = user?.uid ?? null;
+    } catch {
+      // Not authenticated — that's fine for metrics
     }
 
-    const body = await request.json();
+    const body = await (request as Request).json();
     const { metrics } = MetricsBatchSchema.parse(body);
 
     // Filter and process metrics
     const processedMetrics = metrics.map(metric => ({
       ...metric,
-      userId: metric.userId || userId, // Use authenticated user ID if not provided
+      userId: metric.userId || userId,
       timestamp: new Date(metric.timestamp),
       receivedAt: new Date(),
-      userAgent: request.headers.get('user-agent') || 'unknown',
-      ip: getClientIp(request),
+      userAgent: (request as Request).headers.get('user-agent') || 'unknown',
+      ip: getClientIp(request as NextRequest),
     }));
 
     // Store metrics in batches
@@ -75,29 +67,13 @@ export async function POST(request: NextRequest) {
     // Aggregate metrics for real-time dashboards
     await aggregateMetrics(processedMetrics);
 
-    return NextResponse.json({
-      success: true,
+    return respond.success({
       processed: processedMetrics.length,
-      timestamp: new Date().toISOString() });
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Invalid metrics data',
-          details: error.errors,
-        },
-        { status: HttpStatus.BAD_REQUEST }
-      );
-    }
-
-    logger.error(
-      `Error storing metrics at /api/analytics/metrics`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to store metrics", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
-  }
-}
+      timestamp: new Date().toISOString()
+    });
+  },
+  { skipCSRF: true, rateLimit: { maxRequests: 100, windowMs: 60000 } }
+);
 
 // GET /api/analytics/metrics - Retrieve metrics with filters
 async function _GET(request: NextRequest) {

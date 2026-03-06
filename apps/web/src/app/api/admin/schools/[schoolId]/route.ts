@@ -7,10 +7,9 @@
  * DELETE /api/admin/schools/[schoolId] - Delete school (soft)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { validateApiAuth } from '@/lib/middleware/auth';
+import { withAdminAuthAndErrors, getUserId } from '@/lib/middleware';
 import { logger } from '@/lib/logger';
 import { clearDomainCache } from '@/lib/campus-context';
 import { withCache } from '../../../../../lib/cache-headers';
@@ -55,203 +54,99 @@ interface RouteContext {
  * GET /api/admin/schools/[schoolId]
  * Get school details
  */
-async function _GET(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    const { schoolId } = await context.params;
+const _GET = withAdminAuthAndErrors<RouteContext>(async (_request, context, respond) => {
+  const { schoolId } = await context.params;
 
-    // Require admin authentication
-    const auth = await validateApiAuth(request);
-    if (!auth.isAdmin) {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+  const schoolDoc = await dbAdmin.collection('schools').doc(schoolId).get();
 
-    const schoolDoc = await dbAdmin.collection('schools').doc(schoolId).get();
-
-    if (!schoolDoc.exists) {
-      return NextResponse.json(
-        { error: 'School not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      school: {
-        id: schoolDoc.id,
-        ...schoolDoc.data(),
-      },
-    });
-  } catch (error) {
-    logger.error('Failed to get school', {
-      component: 'admin-schools',
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    return NextResponse.json(
-      { error: 'Failed to get school' },
-      { status: 500 }
-    );
+  if (!schoolDoc.exists) {
+    return respond.error('School not found', 'NOT_FOUND', { status: 404 });
   }
-}
+
+  return respond.success({ school: { id: schoolDoc.id, ...schoolDoc.data() } });
+});
 
 /**
  * PATCH /api/admin/schools/[schoolId]
  * Update school configuration
  */
-export async function PATCH(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    const { schoolId } = await context.params;
+export const PATCH = withAdminAuthAndErrors<RouteContext>(async (request, context, respond) => {
+  const adminId = getUserId(request);
+  const { schoolId } = await context.params;
 
-    // Require admin authentication
-    const auth = await validateApiAuth(request);
-    if (!auth.isAdmin) {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+  const schoolRef = dbAdmin.collection('schools').doc(schoolId);
+  const schoolDoc = await schoolRef.get();
 
-    const schoolRef = dbAdmin.collection('schools').doc(schoolId);
-    const schoolDoc = await schoolRef.get();
-
-    if (!schoolDoc.exists) {
-      return NextResponse.json(
-        { error: 'School not found' },
-        { status: 404 }
-      );
-    }
-
-    const body = await request.json();
-    const parsed = updateSchoolSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid update data', details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const updates = {
-      ...parsed.data,
-      isActive: parsed.data.status === 'active', // Backwards compatibility
-      updatedAt: new Date(),
-      updatedBy: auth.userId,
-    };
-
-    await schoolRef.update(updates);
-
-    // Clear domain cache so changes are recognized
-    clearDomainCache();
-
-    logger.info('School updated', {
-      component: 'admin-schools',
-      schoolId,
-      updatedBy: auth.userId,
-      fields: Object.keys(parsed.data),
-    });
-
-    const updatedDoc = await schoolRef.get();
-
-    return NextResponse.json({
-      success: true,
-      school: {
-        id: updatedDoc.id,
-        ...updatedDoc.data(),
-      },
-    });
-  } catch (error) {
-    logger.error('Failed to update school', {
-      component: 'admin-schools',
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    return NextResponse.json(
-      { error: 'Failed to update school' },
-      { status: 500 }
-    );
+  if (!schoolDoc.exists) {
+    return respond.error('School not found', 'NOT_FOUND', { status: 404 });
   }
-}
+
+  const body = await (request as Request).json();
+  const parsed = updateSchoolSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return respond.error('Invalid update data', 'INVALID_INPUT', { status: 400 });
+  }
+
+  const updates = {
+    ...parsed.data,
+    isActive: parsed.data.status === 'active',
+    updatedAt: new Date(),
+    updatedBy: adminId,
+  };
+
+  await schoolRef.update(updates);
+  clearDomainCache();
+
+  logger.info('School updated', {
+    component: 'admin-schools',
+    schoolId,
+    updatedBy: adminId,
+    fields: Object.keys(parsed.data),
+  });
+
+  const updatedDoc = await schoolRef.get();
+  return respond.success({ school: { id: updatedDoc.id, ...updatedDoc.data() } });
+});
 
 /**
  * DELETE /api/admin/schools/[schoolId]
  * Soft delete school (sets status to suspended)
  */
-export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
-    const { schoolId } = await context.params;
+export const DELETE = withAdminAuthAndErrors<RouteContext>(async (request, context, respond) => {
+  const adminId = getUserId(request);
+  const { schoolId } = await context.params;
 
-    // Require admin authentication
-    const auth = await validateApiAuth(request);
-    if (!auth.isAdmin) {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
-
-    // Prevent deletion of UB
-    if (schoolId === 'ub-buffalo') {
-      return NextResponse.json(
-        { error: 'Cannot delete primary school' },
-        { status: 403 }
-      );
-    }
-
-    const schoolRef = dbAdmin.collection('schools').doc(schoolId);
-    const schoolDoc = await schoolRef.get();
-
-    if (!schoolDoc.exists) {
-      return NextResponse.json(
-        { error: 'School not found' },
-        { status: 404 }
-      );
-    }
-
-    // Soft delete - set status to suspended
-    await schoolRef.update({
-      status: 'suspended',
-      isActive: false,
-      suspendedAt: new Date(),
-      suspendedBy: auth.userId,
-      updatedAt: new Date(),
-    });
-
-    // Clear domain cache
-    clearDomainCache();
-
-    logger.info('School suspended', {
-      component: 'admin-schools',
-      schoolId,
-      suspendedBy: auth.userId,
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'School suspended',
-    });
-  } catch (error) {
-    logger.error('Failed to delete school', {
-      component: 'admin-schools',
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    return NextResponse.json(
-      { error: 'Failed to delete school' },
-      { status: 500 }
-    );
+  // Prevent deletion of UB
+  if (schoolId === 'ub-buffalo') {
+    return respond.error('Cannot delete primary school', 'FORBIDDEN', { status: 403 });
   }
-}
+
+  const schoolRef = dbAdmin.collection('schools').doc(schoolId);
+  const schoolDoc = await schoolRef.get();
+
+  if (!schoolDoc.exists) {
+    return respond.error('School not found', 'NOT_FOUND', { status: 404 });
+  }
+
+  // Soft delete - set status to suspended
+  await schoolRef.update({
+    status: 'suspended',
+    isActive: false,
+    suspendedAt: new Date(),
+    suspendedBy: adminId,
+    updatedAt: new Date(),
+  });
+
+  clearDomainCache();
+
+  logger.info('School suspended', {
+    component: 'admin-schools',
+    schoolId,
+    suspendedBy: adminId,
+  });
+
+  return respond.success({ message: 'School suspended' });
+});
 
 export const GET = withCache(_GET, 'PRIVATE');

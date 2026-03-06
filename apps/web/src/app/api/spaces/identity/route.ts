@@ -94,7 +94,7 @@ const _GET = withAuthAndErrors(async (request, context, respond) => {
           type,
           spaceId,
           spaceName: space.name.value,
-          spaceAvatarUrl: space.iconURL || undefined,
+          spaceAvatarUrl: space.iconURL ?? undefined,
           memberCount: space.memberCount,
           claimedAt: data.claimedAt?.toDate?.() || new Date(),
         };
@@ -251,7 +251,7 @@ export const POST = withAuthValidationAndErrors(
           type,
           spaceId,
           spaceName: space.name.value,
-          spaceAvatarUrl: space.iconURL || undefined,
+          spaceAvatarUrl: space.iconURL ?? undefined,
           memberCount: space.memberCount,
           claimedAt: new Date(),
         },

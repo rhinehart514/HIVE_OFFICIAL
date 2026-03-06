@@ -92,10 +92,10 @@ export const POST = withOptionalAuth(
         for (const event of events.slice(0, 100)) {
           try {
             processedEvents.push({
-              eventId: event.eventId || undefined,
+              eventId: event.eventId ?? null,
               userId: userId || "anonymous",
               campusId: campusId || null,
-              sessionId: event.sessionId || undefined,
+              sessionId: event.sessionId ?? null,
               timestamp:
                 typeof event.timestamp === "string"
                   ? event.timestamp

@@ -53,7 +53,7 @@ export default function AboutPage() {
           <div className="space-y-6 text-base leading-relaxed text-white">
             <p>
               HIVE is a permanent operating layer for student communities. Each organization gets
-              a Space: a durable environment with chat, events, tools, and membership that
+              a Space: a durable environment with chat, events, apps, and membership that
               doesn&apos;t vanish when officers graduate.
             </p>
             <p>
@@ -110,7 +110,7 @@ export default function AboutPage() {
             <div>
               <h3 className="text-[15px] font-medium text-white mb-2">Spaces</h3>
               <p className="text-base text-white leading-relaxed">
-                Every org gets a permanent space with chat, events, tools, and membership. When
+                Every org gets a permanent space with chat, events, apps, and membership. When
                 leadership graduates, the Space stays. Knowledge compounds.
               </p>
             </div>
@@ -124,7 +124,7 @@ export default function AboutPage() {
             <div>
               <h3 className="text-[15px] font-medium text-white mb-2">Profile</h3>
               <p className="text-base text-white leading-relaxed">
-                A verifiable record of actual work: events organized, tools built,
+                A verifiable record of actual work: events organized, apps built,
                 communities led. Proof of work, not self-reported bullet points.
               </p>
             </div>

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/middleware/auth';
-import { deriveCampusFromEmail } from '@/lib/middleware';
+import { deriveCampusFromEmail, withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { dbAdmin } from '@/lib/firebase-admin';
@@ -247,64 +247,44 @@ async function _GET(request: NextRequest) {
   }
 }
 
-// POST - Check multiple feature flags with custom context
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(
-        ApiResponseHelper.error('Unauthorized', 'UNAUTHORIZED'), 
-        { status: HttpStatus.UNAUTHORIZED }
-      );
-    }
+// POST - Check multiple feature flags with custom context (auth + rate limit + CSRF via middleware)
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
 
-    const body = await request.json();
-    const { flagIds, customContext = {} } = body;
+  const body = await (request as Request).json();
+  const { flagIds, customContext = {} } = body;
 
-    if (!flagIds || !Array.isArray(flagIds)) {
-      return NextResponse.json(
-        ApiResponseHelper.error('Flag IDs array is required', 'INVALID_INPUT'),
-        { status: HttpStatus.BAD_REQUEST }
-      );
-    }
-
-    // Campus is optional in non-campus mode.
-    const campusId = user.email ? deriveCampusFromEmail(user.email) : undefined;
-
-    // Build user context with custom overrides
-    const baseUserContext = await buildUserContext(user.uid, campusId);
-    const userContext: UserFeatureContext = {
-      ...baseUserContext,
-      ...customContext,
-      userId: user.uid // Always keep the real user ID
-    };
-
-    const results = applySoftLaunchOverrides(
-      await featureFlagService.getUserFeatureFlags(flagIds, userContext)
-    );
-
-    return NextResponse.json({
-      success: true,
-      flags: results,
-      userContext: {
-        userId: userContext.userId,
-        userRole: userContext.userRole,
-        schoolId: userContext.schoolId,
-        spaceCount: userContext.spaceIds?.length || 0
-      },
-      evaluatedAt: new Date().toISOString()
-    });
-  } catch (error) {
-    logger.error(
-      `Error checking feature flags at /api/feature-flags`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(
-      ApiResponseHelper.error('Failed to check feature flags', 'INTERNAL_ERROR'), 
-      { status: HttpStatus.INTERNAL_SERVER_ERROR }
-    );
+  if (!flagIds || !Array.isArray(flagIds)) {
+    return respond.error('Flag IDs array is required', 'INVALID_INPUT', { status: 400 });
   }
-}
+
+  // Campus is optional in non-campus mode.
+  const userEmail = (request as AuthenticatedRequest).user?.email;
+  const campusId = userEmail ? deriveCampusFromEmail(userEmail) : undefined;
+
+  // Build user context with custom overrides
+  const baseUserContext = await buildUserContext(userId, campusId);
+  const userContext: UserFeatureContext = {
+    ...baseUserContext,
+    ...customContext,
+    userId // Always keep the real user ID
+  };
+
+  const results = applySoftLaunchOverrides(
+    await featureFlagService.getUserFeatureFlags(flagIds, userContext)
+  );
+
+  return respond.success({
+    flags: results,
+    userContext: {
+      userId: userContext.userId,
+      userRole: userContext.userRole,
+      schoolId: userContext.schoolId,
+      spaceCount: userContext.spaceIds?.length || 0
+    },
+    evaluatedAt: new Date().toISOString()
+  });
+});
 
 // Helper function to build user context from database
 async function buildUserContext(userId: string, campusId?: string): Promise<UserFeatureContext> {

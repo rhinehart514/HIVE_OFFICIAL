@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/middleware/auth';
+import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { contentModerationService } from '@/lib/content-moderation-service';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
@@ -31,93 +32,66 @@ const ReportSchema = z.object({
   spaceId: z.string().optional()
 });
 
-// POST - Submit content report
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(
-        ApiResponseHelper.error('Authentication required', 'UNAUTHORIZED'),
-        { status: HttpStatus.UNAUTHORIZED }
-      );
-    }
+// POST - Submit content report (auth + rate limit + CSRF via middleware)
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
 
-    // Parse and validate request body
-    const body = await request.json();
-    const validation = ReportSchema.safeParse(body);
-    
-    if (!validation.success) {
-      return NextResponse.json(
-        ApiResponseHelper.error('Invalid request data', 'INVALID_INPUT', validation.error.errors),
-        { status: HttpStatus.BAD_REQUEST }
-      );
-    }
+  // Parse and validate request body
+  const body = await (request as Request).json();
+  const validation = ReportSchema.safeParse(body);
 
-    const reportData = validation.data;
+  if (!validation.success) {
+    return respond.error('Invalid request data', 'INVALID_INPUT', { status: 400 });
+  }
 
-    // Get user agent for metadata
-    const userAgent = request.headers.get('user-agent') || 'unknown';
+  const reportData = validation.data;
 
-    // Rate limiting - check if user has submitted too many reports recently
-    const recentReportsCount = await checkRecentReports(user.uid);
-    if (recentReportsCount >= 10) { // Max 10 reports per hour
-      return NextResponse.json(
-        ApiResponseHelper.error('Rate limit exceeded. Please wait before submitting more reports.', 'RATE_LIMITED'),
-        { status: HttpStatus.TOO_MANY_REQUESTS }
-      );
-    }
+  // Get user agent for metadata
+  const userAgent = (request as Request).headers.get('user-agent') || 'unknown';
 
-    // Submit report
-    const reportId = await contentModerationService.submitReport({
-      reporterId: user.uid,
-      contentId: reportData.contentId,
-      contentType: reportData.contentType,
-      category: reportData.category,
-      subCategory: reportData.subCategory,
-      description: reportData.description,
-      evidence: reportData.evidence ? {
-        screenshots: reportData.evidence.screenshots || [],
-        urls: reportData.evidence.urls || [],
-        additionalContext: reportData.evidence.additionalContext || ''
-      } : undefined,
-      spaceId: reportData.spaceId,
-      userAgent
-    });
-
-    // Log successful report submission
-    logger.info('Content report submitted successfully', {
-      reportId,
-      reporterId: user.uid,
-      postId: reportData.contentId,
-      metadata: {
-        contentType: reportData.contentType,
-        category: reportData.category
-      }
-    });
-
-    return NextResponse.json({
-      success: true,
-      reportId,
-      message: 'Report submitted successfully. Our moderation team will review it shortly.',
-      estimatedReviewTime: '2-24 hours'
-    });
-
-  } catch (error) {
-    logger.error('Error submitting content report', { error: { error: error instanceof Error ? error.message : String(error) } });
-    
-    if (error instanceof Error && error.message.includes('Content not found')) {
-      return NextResponse.json(
-        ApiResponseHelper.error('Content not found', 'NOT_FOUND'),
-        { status: HttpStatus.NOT_FOUND }
-      );
-    }
-
-    return NextResponse.json(
-      ApiResponseHelper.error('Failed to submit report', 'INTERNAL_ERROR'),
-      { status: HttpStatus.INTERNAL_SERVER_ERROR }
+  // Rate limiting - check if user has submitted too many reports recently
+  const recentReportsCount = await checkRecentReports(userId);
+  if (recentReportsCount >= 10) { // Max 10 reports per hour
+    return new Response(
+      JSON.stringify({ success: false, error: { message: 'Rate limit exceeded. Please wait before submitting more reports.', code: 'RATE_LIMITED' } }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } }
     );
   }
-}
+
+  // Submit report
+  const reportId = await contentModerationService.submitReport({
+    reporterId: userId,
+    contentId: reportData.contentId,
+    contentType: reportData.contentType,
+    category: reportData.category,
+    subCategory: reportData.subCategory,
+    description: reportData.description,
+    evidence: reportData.evidence ? {
+      screenshots: reportData.evidence.screenshots || [],
+      urls: reportData.evidence.urls || [],
+      additionalContext: reportData.evidence.additionalContext || ''
+    } : undefined,
+    spaceId: reportData.spaceId,
+    userAgent
+  });
+
+  // Log successful report submission
+  logger.info('Content report submitted successfully', {
+    reportId,
+    reporterId: userId,
+    postId: reportData.contentId,
+    metadata: {
+      contentType: reportData.contentType,
+      category: reportData.category
+    }
+  });
+
+  return respond.success({
+    reportId,
+    message: 'Report submitted successfully. Our moderation team will review it shortly.',
+    estimatedReviewTime: '2-24 hours'
+  });
+});
 
 // GET - Get user's submitted reports (optional feature)
 async function _GET(request: NextRequest) {

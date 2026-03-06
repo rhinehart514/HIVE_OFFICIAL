@@ -27,9 +27,9 @@ const MAX_AI_CREATIONS_PER_SPACE_PER_WEEK = 3;
 const STALENESS_DAYS = 7;
 
 export async function POST(request: Request) {
-  // Auth check
+  // Auth check — reject if CRON_SECRET is missing or doesn't match
   const authHeader = request.headers.get('authorization');
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
           spaceId: space.id,
           spaceName: space.name,
           success: result.success,
-          toolId: result.toolId || undefined,
+          toolId: result.toolId ?? undefined,
           error: result.success ? undefined : 'Tool creation failed',
         });
       } catch (error) {

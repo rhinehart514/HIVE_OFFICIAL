@@ -3,6 +3,7 @@ import { z } from 'zod';
 // Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/middleware/auth';
+import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { getCampusId } from '@/lib/campus-context';
@@ -162,59 +163,45 @@ async function _GET(request: NextRequest) {
   }
 }
 
-// PUT - Update privacy settings
-export async function PUT(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+// PUT - Update privacy settings (auth + rate limit + CSRF via middleware)
+export const PUT = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
 
-    const campusId = await getCampusId(request);
+  const campusId = await getCampusId(request as unknown as NextRequest);
 
-    const body = PrivacyUpdateSchema.parse(await request.json());
-    const { ghostMode, profileVisibility, activitySharing, notifications, dataRetention } = body;
+  const body = PrivacyUpdateSchema.parse(await (request as Request).json());
+  const { ghostMode, profileVisibility, activitySharing, notifications, dataRetention } = body;
 
-    // Get existing settings
-    const privacyDoc = await dbAdmin.collection('privacySettings').doc(user.uid).get();
-    const existingSettings = privacyDoc.exists ? privacyDoc.data() as PrivacySettings : {
-      userId: user.uid,
-      ...defaultPrivacySettings,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+  // Get existing settings
+  const privacyDoc = await dbAdmin.collection('privacySettings').doc(userId).get();
+  const existingSettings = privacyDoc.exists ? privacyDoc.data() as PrivacySettings : {
+    userId,
+    ...defaultPrivacySettings,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
 
-    // Update settings
-    const updatedSettings: PrivacySettings = {
-      ...existingSettings,
-      ghostMode: { ...existingSettings.ghostMode, ...ghostMode },
-      profileVisibility: { ...existingSettings.profileVisibility, ...profileVisibility },
-      activitySharing: { ...existingSettings.activitySharing, ...activitySharing },
-      notifications: { ...existingSettings.notifications, ...notifications },
-      dataRetention: { ...existingSettings.dataRetention, ...dataRetention },
-      updatedAt: new Date().toISOString()
-    };
+  // Update settings
+  const updatedSettings: PrivacySettings = {
+    ...existingSettings,
+    ghostMode: { ...existingSettings.ghostMode, ...ghostMode },
+    profileVisibility: { ...existingSettings.profileVisibility, ...profileVisibility },
+    activitySharing: { ...existingSettings.activitySharing, ...activitySharing },
+    notifications: { ...existingSettings.notifications, ...notifications },
+    dataRetention: { ...existingSettings.dataRetention, ...dataRetention },
+    updatedAt: new Date().toISOString()
+  };
 
-    await dbAdmin.collection('privacySettings').doc(user.uid).set(updatedSettings);
+  await dbAdmin.collection('privacySettings').doc(userId).set(updatedSettings);
 
-    // Apply privacy changes immediately
-    await applyPrivacyChanges(user.uid, updatedSettings, campusId);
+  // Apply privacy changes immediately
+  await applyPrivacyChanges(userId, updatedSettings, campusId);
 
-    return NextResponse.json({ 
-      settings: updatedSettings,
-      message: 'Privacy settings updated successfully'
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(ApiResponseHelper.error(error.errors[0]?.message || "Invalid input", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-    logger.error(
-      `Error updating privacy settings at /api/privacy`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to update privacy settings", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
-  }
-}
+  return respond.success({
+    settings: updatedSettings,
+    message: 'Privacy settings updated successfully'
+  });
+});
 
 // Helper function to apply privacy changes
 async function applyPrivacyChanges(userId: string, settings: PrivacySettings, campusId: string) {

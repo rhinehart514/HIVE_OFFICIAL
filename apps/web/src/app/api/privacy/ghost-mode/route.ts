@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 // Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/middleware/auth';
+import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import type * as admin from 'firebase-admin';
@@ -86,119 +87,108 @@ async function _GET(request: NextRequest) {
   }
 }
 
-// POST - Quick toggle ghost mode
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+// POST - Quick toggle ghost mode (auth + rate limit + CSRF via middleware)
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
 
-    const campusId = await getCampusId(request);
+  const campusId = await getCampusId(request as unknown as NextRequest);
 
-    // Check feature flag
-    const ghostModeFeatureEnabled = await isGhostModeEnabled({ userId: user.uid, schoolId: campusId });
-    if (!ghostModeFeatureEnabled) {
-      return NextResponse.json({ error: 'Feature not available' }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const { enabled, level, duration } = body;
-
-    // Validate level
-    if (level && !['invisible', 'minimal', 'selective', 'normal'].includes(level)) {
-      return NextResponse.json(ApiResponseHelper.error("Invalid ghost mode level", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-
-    const privacyDoc = await dbAdmin.collection('privacySettings').doc(user.uid).get();
-    
-    if (!privacyDoc.exists) {
-      return NextResponse.json(ApiResponseHelper.error("Privacy settings not found", "RESOURCE_NOT_FOUND"), { status: HttpStatus.NOT_FOUND });
-    }
-
-    const settings = privacyDoc.data();
-    if (!settings) {
-      return NextResponse.json(ApiResponseHelper.error("Privacy settings not found", "RESOURCE_NOT_FOUND"), { status: HttpStatus.NOT_FOUND });
-    }
-    const currentGhostMode = settings.ghostMode;
-
-    // Apply ghost mode level presets
-    const levelPresets = {
-      invisible: {
-        hideFromDirectory: true,
-        hideActivity: true,
-        hideSpaceMemberships: true,
-        hideLastSeen: true,
-        hideOnlineStatus: true,
-      },
-      minimal: {
-        hideFromDirectory: false,
-        hideActivity: true,
-        hideSpaceMemberships: false,
-        hideLastSeen: true,
-        hideOnlineStatus: true,
-      },
-      selective: {
-        hideFromDirectory: false,
-        hideActivity: false,
-        hideSpaceMemberships: false,
-        hideLastSeen: true,
-        hideOnlineStatus: false,
-      },
-      normal: {
-        hideFromDirectory: false,
-        hideActivity: false,
-        hideSpaceMemberships: false,
-        hideLastSeen: false,
-        hideOnlineStatus: false,
-      }
-    };
-
-    const updatedGhostMode = {
-      ...currentGhostMode,
-      enabled: enabled !== undefined ? enabled : currentGhostMode.enabled,
-      level: level || currentGhostMode.level,
-      ...(level && level in levelPresets ? levelPresets[level as keyof typeof levelPresets] : {})
-    };
-
-    // Handle temporary ghost mode
-    let ghostModeExpiry = null;
-    if (duration && enabled) {
-      const expiryDate = new Date();
-      expiryDate.setMinutes(expiryDate.getMinutes() + duration);
-      ghostModeExpiry = expiryDate.toISOString();
-    }
-
-    const updatedSettings = {
-      ...settings,
-      ghostMode: updatedGhostMode,
-      ghostModeExpiry,
-      updatedAt: new Date().toISOString()
-    };
-
-    await dbAdmin.collection('privacySettings').doc(user.uid).update(updatedSettings);
-
-    // Apply changes immediately
-    await applyGhostModeChanges(user.uid, updatedGhostMode, campusId);
-
-    // Schedule automatic disable if temporary
-    if (ghostModeExpiry) {
-      scheduleGhostModeDisable(user.uid, duration);
-    }
-
-    return NextResponse.json({ 
-      ghostMode: updatedGhostMode,
-      message: 'Ghost mode updated successfully',
-      expiresAt: ghostModeExpiry
-    });
-  } catch (error) {
-    logger.error(
-      `Error updating ghost mode at /api/privacy/ghost-mode`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to update ghost mode", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  // Check feature flag
+  const ghostModeFeatureEnabled = await isGhostModeEnabled({ userId, schoolId: campusId });
+  if (!ghostModeFeatureEnabled) {
+    return respond.error("Feature not available", "FORBIDDEN", { status: 403 });
   }
-}
+
+  const body = await (request as Request).json();
+  const { enabled, level, duration } = body;
+
+  // Validate level
+  if (level && !['invisible', 'minimal', 'selective', 'normal'].includes(level)) {
+    return respond.error("Invalid ghost mode level", "INVALID_INPUT", { status: 400 });
+  }
+
+  const privacyDoc = await dbAdmin.collection('privacySettings').doc(userId).get();
+
+  if (!privacyDoc.exists) {
+    return respond.error("Privacy settings not found", "NOT_FOUND", { status: 404 });
+  }
+
+  const settings = privacyDoc.data();
+  if (!settings) {
+    return respond.error("Privacy settings not found", "NOT_FOUND", { status: 404 });
+  }
+  const currentGhostMode = settings.ghostMode;
+
+  // Apply ghost mode level presets
+  const levelPresets = {
+    invisible: {
+      hideFromDirectory: true,
+      hideActivity: true,
+      hideSpaceMemberships: true,
+      hideLastSeen: true,
+      hideOnlineStatus: true,
+    },
+    minimal: {
+      hideFromDirectory: false,
+      hideActivity: true,
+      hideSpaceMemberships: false,
+      hideLastSeen: true,
+      hideOnlineStatus: true,
+    },
+    selective: {
+      hideFromDirectory: false,
+      hideActivity: false,
+      hideSpaceMemberships: false,
+      hideLastSeen: true,
+      hideOnlineStatus: false,
+    },
+    normal: {
+      hideFromDirectory: false,
+      hideActivity: false,
+      hideSpaceMemberships: false,
+      hideLastSeen: false,
+      hideOnlineStatus: false,
+    }
+  };
+
+  const updatedGhostMode = {
+    ...currentGhostMode,
+    enabled: enabled !== undefined ? enabled : currentGhostMode.enabled,
+    level: level || currentGhostMode.level,
+    ...(level && level in levelPresets ? levelPresets[level as keyof typeof levelPresets] : {})
+  };
+
+  // Handle temporary ghost mode
+  let ghostModeExpiry = null;
+  if (duration && enabled) {
+    const expiryDate = new Date();
+    expiryDate.setMinutes(expiryDate.getMinutes() + duration);
+    ghostModeExpiry = expiryDate.toISOString();
+  }
+
+  const updatedSettings = {
+    ...settings,
+    ghostMode: updatedGhostMode,
+    ghostModeExpiry,
+    updatedAt: new Date().toISOString()
+  };
+
+  await dbAdmin.collection('privacySettings').doc(userId).update(updatedSettings);
+
+  // Apply changes immediately
+  await applyGhostModeChanges(userId, updatedGhostMode, campusId);
+
+  // Schedule automatic disable if temporary
+  if (ghostModeExpiry) {
+    scheduleGhostModeDisable(userId, duration);
+  }
+
+  return respond.success({
+    ghostMode: updatedGhostMode,
+    message: 'Ghost mode updated successfully',
+    expiresAt: ghostModeExpiry
+  });
+});
 
 // Helper function to check user visibility
 async function checkUserVisibility(targetUserId: string, viewerUserId: string, ghostMode: { enabled: boolean; level: string }, campusId: string): Promise<boolean> {

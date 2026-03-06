@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 // Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/middleware/auth';
+import { getUserId, withAuthAndErrors, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
@@ -35,54 +36,43 @@ interface ActivitySummary {
   updatedAt: string;
 }
 
-// POST - Log activity event
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+// POST - Log activity event (auth + rate limit + CSRF via middleware)
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
 
-    const body = await request.json();
-    const { type, spaceId, toolId, contentId, duration, metadata } = body;
+  const body = await (request as Request).json();
+  const { type, spaceId, toolId, contentId, duration, metadata } = body;
 
-    // Validate required fields
-    if (!type || !['space_visit', 'tool_interaction', 'content_creation', 'social_interaction', 'session_start', 'session_end'].includes(type)) {
-      return NextResponse.json(ApiResponseHelper.error("Invalid activity type", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-
-    const now = new Date();
-    const activityEvent: ActivityEvent = {
-      userId: user.uid,
-      type,
-      spaceId: spaceId || undefined,
-      toolId: toolId || undefined,
-      contentId: contentId || undefined,
-      duration: duration || undefined,
-      metadata: metadata || {},
-      timestamp: now.toISOString(),
-      date: now.toISOString().split('T')[0]
-    };
-
-    // Log the activity event
-    const docRef = await dbAdmin.collection('activityEvents').add(activityEvent);
-
-    // Update daily summary asynchronously (fire and forget)
-    void updateDailySummary(user.uid, activityEvent);
-
-    return NextResponse.json({
-      success: true,
-      eventId: docRef.id,
-      timestamp: activityEvent.timestamp
-    });
-  } catch (error) {
-    logger.error(
-      `Error logging activity at /api/activity`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to log activity", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  // Validate required fields
+  const validTypes = ['space_visit', 'tool_interaction', 'content_creation', 'social_interaction', 'session_start', 'session_end'];
+  if (!type || !validTypes.includes(type)) {
+    return respond.error("Invalid activity type", "INVALID_INPUT", { status: 400 });
   }
-}
+
+  const now = new Date();
+  const activityEvent: ActivityEvent = {
+    userId,
+    type,
+    spaceId: spaceId ?? null,
+    toolId: toolId ?? null,
+    contentId: contentId ?? null,
+    duration: duration ?? null,
+    metadata: metadata || {},
+    timestamp: now.toISOString(),
+    date: now.toISOString().split('T')[0]
+  };
+
+  // Log the activity event
+  const docRef = await dbAdmin.collection('activityEvents').add(activityEvent);
+
+  // Update daily summary asynchronously (fire and forget)
+  void updateDailySummary(userId, activityEvent);
+
+  return respond.success({
+    eventId: docRef.id,
+    timestamp: activityEvent.timestamp
+  });
+});
 
 // GET - Fetch activity analytics
 async function _GET(request: NextRequest) {

@@ -3,6 +3,7 @@ import { z } from 'zod';
 // Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/middleware/auth';
+import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { getCampusId } from '@/lib/campus-context';
@@ -26,74 +27,60 @@ interface VisibilityCheck {
   relationshipType: 'self' | 'space_member' | 'follower' | 'stranger';
 }
 
-// POST - Check visibility between users
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+// POST - Check visibility between users (auth + rate limit + CSRF via middleware)
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
 
-    const campusId = await getCampusId(request);
+  const campusId = await getCampusId(request as unknown as NextRequest);
 
-    const body = VisibilityCheckSchema.parse(await request.json());
-    const { targetUserId, context } = body;
+  const body = VisibilityCheckSchema.parse(await (request as Request).json());
+  const { targetUserId, context } = body;
 
-    // Check if viewing own profile
-    if (targetUserId === user.uid) {
-      return NextResponse.json({
-        visibility: {
-          canSeeProfile: true,
-          canSeeActivity: true,
-          canSeeSpaceMemberships: true,
-          canSeeOnlineStatus: true,
-          canSeeLastSeen: true,
-          visibilityLevel: 'full',
-          sharedSpaces: [],
-          relationshipType: 'self'
-        }
-      });
-    }
-
-    // Get target user's privacy settings
-    const targetPrivacyDoc = await dbAdmin.collection('privacySettings').doc(targetUserId).get();
-    const targetPrivacy = targetPrivacyDoc.exists ? targetPrivacyDoc.data() ?? null : null;
-
-    // Get viewer's privacy settings (for mutual visibility checks)
-    const viewerPrivacyDoc = await dbAdmin.collection('privacySettings').doc(user.uid).get();
-    const viewerPrivacy = viewerPrivacyDoc.exists ? viewerPrivacyDoc.data() ?? null : null;
-
-    // Determine relationship and shared spaces
-    const relationship = await determineRelationship(user.uid, targetUserId, campusId);
-    const sharedSpaces = await getSharedSpaces(user.uid, targetUserId, campusId);
-
-    // Calculate visibility permissions
-    const visibility = calculateVisibility(
-      targetPrivacy,
-      viewerPrivacy,
-      relationship,
-      sharedSpaces,
-      context || 'general'
-    );
-
-    return NextResponse.json({ 
+  // Check if viewing own profile
+  if (targetUserId === userId) {
+    return respond.success({
       visibility: {
-        ...visibility,
-        sharedSpaces,
-        relationshipType: relationship
+        canSeeProfile: true,
+        canSeeActivity: true,
+        canSeeSpaceMemberships: true,
+        canSeeOnlineStatus: true,
+        canSeeLastSeen: true,
+        visibilityLevel: 'full',
+        sharedSpaces: [],
+        relationshipType: 'self'
       }
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(ApiResponseHelper.error(error.errors[0]?.message || "Invalid input", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-    logger.error(
-      `Error checking visibility at /api/privacy/visibility`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to check visibility", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
-}
+
+  // Get target user's privacy settings
+  const targetPrivacyDoc = await dbAdmin.collection('privacySettings').doc(targetUserId).get();
+  const targetPrivacy = targetPrivacyDoc.exists ? targetPrivacyDoc.data() ?? null : null;
+
+  // Get viewer's privacy settings (for mutual visibility checks)
+  const viewerPrivacyDoc = await dbAdmin.collection('privacySettings').doc(userId).get();
+  const viewerPrivacy = viewerPrivacyDoc.exists ? viewerPrivacyDoc.data() ?? null : null;
+
+  // Determine relationship and shared spaces
+  const relationship = await determineRelationship(userId, targetUserId, campusId);
+  const sharedSpaces = await getSharedSpaces(userId, targetUserId, campusId);
+
+  // Calculate visibility permissions
+  const visibility = calculateVisibility(
+    targetPrivacy,
+    viewerPrivacy,
+    relationship,
+    sharedSpaces,
+    context || 'general'
+  );
+
+  return respond.success({
+    visibility: {
+      ...visibility,
+      sharedSpaces,
+      relationshipType: relationship
+    }
+  });
+});
 
 // GET - Batch visibility check for multiple users
 async function _GET(request: NextRequest) {
