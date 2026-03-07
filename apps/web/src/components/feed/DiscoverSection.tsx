@@ -203,7 +203,7 @@ export function DiscoverSection() {
               <button
                 onClick={(e) => handleJoin(e, space.id)}
                 disabled={joiningId === space.id}
-                className="shrink-0 mt-1 px-3 py-1 rounded-lg text-[11px] font-medium bg-white/[0.08] border border-white/[0.10] text-white/60 hover:bg-white/[0.14] hover:text-white/80 transition-all active:scale-[0.97] disabled:opacity-50"
+                className="shrink-0 mt-1 px-3 py-1 rounded-lg text-[11px] font-medium bg-white/[0.08] border border-white/[0.10] text-white/60 hover:bg-white/[0.14] hover:text-white/80 transition-colors active:scale-[0.97] disabled:opacity-50"
               >
                 {joiningId === space.id ? '...' : 'Join'}
               </button>
@@ -216,7 +216,7 @@ export function DiscoverSection() {
         <button
           onClick={() => fetchNextPage()}
           disabled={isFetchingNextPage}
-          className="w-full mt-3 py-2.5 rounded-xl border border-white/[0.06] text-[12px] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-all disabled:opacity-50"
+          className="w-full mt-3 py-2.5 rounded-xl border border-white/[0.06] text-[12px] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-colors disabled:opacity-50"
         >
           {isFetchingNextPage ? 'Loading...' : 'Load more spaces'}
         </button>

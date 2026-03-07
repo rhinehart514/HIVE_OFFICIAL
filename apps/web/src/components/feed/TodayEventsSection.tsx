@@ -194,7 +194,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                     <button
                       onClick={(e) => handleRsvp(e, event.id, event.spaceId)}
                       className={cn(
-                        'px-3 py-1 rounded-lg text-[11px] font-medium transition-all active:scale-[0.97]',
+                        'px-3 py-1 rounded-lg text-[11px] font-medium transition-colors active:scale-[0.97]',
                         isGoing
                           ? 'bg-white/[0.06] border border-white/[0.10] text-white/50'
                           : 'bg-white/[0.08] border border-white/[0.10] text-white/70 hover:bg-white/[0.12]',
@@ -214,7 +214,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                           e.stopPropagation();
                           maybeMutation.mutate({ eventId: event.id, spaceId: event.spaceId });
                         }}
-                        className="px-3 py-1 rounded-lg text-[11px] font-medium bg-transparent border border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-all active:scale-[0.97]"
+                        className="px-3 py-1 rounded-lg text-[11px] font-medium bg-transparent border border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-colors active:scale-[0.97]"
                       >
                         Maybe
                       </button>

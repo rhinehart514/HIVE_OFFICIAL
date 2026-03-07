@@ -288,7 +288,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
       <Popover.Portal>
         <Popover.Content
-          className="z-50 p-4 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-2xl shadow-2xl animate-in fade-in-0 zoom-in-95"
+          className="z-50 p-4 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-2xl shadow-sm animate-in fade-in-0 zoom-in-95"
           sideOffset={8}
           align="start"
         >
@@ -527,7 +527,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
       <Popover.Portal>
         <Popover.Content
-          className="z-50 p-4 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-2xl shadow-2xl animate-in fade-in-0 zoom-in-95"
+          className="z-50 p-4 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-2xl shadow-sm animate-in fade-in-0 zoom-in-95"
           sideOffset={8}
           align="start"
         >

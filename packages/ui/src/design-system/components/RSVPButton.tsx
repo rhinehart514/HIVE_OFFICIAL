@@ -271,7 +271,7 @@ const RSVPButton: React.FC<RSVPButtonProps> = ({
           </Tooltip.Trigger>
           <Tooltip.Portal>
             <Tooltip.Content
-              className="px-3 py-1.5 text-xs bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg shadow-lg"
+              className="px-3 py-1.5 text-xs bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg"
               sideOffset={8}
             >
               {statusLabels[status]}
@@ -313,7 +313,7 @@ const RSVPButton: React.FC<RSVPButtonProps> = ({
 
         <Popover.Portal>
           <Popover.Content
-            className="z-50 min-w-[140px] bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95"
+            className="z-50 min-w-[140px] bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl shadow-sm overflow-hidden animate-in fade-in-0 zoom-in-95"
             sideOffset={8}
             align="start"
           >

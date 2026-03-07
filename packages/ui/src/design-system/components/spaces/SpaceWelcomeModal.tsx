@@ -57,8 +57,8 @@ const DEFAULT_FEATURES: SpaceFeature[] = [
   },
   {
     icon: '🔧',
-    title: 'Custom Tools',
-    description: 'Unique tools built for this community',
+    title: 'Custom Apps',
+    description: 'Unique apps built for this community',
   },
 ];
 

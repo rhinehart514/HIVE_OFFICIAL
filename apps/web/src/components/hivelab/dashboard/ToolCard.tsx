@@ -46,9 +46,9 @@ interface ToolCardProps {
 const STATUS_CONFIG = {
   deployed: {
     label: 'Deployed',
-    bg: 'bg-blue-500/15',
-    text: 'text-blue-400',
-    dot: 'bg-blue-400',
+    bg: 'bg-[#FFD700]/10',
+    text: 'text-[#FFD700]',
+    dot: 'bg-[#FFD700]',
   },
   published: {
     label: 'Published',
@@ -111,7 +111,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
         className="group relative flex flex-col items-start p-4 rounded-2xl
          border border-white/[0.06] bg-[#080808]
           hover:bg-white/[0.03]
-          transition-all duration-200 text-left w-full"
+          transition-colors duration-200 text-left w-full"
       >
         <div className="flex items-center justify-between w-full mb-1.5">
           <span className="text-white font-medium text-sm truncate pr-2 flex-1">
@@ -147,7 +147,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
       className="group relative flex flex-col p-4 rounded-2xl
        border border-white/[0.06] bg-[#080808]
         hover:bg-white/[0.03]
-        transition-all duration-200 text-left w-full cursor-pointer"
+        transition-colors duration-200 text-left w-full cursor-pointer"
       onClick={() => onClick(tool.id)}
     >
       {/* Header: Name + Status */}

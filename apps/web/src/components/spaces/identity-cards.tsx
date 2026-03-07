@@ -124,7 +124,7 @@ function IdentityCard({
           'rounded-lg',
           'bg-white/[0.06] hover:bg-white/[0.06]',
           'border border-white/[0.06] hover:border-white/[0.06]',
-          'transition-all duration-200',
+          'transition-colors duration-200',
           'h-[48px]'
         )}
       >
@@ -148,7 +148,7 @@ function IdentityCard({
           'rounded-lg',
           'bg-white/[0.06] hover:bg-white/[0.06]',
           'border border-white/[0.06] hover:border-white/[0.06]',
-          'transition-all duration-200',
+          'transition-colors duration-200',
           'text-left w-full h-full min-h-[100px]'
         )}
       >
@@ -193,7 +193,7 @@ function IdentityCard({
           'rounded-lg',
           'bg-white/[0.06] hover:bg-white/[0.06]',
           'border border-white/[0.06] hover:border-white/[0.06]',
-          'transition-all duration-200',
+          'transition-colors duration-200',
           'text-left w-full h-full min-h-[100px]'
         )}
       >

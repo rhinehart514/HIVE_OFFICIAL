@@ -54,7 +54,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-white/40 hover:text-white/60 hover:bg-white/[0.10] transition-all"
+            className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-white/40 hover:text-white/60 hover:bg-white/[0.10] transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -83,7 +83,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
               <Link
                 href="/discover"
                 onClick={onClose}
-                className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] text-white/60 hover:text-white/80 hover:bg-white/[0.08] transition-all font-medium"
+                className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] text-white/60 hover:text-white/80 hover:bg-white/[0.08] transition-colors font-medium"
               >
                 Browse spaces
               </Link>
@@ -99,7 +99,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
                   onClick={() => !isDeploying && !isDeployed && onDeploy(toolId, space.id)}
                   disabled={isDeploying || isDeployed}
                   className={cn(
-                    'flex items-center gap-3 w-full rounded-xl px-3 py-3 text-left transition-all duration-150',
+                    'flex items-center gap-3 w-full rounded-xl px-3 py-3 text-left transition-colors duration-150',
                     isDeployed
                       ? 'bg-emerald-500/[0.06]'
                       : 'hover:bg-white/[0.04] active:scale-[0.98]'

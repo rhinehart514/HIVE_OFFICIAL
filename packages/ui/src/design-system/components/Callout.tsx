@@ -98,7 +98,7 @@ const calloutVariants = cva(
   {
     variants: {
       variant: {
-        note: 'bg-blue-500/10 border-blue-500/20 border-l-blue-500',
+        note: 'bg-white/[0.04] border-white/[0.08] border-l-white/30',
         tip: 'bg-green-500/10 border-green-500/20 border-l-green-500',
         warning: 'bg-amber-500/10 border-amber-500/20 border-l-amber-500',
         danger: 'bg-red-500/10 border-red-500/20 border-l-red-500',
@@ -112,7 +112,7 @@ const calloutVariants = cva(
 );
 
 const iconColors = {
-  note: 'text-blue-500',
+  note: 'text-white/50',
   tip: 'text-green-500',
   warning: 'text-amber-500',
   danger: 'text-red-500',

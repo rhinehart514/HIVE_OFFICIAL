@@ -89,7 +89,7 @@ const bannerVariants = cva(
   {
     variants: {
       variant: {
-        info: 'bg-blue-500/10 border-blue-500/20',
+        info: 'bg-white/[0.04] border-white/[0.08]',
         success: 'bg-green-500/10 border-green-500/20',
         warning: 'bg-amber-500/10 border-amber-500/20',
         error: 'bg-red-500/10 border-red-500/20',
@@ -143,7 +143,7 @@ const variantIcons: Record<string, React.ReactNode> = {
 };
 
 const variantColors: Record<string, string> = {
-  info: 'text-blue-500',
+  info: 'text-white/50',
   success: 'text-green-500',
   warning: 'text-amber-500',
   error: 'text-red-500',

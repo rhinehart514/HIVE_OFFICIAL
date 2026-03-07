@@ -86,7 +86,7 @@ const tagVariants = cva(
     variants: {
       variant: {
         default: 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-white',
-        primary: 'bg-blue-500/10 border border-blue-500/20 text-blue-400',
+        primary: 'bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700]',
         gold: 'bg-life-gold/20 border border-life-gold/30 text-life-gold',
         muted: 'bg-[var(--color-bg-hover)] text-[var(--color-text-muted)]',
       },
@@ -279,7 +279,7 @@ const TagInput: React.FC<TagInputProps> = ({
 
       {/* Suggestions dropdown */}
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 py-1 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 py-1 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl shadow-sm z-50 max-h-48 overflow-y-auto">
           {filteredSuggestions.map((suggestion, index) => (
             <button
               key={suggestion}

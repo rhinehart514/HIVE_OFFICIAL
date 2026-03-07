@@ -137,7 +137,7 @@ function SpaceCard({
       <button
         type="button"
         onClick={onToggle}
-        className={`w-full rounded-full px-4 py-2 text-[13px] font-medium transition-all duration-150 ${
+        className={`w-full rounded-full px-4 py-2 text-[13px] font-medium transition-colors duration-150 ${
           joined
             ? 'bg-[#FFD700] text-black'
             : 'bg-white/[0.06] text-white hover:bg-white/[0.1]'
@@ -785,7 +785,7 @@ export function EntryFlowV2() {
                         onPaste={handleOtpPaste}
                         className={[
                           'h-12 w-full rounded-[12px] border bg-[#080808] text-center text-[18px] text-white',
-                          'outline-none transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                          'outline-none transition-colors duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
                           'focus:border-white/[0.15]',
                           codeErrorFlash
                             ? 'border-[#EF4444]'

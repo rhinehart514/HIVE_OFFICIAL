@@ -66,7 +66,7 @@ export function LeaderCreateFAB({
     if (onAddTool) {
       options.push({
         id: 'tool',
-        label: 'Add Tool',
+        label: 'Add App',
         icon: Wrench,
         color: 'bg-white/[0.06]',
         handler: onAddTool,

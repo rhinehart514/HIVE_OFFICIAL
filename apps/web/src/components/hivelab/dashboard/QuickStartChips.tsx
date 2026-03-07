@@ -105,7 +105,7 @@ export function QuickStartChips({
                 disabled={disabled || !!loadingId}
                 className="group relative p-3 rounded-2xl border border-white/[0.06] bg-[#080808]
                   hover:border-white/[0.10]
-                  transition-all duration-200 text-center
+                  transition-colors duration-200 text-center
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex flex-col items-center gap-2">
@@ -172,7 +172,7 @@ export function QuickStartChips({
              border-white/[0.06] bg-transparent
               hover:border-white/12 hover:bg-white/[0.06]
               text-white/50 hover:text-white/50
-              transition-all duration-200 text-xs
+              transition-colors duration-200 text-xs
               disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (

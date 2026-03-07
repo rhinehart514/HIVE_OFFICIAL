@@ -81,7 +81,6 @@ const ReactionPickerMinimal: React.FC<Omit<ReactionPickerProps, 'variant' | 'tri
       'inline-flex items-center gap-1 p-1',
       'bg-[var(--color-bg-card)] rounded-xl',
       'border border-[var(--color-border)]',
-      'shadow-lg',
       className
     )}
     role="group"
@@ -115,7 +114,6 @@ const ReactionPickerGrid: React.FC<Omit<ReactionPickerProps, 'variant' | 'trigge
         'w-72 p-3',
         'bg-[var(--color-bg-card)] rounded-xl',
         'border border-[var(--color-border)]',
-        'shadow-xl',
         className
       )}
     >

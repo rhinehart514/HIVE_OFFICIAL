@@ -618,7 +618,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       'bg-white/[0.06] border border-white/[0.06]',
                       'text-white placeholder:text-white/50',
                       'focus:outline-none focus:ring-2 focus:ring-white/50',
-                      'transition-all duration-150'
+                      'transition-colors duration-150'
                     )}
                   />
                 </div>
@@ -642,7 +642,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       'text-white placeholder:text-white/50',
                       'resize-none',
                       'focus:outline-none focus:ring-2 focus:ring-white/50',
-                      'transition-all duration-150'
+                      'transition-colors duration-150'
                     )}
                   />
                 </div>
@@ -658,7 +658,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     <button
                       onClick={() => setIsPublic(true)}
                       className={cn(
-                        'w-full p-4 rounded-lg text-left transition-all',
+                        'w-full p-4 rounded-lg text-left transition-colors',
                         'border',
                         isPublic
                           ? 'bg-white/[0.06] border-white/[0.06]'
@@ -681,7 +681,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     <button
                       onClick={() => setIsPublic(false)}
                       className={cn(
-                        'w-full p-4 rounded-lg text-left transition-all',
+                        'w-full p-4 rounded-lg text-left transition-colors',
                         'border',
                         !isPublic
                           ? 'bg-white/[0.06] border-white/[0.06]'
@@ -1000,7 +1000,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       'bg-white/[0.06] border border-white/[0.06]',
                       'text-white placeholder:text-white/50',
                       'focus:outline-none focus:ring-2 focus:ring-white/50',
-                      'transition-all duration-150'
+                      'transition-colors duration-150'
                     )}
                   />
                   <Text size="xs" tone="muted" className="mt-1">
@@ -1026,7 +1026,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                       'bg-white/[0.06] border border-white/[0.06]',
                       'text-white placeholder:text-white/50',
                       'focus:outline-none focus:ring-2 focus:ring-white/50',
-                      'transition-all duration-150'
+                      'transition-colors duration-150'
                     )}
                   />
                 </div>
@@ -1052,7 +1052,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                           'bg-white/[0.06] border border-white/[0.06]',
                           'text-white placeholder:text-white/50',
                           'focus:outline-none focus:ring-2 focus:ring-white/50',
-                          'transition-all duration-150'
+                          'transition-colors duration-150'
                         )}
                       />
                     </div>
@@ -1069,7 +1069,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                           'bg-white/[0.06] border border-white/[0.06]',
                           'text-white placeholder:text-white/50',
                           'focus:outline-none focus:ring-2 focus:ring-white/50',
-                          'transition-all duration-150'
+                          'transition-colors duration-150'
                         )}
                       />
                     </div>
@@ -1086,7 +1086,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                           'bg-white/[0.06] border border-white/[0.06]',
                           'text-white placeholder:text-white/50',
                           'focus:outline-none focus:ring-2 focus:ring-white/50',
-                          'transition-all duration-150'
+                          'transition-colors duration-150'
                         )}
                       />
                     </div>
@@ -1103,7 +1103,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                           'bg-white/[0.06] border border-white/[0.06]',
                           'text-white placeholder:text-white/50',
                           'focus:outline-none focus:ring-2 focus:ring-white/50',
-                          'transition-all duration-150'
+                          'transition-colors duration-150'
                         )}
                       />
                     </div>
@@ -1191,7 +1191,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                                 'bg-white/[0.06] border border-white/[0.06]',
                                 'text-white placeholder:text-white/50',
                                 'focus:outline-none focus:ring-2 focus:ring-white/50',
-                                'transition-all duration-150'
+                                'transition-colors duration-150'
                               )}
                             />
                           </div>
@@ -1214,7 +1214,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                                 'text-white placeholder:text-white/50',
                                 'resize-none',
                                 'focus:outline-none focus:ring-2 focus:ring-white/50',
-                                'transition-all duration-150'
+                                'transition-colors duration-150'
                               )}
                             />
                             <Text size="xs" tone="muted" className="mt-1">
@@ -1846,7 +1846,7 @@ export function SpaceSettings({ space, boards = [], isLeader = false, currentUse
                     });
                     setShowAutomationBuilder(true);
                   }}
-                  className="w-full p-4 rounded-lg bg-white/[0.06] border border-white/[0.06] hover:border-amber-500/30 transition-all text-left group"
+                  className="w-full p-4 rounded-lg bg-white/[0.06] border border-white/[0.06] hover:border-amber-500/30 transition-colors text-left group"
                 >
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
@@ -1898,7 +1898,7 @@ function SettingsNavItem({
       onClick={onClick}
       className={cn(
         'w-full flex items-center gap-3 px-3 py-2 rounded-lg',
-        'transition-all duration-150',
+        'transition-colors duration-150',
         'text-left',
         active
           ? 'bg-white/[0.06] text-white'

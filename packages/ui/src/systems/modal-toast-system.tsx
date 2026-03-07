@@ -199,7 +199,7 @@ const ModalRenderer: React.FC<{
 
       {/* Modal */}
       <div className={cn(
-        'relative w-full bg-black/80 backdrop-blur-2xl border border-white/[0.08] rounded-xl shadow-2xl',
+        'relative w-full bg-black/80 backdrop-blur-2xl border border-white/[0.08] rounded-xl',
         'animate-in fade-in zoom-in-95 duration-200',
         sizes[modal.size || 'md']
       )}>
@@ -308,7 +308,7 @@ const ToastItem: React.FC<{
     <div
       className={cn(
         'pointer-events-auto min-w- max-w- p-4 rounded-lg',
-        'bg-black border shadow-xl',
+        'bg-black border shadow-sm',
         'animate-in slide-in-from-right fade-in duration-200',
         isLeaving && 'animate-out slide-out-to-right fade-out duration-200',
         typeStyles[toast.type || 'info']

@@ -140,7 +140,7 @@ const thumbSizes = {
 
 const trackColors = {
   gold: 'bg-life-gold',
-  primary: 'bg-blue-400',
+  primary: 'bg-[#FFD700]',
   success: 'bg-green-500',
   default: 'bg-white',
 };
@@ -211,7 +211,7 @@ const Slider = React.forwardRef<
           <SliderPrimitive.Thumb
             key={i}
             className={cn(
-              'block rounded-full shadow-lg',
+              'block rounded-full shadow-sm',
               'ring-offset-background transition-all duration-150',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
               'disabled:pointer-events-none disabled:opacity-50',

@@ -95,7 +95,7 @@ export function SignupGateModal({
     {
       icon: RocketLaunchIcon,
       title: 'Deploy to your org',
-      description: 'Share custom tools with your campus community'
+      description: 'Share custom apps with your campus community'
     },
     {
       icon: UsersIcon,
@@ -104,8 +104,8 @@ export function SignupGateModal({
     },
     {
       icon: BoltIcon,
-      title: 'Build unlimited tools',
-      description: 'Create as many AI-powered tools as you need'
+      title: 'Build unlimited apps',
+      description: 'Create as many AI-powered apps as you need'
     }
   ];
 
@@ -122,11 +122,11 @@ export function SignupGateModal({
               </div>
 
               <DialogTitle className="text-2xl">
-                {heading || `Deploy "${toolName || 'your tool'}" to your campus`}
+                {heading || `Deploy "${toolName || 'your app'}" to your campus`}
               </DialogTitle>
 
               <DialogDescription className="text-base">
-                {description || 'Sign up with your @buffalo.edu email to deploy tools to your campus community'}
+                {description || 'Sign up with your @buffalo.edu email to deploy apps to your campus community'}
               </DialogDescription>
             </DialogHeader>
 

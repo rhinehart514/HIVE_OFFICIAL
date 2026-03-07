@@ -249,7 +249,7 @@ export function SpacePreviewModal({
                 onClick={handleJoin}
                 disabled={isJoining}
                 className={cn(
-                  'w-full font-medium transition-all duration-200',
+                  'w-full font-medium transition-colors duration-200',
                   'bg-[#FFD700] text-[#0A0A09] hover:bg-[#FFD700]/90',
                   isJoining && 'opacity-70 cursor-wait'
                 )}

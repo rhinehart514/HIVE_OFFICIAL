@@ -204,7 +204,7 @@ export const CommandPalette: React.FC<{ open: boolean; onOpenChange: (open: bool
           role="dialog"
         >
           <motion.div
-            className="fixed left-1/2 top-20 w-full max-w-2xl -translate-x-1/2 rounded-xl border border-white/10 bg-black shadow-2xl"
+            className="fixed left-1/2 top-20 w-full max-w-2xl -translate-x-1/2 rounded-xl border border-white/10 bg-black"
             initial={{ y: shouldReduce ? 0 : -8, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: shouldReduce ? 0 : -8, opacity: 0 }}
@@ -301,7 +301,7 @@ export const TabNav: React.FC<{
           className={cn(
             'flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all',
             activeTab === tab.id
-              ? 'bg-white/[0.08] text-white shadow-lg'
+              ? 'bg-white/[0.08] text-white'
               : 'text-white/60 hover:text-white hover:bg-white/5'
           )}
         >

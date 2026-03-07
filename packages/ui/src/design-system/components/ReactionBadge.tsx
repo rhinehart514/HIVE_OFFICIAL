@@ -81,7 +81,6 @@ const ReactionBadge: React.FC<ReactionBadgeProps> = ({
               className={cn(
                 'z-50 px-3 py-2 rounded-lg',
                 'bg-[var(--color-bg-elevated)] border border-[var(--color-border)]',
-                'shadow-lg',
                 'animate-in fade-in-0 zoom-in-95'
               )}
               sideOffset={5}

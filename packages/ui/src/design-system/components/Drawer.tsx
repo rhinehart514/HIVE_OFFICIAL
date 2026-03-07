@@ -123,7 +123,7 @@ DrawerOverlay.displayName = 'DrawerOverlay';
 
 const drawerContentVariants = cva(
   [
-    'fixed z-50 border-[var(--color-border)] shadow-xl backdrop-blur-xl',
+    'fixed z-50 border-[var(--color-border)] backdrop-blur-xl',
     'flex flex-col',
   ],
   {

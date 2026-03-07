@@ -41,10 +41,10 @@ const territoryConfig: Record<SpaceTerritory, {
   fallbackBg: string;
 }> = {
   academic: {
-    gradient: 'from-blue-600/80 to-blue-900/60',
+    gradient: 'from-white/[0.08] to-white/[0.03]',
     label: 'Academic',
-    color: 'text-blue-300 border-blue-400/30',
-    fallbackBg: 'bg-blue-600/20',
+    color: 'text-white/50 border-white/[0.08]',
+    fallbackBg: 'bg-white/[0.06]',
   },
   creative: {
     gradient: 'from-purple-600/80 to-purple-900/60',
@@ -251,7 +251,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
             size="2xl"
             className={cn(
               'w-20 h-20 rounded-2xl',
-              'shadow-2xl',
+              'shadow-sm',
               'ring-4 ring-[var(--space-avatar-ring)]'
             )}
           >

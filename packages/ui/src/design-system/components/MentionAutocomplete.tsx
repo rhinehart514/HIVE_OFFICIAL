@@ -96,7 +96,7 @@ const MentionAutocomplete: React.FC<MentionAutocompleteProps> = ({
       ref={listRef}
       className={cn(
         'bg-[var(--color-bg-elevated)] border border-[var(--color-border)]',
-        'rounded-lg shadow-lg overflow-hidden',
+        'rounded-lg shadow-sm overflow-hidden',
         'animate-in fade-in-0 zoom-in-95 duration-150',
         className
       )}

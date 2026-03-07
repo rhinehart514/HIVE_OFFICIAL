@@ -25,7 +25,7 @@ const CATEGORIES = [
   'Exchange',
   'Social',
   'Academic',
-  'Org Tools',
+  'Org Apps',
   'Campus Life',
   'Utility',
 ] as const;

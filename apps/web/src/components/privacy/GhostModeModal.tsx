@@ -131,7 +131,7 @@ export function GhostModeModal({
                     type="button"
                     onClick={() => setSelectedDuration(duration.value)}
                     className={cn(
-                      'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
                       selectedDuration === duration.value
                         ? 'bg-[var(-- text-primary)] text-[var(--text-inverse)]'
@@ -203,7 +203,7 @@ function LevelOption({ config, isSelected, onSelect }: LevelOptionProps) {
       type="button"
       onClick={onSelect}
       className={cn(
-        'w-full flex items-start gap-4 p-4 rounded-lg transition-all duration-200 text-left',
+        'w-full flex items-start gap-4 p-4 rounded-lg transition-colors duration-200 text-left',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
         isSelected
           ? 'border-[var(--border-emphasis)] bg-[var(--bg-muted)]'

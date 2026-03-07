@@ -176,7 +176,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               'transition-all duration-[var(--duration-snap)]',
               'flex items-center gap-1',
               'bg-[var(--color-bg-card)] rounded-lg px-2 py-1',
-              'shadow-lg border border-[var(--color-border)]'
+              'border border-[var(--color-border)]'
             )}
           >
             {onReact && (

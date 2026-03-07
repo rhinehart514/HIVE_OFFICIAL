@@ -129,7 +129,7 @@ function SyncIndicator({
 }) {
   if (isSaving) {
     return (
-      <div className="flex items-center gap-1.5 text-xs text-gray-400">
+      <div className="flex items-center gap-1.5 text-xs text-white/50">
         <ArrowPathIcon className="h-3 w-3 animate-spin" />
         <span>Saving...</span>
       </div>
@@ -229,7 +229,7 @@ export function ToolRuntimeModal({
                   variant="ghost"
                   size="sm"
                   onClick={onExpandToFullPage}
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  className="h-8 w-8 p-0 text-white/50 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Open in full page"
                 >
                   <ArrowTopRightOnSquareIcon className="h-4 w-4" />
@@ -238,7 +238,7 @@ export function ToolRuntimeModal({
             </div>
           </div>
           {(toolDescription || tool?.description) && (
-            <p className="text-sm text-gray-400 mt-1 truncate">
+            <p className="text-sm text-white/50 mt-1 truncate">
               {toolDescription || tool?.description}
             </p>
           )}
@@ -263,7 +263,7 @@ export function ToolRuntimeModal({
                     <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse w-3/4" />
                     <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse w-1/2" />
                   </div>
-                  <p className="text-sm text-gray-400">Loading app...</p>
+                  <p className="text-sm text-white/50">Loading app...</p>
                 </div>
               </motion.div>
             ) : error ? (
@@ -280,7 +280,7 @@ export function ToolRuntimeModal({
                     <ExclamationCircleIcon className="h-6 w-6 text-red-400" />
                   </div>
                   <h3 className="text-base font-medium text-white mb-2">Something went wrong</h3>
-                  <p className="text-sm text-gray-400 mb-4">{error}</p>
+                  <p className="text-sm text-white/50 mb-4">{error}</p>
                   <div className="flex gap-2 justify-center">
                     <Button
                       variant="outline"
@@ -302,11 +302,11 @@ export function ToolRuntimeModal({
                 className="flex items-center justify-center py-16"
               >
                 <div className="text-center max-w-sm px-4">
-                  <div className="w-12 h-12 rounded-xl bg-neutral-700/50 flex items-center justify-center mx-auto mb-4">
-                    <ExclamationCircleIcon className="h-6 w-6 text-neutral-400" />
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.06] flex items-center justify-center mx-auto mb-4">
+                    <ExclamationCircleIcon className="h-6 w-6 text-white/50" />
                   </div>
                   <h3 className="text-base font-medium text-white mb-2">No elements</h3>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-white/50">
                     This tool hasn't been configured with any elements yet.
                   </p>
                 </div>

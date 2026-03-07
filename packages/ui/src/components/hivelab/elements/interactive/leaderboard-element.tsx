@@ -54,7 +54,7 @@ interface LeaderboardEntry {
 
 function RankIcon({ rank }: { rank: number }) {
   if (rank === 1) return <TrophyIcon className="h-5 w-5 text-yellow-500" />;
-  if (rank === 2) return <TrophyIcon className="h-5 w-5 text-gray-400" />;
+  if (rank === 2) return <TrophyIcon className="h-5 w-5 text-white/50" />;
   if (rank === 3) return <TrophyIcon className="h-5 w-5 text-amber-600" />;
   return <span className="w-5 text-center text-muted-foreground font-sans">{rank}</span>;
 }

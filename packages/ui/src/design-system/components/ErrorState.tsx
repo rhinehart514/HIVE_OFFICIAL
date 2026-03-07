@@ -85,7 +85,7 @@ const errorStateVariants = cva(
       variant: {
         full: 'flex flex-col items-center justify-center text-center p-12',
         inline: 'flex flex-row items-start gap-3 p-4 rounded-xl border',
-        toast: 'flex flex-row items-start gap-3 p-4 rounded-xl border shadow-lg',
+        toast: 'flex flex-row items-start gap-3 p-4 rounded-xl border',
       },
       severity: {
         error: '',

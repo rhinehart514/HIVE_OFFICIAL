@@ -684,10 +684,10 @@ function CanvasEmpty() {
           ease: 'easeInOut'
         }}
       >
-        <BoxSelect className="h-8 w-8 text-gray-400" />
+        <BoxSelect className="h-8 w-8 text-white/50" />
       </motion.div>
-      <p className="text-gray-300 font-medium mb-1">No elements configured</p>
-      <p className="text-sm text-gray-500">
+      <p className="text-white/50 font-medium mb-1">No elements configured</p>
+      <p className="text-sm text-white/30">
         This tool has no elements to render yet.
       </p>
     </motion.div>

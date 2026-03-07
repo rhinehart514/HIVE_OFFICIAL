@@ -112,7 +112,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md border border-white/[0.1] flex items-center justify-center text-white/60 hover:text-white hover:bg-black/70 transition-all"
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md border border-white/[0.1] flex items-center justify-center text-white/60 hover:text-white hover:bg-black/70 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -236,7 +236,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                 <Link
                   href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'}
                   onClick={onClose}
-                  className="flex items-center gap-3 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all group"
+                  className="flex items-center gap-3 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3 hover:bg-white/[0.05] hover:border-white/[0.1] transition-colors group"
                 >
                   <SpaceAvatar
                     name={event.spaceName}

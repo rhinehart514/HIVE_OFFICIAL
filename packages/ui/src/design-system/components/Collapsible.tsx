@@ -97,7 +97,7 @@ const collapsibleTriggerVariants = cva(
       variant: {
         default: 'w-full justify-between p-4 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] hover:bg-white/5',
         ghost: 'hover:text-white/80',
-        inline: 'text-blue-500 hover:underline',
+        inline: 'text-[#FFD700] hover:underline',
       },
     },
     defaultVariants: {

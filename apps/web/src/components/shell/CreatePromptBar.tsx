@@ -206,7 +206,7 @@ export function CreatePromptBar({
 
         <button
           type="submit"
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-black transition-all duration-150 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-black transition-colors duration-150 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           aria-label="Submit create prompt"
         >
           <ArrowRight className="h-4 w-4" />

@@ -9,7 +9,7 @@
 import { Suspense, lazy, useMemo } from 'react';
 import { CARD } from '@hive/tokens';
 import { isNativeFormat } from '@/lib/shells';
-import type { ShellFormat, ShellConfig, ShellAction } from '@/lib/shells/types';
+import type { ShellFormat, ShellConfig, ShellAction, PollConfig, PollState, BracketConfig, BracketState, RSVPConfig, RSVPState } from '@/lib/shells/types';
 import type { ShellState } from '@/lib/shells/types';
 
 // Lazy-load shell components
@@ -68,22 +68,13 @@ export default function ShellRenderer({
     return null;
   }
 
-  const sharedProps = {
-    shellId,
-    config: config as any,
-    state: state as any,
-    currentUserId,
-    creatorId,
-    isCreator,
-    onAction,
-    compact,
-  };
+  const shared = { shellId, currentUserId, creatorId, isCreator, onAction, compact };
 
   return (
     <Suspense fallback={<ShellSkeleton />}>
-      {format === 'poll' && <PollCard {...sharedProps} />}
-      {format === 'bracket' && <BracketCard {...sharedProps} />}
-      {format === 'rsvp' && <RSVPCard {...sharedProps} />}
+      {format === 'poll' && <PollCard {...shared} config={config as PollConfig} state={state as PollState | null} />}
+      {format === 'bracket' && <BracketCard {...shared} config={config as BracketConfig} state={state as BracketState | null} />}
+      {format === 'rsvp' && <RSVPCard {...shared} config={config as RSVPConfig} state={state as RSVPState | null} />}
     </Suspense>
   );
 }

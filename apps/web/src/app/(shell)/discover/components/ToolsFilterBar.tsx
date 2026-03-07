@@ -83,7 +83,7 @@ export function ToolsFilterBar({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleSearchOpen}
-              className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/50 hover:bg-white/[0.06] transition-all"
+              className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/50 hover:bg-white/[0.06] transition-colors"
             >
               <Search className="w-3.5 h-3.5" />
             </motion.button>
@@ -97,7 +97,7 @@ export function ToolsFilterBar({
                 key={opt}
                 onClick={() => onSortChange(opt)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 capitalize',
+                  'px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors duration-150 capitalize',
                   sort === opt
                     ? 'bg-white/[0.08] text-white/60 border border-white/[0.10]'
                     : 'text-white/25 hover:text-white/40'
@@ -117,7 +117,7 @@ export function ToolsFilterBar({
             key={cat.value}
             onClick={() => onCategoryChange(cat.value)}
             className={cn(
-              'shrink-0 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-150 whitespace-nowrap',
+              'shrink-0 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors duration-150 whitespace-nowrap',
               category === cat.value
                 ? 'bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700]/70'
                 : 'bg-white/[0.03] border border-white/[0.06] text-white/30 hover:bg-white/[0.05] hover:text-white/45'

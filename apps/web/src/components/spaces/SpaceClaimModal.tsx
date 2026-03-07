@@ -26,10 +26,10 @@ import { toast } from '@hive/ui';
 // Category colors - used for accent bars and borders
 const CATEGORY_COLORS: Record<string, { accent: string; text: string; bg: string; border: string }> = {
   university: {
-    accent: 'bg-blue-500',
-    text: 'text-blue-400',
-    bg: 'bg-blue-500/10',
-    border: 'border-blue-500/20',
+    accent: 'bg-white/30',
+    text: 'text-white/50',
+    bg: 'bg-white/[0.06]',
+    border: 'border-white/[0.08]',
   },
   residential: {
     accent: 'bg-emerald-500',
@@ -390,7 +390,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                             'bg-white/[0.06] border border-white/[0.06]',
                             'rounded-lg text-white placeholder:text-white/50',
                             'focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50',
-                            'transition-all duration-300'
+                            'transition-colors duration-300'
                           )}
                         />
                       </div>
@@ -420,7 +420,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                                 disabled={isLocked || isClaimed}
                                 className={cn(
                                   'w-full flex items-center gap-3 p-3 rounded-lg text-left',
-                                  'border transition-all',
+                                  'border transition-colors',
                                   isLocked || isClaimed
                                     ? 'border-white/[0.06] opacity-50 cursor-not-allowed'
                                     : 'border-white/[0.06] hover:border-white/[0.06] hover:bg-white/[0.06]'
@@ -519,7 +519,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                             'w-full px-4 py-3 rounded-lg',
                             'bg-white/[0.06] border border-white/[0.06]',
                             'text-white',
-                            'transition-all duration-300',
+                            'transition-colors duration-300',
                             'focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50',
                             'hover:bg-white/[0.06] hover:border-white/25',
                             'appearance-none bg-no-repeat bg-right cursor-pointer'

@@ -85,7 +85,7 @@ function ToolIcon({
 }) {
   // Map categories to colors for visual differentiation
   const categoryColors: Record<string, string> = {
-    productivity: 'text-blue-400',
+    productivity: 'text-white/50',
     academic: 'text-emerald-400',
     social: 'text-pink-400',
     utility: 'text-amber-400',

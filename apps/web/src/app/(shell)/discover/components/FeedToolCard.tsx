@@ -72,7 +72,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden hover:border-white/[0.10] transition-all duration-200"
+      className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden hover:border-white/[0.10] transition-colors duration-200"
     >
       <div className={cn('h-10 bg-gradient-to-r', getCategoryGradient(tool.category))} />
       <div className="p-4">
@@ -115,7 +115,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
           <button
             onClick={handleToggle}
             className={cn(
-              'flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 active:scale-[0.97]',
+              'flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium transition-colors duration-150 active:scale-[0.97]',
               expanded
                 ? 'bg-white/[0.08] border border-white/[0.10] text-white/60'
                 : 'bg-white/[0.06] border border-white/[0.06] text-white/70 hover:bg-white/[0.08] hover:border-white/[0.10]'
@@ -129,7 +129,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
               onRemix(tool.id);
             }}
             disabled={isRemixing}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium border border-[#FFD700]/20 text-[#FFD700]/70 hover:border-[#FFD700]/30 hover:text-[#FFD700]/90 hover:bg-[#FFD700]/[0.04] transition-all duration-150 active:scale-[0.97] disabled:opacity-40"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium border border-[#FFD700]/20 text-[#FFD700]/70 hover:border-[#FFD700]/30 hover:text-[#FFD700]/90 hover:bg-[#FFD700]/[0.04] transition-colors duration-150 active:scale-[0.97] disabled:opacity-40"
           >
             <GitFork className="w-3.5 h-3.5" />
             {isRemixing ? 'Remixing...' : 'Remix'}
@@ -140,7 +140,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
                 e.stopPropagation();
                 onAddToSpace(tool.id);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium bg-white/[0.04] border border-white/[0.06] text-white/40 hover:bg-white/[0.06] hover:border-white/[0.10] hover:text-white/60 transition-all duration-150 active:scale-[0.97]"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium bg-white/[0.04] border border-white/[0.06] text-white/40 hover:bg-white/[0.06] hover:border-white/[0.10] hover:text-white/60 transition-colors duration-150 active:scale-[0.97]"
             >
               <Plus className="w-3.5 h-3.5" />
               Add to space

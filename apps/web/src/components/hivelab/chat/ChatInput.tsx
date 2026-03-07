@@ -87,7 +87,7 @@ export function ChatInput({
     <div className="relative w-full">
       <div
         className={`
-          flex items-end gap-2 rounded-2xl border transition-all duration-200
+          flex items-end gap-2 rounded-2xl border transition-colors duration-200
           ${isDisabled
             ? 'border-white/[0.04] bg-[#080808]'
             : 'border-white/[0.08] bg-[#080808] hover:border-white/[0.10] focus-within:border-white/[0.12]'

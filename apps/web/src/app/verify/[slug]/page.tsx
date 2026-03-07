@@ -260,7 +260,7 @@ export default function VerifyPage() {
               {record.badges.earned.map((badge) => {
                 const tierColors = {
                   bronze: 'bg-orange-500/10 border-orange-500/20 text-orange-300',
-                  silver: 'bg-gray-400/10 border-gray-400/20 text-gray-300',
+                  silver: 'bg-white/[0.06] border-white/[0.08] text-white/50',
                   gold: 'bg-[var(--color-gold)]/10 border-[var(--color-gold)]/20 text-[var(--color-gold)]',
                 };
                 return (

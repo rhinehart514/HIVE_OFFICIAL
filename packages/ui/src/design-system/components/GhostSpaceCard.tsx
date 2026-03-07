@@ -241,7 +241,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
             size="lg"
             className={cn(
               'w-16 h-16 rounded-xl',
-              'shadow-xl opacity-60',
+              'shadow-sm opacity-60',
               'ring-4 ring-[rgba(18,18,18,0.92)]'
             )}
           >

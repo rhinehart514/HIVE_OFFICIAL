@@ -112,7 +112,7 @@ function CategoryCard({
         'p-4 rounded-lg',
         'bg-white/[0.06] border border-white/[0.06]',
         'hover:bg-white/[0.06] hover:border-white/[0.06]',
-        'transition-all duration-300'
+        'transition-colors duration-300'
       )}
     >
       {/* Icon + Label */}
@@ -381,7 +381,7 @@ export function OnboardingOverlay({
                         'w-full p-4 rounded-lg text-left',
                         'bg-white/[0.06] border border-white/[0.06]',
                         'hover:bg-white/[0.06] hover:border-white/[0.06]',
-                        'transition-all duration-200'
+                        'transition-colors duration-200'
                       )}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -408,7 +408,7 @@ export function OnboardingOverlay({
                         'w-full p-4 rounded-lg text-left',
                         'bg-white/[0.06] border border-white/[0.06]',
                         'hover:bg-white/[0.06] hover:border-white/[0.06]',
-                        'transition-all duration-200'
+                        'transition-colors duration-200'
                       )}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -435,7 +435,7 @@ export function OnboardingOverlay({
                         'w-full p-4 rounded-lg text-left',
                         'bg-white/[0.06] border border-white/[0.06]',
                         'hover:bg-white/[0.06] hover:border-white/[0.06]',
-                        'transition-all duration-200'
+                        'transition-colors duration-200'
                       )}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}

@@ -120,8 +120,8 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
           const data = await res.json();
           const fetchedCategories = data.interests || [];
           setCategories(fetchedCategories.length > 0 ? fetchedCategories : FALLBACK_INTEREST_CATEGORIES);
-          setUndergradMajors((data.majors || []).map((m: any) => m.name || m));
-          setGradPrograms((data.graduatePrograms || []).map((m: any) => m.name || m));
+          setUndergradMajors((data.majors || []).map((m: Record<string, unknown>) => (m.name as string) || String(m)));
+          setGradPrograms((data.graduatePrograms || []).map((m: Record<string, unknown>) => (m.name as string) || String(m)));
           setOnCampusSpaces(data.residentialSpaces || []);
           setOffCampusSpaces(data.offCampusSpaces || []);
           if (data.greekChapters) setGreekChapters(data.greekChapters);
@@ -216,7 +216,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             type="button"
             onClick={() => { setProgramType('undergrad'); setMajor(''); }}
             className={[
-              'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-all duration-150',
+              'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-colors duration-150',
               programType === 'undergrad' ? 'bg-white/[0.1] text-white' : 'text-white/30 hover:text-white/50',
             ].join(' ')}
           >
@@ -226,7 +226,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             type="button"
             onClick={() => { setProgramType('grad'); setMajor(''); }}
             className={[
-              'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-all duration-150',
+              'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-colors duration-150',
               programType === 'grad' ? 'bg-white/[0.1] text-white' : 'text-white/30 hover:text-white/50',
             ].join(' ')}
           >
@@ -253,7 +253,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             type="button"
             onClick={() => { setGreekAffiliated(true); }}
             className={[
-              'flex-1 py-2.5 rounded-[10px] font-sans text-[13px] font-medium transition-all duration-150 border',
+              'flex-1 py-2.5 rounded-[10px] font-sans text-[13px] font-medium transition-colors duration-150 border',
               greekAffiliated === true
                 ? 'bg-white/[0.08] border-white/[0.2] text-white'
                 : 'bg-[#080808] border-white/[0.06] text-white/50 hover:border-white/[0.08]',
@@ -265,7 +265,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             type="button"
             onClick={() => { setGreekAffiliated(false); setGreekChapterId(''); }}
             className={[
-              'flex-1 py-2.5 rounded-[10px] font-sans text-[13px] font-medium transition-all duration-150 border',
+              'flex-1 py-2.5 rounded-[10px] font-sans text-[13px] font-medium transition-colors duration-150 border',
               greekAffiliated === false
                 ? 'bg-white/[0.08] border-white/[0.2] text-white'
                 : 'bg-[#080808] border-white/[0.06] text-white/50 hover:border-white/[0.08]',
@@ -359,7 +359,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
                   type="button"
                   onClick={() => toggleOrg(org.id)}
                   className={[
-                    'px-3 py-1.5 rounded-full font-sans text-[12px] transition-all duration-150 border',
+                    'px-3 py-1.5 rounded-full font-sans text-[12px] transition-colors duration-150 border',
                     isOrgSelected
                       ? 'bg-white/[0.08] border-white/[0.2] text-white'
                       : 'bg-[#080808] border-white/[0.06] text-white/40 hover:text-white/60 hover:border-white/[0.08]',
@@ -391,7 +391,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
                 type="button"
                 onClick={() => toggle(cat.id)}
                 className={[
-                  'flex items-center gap-2 px-2.5 py-2 rounded-[10px] text-left transition-all duration-150 border',
+                  'flex items-center gap-2 px-2.5 py-2 rounded-[10px] text-left transition-colors duration-150 border',
                   isSelected
                     ? 'bg-white/[0.08] border-white/[0.2] text-white'
                     : 'bg-[#080808] border-white/[0.06] text-white/50 hover:border-white/[0.08] hover:text-white/70',
