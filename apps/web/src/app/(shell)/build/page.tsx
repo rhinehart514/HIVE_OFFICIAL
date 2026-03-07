@@ -98,13 +98,13 @@ function PromptInput({
             e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
           }}
           onKeyDown={handleKeyDown}
-          placeholder={`Describe what you want to make... "best dining hall on campus" "who's coming to the study session"`}
+          placeholder={`Describe what you want to make...`}
           disabled={disabled}
-          rows={2}
+          rows={1}
           className="w-full px-4 py-3 pr-12 rounded-2xl text-[15px] bg-white/[0.03] border border-white/[0.08]
             text-white placeholder:text-white/25 resize-none focus:outline-none focus:ring-1 focus:ring-white/20
             disabled:opacity-50 transition-colors duration-100"
-          style={{ minHeight: 56, maxHeight: 160 }}
+          style={{ minHeight: 48, maxHeight: 120 }}
         />
         <button
           onClick={handleSubmit}
@@ -136,22 +136,22 @@ function PollConfigEditor({
   onChange: (c: PollConfig) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div>
-        <label className="text-xs text-white/40 mb-1 block">Question</label>
+        <label className="text-[11px] text-white/30 mb-0.5 block">Question</label>
         <input
           type="text"
           value={config.question}
           onChange={(e) => onChange({ ...config, question: e.target.value })}
-          className="w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/[0.06]
+          className="w-full px-3 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
             text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-white/20"
         />
       </div>
       <div>
-        <label className="text-xs text-white/40 mb-1 block">Options</label>
-        <div className="space-y-2">
+        <label className="text-[11px] text-white/30 mb-0.5 block">Options</label>
+        <div className="space-y-1.5">
           {config.options.map((opt, i) => (
-            <div key={i} className="flex gap-2">
+            <div key={i} className="flex gap-1.5">
               <input
                 type="text"
                 value={opt}
@@ -170,9 +170,9 @@ function PollConfigEditor({
                     const newOptions = config.options.filter((_, j) => j !== i);
                     onChange({ ...config, options: newOptions });
                   }}
-                  className="text-white/20 hover:text-white/40 text-xs px-2"
+                  className="text-white/20 hover:text-white/40 text-[11px] px-1.5"
                 >
-                  Remove
+                  ×
                 </button>
               )}
             </div>
@@ -180,7 +180,7 @@ function PollConfigEditor({
           {config.options.length < 6 && (
             <button
               onClick={() => onChange({ ...config, options: [...config.options, ''] })}
-              className="text-xs text-white/30 hover:text-white/50 transition-colors"
+              className="text-[11px] text-white/25 hover:text-white/50 transition-colors"
             >
               + Add option
             </button>
@@ -199,22 +199,22 @@ function BracketConfigEditor({
   onChange: (c: BracketConfig) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div>
-        <label className="text-xs text-white/40 mb-1 block">Topic</label>
+        <label className="text-[11px] text-white/30 mb-0.5 block">Topic</label>
         <input
           type="text"
           value={config.topic}
           onChange={(e) => onChange({ ...config, topic: e.target.value })}
-          className="w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/[0.06]
+          className="w-full px-3 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
             text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-white/20"
         />
       </div>
       <div>
-        <label className="text-xs text-white/40 mb-1 block">Entries</label>
-        <div className="space-y-2">
+        <label className="text-[11px] text-white/30 mb-0.5 block">Entries</label>
+        <div className="space-y-1.5">
           {config.entries.map((entry, i) => (
-            <div key={i} className="flex gap-2">
+            <div key={i} className="flex gap-1.5">
               <input
                 type="text"
                 value={entry}
@@ -233,9 +233,9 @@ function BracketConfigEditor({
                     const newEntries = config.entries.filter((_, j) => j !== i);
                     onChange({ ...config, entries: newEntries });
                   }}
-                  className="text-white/20 hover:text-white/40 text-xs px-2"
+                  className="text-white/20 hover:text-white/40 text-[11px] px-1.5"
                 >
-                  Remove
+                  ×
                 </button>
               )}
             </div>
@@ -243,7 +243,7 @@ function BracketConfigEditor({
           {config.entries.length < 16 && (
             <button
               onClick={() => onChange({ ...config, entries: [...config.entries, ''] })}
-              className="text-xs text-white/30 hover:text-white/50 transition-colors"
+              className="text-[11px] text-white/25 hover:text-white/50 transition-colors"
             >
               + Add entry
             </button>
@@ -262,42 +262,42 @@ function RSVPConfigEditor({
   onChange: (c: RSVPConfig) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div>
-        <label className="text-xs text-white/40 mb-1 block">Title</label>
+        <label className="text-[11px] text-white/30 mb-0.5 block">Title</label>
         <input
           type="text"
           value={config.title}
           onChange={(e) => onChange({ ...config, title: e.target.value })}
-          className="w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/[0.06]
+          className="w-full px-3 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
             text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-white/20"
         />
       </div>
       <div>
-        <label className="text-xs text-white/40 mb-1 block">Location (optional)</label>
+        <label className="text-[11px] text-white/30 mb-0.5 block">Location (optional)</label>
         <input
           type="text"
           value={config.location ?? ''}
           onChange={(e) => onChange({ ...config, location: e.target.value || undefined })}
           placeholder="e.g. Student Union Room 210"
-          className="w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/[0.06]
+          className="w-full px-3 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
             text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
         />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs text-white/40 mb-1 block">Date & time (optional)</label>
+          <label className="text-[11px] text-white/30 mb-0.5 block">Date & time</label>
           <input
             type="datetime-local"
             value={config.dateTime ?? ''}
             onChange={(e) => onChange({ ...config, dateTime: e.target.value || undefined })}
-            className="w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/[0.06]
+            className="w-full px-2 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
               text-white focus:outline-none focus:ring-1 focus:ring-white/20
               [color-scheme:dark]"
           />
         </div>
         <div>
-          <label className="text-xs text-white/40 mb-1 block">Capacity (optional)</label>
+          <label className="text-[11px] text-white/30 mb-0.5 block">Capacity</label>
           <input
             type="number"
             min={1}
@@ -307,7 +307,7 @@ function RSVPConfigEditor({
               onChange({ ...config, capacity: e.target.value ? Number(e.target.value) : undefined })
             }
             placeholder="No limit"
-            className="w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/[0.06]
+            className="w-full px-2 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
               text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
           />
         </div>
@@ -776,11 +776,11 @@ export default function BuildPage() {
         {/* ============================================ */}
         {/* LEFT PANEL — Prompt + controls               */}
         {/* ============================================ */}
-        <div className="w-full lg:w-[420px] lg:min-w-[400px] lg:border-r lg:border-white/[0.06] flex flex-col">
-          <div className="flex-1 px-6 py-8 flex flex-col">
+        <div className="w-full lg:w-[360px] lg:min-w-[320px] lg:border-r lg:border-white/[0.06] flex flex-col">
+          <div className="px-5 py-6 flex flex-col overflow-y-auto">
             {/* Header — minimal */}
-            <div className="mb-6">
-              <h1 className="text-lg font-medium text-white mb-1">
+            <div className="mb-4">
+              <h1 className="text-base font-medium text-white mb-0.5">
                 Make something
               </h1>
               {originSpaceName ? (
@@ -826,8 +826,8 @@ export default function BuildPage() {
               </div>
             )}
 
-            {/* Phase indicator */}
-            <PhaseIndicator phase={state.phase} />
+            {/* Phase indicator — hidden when shell editor is showing (it duplicates info) */}
+            {state.phase !== 'shell-matched' && <PhaseIndicator phase={state.phase} />}
 
             {/* Shell config editor (only in shell-matched phase) */}
             <AnimatePresence mode="wait">
@@ -838,9 +838,9 @@ export default function BuildPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.25, ease: EASE }}
-                  className="mt-6"
+                  className="mt-4"
                 >
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Wand2 className="w-3.5 h-3.5 text-[#FFD700]/50" />
                       <span className="text-xs font-medium text-white/50">
@@ -852,7 +852,7 @@ export default function BuildPage() {
                     </span>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+                  <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
                     <ShellConfigEditor
                       format={shellFormat!}
                       config={state.shellConfig}
@@ -861,7 +861,7 @@ export default function BuildPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex gap-2 mt-3">
                     <button
                       onClick={handleDeploy}
                       className="flex-1 flex items-center justify-center gap-2 h-10 rounded-full
@@ -961,15 +961,13 @@ export default function BuildPage() {
               </motion.div>
             )}
 
-            {/* Spacer */}
-            <div className="flex-1" />
           </div>
         </div>
 
         {/* ============================================ */}
         {/* RIGHT PANEL — Preview                        */}
         {/* ============================================ */}
-        <div className="flex-1 flex flex-col min-h-[50vh] lg:min-h-0">
+        <div className="flex-1 flex flex-col min-h-[50vh] lg:min-h-0 bg-white/[0.015]">
           <AnimatePresence mode="wait">
             {!showPreview ? (
               /* Idle: show example shell cards as inspiration */
@@ -978,12 +976,12 @@ export default function BuildPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center px-8"
+                className="flex-1 flex flex-col items-center justify-start pt-12 lg:pt-16 px-8"
               >
                 <p className="text-xs text-white/20 mb-6 font-mono uppercase tracking-wider">
                   What you can make
                 </p>
-                <div className="grid gap-3 w-full max-w-sm">
+                <div className="grid gap-3 w-full max-w-md">
                   {/* Mini poll preview */}
                   <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
                     <div className="flex items-center gap-2 mb-2">
@@ -1037,9 +1035,9 @@ export default function BuildPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.97 }}
                 transition={{ duration: 0.25, ease: EASE }}
-                className="flex-1 flex items-center justify-center p-6"
+                className="flex-1 flex items-start justify-center px-6 pt-12 lg:pt-16"
               >
-                <div className="w-full max-w-sm">
+                <div className="w-full max-w-md">
                   <Suspense
                     fallback={
                       <div className="h-48 rounded-2xl bg-white/[0.03] animate-pulse" />
@@ -1057,10 +1055,6 @@ export default function BuildPage() {
                       compact={false}
                     />
                   </Suspense>
-
-                  <p className="text-center text-[11px] text-white/15 mt-4">
-                    Live preview
-                  </p>
                 </div>
               </motion.div>
             ) : (state.phase === 'generating' || state.phase === 'complete') ? (
