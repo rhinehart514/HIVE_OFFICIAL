@@ -33,9 +33,9 @@ export default function ProfileError({
           <button
             onClick={reset}
             className={cn(
-              'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg',
-              'bg-white text-foundation-gray-1000 font-medium',
-              'hover:bg-white transition-colors'
+              'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full',
+              'bg-[#FFD700] text-black font-semibold',
+              'hover:bg-[#FFD700]/90 transition-colors duration-100'
             )}
           >
             Try Again
@@ -43,9 +43,9 @@ export default function ProfileError({
           <Link
             href="/discover"
             className={cn(
-              'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg',
-              'bg-white/[0.06] text-white/50 font-mediumborder-white/[0.06]',
-              'hover:bg-white/[0.06] transition-colors'
+              'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full',
+              'border border-white/10 text-white/50 font-medium',
+              'hover:bg-white/[0.06] transition-colors duration-100'
             )}
           >
             Go Home

@@ -194,7 +194,7 @@ export function ImageCropper({
           whileHover={{ opacity: 0.9 }}
           whileTap={{ opacity: 0.8 }}
           transition={transitionSpring}
-          className="w-full h-12 bg-white text-[var(--color-bg-void,#0A0A09)] font-semibold rounded-lg hover:bg-white transition-colors disabled:opacity-50"
+          className="w-full h-12 bg-[#FFD700] text-black font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors duration-100 disabled:opacity-50"
         >
           {isProcessing ? 'Processing...' : 'Use this photo'}
         </motion.button>

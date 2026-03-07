@@ -38,17 +38,17 @@ export default function BuildError({
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             onClick={() => reset()}
-            className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-2xl
-              bg-white text-black font-medium text-sm hover:bg-white/90 transition-colors"
+            className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-full
+              bg-[#FFD700] text-black font-semibold text-sm hover:bg-[#FFD700]/90 transition-colors duration-100"
           >
             <RotateCcw className="h-4 w-4" />
             Try again
           </button>
           <button
             onClick={() => window.location.href = '/build'}
-            className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-2xl
-              text-sm text-white/60 bg-white/[0.04] border border-white/[0.08]
-              hover:bg-white/[0.08] hover:text-white/80 transition-colors"
+            className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-full
+              text-sm text-white/60 border border-white/10
+              hover:bg-white/[0.06] hover:text-white/80 transition-colors duration-100"
           >
             <Sparkles className="h-4 w-4" />
             Start fresh

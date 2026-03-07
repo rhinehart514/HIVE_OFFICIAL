@@ -156,8 +156,8 @@ export function ToolPreviewCard({
               <button
                 onClick={handleShare}
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                  rounded-xl bg-white text-black font-medium text-sm
-                  hover:bg-white/90 transition-all"
+                  rounded-full bg-[#FFD700] text-black font-semibold text-sm
+                  hover:bg-[#FFD700]/90 transition-colors duration-100"
               >
                 {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
                 {linkCopied ? 'Copied!' : 'Share'}
@@ -165,8 +165,8 @@ export function ToolPreviewCard({
               <button
                 onClick={onEdit}
                 className="flex items-center justify-center gap-1.5 px-3 py-2
-                  rounded-xl bg-white/[0.06] text-white/60 text-sm border border-white/[0.06]
-                  hover:bg-white/[0.08] hover:text-white/80 transition-all"
+                  rounded-full bg-white/[0.06] text-white/60 text-sm border border-white/[0.06]
+                  hover:bg-white/[0.08] hover:text-white/80 transition-colors duration-100"
               >
                 <Pencil className="w-3.5 h-3.5" />
                 Edit

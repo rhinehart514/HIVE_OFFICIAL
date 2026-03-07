@@ -133,11 +133,11 @@ function JoinButton({
         onClick={handleClick}
         disabled={isLoading}
         className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-md',
+          'flex items-center gap-1.5 px-3 py-1.5 rounded-full',
           'text-xs font-medium',
           'bg-white/[0.06] text-white/50',
-          'hover:bg-white/[0.06] hover:text-white',
-          'transition-all duration-150',
+          'hover:bg-white/[0.08] hover:text-white',
+          'transition-colors duration-100',
           'disabled:opacity-50'
         )}
       >
@@ -152,11 +152,11 @@ function JoinButton({
       onClick={handleClick}
       disabled={isLoading}
       className={cn(
-        'px-3 py-1.5 rounded-lg',
+        'px-3 py-1.5 rounded-full',
         'text-xs font-medium',
-        'bg-white text-[var(--color-bg-void,#0A0A09)]',
-        'hover:bg-white',
-        'transition-all duration-150',
+        'bg-[#FFD700] text-black',
+        'hover:bg-[#FFD700]/90',
+        'transition-colors duration-100',
         'disabled:opacity-50'
       )}
     >

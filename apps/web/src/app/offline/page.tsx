@@ -118,14 +118,14 @@ export default function OfflinePage() {
         <div className="space-y-3">
           <button
             onClick={() => window.location.reload()}
-            className="w-full py-3 px-4 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-lg transition-colors"
+            className="w-full py-3 px-4 bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-semibold rounded-full transition-colors duration-100"
           >
             Try Again
           </button>
 
           <button
             onClick={() => window.history.back()}
-            className="w-full py-3 px-4 bg-[#080808] hover:bg-white/[0.06] text-white font-semibold rounded-lg transition-colors"
+            className="w-full py-3 px-4 border border-white/10 text-white font-semibold rounded-full hover:bg-white/[0.06] transition-colors duration-100"
           >
             Go Back
           </button>

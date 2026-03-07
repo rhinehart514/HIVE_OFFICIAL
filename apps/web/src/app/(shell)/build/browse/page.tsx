@@ -69,7 +69,7 @@ function CategoryPill({
       className={`
         px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150
         ${isActive
-          ? 'bg-white text-black'
+          ? 'bg-[#FFD700] text-black'
           : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
         }
       `}
@@ -187,7 +187,7 @@ export default function CampusToolsDirectory() {
           </p>
           <button
             onClick={() => router.push('/enter?redirect=/build/browse')}
-            className="px-6 py-3 bg-white text-black rounded-2xl font-medium text-sm hover:bg-white/90 transition-colors"
+            className="px-6 py-3 bg-[#FFD700] text-black rounded-full font-semibold text-sm hover:bg-[#FFD700]/90 transition-colors duration-100"
           >
             Sign in
           </button>

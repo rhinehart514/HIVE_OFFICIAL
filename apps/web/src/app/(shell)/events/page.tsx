@@ -201,10 +201,10 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
           type="button"
           onClick={() => onRsvp(isGoing ? 'not_going' : 'going')}
           className={cn(
-            'flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-medium transition-all duration-150',
+            'flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors duration-100',
             isGoing
               ? 'bg-white/[0.08] text-white/70 border border-white/[0.08]'
-              : 'bg-white text-black hover:bg-white/90'
+              : 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90'
           )}
         >
           {isGoing ? (

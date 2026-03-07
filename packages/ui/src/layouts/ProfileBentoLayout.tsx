@@ -32,10 +32,10 @@ export const ProfileBentoLayout: React.FC = () => {
                 web3, and making campus life better through technology.
               </p>
               <div className="flex gap-3">
-                <button className="px-6 py-2 bg-[var(--hive-gold)] text-black font-semibold rounded-lg hover:bg-[var(--hive-gold-hover)] transition-colors">
+                <button className="px-6 py-2 bg-[#FFD700] text-black font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors">
                   Edit Profile
                 </button>
-                <button className="px-6 py-2 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors">
+                <button className="px-6 py-2 border border-white/10 text-white font-semibold rounded-full hover:bg-white/[0.06] transition-colors">
                   Share
                 </button>
               </div>

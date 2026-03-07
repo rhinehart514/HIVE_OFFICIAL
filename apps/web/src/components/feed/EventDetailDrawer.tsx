@@ -261,10 +261,10 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                   rsvpMutation.mutate({ eventId: event.id, spaceId: event.spaceId })
                 }
                 className={cn(
-                  'flex items-center justify-center gap-2 w-full py-3 rounded-xl text-[14px] font-semibold transition-all duration-200 active:scale-[0.98]',
+                  'flex items-center justify-center gap-2 w-full py-3 rounded-full text-[14px] font-semibold transition-colors duration-100 active:scale-[0.98]',
                   isGoing
                     ? 'bg-white/[0.06] border border-white/[0.10] text-white/50 hover:bg-white/[0.08]'
-                    : 'bg-white text-black hover:bg-white/90',
+                    : 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90',
                 )}
               >
                 {isGoing ? (

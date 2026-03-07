@@ -200,7 +200,7 @@ function RejectedRequestStatus({
       {canRequestAgain && (
         <button
           onClick={onRequestAgain}
-          className="w-full py-3 rounded-xl bg-white/[0.06] text-white/70 hover:bg-white/[0.10] transition-colors"
+          className="w-full py-3 rounded-full border border-white/10 text-white/70 hover:bg-white/[0.06] transition-colors"
         >
           Request Again
         </button>
@@ -399,7 +399,7 @@ export function SpaceThreshold({
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowRequestForm(false)}
-                    className="flex-1 py-3 rounded-xl bg-white/[0.06] text-white/70 hover:bg-white/[0.10] transition-colors"
+                    className="flex-1 py-3 rounded-full border border-white/10 text-white/70 hover:bg-white/[0.06] transition-colors"
                   >
                     Back
                   </button>
@@ -407,8 +407,8 @@ export function SpaceThreshold({
                     onClick={handleRequestJoin}
                     disabled={isJoining}
                     className={cn(
-                      'flex-1 py-3 rounded-xl font-medium transition-all',
-                      'bg-[var(--life-gold)] text-black hover:bg-[var(--life-gold)]/90',
+                      'flex-1 py-3 rounded-full font-semibold transition-all',
+                      'bg-[#FFD700] text-black hover:bg-[#FFD700]/90',
                       'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >
@@ -432,8 +432,8 @@ export function SpaceThreshold({
                     <button
                       onClick={() => setShowRequestForm(true)}
                       className={cn(
-                        'w-full py-4 rounded-xl font-semibold transition-all',
-                        'bg-[var(--life-gold)] text-black hover:bg-[var(--life-gold)]/90'
+                        'w-full py-4 rounded-full font-semibold transition-all',
+                        'bg-[#FFD700] text-black hover:bg-[#FFD700]/90'
                       )}
                     >
                       Request to Join
@@ -447,8 +447,8 @@ export function SpaceThreshold({
                     onClick={handleEnter}
                     disabled={isJoining}
                     className={cn(
-                      'w-full py-4 rounded-xl font-semibold transition-all',
-                      'bg-white text-black hover:bg-white/90',
+                      'w-full py-4 rounded-full font-semibold transition-all',
+                      'bg-[#FFD700] text-black hover:bg-[#FFD700]/90',
                       'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >

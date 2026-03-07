@@ -137,9 +137,9 @@ export function ChatInput({
                 onClick={handleSubmit}
                 disabled={!value.trim()}
                 className={`
-                  w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-150
+                  w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-100
                   ${value.trim()
-                    ? 'bg-white text-black hover:bg-white/90'
+                    ? 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90'
                     : 'bg-white/[0.08] text-white/30'
                   }
                   disabled:cursor-not-allowed

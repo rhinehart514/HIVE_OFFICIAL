@@ -59,7 +59,7 @@ function ProfileShell({ user }: { user: { id: string; email?: string | null; dis
             </p>
             <Link
               href="/me/edit"
-              className="inline-flex items-center justify-center w-full px-5 py-2.5 bg-white text-black text-sm font-medium rounded-xl hover:bg-white/90 transition-colors"
+              className="inline-flex items-center justify-center w-full px-5 py-2.5 bg-[#FFD700] text-black text-sm font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors duration-100"
             >
               Set up profile
             </Link>

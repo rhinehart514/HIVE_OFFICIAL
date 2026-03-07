@@ -190,7 +190,7 @@ export default function CampusToolPage() {
           </p>
           <button
             onClick={() => router.push('/campus')}
-            className="px-6 py-2.5 bg-white text-black text-sm font-medium rounded-full hover:bg-white/90 transition-colors"
+            className="px-6 py-2.5 bg-[#FFD700] text-black text-sm font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors"
           >
             Browse Campus Apps
           </button>
@@ -218,7 +218,7 @@ export default function CampusToolPage() {
           </Link>
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/30 hover:text-white/55 hover:bg-white/[0.04] transition-all text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/30 hover:text-white/55 hover:bg-white/[0.04] transition-colors text-sm"
           >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
             {copied ? 'Copied' : 'Share'}
