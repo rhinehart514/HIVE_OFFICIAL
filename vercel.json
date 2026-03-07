@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter=@hive/web... build",
+  "buildCommand": "pnpm --filter=@hive/web... build && mkdir -p public && cp -r apps/web/public/* public/",
   "outputDirectory": "apps/web/.next",
   "installCommand": "corepack enable && corepack prepare pnpm@9.1.1 --activate && pnpm install --prod=false",
   "regions": ["iad1"],

@@ -112,14 +112,16 @@ export function LeftSidebar() {
           <span className="text-[14px] font-medium">Notifications</span>
         </button>
 
-        {/* Create button — white pill */}
-        <Link
-          href="/build"
-          className="flex items-center justify-center gap-2 h-10 mt-2 rounded-full bg-white text-black text-[14px] font-semibold hover:bg-white/90 transition-colors duration-100"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          Create
-        </Link>
+        {/* Create button — white pill (hidden on /build since it IS the creation surface) */}
+        {!pathname.startsWith('/build') && (
+          <Link
+            href="/build"
+            className="flex items-center justify-center gap-2 h-10 mt-2 rounded-full bg-white text-black text-[14px] font-semibold hover:bg-white/90 transition-colors duration-100"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            Create
+          </Link>
+        )}
       </div>
     </aside>
   );
