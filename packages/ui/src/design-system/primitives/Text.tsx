@@ -25,6 +25,7 @@ const textVariants = cva(
         sm: 'text-[var(--font-size-body-sm)] leading-[var(--line-height-normal)]',      // 14px
         xs: 'text-[var(--font-size-body-xs)] leading-[var(--line-height-snug)]',        // 13px
         lg: 'text-[var(--font-size-body-lg)] leading-[var(--line-height-relaxed)]',     // 18px
+        ui: 'text-[14px] font-medium leading-[1.4]',                                   // nav items, interactive chrome
       },
       tone: {
         primary: 'text-[var(--color-text-primary)]',

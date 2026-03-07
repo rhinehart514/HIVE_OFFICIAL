@@ -3,10 +3,10 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { Users, ArrowRight } from 'lucide-react';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { emitValueMoment } from '@/lib/pwa-triggers';
+import { Mono } from '@hive/ui/design-system/primitives';
 import type { FeedSpace } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
 
@@ -106,9 +106,9 @@ export function DiscoverSection() {
     return (
       <section>
         <div className="flex items-center gap-2 mb-3">
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+          <Mono size="label" className="text-white/50">
             Discover
-          </span>
+          </Mono>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {[0, 1, 2, 3].map((i) => (
@@ -134,9 +134,9 @@ export function DiscoverSection() {
     return (
       <section>
         <div className="flex items-center gap-2 mb-3">
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+          <Mono size="label" className="text-white/50">
             Discover
-          </span>
+          </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
           You&apos;ve explored all available spaces. Nice.
@@ -148,9 +148,9 @@ export function DiscoverSection() {
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+        <Mono size="label" className="text-white/50">
           Discover
-        </span>
+        </Mono>
         <Link
           href="/discover"
           className="text-[10px] text-white/20 hover:text-white/40 transition-colors flex items-center gap-1"
@@ -160,16 +160,11 @@ export function DiscoverSection() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {visibleSpaces.map((space, i) => (
-          <motion.div
-            key={space.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.2) }}
-          >
+        {visibleSpaces.map((space) => (
+          <div key={space.id}>
             <Link
               href={`/s/${space.handle || space.id}`}
-              className="group flex items-start gap-3 rounded-xl border border-white/[0.06] bg-[#0a0a0a] px-3.5 py-3 hover:border-white/[0.12] transition-all duration-200"
+              className="group flex items-start gap-3 rounded-xl border border-white/[0.06] bg-[#0a0a0a] px-3.5 py-3 hover:border-white/[0.12] transition-colors duration-100"
             >
               <SpaceAvatar name={space.name} url={space.avatarUrl} size={40} />
               <div className="flex-1 min-w-0">
@@ -213,7 +208,7 @@ export function DiscoverSection() {
                 {joiningId === space.id ? '...' : 'Join'}
               </button>
             </Link>
-          </motion.div>
+          </div>
         ))}
       </div>
 

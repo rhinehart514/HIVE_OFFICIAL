@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { Mono } from '@hive/ui/design-system/primitives';
 import { SpaceAvatar } from './SpaceAvatar';
 
 interface ActivityItem {
@@ -52,9 +52,9 @@ export function SpacesActivitySection() {
     return (
       <section>
         <div className="flex items-center gap-2 mb-3">
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+          <Mono size="label" className="text-white/50">
             Your Spaces
-          </span>
+          </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
           No recent activity in your spaces. Join some below to get started.
@@ -66,19 +66,14 @@ export function SpacesActivitySection() {
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+        <Mono size="label" className="text-white/50">
           Your Spaces
-        </span>
+        </Mono>
       </div>
 
       <div className="space-y-1">
-        {items.map((item, i) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: i * 0.03, ease: [0.22, 1, 0.36, 1] }}
-          >
+        {items.map((item) => (
+          <div key={item.id}>
             <Link
               href={`/s/${item.spaceHandle ?? item.spaceId}`}
               className="group flex items-start gap-3 rounded-lg px-3 py-2.5 -mx-1 hover:bg-white/[0.03] transition-colors"
@@ -104,7 +99,7 @@ export function SpacesActivitySection() {
                 </span>
               </div>
             </Link>
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>

@@ -641,7 +641,7 @@ export default function BuildStudioPage({ params }: Props) {
                       ease: EASE,
                     }}
                     className="absolute right-0 top-full mt-2 w-64 bg-[#141414] border border-white/[0.08]
-                      rounded-xl shadow-2xl z-50 overflow-hidden"
+                      rounded-xl shadow-md z-50 overflow-hidden"
                   >
                     <div className="px-3 py-2 border-b border-white/[0.06]">
                       <p className="text-xs font-medium text-white/50">

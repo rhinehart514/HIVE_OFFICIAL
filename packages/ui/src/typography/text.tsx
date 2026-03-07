@@ -53,7 +53,7 @@ const textVariants = cva(
       },
       tracking: {
         normal: "",
-        wide: "tracking-[0.08em]",
+        wide: "tracking-label",
         wider: "tracking-[0.16em]",
       },
       truncate: {

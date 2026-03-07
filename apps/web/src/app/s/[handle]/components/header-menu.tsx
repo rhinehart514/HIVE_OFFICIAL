@@ -86,7 +86,7 @@ export function HeaderMenu({
 
             {/* Header */}
             <div className="flex items-center justify-between px-4 h-12 md:h-14 md:border-b md:border-white/[0.05]">
-              <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+              <span className="font-mono text-[11px] uppercase tracking-label text-white/50">
                 Space
               </span>
               <button
@@ -101,7 +101,7 @@ export function HeaderMenu({
               {/* ── Apps section ── */}
               {(tools.length > 0 || isLoadingTools) && (
                 <div className="mt-3 mb-4">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-white/30 mb-2 block">
+                  <span className="font-mono text-[10px] uppercase tracking-label text-white/30 mb-2 block">
                     Apps
                   </span>
                   {isLoadingTools ? (
@@ -145,7 +145,7 @@ export function HeaderMenu({
               {/* ── Events section ── */}
               {events.length > 0 && (
                 <div className="mb-4">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-white/30 mb-2 block">
+                  <span className="font-mono text-[10px] uppercase tracking-label text-white/30 mb-2 block">
                     Upcoming
                   </span>
                   <div className="space-y-1">

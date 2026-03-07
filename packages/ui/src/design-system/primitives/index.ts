@@ -557,23 +557,29 @@ export {
   SpaceHealthBadge,
   SpaceHealthDot,
   SpaceHealthEdge,
-  SpaceGrowthIndicator,
-  SpaceHealthIndicator,
   healthBadgeContainerVariants,
   healthDotVariants,
   healthEdgeVariants,
+  type SpaceHealthBadgeProps,
+  type SpaceHealthDotProps,
+  type SpaceHealthEdgeProps,
+} from './SpaceHealthBadge';
+
+export {
   getSpaceHealthLevel,
   getHealthLabel,
   getHealthDescription,
   getMemberGrowthTrend,
   type SpaceHealthLevel,
   type SpaceHealthMetrics,
-  type SpaceHealthBadgeProps,
-  type SpaceHealthDotProps,
-  type SpaceHealthEdgeProps,
+} from './space-health-utils';
+
+export {
+  SpaceGrowthIndicator,
+  SpaceHealthIndicator,
   type SpaceGrowthIndicatorProps,
   type SpaceHealthIndicatorProps,
-} from './SpaceHealthBadge';
+} from './SpaceHealthIndicator';
 
 // ============================================
 // BREADCRUMB PRIMITIVES (IA Consolidation)

@@ -260,7 +260,7 @@ export function SearchCommand() {
             {!loading && grouped.map((group) => (
               <div key={group.type}>
                 <div className="flex items-center gap-2 px-4 py-1.5">
-                  <span className="text-[10px] uppercase tracking-[0.1em] text-white/25 font-sans font-medium">
+                  <span className="text-[10px] uppercase tracking-label text-white/25 font-sans font-medium">
                     {group.label}
                   </span>
                 </div>

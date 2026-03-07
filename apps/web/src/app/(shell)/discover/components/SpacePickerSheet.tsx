@@ -40,7 +40,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
 
       {/* Sheet */}
       <motion.div
-        className="relative w-full max-w-[400px] max-h-[70vh] rounded-t-2xl sm:rounded-2xl bg-[#111] border border-white/[0.08] shadow-2xl shadow-black/50 overflow-hidden flex flex-col"
+        className="relative w-full max-w-[400px] max-h-[70vh] rounded-t-2xl sm:rounded-2xl bg-[#111] border border-white/[0.08] shadow-md shadow-black/50 overflow-hidden flex flex-col"
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 80, opacity: 0 }}

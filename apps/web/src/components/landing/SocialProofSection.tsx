@@ -194,7 +194,7 @@ function CountUpStat({
       <div className={`${clashDisplay} text-[clamp(28px,4vw,40px)] font-semibold text-white`}>
         {count.toLocaleString()}{suffix}
       </div>
-      <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-white/30">
+      <div className="mt-1 font-mono text-[11px] uppercase tracking-label text-white/30">
         {label}
       </div>
     </div>
@@ -207,7 +207,7 @@ function StatBlock({ label, value }: { label: string; value: string }) {
       <div className={`${clashDisplay} text-[clamp(28px,4vw,40px)] font-semibold text-white`}>
         {value}
       </div>
-      <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-white/30">
+      <div className="mt-1 font-mono text-[11px] uppercase tracking-label text-white/30">
         {label}
       </div>
     </div>

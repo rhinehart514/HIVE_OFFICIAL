@@ -57,7 +57,7 @@ export const StatAtom = React.forwardRef<HTMLDivElement, StatAtomProps>(
     return (
       <div ref={ref} className={cn('flex flex-col', className)}>
         {noAnimation ? (
-          <p className={cn(styles.number, 'font-semibold text-white leading-none tabular-nums')}>
+          <p className={cn(styles.number, 'font-mono font-semibold text-white leading-none tabular-nums')}>
             {formatFn ? formatFn(value) : value.toLocaleString()}
           </p>
         ) : (
@@ -66,10 +66,10 @@ export const StatAtom = React.forwardRef<HTMLDivElement, StatAtomProps>(
             springOptions={numberSpringPresets.quick}
             formatFn={formatFn}
             animateOnView
-            className={cn(styles.number, 'font-semibold text-white leading-none')}
+            className={cn(styles.number, 'font-mono font-semibold text-white leading-none tabular-nums')}
           />
         )}
-        <p className={cn(styles.label, 'text-white/35 mt-1 uppercase tracking-[0.12em]')}>
+        <p className={cn(styles.label, 'font-mono text-white/35 mt-1 uppercase tracking-label')}>
           {label}
         </p>
       </div>

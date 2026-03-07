@@ -410,7 +410,7 @@ export const CommandPalette = React.forwardRef<HTMLDivElement, CommandPalettePro
                   ) : (
                     Object.entries(groupedItems).map(([category, categoryItems]) => (
                       <div key={category}>
-                        <div className="px-4 py-2 text-label-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.08em]">
+                        <div className="px-4 py-2 text-label-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-label">
                           {category}
                         </div>
                         {categoryItems.map((item) => {

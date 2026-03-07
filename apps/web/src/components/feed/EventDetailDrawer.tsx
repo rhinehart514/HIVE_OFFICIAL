@@ -103,7 +103,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
           {/* Panel — slides up on mobile, centered on desktop */}
           <motion.div
             ref={modalRef}
-            className="relative w-full sm:max-w-[520px] max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-[#111] border border-white/[0.08] shadow-2xl shadow-black/40 flex flex-col"
+            className="relative w-full sm:max-w-[520px] max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-[#111] border border-white/[0.08] shadow-md shadow-black/40 flex flex-col"
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}

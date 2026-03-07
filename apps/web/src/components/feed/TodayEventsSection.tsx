@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { Check, MapPin, Users, Video } from 'lucide-react';
+import { Mono } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import type { FeedEvent } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
@@ -78,9 +78,9 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/30" />
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+          <Mono size="label" className="text-white/50">
             Today
-          </span>
+          </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
           No events scheduled for today.
@@ -94,9 +94,9 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+          <Mono size="label" className="text-white/50">
             Today
-          </span>
+          </Mono>
         </div>
         <span className="text-[11px] text-white/20 tabular-nums">
           {todayEvents.length} event{todayEvents.length !== 1 ? 's' : ''}
@@ -110,17 +110,10 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
           const signal = socialSignal(event);
 
           return (
-            <motion.div
+            <div
               key={event.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.3,
-                delay: i * 0.04,
-                ease: [0.22, 1, 0.36, 1],
-              }}
               onClick={() => onSelectEvent(event)}
-              className="group cursor-pointer rounded-xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden hover:border-white/[0.12] transition-all duration-200"
+              className="group cursor-pointer rounded-xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden hover:border-white/[0.12] transition-colors duration-100"
             >
               <div className="flex">
                 {/* Image thumbnail */}
@@ -229,7 +222,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>

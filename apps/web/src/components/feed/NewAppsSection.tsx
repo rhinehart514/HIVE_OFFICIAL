@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import { Mono } from '@hive/ui/design-system/primitives';
 import { useAuth } from '@hive/auth-logic';
 import ShellRenderer from '@/components/shells/ShellRenderer';
 import { useShellState } from '@/hooks/useShellState';
@@ -88,10 +89,7 @@ function AppCard({
     hasInteracted && tool.spaceId && tool.spaceName && !joinedSpaces.has(tool.spaceId);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3), ease: [0.22, 1, 0.36, 1] }}
+    <div
       className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden"
     >
       <div className="p-4">
@@ -158,7 +156,7 @@ function AppCard({
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -180,9 +178,9 @@ export function NewAppsSection() {
     return (
       <section>
         <div className="flex items-center gap-2 mb-3">
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+          <Mono size="label" className="text-white/50">
             New Apps
-          </span>
+          </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
           No new apps yet.{' '}
@@ -200,9 +198,9 @@ export function NewAppsSection() {
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+        <Mono size="label" className="text-white/50">
           New Apps
-        </span>
+        </Mono>
       </div>
 
       <div className="space-y-3">

@@ -12,17 +12,23 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const monoVariants = cva(
-  // Base: Geist Mono font, primary text
+  // Base: Geist Mono font, primary text, tabular-nums for stable number rendering
   [
-    'font-[var(--font-sans)]',
+    'font-[var(--font-mono)]',
     'text-[var(--color-text-primary)]',
+    'tabular-nums',
   ].join(' '),
   {
     variants: {
       size: {
         default: 'text-[var(--font-size-body-sm)]', // 14px
         sm: 'text-[var(--font-size-body-xs)]',      // 13px
-        xs: 'text-label',                          // 12px
+        xs: 'text-label',                           // 12px
+        // Semantic variants
+        data: 'text-[14px] font-medium leading-[1.3]',         // counts, stats, @handles
+        'data-sm': 'text-[12px] font-medium leading-[1.3]',    // badge numbers, compact stats
+        label: 'text-[11px] font-medium uppercase tracking-label leading-none text-white/50', // section labels
+        meta: 'text-[11px] font-normal leading-[1.3] text-white/30',  // timestamps, fine print
       },
       inline: {
         true: [

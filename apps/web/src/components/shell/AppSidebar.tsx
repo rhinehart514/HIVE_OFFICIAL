@@ -149,7 +149,7 @@ function MobileNavItem({ item, isActive, badge }: { item: NavItem; isActive: boo
           </span>
         ) : null}
       </div>
-      <span className={cn('font-mono text-[10px] uppercase tracking-[0.1em]', isActive && 'font-semibold')}>
+      <span className={cn('font-mono text-[10px] uppercase tracking-label', isActive && 'font-semibold')}>
         {item.label}
       </span>
     </Link>

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useReducer } from 'react';
-import { motion } from 'framer-motion';
 import { Check, MapPin, Users, Video } from 'lucide-react';
+import { Mono } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
 import type { FeedEvent } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
@@ -30,9 +30,9 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+          <Mono size="label" className="text-white/50">
             Live now
-          </span>
+          </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
           No events live right now. Check back soon.
@@ -45,9 +45,9 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
     <section>
       <div className="flex items-center gap-2 mb-3">
         <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50">
+        <Mono size="label" className="text-white/50">
           Live now
-        </span>
+        </Mono>
       </div>
       <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
         {liveEvents.map((event, i) => {
@@ -56,13 +56,10 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
           const coverSrc = event.imageUrl || event.coverImageUrl;
 
           return (
-            <motion.button
+            <button
               key={event.id}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
               onClick={() => onSelectEvent(event)}
-              className="shrink-0 w-[260px] text-left group cursor-pointer relative overflow-hidden rounded-xl border border-red-500/15 hover:border-red-500/25 bg-[#0a0a0a] transition-all duration-200"
+              className="shrink-0 w-[260px] text-left group cursor-pointer relative overflow-hidden rounded-xl border border-red-500/15 hover:border-red-500/25 bg-[#0a0a0a] transition-colors duration-100"
             >
               <div className="relative h-28 w-full overflow-hidden">
                 {coverSrc ? (
@@ -132,7 +129,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
                   )}
                 </div>
               </div>
-            </motion.button>
+            </button>
           );
         })}
       </div>

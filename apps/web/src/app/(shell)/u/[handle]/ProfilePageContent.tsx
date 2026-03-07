@@ -34,7 +34,7 @@ import { useProfileByHandle } from './hooks';
 
 function ZoneHeader({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50 mb-3">
+    <p className="font-mono text-[11px] uppercase tracking-label text-white/50 mb-3">
       {children}
     </p>
   );

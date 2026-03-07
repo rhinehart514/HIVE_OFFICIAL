@@ -148,7 +148,7 @@ export function LeaderCreateFAB({
                     'flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-full',
                     'bg-[var(--bg-ground)] border border-white/[0.08]',
                     'text-white/80 hover:text-white text-sm font-medium',
-                    'shadow-lg shadow-black/30',
+                    'shadow-sm shadow-black/30',
                     'transition-colors duration-150',
                     'hover:bg-white/[0.06]',
                   )}
@@ -178,7 +178,7 @@ export function LeaderCreateFAB({
           'w-12 h-12 rounded-full',
           'bg-gold-500 hover:bg-gold-400',
           'flex items-center justify-center',
-          'shadow-lg shadow-black/40',
+          'shadow-sm shadow-black/40',
           'transition-shadow duration-200',
           'hover:shadow-[0_0_24px_rgba(255,215,0,0.25)]',
         )}

@@ -14,8 +14,8 @@ const badgeVariants = cva(
   [
     'inline-flex items-center justify-center gap-1.5',
     'rounded-full',
-    'text-xs font-medium',
-    'transition-colors duration-150',
+    'font-mono text-xs font-medium tabular-nums',
+    'transition-colors duration-100',
   ].join(' '),
   {
     variants: {

@@ -110,30 +110,53 @@ export const FOCUS = {
 // Use opacity for hierarchy: 90% emphasis, 70% primary, 50% secondary, 30% disabled.
 
 export const TYPOGRAPHY = {
-  /** Display — page hero (56px Clash Display) */
-  display: 'font-clash text-[56px] font-semibold tracking-[-0.02em] leading-[1.1] text-white',
-  /** Title XL — page titles (32px Clash Display) */
-  titleXl: 'font-clash text-[32px] font-semibold tracking-tight leading-[1.2] text-white',
-  /** Title LG — section headers (24px Clash Display) */
-  titleLg: 'font-clash text-[24px] font-semibold tracking-[-0.01em] leading-[1.3] text-white',
-  /** Title — card titles (20px) */
-  title: 'text-[20px] font-medium leading-[1.4] text-white',
-  /** Body — default body (15px Geist) */
-  body: 'text-[15px] font-normal leading-[1.6] text-white',
-  /** Body SM — secondary text (14px Geist) */
-  bodySm: 'text-[14px] font-normal leading-[1.5] text-white/50',
-  /** Label — section labels (11px Geist Mono, uppercase) */
-  label: 'font-mono text-[11px] uppercase tracking-wide leading-[1.4] text-white/50',
-  /** Caption — timestamps, meta (11px Geist Mono) */
-  caption: 'font-mono text-[11px] leading-[1.4] text-white/30',
+  // ─── SEMANTIC SCALE (canonical) ──────────────────────────────────────
 
-  // Legacy aliases
-  heading: 'font-clash text-[32px] font-semibold tracking-tight text-white',
-  section: 'font-clash text-[24px] font-semibold tracking-[-0.01em] text-white',
-  cardTitle: 'text-[20px] font-medium text-white',
+  /** Page title — 32px Clash Display semibold */
+  'page-title': 'font-clash text-[32px] font-semibold tracking-[-0.03em] leading-[1.1] text-white',
+  /** Section title — 24px Clash Display semibold */
+  'section-title': 'font-clash text-[24px] font-semibold tracking-[-0.02em] leading-[1.2] text-white',
+  /** Card title — 20px Clash Display medium */
+  'card-title': 'font-clash text-[20px] font-medium tracking-[-0.01em] leading-[1.3] text-white',
+  /** Body — 15px Geist regular */
+  body: 'text-[15px] font-normal leading-[1.5] text-white',
+  /** Body SM — 14px Geist regular, secondary */
+  'body-sm': 'text-[14px] font-normal leading-[1.5] text-white/50',
+  /** UI — 14px Geist medium, interactive chrome */
+  ui: 'text-[14px] font-medium leading-[1.4] text-white',
+  /** Data — 14px Geist Mono medium, counts & stats */
+  data: 'font-mono text-[14px] font-medium leading-[1.3] tabular-nums text-white',
+  /** Data SM — 12px Geist Mono medium, badge numbers */
+  'data-sm': 'font-mono text-[12px] font-medium leading-[1.3] tabular-nums text-white',
+  /** Label — 11px Geist Mono uppercase, section labels */
+  label: 'font-mono text-[11px] font-medium uppercase tracking-label leading-none text-white/50',
+  /** Meta — 11px Geist Mono regular, timestamps */
+  meta: 'font-mono text-[11px] font-normal leading-[1.3] text-white/30',
+
+  // ─── LEGACY ALIASES (point to semantic) ──────────────────────────────
+
+  /** @deprecated use 'page-title' */
+  display: 'font-clash text-[56px] font-semibold tracking-[-0.02em] leading-[1.1] text-white',
+  /** @deprecated use 'page-title' */
+  titleXl: 'font-clash text-[32px] font-semibold tracking-[-0.03em] leading-[1.1] text-white',
+  /** @deprecated use 'section-title' */
+  titleLg: 'font-clash text-[24px] font-semibold tracking-[-0.02em] leading-[1.2] text-white',
+  /** @deprecated use 'card-title' */
+  title: 'font-clash text-[20px] font-medium tracking-[-0.01em] leading-[1.3] text-white',
+  /** @deprecated use 'body-sm' */
+  bodySm: 'text-[14px] font-normal leading-[1.5] text-white/50',
+  /** @deprecated use 'meta' */
+  caption: 'font-mono text-[11px] font-normal leading-[1.3] text-white/30',
+  /** @deprecated use 'page-title' */
+  heading: 'font-clash text-[32px] font-semibold tracking-[-0.03em] text-white',
+  /** @deprecated use 'section-title' */
+  section: 'font-clash text-[24px] font-semibold tracking-[-0.02em] text-white',
+  /** @deprecated use 'card-title' */
+  cardTitle: 'font-clash text-[20px] font-medium tracking-[-0.01em] text-white',
+  /** @deprecated use 'body' */
   bodyLg: 'text-[15px] font-normal leading-[1.5] text-white',
+  /** @deprecated use 'body-sm' */
   secondary: 'text-[14px] text-white/50',
-  meta: 'font-mono text-[11px] text-white/30',
 } as const;
 
 // ============================================

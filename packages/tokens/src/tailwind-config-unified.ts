@@ -171,6 +171,9 @@ export const hiveTailwindLetterSpacing = {
   ...typography.letterSpacing,
 };
 
+// Semantic type scale — exported for programmatic use
+export const hiveTailwindSemanticType = typography.semantic;
+
 // ============================================================================
 // BORDER RADIUS
 // ============================================================================
