@@ -801,6 +801,31 @@ export default function BuildPage() {
               autoPrompt={autoPrompt}
             />
 
+            {/* Example prompts — idle only, right under the input */}
+            {state.phase === 'idle' && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-white/20">Try something like:</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'Best dining hall on campus',
+                    'Who\'s coming to the pregame',
+                    'Rate the professors bracket',
+                    'Study group signup sheet',
+                  ].map((example) => (
+                    <button
+                      key={example}
+                      onClick={() => submitPrompt(example)}
+                      className="px-3 py-1.5 rounded-full text-xs text-white/30 bg-white/[0.03]
+                        border border-white/[0.06] hover:bg-white/[0.06] hover:text-white/50
+                        transition-colors duration-100"
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Phase indicator */}
             <PhaseIndicator phase={state.phase} />
 
@@ -938,31 +963,6 @@ export default function BuildPage() {
 
             {/* Spacer */}
             <div className="flex-1" />
-
-            {/* Example prompts — idle only */}
-            {state.phase === 'idle' && (
-              <div className="mt-8 space-y-3">
-                <p className="text-xs text-white/20">Try something like:</p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    'Best dining hall on campus',
-                    'Who\'s coming to the pregame',
-                    'Rate the professors bracket',
-                    'Study group signup sheet',
-                  ].map((example) => (
-                    <button
-                      key={example}
-                      onClick={() => submitPrompt(example)}
-                      className="px-3 py-1.5 rounded-full text-xs text-white/30 bg-white/[0.03]
-                        border border-white/[0.06] hover:bg-white/[0.06] hover:text-white/50
-                        transition-colors duration-100"
-                    >
-                      {example}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -1091,6 +1091,25 @@ export default function BuildPage() {
                   <BrandSpinner size="md" variant="gold" />
                   <p className="text-xs text-white/25 mt-4">
                     Understanding your idea...
+                  </p>
+                </div>
+              </motion.div>
+            ) : state.phase === 'error' ? (
+              /* Error state — right panel */
+              <motion.div
+                key="error"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 flex items-center justify-center px-8"
+              >
+                <div className="text-center max-w-xs">
+                  <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                    <span className="text-red-400 text-lg">!</span>
+                  </div>
+                  <p className="text-sm text-white/50 mb-2">Something went wrong</p>
+                  <p className="text-xs text-white/25">
+                    Try a simpler prompt, or try again in a moment.
                   </p>
                 </div>
               </motion.div>

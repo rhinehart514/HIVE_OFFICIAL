@@ -229,6 +229,54 @@ function buildReducer(state: BuildState, action: BuildAction): BuildState {
 }
 
 // ============================================================================
+// CLIENT-SIDE FALLBACK CLASSIFIER (when API is down)
+// ============================================================================
+
+const POLL_PATTERNS = /\b(best|favorite|worst|which|rank|vote|prefer|rate|top|pick)\b/i;
+const BRACKET_PATTERNS = /\b(bracket|tournament|march madness|head.to.head|versus|vs|showdown)\b/i;
+const RSVP_PATTERNS = /\b(coming|attend|rsvp|who.?s in|party|meeting|signup|sign.?up|gathering|event|pregame|session)\b/i;
+
+function clientSideClassify(prompt: string): ClassificationResult | null {
+  const lower = prompt.toLowerCase();
+
+  if (BRACKET_PATTERNS.test(lower)) {
+    const words = prompt.split(/\s+/).filter(w => w.length > 2);
+    const topic = prompt.slice(0, 60);
+    return {
+      format: 'bracket',
+      confidence: 0.7,
+      config: {
+        topic,
+        entries: words.length >= 4 ? words.slice(0, 8) : ['Entry 1', 'Entry 2', 'Entry 3', 'Entry 4'],
+      },
+    };
+  }
+
+  if (RSVP_PATTERNS.test(lower)) {
+    return {
+      format: 'rsvp',
+      confidence: 0.7,
+      config: {
+        title: prompt.slice(0, 80),
+      },
+    };
+  }
+
+  if (POLL_PATTERNS.test(lower)) {
+    return {
+      format: 'poll',
+      confidence: 0.7,
+      config: {
+        question: prompt.endsWith('?') ? prompt : `${prompt}?`,
+        options: ['Option 1', 'Option 2', 'Option 3'],
+      },
+    };
+  }
+
+  return null;
+}
+
+// ============================================================================
 // HOOK
 // ============================================================================
 
@@ -270,6 +318,12 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
         });
 
         if (!res.ok) {
+          // API failed — try client-side fallback
+          const fallback = clientSideClassify(prompt);
+          if (fallback) {
+            dispatch({ type: 'CLASSIFICATION_SUCCESS', result: fallback });
+            return fallback;
+          }
           dispatch({ type: 'CLASSIFICATION_FAIL', error: 'Classification failed' });
           return;
         }
@@ -279,6 +333,12 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
         dispatch({ type: 'CLASSIFICATION_SUCCESS', result });
         return result;
       } catch {
+        // Network error — try client-side fallback
+        const fallback = clientSideClassify(prompt);
+        if (fallback) {
+          dispatch({ type: 'CLASSIFICATION_SUCCESS', result: fallback });
+          return fallback;
+        }
         dispatch({ type: 'CLASSIFICATION_FAIL', error: 'Classification failed' });
         return null;
       }
