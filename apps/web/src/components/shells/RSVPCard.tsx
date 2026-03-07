@@ -3,18 +3,13 @@
 /**
  * RSVPCard — Native RSVP format shell.
  *
- * Compact layout: title + date/time + "I'm in" toggle + attendee face stack.
- * Capacity bar if maxCapacity set.
+ * Title + date/location + capacity bar + "I'm in" toggle + attendee faces.
  */
 
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { MOTION, CARD } from '@hive/tokens';
 import type { ShellComponentProps, RSVPConfig, RSVPState } from '@/lib/shells/types';
-
-// ============================================================================
-// HELPERS
-// ============================================================================
 
 function formatDateTime(iso: string): string {
   try {
@@ -44,10 +39,6 @@ function getTimeUntil(iso: string): string | null {
     return null;
   }
 }
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 function RSVPCard({
   config,
@@ -81,28 +72,32 @@ function RSVPCard({
 
   return (
     <div className={`${CARD.default} p-4 ${compact ? 'max-w-sm' : 'max-w-md'}`}>
-      {/* Title + date */}
+      {/* Title + meta */}
       <div className="mb-3">
-        <p className="text-white/90 text-sm font-medium leading-snug">{title}</p>
-        {dateTime && (
-          <p className="text-xs text-white/40 mt-0.5">{formatDateTime(dateTime)}</p>
-        )}
-        {location && (
-          <p className="text-xs text-white/30 mt-0.5">{location}</p>
-        )}
+        <p className="text-white text-sm font-medium leading-snug">{title}</p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+          {dateTime && (
+            <p className="text-[12px] text-white/50">{formatDateTime(dateTime)}</p>
+          )}
+          {location && (
+            <p className="text-[12px] text-white/30">{location}</p>
+          )}
+        </div>
       </div>
 
       {/* Capacity bar */}
       {capacity && (
         <div className="mb-3">
-          <div className="flex items-center justify-between text-xs text-white/30 mb-1">
-            <span>{count}/{capacity} spots</span>
-            {isFull && <span className="text-[#FFD700]/60">Full</span>}
+          <div className="flex items-center justify-between text-[12px] mb-1.5">
+            <span className="text-white/50">
+              <span className="text-white font-medium">{count}</span>/{capacity}
+            </span>
+            {isFull && <span className="text-[#FFD700]/60 font-medium">Full</span>}
           </div>
-          <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+          <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
             <motion.div
               className={`h-full rounded-full ${
-                isFull ? 'bg-[#FFD700]/40' : 'bg-white/20'
+                isFull ? 'bg-[#FFD700]/40' : 'bg-white/25'
               }`}
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(100, (count / capacity) * 100)}%` }}
@@ -118,9 +113,9 @@ function RSVPCard({
           onClick={handleToggle}
           disabled={!canRSVP && !isIn}
           className={`
-            px-4 h-9 rounded-3xl text-sm font-medium transition-all duration-200
+            px-4 h-9 rounded-full text-sm font-medium transition-colors duration-100
             ${isIn
-              ? 'bg-white/[0.10] text-white border border-white/30 hover:bg-white/[0.15]'
+              ? 'bg-white/[0.10] text-white border border-white/30'
               : canRSVP
                 ? 'bg-white text-black hover:bg-white/90'
                 : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.06]'
@@ -136,7 +131,7 @@ function RSVPCard({
             {attendeeList.map((a, i) => (
               <div
                 key={a.userId}
-                className="w-7 h-7 rounded-full border-2 border-[#0a0a0a] bg-white/[0.08] flex items-center justify-center overflow-hidden"
+                className="w-7 h-7 rounded-full border-2 border-[#111] bg-white/[0.08] flex items-center justify-center overflow-hidden"
                 style={{ zIndex: 5 - i }}
               >
                 {a.photoURL ? (
@@ -154,17 +149,17 @@ function RSVPCard({
             ))}
           </div>
           {extraCount > 0 && (
-            <span className="text-xs text-white/30 ml-1.5">+{extraCount}</span>
+            <span className="text-[12px] text-white/30 ml-1.5">+{extraCount}</span>
           )}
           {count === 0 && (
-            <span className="text-xs text-white/20">No RSVPs yet</span>
+            <span className="text-[12px] text-white/30">Be the first</span>
           )}
         </div>
       </div>
 
       {/* Deadline */}
       {deadlineText && (
-        <p className={`text-xs mt-2 ${isPastDeadline ? 'text-red-400/60' : 'text-white/30'}`}>
+        <p className={`text-[12px] mt-2 ${isPastDeadline ? 'text-red-400/60' : 'text-white/30'}`}>
           {deadlineText}
         </p>
       )}
