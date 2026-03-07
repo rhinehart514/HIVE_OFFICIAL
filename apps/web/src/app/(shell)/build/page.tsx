@@ -102,7 +102,7 @@ function PromptInput({
           disabled={disabled}
           rows={2}
           className="w-full px-4 py-3 pr-12 rounded-2xl text-[15px] bg-white/[0.03] border border-white/[0.08]
-            text-white placeholder:text-white/25 resize-none focus:outline-none focus:ring-1 focus:ring-[#FFD700]/40
+            text-white placeholder:text-white/25 resize-none focus:outline-none focus:ring-1 focus:ring-white/20
             disabled:opacity-50 transition-colors duration-100"
           style={{ minHeight: 56, maxHeight: 160 }}
         />
@@ -772,54 +772,27 @@ export default function BuildPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Split panel: left prompt, right preview */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         {/* ============================================ */}
         {/* LEFT PANEL — Prompt + controls               */}
         {/* ============================================ */}
         <div className="w-full lg:w-[420px] lg:min-w-[400px] lg:border-r lg:border-white/[0.06] flex flex-col">
           <div className="flex-1 px-6 py-8 flex flex-col">
-            {/* Header */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: EASE }}
-              className="mb-6"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="w-4 h-4 text-[#FFD700]/60" />
-                <h1 className="text-lg font-medium text-white">Make something</h1>
-              </div>
-              <p className="text-sm text-white/35">
-                Describe it. We figure out the format.
-              </p>
-              {originSpaceName && (
-                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
-                  bg-white/[0.04] border border-white/[0.06] text-xs text-white/50"
-                >
-                  Creating for <span className="text-white/70 font-medium">{originSpaceName}</span>
-                </div>
+            {/* Header — minimal */}
+            <div className="mb-6">
+              <h1 className="text-lg font-medium text-white mb-1">
+                Make something
+              </h1>
+              {originSpaceName ? (
+                <p className="text-sm text-white/50">
+                  for <span className="text-white/70 font-medium">{originSpaceName}</span>
+                </p>
+              ) : (
+                <p className="text-sm text-white/30">
+                  Describe it. We figure out the format.
+                </p>
               )}
-            </motion.div>
-
-            {/* Format chips — quick-start for common formats */}
-            {state.phase === 'idle' && (
-              <div className="flex gap-2 mb-4">
-                {[
-                  { label: 'Poll', prompt: 'Create a poll' },
-                  { label: 'Bracket', prompt: 'Create a bracket' },
-                  { label: 'RSVP', prompt: 'Create an RSVP' },
-                ].map((chip) => (
-                  <button
-                    key={chip.label}
-                    onClick={() => submitPrompt(chip.prompt)}
-                    className="px-3 py-1.5 rounded-full border border-white/[0.08] text-[13px] text-white/50 hover:text-white hover:border-white/[0.15] transition-colors duration-100"
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            </div>
 
             {/* Prompt input */}
             <PromptInput
@@ -963,17 +936,12 @@ export default function BuildPage() {
               </motion.div>
             )}
 
-            {/* Spacer to push help text to bottom */}
+            {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Help text + My Apps */}
+            {/* Example prompts — idle only */}
             {state.phase === 'idle' && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="mt-8 space-y-2"
-              >
+              <div className="mt-8 space-y-3">
                 <p className="text-xs text-white/20">Try something like:</p>
                 <div className="flex flex-wrap gap-2">
                   {[
@@ -987,15 +955,13 @@ export default function BuildPage() {
                       onClick={() => submitPrompt(example)}
                       className="px-3 py-1.5 rounded-full text-xs text-white/30 bg-white/[0.03]
                         border border-white/[0.06] hover:bg-white/[0.06] hover:text-white/50
-                        transition-colors"
+                        transition-colors duration-100"
                     >
                       {example}
                     </button>
                   ))}
                 </div>
-
-                {user && <MyAppsSection />}
-              </motion.div>
+              </div>
             )}
           </div>
         </div>
@@ -1006,31 +972,71 @@ export default function BuildPage() {
         <div className="flex-1 flex flex-col min-h-[50vh] lg:min-h-0">
           <AnimatePresence mode="wait">
             {!showPreview ? (
-              /* Empty state */
+              /* Idle: show example shell cards as inspiration */
               <motion.div
-                key="empty"
+                key="inspiration"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center px-6"
+                className="flex-1 flex flex-col items-center justify-center px-8"
               >
-                <div className="w-16 h-16 rounded-3xl bg-white/[0.03] border border-white/[0.06]
-                  flex items-center justify-center mb-4"
-                >
-                  <Sparkles className="w-7 h-7 text-white/10" />
-                </div>
-                <p className="text-sm text-white/20 text-center max-w-xs">
-                  Your creation will appear here
+                <p className="text-xs text-white/20 mb-6 font-mono uppercase tracking-wider">
+                  What you can make
                 </p>
+                <div className="grid gap-3 w-full max-w-sm">
+                  {/* Mini poll preview */}
+                  <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
+                      <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">Poll</span>
+                    </div>
+                    <p className="text-sm text-white/60 mb-3">Best dining hall?</p>
+                    <div className="space-y-1.5">
+                      <div className="h-7 rounded-lg bg-white/[0.06] relative overflow-hidden">
+                        <div className="absolute inset-y-0 left-0 w-[42%] bg-white/[0.08] rounded-lg" />
+                        <span className="relative z-10 flex items-center justify-between h-full px-2.5 text-[11px]">
+                          <span className="text-white/50">Sizzles</span>
+                          <span className="text-white/30 font-mono">42%</span>
+                        </span>
+                      </div>
+                      <div className="h-7 rounded-lg bg-white/[0.06] relative overflow-hidden">
+                        <div className="absolute inset-y-0 left-0 w-[31%] bg-white/[0.05] rounded-lg" />
+                        <span className="relative z-10 flex items-center justify-between h-full px-2.5 text-[11px]">
+                          <span className="text-white/30">C3</span>
+                          <span className="text-white/20 font-mono">31%</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Mini RSVP + Bracket side by side */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
+                      <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">RSVP</span>
+                      <p className="text-sm text-white/60 mt-1.5 mb-2">Spring Formal</p>
+                      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className="h-full w-[73%] bg-white/20 rounded-full" />
+                      </div>
+                      <p className="text-[10px] text-white/20 mt-1.5">147/200</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
+                      <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">Bracket</span>
+                      <p className="text-sm text-white/60 mt-1.5 mb-2">Best prof</p>
+                      <div className="flex rounded-lg overflow-hidden border border-white/[0.06]">
+                        <div className="flex-1 py-1.5 text-center text-[10px] bg-white/[0.06] text-white/50">Smith</div>
+                        <div className="flex-1 py-1.5 text-center text-[10px] bg-white/[0.02] text-white/20">Lee</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             ) : isShellMatched || (isShellFormat && state.phase === 'complete') ? (
               /* Shell preview — shown during editing AND after deploy */
               <motion.div
                 key="shell-preview"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3, ease: EASE }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.25, ease: EASE }}
                 className="flex-1 flex items-center justify-center p-6"
               >
                 <div className="w-full max-w-sm">
@@ -1053,7 +1059,7 @@ export default function BuildPage() {
                   </Suspense>
 
                   <p className="text-center text-[11px] text-white/15 mt-4">
-                    Live preview — this is what people will see
+                    Live preview
                   </p>
                 </div>
               </motion.div>

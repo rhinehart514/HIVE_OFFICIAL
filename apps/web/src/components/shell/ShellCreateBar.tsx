@@ -20,6 +20,10 @@ export function ShellCreateBar() {
   const spaceMatch = pathname.match(/^\/s\/([^/]+)/);
   const spaceHandle = spaceMatch ? spaceMatch[1] : null;
 
+  // Hide on /build — that page IS the creation surface
+  const isBuildPage = pathname === '/build' || pathname.startsWith('/build/');
+  if (isBuildPage) return null;
+
   return (
     <>
       {/* Desktop: fixed bottom bar (CreatePromptBar handles the positioning) */}
