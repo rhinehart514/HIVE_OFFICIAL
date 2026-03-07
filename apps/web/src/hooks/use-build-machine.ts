@@ -542,12 +542,20 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
       }
 
       // Write initial state to RTDB so shell components can render
+      // Non-blocking: don't await — Firebase client auth may not be initialized
+      // (user authenticates via session cookies, not Firebase client SDK)
       const shellFormat = state.classification.format as ShellFormat;
       if (shellFormat !== 'custom' && state.shellConfig) {
-        const database = getDatabase(app);
-        const stateRef = ref(database, `shell_states/${toolId}`);
-        const initialState = buildInitialShellState(shellFormat, state.shellConfig);
-        await set(stateRef, initialState);
+        try {
+          const database = getDatabase(app);
+          const stateRef = ref(database, `shell_states/${toolId}`);
+          const shellInitialState = buildInitialShellState(shellFormat, state.shellConfig);
+          set(stateRef, shellInitialState).catch(() => {
+            // RTDB write failed — shell will init state on first interaction
+          });
+        } catch {
+          // getDatabase failed — non-critical
+        }
       }
 
       // Place in space if spaceId is set
@@ -563,7 +571,7 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
       }
 
       dispatch({ type: 'DEPLOY_COMPLETE', toolId });
-      dispatch({ type: 'ACCEPT_SHELL' });
+      dispatch({ type: 'GENERATION_COMPLETE', toolId, toolName: name });
       onToolCreated?.(toolId);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to deploy';
