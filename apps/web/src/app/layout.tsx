@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://hive.college'),
-  manifest: '/manifest.json',
+  // manifest auto-generated from app/manifest.ts
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

@@ -16,14 +16,14 @@ export function CTASection() {
         <h2
           className={`${displayFont} mb-5 text-[clamp(32px,6vw,56px)] font-semibold leading-tight tracking-[-0.03em] text-white`}
         >
-          Nothing&apos;s been made yet.
+          Be the first to build for
           <br />
-          <span className="text-[#FFD700]">You&apos;re early.</span>
+          <span className="text-[#FFD700]">your people.</span>
         </h2>
 
         <p className="mx-auto mb-10 max-w-md text-base text-white/50">
-          Your campus is a blank canvas. The first makers shape what everyone uses.
-          Be the one who made the thing everyone needed.
+          Your campus is waiting. The first makers shape what everyone uses.
+          Build something your org actually needs.
         </p>
 
         <Link

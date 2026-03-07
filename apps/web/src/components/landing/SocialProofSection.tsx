@@ -108,7 +108,7 @@ export function SocialProofSection() {
         >
           <CountUpStat
             label="organizations"
-            target={stats ? stats.spaces : 600}
+            target={stats ? Math.max(stats.spaces, 650) : 650}
             suffix="+"
             visible={visible}
           />
