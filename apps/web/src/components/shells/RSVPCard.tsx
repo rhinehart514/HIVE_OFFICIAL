@@ -120,9 +120,9 @@ function RSVPCard({
           className={`
             px-4 h-9 rounded-3xl text-sm font-medium transition-all duration-200
             ${isIn
-              ? 'bg-[#FFD700]/[0.10] text-[#FFD700] border border-[#FFD700]/30 hover:bg-[#FFD700]/[0.15]'
+              ? 'bg-white/[0.10] text-white border border-white/30 hover:bg-white/[0.15]'
               : canRSVP
-                ? 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90'
+                ? 'bg-white text-black hover:bg-white/90'
                 : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.06]'
             }
           `}

@@ -333,7 +333,7 @@ export function SparkleCreateSheet({
                         onClick={handlePromptSubmit}
                         className={cn(
                           'absolute right-3 bottom-3 p-1.5 rounded-full',
-                          'bg-[#FFD700] text-black',
+                          'bg-white text-black',
                           'hover:opacity-90 transition-opacity duration-100'
                         )}
                       >
@@ -382,8 +382,8 @@ export function SparkleCreateSheet({
                     onClick={acceptShell}
                     className={cn(
                       'w-full mt-4 py-3 rounded-full font-semibold text-[14px]',
-                      'bg-[#FFD700] text-black',
-                      'hover:bg-[#FFD700]/90 transition-colors duration-100',
+                      'bg-white text-black',
+                      'hover:bg-white/90 transition-colors duration-100',
                       'active:scale-[0.98]'
                     )}
                   >

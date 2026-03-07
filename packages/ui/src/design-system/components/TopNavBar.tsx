@@ -18,7 +18,7 @@ import { cn } from '../../lib/utils';
 
 const TOP_NAV_HEIGHT = 56;
 
-const HIVE_LOGO_PATH = 'M432.83,133.2l373.8,216.95v173.77s-111.81,64.31-111.81,64.31v-173.76l-262.47-150.64-262.27,150.84.28,303.16,259.55,150.31,5.53-.33,633.4-365.81,374.52,215.84v433.92l-372.35,215.04h-2.88l-372.84-215.99-.27-174.53,112.08-63.56v173.76c87.89,49.22,174.62,101.14,262.48,150.69l261.99-151.64v-302.41s-261.51-151.27-261.51-151.27l-2.58.31-635.13,366.97c-121.32-69.01-241.36-140.28-362.59-209.44-4.21-2.4-8.42-5.15-13.12-6.55v-433.92l375.23-216h.96Z';
+// Logo uses /assets/hive-logo-gold.svg
 
 // ============================================
 // TYPES
@@ -76,15 +76,13 @@ function Logo({ onClick }: { onClick?: () => void }) {
       onClick={onClick}
       className="flex items-center gap-2.5 px-1 transition-opacity hover:opacity-80"
     >
-      <svg
+      <img
+        src="/assets/hive-logo-gold.svg"
+        alt="HIVE"
         width={26}
         height={26}
-        viewBox="0 0 1500 1500"
-        fill="#FFD700"
-        style={{ filter: 'drop-shadow(0 0 8px rgba(255,215,0,0.15))' }}
-      >
-        <path d={HIVE_LOGO_PATH} />
-      </svg>
+        className="flex-shrink-0"
+      />
       <span className="font-bold tracking-tight text-body-lg hidden sm:block text-[var(--color-text-primary)]">
         HIVE
       </span>

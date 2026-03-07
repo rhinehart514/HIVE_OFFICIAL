@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { buildEnterUrl } from './entry-url';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
+const displayFont = "font-sans";
 
 export function CTASection() {
   const searchParams = useSearchParams();
@@ -14,7 +14,7 @@ export function CTASection() {
     <section className="relative overflow-hidden bg-black px-6 py-24 md:py-32">
       <div className="relative mx-auto max-w-2xl text-center">
         <h2
-          className={`${clashDisplay} mb-5 text-[clamp(32px,6vw,56px)] font-semibold leading-tight tracking-[-0.03em] text-white`}
+          className={`${displayFont} mb-5 text-[clamp(32px,6vw,56px)] font-semibold leading-tight tracking-[-0.03em] text-white`}
         >
           Nothing&apos;s been made yet.
           <br />
@@ -28,7 +28,7 @@ export function CTASection() {
 
         <Link
           href={enterHref}
-          className="inline-block rounded-full bg-[#FFD700] px-8 py-4 text-base font-semibold text-black transition-opacity hover:opacity-90"
+          className="inline-block rounded-full bg-white px-8 py-4 text-base font-semibold text-black transition-opacity hover:opacity-90"
         >
           Get started
         </Link>

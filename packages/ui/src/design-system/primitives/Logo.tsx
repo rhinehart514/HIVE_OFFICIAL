@@ -4,8 +4,11 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
-const HIVE_MARK_PATH =
-  'M432.83,133.2l373.8,216.95v173.77s-111.81,64.31-111.81,64.31v-173.76l-262.47-150.64-262.27,150.84.28,303.16,259.55,150.31,5.53-.33,633.4-365.81,374.52,215.84v433.92l-372.35,215.04h-2.88l-372.84-215.99-.27-174.53,112.08-63.56v173.76c87.89,49.22,174.62,101.14,262.48,150.69l261.99-151.64v-302.41s-261.51-151.27-261.51-151.27l-2.58.31-635.13,366.97c-121.32-69.01-241.36-140.28-362.59-209.44-4.21-2.4-8.42-5.15-13.12-6.55v-433.92l375.23-216h.96Z';
+const LOGO_ASSETS = {
+  gold: '/assets/hive-logo-gold.svg',
+  white: '/assets/hive-logo-white.svg',
+  muted: '/assets/hive-logo-platinum.svg',
+} as const;
 
 export const logoVariants = cva('inline-flex items-center', {
   variants: {
@@ -36,12 +39,18 @@ export interface LogoProps
 }
 
 export const LogoMark = React.forwardRef<
-  SVGSVGElement,
-  React.SVGAttributes<SVGSVGElement> & { markSize?: number; markColor?: string }
->(({ markSize = 32, markColor = COLOR_MAP.gold, className, ...props }, ref) => (
-  <svg ref={ref} viewBox="0 0 1500 1500" width={markSize} height={markSize} className={cn('flex-shrink-0', className)} aria-hidden="true" {...props}>
-    <path d={HIVE_MARK_PATH} fill={markColor} />
-  </svg>
+  HTMLImageElement,
+  React.ImgHTMLAttributes<HTMLImageElement> & { markSize?: number; markColor?: keyof typeof LOGO_ASSETS }
+>(({ markSize = 32, markColor = 'gold', className, ...props }, ref) => (
+  <img
+    ref={ref}
+    src={LOGO_ASSETS[markColor]}
+    alt="HIVE"
+    width={markSize}
+    height={markSize}
+    className={cn('flex-shrink-0', className)}
+    {...props}
+  />
 ));
 LogoMark.displayName = 'LogoMark';
 
@@ -58,12 +67,13 @@ LogoWordmark.displayName = 'LogoWordmark';
 export const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
   ({ variant = 'full', size = 'md', color = 'gold', className, ...props }, ref) => {
     const dimensions = SIZE_MAP[size || 'md'];
-    const fillColor = COLOR_MAP[color || 'gold'];
+    const colorKey = color || 'gold';
+    const fillColor = COLOR_MAP[colorKey];
 
     if (variant === 'mark') {
       return (
         <div ref={ref} className={cn(logoVariants({ size, color }), className)} {...props}>
-          <LogoMark markSize={dimensions.mark} markColor={fillColor} />
+          <LogoMark markSize={dimensions.mark} markColor={colorKey} />
         </div>
       );
     }
@@ -76,7 +86,7 @@ export const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
     }
     return (
       <div ref={ref} className={cn(logoVariants({ size, color }), className)} style={{ gap: dimensions.gap }} {...props}>
-        <LogoMark markSize={dimensions.mark} markColor={fillColor} />
+        <LogoMark markSize={dimensions.mark} markColor={colorKey} />
         <LogoWordmark textSize={dimensions.text} textColor={fillColor} />
       </div>
     );

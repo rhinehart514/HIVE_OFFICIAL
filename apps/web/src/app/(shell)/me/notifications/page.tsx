@@ -276,7 +276,7 @@ export default function NotificationsPage() {
               }}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-150 ${
                 activeFilter === tab.id
-                  ? 'bg-[#FFD700] text-black'
+                  ? 'bg-white text-black'
                   : 'bg-white/[0.03] text-white/50 hover:text-white hover:bg-white/[0.06]'
               }`}
             >

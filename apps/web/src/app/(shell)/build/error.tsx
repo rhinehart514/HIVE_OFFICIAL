@@ -39,7 +39,7 @@ export default function BuildError({
           <button
             onClick={() => reset()}
             className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-full
-              bg-[#FFD700] text-black font-semibold text-sm hover:bg-[#FFD700]/90 transition-colors duration-100"
+              bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors duration-100"
           >
             <RotateCcw className="h-4 w-4" />
             Try again

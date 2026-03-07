@@ -104,11 +104,11 @@ export function ImageCropper({
           type="button"
           onClick={handleConfirm}
           disabled={isProcessing}
-          className="p-2 rounded-lg text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors disabled:opacity-50"
+          className="p-2 rounded-lg text-white hover:bg-white/10 transition-colors disabled:opacity-50"
           aria-label={isProcessing ? "Processing image" : "Confirm crop"}
         >
           {isProcessing ? (
-            <div className="w-5 h-5 border-2 border-[#FFD700]/30 border-t-[#FFD700] rounded-full " aria-hidden="true" />
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full " aria-hidden="true" />
           ) : (
             <CheckIcon className="w-5 h-5" aria-hidden="true" />
           )}
@@ -194,7 +194,7 @@ export function ImageCropper({
           whileHover={{ opacity: 0.9 }}
           whileTap={{ opacity: 0.8 }}
           transition={transitionSpring}
-          className="w-full h-12 bg-[#FFD700] text-black font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors duration-100 disabled:opacity-50"
+          className="w-full h-12 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-colors duration-100 disabled:opacity-50"
         >
           {isProcessing ? 'Processing...' : 'Use this photo'}
         </motion.button>

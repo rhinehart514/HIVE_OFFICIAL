@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
+const displayFont = "font-sans";
 
 const UB_ORGS = [
   'SWE Club',
@@ -73,7 +73,7 @@ export function SocialProofSection() {
           }`}
         >
           <h2
-            className={`${clashDisplay} text-[clamp(28px,5vw,48px)] font-semibold tracking-tight text-white`}
+            className={`${displayFont} text-[clamp(28px,5vw,48px)] font-semibold tracking-tight text-white`}
           >
             Your campus is already here.
           </h2>
@@ -191,7 +191,7 @@ function CountUpStat({
 
   return (
     <div className="text-center">
-      <div className={`${clashDisplay} text-[clamp(28px,4vw,40px)] font-semibold text-white`}>
+      <div className={`${displayFont} text-[clamp(28px,4vw,40px)] font-semibold text-white`}>
         {count.toLocaleString()}{suffix}
       </div>
       <div className="mt-1 font-mono text-[11px] uppercase tracking-label text-white/30">
@@ -204,7 +204,7 @@ function CountUpStat({
 function StatBlock({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-center">
-      <div className={`${clashDisplay} text-[clamp(28px,4vw,40px)] font-semibold text-white`}>
+      <div className={`${displayFont} text-[clamp(28px,4vw,40px)] font-semibold text-white`}>
         {value}
       </div>
       <div className="mt-1 font-mono text-[11px] uppercase tracking-label text-white/30">

@@ -34,8 +34,8 @@ export default function ProfileError({
             onClick={reset}
             className={cn(
               'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full',
-              'bg-[#FFD700] text-black font-semibold',
-              'hover:bg-[#FFD700]/90 transition-colors duration-100'
+              'bg-white text-black font-semibold',
+              'hover:bg-white/90 transition-colors duration-100'
             )}
           >
             Try Again

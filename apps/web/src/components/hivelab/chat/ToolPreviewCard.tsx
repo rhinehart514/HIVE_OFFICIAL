@@ -156,8 +156,8 @@ export function ToolPreviewCard({
               <button
                 onClick={handleShare}
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                  rounded-full bg-[#FFD700] text-black font-semibold text-sm
-                  hover:bg-[#FFD700]/90 transition-colors duration-100"
+                  rounded-full bg-white text-black font-semibold text-sm
+                  hover:bg-white/90 transition-colors duration-100"
               >
                 {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
                 {linkCopied ? 'Copied!' : 'Share'}

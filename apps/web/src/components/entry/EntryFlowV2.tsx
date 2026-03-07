@@ -139,7 +139,7 @@ function SpaceCard({
         onClick={onToggle}
         className={`w-full rounded-full px-4 py-2 text-[13px] font-medium transition-colors duration-150 ${
           joined
-            ? 'bg-[#FFD700] text-black'
+            ? 'bg-white text-black'
             : 'bg-white/[0.06] text-white hover:bg-white/[0.1]'
         }`}
       >

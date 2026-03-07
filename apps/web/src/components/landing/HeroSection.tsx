@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { buildEnterUrl } from './entry-url';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
+const displayFont = "font-sans";
 
 export function HeroSection() {
   const router = useRouter();
@@ -41,7 +41,7 @@ export function HeroSection() {
     <section className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-black px-6">
       <div className="mx-auto max-w-3xl text-center">
         <h1
-          className={`${clashDisplay} mb-6 text-[clamp(40px,8vw,56px)] font-semibold leading-[1.05] tracking-[-0.03em] text-white transition-all duration-500 ${show(1)}`}
+          className={`${displayFont} mb-6 text-[clamp(40px,8vw,56px)] font-bold leading-[1.05] tracking-[-0.03em] text-white transition-all duration-500 ${show(1)}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
         >
           Say something.
@@ -74,7 +74,7 @@ export function HeroSection() {
               <button
                 type="submit"
                 disabled={!prompt.trim()}
-                className="flex items-center gap-1.5 rounded-full bg-[#FFD700] px-5 py-2 text-[14px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="flex items-center gap-1.5 rounded-full bg-white px-5 py-2 text-[14px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 Build
                 <ArrowRight className="h-3.5 w-3.5" />

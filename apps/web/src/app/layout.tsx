@@ -1,21 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import localFont from 'next/font/local';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Providers } from './providers';
-
-const clashDisplay = localFont({
-  src: [
-    { path: './fonts/ClashDisplay-Regular.woff2', weight: '400', style: 'normal' },
-    { path: './fonts/ClashDisplay-Medium.woff2', weight: '500', style: 'normal' },
-    { path: './fonts/ClashDisplay-Semibold.woff2', weight: '600', style: 'normal' },
-    { path: './fonts/ClashDisplay-Bold.woff2', weight: '700', style: 'normal' },
-  ],
-  variable: '--font-clash',
-  display: 'swap',
-  preload: true,
-});
 
 export const metadata: Metadata = {
   title: {
@@ -89,7 +76,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable} ${clashDisplay.variable}`}
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
     >
       <body className="bg-[var(--bg-ground)] text-[var(--text-primary)] min-h-screen">

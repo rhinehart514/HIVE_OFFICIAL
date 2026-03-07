@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Settings, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
+const displayFont = "font-sans";
 
 interface SpaceHeaderProps {
   space: {
@@ -72,7 +72,7 @@ export function SpaceHeader({
           className="flex items-center gap-3 min-w-0 group"
         >
           <h1
-            className={`${clashDisplay} text-[20px] font-semibold text-white truncate`}
+            className={`${displayFont} text-[20px] font-semibold text-white truncate`}
           >
             {space.name}
           </h1>
@@ -85,7 +85,7 @@ export function SpaceHeader({
         {space.isClaimed === false && onClaimClick && (
           <button
             onClick={onClaimClick}
-            className="rounded-full px-4 py-1.5 text-xs font-medium bg-[#FFD700] text-black hover:opacity-90 transition-opacity"
+            className="rounded-full px-4 py-1.5 text-xs font-medium bg-white text-black hover:opacity-90 transition-opacity"
           >
             Claim
           </button>

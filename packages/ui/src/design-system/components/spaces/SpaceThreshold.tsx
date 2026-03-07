@@ -408,7 +408,7 @@ export function SpaceThreshold({
                     disabled={isJoining}
                     className={cn(
                       'flex-1 py-3 rounded-full font-semibold transition-all',
-                      'bg-[#FFD700] text-black hover:bg-[#FFD700]/90',
+                      'bg-white text-black hover:bg-white/90',
                       'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >
@@ -433,7 +433,7 @@ export function SpaceThreshold({
                       onClick={() => setShowRequestForm(true)}
                       className={cn(
                         'w-full py-4 rounded-full font-semibold transition-all',
-                        'bg-[#FFD700] text-black hover:bg-[#FFD700]/90'
+                        'bg-white text-black hover:bg-white/90'
                       )}
                     >
                       Request to Join
@@ -448,7 +448,7 @@ export function SpaceThreshold({
                     disabled={isJoining}
                     className={cn(
                       'w-full py-4 rounded-full font-semibold transition-all',
-                      'bg-[#FFD700] text-black hover:bg-[#FFD700]/90',
+                      'bg-white text-black hover:bg-white/90',
                       'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >

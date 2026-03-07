@@ -18,8 +18,8 @@
    * ====================================================================== */
 
   /* Typography */
-  --font-clash: "Clash Display", "Geist", system-ui, sans-serif;
-  --font-display: var(--font-clash); /* legacy alias — use --font-clash */
+  --font-clash: "Geist", system-ui, sans-serif;
+  --font-display: var(--font-clash); /* display = body = Geist (all-in) */
   --font-body: "Geist", system-ui, sans-serif;
   --font-mono: "Geist Mono", "SF Mono", ui-monospace, monospace;
 
@@ -822,14 +822,14 @@
 }
 
 .workshop-btn-primary {
-  background-color: var(--life-gold);
+  background-color: var(--text-primary);
   color: var(--bg-ground);
-  border-color: var(--life-gold);
+  border-color: var(--text-primary);
 }
 
 .workshop-btn-primary:hover {
-  background-color: var(--life-gold-hover);
-  border-color: var(--life-gold-hover);
+  background-color: rgba(255, 255, 255, 0.90);
+  border-color: rgba(255, 255, 255, 0.90);
 }
 
 .workshop-btn-ghost {

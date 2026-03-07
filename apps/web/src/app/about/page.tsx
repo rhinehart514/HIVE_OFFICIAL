@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
+const displayFont = "font-sans";
 
 const CONTRIBUTORS = [
   { name: 'Brunda', role: 'Development', linkedin: 'https://www.linkedin.com/in/brunda-venkatesh/' },
@@ -35,7 +35,7 @@ export default function AboutPage() {
       <main className="max-w-[640px] mx-auto px-6">
         {/* Hero */}
         <section className="pt-16 pb-[120px]">
-          <h1 className={`${clashDisplay} text-[clamp(36px,8vw,48px)] font-semibold leading-[1.05] text-white mb-6`}>
+          <h1 className={`${displayFont} text-[clamp(36px,8vw,48px)] font-semibold leading-[1.05] text-white mb-6`}>
             We stopped waiting
             <br />
             <span className="text-white/50">for institutions.</span>
@@ -47,7 +47,7 @@ export default function AboutPage() {
 
         {/* What HIVE Is */}
         <section className="pb-[120px]">
-          <h2 className={`${clashDisplay} text-2xl font-semibold text-white mb-8`}>
+          <h2 className={`${displayFont} text-2xl font-semibold text-white mb-8`}>
             What HIVE is
           </h2>
           <div className="space-y-6 text-base leading-relaxed text-white">
@@ -70,14 +70,14 @@ export default function AboutPage() {
 
         {/* Pull quote */}
         <section className="pb-[120px]">
-          <p className={`${clashDisplay} text-[24px] font-medium leading-snug text-[#FFD700]`}>
+          <p className={`${displayFont} text-[24px] font-medium leading-snug text-[#FFD700]`}>
             &ldquo;The feed isn&apos;t the product. The Space is. Legibility, memory, and ownership are.&rdquo;
           </p>
         </section>
 
         {/* Why */}
         <section className="pb-[120px]">
-          <h2 className={`${clashDisplay} text-2xl font-semibold text-white mb-8`}>
+          <h2 className={`${displayFont} text-2xl font-semibold text-white mb-8`}>
             Why it took two years
           </h2>
           <div className="space-y-6 text-base leading-relaxed text-white">
@@ -94,7 +94,7 @@ export default function AboutPage() {
               Two years of nights and weekends. Stretches where I didn&apos;t touch it for weeks.
               Other times up until 3am. The thing is finally at a point where other people can use it.
             </p>
-            <p className={`${clashDisplay} text-[20px] font-medium text-[#FFD700]`}>
+            <p className={`${displayFont} text-[20px] font-medium text-[#FFD700]`}>
               If you use it, tell me what sucks. I need the feedback loop.
             </p>
             <p className="text-white/30 text-sm mt-4">— Jacob</p>
@@ -103,7 +103,7 @@ export default function AboutPage() {
 
         {/* What's In It */}
         <section className="pb-[120px]">
-          <h2 className={`${clashDisplay} text-2xl font-semibold text-white mb-8`}>
+          <h2 className={`${displayFont} text-2xl font-semibold text-white mb-8`}>
             What&apos;s in the app
           </h2>
           <div className="space-y-8">
@@ -153,13 +153,13 @@ export default function AboutPage() {
 
         {/* CTA */}
         <section className="pb-32 text-center">
-          <h2 className={`${clashDisplay} text-[clamp(28px,6vw,40px)] font-semibold text-white mb-6`}>
+          <h2 className={`${displayFont} text-[clamp(28px,6vw,40px)] font-semibold text-white mb-6`}>
             Your club is already here.
           </h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/enter"
-              className="px-7 py-3.5 bg-[#FFD700] text-black text-[15px] font-medium rounded-full hover:opacity-90 transition-opacity flex items-center gap-2"
+              className="px-7 py-3.5 bg-white text-black text-[15px] font-medium rounded-full hover:opacity-90 transition-opacity flex items-center gap-2"
             >
               Get started
               <ArrowRight className="w-4 h-4" />

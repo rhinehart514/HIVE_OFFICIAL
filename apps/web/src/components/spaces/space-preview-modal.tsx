@@ -250,7 +250,7 @@ export function SpacePreviewModal({
                 disabled={isJoining}
                 className={cn(
                   'w-full font-medium transition-colors duration-200',
-                  'bg-[#FFD700] text-[#0A0A09] hover:bg-[#FFD700]/90',
+                  'bg-white text-black hover:bg-white/90',
                   isJoining && 'opacity-70 cursor-wait'
                 )}
               >

@@ -333,7 +333,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           </p>
           <button
             onClick={() => router.push('/enter')}
-            className="px-6 py-2.5 bg-[#FFD700] text-black text-sm font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors"
+            className="px-6 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
           >
             Sign In
           </button>
@@ -353,7 +353,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           </p>
           <button
             onClick={() => router.push('/discover')}
-            className="px-6 py-2.5 bg-[#FFD700] text-black text-sm font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors"
+            className="px-6 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
           >
             Explore
           </button>
@@ -469,7 +469,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                 {user && tool.ownerId === user.uid && (
                   <button
                     onClick={() => router.push(`/build/${toolId}`)}
-                    className="px-4 py-2 text-sm font-semibold text-black bg-[#FFD700] rounded-full hover:bg-[#FFD700]/90 transition-colors"
+                    className="px-4 py-2 text-sm font-semibold text-black bg-white rounded-full hover:bg-white/90 transition-colors"
                   >
                     Open in editor
                   </button>
@@ -490,7 +490,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               <div className="flex gap-2">
                 <button
                   onClick={handleShare}
-                  className="flex-1 px-4 py-2.5 bg-[#FFD700] text-black text-sm font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
                 >
                   {copied ? 'Copied!' : 'Share link'}
                 </button>
@@ -509,7 +509,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             <div className="mt-6 text-center animate-in fade-in duration-300">
               <Link
                 href="/enter"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FFD700] text-black text-sm font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
               >
                 Create your own
               </Link>
@@ -529,7 +529,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               </div>
               <Link
                 href="/enter"
-                className="shrink-0 rounded-full bg-[#FFD700] px-4 py-2 text-[12px] font-medium text-black transition-opacity hover:opacity-90"
+                className="shrink-0 rounded-full bg-white px-4 py-2 text-[12px] font-medium text-black transition-opacity hover:opacity-90"
               >
                 Create
               </Link>

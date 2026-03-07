@@ -107,7 +107,7 @@ function ProfileErrorState({ onRetry }: { onRetry: () => void }) {
     <div className="flex items-center justify-center py-32">
       <div className="text-center">
         <p className="text-white/50 mb-4">Couldn't load this profile.</p>
-        <button onClick={onRetry} className="px-5 py-2.5 rounded-full bg-[#FFD700] text-black text-sm font-medium">
+        <button onClick={onRetry} className="px-5 py-2.5 rounded-full bg-white text-black text-sm font-medium">
           Try again
         </button>
       </div>
@@ -389,7 +389,7 @@ export default function ProfilePageContent() {
                 <p className="text-[15px] text-white/50">Build your first app to unlock your portfolio</p>
                 <Link
                   href="/build"
-                  className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-[#FFD700] text-black text-sm font-semibold hover:bg-[#FFD700]/90 transition-colors duration-100"
+                  className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors duration-100"
                 >
                   <Zap className="w-3.5 h-3.5" />Start building
                 </Link>

@@ -110,8 +110,8 @@ function PromptInput({
           onClick={handleSubmit}
           disabled={!value.trim() || disabled}
           className="absolute right-2 bottom-2 h-9 w-9 flex items-center justify-center
-            rounded-full bg-[#FFD700] text-black disabled:opacity-30 disabled:bg-white/20
-            hover:bg-[#FFD700]/90 transition-colors duration-100"
+            rounded-full bg-white text-black disabled:opacity-30 disabled:bg-white/20
+            hover:bg-white/90 transition-colors duration-100"
         >
           {disabled ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -867,7 +867,7 @@ export default function BuildPage() {
                     <button
                       onClick={handleDeploy}
                       className="flex-1 flex items-center justify-center gap-2 h-10 rounded-full
-                        bg-[#FFD700] text-black font-semibold text-sm hover:bg-[#FFD700]/90 transition-colors duration-100"
+                        bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors duration-100"
                     >
                       <Zap className="w-4 h-4" />
                       {user ? 'Deploy' : 'Sign in to deploy'}

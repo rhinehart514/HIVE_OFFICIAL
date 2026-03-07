@@ -1,10 +1,11 @@
 'use client';
 
 /**
- * Button Primitive — LOCKED 2026-02-21
+ * Button Primitive
  *
  * - Pill radius, no scale transforms
- * - Primary = flat gold, shimmer = gold + sweeping light (Lab CTA only)
+ * - Primary = white fill, black text (SF/YC pattern)
+ * - Gold reserved for indicators only, never button fills
  * - White focus ring with black offset
  */
 
@@ -35,11 +36,11 @@ const buttonVariants = cva(
           'active:bg-white/[0.10]',
         ].join(' '),
         primary: [
-          'bg-[#FFD700]',
+          'bg-white',
           'text-black',
-          'border border-[#FFD700]',
-          'hover:bg-[#F2CC00]',
-          'active:bg-[#E6BF00]',
+          'border border-white',
+          'hover:bg-white/90',
+          'active:bg-white/80',
         ].join(' '),
         secondary: [
           'bg-white/[0.06]',
@@ -71,18 +72,18 @@ const buttonVariants = cva(
           'p-0 h-auto',
         ].join(' '),
         shimmer: [
-          'bg-[#FFD700]',
+          'bg-white',
           'text-black',
-          'border border-[#FFD700]',
-          'hover:bg-[#F2CC00]',
-          'active:bg-[#E6BF00]',
+          'border border-white',
+          'hover:bg-white/90',
+          'active:bg-white/80',
           'overflow-hidden',
         ].join(' '),
-        // Legacy aliases for backwards compatibility
-        solid: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
+        // Legacy aliases
+        solid: 'bg-white text-black border border-white hover:bg-white/90 active:bg-white/80',
         outline: 'bg-white/[0.06] text-white border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.16] active:bg-[#171717]',
-        cta: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
-        brand: 'bg-[#FFD700] text-black border border-[#FFD700] hover:bg-[#F2CC00] active:bg-[#E6BF00]',
+        cta: 'bg-white text-black border border-white hover:bg-white/90 active:bg-white/80',
+        brand: 'bg-white text-black border border-white hover:bg-white/90 active:bg-white/80',
       },
       size: {
         xs: 'h-8 px-3 text-xs',

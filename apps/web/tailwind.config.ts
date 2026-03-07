@@ -30,11 +30,11 @@ const config: Config = {
       // Web-specific font family overrides (display + manifesto not in tokens)
       fontFamily: {
         ...hiveTailwindConfig.fontFamily,
-        sans: ['var(--hive-font-sans)', 'Geist Sans', 'system-ui', 'sans-serif'],
-        clash: ['var(--font-clash)', 'Clash Display', 'system-ui', 'sans-serif'],
-        display: ['var(--font-clash)', 'Clash Display', 'system-ui', 'sans-serif'], /* legacy alias */
+        sans: ['var(--hive-font-sans)', 'Geist', 'system-ui', 'sans-serif'],
+        clash: ['var(--hive-font-sans)', 'Geist', 'system-ui', 'sans-serif'], /* legacy alias — now Geist */
+        display: ['var(--hive-font-sans)', 'Geist', 'system-ui', 'sans-serif'],
         mono: ['var(--hive-font-mono)', 'Geist Mono', 'monospace'],
-        manifesto: ['var(--hive-font-manifesto)', 'Clash Display', 'system-ui', 'sans-serif'],
+        manifesto: ['var(--hive-font-sans)', 'Geist', 'system-ui', 'sans-serif'],
       },
 
       // Web-specific color overrides (compatibility aliases)

@@ -154,8 +154,8 @@ function JoinButton({
       className={cn(
         'px-3 py-1.5 rounded-full',
         'text-xs font-medium',
-        'bg-[#FFD700] text-black',
-        'hover:bg-[#FFD700]/90',
+        'bg-white text-black',
+        'hover:bg-white/90',
         'transition-colors duration-100',
         'disabled:opacity-50'
       )}

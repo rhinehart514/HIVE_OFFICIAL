@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
+const displayFont = "font-sans";
 
 export function CapabilitiesSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -38,7 +38,7 @@ export function CapabilitiesSection() {
             What students are making
           </span>
           <h2
-            className={`${clashDisplay} text-[clamp(28px,5vw,48px)] font-semibold tracking-tight text-white`}
+            className={`${displayFont} text-[clamp(28px,5vw,48px)] font-semibold tracking-tight text-white`}
           >
             Apps your campus actually uses.
           </h2>
@@ -104,7 +104,7 @@ function PollCard() {
           Live poll
         </span>
       </div>
-      <h3 className={`${clashDisplay} mb-4 text-[20px] font-semibold text-white`}>
+      <h3 className={`${displayFont} mb-4 text-[20px] font-semibold text-white`}>
         Best dining hall?
       </h3>
       <div className="flex flex-col gap-2">
@@ -139,7 +139,7 @@ function RSVPCard() {
           RSVP
         </span>
       </div>
-      <h3 className={`${clashDisplay} mb-4 text-[20px] font-semibold text-white`}>
+      <h3 className={`${displayFont} mb-4 text-[20px] font-semibold text-white`}>
         Spring Formal
       </h3>
       <div className="mb-3">
@@ -180,7 +180,7 @@ function BracketCard() {
           Bracket
         </span>
       </div>
-      <h3 className={`${clashDisplay} mb-4 text-[20px] font-semibold text-white`}>
+      <h3 className={`${displayFont} mb-4 text-[20px] font-semibold text-white`}>
         Best professor
       </h3>
       <div className="flex flex-col gap-2">

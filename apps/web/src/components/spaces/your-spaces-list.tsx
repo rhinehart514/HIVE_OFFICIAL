@@ -100,8 +100,8 @@ function EmptyState({ onBrowse }: { onBrowse?: () => void }) {
           className={cn(
             'px-5 py-2.5 rounded-full',
             'text-sm font-semibold',
-            'bg-[#FFD700] text-black',
-            'hover:bg-[#FFD700]/90',
+            'bg-white text-black',
+            'hover:bg-white/90',
             'transition-colors duration-100'
           )}
         >

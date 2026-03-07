@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const clashDisplay = "font-[family-name:'Clash_Display',var(--font-clash)]";
+const displayFont = "font-sans";
 
 const PROMPT_TEXT = '"Best dining hall on campus?"';
 const CHAR_DELAY = 50;
@@ -81,7 +81,7 @@ export function DemoSection() {
             How it works
           </span>
           <h2
-            className={`${clashDisplay} text-[clamp(28px,5vw,48px)] font-semibold tracking-tight text-white`}
+            className={`${displayFont} text-[clamp(28px,5vw,48px)] font-semibold tracking-tight text-white`}
           >
             One sentence. Live app.
           </h2>

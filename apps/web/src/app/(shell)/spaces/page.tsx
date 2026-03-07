@@ -101,7 +101,7 @@ export default function SpacesPage() {
           </p>
           <Link
             href="/discover"
-            className="h-12 px-8 rounded-full bg-[#FFD700] text-black text-sm font-semibold inline-flex items-center justify-center hover:bg-[#FFD700]/90 transition-colors duration-100"
+            className="h-12 px-8 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center justify-center hover:bg-white/90 transition-colors duration-100"
           >
             Find your clubs
           </Link>

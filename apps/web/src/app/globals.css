@@ -5,7 +5,7 @@
  * This file only contains: imports, Tailwind directives, and utility classes.
  */
 
-/* Clash Display loaded via next/font/local in layout.tsx — no CDN dependency */
+/* All-in Geist: display + body + mono. No external display font needed. */
 
 /* Design system tokens */
 @import '../../../../packages/ui/src/design-system/tokens.css';
@@ -50,8 +50,9 @@
   }
 
   h1, h2, h3 {
-    font-family: var(--font-clash);
+    font-family: var(--font-body);
     letter-spacing: var(--tracking-tight);
+    font-weight: 700;
   }
 }
 
@@ -92,12 +93,12 @@
   }
 
   .btn-gold {
-    background-color: var(--button-gold-bg);
-    color: var(--button-gold-text);
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-text);
   }
 
   .btn-gold:hover {
-    background-color: var(--button-gold-hover);
+    background-color: var(--button-primary-hover);
   }
 
   .btn-secondary {
