@@ -112,11 +112,11 @@ export function LeftSidebar() {
           <span className="text-[14px] font-medium">Notifications</span>
         </button>
 
-        {/* Create button — white pill (hidden on /build since it IS the creation surface) */}
+        {/* Create button — yellow pill (hidden on /build since it IS the creation surface) */}
         {!pathname.startsWith('/build') && (
           <Link
             href="/build"
-            className="flex items-center justify-center gap-2 h-10 mt-2 rounded-full bg-white text-black text-[14px] font-semibold hover:bg-white/90 transition-colors duration-100"
+            className="flex items-center justify-center gap-2 h-10 mt-2 rounded-full bg-[#FFD700] text-black text-[14px] font-semibold hover:bg-[#FFE033] transition-colors duration-100"
           >
             <Plus className="h-4 w-4" strokeWidth={2} />
             Create
@@ -131,16 +131,21 @@ export function LeftSidebar() {
 // Mobile bottom bar — 56px, 4 tabs
 // ─────────────────────────────────────────────────────────────────────────────
 
-function MobileNavItem({ item, isActive, badge }: { item: NavItem; isActive: boolean; badge?: number }) {
+function MobileNavItem({
+  item,
+  isActive,
+  badge,
+  onClick,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  badge?: number;
+  onClick?: () => void;
+}) {
   const Icon = item.icon;
-  return (
-    <Link
-      href={item.href}
-      className={cn(
-        'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors duration-100',
-        isActive ? 'text-white' : 'text-white/35',
-      )}
-    >
+
+  const content = (
+    <>
       <div className="relative">
         <Icon className="h-[22px] w-[22px]" />
         {isActive && (
@@ -155,6 +160,26 @@ function MobileNavItem({ item, isActive, badge }: { item: NavItem; isActive: boo
       <span className={cn('font-mono text-[10px] uppercase tracking-label', isActive && 'font-semibold')}>
         {item.label}
       </span>
+    </>
+  );
+
+  const className = cn(
+    'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors duration-100',
+    isActive ? 'text-white' : 'text-white/35',
+  );
+
+  // Make tab opens creation sheet instead of navigating
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={className}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={item.href} className={className}>
+      {content}
     </Link>
   );
 }
@@ -167,7 +192,7 @@ export function MobileBottomBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch border-t border-white/[0.05] bg-black md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch border-t border-white/[0.05] bg-black/90 backdrop-blur-[12px] md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {navItems.map((item) => (
@@ -176,6 +201,11 @@ export function MobileBottomBar() {
           item={item}
           isActive={isNavItemActive(item, pathname)}
           badge={item.id === 'you' ? unreadCount : undefined}
+          onClick={
+            item.id === 'build'
+              ? () => window.dispatchEvent(new Event('hive:open-create'))
+              : undefined
+          }
         />
       ))}
     </nav>

@@ -20,15 +20,16 @@ export const HEADER_HEIGHT = 56; // h-14, desktop sidebar header & mobile header
 export const HEADER_HEIGHT_CLASS = 'h-14';
 
 // Sidebar
-export const SIDEBAR_WIDTH = 260; // Desktop sidebar width
-export const SIDEBAR_WIDTH_CLASS = 'w-[260px]';
-export const SIDEBAR_COLLAPSED_WIDTH = 72; // When sidebar is collapsed (future)
+export const SIDEBAR_WIDTH = 200; // Desktop sidebar width (fixed, no collapse)
+export const SIDEBAR_WIDTH_CLASS = 'w-[200px]';
+/** @deprecated Sidebar no longer collapses */
+export const SIDEBAR_COLLAPSED_WIDTH = 200;
 
 // Mobile Navigation
 export const MOBILE_NAV_WIDTH = 280; // Mobile slide-out nav
 export const MOBILE_NAV_WIDTH_CLASS = 'w-[280px]';
 export const MOBILE_HEADER_HEIGHT = 56; // Same as desktop for consistency
-export const MOBILE_BOTTOM_NAV_HEIGHT = 0; // No bottom nav currently
+export const MOBILE_BOTTOM_NAV_HEIGHT = 56; // Mobile bottom tab bar
 
 // Content Constraints
 export const MAX_CONTENT_WIDTH = 768; // max-w-3xl for standard content
