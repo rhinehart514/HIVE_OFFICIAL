@@ -45,6 +45,7 @@
     "memory:cleanup:aggressive": "./scripts/cleanup-memory.sh --aggressive",
     "npm:reinstall": "./scripts/reinstall-npm.sh",
     "claude:reinstall": "./scripts/reinstall-claude.sh",
+    "claude:update": "./scripts/update-claude.sh",
     "goose:generate-dataset": "NODE_OPTIONS='--max-old-space-size=4096' pnpm tsx packages/core/src/hivelab/goose/training/generate-dataset.ts"
   },
   "devDependencies": {

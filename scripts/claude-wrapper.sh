@@ -12,8 +12,20 @@ check_memory() {
     if [ "$free_mb" -lt 500 ]; then
       echo "⚠️  Warning: Only ${free_mb}MB free memory. Consider closing other applications." >&2
     fi
+  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux
+    local free_mb=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+    if [ "$free_mb" -lt 500 ]; then
+      echo "⚠️  Warning: Only ${free_mb}MB free memory. Consider closing other applications." >&2
+    fi
   fi
 }
+
+# Verify Claude CLI is installed
+if ! command -v claude &> /dev/null; then
+  echo "❌ Error: Claude CLI not found. Install it with: npm install -g @anthropic-ai/claude-code" >&2
+  exit 1
+fi
 
 # Set Node.js memory options
 export NODE_OPTIONS="--max-old-space-size=4096 --expose-gc"

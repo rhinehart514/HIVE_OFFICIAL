@@ -50,3 +50,8 @@ echo "   2. Or open a new terminal window"
 echo "   3. Use your aliases (c, cc, ccc, ccr) as normal"
 echo ""
 echo "💡 Your aliases now automatically use 4GB heap size"
+
+echo ""
+echo "💡 To update Claude CLI in the future:"
+echo "   - Run: claude update"
+echo "   - Or use: ./scripts/update-claude.sh"
