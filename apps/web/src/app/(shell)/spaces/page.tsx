@@ -23,7 +23,7 @@ function SpaceRow({ space }: { space: MySpace }) {
       className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors duration-100"
     >
       {/* Avatar */}
-      <div className="w-10 h-10 rounded-full bg-[#111] border border-white/[0.05] flex items-center justify-center shrink-0 overflow-hidden">
+      <div className="w-10 h-10 rounded-full bg-[var(--bg-surface)] border border-white/[0.05] flex items-center justify-center shrink-0 overflow-hidden">
         {space.iconURL ? (
           <img src={space.iconURL} alt="" className="w-full h-full object-cover" />
         ) : (

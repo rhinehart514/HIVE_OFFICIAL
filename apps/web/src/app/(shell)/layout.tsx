@@ -5,7 +5,7 @@ import { ShellCreateBar } from '@/components/shell/ShellCreateBar';
 
 export default function ShellLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen text-white bg-black">
+    <div className="min-h-screen text-white bg-[var(--bg-void)]">
       <LeftSidebar />
       <MobileBottomBar />
 
