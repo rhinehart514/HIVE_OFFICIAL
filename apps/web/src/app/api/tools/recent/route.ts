@@ -108,11 +108,52 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
     }
   }
 
+  // Batch-fetch owner handles for profile links
+  const ownerIds = new Set(
+    filtered
+      .map((doc) => (doc.data().ownerId as string | undefined))
+      .filter((id): id is string => !!id && id !== 'hive-system')
+  );
+  const ownerHandleMap = new Map<string, string>();
+  if (ownerIds.size > 0) {
+    const ownerRefs = Array.from(ownerIds).slice(0, 30).map((id) =>
+      dbAdmin.collection("users").doc(id)
+    );
+    const ownerDocs = await dbAdmin.getAll(...ownerRefs);
+    for (const od of ownerDocs) {
+      if (od.exists) {
+        const handle = (od.data()?.handle as string | undefined);
+        if (handle) ownerHandleMap.set(od.id, handle);
+      }
+    }
+  }
+
+  // Batch-fetch space handles for space links
+  const spaceIdsForHandles = new Set(
+    Array.from(deploymentMap.values())
+      .map((d) => d.spaceId)
+      .filter((id): id is string => !!id)
+  );
+  const spaceHandleMap = new Map<string, string>();
+  if (spaceIdsForHandles.size > 0) {
+    const spaceRefs = Array.from(spaceIdsForHandles).slice(0, 30).map((id) =>
+      dbAdmin.collection("spaces").doc(id)
+    );
+    const spaceDocs = await dbAdmin.getAll(...spaceRefs);
+    for (const sd of spaceDocs) {
+      if (sd.exists) {
+        const slug = (sd.data()?.slug as string | undefined);
+        if (slug) spaceHandleMap.set(sd.id, slug);
+      }
+    }
+  }
+
   const tools = filtered.map((doc) => {
     const data = doc.data();
     const useCount = (data.useCount as number | undefined) ?? 0;
     const viewCount = (data.viewCount as number | undefined) ?? 0;
     const deployment = deploymentMap.get(doc.id);
+    const ownerId = (data.ownerId as string | undefined) ?? null;
 
     return {
       id: doc.id,
@@ -121,14 +162,16 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
       shellFormat: (data.shellFormat as string | undefined) ?? null,
       shellConfig: (data.shellConfig as Record<string, unknown> | undefined) ?? null,
       type: (data.type as string | undefined) ?? "visual",
-      ownerId: (data.ownerId as string | undefined) ?? null,
+      ownerId,
       ownerName: (data.creatorName as string | undefined) ?? null,
+      ownerHandle: ownerId ? (ownerHandleMap.get(ownerId) ?? null) : null,
       createdAt: toISOString(data.createdAt),
       createdBy: (data.createdBy as string | undefined) ?? null,
       useCount,
       viewCount,
       spaceId: deployment?.spaceId ?? null,
       spaceName: deployment?.spaceName ?? null,
+      spaceHandle: deployment?.spaceId ? (spaceHandleMap.get(deployment.spaceId) ?? null) : null,
     };
   });
 

@@ -21,9 +21,11 @@ interface RecentTool {
   shellConfig: ShellConfig;
   ownerId: string | null;
   ownerName: string | null;
+  ownerHandle: string | null;
   createdAt: string;
   spaceId: string | null;
   spaceName: string | null;
+  spaceHandle: string | null;
 }
 
 /* ─── Data fetching ─────────────────────────────────────────────── */
@@ -97,11 +99,29 @@ function AppCard({
         <div className="mb-1">
           <h3 className="text-[15px] font-semibold text-white leading-snug">{tool.name}</h3>
           <div className="flex items-center gap-1.5 mt-1">
-            <span className="text-[12px] text-white/40">{creatorLabel}</span>
+            {tool.ownerHandle && tool.ownerId !== 'hive-system' ? (
+              <Link
+                href={`/u/${tool.ownerHandle}`}
+                className="text-[12px] text-white/40 hover:text-white/60 transition-colors"
+              >
+                {creatorLabel}
+              </Link>
+            ) : (
+              <span className="text-[12px] text-white/40">{creatorLabel}</span>
+            )}
             {tool.spaceName && (
               <>
                 <span className="text-[10px] text-white/20">in</span>
-                <span className="text-[12px] text-white/50">{tool.spaceName}</span>
+                {tool.spaceHandle ? (
+                  <Link
+                    href={`/s/${tool.spaceHandle}`}
+                    className="text-[12px] text-white/50 hover:text-white/70 transition-colors"
+                  >
+                    {tool.spaceName}
+                  </Link>
+                ) : (
+                  <span className="text-[12px] text-white/50">{tool.spaceName}</span>
+                )}
               </>
             )}
           </div>
