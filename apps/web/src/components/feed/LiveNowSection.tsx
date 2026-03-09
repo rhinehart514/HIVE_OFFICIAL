@@ -35,7 +35,8 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
           </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
-          No events live right now. Check back soon.
+          Nothing happening right now — but your orgs are always posting.
+          Scroll down to see what&apos;s coming up.
         </p>
       </section>
     );

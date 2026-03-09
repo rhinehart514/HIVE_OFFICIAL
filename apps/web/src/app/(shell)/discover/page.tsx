@@ -101,7 +101,7 @@ export default function DiscoverPage() {
       <div className="w-full max-w-[960px] mx-auto px-4 py-8 md:px-8">
         {/* Page header */}
         <div className="mb-6">
-          <h1 className="font-clash text-[32px] font-semibold text-white mb-1">Discover</h1>
+          <h1 className="font-clash text-[32px] font-semibold text-white mb-1">What&apos;s happening</h1>
           <CampusHeader />
         </div>
 

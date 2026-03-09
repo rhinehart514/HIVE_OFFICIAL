@@ -83,7 +83,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
           </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
-          No events scheduled for today.
+          Nothing on campus today — good day to start something.
         </p>
       </section>
     );

@@ -183,13 +183,14 @@ export function NewAppsSection() {
           </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
-          No new apps yet.{' '}
+          Nobody&apos;s made anything yet — be the first.{' '}
           <Link
             href="/build"
             className="text-white/40 hover:text-white/60 transition-colors underline underline-offset-2"
           >
-            Create one
-          </Link>
+            Make a poll or bracket
+          </Link>{' '}
+          and see what your campus thinks.
         </p>
       </section>
     );

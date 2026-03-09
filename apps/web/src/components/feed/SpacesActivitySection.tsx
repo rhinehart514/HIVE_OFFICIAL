@@ -57,7 +57,7 @@ export function SpacesActivitySection() {
           </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
-          No recent activity in your spaces. Join some below to get started.
+          Your spaces have been quiet — join a few more below or make something to get things going.
         </p>
       </section>
     );

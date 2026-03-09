@@ -107,7 +107,7 @@ export function DiscoverSection() {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <Mono size="label" className="text-white/50">
-            Discover
+            Find your people
           </Mono>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -135,7 +135,7 @@ export function DiscoverSection() {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <Mono size="label" className="text-white/50">
-            Discover
+            Find your people
           </Mono>
         </div>
         <p className="text-sm text-white/25 py-2">
