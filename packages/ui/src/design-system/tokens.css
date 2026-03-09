@@ -106,13 +106,13 @@
   --type-meta-leading: 1.3;
   --type-meta-tracking: 0;
 
-  /* Color */
-  --bg-void: #000000;
-  --bg-ground: #000000;
-  --bg-surface: #0A0A0A;
-  --bg-surface-hover: #111111;
-  --bg-surface-active: #141414;
-  --bg-elevated: #141414;
+  /* Color — warm blacks (not pure #000 — reads as material, not void) */
+  --bg-void: #0A0A09;
+  --bg-ground: #0A0A09;
+  --bg-surface: #111110;
+  --bg-surface-hover: #181816;
+  --bg-surface-active: #1C1C19;
+  --bg-elevated: #1C1C19;
 
   --bg-subtle: rgba(255, 255, 255, 0.04);
   --bg-muted: rgba(255, 255, 255, 0.06);
@@ -240,7 +240,7 @@
   --glow-soft: none;
   --glow-behind: none;
 
-  --gradient-void: linear-gradient(180deg, #000000 0%, #000000 100%);
+  --gradient-void: linear-gradient(180deg, #0A0A09 0%, #0A0A09 100%);
   --gradient-gold-glow: none;
   --gradient-warm-glow: none;
   --gradient-soft-glow: none;
@@ -315,12 +315,12 @@
    * WORKSHOP / HIVELAB
    * ====================================================================== */
 
-  --hivelab-bg: #000000;
-  --hivelab-surface: #0A0A0A;
-  --hivelab-surface-hover: #141414;
-  --hivelab-surface-active: #141414;
-  --hivelab-panel: #0A0A0A;
-  --hivelab-canvas: #000000;
+  --hivelab-bg: var(--bg-void);
+  --hivelab-surface: var(--bg-surface);
+  --hivelab-surface-hover: var(--bg-surface-hover);
+  --hivelab-surface-active: var(--bg-surface-active);
+  --hivelab-panel: var(--bg-surface);
+  --hivelab-canvas: var(--bg-void);
   --hivelab-grid: rgba(255, 255, 255, 0.04);
   --hivelab-grid-accent: rgba(255, 255, 255, 0.08);
 

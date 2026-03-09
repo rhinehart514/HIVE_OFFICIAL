@@ -30,7 +30,7 @@ export function CapabilitiesSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="bg-black px-6 py-16 md:py-24">
+    <section ref={sectionRef} className="bg-[var(--bg-void)] px-6 py-16 md:py-24">
       <div className="mx-auto max-w-5xl">
         {/* Header */}
         <div className="mb-8 text-center">

@@ -65,7 +65,7 @@ export function SocialProofSection() {
   const showStudents = stats && stats.students >= STUDENT_THRESHOLD;
 
   return (
-    <section ref={sectionRef} className="bg-black px-6 py-16 md:py-24">
+    <section ref={sectionRef} className="bg-[var(--bg-void)] px-6 py-16 md:py-24">
       <div className="mx-auto max-w-7xl">
         <div
           className={`mb-8 text-center transition-all duration-500 ease-out ${

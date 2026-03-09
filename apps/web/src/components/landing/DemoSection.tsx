@@ -73,7 +73,7 @@ export function DemoSection() {
   }, [phase]);
 
   return (
-    <section ref={sectionRef} className="bg-black px-6 py-16 md:py-24">
+    <section ref={sectionRef} className="bg-[var(--bg-void)] px-6 py-16 md:py-24">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -91,7 +91,7 @@ export function DemoSection() {
         <div className="mx-auto max-w-lg rounded-2xl border border-white/[0.08] bg-[#0A0A0A]">
           {/* Prompt area */}
           <div className="border-b border-white/[0.08] px-5 py-4">
-            <div className="rounded-xl border border-white/[0.06] bg-black px-4 py-3 font-mono text-[13px] text-white/50">
+            <div className="rounded-xl border border-white/[0.06] bg-[var(--bg-void)] px-4 py-3 font-mono text-[13px] text-white/50">
               {typed}
               {phase === 'typing' && (
                 <span className="ml-0.5 inline-block h-4 w-[2px] bg-[#FFD700] animate-pulse" />

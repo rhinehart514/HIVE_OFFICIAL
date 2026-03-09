@@ -38,7 +38,7 @@ export function HeroSection() {
     step >= n ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3';
 
   return (
-    <section className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-black px-6">
+    <section className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--bg-void)] px-6">
       <div className="mx-auto max-w-3xl text-center">
         <h1
           className={`${displayFont} mb-6 text-[clamp(40px,8vw,56px)] font-bold leading-[1.05] tracking-[-0.03em] text-white transition-all duration-500 ${show(1)}`}
