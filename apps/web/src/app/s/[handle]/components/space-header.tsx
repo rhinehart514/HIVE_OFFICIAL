@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Settings, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const displayFont = "font-sans";
+const displayFont = "font-display";
 
 interface SpaceHeaderProps {
   space: {

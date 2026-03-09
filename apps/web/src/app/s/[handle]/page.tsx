@@ -588,7 +588,7 @@ export default function SpacePageUnified() {
   if (error || !space) {
     return (
       <motion.div
-        className="min-h-screen bg-black flex items-center justify-center"
+        className="min-h-screen bg-[var(--bg-void)] flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
@@ -643,7 +643,7 @@ export default function SpacePageUnified() {
     <AnimatePresence mode="wait">
       <motion.div
         key="split-panel"
-        className="h-screen bg-black"
+        className="h-screen bg-[var(--bg-void)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
