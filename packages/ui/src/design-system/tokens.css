@@ -253,8 +253,8 @@
   --text-gradient-silver: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 100%);
   --text-gradient-warm: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 100%);
 
-  --grain-opacity-subtle: 0;
-  --grain-opacity-texture: 0;
+  --grain-opacity-subtle: 0.03;
+  --grain-opacity-texture: 0.04;
 
   --warmth-none: none;
 
