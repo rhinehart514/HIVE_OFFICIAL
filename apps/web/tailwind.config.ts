@@ -31,8 +31,8 @@ const config: Config = {
       fontFamily: {
         ...hiveTailwindConfig.fontFamily,
         sans: ['var(--hive-font-sans)', 'Geist', 'system-ui', 'sans-serif'],
-        clash: ['var(--hive-font-sans)', 'Geist', 'system-ui', 'sans-serif'], /* legacy alias — now Geist */
-        display: ['var(--hive-font-sans)', 'Geist', 'system-ui', 'sans-serif'],
+        clash: ['var(--font-clash-display, "Clash Display")', 'Geist', 'system-ui', 'sans-serif'],
+        display: ['var(--font-clash-display, "Clash Display")', 'Geist', 'system-ui', 'sans-serif'],
         mono: ['var(--hive-font-mono)', 'Geist Mono', 'monospace'],
         manifesto: ['var(--hive-font-sans)', 'Geist', 'system-ui', 'sans-serif'],
       },

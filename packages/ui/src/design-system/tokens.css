@@ -18,8 +18,8 @@
    * ====================================================================== */
 
   /* Typography */
-  --font-clash: "Geist", system-ui, sans-serif;
-  --font-display: var(--font-clash); /* display = body = Geist (all-in) */
+  --font-clash: var(--font-clash-display, "Clash Display"), "Geist", system-ui, sans-serif;
+  --font-display: var(--font-clash);
   --font-body: "Geist", system-ui, sans-serif;
   --font-mono: "Geist Mono", "SF Mono", ui-monospace, monospace;
 

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { buildEnterUrl } from './entry-url';
 
-const displayFont = "font-sans";
+const displayFont = "font-display";
 
 export function HeroSection() {
   const router = useRouter();
