@@ -305,7 +305,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
   // Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[var(--bg-void)] flex items-center justify-center p-6">
         <div className="w-full max-w-[480px]">
           <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-8">
             <div className="space-y-4 animate-pulse">
@@ -325,7 +325,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
   // Error: private
   if (error instanceof Error && error.message.includes('private')) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[var(--bg-void)] flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
           <h2 className="text-xl font-semibold text-white mb-2">Private Creation</h2>
           <p className="text-white/50 text-sm mb-6">
@@ -345,7 +345,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
   // Error: not found
   if (error || !tool) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[var(--bg-void)] flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
           <h2 className="text-xl font-semibold text-white mb-2">Not Found</h2>
           <p className="text-white/50 text-sm mb-6">
@@ -365,7 +365,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
   const usageCount = tool.useCount || tool.viewCount || 0;
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-[var(--bg-void)] flex flex-col">
       {/* Minimal header — way back to HIVE */}
       <header className="flex items-center justify-between px-6 py-4 flex-shrink-0">
         <Link
@@ -373,7 +373,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           className="flex items-center gap-2 rounded-full px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
         >
           <span className="h-4 w-4 rounded-full bg-[var(--life-gold,#FFD700)]" aria-hidden />
-          <span className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
+          <span className="font-display text-[12px] font-semibold tracking-[0.08em] text-white/40">
             HIVE
           </span>
         </Link>
@@ -399,10 +399,10 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-6">
         <div className="w-full max-w-[480px]">
           {/* Tool surface */}
-          <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-6 sm:p-8">
+          <div className="rounded-2xl bg-[var(--bg-surface)] border border-white/[0.06] p-6 sm:p-8">
             {/* Tool title inside the card */}
             <div className="mb-5">
-              <h1 className="text-lg font-semibold text-white leading-tight">
+              <h1 className="font-display text-lg font-semibold text-white leading-tight">
                 {tool.name}
               </h1>
               {tool.description && (
@@ -556,7 +556,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               className="h-[6px] w-[6px] rounded-full bg-[#FFD700]"
               style={{ animation: 'pulse-breathe 3s ease-in-out infinite' }}
             />
-            <span className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 group-hover:text-white/50 transition-colors">
+            <span className="font-display text-[11px] font-semibold tracking-[0.06em] text-white/30 group-hover:text-white/50 transition-colors">
               Made with HIVE
             </span>
           </Link>
