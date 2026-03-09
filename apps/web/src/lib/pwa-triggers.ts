@@ -8,7 +8,7 @@
 
 const VALUE_EVENT = 'hive:value-moment';
 
-export type ValueMomentType = 'space-join' | 'tool-interaction' | 'first-post';
+export type ValueMomentType = 'space-join' | 'tool-interaction' | 'first-post' | 'first-creation';
 
 interface ValueMomentDetail {
   type: ValueMomentType;
