@@ -98,7 +98,7 @@ function PromptInput({
             e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
           }}
           onKeyDown={handleKeyDown}
-          placeholder={`Describe what you want to make...`}
+          placeholder={`"Best pizza place near campus" or "Who's coming Friday"...`}
           disabled={disabled}
           rows={1}
           className="w-full px-4 py-3 pr-12 rounded-2xl text-[15px] bg-white/[0.03] border border-white/[0.08]
@@ -346,11 +346,11 @@ function ShellConfigEditor({
 function PhaseIndicator({ phase }: { phase: BuildPhase }) {
   const labels: Record<BuildPhase, string> = {
     idle: '',
-    classifying: 'Understanding your idea...',
-    'shell-matched': 'Format detected',
-    generating: 'Building your app...',
-    complete: 'Ready to share',
-    error: 'Something went wrong',
+    classifying: 'Figuring out the best format...',
+    'shell-matched': 'Got it — here\'s what we made',
+    generating: 'Building it now...',
+    complete: 'Done — share it with your people',
+    error: 'That didn\'t work',
   };
 
   if (phase === 'idle') return null;
@@ -781,15 +781,15 @@ export default function BuildPage() {
             {/* Header — minimal */}
             <div className="mb-4">
               <h1 className="text-base font-medium text-white mb-0.5">
-                Make something
+                What do you need?
               </h1>
               {originSpaceName ? (
                 <p className="text-sm text-white/50">
-                  for <span className="text-white/70 font-medium">{originSpaceName}</span>
+                  Building for <span className="text-white/70 font-medium">{originSpaceName}</span>
                 </p>
               ) : (
                 <p className="text-sm text-white/30">
-                  Describe it. We figure out the format.
+                  Poll, bracket, RSVP — just say what and we handle the rest.
                 </p>
               )}
             </div>
@@ -804,13 +804,13 @@ export default function BuildPage() {
             {/* Example prompts — idle only, right under the input */}
             {state.phase === 'idle' && (
               <div className="mt-4 space-y-2">
-                <p className="text-xs text-white/20">Try something like:</p>
+                <p className="text-xs text-white/20">People are making:</p>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    'Best dining hall on campus',
-                    'Who\'s coming to the pregame',
-                    'Rate the professors bracket',
-                    'Study group signup sheet',
+                    'Best dining hall on campus?',
+                    'Who\'s coming to the pregame tonight?',
+                    'Rate the professors — tournament style',
+                    'Sign up for the bake sale',
                   ].map((example) => (
                     <button
                       key={example}
@@ -895,7 +895,7 @@ export default function BuildPage() {
                   <div className="flex items-center gap-2 text-sm text-[#FFD700]">
                     <Check className="w-4 h-4" />
                     <span>
-                      {state.toolName || 'Your app'} is live
+                      {state.toolName || 'Your app'} is ready — get it to your people
                     </span>
                   </div>
 
@@ -979,7 +979,7 @@ export default function BuildPage() {
                 className="flex-1 flex flex-col items-center justify-start pt-12 lg:pt-16 px-8"
               >
                 <p className="text-xs text-white/20 mb-6 font-mono uppercase tracking-wider">
-                  What you can make
+                  What people are making
                 </p>
                 <div className="grid gap-3 w-full max-w-md">
                   {/* Mini poll preview */}
