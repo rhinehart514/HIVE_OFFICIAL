@@ -1,11 +1,11 @@
 /**
  * Shared Navigation Config
  *
- * 4-tab model: Home · Spaces · Make · You
+ * 4-tab model: Make · Home · Spaces · You
  *
+ * Make    — creation hub (first = creation-first thesis)
  * Home    — campus pulse, events, trending apps, activity
  * Spaces  — your communities, /s/[handle]
- * Make    — creation hub + campus app marketplace
  * You     — portfolio, settings
  */
 
@@ -21,6 +21,13 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   {
+    id: 'build',
+    label: 'Make',
+    href: '/build',
+    icon: BuildIcon,
+    matchPattern: /^\/build(\/|$)|^\/lab(\/|$)/,
+  },
+  {
     id: 'home',
     label: 'Home',
     href: '/discover',
@@ -33,13 +40,6 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/spaces',
     icon: SpacesIcon,
     matchPattern: /^\/spaces(\/|$)|^\/s\//,
-  },
-  {
-    id: 'build',
-    label: 'Make',
-    href: '/build',
-    icon: BuildIcon,
-    matchPattern: /^\/build(\/|$)|^\/lab(\/|$)/,
   },
   {
     id: 'you',
