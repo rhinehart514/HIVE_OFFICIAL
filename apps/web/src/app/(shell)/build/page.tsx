@@ -764,20 +764,27 @@ export default function BuildPage() {
   // Loading
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-void)]">
         <BrandSpinner size="md" variant="gold" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[var(--bg-void)]">
       <div className="flex flex-col lg:flex-row min-h-screen">
         {/* ============================================ */}
         {/* LEFT PANEL — Prompt + controls               */}
         {/* ============================================ */}
-        <div className="w-full lg:w-[360px] lg:min-w-[320px] lg:border-r lg:border-white/[0.06] flex flex-col">
-          <div className="px-5 py-6 flex flex-col overflow-y-auto">
+        <div className="relative w-full lg:w-[360px] lg:min-w-[320px] lg:border-r lg:border-white/[0.06] flex flex-col">
+          {/* Subtle gold glow behind creation surface (design rule §19) */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              background: 'radial-gradient(ellipse at 50% 30%, #FFD700, transparent 70%)',
+            }}
+          />
+          <div className="relative px-5 py-6 flex flex-col overflow-y-auto">
             {/* Header — minimal */}
             <div className="mb-4">
               <h1 className="text-base font-medium text-white mb-0.5">

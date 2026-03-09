@@ -143,7 +143,7 @@
   --life-gold-hover: #FFE033;
   --life-gold-active: #E6C200;
   --life-pulse: rgba(255, 215, 0, 0.60);
-  --life-glow: transparent;
+  --life-glow: rgba(255, 215, 0, 0.04);
   --life-subtle: rgba(255, 215, 0, 0.12);
   --life-text: #FFD700;
   --life-edge: rgba(255, 215, 0, 0.20);
