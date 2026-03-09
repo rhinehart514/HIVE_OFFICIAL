@@ -984,23 +984,26 @@ export default function BuildPage() {
                 <div className="grid gap-3 w-full max-w-md">
                   {/* Mini poll preview */}
                   <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
-                      <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">Poll</span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
+                        <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">Poll</span>
+                      </div>
+                      <span className="text-[10px] text-white/20">247 votes</span>
                     </div>
-                    <p className="text-sm text-white/60 mb-3">Best dining hall?</p>
+                    <p className="text-sm text-white/60 mb-3">Best late-night food near campus?</p>
                     <div className="space-y-1.5">
                       <div className="h-7 rounded-lg bg-white/[0.06] relative overflow-hidden">
                         <div className="absolute inset-y-0 left-0 w-[42%] bg-white/[0.08] rounded-lg" />
                         <span className="relative z-10 flex items-center justify-between h-full px-2.5 text-[11px]">
-                          <span className="text-white/50">Sizzles</span>
+                          <span className="text-white/50">Jim&apos;s Steakout</span>
                           <span className="text-white/30 font-mono">42%</span>
                         </span>
                       </div>
                       <div className="h-7 rounded-lg bg-white/[0.06] relative overflow-hidden">
                         <div className="absolute inset-y-0 left-0 w-[31%] bg-white/[0.05] rounded-lg" />
                         <span className="relative z-10 flex items-center justify-between h-full px-2.5 text-[11px]">
-                          <span className="text-white/30">C3</span>
+                          <span className="text-white/30">Danny&apos;s</span>
                           <span className="text-white/20 font-mono">31%</span>
                         </span>
                       </div>
@@ -1010,18 +1013,18 @@ export default function BuildPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
                       <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">RSVP</span>
-                      <p className="text-sm text-white/60 mt-1.5 mb-2">Spring Formal</p>
+                      <p className="text-sm text-white/60 mt-1.5 mb-2">SGA Town Hall</p>
                       <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                         <div className="h-full w-[73%] bg-white/20 rounded-full" />
                       </div>
-                      <p className="text-[10px] text-white/20 mt-1.5">147/200</p>
+                      <p className="text-[10px] text-white/20 mt-1.5">147/200 going</p>
                     </div>
                     <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
                       <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">Bracket</span>
-                      <p className="text-sm text-white/60 mt-1.5 mb-2">Best prof</p>
+                      <p className="text-sm text-white/60 mt-1.5 mb-2">Best CSE prof</p>
                       <div className="flex rounded-lg overflow-hidden border border-white/[0.06]">
-                        <div className="flex-1 py-1.5 text-center text-[10px] bg-white/[0.06] text-white/50">Smith</div>
-                        <div className="flex-1 py-1.5 text-center text-[10px] bg-white/[0.02] text-white/20">Lee</div>
+                        <div className="flex-1 py-1.5 text-center text-[10px] bg-white/[0.06] text-white/50">Hertz</div>
+                        <div className="flex-1 py-1.5 text-center text-[10px] bg-white/[0.02] text-white/20">Alphonce</div>
                       </div>
                     </div>
                   </div>
