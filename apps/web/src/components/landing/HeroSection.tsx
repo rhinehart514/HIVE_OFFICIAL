@@ -44,17 +44,17 @@ export function HeroSection() {
           className={`${displayFont} mb-6 text-[clamp(40px,8vw,56px)] font-bold leading-[1.05] tracking-[-0.03em] text-white transition-all duration-500 ${show(1)}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
         >
-          Say something.
+          Rally your people
           <br />
-          Your campus responds.
+          in 30 seconds.
         </h1>
 
         <p
           className={`mx-auto mb-8 max-w-md text-[15px] leading-relaxed text-white/50 transition-all duration-500 ${show(2)}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
         >
-          Type a sentence. HIVE turns it into a live app.{' '}
-          Your campus uses it.
+          Polls, brackets, RSVPs — describe what you need and
+          HIVE makes it live. Your org sees it instantly.
         </p>
 
         <div
@@ -68,7 +68,7 @@ export function HeroSection() {
                 type="text"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Make a poll for your org..."
+                placeholder="Best dining hall? Who's coming tonight?"
                 className="flex-1 bg-transparent text-[15px] text-white placeholder:text-white/30 outline-none"
               />
               <button

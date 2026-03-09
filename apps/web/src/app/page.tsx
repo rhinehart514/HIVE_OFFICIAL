@@ -12,21 +12,21 @@ import {
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.college';
 
 export const metadata: Metadata = {
-  title: 'HIVE — Say something. Your campus responds.',
+  title: 'HIVE — Rally your people in 30 seconds',
   description:
-    'Type a sentence. HIVE turns it into a live app your campus actually uses — polls, brackets, RSVPs, and more.',
+    'Polls, brackets, RSVPs — describe what you need and HIVE makes it live. Your org sees it instantly.',
   openGraph: {
-    title: 'HIVE — Say something. Your campus responds.',
+    title: 'HIVE — Rally your people in 30 seconds',
     description:
-      'Type a sentence. HIVE turns it into a live app your campus actually uses — polls, brackets, RSVPs, and more.',
+      'Polls, brackets, RSVPs — describe what you need and HIVE makes it live. Your org sees it instantly.',
     type: 'website',
     images: [{ url: `${baseUrl}/api/og/landing`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HIVE — Say something. Your campus responds.',
+    title: 'HIVE — Rally your people in 30 seconds',
     description:
-      'Type a sentence. HIVE turns it into a live app your campus actually uses — polls, brackets, RSVPs, and more.',
+      'Polls, brackets, RSVPs — describe what you need and HIVE makes it live. Your org sees it instantly.',
     images: [`${baseUrl}/api/og/landing`],
   },
 };
