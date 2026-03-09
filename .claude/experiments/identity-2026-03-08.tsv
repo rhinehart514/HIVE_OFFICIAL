@@ -1,0 +1,22 @@
+commit	score	delta	status	description
+baseline	0.30	0.00	baseline	Starting score from product-eval-2026-03-08
+b5b1d9d	0.35	+0.05	keep	Social campus voice in hero copy — "Rally your people in 30 seconds"
+05aaf19	0.37	+0.02	keep	Social voice across build page — "What do you need?" + "People are making:"
+d8b9be6	0.37	0.00	discard	Gold ping celebration on complete — too small, violates spring physics rule
+2ab4a1f	0.40	+0.03	keep	Campus voice in discover page header + all 5 feed section empty states
+dfe8a63	0.43	+0.03	keep	UB-specific examples in build preview cards — Jim's Steakout, SGA, CSE profs
+4fb2102	0.44	+0.01	keep	Student voice in demo section + UB-specific late-night food poll options
+6d279b1	0.45	+0.01	keep	UB-specific content in all three capabilities cards — profs, SGA, food spots
+dcc5cf1	0.46	+0.01	keep	Campus voice in space chat input, empty message feed, tools empty states
+---	---	---	note	0.30 → 0.46 after 8 experiments (7 kept, 1 discarded). Paused by user.
+---	---	---	note	Phase 2: Visual identity experiments (was copy/voice, now design system)
+c1bbf6c	0.52	+0.06	keep	Load Clash Display font + wire through token system — personality font across 24 files
+708958c	0.54	+0.02	keep	Warm blacks (#0A0A09) replace pure #000 in tokens + landing pages — material not void
+4e564bc	0.55	+0.01	keep	Subtle grain texture on body at 3% opacity — breaks CSS void look
+3c900c0	0.57	+0.02	keep	Gold radial glow behind build creation surface at 4% opacity — alive signal
+2c1443e	0.58	+0.01	keep	h1-h3 base CSS uses Clash Display + semibold 600 — catches all raw headings
+e282ad9	0.59	+0.01	keep	Sidebar + mobile nav warm blacks, HIVE wordmark in Clash Display
+ba77c36	0.61	+0.02	keep	Standalone tool page — warm blacks, Clash Display, token surfaces (growth surface)
+51a3ae2	0.62	+0.01	keep	Shell layout + spaces page warm blacks — all authenticated pages inherit warmth
+f8db237	0.63	+0.01	keep	Space page — Clash Display header, warm blacks across loading/error/chat states
+---	---	---	note	0.30 → 0.63 after 17 experiments (16 kept, 1 discarded). Phase 2 visual: +0.17
