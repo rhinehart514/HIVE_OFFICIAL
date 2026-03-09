@@ -4,14 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 
 const displayFont = "font-sans";
 
-const PROMPT_TEXT = '"Best dining hall on campus?"';
+const PROMPT_TEXT = '"Best late-night food near campus?"';
 const CHAR_DELAY = 50;
 
 const POLL_OPTIONS = [
-  { label: 'Sizzles', pct: 42 },
-  { label: 'C3', pct: 31 },
-  { label: 'Crossroads', pct: 18 },
-  { label: 'Governors', pct: 9 },
+  { label: "Jim's Steakout", pct: 42 },
+  { label: "Danny's", pct: 31 },
+  { label: 'Mighty Taco', pct: 18 },
+  { label: 'Insomnia Cookies', pct: 9 },
 ];
 
 export function DemoSection() {
@@ -78,12 +78,12 @@ export function DemoSection() {
         {/* Header */}
         <div className="mb-8 text-center">
           <span className="mb-3 block font-mono text-[11px] uppercase tracking-[0.2em] text-[#FFD700]/70">
-            How it works
+            Watch this
           </span>
           <h2
             className={`${displayFont} text-[clamp(28px,5vw,48px)] font-semibold tracking-tight text-white`}
           >
-            One sentence. Live app.
+            Type it. Share it. Done.
           </h2>
         </div>
 
