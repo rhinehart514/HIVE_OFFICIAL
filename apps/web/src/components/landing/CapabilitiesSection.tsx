@@ -87,10 +87,10 @@ function Card({
 
 function PollCard() {
   const options = [
-    { label: 'Sizzles', pct: 42 },
-    { label: 'C3', pct: 31 },
-    { label: 'Crossroads', pct: 18 },
-    { label: 'Governors', pct: 9 },
+    { label: "Jim's Steakout", pct: 42 },
+    { label: "Danny's", pct: 31 },
+    { label: 'Mighty Taco', pct: 18 },
+    { label: 'Insomnia Cookies', pct: 9 },
   ];
 
   return (
@@ -105,7 +105,7 @@ function PollCard() {
         </span>
       </div>
       <h3 className={`${displayFont} mb-4 text-[20px] font-semibold text-white`}>
-        Best dining hall?
+        Best late-night food?
       </h3>
       <div className="flex flex-col gap-2">
         {options.map((opt, i) => (
@@ -152,7 +152,7 @@ function RSVPCard() {
         </span>
       </div>
       <h3 className={`${displayFont} mb-4 text-[20px] font-semibold text-white`}>
-        Spring Formal
+        SGA Town Hall
       </h3>
 
       {/* Attendance bar */}
@@ -177,7 +177,7 @@ function RSVPCard() {
           Sat, Apr 12
         </span>
         <span className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50">
-          Center for the Arts
+          Student Union 230
         </span>
       </div>
     </div>
@@ -186,9 +186,9 @@ function RSVPCard() {
 
 function BracketCard() {
   const matchups = [
-    { a: 'Dr. Smith', b: 'Dr. Lee', winner: 'b' },
-    { a: 'Dr. Patel', b: 'Dr. Kim', winner: 'b' },
-    { a: 'Dr. Chen', b: 'Dr. Jones', winner: 'a' },
+    { a: 'Hertz', b: 'Alphonce', winner: 'b' },
+    { a: 'Hartloff', b: 'Sridhar', winner: 'b' },
+    { a: 'Nasri', b: 'Lund', winner: 'a' },
   ];
 
   return (
@@ -199,7 +199,7 @@ function BracketCard() {
         </span>
       </div>
       <h3 className={`${displayFont} mb-4 text-[20px] font-semibold text-white`}>
-        Best professor
+        Best CSE professor
       </h3>
       <div className="flex flex-col gap-2">
         {matchups.map((m, i) => {
