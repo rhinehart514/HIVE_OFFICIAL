@@ -42,7 +42,7 @@ interface ChatInputProps {
 export function ChatInput({
   spaceId,
   onSend,
-  placeholder = '/ Try /poll, /rsvp, /countdown',
+  placeholder = 'Say something or try /poll, /rsvp, /countdown',
   disabled,
   className,
   onTypingChange,

@@ -160,8 +160,8 @@ export function MessageFeed({
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-white/50 text-sm">No messages yet</p>
-          <p className="text-white/50 text-xs mt-1">Be the first to say something</p>
+          <p className="text-white/50 text-sm">This space is quiet — start the conversation.</p>
+          <p className="text-white/30 text-xs mt-1">Try /poll to ask the group something</p>
         </div>
       </div>
     );
