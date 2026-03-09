@@ -38,6 +38,7 @@ import { useBuildMachine, type BuildPhase } from '@/hooks/use-build-machine';
 import { isNativeFormat, SHELL_REGISTRY } from '@/lib/shells';
 import type { ShellFormat, ShellConfig, PollConfig, BracketConfig, RSVPConfig } from '@/lib/shells/types';
 import { useAnalytics } from '@/hooks/use-analytics';
+import { emitValueMoment } from '@/lib/pwa-triggers';
 
 const ShellRenderer = lazy(() => import('@/components/shells/ShellRenderer'));
 
@@ -716,6 +717,8 @@ export default function BuildPage() {
     } : null,
     onToolCreated: (toolId) => {
       track('creation_completed', { toolId, source: 'build-page' });
+      // Trigger push permission prompt after first creation — this is THE value moment
+      emitValueMoment({ type: 'first-creation' });
     },
   });
 

@@ -726,6 +726,34 @@ export default function SpacePageUnified() {
             <span>{sidebarTools.length} {sidebarTools.length === 1 ? 'app' : 'apps'} made</span>
           </div>
 
+          {/* Apps strip — always visible when apps exist, one tap to interact */}
+          {sidebarTools.length > 0 && (
+            <div className="px-4 py-2 border-b border-white/[0.04] overflow-x-auto scrollbar-none">
+              <div className="flex gap-2">
+                {sidebarTools.map((tool) => (
+                  <button
+                    key={tool.toolId}
+                    onClick={() => setActiveTool({
+                      toolId: tool.toolId,
+                      placementId: tool.placementId,
+                      name: tool.titleOverride || tool.name,
+                      description: tool.description,
+                    })}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full
+                      bg-white/[0.04] border border-white/[0.06]
+                      hover:bg-white/[0.08] transition-colors duration-100
+                      flex-shrink-0"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
+                    <span className="text-[13px] text-white/70 whitespace-nowrap">
+                      {tool.titleOverride || tool.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Full-width chat stream */}
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 {feedMessages.length === 0 && !isLoadingMessages ? (

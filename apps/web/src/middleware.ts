@@ -364,9 +364,9 @@ export async function middleware(request: NextRequest) {
       if (sessionCookie) {
         const session = await verifySessionAtEdge(sessionCookie);
         if (session?.onboardingCompleted) {
-          // Completed user — send them to their intended destination or creator dashboard
+          // Completed user — send them to creation surface (agency-first, not consumption-first)
           const redirectParam = request.nextUrl.searchParams.get('redirect');
-          const destination = redirectParam || '/discover';
+          const destination = redirectParam || '/build';
           return NextResponse.redirect(new URL(destination, request.url));
         }
       } else if (refreshCookie) {
@@ -375,7 +375,7 @@ export async function middleware(request: NextRequest) {
         const refreshSession = await verifySessionAtEdge(refreshCookie);
         if (refreshSession?.onboardingCompleted) {
           const redirectParam = request.nextUrl.searchParams.get('redirect');
-          const destination = redirectParam || '/discover';
+          const destination = redirectParam || '/build';
           return NextResponse.redirect(new URL(destination, request.url));
         }
       }

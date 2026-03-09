@@ -30,6 +30,7 @@ export type NotificationType =
   | 'tool.deployed'     // Tool was added to a space
   | 'tool.milestone'    // Tool hit a usage milestone
   | 'tool.updated'      // Upstream tool was updated
+  | 'tool.social_proof' // Social-proof threshold: "Jordan and 4 others voted on your poll"
   | 'ritual_joined'     // You joined a ritual
   | 'ritual_active'     // A ritual you joined is now active
   | 'ritual_checkin'    // Daily reminder to check in to ritual

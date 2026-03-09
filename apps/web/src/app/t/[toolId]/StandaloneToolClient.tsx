@@ -478,6 +478,46 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             )}
           </div>
 
+          {/* Creator impact banner — shows when creator views their own tool (from push notification) */}
+          {user && tool.ownerId === user.uid && !showCreatedBanner && (
+            <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[13px] text-white/50">
+                  {isShellTool && shellState.state ? (
+                    (() => {
+                      const s = shellState.state;
+                      const voteCount = s.votes ? Object.keys(s.votes).length : 0;
+                      const attendeeCount = s.attendees ? Object.keys(s.attendees).length : 0;
+                      const total = voteCount + attendeeCount;
+                      if (total > 0) {
+                        return <span className="text-white/70 font-medium">{total} {total === 1 ? 'response' : 'responses'} so far</span>;
+                      }
+                      return <span>Waiting for responses...</span>;
+                    })()
+                  ) : usageCount > 0 ? (
+                    <span className="text-white/70 font-medium">{usageCount} {usageCount === 1 ? 'person' : 'people'} used this</span>
+                  ) : (
+                    <span>Share the link to get responses</span>
+                  )}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Link
+                  href="/build"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#FFD700] text-black text-sm font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors"
+                >
+                  Make another
+                </Link>
+                <button
+                  onClick={handleShare}
+                  className="px-4 py-2.5 bg-white/[0.06] text-white/60 text-sm font-medium rounded-full border border-white/[0.06] hover:bg-white/[0.08] transition-colors"
+                >
+                  {copied ? 'Copied!' : 'Share'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Just created — share banner */}
           {showCreatedBanner && (
             <div className="mt-4 rounded-2xl border border-[#FFD700]/20 bg-[#FFD700]/[0.04] p-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
