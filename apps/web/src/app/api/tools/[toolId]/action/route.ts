@@ -12,6 +12,7 @@ import { z } from "zod";
 import * as admin from "firebase-admin";
 import { withErrors } from "@/lib/middleware";
 import { logger } from "@/lib/logger";
+import { checkSocialProofThreshold } from "@/lib/social-proof-notifications";
 
 const ShellActionSchema = z.discriminatedUnion("type", [
   z.object({
@@ -105,6 +106,15 @@ export const POST = withErrors(async (
         break;
       }
     }
+
+    // Fire-and-forget: check if we hit the social-proof threshold
+    const displayName = 'displayName' in action ? action.displayName : undefined;
+    checkSocialProofThreshold(toolId, action.type, displayName).catch((err) => {
+      logger.warn("Social-proof check failed (non-blocking)", {
+        toolId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
 
     return respond.success({ ok: true });
   } catch (error) {
