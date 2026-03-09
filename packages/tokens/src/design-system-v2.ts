@@ -1,16 +1,15 @@
 /**
  * HIVE Design System V2
- * Dark-only. The void is the brand.
+ * Dark-only. Warm blacks, gold brand, campus social energy.
  *
  * Design Direction:
- * - Monochrome-dominant: primary palette is white-on-void
- * - Color is the exception, not the rule
- * - Hierarchy through opacity, not hue
- * - Gold restricted to logo/brand mark and leader status indicators ONLY
- * - Light typography weights (400-600 max, never bold/black)
+ * - Warm dark palette: off-black with subtle warm undertone (not pure #000)
+ * - Gold is the brand at 15-25% visual weight — not hidden, not garish
+ * - Hierarchy through opacity AND color weight
+ * - Clash Display for personality, Geist for clarity
  * - Pillowy corners (16px+ on containers)
  *
- * References: Apple (hardware precision), ChatGPT (dark UI), Discord (community-native)
+ * References: Discord (community-native), BeReal (authentic), Locket (campus social)
  */
 
 // ============================================================================
@@ -21,23 +20,24 @@
  * Raw color values - use semantic tokens in components
  */
 export const colors = {
-  // Backgrounds - Neutral, no tint
-  black: '#000000',
-  bgBase: '#000000',        // Page background
-  bgSurface: '#080808',     // Cards, inputs, elevated
-  bgElevated: '#141414',    // Hover states
-  bgActive: '#1A1A1A',      // Active/pressed states
+  // Backgrounds - Warm blacks (subtle warm undertone, not pure neutral)
+  black: '#0D0D0C',
+  bgBase: '#0D0D0C',        // Page background (warm off-black)
+  bgSurface: '#121210',     // Cards, inputs, elevated
+  bgElevated: '#181816',    // Hover states
+  bgActive: '#1E1E1B',      // Active/pressed states
 
-  // Text hierarchy
-  textPrimary: '#FFFFFF',                 // Main content
-  textSecondary: 'rgba(255, 255, 255, 0.5)', // Supporting content
-  textSubtle: 'rgba(255, 255, 255, 0.3)',    // Timestamps, metadata
+  // Text hierarchy (4 levels)
+  textPrimary: '#FFFFFF',                    // Headlines, active content
+  textSecondary: 'rgba(255, 255, 255, 0.7)', // Body text, secondary-but-important
+  textTertiary: 'rgba(255, 255, 255, 0.5)',  // Helper text, metadata
+  textSubtle: 'rgba(255, 255, 255, 0.3)',    // Placeholders, timestamps
   textDisabled: 'rgba(255, 255, 255, 0.25)', // Disabled states
 
-  // Borders — increased opacity for more visible structure
-  borderDefault: 'rgba(255, 255, 255, 0.10)', // Standard borders (was 0.06)
-  borderHover: 'rgba(255, 255, 255, 0.14)',   // Hover state borders (was 0.08)
-  borderFocus: 'rgba(255, 255, 255, 0.50)', // Focus rings (white, NOT gold)
+  // Borders
+  borderDefault: 'rgba(255, 255, 255, 0.10)', // Standard borders
+  borderHover: 'rgba(255, 255, 255, 0.14)',   // Hover state borders
+  borderFocus: 'rgba(255, 215, 0, 0.60)',     // Focus rings (gold — brand identity)
 
   // Brand - Gold
   gold: '#FFD700',          // Primary gold (canonical)
@@ -64,12 +64,12 @@ export const colors = {
 // ============================================================================
 
 export const scale = {
-  // Gray scale - 12 steps, neutral
+  // Gray scale - 12 steps, warm tint
   gray: {
-    1: '#000000',   // App background
-    2: '#0A0A0A',   // Subtle background / surface
-    3: '#141414',   // UI element background
-    4: '#1A1A1A',   // Hovered element
+    1: '#0D0D0C',   // App background (warm off-black)
+    2: '#121210',   // Subtle background / surface
+    3: '#181816',   // UI element background
+    4: '#1E1E1B',   // Hovered element
     5: '#2E2E2E',   // Active element
     6: '#262626',   // Subtle border
     7: '#2E2E2E',   // Element border
@@ -177,7 +177,7 @@ export const cssVariables = {
     // Border & Input
     '--border': colors.borderDefault,
     '--input': colors.bgSurface,
-    '--ring': 'rgba(255, 255, 255, 0.50)', // WHITE focus rings, never gold
+    '--ring': 'rgba(255, 215, 0, 0.60)', // Gold focus rings — brand identity
 
     // Chart colors
     '--chart-1': colors.gold,
@@ -286,7 +286,7 @@ export const componentTokens = {
       placeholder: 'rgba(255, 255, 255, 0.30)',
       focusBg: 'rgba(255, 255, 255, 0.05)',
       focusBorder: 'rgba(255, 255, 255, 0.20)',
-      focusRing: 'rgba(255, 255, 255, 0.50)', // White, never gold
+      focusRing: 'rgba(255, 215, 0, 0.60)', // Gold — brand identity
       radius: '12px', // rounded-xl
       height: '44px', // h-11
     },
@@ -397,8 +397,8 @@ export const radius = {
 // ============================================================================
 // TYPOGRAPHY
 // ============================================================================
-// Weight Philosophy: Never use bold (700) or black (900). Elegance through lightness.
-// Regular (400) for body, Medium (500) for emphasis, Semibold (600) for headlines only.
+// Weight Philosophy: Clash Display for personality (bold/700 allowed). Geist for clarity (max semibold/600).
+// Regular (400) for body, Medium (500) for emphasis, Semibold (600) for Geist headlines, Bold (700) for Clash only.
 
 export const typography = {
   fontFamily: {
@@ -586,19 +586,23 @@ export const cognitiveBudgets = {
 // ============================================================================
 
 export const guidelines = {
-  // GOLD IS EARNED - Builder status only, not decorative
+  // GOLD IS THE BRAND — 15-25% visual weight, not hidden, not garish
   goldUsage: {
-    allowed: [
-      'Logo/brand mark (always)',
-      'Builder status indicators (shipped apps, remix milestones)',
-      'Creation celebration moments (app published, milestone hit)',
+    always: [
+      'Logo/brand mark',
+      'Active nav indicators',
+      'Creation CTAs (Deploy, Make it live, create FAB)',
+      'Focus rings',
+      'Notification badges',
+      'Engagement numbers above threshold',
+      'Creation celebration moments',
+      'Progress indicators in creation flow',
     ],
-    forbidden: [
-      'Generic CTAs (use white or accent colors)',
-      'Focus rings',     // White focus rings
-      'Hover states',
-      'Decorative elements',
+    never: [
       'Body text',
+      'Large background fills (>200px)',
+      'Every button on a page (max 1 gold button per screen)',
+      'Decorative borders with no meaning',
     ],
   },
   // Accent color usage — creation energy
@@ -612,10 +616,12 @@ export const guidelines = {
   antiPatterns: [
     'Corporate/enterprise UI (we serve students)',
     'Heavy borders (>20% opacity)',
-    'Bold/black typography (700+)',
+    'Bold/black typography in Geist (700+ — use Clash for bold)',
     'Solid filled secondary buttons (keep ghost)',
     'Light mode',
-    'Empty whitespace without purpose (density matters)',
+    'Pure #000000 backgrounds (use warm off-blacks)',
+    'AI slop: hover:scale-105, transition-all, backdrop-blur on non-modals',
+    'AI slop: purple-to-blue gradients, three-card icon grids',
   ],
   accessibility: {
     minContrastText: 4.5,
