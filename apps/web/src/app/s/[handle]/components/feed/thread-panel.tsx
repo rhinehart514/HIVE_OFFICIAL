@@ -176,12 +176,12 @@ export function ThreadPanel({
             className={cn(
               'fixed right-0 top-0 bottom-0 z-50',
               'w-full max-w-md',
-              'bg-[var(--bg-ground)] border-l border-white/[0.06]',
+              'bg-[var(--bg-ground)] border-l border-white/[0.05]',
               'flex flex-col'
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05]">
               <div>
                 <h3 className="text-sm font-medium text-white">Thread</h3>
                 <p className="text-xs text-white/50">
@@ -192,7 +192,7 @@ export function ThreadPanel({
                 onClick={onClose}
                 className={cn(
                   'p-2 rounded-lg',
-                  'hover:bg-white/[0.06] transition-colors',
+                  'hover:bg-white/[0.10] transition-colors',
                   'text-white/50 hover:text-white'
                 )}
               >
@@ -201,7 +201,7 @@ export function ThreadPanel({
             </div>
 
             {/* Parent message */}
-            <div className="px-4 py-3 border-b border-white/[0.06] bg-white/[0.06]">
+            <div className="px-4 py-3 border-b border-white/[0.05] bg-white/[0.05]">
               <MessageItem
                 message={parentMessage}
                 showAuthor={true}
@@ -248,7 +248,7 @@ export function ThreadPanel({
             </div>
 
             {/* Reply input */}
-            <div className="px-4 py-3 border-t border-white/[0.06]">
+            <div className="px-4 py-3 border-t border-white/[0.05]">
               <div className="flex items-end gap-2">
                 <textarea
                   ref={inputRef}
@@ -259,7 +259,7 @@ export function ThreadPanel({
                   rows={1}
                   className={cn(
                     'flex-1 px-4 py-2.5 rounded-2xl',
-                    'bg-white/[0.03] border border-white/[0.06]',
+                    'bg-white/[0.03] border border-white/[0.05]',
                     'text-white text-[15px] placeholder:text-white/30',
                     'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
                     'resize-none min-h-[40px] max-h-[120px]'
@@ -274,7 +274,7 @@ export function ThreadPanel({
                   disabled={!replyContent.trim() || isSending}
                   className={cn(
                     'p-2.5 rounded-xl',
-                    'bg-white/[0.06] text-white',
+                    'bg-white/[0.05] text-white',
                     'hover:bg-white/[0.10] transition-colors',
                     'disabled:opacity-30 disabled:cursor-not-allowed'
                   )}

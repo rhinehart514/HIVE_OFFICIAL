@@ -37,7 +37,7 @@ interface InlineComponentProps {
 // ============================================
 
 const CARD_CLASSES =
-  'mt-2 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 max-w-sm';
+  'mt-2 rounded-2xl border border-white/[0.05] bg-white/[0.03] p-4 max-w-sm';
 
 // ============================================
 // POLL CARD
@@ -100,10 +100,10 @@ function PollCard({
               className={`
                 relative overflow-hidden rounded-xl h-10 px-3 text-left text-sm
                 transition-colors duration-200
-                ${showResults ? 'cursor-default' : 'cursor-pointer hover:bg-white/[0.06]'}
+                ${showResults ? 'cursor-default' : 'cursor-pointer hover:bg-white/[0.10]'}
                 ${isMyVote
                   ? 'border border-[#FFD700]/40 bg-[#FFD700]/[0.06]'
-                  : 'border border-white/[0.08] bg-white/[0.02]'
+                  : 'border border-white/[0.05] bg-white/[0.03]'
                 }
                 disabled:cursor-default
               `}
@@ -114,7 +114,7 @@ function PollCard({
                   className={`absolute inset-y-0 left-0 transition-[width,background-color] duration-500 ease-out ${
                     isMyVote || isLeading
                       ? 'bg-[#FFD700]/[0.12]'
-                      : 'bg-white/[0.04]'
+                      : 'bg-white/[0.05]'
                   }`}
                   style={{ width: `${pct}%` }}
                 />
@@ -227,7 +227,7 @@ function RsvpCard({
             px-4 h-9 rounded-3xl text-sm font-medium transition-colors duration-200
             ${userResponse === 'yes'
               ? 'bg-[#22C55E]/[0.15] text-[#22C55E] border border-[#22C55E]/30'
-              : 'bg-white/[0.04] text-white/50 border border-white/[0.08] hover:bg-white/[0.08]'
+              : 'bg-white/[0.05] text-white/50 border border-white/[0.05] hover:bg-white/[0.10]'
             }
           `}
         >
@@ -241,7 +241,7 @@ function RsvpCard({
               px-4 h-9 rounded-3xl text-sm font-medium transition-colors duration-200
               ${userResponse === 'maybe'
                 ? 'bg-[#FFD700]/[0.10] text-[#FFD700] border border-[#FFD700]/30'
-                : 'bg-white/[0.04] text-white/50 border border-white/[0.08] hover:bg-white/[0.08]'
+                : 'bg-white/[0.05] text-white/50 border border-white/[0.05] hover:bg-white/[0.10]'
               }
             `}
           >
@@ -415,7 +415,7 @@ function SignupCard({
                 border transition-colors duration-200
                 ${isMine
                   ? 'border-[#FFD700]/30 bg-[#FFD700]/[0.06]'
-                  : 'border-white/[0.08] bg-white/[0.02]'
+                  : 'border-white/[0.05] bg-white/[0.03]'
                 }
               `}
             >
@@ -534,7 +534,7 @@ function EventCard({
             px-4 h-8 rounded-3xl text-xs font-medium transition-colors duration-200
             ${userResponse === 'yes'
               ? 'bg-[#22C55E]/[0.15] text-[#22C55E] border border-[#22C55E]/30'
-              : 'bg-white/[0.04] text-white/50 border border-white/[0.08] hover:bg-white/[0.08]'
+              : 'bg-white/[0.05] text-white/50 border border-white/[0.05] hover:bg-white/[0.10]'
             }
           `}
         >

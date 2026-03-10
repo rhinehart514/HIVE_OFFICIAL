@@ -28,7 +28,7 @@ function ThinkingIndicator() {
       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className="flex items-start gap-2"
     >
-      <div className="px-4 py-3 rounded-2xl rounded-tl-md bg-white/[0.04] border border-white/[0.06]">
+      <div className="px-4 py-3 rounded-2xl rounded-tl-md bg-white/[0.05] border border-white/[0.05]">
         <div className="flex items-center gap-1.5">
           {[0, 1, 2].map(i => (
             <motion.span

@@ -20,7 +20,7 @@ export default function ProfileError({
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center max-w-md"
       >
-        <div className="w-20 h-20 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 rounded-lg bg-white/[0.05] flex items-center justify-center mx-auto mb-6">
           <span className="text-3xl">&#9888;&#65039;</span>
         </div>
         <h1 className="text-title-lg font-semibold text-white mb-3">
@@ -45,7 +45,7 @@ export default function ProfileError({
             className={cn(
               'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full',
               'border border-white/10 text-white/50 font-medium',
-              'hover:bg-white/[0.06] transition-colors duration-100'
+              'hover:bg-white/[0.10] transition-colors duration-100'
             )}
           >
             Go Home

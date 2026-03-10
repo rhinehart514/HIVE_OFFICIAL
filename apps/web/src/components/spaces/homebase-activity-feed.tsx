@@ -143,8 +143,8 @@ function ActivityRow({
       onClick={onClick}
       className={cn(
         'w-full px-4 py-3 flex items-start gap-3 text-left',
-        'hover:bg-white/[0.06] transition-colors duration-150',
-        'border-b border-white/[0.06] last:border-b-0'
+        'hover:bg-white/[0.10] transition-colors duration-150',
+        'border-b border-white/[0.05] last:border-b-0'
       )}
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
@@ -208,14 +208,14 @@ function ActivityRow({
 function ActivitySkeleton() {
   return (
     <div className="px-4 py-3 flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex-shrink-0" />
+      <div className="w-8 h-8 rounded-lg bg-white/[0.05] flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="flex items-center gap-2">
-          <div className="h-3 w-20 rounded bg-white/[0.06]" />
-          <div className="h-3 w-12 rounded bg-white/[0.06]" />
-          <div className="h-3 w-16 rounded bg-white/[0.06]" />
+          <div className="h-3 w-20 rounded bg-white/[0.05]" />
+          <div className="h-3 w-12 rounded bg-white/[0.05]" />
+          <div className="h-3 w-16 rounded bg-white/[0.05]" />
         </div>
-        <div className="h-4 w-3/4 rounded bg-white/[0.06]" />
+        <div className="h-4 w-3/4 rounded bg-white/[0.05]" />
       </div>
     </div>
   );
@@ -234,7 +234,7 @@ function EmptyState({ message }: { message?: string }) {
       transition={{ duration: 0.6, ease: MOTION.ease.premium }}
     >
       <motion.div
-        className="w-14 h-14 mx-auto mb-4 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center"
+        className="w-14 h-14 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/[0.05] flex items-center justify-center"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.1, ease: MOTION.ease.premium }}
@@ -259,7 +259,7 @@ function EmptyState({ message }: { message?: string }) {
         </p>
         <Link
           href="/discover"
-          className="inline-flex items-center px-4 py-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
+          className="inline-flex items-center px-4 py-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.10] transition-colors duration-100"
         >
           Browse spaces
         </Link>
@@ -294,7 +294,7 @@ export function HomebaseActivityFeed({
         >
           Activity
         </Text>
-        <div className="rounded-lg border border-white/[0.06] overflow-hidden divide-y divide-white/[0.06]">
+        <div className="rounded-lg border border-white/[0.05] overflow-hidden divide-y divide-white/[0.05]">
           {Array.from({ length: 5 }).map((_, i) => (
             <ActivitySkeleton key={i} />
           ))}
@@ -312,7 +312,7 @@ export function HomebaseActivityFeed({
         >
           Activity
         </Text>
-        <div className="rounded-lg border border-white/[0.06] overflow-hidden">
+        <div className="rounded-lg border border-white/[0.05] overflow-hidden">
           <EmptyState message={emptyMessage} />
         </div>
       </section>
@@ -334,7 +334,7 @@ export function HomebaseActivityFeed({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="rounded-lg border border-white/[0.06] overflow-hidden"
+        className="rounded-lg border border-white/[0.05] overflow-hidden"
       >
         {sortedActivities.slice(0, 10).map((activity, index) => (
           <ActivityRow
@@ -347,7 +347,7 @@ export function HomebaseActivityFeed({
 
         {/* Show more hint if there are more than 10 items */}
         {sortedActivities.length > 10 && (
-          <div className="px-4 py-3 text-center border-t border-white/[0.06]">
+          <div className="px-4 py-3 text-center border-t border-white/[0.05]">
             <Text size="xs" className="text-white/50">
               Showing latest 10 of {sortedActivities.length} activities
             </Text>

@@ -207,14 +207,14 @@ export function ClaimOnboarding({
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => setInviteModalOpen(true)}
-                    className="px-4 py-1.5 rounded-full border border-white/[0.1] text-[13px] text-white font-medium hover:bg-white/[0.06] transition-colors duration-100"
+                    className="px-4 py-1.5 rounded-full border border-white/[0.05] text-[13px] text-white font-medium hover:bg-white/[0.10] transition-colors duration-100"
                   >
                     Invite members
                   </button>
                   {firstToolId && (
                     <button
                       onClick={handleCopyAppLink}
-                      className="px-4 py-1.5 rounded-full border border-white/[0.1] text-[13px] text-white font-medium hover:bg-white/[0.06] transition-colors duration-100"
+                      className="px-4 py-1.5 rounded-full border border-white/[0.05] text-[13px] text-white font-medium hover:bg-white/[0.10] transition-colors duration-100"
                     >
                       {copied ? 'Copied!' : 'Copy app link'}
                     </button>

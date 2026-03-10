@@ -137,7 +137,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
 
         {/* Modal */}
         <motion.div
-          className="relative w-full max-w-md bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg overflow-hidden"
+          className="relative w-full max-w-md bg-[var(--bg-ground)] border border-white/[0.05] rounded-lg overflow-hidden"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -158,7 +158,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
             {status === 'loading' && (
               <div className="text-center py-8">
                 <motion.div
-                  className="w-12 h-12 rounded-full border border-2 border-white/[0.06] flex items-center justify-center mx-auto mb-4"
+                  className="w-12 h-12 rounded-full border border-2 border-white/[0.05] flex items-center justify-center mx-auto mb-4"
                   animate={{
                     scale: [1, 1.05, 1],
                     borderColor: ['rgba(255,255,255,0.2)', 'rgba(255,215,0,0.3)', 'rgba(255,255,255,0.2)'],
@@ -187,11 +187,11 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
                   <Text className="text-white/50">You&apos;ve been invited to</Text>
                 </div>
 
-                <div className="bg-white/[0.06] rounded-lg p-6border-white/[0.06]">
+                <div className="bg-white/[0.05] rounded-lg p-6border-white/[0.05]">
                   <div className="flex flex-col items-center text-center gap-4">
                     <Avatar className="h-20 w-20 rounded-lg">
                       <AvatarImage src={space.avatarUrl} alt={space.name} />
-                      <AvatarFallback className="text-2xl bg-white/[0.06] rounded-lg">
+                      <AvatarFallback className="text-2xl bg-white/[0.05] rounded-lg">
                         {space.name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>

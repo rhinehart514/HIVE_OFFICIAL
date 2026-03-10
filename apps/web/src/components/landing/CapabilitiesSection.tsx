@@ -123,7 +123,7 @@ function PollCard() {
             {/* Fill bar */}
             <div
               className={`absolute inset-y-0 left-0 rounded-xl ${
-                i === 0 ? 'bg-white/[0.12]' : 'bg-white/[0.06]'
+                i === 0 ? 'bg-white/[0.10]' : 'bg-white/[0.05]'
               }`}
               style={{ width: `${opt.pct}%` }}
             />
@@ -170,7 +170,7 @@ function RSVPCard() {
           </span>
           <span className="font-mono text-[12px] text-white/30">{total} spots</span>
         </div>
-        <div className="h-2.5 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="h-2.5 overflow-hidden rounded-full bg-white/[0.05]">
           <div
             className="h-full rounded-full bg-white/30"
             style={{ width: `${pct}%` }}
@@ -291,7 +291,7 @@ function CountdownCard() {
           </span>
           <span className="font-mono text-[12px] text-white/30">3,000 cap</span>
         </div>
-        <div className="h-2.5 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="h-2.5 overflow-hidden rounded-full bg-white/[0.05]">
           <div className="h-full rounded-full bg-white/30" style={{ width: '80%' }} />
         </div>
       </div>

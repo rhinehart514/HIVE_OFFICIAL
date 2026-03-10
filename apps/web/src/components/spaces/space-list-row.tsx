@@ -135,8 +135,8 @@ function JoinButton({
         className={cn(
           'flex items-center gap-1.5 px-3 py-1.5 rounded-full',
           'text-xs font-medium',
-          'bg-white/[0.06] text-white/50',
-          'hover:bg-white/[0.08] hover:text-white',
+          'bg-white/[0.05] text-white/50',
+          'hover:bg-white/[0.10] hover:text-white',
           'transition-colors duration-100',
           'disabled:opacity-50'
         )}
@@ -205,7 +205,7 @@ export function SpaceListRow({
       className={cn(
         'group relative flex items-center gap-4',
         variant === 'compact' ? 'px-3 py-2.5' : 'px-4 py-3',
-        'hover:bg-white/[0.06]',
+        'hover:bg-white/[0.10]',
         'transition-colors duration-150',
         'cursor-pointer',
         className
@@ -256,7 +256,7 @@ export function SpaceListRow({
           {/* Org type (for imported spaces) */}
           {space.orgTypeName && space.source === 'ublinked' && (
             <>
-              <span className="w-1 h-1 rounded-full bg-white/[0.06]" />
+              <span className="w-1 h-1 rounded-full bg-white/[0.05]" />
               <Text size="xs" className="text-white/50 truncate max-w-[100px]">
                 {space.orgTypeName}
               </Text>
@@ -266,7 +266,7 @@ export function SpaceListRow({
           {/* Mutual friends */}
           {space.mutualCount != null && space.mutualCount > 0 && (
             <>
-              <span className="w-1 h-1 rounded-full bg-white/[0.06]" />
+              <span className="w-1 h-1 rounded-full bg-white/[0.05]" />
               <div className="flex items-center gap-1.5">
                 {space.mutualAvatars && space.mutualAvatars.length > 0 && (
                   <AvatarGroup
@@ -288,7 +288,7 @@ export function SpaceListRow({
           {/* Upcoming events */}
           {space.upcomingEventCount != null && space.upcomingEventCount > 0 && !(space.mutualCount && space.mutualCount > 0) && (
             <>
-              <span className="w-1 h-1 rounded-full bg-white/[0.06]" />
+              <span className="w-1 h-1 rounded-full bg-white/[0.05]" />
               <Text size="xs" className="text-white/50">
                 {space.upcomingEventCount} event{space.upcomingEventCount !== 1 ? 's' : ''} soon
               </Text>
@@ -347,19 +347,19 @@ export function SpaceListRowSkeleton({
       {/* Avatar skeleton */}
       <div
         className={cn(
-          'rounded-lg bg-white/[0.06]',
+          'rounded-lg bg-white/[0.05]',
           variant === 'compact' ? 'w-8 h-8' : 'w-10 h-10'
         )}
       />
 
       {/* Content skeleton */}
       <div className="flex-1 space-y-2">
-        <div className="h-4 w-32 bg-white/[0.06] rounded" />
-        <div className="h-3 w-20 bg-white/[0.06] rounded" />
+        <div className="h-4 w-32 bg-white/[0.05] rounded" />
+        <div className="h-3 w-20 bg-white/[0.05] rounded" />
       </div>
 
       {/* Button skeleton */}
-      <div className="w-14 h-7 bg-white/[0.06] rounded-md" />
+      <div className="w-14 h-7 bg-white/[0.05] rounded-md" />
     </div>
   );
 }

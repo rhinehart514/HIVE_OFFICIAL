@@ -218,7 +218,7 @@ export default function CampusToolPage() {
           </Link>
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/30 hover:text-white/50 hover:bg-white/[0.04] transition-colors text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/30 hover:text-white/50 hover:bg-white/[0.10] transition-colors text-sm"
           >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
             {copied ? 'Copied' : 'Share'}
@@ -241,7 +241,7 @@ export default function CampusToolPage() {
                 shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider
                 ${tool.badge === 'official'
                   ? 'bg-[#FFD700]/15 text-[#FFD700]'
-                  : 'bg-white/[0.06] text-white/30'
+                  : 'bg-white/[0.05] text-white/30'
                 }
               `}
             >
@@ -276,7 +276,7 @@ export default function CampusToolPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: durationSeconds.standard, delay: 0.1, ease: EASE }}
-          className="rounded-2xl bg-void border border-white/[0.06] p-6 sm:p-8"
+          className="rounded-2xl bg-void border border-white/[0.05] p-6 sm:p-8"
         >
           {tool.elements && tool.elements.length > 0 ? (
             <LazyToolCanvas
@@ -305,7 +305,7 @@ export default function CampusToolPage() {
               <div className="flex items-center justify-center gap-3">
                 <Link
                   href="/build"
-                  className="inline-flex items-center px-4 py-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
+                  className="inline-flex items-center px-4 py-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.10] transition-colors duration-100"
                 >
                   Back to build
                 </Link>

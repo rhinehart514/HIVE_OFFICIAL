@@ -97,8 +97,8 @@ export function ContextBar({
         onClick={() => onEventClick?.(nextEvent.id)}
         className={cn(
           'w-full h-10 px-4 flex items-center gap-2.5',
-          'bg-white/[0.02] border-b border-white/[0.06]',
-          'text-left transition-colors hover:bg-white/[0.04]',
+          'bg-white/[0.03] border-b border-white/[0.05]',
+          'text-left transition-colors hover:bg-white/[0.05]',
           className
         )}
       >
@@ -110,7 +110,7 @@ export function ContextBar({
           className={cn(
             'text-[11px] font-medium flex-shrink-0 px-2 py-0.5 rounded-full',
             isStartingSoon
-              ? 'bg-[var(--color-gold)]/15 text-[var(--color-gold)]'
+              ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
               : 'text-white/30'
           )}
         >
@@ -127,8 +127,8 @@ export function ContextBar({
         onClick={() => onPollClick?.(activePoll.id)}
         className={cn(
           'w-full h-10 px-4 flex items-center gap-2.5',
-          'bg-white/[0.02] border-b border-white/[0.06]',
-          'text-left transition-colors hover:bg-white/[0.04]',
+          'bg-white/[0.03] border-b border-white/[0.05]',
+          'text-left transition-colors hover:bg-white/[0.05]',
           className
         )}
       >
@@ -148,7 +148,7 @@ export function ContextBar({
       <div
         className={cn(
           'w-full h-10 px-4 flex items-center gap-2.5',
-          'bg-white/[0.02] border-b border-white/[0.06]',
+          'bg-white/[0.03] border-b border-white/[0.05]',
           className
         )}
       >

@@ -123,7 +123,7 @@ function InviteLinkRow({
     : `${invite.uses} uses`;
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.05] border border-white/[0.05]">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <LinkIcon className="w-4 h-4 text-white/50 flex-shrink-0" />
@@ -149,7 +149,7 @@ function InviteLinkRow({
             'p-2 rounded-lg transition-colors',
             copied
               ? 'bg-[var(--status-success-subtle)] text-[var(--status-success)]'
-              : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.06] hover:text-white'
+              : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.10] hover:text-white'
           )}
           aria-label={copied ? 'Link copied' : 'Copy invite link'}
         >
@@ -162,7 +162,7 @@ function InviteLinkRow({
         <button
           onClick={onRevoke}
           disabled={isRevoking}
-          className="p-2 rounded-lg bg-white/[0.06] text-white/50 hover:bg-red-500/20 hover:text-red-400 transition-colors disabled:opacity-50"
+          className="p-2 rounded-lg bg-white/[0.05] text-white/50 hover:bg-red-500/20 hover:text-red-400 transition-colors disabled:opacity-50"
           aria-label={isRevoking ? 'Revoking link' : 'Revoke invite link'}
         >
           {isRevoking ? (
@@ -340,15 +340,15 @@ export function InviteLinkModal({
               'fixed z-50',
               'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
               'w-full max-w-lg',
-              'bg-[var(--bg-surface)] border border-white/[0.06]',
+              'bg-[var(--bg-surface)] border border-white/[0.05]',
               'rounded-lg',
               'overflow-hidden'
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-white/[0.06]">
+                <div className="p-2 rounded-lg bg-white/[0.05]">
                   <LinkIcon className="w-5 h-5 text-white/50" />
                 </div>
                 <div>
@@ -362,7 +362,7 @@ export function InviteLinkModal({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg text-white/50 hover:text-white/50 hover:bg-white/[0.06] transition-colors"
+                className="p-2 rounded-lg text-white/50 hover:text-white/50 hover:bg-white/[0.10] transition-colors"
               >
                 <XMarkIcon className="w-5 h-5" />
               </button>
@@ -397,7 +397,7 @@ export function InviteLinkModal({
                     onChange={(e) => setExpiryDays(Number(e.target.value))}
                     className={cn(
                       'flex-1 px-3 py-2 rounded-lg',
-                      'bg-white/[0.06] border border-white/[0.06]',
+                      'bg-white/[0.05] border border-white/[0.05]',
                       'text-white text-sm',
                       'focus:outline-none focus:outline-2 focus:outline-[#FFD700]'
                     )}
@@ -417,7 +417,7 @@ export function InviteLinkModal({
                     }
                     className={cn(
                       'flex-1 px-3 py-2 rounded-lg',
-                      'bg-white/[0.06] border border-white/[0.06]',
+                      'bg-white/[0.05] border border-white/[0.05]',
                       'text-white text-sm',
                       'focus:outline-none focus:outline-2 focus:outline-[#FFD700]'
                     )}
@@ -498,7 +498,7 @@ export function InviteLinkModal({
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-white/[0.06] bg-white/[0.06]">
+            <div className="px-5 py-4 border-t border-white/[0.05] bg-white/[0.05]">
               <Text size="xs" className="text-white/50 text-center">
                 Invite links allow anyone with the link to join your space
               </Text>

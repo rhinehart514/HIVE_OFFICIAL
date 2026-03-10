@@ -81,7 +81,7 @@ export function HeaderMenu({
           >
             {/* Handle (mobile only) */}
             <div className="flex justify-center pt-3 pb-1 md:hidden">
-              <div className="w-8 h-1 rounded-full bg-white/[0.12]" />
+              <div className="w-8 h-1 rounded-full bg-white/[0.10]" />
             </div>
 
             {/* Header */}
@@ -124,7 +124,7 @@ export function HeaderMenu({
                             'text-left hover:bg-white/[0.03] transition-colors duration-100'
                           )}
                         >
-                          <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center shrink-0">
                             <Sparkles className="w-3.5 h-3.5 text-white/50" />
                           </div>
                           <div className="min-w-0 flex-1">

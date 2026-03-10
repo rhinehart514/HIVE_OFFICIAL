@@ -101,12 +101,12 @@ export function EventCard({
       transition={{ duration: 0.15 }}
       className={cn(
         'rounded-lg',
-        'bg-white/[0.06] hover:bg-white/[0.06]',
+        'bg-white/[0.05] hover:bg-white/[0.10]',
         'transition-colors duration-100',
         'cursor-pointer',
         isStartingSoon
           ? 'border border-[var(--color-gold)]/20 hover:border-[var(--color-gold)]/30'
-          : 'border border-white/[0.06] hover:border-white/[0.06]',
+          : 'border border-white/[0.05] hover:border-white/[0.05]',
         className
       )}
       style={{
@@ -200,7 +200,7 @@ export function EventCard({
       )}
 
       {/* Footer: RSVP count + action */}
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/[0.06]">
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/[0.05]">
         {/* RSVP count */}
         <div className="flex items-center gap-1.5">
           <Users className="w-3.5 h-3.5 text-white/50" />

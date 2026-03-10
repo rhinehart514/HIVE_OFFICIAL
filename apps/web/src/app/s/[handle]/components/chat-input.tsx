@@ -251,7 +251,7 @@ export function ChatInput({
         <div
           className={cn(
             'absolute bottom-full left-3 right-3 mb-2',
-            'bg-void border border-white/[0.06] rounded-xl',
+            'bg-void border border-white/[0.05] rounded-xl',
             'py-2 max-h-[200px] overflow-y-auto'
           )}
         >
@@ -270,14 +270,14 @@ export function ChatInput({
               className={cn(
                 'w-full px-3 py-2 text-left text-sm transition-colors',
                 index === selectedSuggestionIndex
-                  ? 'bg-white/[0.06] text-white'
-                  : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
+                  ? 'bg-white/[0.05] text-white'
+                  : 'text-white/50 hover:text-white hover:bg-white/[0.10]'
               )}
             >
               {suggestion}
             </button>
           ))}
-          <div className="px-3 py-1.5 mt-1 text-xs text-white/50 border-t border-white/[0.06]">
+          <div className="px-3 py-1.5 mt-1 text-xs text-white/50 border-t border-white/[0.05]">
             Tab or Enter • Esc to close
           </div>
         </div>
@@ -289,7 +289,7 @@ export function ChatInput({
           {attachments.map((attachment, index) => (
             <div
               key={index}
-              className="relative group rounded-lg overflow-hidden bg-white/[0.06] border border-white/[0.06]"
+              className="relative group rounded-lg overflow-hidden bg-white/[0.05] border border-white/[0.05]"
             >
               <img
                 src={attachment.url}
@@ -361,7 +361,7 @@ export function ChatInput({
               'w-full px-4 py-2.5',
               'rounded-2xl text-[15px]',
               'bg-white/[0.03]',
-              'border border-white/[0.06]',
+              'border border-white/[0.05]',
               'text-white placeholder:text-white/30',
               'resize-none',
               'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',

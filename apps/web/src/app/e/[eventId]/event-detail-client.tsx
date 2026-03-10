@@ -208,11 +208,11 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
       <div className="min-h-screen bg-[var(--bg-ground)]">
         <div className="max-w-2xl mx-auto px-4 py-12">
           <div className="animate-pulse space-y-6">
-            <div className="h-8 w-3/4 rounded bg-white/[0.06]" />
-            <div className="h-4 w-1/2 rounded bg-white/[0.06]" />
-            <div className="h-32 rounded-xl bg-white/[0.06]" />
-            <div className="h-24 rounded-xl bg-white/[0.06]" />
-            <div className="h-24 rounded-xl bg-white/[0.06]" />
+            <div className="h-8 w-3/4 rounded bg-white/[0.05]" />
+            <div className="h-4 w-1/2 rounded bg-white/[0.05]" />
+            <div className="h-32 rounded-xl bg-white/[0.05]" />
+            <div className="h-24 rounded-xl bg-white/[0.05]" />
+            <div className="h-24 rounded-xl bg-white/[0.05]" />
           </div>
         </div>
       </div>
@@ -242,7 +242,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
   return (
     <div className="min-h-screen bg-[var(--bg-ground)]">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[var(--bg-ground)] border-b border-white/[0.06]">
+      <div className="sticky top-0 z-10 bg-[var(--bg-ground)] border-b border-white/[0.05]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-white/50 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" />
@@ -259,7 +259,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
         {event.space && (
           <Link
             href={event.space.handle ? `/s/${event.space.handle}` : '#'}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.08] transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
           >
             <Avatar size="xs">
               {event.space.avatarUrl && <AvatarImage src={event.space.avatarUrl} />}
@@ -279,7 +279,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
         </h1>
 
         {/* Date & Time card */}
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4">
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-4">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg bg-[var(--color-gold)]/10 flex-shrink-0">
               <Calendar className="w-5 h-5 text-[var(--color-gold)]" />
@@ -298,7 +298,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
         </div>
 
         {/* Location card */}
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4">
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-4">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg bg-[var(--color-gold)]/10 flex-shrink-0">
               {isOnline ? (
@@ -327,7 +327,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
         </div>
 
         {/* RSVP section */}
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4 space-y-4">
+        <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-4 space-y-4">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-white/50" />
             <span className="text-sm text-white/50">
@@ -416,7 +416,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
               {goingAttendees.map((a) => (
                 <div
                   key={a.userId}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.06]"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.05]"
                 >
                   <Avatar size="xs">
                     {a.photoURL && <AvatarImage src={a.photoURL} />}
@@ -438,7 +438,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
               {maybeAttendees.map((a) => (
                 <div
                   key={a.userId}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.06]"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.05]"
                 >
                   <Avatar size="xs">
                     {a.photoURL && <AvatarImage src={a.photoURL} />}
@@ -453,12 +453,12 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
 
         {/* Organizer */}
         {event.organizer && (
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4">
+          <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-4">
             <h2 className="text-xs font-medium uppercase tracking-wider text-white/30 mb-3">
               Hosted by
             </h2>
             <div className="flex items-center gap-3">
-              <Avatar size="sm" className="ring-1 ring-white/[0.06]">
+              <Avatar size="sm" className="ring-1 ring-white/[0.05]">
                 {event.organizer.photoURL && <AvatarImage src={event.organizer.photoURL} />}
                 <AvatarFallback>{getInitials(event.organizer.name)}</AvatarFallback>
               </Avatar>
@@ -478,7 +478,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
             {event.tags.map((tag) => (
               <span
                 key={tag}
-                className="px-2.5 py-1 rounded-full text-xs bg-white/[0.06] text-white/50"
+                className="px-2.5 py-1 rounded-full text-xs bg-white/[0.05] text-white/50"
               >
                 {tag}
               </span>
@@ -497,7 +497,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
                 <Link
                   key={re.id}
                   href={`/e/${re.id}`}
-                  className="block rounded-xl border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.06] p-3 transition-colors"
+                  className="block rounded-xl border border-white/[0.05] bg-white/[0.05] hover:bg-white/[0.10] p-3 transition-colors"
                 >
                   <p className="text-sm font-medium text-white truncate">{re.title}</p>
                   <div className="flex items-center gap-3 mt-1 text-xs text-white/50">
@@ -512,7 +512,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
         )}
 
         {/* Share CTA */}
-        <div className="pt-4 border-t border-white/[0.06]">
+        <div className="pt-4 border-t border-white/[0.05]">
           <Button variant="default" className="w-full" onClick={handleShare}>
             <Share2 className="w-4 h-4 mr-2" />
             Share Event

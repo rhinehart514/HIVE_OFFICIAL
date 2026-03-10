@@ -133,7 +133,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
 
         {/* Modal */}
         <motion.div
-          className="relative w-full max-w-lg bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg overflow-hidden"
+          className="relative w-full max-w-lg bg-[var(--bg-ground)] border border-white/[0.05] rounded-lg overflow-hidden"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -141,7 +141,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
         >
           {/* Header */}
           {step !== 'launch' && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05]">
               <button
                 onClick={step === 'template' ? handleClose : () => setStep(step === 'access' ? 'identity' : 'template')}
                 className="text-white/50 hover:text-white/50 text-sm transition-colors"
@@ -186,13 +186,13 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                         }}
                         className={cn(
                           'w-full flex items-center gap-4 p-4 rounded-lg transition-colors duration-100',
-                          'hover:bg-white/[0.06] hover:border-white/[0.06]',
+                          'hover:bg-white/[0.10] hover:border-white/[0.10]',
                           template === t.id
-                            ? 'border-white/[0.06] bg-white/[0.06]'
-                            : 'border-white/[0.06]'
+                            ? 'border-white/[0.05] bg-white/[0.05]'
+                            : 'border-white/[0.05]'
                         )}
                       >
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center">
                           <t.icon size={20} className="text-white/50" />
                         </div>
                         <div className="text-left">
@@ -281,11 +281,11 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                         className={cn(
                           'w-full flex items-center gap-4 p-4 rounded-lg transition-colors duration-100',
                           access === opt.id
-                            ? 'border-white/50 bg-white/[0.06]'
-                            : 'border-white/[0.06] hover:border-white/15'
+                            ? 'border-white/50 bg-white/[0.05]'
+                            : 'border-white/[0.05] hover:border-white/[0.10]'
                         )}
                       >
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center">
                           <opt.icon size={20} className="text-white/50" />
                         </div>
                         <div className="text-left flex-1">

@@ -62,7 +62,7 @@ export function SpaceHeader({
       <div className="flex items-center gap-1 min-w-0">
         <Link
           href="/discover"
-          className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-white/30 hover:text-white/50 hover:bg-white/[0.06] transition-colors flex-shrink-0"
+          className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-white/30 hover:text-white/50 hover:bg-white/[0.10] transition-colors flex-shrink-0"
           aria-label="Back to Spaces"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -95,7 +95,7 @@ export function SpaceHeader({
         {onMembersClick && (
           <button
             onClick={onMembersClick}
-            className="rounded-full px-3 py-1.5 text-[12px] font-mono tabular-nums text-white/50 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+            className="rounded-full px-3 py-1.5 text-[12px] font-mono tabular-nums text-white/50 bg-white/[0.03] hover:bg-white/[0.10] transition-colors"
           >
             {space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}
           </button>
@@ -105,7 +105,7 @@ export function SpaceHeader({
         {isMember && onSettingsClick && (
           <button
             onClick={onSettingsClick}
-            className="rounded-full p-2 text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+            className="rounded-full p-2 text-white/50 hover:text-white hover:bg-white/[0.10] transition-colors"
             title="Settings"
           >
             <Settings className="h-4 w-4" />

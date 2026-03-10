@@ -133,7 +133,7 @@ function ToolSectionSkeleton() {
       {[1, 2].map((i) => (
         <div
           key={i}
-          className="h-9 rounded-lg bg-white/[0.06]"
+          className="h-9 rounded-lg bg-white/[0.05]"
           style={{ animationDelay: `${i * 100}ms` }}
         />
       ))}
@@ -154,7 +154,7 @@ function EmptyState({
 }) {
   return (
     <div className="py-4 px-2 text-center">
-      <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-3">
+      <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center mx-auto mb-3">
         <WrenchScrewdriverIcon className="w-5 h-5 text-white/50" />
       </div>
       {isLeader ? (
@@ -221,7 +221,7 @@ function SectionHeader({
           Pinned Apps
         </Text>
         {toolCount > 0 && (
-          <span className="px-1.5 py-0.5 text-label-xs font-medium rounded bg-white/[0.06] text-white/50">
+          <span className="px-1.5 py-0.5 text-label-xs font-medium rounded bg-white/[0.05] text-white/50">
             {toolCount}
           </span>
         )}
@@ -306,7 +306,7 @@ export function SidebarToolSection({
 
   return (
     <motion.div
-      className="mt-4 pt-4 border-t border-white/[0.06]"
+      className="mt-4 pt-4 border-t border-white/[0.05]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: MOTION.duration.standard / 1000, ease: MOTION.ease.premium }}
@@ -380,9 +380,9 @@ export function SidebarToolSection({
                   'mt-2 w-full px-2 py-2 rounded-lg',
                   'flex items-center gap-2',
                   'text-white/50 hover:text-white/50',
-                  'hover:bg-white/[0.06]',
+                  'hover:bg-white/[0.10]',
                   'transition-colors duration-100',
-                  'border border-dashed border-white/[0.06] hover:border-white/[0.06]'
+                  'border border-dashed border-white/[0.05] hover:border-white/[0.05]'
                 )}
                 whileHover={{ opacity: 0.96 }}
                 whileTap={{ scale: 0.98 }}

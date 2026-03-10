@@ -110,7 +110,7 @@ export function SocialProofSection() {
           />
           {showStudents && (
             <>
-              <div className="hidden h-8 w-px bg-white/[0.06] sm:block" />
+              <div className="hidden h-8 w-px bg-white/[0.05] sm:block" />
               <CountUpStat
                 label="students"
                 target={stats.students}
@@ -118,7 +118,7 @@ export function SocialProofSection() {
               />
             </>
           )}
-          <div className="hidden h-8 w-px bg-white/[0.06] sm:block" />
+          <div className="hidden h-8 w-px bg-white/[0.05] sm:block" />
           <StatBlock label="idea to live app" value="<60s" />
         </div>
       </div>

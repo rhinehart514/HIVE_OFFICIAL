@@ -134,7 +134,7 @@ export default function BuildPage() {
     <div className="min-h-screen bg-[var(--bg-void)]">
       <div className="flex flex-col lg:flex-row min-h-screen">
         {/* LEFT PANEL -- Prompt + controls */}
-        <div className="relative w-full lg:w-[360px] lg:min-w-[320px] lg:border-r lg:border-white/[0.06] flex flex-col">
+        <div className="relative w-full lg:w-[360px] lg:min-w-[320px] lg:border-r lg:border-white/[0.05] flex flex-col">
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
             style={{ background: 'radial-gradient(ellipse at 50% 30%, #FFD700, transparent 70%)' }}

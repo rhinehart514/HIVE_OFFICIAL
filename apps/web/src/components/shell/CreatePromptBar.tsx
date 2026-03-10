@@ -152,7 +152,7 @@ export function CreatePromptBar({
                   type="button"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => navigateToCreate(`Create a ${option.label.toLowerCase()}`)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.06] px-3 py-1 text-xs text-white/70 transition-colors duration-150 hover:bg-white/[0.1] focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-[#FFD700]"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.05] bg-white/[0.05] px-3 py-1 text-xs text-white/70 transition-colors duration-150 hover:bg-white/[0.1] focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-[#FFD700]"
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
@@ -176,8 +176,8 @@ export function CreatePromptBar({
         onSubmit={handleSubmit}
         onClick={() => inputRef.current?.focus()}
         className={cn(
-          'flex h-12 w-full items-center gap-2 rounded-2xl border bg-white/[0.06] px-3 text-white transition-colors duration-150',
-          isFocused ? 'border-[#FFD700]/50' : 'border-white/[0.06]'
+          'flex h-12 w-full items-center gap-2 rounded-2xl border bg-white/[0.05] px-3 text-white transition-colors duration-150',
+          isFocused ? 'border-[#FFD700]/50' : 'border-white/[0.05]'
         )}
       >
         <Sparkles className="h-4 w-4 shrink-0 text-[#FFD700]" aria-hidden />
@@ -253,7 +253,7 @@ export function CreatePromptBar({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.06] text-white/70 transition-colors duration-150 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-[#FFD700]"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.05] bg-white/[0.05] text-white/70 transition-colors duration-150 hover:bg-white/[0.10] focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-[#FFD700]"
                     aria-label="Dismiss create bar"
                   >
                     <X className="h-4 w-4" />

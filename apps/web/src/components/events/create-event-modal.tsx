@@ -262,7 +262,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                       className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-colors duration-100 ${
                         formData.type === type.value
                           ? "border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/10"
-                          : "border-white/[0.06] hover:border-white/[0.06] bg-white/[0.06]"
+                          : "border-white/[0.05] hover:border-white/[0.10] bg-white/[0.05]"
                       }`}
                     >
                       <Icon className="w-5 h-5 text-white" />
@@ -358,7 +358,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                       className={`flex items-center justify-center gap-2 p-3 rounded-lg transition-colors duration-100 ${
                         formData.locationType === loc.value
                           ? "border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/10"
-                          : "border-white/[0.06] hover:border-white/[0.06] bg-white/[0.06]"
+                          : "border-white/[0.05] hover:border-white/[0.10] bg-white/[0.05]"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -431,7 +431,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 onChange={(e) => handleInputChange("description", e.target.value)}
                 placeholder="Tell people what this event is about..."
                 rows={4}
-                className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white placeholder-white/50 focus:outline-none focus:outline-2 focus:outline-[#FFD700] resize-none"
+                className="w-full px-4 py-3 rounded-lg bg-white/[0.05] border border-white/[0.05] text-white placeholder-white/50 focus:outline-none focus:outline-2 focus:outline-[#FFD700] resize-none"
               />
             </div>
           </ModalBody>

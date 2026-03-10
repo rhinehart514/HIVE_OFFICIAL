@@ -40,7 +40,7 @@ export interface ShellRendererProps {
 function ShellSkeleton() {
   return (
     <div className={`${CARD.default} p-4 max-w-sm animate-pulse`}>
-      <div className="h-4 bg-white/[0.04] rounded w-3/4 mb-3" />
+      <div className="h-4 bg-white/[0.03] rounded w-3/4 mb-3" />
       <div className="space-y-2">
         <div className="h-10 bg-white/[0.03] rounded-xl" />
         <div className="h-10 bg-white/[0.03] rounded-xl" />

@@ -156,7 +156,7 @@ function SearchResultRow({
         'w-full flex items-center gap-3 px-4 py-3',
         'text-left',
         'transition-colors duration-150',
-        isSelected && 'bg-white/[0.06]'
+        isSelected && 'bg-white/[0.05]'
       )}
     >
       <SimpleAvatar
@@ -305,15 +305,15 @@ export function IdentityClaimModal({
               'fixed z-50',
               'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
               'w-full max-w-md',
-              'bg-[var(--bg-surface)] border border-white/[0.06]',
+              'bg-[var(--bg-surface)] border border-white/[0.05]',
               'rounded-lg',
               'overflow-hidden'
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-white/[0.06]">
+                <div className="p-2 rounded-lg bg-white/[0.05]">
                   <Icon className="w-5 h-5 text-white/50" />
                 </div>
                 <div>
@@ -327,7 +327,7 @@ export function IdentityClaimModal({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg text-white/50 hover:text-white/50 hover:bg-white/[0.06] transition-colors"
+                className="p-2 rounded-lg text-white/50 hover:text-white/50 hover:bg-white/[0.10] transition-colors"
                 aria-label="Close modal"
               >
                 <XMarkIcon className="w-5 h-5" aria-hidden="true" />
@@ -335,7 +335,7 @@ export function IdentityClaimModal({
             </div>
 
             {/* Search */}
-            <div className="px-5 py-3 border-b border-white/[0.06]">
+            <div className="px-5 py-3 border-b border-white/[0.05]">
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                 <input
@@ -345,7 +345,7 @@ export function IdentityClaimModal({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={config.searchPlaceholder}
                   className={cn(
-                    'w-full bg-white/[0.06] border border-white/[0.06]',
+                    'w-full bg-white/[0.05] border border-white/[0.05]',
                     'rounded-lg py-2.5 pl-9 pr-4',
                     'text-sm text-white placeholder:text-white/50',
                     'focus:outline-none focus:outline-2 focus:outline-[#FFD700]'
@@ -375,7 +375,7 @@ export function IdentityClaimModal({
                   </Text>
                 </div>
               ) : (
-                <div className="divide-y divide-white/[0.06]">
+                <div className="divide-y divide-white/[0.05]">
                   {filteredResults.map((space) => (
                     <SearchResultRow
                       key={space.id}
@@ -389,7 +389,7 @@ export function IdentityClaimModal({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/[0.06] bg-white/[0.06]">
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/[0.05] bg-white/[0.05]">
               <Button variant="ghost" size="sm" onClick={onClose}>
                 Cancel
               </Button>

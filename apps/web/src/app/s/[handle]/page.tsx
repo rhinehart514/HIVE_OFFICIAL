@@ -775,7 +775,7 @@ export default function SpacePageUnified() {
             );
             if (totalResponses === 0) return null;
             return (
-              <div className="px-4 py-2 flex items-center gap-2 border-b border-white/[0.04]">
+              <div className="px-4 py-2 flex items-center gap-2 border-b border-white/[0.05]">
                 <span className="font-mono text-[11px] text-white/50 uppercase tracking-wider">
                   Impact
                 </span>
@@ -791,7 +791,7 @@ export default function SpacePageUnified() {
           })()}
 
           {/* Space History Line */}
-          <div className="px-4 py-2 flex items-center gap-2 text-[11px] text-white/30 border-b border-white/[0.04]">
+          <div className="px-4 py-2 flex items-center gap-2 text-[11px] text-white/30 border-b border-white/[0.05]">
             <span>
               {space.activatedAt
                 ? `Active since ${new Date(space.activatedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
@@ -807,7 +807,7 @@ export default function SpacePageUnified() {
 
           {/* Member participation accumulation — shows only for non-leader members who have engaged */}
           {!space.isLeader && participationCount > 0 && (
-            <div className="px-4 py-2 border-b border-white/[0.04]">
+            <div className="px-4 py-2 border-b border-white/[0.05]">
               <span className="font-mono text-[11px] text-white/30">
                 You&apos;ve responded to {participationCount} {participationCount === 1 ? 'app' : 'apps'} in {space.name}
               </span>
@@ -816,7 +816,7 @@ export default function SpacePageUnified() {
 
           {/* Apps strip — always visible when apps exist, one tap to interact */}
           {sidebarTools.length > 0 && (
-            <div className="px-4 py-2 border-b border-white/[0.04] overflow-x-auto scrollbar-none">
+            <div className="px-4 py-2 border-b border-white/[0.05] overflow-x-auto scrollbar-none">
               <div className="flex gap-2">
                 {sidebarTools.map((tool) => (
                   <button

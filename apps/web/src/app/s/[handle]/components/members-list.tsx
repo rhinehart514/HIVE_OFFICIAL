@@ -101,7 +101,7 @@ export function MembersList({
   return (
     <div className={cn('flex flex-col h-full', className)}>
       {/* Search */}
-      <div className="px-6 py-4 border-b border-white/[0.06]">
+      <div className="px-6 py-4 border-b border-white/[0.05]">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
           <input
@@ -112,7 +112,7 @@ export function MembersList({
             className={cn(
               'w-full pl-10 pr-4 py-2',
               'rounded-xl text-[15px]',
-              'bg-white/[0.03] border border-white/[0.06]',
+              'bg-white/[0.03] border border-white/[0.05]',
               'text-white placeholder:text-white/30',
               'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
               'transition-colors'
@@ -135,7 +135,7 @@ export function MembersList({
                   const url = window.location.href;
                   navigator.clipboard.writeText(url);
                 }}
-                className="inline-flex items-center px-4 py-2 mt-4 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
+                className="inline-flex items-center px-4 py-2 mt-4 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.05] transition-colors duration-100"
               >
                 Copy invite link
               </button>
@@ -244,7 +244,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
     }
     if (member.role === 'moderator') {
       return (
-        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.06]">
+        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.05]">
           <Shield className="w-3 h-3 text-white/50" />
           <span className="text-[11px] font-medium text-white/50">Mod</span>
         </span>
@@ -265,9 +265,9 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
       }}
       className={cn(
         'w-full flex items-center gap-3 p-3 rounded-lg',
-        'hover:bg-white/[0.06] transition-colors',
+        'hover:bg-white/[0.10] transition-colors',
         'text-left',
-        isCurrentUser && 'bg-white/[0.06]'
+        isCurrentUser && 'bg-white/[0.05]'
       )}
     >
       {/* Avatar with online indicator */}
@@ -289,7 +289,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
             <span
               className={cn(
                 'absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-ground)]',
-                recentlyActive ? 'bg-amber-400/60' : 'bg-white/[0.06]'
+                recentlyActive ? 'bg-amber-400/60' : 'bg-white/[0.05]'
               )}
             />
           );
@@ -337,10 +337,10 @@ function MembersListSkeleton() {
     <div className="px-6 py-4 space-y-3">
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <div key={i} className="flex items-center gap-3 p-3">
-          <div className="w-10 h-10 rounded-lg bg-white/[0.06]" />
+          <div className="w-10 h-10 rounded-lg bg-white/[0.05]" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 rounded bg-white/[0.06]" />
-            <div className="h-3 w-24 rounded bg-white/[0.06]" />
+            <div className="h-4 w-32 rounded bg-white/[0.05]" />
+            <div className="h-3 w-24 rounded bg-white/[0.05]" />
           </div>
         </div>
       ))}

@@ -101,7 +101,7 @@ function ToolIcon({
     <div
       className={cn(
         'w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0',
-        'bg-white/[0.06]',
+        'bg-white/[0.05]',
         isActive && 'bg-[var(--color-accent-gold,#FFD700)]/20'
       )}
     >
@@ -162,7 +162,7 @@ function HoverActions({
           }}
           className={cn(
             'p-1 rounded transition-colors',
-            'hover:bg-white/[0.06]',
+            'hover:bg-white/[0.10]',
             'text-white/50 hover:text-white/70'
           )}
           title="View in Lab"
@@ -236,7 +236,7 @@ export function SidebarToolCard({
         'text-left',
         // Active state
         isActive && [
-          'bg-white/[0.06]',
+          'bg-white/[0.05]',
           'text-white',
           'border-l-2 border-l-[#FFD700]',
           'ml-[-2px]',
@@ -248,7 +248,7 @@ export function SidebarToolCard({
         ],
         // Inactive state
         !isActive && [
-          'hover:bg-white/[0.06]',
+          'hover:bg-white/[0.10]',
           'text-white hover:text-white',
         ]
       )}

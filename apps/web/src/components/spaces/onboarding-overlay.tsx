@@ -110,14 +110,14 @@ function CategoryCard({
       }}
       className={cn(
         'p-4 rounded-lg',
-        'bg-white/[0.06] border border-white/[0.06]',
-        'hover:bg-white/[0.06] hover:border-white/[0.06]',
+        'bg-white/[0.05] border border-white/[0.05]',
+        'hover:bg-white/[0.10] hover:border-white/[0.10]',
         'transition-colors duration-300'
       )}
     >
       {/* Icon + Label */}
       <div className="flex items-center gap-3 mb-2">
-        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50">
+        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/50">
           {category.icon}
         </div>
         <Text weight="medium" className="text-white">
@@ -222,11 +222,11 @@ export function OnboardingOverlay({
             className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-2xl mx-auto z-50 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-[var(--color-bg-ground,#0D0D0C)] border border-white/[0.06] rounded-lg p-6 sm:p-8">
+            <div className="bg-[var(--color-bg-ground,#0D0D0C)] border border-white/[0.05] rounded-lg p-6 sm:p-8">
               {/* Close button */}
               <button
                 onClick={handleSkip}
-                className="absolute top-4 right-4 p-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.06] transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
                 aria-label="Skip onboarding"
               >
                 <XMarkIcon className="w-4 h-4 text-white/50" aria-hidden="true" />
@@ -241,7 +241,7 @@ export function OnboardingOverlay({
                 >
                   {/* Badge */}
                   <motion.div
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.06] mb-6"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.05] mb-6"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.4, delay: 0.1 }}
@@ -379,8 +379,8 @@ export function OnboardingOverlay({
                       onClick={() => handleClaimIdentity('residential')}
                       className={cn(
                         'w-full p-4 rounded-lg text-left',
-                        'bg-white/[0.06] border border-white/[0.06]',
-                        'hover:bg-white/[0.06] hover:border-white/[0.06]',
+                        'bg-white/[0.05] border border-white/[0.05]',
+                        'hover:bg-white/[0.10] hover:border-white/[0.10]',
                         'transition-colors duration-200'
                       )}
                       initial={{ opacity: 0, x: -8 }}
@@ -388,7 +388,7 @@ export function OnboardingOverlay({
                       transition={{ duration: 0.3, delay: 0.3 }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/50">
                           <HomeModernIcon className="w-5 h-5" />
                         </div>
                         <div>
@@ -406,8 +406,8 @@ export function OnboardingOverlay({
                       onClick={() => handleClaimIdentity('major')}
                       className={cn(
                         'w-full p-4 rounded-lg text-left',
-                        'bg-white/[0.06] border border-white/[0.06]',
-                        'hover:bg-white/[0.06] hover:border-white/[0.06]',
+                        'bg-white/[0.05] border border-white/[0.05]',
+                        'hover:bg-white/[0.10] hover:border-white/[0.10]',
                         'transition-colors duration-200'
                       )}
                       initial={{ opacity: 0, x: -8 }}
@@ -415,7 +415,7 @@ export function OnboardingOverlay({
                       transition={{ duration: 0.3, delay: 0.4 }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/50">
                           <AcademicCapIcon className="w-5 h-5" />
                         </div>
                         <div>
@@ -433,8 +433,8 @@ export function OnboardingOverlay({
                       onClick={() => handleClaimIdentity('greek')}
                       className={cn(
                         'w-full p-4 rounded-lg text-left',
-                        'bg-white/[0.06] border border-white/[0.06]',
-                        'hover:bg-white/[0.06] hover:border-white/[0.06]',
+                        'bg-white/[0.05] border border-white/[0.05]',
+                        'hover:bg-white/[0.10] hover:border-white/[0.10]',
                         'transition-colors duration-200'
                       )}
                       initial={{ opacity: 0, x: -8 }}
@@ -442,7 +442,7 @@ export function OnboardingOverlay({
                       transition={{ duration: 0.3, delay: 0.5 }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-white/50">
+                        <div className="w-10 h-10 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/50">
                           <SparklesIcon className="w-5 h-5" />
                         </div>
                         <div>

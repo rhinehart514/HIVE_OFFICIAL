@@ -122,8 +122,8 @@ function IdentityCard({
         className={cn(
           'group flex items-center gap-2 px-3 py-2',
           'rounded-lg',
-          'bg-white/[0.06] hover:bg-white/[0.06]',
-          'border border-white/[0.06] hover:border-white/[0.06]',
+          'bg-white/[0.05] hover:bg-white/[0.10]',
+          'border border-white/[0.05] hover:border-white/[0.10]',
           'transition-colors duration-200',
           'h-[48px]'
         )}
@@ -146,8 +146,8 @@ function IdentityCard({
         className={cn(
           'group relative flex flex-col items-start p-4',
           'rounded-lg',
-          'bg-white/[0.06] hover:bg-white/[0.06]',
-          'border border-white/[0.06] hover:border-white/[0.06]',
+          'bg-white/[0.05] hover:bg-white/[0.10]',
+          'border border-white/[0.05] hover:border-white/[0.10]',
           'transition-colors duration-200',
           'text-left w-full h-full min-h-[100px]'
         )}
@@ -156,7 +156,7 @@ function IdentityCard({
         <div
           className={cn(
             'flex items-center justify-center w-8 h-8 rounded-lg mb-2',
-            'bg-white/[0.06] group-hover:bg-white/[0.06]',
+            'bg-white/[0.05] group-hover:bg-white/[0.10]',
             'transition-colors duration-200'
           )}
         >
@@ -191,8 +191,8 @@ function IdentityCard({
         className={cn(
           'group relative flex flex-col items-start p-4',
           'rounded-lg',
-          'bg-white/[0.06] hover:bg-white/[0.06]',
-          'border border-white/[0.06] hover:border-white/[0.06]',
+          'bg-white/[0.05] hover:bg-white/[0.10]',
+          'border border-white/[0.05] hover:border-white/[0.10]',
           'transition-colors duration-200',
           'text-left w-full h-full min-h-[100px]'
         )}
@@ -234,7 +234,7 @@ function IdentityCard({
 
 function IdentityCardSkeleton() {
   return (
-    <div className="flex flex-col p-4 rounded-lg bg-white/[0.06] border border-white/[0.06] min-h-[100px]">
+    <div className="flex flex-col p-4 rounded-lg bg-white/[0.05] border border-white/[0.05] min-h-[100px]">
       <div className="flex items-start gap-3">
         <Skeleton className="w-8 h-8 rounded-lg" />
         <div className="flex-1 space-y-2">

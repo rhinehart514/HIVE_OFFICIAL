@@ -96,7 +96,7 @@ export function ToolPreviewCard({
   }, [toolId, onShare]);
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-void overflow-hidden">
+    <div className="rounded-2xl border border-white/[0.05] bg-void overflow-hidden">
       {/* Preview area */}
       <div className="p-4 sm:p-5 min-h-[180px]">
         {elements.length === 0 && phase !== 'error' ? (
@@ -141,7 +141,7 @@ export function ToolPreviewCard({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="border-t border-white/[0.06] px-4 py-3"
+            className="border-t border-white/[0.05] px-4 py-3"
           >
             {/* Share link row */}
             <div className="flex items-center gap-2 mb-3 px-2 py-1.5 rounded-xl bg-white/[0.03]">
@@ -165,8 +165,8 @@ export function ToolPreviewCard({
               <button
                 onClick={onEdit}
                 className="flex items-center justify-center gap-1.5 px-3 py-2
-                  rounded-full bg-white/[0.06] text-white/50 text-sm border border-white/[0.06]
-                  hover:bg-white/[0.08] hover:text-white/70 transition-colors duration-100"
+                  rounded-full bg-white/[0.05] text-white/50 text-sm border border-white/[0.05]
+                  hover:bg-white/[0.10] hover:text-white/70 transition-colors duration-100"
               >
                 <Pencil className="w-3.5 h-3.5" />
                 Edit

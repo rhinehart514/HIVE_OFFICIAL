@@ -191,7 +191,7 @@ export function SearchCommand() {
             'sm:inset-auto sm:left-[50%] sm:top-[15%] sm:translate-x-[-50%] sm:translate-y-0',
             'sm:w-full sm:max-w-xl sm:rounded-2xl sm:max-h-[60vh]',
             // Surface
-            'bg-[var(--bg-void)] border border-white/[0.08]',
+            'bg-[var(--bg-void)] border border-white/[0.05]',
             'flex flex-col overflow-hidden',
             // Animation
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
@@ -212,7 +212,7 @@ export function SearchCommand() {
           </DialogPrimitive.Description>
 
           {/* Search input */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05]">
             <Search className="h-[18px] w-[18px] shrink-0 text-white/30" strokeWidth={1.5} />
             <input
               ref={inputRef}
@@ -228,7 +228,7 @@ export function SearchCommand() {
               autoCorrect="off"
               spellCheck={false}
             />
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[11px] font-sans text-white/30">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-white/[0.05] bg-white/[0.05] px-1.5 py-0.5 text-[11px] font-sans text-white/30">
               ESC
             </kbd>
           </div>
@@ -272,7 +272,7 @@ export function SearchCommand() {
                     onClick={() => navigate(result.url)}
                     className={cn(
                       'flex items-center gap-3 w-full px-4 py-2.5 text-left',
-                      'hover:bg-white/[0.04] transition-colors duration-100',
+                      'hover:bg-white/[0.05] transition-colors duration-100',
                       'group',
                     )}
                   >
@@ -316,11 +316,11 @@ function ResultIcon({ type, metadata }: { type: SearchResult['type']; metadata?:
 
   return (
     <span
-      className="flex items-center justify-center shrink-0 rounded-lg text-white/50 border border-white/[0.08] font-sans font-semibold text-[11px]"
+      className="flex items-center justify-center shrink-0 rounded-lg text-white/50 border border-white/[0.05] font-sans font-semibold text-[11px]"
       style={{
         width: 28,
         height: 28,
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.03) 100%)',
       }}
     >
       {letter}

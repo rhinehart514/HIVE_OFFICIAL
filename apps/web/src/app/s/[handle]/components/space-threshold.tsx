@@ -90,7 +90,7 @@ export function SpaceThreshold({
             {/* Category */}
             {space.orgTypeName && (
               <div className="flex justify-center mb-4">
-                <span className="px-3 py-1 rounded-full border border-white/[0.06] text-[11px] tracking-wider uppercase text-white/30 font-mono">
+                <span className="px-3 py-1 rounded-full border border-white/[0.05] text-[11px] tracking-wider uppercase text-white/30 font-mono">
                   {space.orgTypeName}
                 </span>
               </div>
@@ -104,7 +104,7 @@ export function SpaceThreshold({
             {hasActivity && (
               <div className="mb-4 space-y-2">
                 {signals.map((sig, i) => (
-                  <div key={`${sig.type}-${i}`} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.04]">
+                  <div key={`${sig.type}-${i}`} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                     {sig.type === 'event'
                       ? <Calendar className="h-3.5 w-3.5 text-[#FFD700] flex-shrink-0" />
                       : <BarChart3 className="h-3.5 w-3.5 text-[#FFD700] flex-shrink-0" />}
@@ -122,7 +122,7 @@ export function SpaceThreshold({
             <AnimatePresence mode="wait">
               {joinError && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }} className="overflow-hidden mb-4">
-                  <div className="rounded-xl bg-red-500/8 border border-red-500/15 px-4 py-3">
+                  <div className="rounded-xl bg-red-500/10 border border-red-500/10 px-4 py-3">
                     <div className="flex items-start gap-2.5">
                       <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
                       <span className="text-[13px] text-red-300 leading-snug">{joinError}</span>

@@ -28,8 +28,8 @@ const CATEGORY_COLORS: Record<string, { accent: string; text: string; bg: string
   university: {
     accent: 'bg-white/30',
     text: 'text-white/50',
-    bg: 'bg-white/[0.06]',
-    border: 'border-white/[0.08]',
+    bg: 'bg-white/[0.05]',
+    border: 'border-white/[0.05]',
   },
   residential: {
     accent: 'bg-emerald-500',
@@ -233,7 +233,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
 
         {/* Modal */}
         <motion.div
-          className="relative w-full max-w-lg bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg overflow-hidden"
+          className="relative w-full max-w-lg bg-[var(--bg-ground)] border border-white/[0.05] rounded-lg overflow-hidden"
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
@@ -313,7 +313,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
           ) : (
             <>
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05]">
                 <button
                   onClick={step === 'search' ? handleClose : () => {
                     setStep('search');
@@ -387,7 +387,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                           autoFocus
                           className={cn(
                             'w-full pl-10 pr-4 py-3',
-                            'bg-white/[0.06] border border-white/[0.06]',
+                            'bg-white/[0.05] border border-white/[0.05]',
                             'rounded-lg text-white placeholder:text-white/50',
                             'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
                             'transition-colors duration-300'
@@ -422,8 +422,8 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                                   'w-full flex items-center gap-3 p-3 rounded-lg text-left',
                                   'border transition-colors',
                                   isLocked || isClaimed
-                                    ? 'border-white/[0.06] opacity-50 cursor-not-allowed'
-                                    : 'border-white/[0.06] hover:border-white/[0.06] hover:bg-white/[0.06]'
+                                    ? 'border-white/[0.05] opacity-50 cursor-not-allowed'
+                                    : 'border-white/[0.05] hover:border-white/[0.10] hover:bg-white/[0.10]'
                                 )}
                               >
                                 {/* Colored accent bar */}
@@ -481,7 +481,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                       {(() => {
                         const colors = CATEGORY_COLORS[selectedSpace.category] || CATEGORY_COLORS.university;
                         return (
-                          <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                          <div className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
                             <div className="flex items-center gap-4 mb-3">
                               <div className={cn('w-1 h-12 rounded-full', colors.accent)} />
                               <div>
@@ -517,11 +517,11 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                           onChange={(e) => setRole(e.target.value)}
                           className={cn(
                             'w-full px-4 py-3 rounded-lg',
-                            'bg-white/[0.06] border border-white/[0.06]',
+                            'bg-white/[0.05] border border-white/[0.05]',
                             'text-white',
                             'transition-colors duration-300',
                             'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
-                            'hover:bg-white/[0.06] hover:border-white/25',
+                            'hover:bg-white/[0.10] hover:border-white/[0.10]',
                             'appearance-none bg-no-repeat bg-right cursor-pointer'
                           )}
                           style={{
@@ -549,7 +549,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                       </div>
 
                       {/* Admin benefits */}
-                      <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                      <div className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
                         <Text size="xs" weight="medium" className="text-white/50 mb-3">
                           As admin, you&apos;ll be able to:
                         </Text>

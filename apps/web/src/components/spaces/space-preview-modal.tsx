@@ -117,9 +117,9 @@ export function SpacePreviewModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <ModalOverlay className="bg-black/80 " />
-      <DialogContent className="max-w-md p-0 bg-[var(--bg-surface)] border-white/[0.06] overflow-hidden">
+      <DialogContent className="max-w-md p-0 bg-[var(--bg-surface)] border-white/[0.05] overflow-hidden">
         {/* Banner/Header */}
-        <div className="relative h-32 bg-white/[0.06]">
+        <div className="relative h-32 bg-white/[0.05]">
           {space.bannerUrl && (
             <div
               className="absolute inset-0 bg-cover bg-center opacity-40"
@@ -140,7 +140,7 @@ export function SpacePreviewModal({
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
             <Avatar className="h-20 w-20 border-4 border-[var(--bg-surface)]">
               <AvatarImage src={space.avatarUrl} alt={space.name} />
-              <AvatarFallback className="text-2xl bg-white/[0.06] text-white/50">
+              <AvatarFallback className="text-2xl bg-white/[0.05] text-white/50">
                 {space.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -195,7 +195,7 @@ export function SpacePreviewModal({
                 {space.upcomingEvents.slice(0, 2).map((event) => (
                   <div
                     key={event.id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06]"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.05]"
                   >
                     <CalendarIcon className="w-4 h-4 text-white/50 flex-shrink-0" />
                     <div className="flex-1 min-w-0">

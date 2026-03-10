@@ -197,7 +197,7 @@ export function MessageItem({
                 onKeyDown={handleEditKeyDown}
                 className={cn(
                   'w-full px-4 py-2.5 rounded-xl',
-                  'bg-white/[0.03] border border-white/[0.06]',
+                  'bg-white/[0.03] border border-white/[0.05]',
                   'text-white text-[15px] placeholder:text-white/30',
                   'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
                   'resize-none'
@@ -223,7 +223,7 @@ export function MessageItem({
                   onClick={handleEditCancel}
                   className={cn(
                     'flex items-center gap-1 px-2 py-1 rounded-full text-xs',
-                    'text-white/50 hover:text-white hover:bg-white/[0.06]',
+                    'text-white/50 hover:text-white hover:bg-white/[0.10]',
                     'transition-colors'
                   )}
                 >
@@ -261,10 +261,10 @@ export function MessageItem({
                     <img
                       src={attachment.url}
                       alt={attachment.filename}
-                      className="max-w-xs max-h-48 rounded-lg border border-white/[0.06]"
+                      className="max-w-xs max-h-48 rounded-lg border border-white/[0.05]"
                     />
                   ) : (
-                    <div className="px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-sm text-white/50 hover:bg-white/[0.06] transition-colors">
+                    <div className="px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.05] text-sm text-white/50 hover:bg-white/[0.10] transition-colors">
                       {attachment.filename}
                     </div>
                   )}
@@ -302,7 +302,7 @@ export function MessageItem({
                     'text-xs transition-colors',
                     reaction.userReacted
                       ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
-                      : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.10]'
+                      : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.10]'
                   )}
                 >
                   <span>{reaction.emoji}</span>
@@ -330,7 +330,7 @@ export function MessageItem({
           className={cn(
             'absolute top-0 right-2',
             'flex items-center gap-0.5',
-            'bg-[var(--bg-surface)] border border-white/[0.06] rounded-lg',
+            'bg-[var(--bg-surface)] border border-white/[0.05] rounded-lg',
             'p-0.5'
           )}
         >
@@ -344,7 +344,7 @@ export function MessageItem({
                       onReact?.(emoji);
                       setShowEmojiPicker(false);
                     }}
-                    className="p-1 hover:bg-white/[0.06] rounded transition-colors text-sm"
+                    className="p-1 hover:bg-white/[0.10] rounded transition-colors text-sm"
                   >
                     {emoji}
                   </button>
@@ -356,7 +356,7 @@ export function MessageItem({
                 {onReact && (
                   <button
                     onClick={() => setShowEmojiPicker(true)}
-                    className="p-1.5 hover:bg-white/[0.06] rounded transition-colors"
+                    className="p-1.5 hover:bg-white/[0.10] rounded transition-colors"
                     title="Add reaction"
                   >
                     <SmilePlus className="w-4 h-4 text-white/50" />
@@ -367,7 +367,7 @@ export function MessageItem({
                 {onReply && (
                   <button
                     onClick={onReply}
-                    className="p-1.5 hover:bg-white/[0.06] rounded transition-colors"
+                    className="p-1.5 hover:bg-white/[0.10] rounded transition-colors"
                     title="Reply in thread"
                   >
                     <MessageSquare className="w-4 h-4 text-white/50" />
@@ -378,7 +378,7 @@ export function MessageItem({
                 {isOwn && onEdit && !isEditing && (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="p-1.5 hover:bg-white/[0.06] rounded transition-colors"
+                    className="p-1.5 hover:bg-white/[0.10] rounded transition-colors"
                     title="Edit message"
                   >
                     <Pencil className="w-4 h-4 text-white/50" />
@@ -401,7 +401,7 @@ export function MessageItem({
                   <div className="relative">
                     <button
                       onClick={() => setShowMoreMenu(!showMoreMenu)}
-                      className="p-1.5 hover:bg-white/[0.06] rounded transition-colors"
+                      className="p-1.5 hover:bg-white/[0.10] rounded transition-colors"
                       title="More options"
                       data-testid="message-actions-button"
                     >
@@ -416,7 +416,7 @@ export function MessageItem({
                         <div
                           className={cn(
                             'absolute right-0 top-full mt-1 z-20',
-                            'bg-[var(--bg-elevated)] border border-white/[0.06] rounded-lg',
+                            'bg-[var(--bg-elevated)] border border-white/[0.05] rounded-lg',
                             'py-1 min-w-[120px]'
                           )}
                         >
@@ -427,7 +427,7 @@ export function MessageItem({
                             }}
                             className={cn(
                               'w-full px-3 py-1.5 text-left text-sm',
-                              'text-white/50 hover:text-white hover:bg-white/[0.06]',
+                              'text-white/50 hover:text-white hover:bg-white/[0.10]',
                               'flex items-center gap-2'
                             )}
                             data-testid="report-button"

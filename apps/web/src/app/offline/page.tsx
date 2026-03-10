@@ -125,7 +125,7 @@ export default function OfflinePage() {
 
           <button
             onClick={() => window.history.back()}
-            className="w-full py-3 px-4 border border-white/10 text-white font-semibold rounded-full hover:bg-white/[0.06] transition-colors duration-100"
+            className="w-full py-3 px-4 border border-white/10 text-white font-semibold rounded-full hover:bg-white/[0.10] transition-colors duration-100"
           >
             Go Back
           </button>

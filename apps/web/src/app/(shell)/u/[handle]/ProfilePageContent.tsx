@@ -339,7 +339,7 @@ export default function ProfilePageContent() {
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
                   item.done
                     ? 'bg-[#FFD700]/20'
-                    : 'border border-white/[0.12]'
+                    : 'border border-white/[0.10]'
                 }`}>
                   {item.done ? (
                     <Check className="w-3 h-3 text-[#FFD700]" />

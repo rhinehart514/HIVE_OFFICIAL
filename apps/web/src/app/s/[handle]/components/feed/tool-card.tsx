@@ -48,8 +48,8 @@ export function ToolCard({
       transition={{ duration: 0.15 }}
       className={cn(
         'rounded-lg',
-        'bg-white/[0.06] hover:bg-white/[0.06]',
-        'border border-white/[0.06] hover:border-white/[0.06]',
+        'bg-white/[0.05] hover:bg-white/[0.10]',
+        'border border-white/[0.05] hover:border-white/[0.05]',
         'transition-colors duration-100',
         className
       )}
@@ -61,7 +61,7 @@ export function ToolCard({
     >
       {/* Header: Icon + Name */}
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-white/[0.06] border border-white/[0.06] flex-shrink-0">
+        <div className="p-2 rounded-lg bg-white/[0.05] border border-white/[0.05] flex-shrink-0">
           {tool.icon ? (
             <span className="text-lg">{tool.icon}</span>
           ) : (
@@ -82,7 +82,7 @@ export function ToolCard({
       </div>
 
       {/* Footer: Usage + Actions */}
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/[0.06]">
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/[0.05]">
         {/* Usage count */}
         {tool.usageCount !== undefined && tool.usageCount > 0 && (
           <div className="flex items-center gap-1.5">

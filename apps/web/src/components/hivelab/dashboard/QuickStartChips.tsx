@@ -103,13 +103,13 @@ export function QuickStartChips({
                 }}
                 onClick={() => handleClick(template)}
                 disabled={disabled || !!loadingId}
-                className="group relative p-3 rounded-2xl border border-white/[0.06] bg-void
+                className="group relative p-3 rounded-2xl border border-white/[0.05] bg-void
                   hover:border-white/[0.10]
                   transition-colors duration-200 text-center
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex flex-col items-center gap-2">
-                  <div className="p-2 rounded-xl bg-white/[0.04] group-hover:bg-white/[0.06]
+                  <div className="p-2 rounded-xl bg-white/[0.05] group-hover:bg-white/[0.10]
                     transition-colors">
                     {isLoading ? (
                       <motion.div
@@ -169,8 +169,8 @@ export function QuickStartChips({
             onClick={() => handleClick(template)}
             disabled={disabled || !!loadingId}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full
-             border-white/[0.06] bg-transparent
-              hover:border-white/12 hover:bg-white/[0.06]
+             border-white/[0.05] bg-transparent
+              hover:border-white/[0.10] hover:bg-white/[0.10]
               text-white/50 hover:text-white/50
               transition-colors duration-200 text-xs
               disabled:opacity-50 disabled:cursor-not-allowed"

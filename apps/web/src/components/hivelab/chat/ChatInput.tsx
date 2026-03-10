@@ -89,8 +89,8 @@ export function ChatInput({
         className={`
           flex items-end gap-2 rounded-2xl border transition-colors duration-200
           ${isDisabled
-            ? 'border-white/[0.04] bg-void'
-            : 'border-white/[0.08] bg-void hover:border-white/[0.10] focus-within:border-white/[0.12]'
+            ? 'border-white/[0.05] bg-void'
+            : 'border-white/[0.10] bg-void hover:border-white/[0.10] focus-within:border-white/[0.10]'
           }
         `}
       >
@@ -140,7 +140,7 @@ export function ChatInput({
                   w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-100
                   ${value.trim()
                     ? 'bg-white text-black hover:bg-white/90'
-                    : 'bg-white/[0.08] text-white/30'
+                    : 'bg-white/[0.10] text-white/30'
                   }
                   disabled:cursor-not-allowed
                 `}

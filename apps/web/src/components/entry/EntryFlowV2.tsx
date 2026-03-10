@@ -94,7 +94,7 @@ function ProgressDots({ step }: { step: Step }) {
         <span
           key={s}
           className={`h-1.5 w-1.5 rounded-full transition-colors ${
-            i <= currentIndex ? 'bg-white' : 'bg-white/20'
+            i <= currentIndex ? 'bg-white' : 'bg-white/[0.05]'
           }`}
         />
       ))}
@@ -116,9 +116,9 @@ function SpaceCard({
   onToggle: () => void;
 }) {
   return (
-    <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-4 flex flex-col gap-3">
+    <div className="rounded-2xl bg-white/[0.05] border border-white/[0.05] p-4 flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-white/[0.06] flex items-center justify-center text-sm shrink-0 overflow-hidden">
+        <div className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center text-sm shrink-0 overflow-hidden">
           {space.avatarUrl ? (
             <img src={space.avatarUrl} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -140,7 +140,7 @@ function SpaceCard({
         className={`w-full rounded-full px-4 py-2 text-[13px] font-medium transition-colors duration-150 ${
           joined
             ? 'bg-white text-black'
-            : 'bg-white/[0.06] text-white hover:bg-white/[0.1]'
+            : 'bg-white/[0.05] text-white hover:bg-white/[0.10]'
         }`}
       >
         {joined ? 'Joined' : 'Join'}
@@ -795,12 +795,12 @@ export function EntryFlowV2() {
                         className={[
                           'h-12 w-full rounded-[12px] border bg-void text-center text-[18px] text-white',
                           'outline-none transition-colors duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                          'focus:border-white/[0.15]',
+                          'focus:border-white/[0.10]',
                           codeErrorFlash
                             ? 'border-[#EF4444]'
                             : isCodeVerified
                               ? 'border-[#22C55E]'
-                              : 'border-white/[0.06]',
+                              : 'border-white/[0.05]',
                           (isVerifyingCode || isCodeVerified) ? 'cursor-not-allowed opacity-80' : '',
                         ].join(' ')}
                       />
@@ -859,7 +859,7 @@ export function EntryFlowV2() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.5, duration: 0.4 }}
-                  className="mt-6 rounded-xl bg-white/[0.02] border border-white/[0.06] p-4"
+                  className="mt-6 rounded-xl bg-white/[0.03] border border-white/[0.05] p-4"
                 >
                   <p className="text-[11px] text-white/30 uppercase tracking-[0.15em] font-sans mb-3">
                     Happening at UB
@@ -1013,7 +1013,7 @@ export function EntryFlowV2() {
               {isLoadingSpaces ? (
                 <div className="grid grid-cols-2 gap-3">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-4 h-[120px] animate-pulse" />
+                    <div key={i} className="rounded-2xl bg-white/[0.03] border border-white/[0.05] p-4 h-[120px] animate-pulse" />
                   ))}
                 </div>
               ) : recommendedSpaces.length > 0 ? (
@@ -1028,7 +1028,7 @@ export function EntryFlowV2() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-8 text-center">
+                <div className="rounded-2xl bg-white/[0.03] border border-white/[0.05] p-8 text-center">
                   <p className="text-sm text-white/30">No spaces to show yet</p>
                 </div>
               )}

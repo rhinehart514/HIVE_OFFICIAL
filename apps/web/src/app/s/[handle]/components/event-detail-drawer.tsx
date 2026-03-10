@@ -304,13 +304,13 @@ export function EventDetailDrawer({
           />
 
           <motion.div
-            className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] flex flex-col"
+            className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.05] flex flex-col"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05]">
               <Text weight="medium" className="text-white">
                 Event details
               </Text>
@@ -327,10 +327,10 @@ export function EventDetailDrawer({
             <div className="flex-1 overflow-y-auto p-6">
               {isLoading && (
                 <div className="space-y-4 animate-pulse">
-                  <div className="h-7 w-4/5 rounded bg-white/[0.06]" />
-                  <div className="h-4 w-2/3 rounded bg-white/[0.06]" />
-                  <div className="h-24 rounded-xl bg-white/[0.06]" />
-                  <div className="h-20 rounded-xl bg-white/[0.06]" />
+                  <div className="h-7 w-4/5 rounded bg-white/[0.05]" />
+                  <div className="h-4 w-2/3 rounded bg-white/[0.05]" />
+                  <div className="h-24 rounded-xl bg-white/[0.05]" />
+                  <div className="h-20 rounded-xl bg-white/[0.05]" />
                 </div>
               )}
 
@@ -359,7 +359,7 @@ export function EventDetailDrawer({
                   </div>
 
                   <div className="space-y-3">
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.06] p-4">
+                    <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-4">
                       <div className="flex items-start gap-3">
                         <Calendar className="w-4 h-4 text-[var(--color-gold)] mt-0.5" />
                         <div className="min-w-0">
@@ -376,7 +376,7 @@ export function EventDetailDrawer({
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.06] p-4">
+                    <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-4">
                       <div className="flex items-start gap-3">
                         {isOnline ? (
                           <Video className="w-4 h-4 text-[var(--color-gold)] mt-0.5" />
@@ -403,7 +403,7 @@ export function EventDetailDrawer({
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.06] p-4">
+                  <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-4">
                     <Text size="xs" weight="medium" className="uppercase tracking-wider text-white/50">
                       RSVP
                     </Text>
@@ -456,7 +456,7 @@ export function EventDetailDrawer({
                       })()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full p-3 rounded-xl border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center gap-2 transition-colors duration-100 text-[13px] text-white/50 hover:text-white/70"
+                      className="w-full p-3 rounded-xl border border-white/[0.05] bg-white/[0.05] hover:bg-white/[0.10] flex items-center justify-center gap-2 transition-colors duration-100 text-[13px] text-white/50 hover:text-white/70"
                     >
                       <Calendar className="w-4 h-4" />
                       Add to Google Calendar
@@ -466,19 +466,19 @@ export function EventDetailDrawer({
                   {event.linkedBoard && (event.linkedBoard.id || event.linkedBoard.boardId) && (
                     <a
                       href={spaceHandle ? `/s/${spaceHandle}?tab=chat` : '#'}
-                      className="w-full p-3 rounded-xl border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center gap-2 transition-colors duration-100 text-[13px] text-[#FFD700]/60 hover:text-[#FFD700]"
+                      className="w-full p-3 rounded-xl border border-white/[0.05] bg-white/[0.05] hover:bg-white/[0.10] flex items-center justify-center gap-2 transition-colors duration-100 text-[13px] text-[#FFD700]/60 hover:text-[#FFD700]"
                     >
                       <MessageCircle className="w-4 h-4" />
                       Chat about this event
                     </a>
                   )}
 
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.06] p-4">
+                  <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-4">
                     <Text size="xs" weight="medium" className="uppercase tracking-wider text-white/50">
                       Organizer
                     </Text>
                     <div className="mt-3 flex items-center gap-3">
-                      <Avatar size="sm" className="ring-1 ring-white/[0.06]">
+                      <Avatar size="sm" className="ring-1 ring-white/[0.05]">
                         {organizerAvatar && <AvatarImage src={organizerAvatar} />}
                         <AvatarFallback>{getInitials(organizerName)}</AvatarFallback>
                       </Avatar>

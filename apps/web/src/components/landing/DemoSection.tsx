@@ -96,10 +96,10 @@ export function DemoSection() {
               background: 'radial-gradient(circle at center, rgba(255,215,0,0.04), transparent 60%)',
             }}
           />
-        <div className="relative rounded-2xl border border-white/[0.08] bg-[var(--bg-card)]">
+        <div className="relative rounded-2xl border border-white/[0.10] bg-[var(--bg-card)]">
           {/* Prompt area */}
-          <div className="border-b border-white/[0.08] px-5 py-4">
-            <div className="rounded-xl border border-white/[0.06] bg-[var(--bg-void)] px-4 py-3 font-mono text-[13px] text-white/50">
+          <div className="border-b border-white/[0.10] px-5 py-4">
+            <div className="rounded-xl border border-white/[0.05] bg-[var(--bg-void)] px-4 py-3 font-mono text-[13px] text-white/50">
               {typed}
               {phase === 'typing' && (
                 <span
@@ -135,9 +135,9 @@ export function DemoSection() {
               {POLL_OPTIONS.map((opt) => (
                 <div key={opt.label} className="flex items-center gap-3">
                   <span className="w-24 shrink-0 text-[13px] text-white/50">{opt.label}</span>
-                  <div className="relative h-7 flex-1 overflow-hidden rounded-full bg-white/[0.04]">
+                  <div className="relative h-7 flex-1 overflow-hidden rounded-full bg-white/[0.05]">
                     <div
-                      className="absolute inset-y-0 left-0 rounded-full bg-white/[0.08] transition-[width] duration-700 ease-out"
+                      className="absolute inset-y-0 left-0 rounded-full bg-white/[0.10] transition-[width] duration-700 ease-out"
                       style={{ width: barsAnimated ? `${opt.pct}%` : '0%' }}
                     />
                     <span

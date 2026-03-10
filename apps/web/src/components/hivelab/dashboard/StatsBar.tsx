@@ -41,9 +41,9 @@ function StatCard({
         ease: EASE,
       }}
       className="flex items-center gap-3 px-4 py-3 rounded-lg
-       border-white/[0.06] bg-white/[0.06]"
+       border-white/[0.05] bg-white/[0.05]"
     >
-      <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+      <div className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center flex-shrink-0">
         <Icon className="w-4 h-4 text-white/50" />
       </div>
       <div className="min-w-0">

@@ -70,7 +70,7 @@ function CategoryPill({
         px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors duration-100
         ${isActive
           ? 'bg-white text-black'
-          : 'bg-white/[0.05] text-white/30 hover:bg-white/[0.08] hover:text-white/50'
+          : 'bg-white/[0.05] text-white/30 hover:bg-white/[0.10] hover:text-white/50'
         }
       `}
     >
@@ -89,8 +89,8 @@ function ToolCard({
   return (
     <motion.button
       onClick={() => onClick(tool.slug)}
-      className="group text-left w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06]
-        hover:bg-white/[0.06] hover:border-white/[0.1] transition-colors duration-100"
+      className="group text-left w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05]
+        hover:bg-white/[0.05] hover:border-white/[0.1] transition-colors duration-100"
       whileHover={{ y: -1 }}
       transition={{ duration: 0.15 }}
     >
@@ -103,7 +103,7 @@ function ToolCard({
             shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider
             ${tool.badge === 'official'
               ? 'bg-[#FFD700]/15 text-[#FFD700]'
-              : 'bg-white/[0.06] text-white/30'
+              : 'bg-white/[0.05] text-white/30'
             }
           `}
         >

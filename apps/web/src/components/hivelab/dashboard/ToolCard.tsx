@@ -64,7 +64,7 @@ const STATUS_CONFIG = {
   },
   draft: {
     label: 'Draft',
-    bg: 'bg-white/[0.06]',
+    bg: 'bg-white/[0.05]',
     text: 'text-white/50',
     dot: 'bg-white/50',
   },
@@ -109,8 +109,8 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
         whileTap={{ scale: 0.98 }}
         onClick={() => onClick(tool.id)}
         className="group relative flex flex-col items-start p-4 rounded-2xl
-         border border-white/[0.06] bg-void
-          hover:bg-white/[0.03]
+         border border-white/[0.05] bg-void
+          hover:bg-white/[0.05]
           transition-colors duration-200 text-left w-full"
       >
         <div className="flex items-center justify-between w-full mb-1.5">
@@ -145,8 +145,8 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
     <motion.div
       whileHover={{ opacity: 0.96 }}
       className="group relative flex flex-col p-4 rounded-2xl
-       border border-white/[0.06] bg-void
-        hover:bg-white/[0.03]
+       border border-white/[0.05] bg-void
+        hover:bg-white/[0.05]
         transition-colors duration-200 text-left w-full cursor-pointer"
       onClick={() => onClick(tool.id)}
     >
@@ -192,7 +192,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
       </div>
 
       {/* Footer: Updated + Quick Actions */}
-      <div className="flex items-center justify-between w-full pt-2 border-t border-white/[0.06]">
+      <div className="flex items-center justify-between w-full pt-2 border-t border-white/[0.05]">
         <span className="flex items-center gap-1 text-white/50 text-xs">
           <Clock className="w-3 h-3" />
           {formatRelativeTime(tool.updatedAt)}
@@ -202,14 +202,14 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleEdit}
-            className="p-1.5 rounded-md hover:bg-white/[0.06] text-white/50 hover:text-white/50 transition-colors"
+            className="p-1.5 rounded-md hover:bg-white/[0.10] text-white/50 hover:text-white/50 transition-colors"
             title="Edit"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleAnalytics}
-            className="p-1.5 rounded-md hover:bg-white/[0.06] text-white/50 hover:text-white/50 transition-colors"
+            className="p-1.5 rounded-md hover:bg-white/[0.10] text-white/50 hover:text-white/50 transition-colors"
             title="Analytics"
           >
             <BarChart3 className="w-3.5 h-3.5" />
@@ -217,7 +217,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
           {tool.status === 'draft' || tool.status === 'published' ? (
             <button
               onClick={handleDeploy}
-              className="p-1.5 rounded-md hover:bg-white/[0.06] text-white/50 hover:text-white/50 transition-colors"
+              className="p-1.5 rounded-md hover:bg-white/[0.10] text-white/50 hover:text-white/50 transition-colors"
               title="Deploy"
             >
               <Rocket className="w-3.5 h-3.5" />
@@ -229,7 +229,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
               className={`p-1.5 rounded-md transition-colors ${
                 confirmDelete
                   ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                  : 'hover:bg-white/[0.06] text-white/50 hover:text-red-400'
+                  : 'hover:bg-white/[0.10] text-white/50 hover:text-red-400'
               }`}
               title={confirmDelete ? 'Click again to confirm' : 'Delete'}
             >

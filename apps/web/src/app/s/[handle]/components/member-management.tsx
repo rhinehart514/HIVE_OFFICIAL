@@ -284,8 +284,8 @@ function MemberRow({
     <div
       className={cn(
         'group flex items-center gap-3 px-3 py-2.5 rounded-lg',
-        'hover:bg-white/[0.06] transition-colors',
-        isCurrentUser && 'bg-white/[0.06]'
+        'hover:bg-white/[0.10] transition-colors',
+        isCurrentUser && 'bg-white/[0.05]'
       )}
     >
       {/* Avatar */}
@@ -440,12 +440,12 @@ function MemberMenu({
       className={cn(
         'absolute right-0 top-full mt-1 z-50',
         'min-w-[160px] py-1',
-        'bg-[var(--bg-elevated)] border border-white/[0.06] rounded-lg'
+        'bg-[var(--bg-elevated)] border border-white/[0.05] rounded-lg'
       )}
     >
       <button
         onClick={onViewProfile}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.06]"
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.10]"
       >
         <User className="w-4 h-4" />
         View profile
@@ -453,11 +453,11 @@ function MemberMenu({
 
       {(canPromote || canDemote) && (
         <>
-          <div className="h-px bg-white/[0.06] my-1" />
+          <div className="h-px bg-white/[0.05] my-1" />
           {canPromote && (
             <button
               onClick={onPromote}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.06]"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.10]"
             >
               <ChevronUp className="w-4 h-4" />
               Promote
@@ -466,7 +466,7 @@ function MemberMenu({
           {canDemote && (
             <button
               onClick={onDemote}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.06]"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/[0.10]"
             >
               <ChevronDown className="w-4 h-4" />
               Demote
@@ -477,11 +477,11 @@ function MemberMenu({
 
       {(canSuspend || canRemove) && (
         <>
-          <div className="h-px bg-white/[0.06] my-1" />
+          <div className="h-px bg-white/[0.05] my-1" />
           {canSuspend && (
             <button
               onClick={onSuspend}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-400/70 hover:text-amber-400 hover:bg-amber-400/[0.04]"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-400/70 hover:text-amber-400 hover:bg-amber-400/[0.05]"
             >
               <Ban className="w-4 h-4" />
               Suspend
@@ -490,7 +490,7 @@ function MemberMenu({
           {canRemove && (
             <button
               onClick={onRemove}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/[0.04]"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/[0.05]"
             >
               <UserX className="w-4 h-4" />
               Remove
@@ -706,12 +706,12 @@ export function MemberManagement({
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/[0.06]"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/[0.03]"
           >
-            <div className="w-10 h-10 rounded-lg bg-white/[0.06]" />
+            <div className="w-10 h-10 rounded-lg bg-white/[0.03]" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-32 rounded bg-white/[0.06]" />
-              <div className="h-3 w-24 rounded bg-white/[0.06]" />
+              <div className="h-4 w-32 rounded bg-white/[0.03]" />
+              <div className="h-3 w-24 rounded bg-white/[0.03]" />
             </div>
           </div>
         ))}
@@ -747,7 +747,7 @@ export function MemberManagement({
             className={cn(
               'w-full pl-10 pr-4 py-2.5',
               'rounded-lg text-sm',
-              'bg-white/[0.06] border border-white/[0.06]',
+              'bg-white/[0.05] border border-white/[0.05]',
               'text-white placeholder:text-white/50',
               'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
               'transition-colors duration-100'

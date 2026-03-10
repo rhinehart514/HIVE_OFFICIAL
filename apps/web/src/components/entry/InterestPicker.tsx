@@ -73,7 +73,7 @@ const FALLBACK_GREEK_CHAPTERS: GreekChapter[] = [
 function SectionHeader({ number, label }: { number: number; label: string }) {
   return (
     <div className="flex items-center gap-2 mb-2">
-      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/[0.06] text-white/30 text-[11px] font-mono font-medium">
+      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/[0.05] text-white/30 text-[11px] font-mono font-medium">
         {number}
       </span>
       <span className="font-sans text-[13px] font-medium text-white/50">{label}</span>
@@ -187,7 +187,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-5 h-5 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-white/[0.10] border-t-white/70 rounded-full animate-spin" />
       </div>
     );
   }
@@ -211,13 +211,13 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
       {/* ── Dimension 1: Major ── */}
       <div>
         <SectionHeader number={1} label="What do you study?" />
-        <div className="flex items-center gap-1 p-0.5 rounded-[8px] bg-void border border-white/[0.06] mb-2">
+        <div className="flex items-center gap-1 p-0.5 rounded-[8px] bg-void border border-white/[0.05] mb-2">
           <button
             type="button"
             onClick={() => { setProgramType('undergrad'); setMajor(''); }}
             className={[
               'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-colors duration-150',
-              programType === 'undergrad' ? 'bg-white/[0.1] text-white' : 'text-white/30 hover:text-white/50',
+              programType === 'undergrad' ? 'bg-white/[0.10] text-white' : 'text-white/30 hover:text-white/50',
             ].join(' ')}
           >
             Undergrad
@@ -227,7 +227,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             onClick={() => { setProgramType('grad'); setMajor(''); }}
             className={[
               'flex-1 py-1.5 rounded-[6px] font-sans text-[12px] font-medium transition-colors duration-150',
-              programType === 'grad' ? 'bg-white/[0.1] text-white' : 'text-white/30 hover:text-white/50',
+              programType === 'grad' ? 'bg-white/[0.10] text-white' : 'text-white/30 hover:text-white/50',
             ].join(' ')}
           >
             Graduate
@@ -236,7 +236,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
         <select
           value={major}
           onChange={(e) => setMajor(e.target.value)}
-          className="w-full h-11 px-3 rounded-[10px] bg-void border border-white/[0.06] font-sans text-[14px] text-white outline-none focus:border-white/[0.15] transition-colors appearance-none"
+          className="w-full h-11 px-3 rounded-[10px] bg-void border border-white/[0.05] font-sans text-[14px] text-white outline-none focus:border-white/[0.10] transition-colors appearance-none"
         >
           <option value="">{programType === 'grad' ? 'Select your program' : 'Select your major'}</option>
           {activeMajors.map((m) => (
@@ -255,8 +255,8 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             className={[
               'flex-1 py-2.5 rounded-[10px] font-sans text-[13px] font-medium transition-colors duration-150 border',
               greekAffiliated === true
-                ? 'bg-white/[0.08] border-white/[0.2] text-white'
-                : 'bg-void border-white/[0.06] text-white/50 hover:border-white/[0.08]',
+                ? 'bg-white/[0.10] border-white/[0.10] text-white'
+                : 'bg-void border-white/[0.05] text-white/50 hover:border-white/[0.10]',
             ].join(' ')}
           >
             Yes
@@ -267,8 +267,8 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
             className={[
               'flex-1 py-2.5 rounded-[10px] font-sans text-[13px] font-medium transition-colors duration-150 border',
               greekAffiliated === false
-                ? 'bg-white/[0.08] border-white/[0.2] text-white'
-                : 'bg-void border-white/[0.06] text-white/50 hover:border-white/[0.08]',
+                ? 'bg-white/[0.10] border-white/[0.10] text-white'
+                : 'bg-void border-white/[0.05] text-white/50 hover:border-white/[0.10]',
             ].join(' ')}
           >
             No
@@ -287,7 +287,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
               <select
                 value={greekChapterId}
                 onChange={(e) => setGreekChapterId(e.target.value)}
-                className="w-full h-11 px-3 mt-2 rounded-[10px] bg-void border border-white/[0.06] font-sans text-[14px] text-white outline-none focus:border-white/[0.15] transition-colors appearance-none"
+                className="w-full h-11 px-3 mt-2 rounded-[10px] bg-void border border-white/[0.05] font-sans text-[14px] text-white outline-none focus:border-white/[0.10] transition-colors appearance-none"
               >
                 <option value="">Select your chapter</option>
                 {greekChapters.map((ch) => (
@@ -307,7 +307,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
         <select
           value={residentialSpaceId}
           onChange={(e) => setResidentialSpaceId(e.target.value)}
-          className="w-full h-11 px-3 rounded-[10px] bg-void border border-white/[0.06] font-sans text-[14px] text-white outline-none focus:border-white/[0.15] transition-colors appearance-none"
+          className="w-full h-11 px-3 rounded-[10px] bg-void border border-white/[0.05] font-sans text-[14px] text-white outline-none focus:border-white/[0.10] transition-colors appearance-none"
         >
           <option value="">Select where you live</option>
           {onCampusSpaces.length > 0 && (
@@ -338,7 +338,7 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
               value={orgSearch}
               onChange={(e) => setOrgSearch(e.target.value)}
               placeholder="Search clubs and organizations..."
-              className="w-full h-10 pl-9 pr-8 rounded-[10px] bg-void border border-white/[0.06] font-sans text-[13px] text-white placeholder-white/20 outline-none focus:border-white/[0.15] transition-colors"
+              className="w-full h-10 pl-9 pr-8 rounded-[10px] bg-void border border-white/[0.05] font-sans text-[13px] text-white placeholder-white/30 outline-none focus:border-white/[0.10] transition-colors"
             />
             {orgSearch && (
               <button
@@ -361,8 +361,8 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
                   className={[
                     'px-3 py-1.5 rounded-full font-sans text-[12px] transition-colors duration-150 border',
                     isOrgSelected
-                      ? 'bg-white/[0.08] border-white/[0.2] text-white'
-                      : 'bg-void border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/[0.08]',
+                      ? 'bg-white/[0.10] border-white/[0.10] text-white'
+                      : 'bg-void border-white/[0.05] text-white/30 hover:text-white/50 hover:border-white/[0.10]',
                   ].join(' ')}
                 >
                   {org.name}
@@ -393,8 +393,8 @@ export function InterestPicker({ onComplete, isSubmitting, campusId }: InterestP
                 className={[
                   'flex items-center gap-2 px-2.5 py-2 rounded-[10px] text-left transition-colors duration-150 border',
                   isSelected
-                    ? 'bg-white/[0.08] border-white/[0.2] text-white'
-                    : 'bg-void border-white/[0.06] text-white/50 hover:border-white/[0.08] hover:text-white/70',
+                    ? 'bg-white/[0.10] border-white/[0.10] text-white'
+                    : 'bg-void border-white/[0.05] text-white/50 hover:border-white/[0.10] hover:text-white/70',
                   selected.size >= MAX_INTERESTS && !isSelected ? 'opacity-30 cursor-not-allowed' : '',
                 ].join(' ')}
               >

@@ -116,7 +116,7 @@ export function SpaceInfoDrawer({
           {/* Drawer Panel */}
           <motion.div
             className={cn(
-              'relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] overflow-y-auto',
+              'relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.05] overflow-y-auto',
               className
             )}
             initial={{ x: '100%' }}
@@ -125,7 +125,7 @@ export function SpaceInfoDrawer({
             transition={{ duration: durationSeconds.smooth, ease: MOTION.ease.premium }}
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[var(--bg-ground)]">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.05] bg-[var(--bg-ground)]">
               <Text weight="medium" className="text-white">
                 About this space
               </Text>
@@ -143,7 +143,7 @@ export function SpaceInfoDrawer({
             <div className="p-6 space-y-8">
               {/* Space Identity */}
               <div className="flex items-start gap-4">
-                <Avatar size="lg" className="ring-1 ring-white/[0.06]">
+                <Avatar size="lg" className="ring-1 ring-white/[0.05]">
                   {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
                   <AvatarFallback className="text-lg">
                     {getInitials(space.name)}
@@ -271,7 +271,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.05] text-white/50 hover:text-white hover:bg-white/[0.10] transition-colors"
                       >
                         <Globe className="h-4 w-4" />
                         <Text size="xs">Website</Text>
@@ -282,7 +282,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.instagram}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.05] text-white/50 hover:text-white hover:bg-white/[0.10] transition-colors"
                       >
                         <Instagram className="h-4 w-4" />
                         <Text size="xs">Instagram</Text>
@@ -293,7 +293,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.twitter}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.05] text-white/50 hover:text-white hover:bg-white/[0.10] transition-colors"
                       >
                         <Twitter className="h-4 w-4" />
                         <Text size="xs">Twitter</Text>
@@ -304,7 +304,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.facebook}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.05] text-white/50 hover:text-white hover:bg-white/[0.10] transition-colors"
                       >
                         <Facebook className="h-4 w-4" />
                         <Text size="xs">Facebook</Text>
@@ -315,7 +315,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.linkedin}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.05] text-white/50 hover:text-white hover:bg-white/[0.10] transition-colors"
                       >
                         <Linkedin className="h-4 w-4" />
                         <Text size="xs">LinkedIn</Text>
@@ -326,7 +326,7 @@ export function SpaceInfoDrawer({
                         href={space.socialLinks.youtube}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.05] text-white/50 hover:text-white hover:bg-white/[0.10] transition-colors"
                       >
                         <Youtube className="h-4 w-4" />
                         <Text size="xs">YouTube</Text>

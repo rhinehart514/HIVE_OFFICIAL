@@ -194,7 +194,7 @@ export function FeedbackModal({
                         onMouseEnter={() => setHoveredStar(star)}
                         onMouseLeave={() => setHoveredStar(0)}
                         whileTap={{ scale: 0.85 }}
-                        className="p-1 rounded-md transition-colors hover:bg-white/[0.06]"
+                        className="p-1 rounded-md transition-colors hover:bg-white/[0.10]"
                       >
                         <Star
                           className={`w-7 h-7 transition-colors ${

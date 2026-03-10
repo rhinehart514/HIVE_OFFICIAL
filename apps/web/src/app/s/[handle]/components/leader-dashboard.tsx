@@ -82,7 +82,7 @@ function MetricCard({ icon: Icon, label, value, growth, color = 'text-white/50' 
 
   return (
     <div
-      className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.06] transition-colors"
+      className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05] hover:border-white/[0.05] transition-colors"
     >
       <div className="flex items-start justify-between mb-2">
         <Icon className={cn('w-5 h-5', color)} />
@@ -133,13 +133,13 @@ function PendingItemRow({ item, onClick }: PendingItemRowProps) {
       className={cn(
         'w-full px-3 py-2.5 rounded-lg',
         'flex items-center gap-3',
-        'hover:bg-white/[0.06] transition-colors',
+        'hover:bg-white/[0.10] transition-colors',
         'text-left group'
       )}
     >
       <div className={cn(
         'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-        'bg-white/[0.06]',
+        'bg-white/[0.05]',
         item.urgent && 'bg-amber-500/20'
       )}>
         <Icon className={cn(
@@ -186,8 +186,8 @@ function QuickAction({ icon: Icon, label, onClick }: QuickActionProps) {
       className={cn(
         'p-3 rounded-lg',
         'flex items-center gap-3',
-        'bg-white/[0.06] border border-white/[0.06]',
-        'hover:bg-white/[0.06] hover:border-white/[0.06]',
+        'bg-white/[0.05] border border-white/[0.05]',
+        'hover:bg-white/[0.10] hover:border-white/[0.05]',
         'transition-colors'
       )}
     >
@@ -219,7 +219,7 @@ export function LeaderDashboard({
       <div className={cn('p-6 space-y-6', className)}>
         {/* Loading skeleton */}
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-white/[0.06] rounded-lg" />
+          <div key={i} className="h-20 bg-white/[0.05] rounded-lg" />
         ))}
       </div>
     );
@@ -287,7 +287,7 @@ export function LeaderDashboard({
               {pendingItems.length} item{pendingItems.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="space-y-1 p-2 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+          <div className="space-y-1 p-2 rounded-lg bg-white/[0.05] border border-white/[0.05]">
             {pendingItems.slice(0, 3).map((item) => (
               <PendingItemRow
                 key={item.id}

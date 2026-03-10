@@ -85,7 +85,7 @@ function sortSpaces(spaces: YourSpace[]): YourSpace[] {
 function EmptyState({ onBrowse }: { onBrowse?: () => void }) {
   return (
     <div className="py-12 text-center">
-      <div className="w-14 h-14 mx-auto mb-4 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center">
+      <div className="w-14 h-14 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/[0.05] flex items-center justify-center">
         <HomeIcon className="w-6 h-6 text-white/50" />
       </div>
       <Text weight="medium" className="text-white/50 mb-2">
@@ -134,12 +134,12 @@ export function YourSpacesList({
           </div>
           <Skeleton className="h-4 w-20" />
         </div>
-        <div className="rounded-lg border border-white/[0.06] overflow-hidden">
+        <div className="rounded-lg border border-white/[0.05] overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
               className={cn(
-                i !== 4 && 'border-b border-white/[0.06]'
+                i !== 4 && 'border-b border-white/[0.05]'
               )}
             >
               <SpaceListRowSkeleton />
@@ -175,7 +175,7 @@ export function YourSpacesList({
           >
             Your Spaces
           </Text>
-          <span className="px-1.5 py-0.5 text-label-xs font-medium text-white/50 bg-white/[0.06] rounded">
+          <span className="px-1.5 py-0.5 text-label-xs font-medium text-white/50 bg-white/[0.05] rounded">
             {spaces.length}
           </span>
         </div>
@@ -196,7 +196,7 @@ export function YourSpacesList({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="rounded-lg border border-white/[0.06] overflow-hidden"
+        className="rounded-lg border border-white/[0.05] overflow-hidden"
       >
         {sortedSpaces.map((space, index) => (
           <motion.div
@@ -206,7 +206,7 @@ export function YourSpacesList({
             transition={{ delay: index * 0.03, duration: 0.2 }}
             className={cn(
               'relative',
-              index !== sortedSpaces.length - 1 && 'border-b border-white/[0.06]'
+              index !== sortedSpaces.length - 1 && 'border-b border-white/[0.05]'
             )}
           >
             <SpaceListRow

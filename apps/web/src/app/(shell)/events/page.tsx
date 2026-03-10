@@ -133,7 +133,7 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/[0.06] bg-void p-4 transition-colors hover:border-white/[0.1]"
+      className="rounded-2xl border border-white/[0.05] bg-void p-4 transition-colors hover:border-white/[0.1]"
     >
       <div className="flex items-start justify-between gap-3">
         {/* Left: Info */}
@@ -203,7 +203,7 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
           className={cn(
             'flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors duration-100',
             isGoing
-              ? 'bg-white/[0.08] text-white/70 border border-white/[0.08]'
+              ? 'bg-white/[0.10] text-white/70 border border-white/[0.10]'
               : 'bg-white text-black hover:bg-white/90'
           )}
         >
@@ -341,7 +341,7 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-void">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-void">
+      <div className="sticky top-0 z-10 border-b border-white/[0.05] bg-void">
         <div className="max-w-xl px-6 py-4">
           <div className="flex items-baseline gap-3">
             <h1 className="text-[18px] font-medium text-white">Events</h1>
@@ -361,7 +361,7 @@ export default function EventsPage() {
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="rounded-2xl border border-white/[0.06] bg-void p-4 h-24 animate-pulse"
+                className="rounded-2xl border border-white/[0.05] bg-void p-4 h-24 animate-pulse"
               />
             ))}
           </div>

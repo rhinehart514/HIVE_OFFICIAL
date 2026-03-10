@@ -71,7 +71,7 @@ export default function LoginError({
           </div>
 
           {process.env.NODE_ENV === 'development' && error.message && (
-            <div className="mt-6 rounded-md bg-white/[0.06] p-3 text-leftborder-white/[0.06]">
+            <div className="mt-6 rounded-md bg-white/[0.05] p-3 text-left border border-white/[0.05]">
               <p className="text-xs font-sans text-white/50 break-all">
                 {error.message}
               </p>
