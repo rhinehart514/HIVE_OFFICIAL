@@ -491,7 +491,18 @@ function MyAppsSection() {
       .catch(() => setLoaded(true));
   }, []);
 
-  if (!loaded || tools.length === 0) return null;
+  if (!loaded) return null;
+
+  if (tools.length === 0) {
+    return (
+      <div className="mt-6">
+        <span className="text-xs text-white/25 uppercase tracking-wider">Your Apps</span>
+        <p className="text-sm text-white/20 mt-2">
+          Apps you make show up here. Try typing what you need above.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -833,6 +844,9 @@ export default function BuildPage() {
                     </button>
                   ))}
                 </div>
+
+                {/* My Apps — show creator's existing tools in idle state */}
+                {user && <MyAppsSection />}
               </div>
             )}
 
