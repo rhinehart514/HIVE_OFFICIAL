@@ -440,17 +440,28 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
           code: finalCode,
         });
 
-        // Auto-save + publish
+        // Auto-save + publish (include generated code as elements)
+        const saveBody: Record<string, unknown> = {
+          name: finalName,
+          type: 'code',
+          status: 'published',
+          visibility: 'public',
+        };
+        if (finalCode) {
+          saveBody.elements = [{
+            elementId: 'custom-block',
+            instanceId: 'code_app_1',
+            config: {
+              code: finalCode,
+              metadata: { name: finalName, description: '' },
+            },
+          }];
+        }
         await fetch(`/api/tools/${toolId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({
-            name: finalName,
-            type: 'code',
-            status: 'published',
-            visibility: 'public',
-          }),
+          body: JSON.stringify(saveBody),
         }).catch(() => {});
       } catch (error) {
         if (controller.signal.aborted) return;
