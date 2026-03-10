@@ -163,7 +163,7 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-white/50 bg-white/[0.06] border border-white/[0.06]">
+                <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium text-white/50 bg-white/[0.06] border border-white/[0.06]">
                   ESC
                 </kbd>
               </div>

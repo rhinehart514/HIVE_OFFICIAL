@@ -91,7 +91,7 @@ export function SpacePlacementFlow({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-4 text-sm text-white/40">
+      <div className="flex items-center gap-2 py-4 text-sm text-white/30">
         <Loader2 className="w-4 h-4 animate-spin" />
         Loading your spaces...
       </div>
@@ -101,7 +101,7 @@ export function SpacePlacementFlow({
   if (spaces.length === 0) {
     return (
       <div className="space-y-2">
-        <p className="text-sm text-white/40">
+        <p className="text-sm text-white/30">
           Join or create a space to place your app where people can find it.
         </p>
         <button
@@ -129,21 +129,21 @@ export function SpacePlacementFlow({
             {space.iconURL ? (
               <img src={space.iconURL} alt="" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-[11px] text-white/40 font-medium">
+              <span className="text-[11px] text-white/30 font-medium">
                 {space.name.charAt(0).toUpperCase()}
               </span>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-white/80 truncate">{space.name}</p>
+            <p className="text-sm text-white/70 truncate">{space.name}</p>
             <p className="text-[11px] text-white/30">{space.membership.role}</p>
           </div>
           {deploying === space.id ? (
-            <Loader2 className="w-4 h-4 animate-spin text-white/40 flex-shrink-0" />
+            <Loader2 className="w-4 h-4 animate-spin text-white/30 flex-shrink-0" />
           ) : deployed === space.id ? (
             <Check className="w-4 h-4 text-[#FFD700] flex-shrink-0" />
           ) : (
-            <MapPin className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
+            <MapPin className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
           )}
         </button>
       ))}

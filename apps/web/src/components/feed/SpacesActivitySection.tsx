@@ -48,20 +48,7 @@ export function SpacesActivitySection() {
     staleTime: 60_000,
   });
 
-  if (items.length === 0) {
-    return (
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <Mono size="label" className="text-white/50">
-            Your Spaces
-          </Mono>
-        </div>
-        <p className="text-sm text-white/30 py-2">
-          Your spaces have been quiet — join a few more below or make something to get things going.
-        </p>
-      </section>
-    );
-  }
+  if (items.length === 0) return null;
 
   return (
     <section>
@@ -90,11 +77,11 @@ export function SpacesActivitySection() {
                   {item.type === 'event' && (
                     <>
                       :{' '}
-                      <span className="text-white/60">{item.preview.split(' - ')[0]}</span>
+                      <span className="text-white/50">{item.preview.split(' - ')[0]}</span>
                     </>
                   )}
                 </p>
-                <span className="text-[10px] text-white/30 tabular-nums">
+                <span className="text-[11px] text-white/30 tabular-nums">
                   {relativeTime(item.timestamp)}
                 </span>
               </div>

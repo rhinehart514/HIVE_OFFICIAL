@@ -112,7 +112,7 @@ export function PromptInput({
           rows={1}
           className={[
             'w-full px-4 py-3 pr-12 rounded-2xl text-[15px] bg-white/[0.03] border',
-            'text-white placeholder:text-white/25 resize-none',
+            'text-white placeholder:text-white/30 resize-none',
             'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
             'focus:shadow-[inset_0_0_20px_rgba(255,215,0,0.06)]',
             'focus:border-[#FFD700]/30',

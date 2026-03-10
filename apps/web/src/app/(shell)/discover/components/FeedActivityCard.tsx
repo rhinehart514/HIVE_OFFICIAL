@@ -38,7 +38,7 @@ export function FeedActivityCard({ item, index }: { item: ActivityItem; index: n
         className="group flex items-center gap-3 rounded-xl border border-white/[0.05] bg-card px-4 py-3 hover:border-[#FFD700]/30 hover:bg-[#FFD700]/[0.02] transition-colors duration-100 border-l-2 border-l-[#FFD700]/30"
       >
         <Sparkles className="w-3.5 h-3.5 text-[#FFD700]/50 shrink-0" />
-        <span className="flex-1 min-w-0 text-[13px] text-white/60 truncate group-hover:text-white/80 transition-colors">
+        <span className="flex-1 min-w-0 text-[13px] text-white/50 truncate group-hover:text-white/70 transition-colors">
           {item.headline}
         </span>
         <span className="text-[11px] text-white/30 shrink-0 tabular-nums">{relativeTime(item.timestamp)}</span>

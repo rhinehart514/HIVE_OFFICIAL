@@ -259,7 +259,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                       key={type.value}
                       type="button"
                       onClick={() => handleInputChange("type", type.value)}
-                      className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all ${
+                      className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-colors duration-100 ${
                         formData.type === type.value
                           ? "border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/10"
                           : "border-white/[0.06] hover:border-white/[0.06] bg-white/[0.06]"
@@ -355,7 +355,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                       key={loc.value}
                       type="button"
                       onClick={() => handleInputChange("locationType", loc.value)}
-                      className={`flex items-center justify-center gap-2 p-3 rounded-lg transition-all ${
+                      className={`flex items-center justify-center gap-2 p-3 rounded-lg transition-colors duration-100 ${
                         formData.locationType === loc.value
                           ? "border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/10"
                           : "border-white/[0.06] hover:border-white/[0.06] bg-white/[0.06]"

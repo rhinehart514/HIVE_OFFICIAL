@@ -27,7 +27,7 @@ export default function DesignSystemPage() {
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-12">
         <header className="space-y-2">
           <h1 className="text-3xl font-semibold">HIVE Design System</h1>
-          <p className="text-white/60">Tokens, components, and UX building blocks</p>
+          <p className="text-white/50">Tokens, components, and UX building blocks</p>
         </header>
 
         {/* Color tokens */}
@@ -37,7 +37,7 @@ export default function DesignSystemPage() {
             {colorVars.map((v) => (
               <div key={v} className="rounded-lg p-4" style={{ borderColor: "var(--hive-border-primary)" }}>
                 <div className="h-16 rounded-lg mb-3" style={{ background: `var(${v})` }} />
-                <div className="text-sm font-sans text-white/80">{v}</div>
+                <div className="text-sm font-sans text-white/70">{v}</div>
               </div>
             ))}
           </div>
@@ -91,11 +91,11 @@ export default function DesignSystemPage() {
         {/* Dev Links */}
         <section className="space-y-3">
           <h2 className="text-xl font-semibold">Dev Tools</h2>
-          <p className="text-white/60">Quick links to development tools</p>
+          <p className="text-white/50">Quick links to development tools</p>
           <div className="grid sm:grid-cols-2 gap-4">
             <Link className="rounded-lg p-5 hover:bg-white/[0.06] transition" href="/lab">
               <div className="text-lg font-medium mb-1">HiveLab IDE</div>
-              <div className="text-sm text-white/60">Visual tool builder</div>
+              <div className="text-sm text-white/50">Visual tool builder</div>
             </Link>
           </div>
         </section>

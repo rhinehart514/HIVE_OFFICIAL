@@ -97,7 +97,7 @@ export default function SpacesPage() {
       {!isLoading && spaces.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-[15px] text-white/50 mb-4">
-            You haven't joined any spaces yet.
+            No spaces yet — join a few and they show up here.
           </p>
           <Link
             href="/discover"

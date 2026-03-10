@@ -90,8 +90,8 @@ export function ToolsList({
       {tools.length === 0 && isLeader && (
         <div className="text-center py-4">
           <Wrench className="w-5 h-5 text-white/50 mx-auto mb-2" />
-          <p className="text-xs text-white mb-2">Make something for your members</p>
-          <p className="text-xs text-white/50">Run a poll, collect RSVPs, start a bracket</p>
+          <p className="text-xs text-white mb-2">Your members are waiting</p>
+          <p className="text-xs text-white/50">Drop a poll, collect RSVPs, run a bracket — takes 30 seconds</p>
         </div>
       )}
 
@@ -99,7 +99,7 @@ export function ToolsList({
       {tools.length === 0 && !isLeader && (
         <div className="text-center py-4">
           <Wrench className="w-5 h-5 text-white/50 mx-auto mb-2" />
-          <p className="text-xs text-white/50">No apps yet — leaders can build them from the Make tab</p>
+          <p className="text-xs text-white/50">No apps yet — check back soon, leaders are building</p>
         </div>
       )}
 

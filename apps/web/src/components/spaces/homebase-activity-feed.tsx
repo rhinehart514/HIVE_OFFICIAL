@@ -255,7 +255,7 @@ function EmptyState({ message }: { message?: string }) {
         </h3>
         <p className="text-body text-white/50 max-w-xs mx-auto mb-4">
           {message ||
-            'Join a few spaces and this feed fills up with everything happening across your campus.'}
+            'Once you join a few spaces, this fills up with polls, events, and whatever your orgs are running.'}
         </p>
         <Link
           href="/discover"

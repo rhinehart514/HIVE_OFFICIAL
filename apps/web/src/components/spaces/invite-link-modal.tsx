@@ -84,7 +84,7 @@ function QRCodeDisplay({ value }: { value: string }) {
       <div className="w-32 h-32 bg-[var(--bg-ground)] rounded-lg flex items-center justify-center">
         <QrCodeIcon className="w-16 h-16 text-white/50" />
       </div>
-      <Text size="xs" className="text-[#0A0A09]/60 text-center max-w-[200px] break-all">
+      <Text size="xs" className="text-void/60 text-center max-w-[200px] break-all">
         {value}
       </Text>
     </div>

@@ -2,7 +2,7 @@ import { Skeleton } from '@hive/ui';
 
 export default function SpaceToolLoading() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-ground, #0A0A09)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-ground, #0D0D0C)' }}>
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-start gap-4 mb-8">
@@ -17,7 +17,7 @@ export default function SpaceToolLoading() {
         <div
           className="rounded-lg p-6 min-h-[500px]"
           style={{
-            backgroundColor: 'var(--bg-void, #0A0A09)',
+            backgroundColor: 'var(--bg-void, #0D0D0C)',
             borderColor: 'rgba(255, 255, 255, 0.06)',
           }}
         >

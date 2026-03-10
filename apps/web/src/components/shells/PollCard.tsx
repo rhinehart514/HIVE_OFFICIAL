@@ -110,7 +110,7 @@ function PollCard({
                     ? 'text-[#FFD700] font-medium'
                     : showResults && isLeading
                       ? 'text-white font-medium'
-                      : 'text-white/80'
+                      : 'text-white/70'
                 }`}>
                   {option}
                 </span>
@@ -120,7 +120,7 @@ function PollCard({
                       isMyVote
                         ? 'text-[#FFD700]/80'
                         : isLeading
-                          ? 'text-white/60'
+                          ? 'text-white/50'
                           : 'text-white/30'
                     }`}
                     initial={{ opacity: 0 }}
@@ -146,7 +146,7 @@ function PollCard({
         {isCreator && !closed && (
           <button
             onClick={handleClose}
-            className="text-[12px] text-white/40 hover:text-white/60 transition-colors duration-100"
+            className="text-[12px] text-white/30 hover:text-white/50 transition-colors duration-100"
           >
             Close poll
           </button>

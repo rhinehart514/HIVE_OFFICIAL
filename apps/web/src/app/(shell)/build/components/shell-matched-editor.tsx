@@ -43,7 +43,7 @@ export function ShellMatchedEditor({
             {registryName} detected
           </span>
         </div>
-        <span className="text-[10px] text-white/20 px-2 py-0.5 rounded-full bg-white/[0.04]">
+        <span className="text-[11px] text-white/30 px-2 py-0.5 rounded-full bg-white/[0.04]">
           {Math.round(confidence * 100)}% match
         </span>
       </div>
@@ -60,7 +60,7 @@ export function ShellMatchedEditor({
         <button
           onClick={onDeploy}
           className="flex-1 flex items-center justify-center gap-2 h-10 rounded-full
-            bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors duration-100"
+            bg-[#FFD700] text-black font-semibold text-sm hover:bg-[#FFD700]/90 transition-colors duration-100"
         >
           <Zap className="w-4 h-4" />
           {hasUser ? 'Deploy' : 'Sign in to deploy'}

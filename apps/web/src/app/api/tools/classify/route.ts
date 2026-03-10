@@ -13,9 +13,11 @@ import { generateObject } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { logger } from '@/lib/logger';
 import { dbAdmin } from '@/lib/firebase-admin';
+import { buildCampusContextPrompt } from '@hive/core/domain';
 import {
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
   RATE_LIMIT_PRESETS,
 } from '@/lib/middleware';
@@ -57,22 +59,19 @@ const ClassifyResponseSchema = z.object({
 });
 
 // ============================================================================
-// UB CAMPUS KNOWLEDGE
-// ============================================================================
-
-const UB_CAMPUS_CONTEXT = `Campus: University at Buffalo (UB), Buffalo NY
-Dining: Crossroads, C3, Governor's, Sizzles, Tikka House, Moe's, Tim Hortons, Au Bon Pain, Hubie's (late night), Starbucks (Student Union & Lockwood)
-Study spots: Lockwood Library, Silverman Library, Capen Hall, NSC, Student Union, Ellicott 24hr lounges
-Landmarks: Student Union, Ellicott Complex, Center for Tomorrow, Governors Complex, Harriman Hall`;
-
-// ============================================================================
 // SYSTEM PROMPT
 // ============================================================================
 
-const CLASSIFY_SYSTEM_PROMPT = `You are a format classifier for a campus social platform called HIVE at the University at Buffalo.
+/**
+ * Build the classification system prompt with optional campus context.
+ * Falls back to a generic prompt if campusId is not recognized.
+ */
+function buildClassifySystemPrompt(campusId?: string): string {
+  const campusBlock = campusId ? buildCampusContextPrompt(campusId) : null;
+  const campusSection = campusBlock ? `\n${campusBlock}\n` : '';
 
-${UB_CAMPUS_CONTEXT}
-
+  return `You are a format classifier for a campus social platform called HIVE.
+${campusSection}
 Given a user's natural language prompt, classify it into one of these formats:
 - "poll": The user wants to ask a question with multiple choice options. Extract the question and options.
 - "bracket": The user wants a tournament/bracket where entries compete head-to-head. Extract the topic and entries.
@@ -86,7 +85,7 @@ RULES:
 - If unsure or the prompt is too vague, classify as "custom" with confidence < 0.5
 - For polls, always extract 2-6 options. If the user lists items, those are the options. If no explicit options, generate reasonable ones from context. Use campus-specific options when relevant (e.g. dining hall names, study spots).
 - For brackets, extract 4-16 entries. Pad to next power of 2 if needed. Use real campus names when the prompt is about campus topics.
-- For RSVP, extract any date/time and location mentioned. Use real UB locations when applicable.
+- For RSVP, extract any date/time and location mentioned. Use real campus locations when applicable.
 - confidence should be 0.0-1.0 where 1.0 means very certain
 
 Return JSON matching this exact schema:
@@ -95,6 +94,7 @@ Return JSON matching this exact schema:
   "confidence": number,
   "config": { ... } | null
 }`;
+}
 
 // ============================================================================
 // SPACE CONTEXT HELPER
@@ -124,6 +124,7 @@ async function fetchSpaceContext(spaceId: string): Promise<string | null> {
 export const POST = withAuthAndErrors(
   async (request, _context, respond) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const body = await request.json();
 
     const parsed = ClassifyRequestSchema.safeParse(body);
@@ -174,7 +175,7 @@ export const POST = withAuthAndErrors(
       const result = await generateObject({
         model: groq('llama-3.3-70b-versatile'),
         schema: ClassifyResponseSchema,
-        system: CLASSIFY_SYSTEM_PROMPT,
+        system: buildClassifySystemPrompt(campusId || undefined),
         prompt: userPrompt,
         temperature: 0.1,
         maxRetries: 1,

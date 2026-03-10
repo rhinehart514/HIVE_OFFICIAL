@@ -456,7 +456,7 @@ export function EventDetailDrawer({
                       })()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full p-3 rounded-xl border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-[13px] text-white/40 hover:text-white/60"
+                      className="w-full p-3 rounded-xl border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center gap-2 transition-colors duration-100 text-[13px] text-white/50 hover:text-white/70"
                     >
                       <Calendar className="w-4 h-4" />
                       Add to Google Calendar
@@ -466,7 +466,7 @@ export function EventDetailDrawer({
                   {event.linkedBoard && (event.linkedBoard.id || event.linkedBoard.boardId) && (
                     <a
                       href={spaceHandle ? `/s/${spaceHandle}?tab=chat` : '#'}
-                      className="w-full p-3 rounded-xl border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-[13px] text-[#FFD700]/60 hover:text-[#FFD700]"
+                      className="w-full p-3 rounded-xl border border-white/[0.06] bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center gap-2 transition-colors duration-100 text-[13px] text-[#FFD700]/60 hover:text-[#FFD700]"
                     >
                       <MessageCircle className="w-4 h-4" />
                       Chat about this event

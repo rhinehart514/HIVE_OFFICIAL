@@ -84,7 +84,7 @@ export function CreatePromptBar({
         params.set('space', spaceHandle);
       }
 
-      router.push(`/lab?${params.toString()}`);
+      router.push(`/build?${params.toString()}`);
       setIsFocused(false);
       setInputValue('');
       inputRef.current?.blur();
@@ -170,11 +170,7 @@ export function CreatePromptBar({
       <motion.form
         initial={false}
         animate={{
-          scale: isFocused ? 1.015 : 1,
           y: isFocused ? -1 : 0,
-          boxShadow: isFocused
-            ? '0 0 20px rgba(255,215,0,0.1)'
-            : '0 0 0 rgba(255,215,0,0)',
         }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         onSubmit={handleSubmit}
@@ -239,7 +235,7 @@ export function CreatePromptBar({
               type="button"
               onClick={onClose}
               aria-label="Close create prompt"
-              className="absolute inset-0 bg-black/40 backdrop-blur-xl"
+              className="absolute inset-0 bg-black/85"
             />
 
             <motion.div
@@ -272,5 +268,3 @@ export function CreatePromptBar({
     </>
   );
 }
-
-export default CreatePromptBar;

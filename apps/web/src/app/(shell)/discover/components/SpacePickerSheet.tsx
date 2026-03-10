@@ -40,7 +40,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
 
       {/* Sheet */}
       <motion.div
-        className="relative w-full max-w-[400px] max-h-[70vh] rounded-t-2xl sm:rounded-2xl bg-[#111] border border-white/[0.08] shadow-md shadow-black/50 overflow-hidden flex flex-col"
+        className="relative w-full max-w-[400px] max-h-[70vh] rounded-t-2xl sm:rounded-2xl bg-surface border border-white/[0.08] shadow-md shadow-black/50 overflow-hidden flex flex-col"
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 80, opacity: 0 }}
@@ -54,7 +54,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-white/40 hover:text-white/60 hover:bg-white/[0.10] transition-colors"
+            className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/50 hover:bg-white/[0.10] transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -76,14 +76,14 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
             </div>
           ) : eligible.length === 0 ? (
             <div className="py-10 px-6 text-center">
-              <p className="text-[14px] text-white/50 font-medium">No spaces yet</p>
+              <p className="text-[14px] text-white/50 font-medium">No spaces to place this in</p>
               <p className="text-[12px] text-white/30 mt-1.5 leading-relaxed">
-                Join a space to start adding apps
+                Join a space first — then you can drop apps into it
               </p>
               <Link
                 href="/discover"
                 onClick={onClose}
-                className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] text-white/60 hover:text-white/80 hover:bg-white/[0.08] transition-colors font-medium"
+                className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] text-white/50 hover:text-white/70 hover:bg-white/[0.08] transition-colors font-medium"
               >
                 Browse spaces
               </Link>

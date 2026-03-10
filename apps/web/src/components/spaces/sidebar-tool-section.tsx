@@ -160,10 +160,10 @@ function EmptyState({
       {isLeader ? (
         <>
           <Text size="sm" className="text-white/50 mb-1">
-            Make something for your members
+            Your members are waiting
           </Text>
           <Text size="xs" className="text-white/50 mb-3">
-            Run a poll, collect RSVPs, start a bracket
+            Drop a poll, collect RSVPs, run a bracket — takes 30 seconds
           </Text>
           {onAddTool && (
             <button
@@ -184,7 +184,7 @@ function EmptyState({
         </>
       ) : (
         <Text size="sm" className="text-white/50">
-          No apps here yet — leaders can add them
+          No apps yet — check back soon, leaders are building
         </Text>
       )}
     </div>
@@ -381,7 +381,7 @@ export function SidebarToolSection({
                   'flex items-center gap-2',
                   'text-white/50 hover:text-white/50',
                   'hover:bg-white/[0.06]',
-                  'transition-all duration-150',
+                  'transition-colors duration-100',
                   'border border-dashed border-white/[0.06] hover:border-white/[0.06]'
                 )}
                 whileHover={{ opacity: 0.96 }}

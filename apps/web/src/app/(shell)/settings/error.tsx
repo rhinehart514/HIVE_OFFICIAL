@@ -20,7 +20,7 @@ export default function SettingsError({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+    <div className="min-h-screen bg-void flex items-center justify-center px-4">
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-[var(--hive-brand-primary)]/10 p-4">

@@ -181,7 +181,7 @@ function SearchInput({ value, onChange, onClear, placeholder }: SearchInputProps
           'rounded-lg py-2.5 pl-9 pr-9',
           'text-sm text-white placeholder:text-white/50',
           'focus:outline-none focus:outline-2 focus:outline-[#FFD700] focus:bg-white/[0.06]',
-          'transition-all duration-150'
+          'transition-colors duration-100'
         )}
       />
       {value && (
@@ -228,53 +228,35 @@ function TabPills({ tabs, selected, onSelect }: TabPillsProps) {
 // Empty State
 // ============================================================
 
-function EmptyState({ isSearch }: { isSearch?: boolean }) {
+function EmptyState({ isSearch, onClear }: { isSearch?: boolean; onClear?: () => void }) {
   return (
     <motion.div
-      className="py-24 px-6 text-center"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
+      className="py-16 px-6 text-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
     >
-      {/* Icon with entrance */}
-      <motion.div
-        className="w-16 h-16 mx-auto mb-6 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center"
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
+      <h3
+        className="text-[20px] font-semibold text-white mb-2"
+        style={{ fontFamily: 'var(--font-clash)' }}
       >
-        <MagnifyingGlassIcon className="w-6 h-6 text-white/50" />
-      </motion.div>
+        {isSearch ? 'No matches' : 'This corner is quiet'}
+      </h3>
+      <p className="text-[14px] text-white/50 max-w-xs mx-auto mb-4">
+        {isSearch
+          ? 'Try different words or switch categories — 650+ orgs are in here, from SGA to club rugby.'
+          : 'Nothing in this category yet. Try Student Orgs — that\'s where most of UB lives.'
+        }
+      </p>
 
-      {/* Narrative headline */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
-      >
-        <h3
-          className="text-title-lg md:text-heading-sm font-semibold text-white mb-3"
-          style={{ fontFamily: 'var(--font-clash)' }}
+      {isSearch && onClear && (
+        <button
+          onClick={onClear}
+          className="text-[14px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors duration-100"
         >
-          {isSearch ? 'No matches' : 'Nothing in this category yet'}
-        </h3>
-        <p className="text-body-lg text-white/50 max-w-sm mx-auto mb-6">
-          {isSearch
-            ? 'Try a different search or switch categories to find your people.'
-            : 'Spaces show up here as they get created. Try Student Orgs or browse all.'
-          }
-        </p>
-
-        {/* Recovery action */}
-        {isSearch && (
-          <button
-            onClick={() => window.location.reload()}
-            className="text-body-sm text-[var(--color-gold)]/60 hover:text-[var(--color-gold)]/80 transition-colors"
-          >
-            Clear search
-          </button>
-        )}
-      </motion.div>
+          Clear search
+        </button>
+      )}
     </motion.div>
   );
 }
@@ -541,7 +523,7 @@ export function DiscoverSection({
             </div>
           ) : displayedSpaces.length === 0 ? (
             // Empty state
-            <EmptyState isSearch={!!searchQuery} />
+            <EmptyState isSearch={!!searchQuery} onClear={() => setSearchQuery('')} />
           ) : (
             // Results list
             <div>

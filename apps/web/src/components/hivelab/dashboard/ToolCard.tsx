@@ -109,7 +109,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
         whileTap={{ scale: 0.98 }}
         onClick={() => onClick(tool.id)}
         className="group relative flex flex-col items-start p-4 rounded-2xl
-         border border-white/[0.06] bg-[#080808]
+         border border-white/[0.06] bg-void
           hover:bg-white/[0.03]
           transition-colors duration-200 text-left w-full"
       >
@@ -117,7 +117,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
           <span className="text-white font-medium text-sm truncate pr-2 flex-1">
             {tool.name || 'Untitled Tool'}
           </span>
-          <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full
+          <span className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full
             ${status.bg} ${status.text} flex-shrink-0`}>
             <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
             {status.label}
@@ -145,7 +145,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
     <motion.div
       whileHover={{ opacity: 0.96 }}
       className="group relative flex flex-col p-4 rounded-2xl
-       border border-white/[0.06] bg-[#080808]
+       border border-white/[0.06] bg-void
         hover:bg-white/[0.03]
         transition-colors duration-200 text-left w-full cursor-pointer"
       onClick={() => onClick(tool.id)}
@@ -155,7 +155,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
         <span className="text-white font-medium text-sm truncate pr-2 flex-1">
           {tool.name || 'Untitled Tool'}
         </span>
-        <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full
+        <span className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full
           ${status.bg} ${status.text} flex-shrink-0`}>
           <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
           {status.label}

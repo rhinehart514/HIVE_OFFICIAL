@@ -102,7 +102,7 @@ export function EventCard({
       className={cn(
         'rounded-lg',
         'bg-white/[0.06] hover:bg-white/[0.06]',
-        'transition-all duration-150',
+        'transition-colors duration-100',
         'cursor-pointer',
         isStartingSoon
           ? 'border border-[var(--color-gold)]/20 hover:border-[var(--color-gold)]/30'
@@ -119,11 +119,11 @@ export function EventCard({
       {/* Space badge (when showing in cross-space context like home) */}
       {event.spaceName && (
         <div className="flex items-center gap-2 mb-3">
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-gold)]/10 text-[var(--color-gold)] truncate max-w-[200px]">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--color-gold)]/10 text-[var(--color-gold)] truncate max-w-[200px]">
             {event.spaceName}
           </span>
           {event.isLive && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-500/10 text-red-400">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-500/10 text-red-400">
               <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
               Live
             </span>
@@ -157,13 +157,13 @@ export function EventCard({
                     repeat: Infinity,
                     ease: MOTION.ease.default,
                   }}
-                  className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--color-gold)]/20 text-[var(--color-gold)]"
+                  className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--color-gold)]/20 text-[var(--color-gold)]"
                 >
                   <Zap className="w-2.5 h-2.5" />
                   {timeUntil}
                 </motion.span>
               ) : (
-                <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--color-gold)]/10 text-[var(--color-gold)]">
+                <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--color-gold)]/10 text-[var(--color-gold)]">
                   {timeUntil}
                 </span>
               )

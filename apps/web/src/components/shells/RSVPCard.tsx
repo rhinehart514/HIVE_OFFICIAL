@@ -131,7 +131,7 @@ function RSVPCard({
             {attendeeList.map((a, i) => (
               <div
                 key={a.userId}
-                className="w-7 h-7 rounded-full border-2 border-[#111] bg-white/[0.08] flex items-center justify-center overflow-hidden"
+                className="w-7 h-7 rounded-full border-2 border-surface bg-white/[0.08] flex items-center justify-center overflow-hidden"
                 style={{ zIndex: 5 - i }}
               >
                 {a.photoURL ? (
@@ -141,7 +141,7 @@ function RSVPCard({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-[10px] text-white/40">
+                  <span className="text-[11px] text-white/30">
                     {a.displayName?.charAt(0)?.toUpperCase() || '?'}
                   </span>
                 )}

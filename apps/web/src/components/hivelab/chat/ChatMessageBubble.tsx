@@ -57,7 +57,7 @@ export function ChatMessageBubble({
         className="flex justify-center"
       >
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full
-          bg-white/[0.04] text-white/40 text-xs">
+          bg-white/[0.04] text-white/30 text-xs">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
@@ -129,7 +129,7 @@ export function ChatMessageBubble({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: EASE }}
     >
-      <p className="text-white/60 text-[15px] leading-relaxed">{message.content}</p>
+      <p className="text-white/50 text-[15px] leading-relaxed">{message.content}</p>
     </motion.div>
   );
 }

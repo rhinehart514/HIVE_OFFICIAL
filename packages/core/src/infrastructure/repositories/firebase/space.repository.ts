@@ -52,6 +52,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
       const q = query(
         collection(db, this.collectionName),
         where('name', '==', name),
+        where('campusId', '==', campusId),
         firestoreLimit(1)
       );
       const snapshot = await getDocs(q);
@@ -79,6 +80,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
       const q = query(
         collection(db, this.collectionName),
         where('slug', '==', slug),
+        where('campusId', '==', campusId),
         firestoreLimit(1)
       );
       const snapshot = await getDocs(q);
@@ -105,6 +107,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
     try {
       const q = query(
         collection(db, this.collectionName),
+        where('campusId', '==', campusId),
         where('isActive', '==', true),
         orderBy('memberCount', 'desc'),
         firestoreLimit(limitCount)
@@ -129,6 +132,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
     try {
       const q = query(
         collection(db, this.collectionName),
+        where('campusId', '==', campusId),
         where('category', '==', category),
         where('isActive', '==', true),
         orderBy('memberCount', 'desc'),
@@ -180,6 +184,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
     try {
       const q = query(
         collection(db, this.collectionName),
+        where('campusId', '==', campusId),
         where('isActive', '==', true),
         where('trendingScore', '>', 0),
         orderBy('trendingScore', 'desc'),
@@ -211,6 +216,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
       // Get popular spaces
       const popularQuery = query(
         collection(db, this.collectionName),
+        where('campusId', '==', campusId),
         where('isActive', '==', true),
         orderBy('memberCount', 'desc'),
         firestoreLimit(10)
@@ -228,6 +234,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
       if (major) {
         const majorQuery = query(
           collection(db, this.collectionName),
+          where('campusId', '==', campusId),
           where('tags', 'array-contains', major.toLowerCase()),
           where('isActive', '==', true),
           firestoreLimit(5)
@@ -263,6 +270,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
       // name_lowercase >= "searchterm" AND name_lowercase < "searchterm\uf8ff"
       const q = query(
         collection(db, this.collectionName),
+        where('campusId', '==', campusId),
         where('isActive', '==', true),
         where('name_lowercase', '>=', searchLower),
         where('name_lowercase', '<=', searchLower + '\uf8ff'),
@@ -287,6 +295,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
       try {
         const fallbackQuery = query(
           collection(db, this.collectionName),
+          where('campusId', '==', campusId),
           where('isActive', '==', true),
           orderBy('memberCount', 'desc'),
           firestoreLimit(20)
@@ -383,9 +392,9 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
   // Additional methods required by interface
   async findByType(type: string, campusId: string): Promise<Result<EnhancedSpace[]>> {
     try {
-      // Type could be a sub-category or feature type
       const q = query(
         collection(db, this.collectionName),
+        where('campusId', '==', campusId),
         where('type', '==', type),
         where('isActive', '==', true),
         orderBy('memberCount', 'desc'),
@@ -450,6 +459,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
     try {
       const q = query(
         collection(db, this.collectionName),
+        where('campusId', '==', campusId),
         where('visibility', '==', 'public'),
         where('isActive', '==', true),
         orderBy('memberCount', 'desc'),
@@ -504,6 +514,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
 
       // Build query constraints
       const constraints: Parameters<typeof query>[1][] = [
+        where('campusId', '==', campusId),
         where('isActive', '==', true)
       ];
 

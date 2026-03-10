@@ -121,14 +121,19 @@ export function deriveCampusFromEmail(email: string): string | undefined {
   }
 
   const domain = normalized.split('@')[1];
+  if (!domain) return undefined;
 
-  // UB Buffalo domains
+  // Known campus domains (exact match)
   if (domain === 'buffalo.edu' || domain === 'ub.edu') {
     return 'ub-buffalo';
   }
 
-  // Add more campus domains here as they onboard:
-  // if (domain === 'example.edu') return 'example-campus';
+  // Generic .edu fallback: derive campusId from domain
+  // e.g., nyu.edu -> nyu, umich.edu -> umich
+  if (domain.endsWith('.edu')) {
+    const subdomain = domain.replace(/\.edu$/, '').replace(/\./g, '-');
+    return subdomain;
+  }
 
   return undefined;
 }

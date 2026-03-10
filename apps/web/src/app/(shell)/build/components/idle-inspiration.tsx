@@ -17,15 +17,15 @@ export function IdleInspiration() {
       </p>
       <div className="grid gap-3 w-full max-w-md">
         {/* Mini poll preview */}
-        <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
+        <div className="rounded-2xl border border-white/[0.06] bg-surface p-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
-              <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">Poll</span>
+              <span className="font-mono text-[11px] text-white/30 uppercase tracking-wider">Poll</span>
             </div>
-            <span className="text-[10px] text-white/50">247 votes</span>
+            <span className="text-[11px] text-white/50">247 votes</span>
           </div>
-          <p className="text-sm text-white/60 mb-3">Best late-night food near campus?</p>
+          <p className="text-sm text-white/50 mb-3">Best late-night food near campus?</p>
           <div className="space-y-1.5">
             <div className="h-7 rounded-lg bg-white/[0.06] relative overflow-hidden">
               <div className="absolute inset-y-0 left-0 w-[42%] bg-[#FFD700]/[0.15] rounded-lg" />
@@ -45,20 +45,20 @@ export function IdleInspiration() {
         </div>
         {/* Mini RSVP + Bracket side by side */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
-            <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">RSVP</span>
-            <p className="text-sm text-white/60 mt-1.5 mb-2">SGA Town Hall</p>
+          <div className="rounded-2xl border border-white/[0.06] bg-surface p-4">
+            <span className="font-mono text-[11px] text-white/30 uppercase tracking-wider">RSVP</span>
+            <p className="text-sm text-white/50 mt-1.5 mb-2">SGA Town Hall</p>
             <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
               <div className="h-full w-[73%] bg-white/20 rounded-full" />
             </div>
-            <p className="text-[10px] text-white/50 mt-1.5">147/200 going</p>
+            <p className="text-[11px] text-white/50 mt-1.5">147/200 going</p>
           </div>
-          <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-4">
-            <span className="font-mono text-[10px] text-white/30 uppercase tracking-wider">Bracket</span>
-            <p className="text-sm text-white/60 mt-1.5 mb-2">Best CSE prof</p>
+          <div className="rounded-2xl border border-white/[0.06] bg-surface p-4">
+            <span className="font-mono text-[11px] text-white/30 uppercase tracking-wider">Bracket</span>
+            <p className="text-sm text-white/50 mt-1.5 mb-2">Best CSE prof</p>
             <div className="flex rounded-lg overflow-hidden border border-white/[0.06]">
-              <div className="flex-1 py-1.5 text-center text-[10px] bg-white/[0.06] text-white/50">Hertz</div>
-              <div className="flex-1 py-1.5 text-center text-[10px] bg-white/[0.02] text-white/50">Alphonce</div>
+              <div className="flex-1 py-1.5 text-center text-[11px] bg-white/[0.06] text-white/50">Hertz</div>
+              <div className="flex-1 py-1.5 text-center text-[11px] bg-white/[0.02] text-white/50">Alphonce</div>
             </div>
           </div>
         </div>

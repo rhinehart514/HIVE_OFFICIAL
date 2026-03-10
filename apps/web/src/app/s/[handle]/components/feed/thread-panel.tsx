@@ -227,9 +227,9 @@ export function ThreadPanel({
                 </div>
               ) : replies.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-sm text-white/50">No replies yet — be the first</p>
+                  <p className="text-sm text-white/50">No replies yet — say something</p>
                   <p className="text-xs text-white/50 mt-1">
-                    Start the conversation
+                    Be the one who starts it
                   </p>
                 </div>
               ) : (

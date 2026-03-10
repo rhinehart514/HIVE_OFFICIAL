@@ -43,11 +43,11 @@ function ProfileShell({ user }: { user: { id: string; email?: string | null; dis
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="min-h-screen bg-void pb-24">
       <div className="mx-auto max-w-2xl px-4 pt-16">
         <div className="flex flex-col items-center text-center">
           <div className="h-20 w-20 rounded-full bg-white/[0.06] border border-white/[0.06] flex items-center justify-center mb-4">
-            <span className="text-2xl font-medium text-white/40">{initial}</span>
+            <span className="text-2xl font-medium text-white/30">{initial}</span>
           </div>
           <h1 className="text-xl font-semibold text-white mb-1">{displayName}</h1>
           {user.email && (

@@ -750,7 +750,7 @@ export function MemberManagement({
               'bg-white/[0.06] border border-white/[0.06]',
               'text-white placeholder:text-white/50',
               'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
-              'transition-all duration-150'
+              'transition-colors duration-100'
             )}
           />
         </div>
@@ -760,7 +760,7 @@ export function MemberManagement({
       {filteredMembers.length === 0 ? (
         <div className="py-12 text-center">
           <Text tone="muted">
-            {searchQuery ? 'Nobody by that name here' : 'No members yet — share your space to get people in'}
+            {searchQuery ? 'No one by that name here' : 'No members yet — drop your invite link in the GroupMe'}
           </Text>
         </div>
       ) : (

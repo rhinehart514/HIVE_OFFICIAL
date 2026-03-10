@@ -6,11 +6,12 @@
  * the corresponding HIVE spaces (imported via import-campuslabs.mjs).
  *
  * Usage:
- *   node scripts/sync-campuslabs-events.mjs [--dry-run] [--campus ub-buffalo]
+ *   node scripts/sync-campuslabs-events.mjs [--dry-run] [--school buffalo] [--campus-id ub-buffalo]
  *
  * Options:
- *   --dry-run     Preview what would be synced without writing to Firestore
- *   --campus      Campus ID to filter spaces (default: ub-buffalo)
+ *   --dry-run              Preview what would be synced without writing to Firestore
+ *   --school [subdomain]   CampusLabs subdomain for RSS URL (default: buffalo)
+ *   --campus-id [id]       Campus ID for Firestore writes (default: ub-buffalo)
  */
 
 import { initializeApp, cert } from 'firebase-admin/app';
@@ -27,9 +28,38 @@ const __dirname = dirname(__filename);
 // Configuration
 // =============================================================================
 
+/**
+ * Parse CLI flags:
+ *   --school [subdomain]    CampusLabs subdomain (default: buffalo)
+ *   --campus-id [id]        Firestore campusId (default: ub-buffalo)
+ */
+function parseCliFlags() {
+  const args = process.argv.slice(2);
+  let school = 'buffalo';
+  let campusIdFlag = 'ub-buffalo';
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--school' && args[i + 1]) {
+      school = args[i + 1];
+      i++;
+    } else if (args[i].startsWith('--school=')) {
+      school = args[i].split('=')[1];
+    } else if (args[i] === '--campus-id' && args[i + 1]) {
+      campusIdFlag = args[i + 1];
+      i++;
+    } else if (args[i].startsWith('--campus-id=')) {
+      campusIdFlag = args[i].split('=')[1];
+    }
+  }
+
+  return { school, campusIdFlag };
+}
+
+const { school: CLI_SCHOOL, campusIdFlag: CLI_CAMPUS_ID } = parseCliFlags();
+
 const CONFIG = {
-  // CampusLabs RSS feed (UB Buffalo)
-  RSS_URL: 'https://buffalo.campuslabs.com/engage/events.rss',
+  // CampusLabs RSS feed (parameterized by --school flag)
+  RSS_URL: `https://${CLI_SCHOOL}.campuslabs.com/engage/events.rss`,
 
   // Batch size for Firestore writes
   BATCH_SIZE: 400,
@@ -155,7 +185,7 @@ function parseEvent(item) {
     imageUrl: item.enclosure?.['$']?.url || null,
 
     // Campus isolation (required for security rules)
-    campusId: 'ub-buffalo',
+    campusId: CLI_CAMPUS_ID,
 
     // Metadata
     createdAt: FieldValue.serverTimestamp(),
@@ -345,12 +375,14 @@ async function syncEvents(db, events, spaceIndex, dryRun = false) {
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
-  const campusId = args.find(a => a.startsWith('--campus='))?.split('=')[1] || 'ub-buffalo';
+  const campusId = CLI_CAMPUS_ID;
 
   console.log('='.repeat(60));
   console.log('CampusLabs Event Sync');
   console.log('='.repeat(60));
-  console.log(`Campus: ${campusId}`);
+  console.log(`School: ${CLI_SCHOOL}`);
+  console.log(`Campus ID: ${campusId}`);
+  console.log(`RSS URL: ${CONFIG.RSS_URL}`);
   console.log(`Dry Run: ${dryRun}`);
   console.log('');
 

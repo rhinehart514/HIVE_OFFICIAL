@@ -436,7 +436,7 @@ export const metadata: Metadata = {
 export default function CommunityGuidelinesPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-void">
       {/* Header */}
       <div className="border-b border-white/[0.06] bg-[var(--bg-void)]/50">
         <div className="mx-auto max-w-4xl px-4 py-6">

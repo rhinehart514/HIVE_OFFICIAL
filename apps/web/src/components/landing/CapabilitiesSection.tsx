@@ -102,7 +102,7 @@ function PollCard() {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-75" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#FFD700]" />
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/50">
+        <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/50">
           Live poll
         </span>
       </div>
@@ -124,10 +124,10 @@ function PollCard() {
             />
             {/* Content */}
             <div className="relative z-10 flex h-full items-center justify-between px-3">
-              <span className={`text-[13px] ${i === 0 ? 'text-white font-medium' : 'text-white/60'}`}>
+              <span className={`text-[13px] ${i === 0 ? 'text-white font-medium' : 'text-white/50'}`}>
                 {opt.label}
               </span>
-              <span className={`font-mono text-[12px] tabular-nums ${i === 0 ? 'text-white' : 'text-white/40'}`}>
+              <span className={`font-mono text-[12px] tabular-nums ${i === 0 ? 'text-white' : 'text-white/30'}`}>
                 {opt.pct}%
               </span>
             </div>
@@ -149,7 +149,7 @@ function RSVPCard() {
   return (
     <div>
       <div className="mb-1">
-        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/50">
+        <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/50">
           RSVP
         </span>
       </div>
@@ -160,7 +160,7 @@ function RSVPCard() {
       {/* Attendance bar */}
       <div className="mb-4">
         <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-[13px] text-white/60">
+          <span className="text-[13px] text-white/50">
             <span className="text-white font-medium">{confirmed}</span> going
           </span>
           <span className="font-mono text-[12px] text-white/30">{total} spots</span>
@@ -196,7 +196,7 @@ function BracketCard() {
   return (
     <div>
       <div className="mb-1">
-        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/50">
+        <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/50">
           Bracket
         </span>
       </div>
@@ -222,7 +222,7 @@ function BracketCard() {
                 {m.a}
               </div>
               {/* Divider */}
-              <span className="shrink-0 bg-white/[0.04] px-2 py-2.5 font-mono text-[10px] text-white/30">
+              <span className="shrink-0 bg-white/[0.04] px-2 py-2.5 font-mono text-[11px] text-white/30">
                 vs
               </span>
               {/* Side B */}

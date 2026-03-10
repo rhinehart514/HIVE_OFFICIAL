@@ -397,7 +397,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
         {/* Description */}
         {event.description && (
           <div>
-            <h2 className="text-xs font-medium uppercase tracking-wider text-white/40 mb-2">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-white/30 mb-2">
               About
             </h2>
             <p className="text-white/70 leading-relaxed whitespace-pre-wrap">
@@ -409,7 +409,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
         {/* Attendees */}
         {goingAttendees.length > 0 && (
           <div>
-            <h2 className="text-xs font-medium uppercase tracking-wider text-white/40 mb-3">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-white/30 mb-3">
               Going ({goingAttendees.length})
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -431,7 +431,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
 
         {maybeAttendees.length > 0 && (
           <div>
-            <h2 className="text-xs font-medium uppercase tracking-wider text-white/40 mb-3">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-white/30 mb-3">
               Maybe ({maybeAttendees.length})
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -454,7 +454,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
         {/* Organizer */}
         {event.organizer && (
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-white/40 mb-3">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-white/30 mb-3">
               Hosted by
             </h2>
             <div className="flex items-center gap-3">
@@ -489,7 +489,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
         {/* Related events */}
         {event.relatedEvents.length > 0 && (
           <div>
-            <h2 className="text-xs font-medium uppercase tracking-wider text-white/40 mb-3">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-white/30 mb-3">
               More from {event.space?.name ?? 'this org'}
             </h2>
             <div className="space-y-2">

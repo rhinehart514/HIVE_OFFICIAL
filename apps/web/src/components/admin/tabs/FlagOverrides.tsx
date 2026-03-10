@@ -27,7 +27,7 @@ export function FlagOverrides() {
           <Flag size={12} />
           Feature Flags
           {overrideCount > 0 && (
-            <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-bold">
+            <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[11px] font-bold">
               {overrideCount}
             </span>
           )}
@@ -58,7 +58,7 @@ export function FlagOverrides() {
             >
               <div className="min-w-0">
                 <p className="text-[12px] text-white/50 font-sans truncate">{flagId}</p>
-                <p className="text-[10px] text-white/50">
+                <p className="text-[11px] text-white/50">
                   Server: {serverValue ? 'ON' : 'OFF'}
                   {hasOverride && ' → Overridden'}
                 </p>
@@ -91,7 +91,7 @@ export function FlagOverrides() {
               >
                 <span
                   className={`
-                    absolute top-0.5 w-4 h-4 rounded-full transition-all duration-200
+                    absolute top-0.5 w-4 h-4 rounded-full transition-[left,background-color] duration-200
                     ${effectiveValue
                       ? 'left-[18px] bg-emerald-400'
                       : 'left-0.5 bg-white/50'
@@ -105,7 +105,7 @@ export function FlagOverrides() {
       </div>
 
       {/* Footer */}
-      <p className="text-[10px] text-white/50 text-center pt-1">
+      <p className="text-[11px] text-white/50 text-center pt-1">
         Overrides are session-scoped. Close tab to reset.
       </p>
     </div>

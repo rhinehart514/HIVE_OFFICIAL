@@ -23,14 +23,13 @@ export function CTASection() {
         <h2
           className={`${displayFont} mb-5 text-[clamp(32px,6vw,56px)] font-bold leading-tight tracking-[-0.03em] text-white`}
         >
-          Be the first to build for
+          Build for
           <br />
           <span className="text-[#FFD700]">your people.</span>
         </h2>
 
         <p className="mx-auto mb-10 max-w-md text-base text-white/50">
-          Your campus is waiting. The first makers shape what everyone uses.
-          Build something your org actually needs.
+          650+ orgs are already here. Build something yours actually needs.
         </p>
 
         <Link
@@ -41,7 +40,7 @@ export function CTASection() {
         </Link>
 
         <p className="mt-4 text-[13px] text-white/50">
-          Join 650+ organizations already on HIVE
+          Free with your .edu email
         </p>
         <p className="mt-2 font-mono text-[11px] text-white/30">
           your .edu email · takes 30 seconds

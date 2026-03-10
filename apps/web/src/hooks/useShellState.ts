@@ -12,6 +12,25 @@ import { getDatabase, ref, onValue, off, set, update, type DataSnapshot } from '
 import { app } from '@hive/core';
 import type { ShellState, ShellAction, PollState, BracketState, RSVPState } from '@/lib/shells/types';
 
+/**
+ * Fire-and-forget call to check if this interaction crossed a social-proof threshold.
+ * Auth'd users write to RTDB directly (fast), then this async call triggers
+ * the server-side notification check so creators get pull-back notifications.
+ */
+function notifyThresholdCheck(
+  toolId: string,
+  actionType: 'poll_vote' | 'bracket_vote' | 'rsvp_toggle' | 'poll_close',
+  displayName?: string,
+) {
+  fetch(`/api/tools/${toolId}/check-threshold`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ actionType, displayName }),
+  }).catch(() => {
+    // Non-blocking — threshold check is best-effort
+  });
+}
+
 export interface UseShellStateResult {
   state: ShellState | null;
   isConnected: boolean;
@@ -104,8 +123,8 @@ export function useShellState(shellId: string | null): UseShellStateResult {
               votedAt: Date.now(),
             }).catch(() => {});
 
-            // Update vote count atomically via update
-            // We re-read on next onValue, so eventual consistency is fine
+            // Check social-proof threshold (fire-and-forget)
+            notifyThresholdCheck(shellId, 'poll_vote', meta?.displayName);
             break;
           }
 
@@ -115,6 +134,9 @@ export function useShellState(shellId: string | null): UseShellStateResult {
               return { ...prev, closed: true, closedAt: Date.now() } as PollState;
             });
             update(ref(database, basePath), { closed: true, closedAt: Date.now() }).catch(() => {});
+
+            // Notify voters about poll results (fire-and-forget)
+            notifyThresholdCheck(shellId, 'poll_close');
             break;
           }
 
@@ -146,6 +168,9 @@ export function useShellState(shellId: string | null): UseShellStateResult {
                 set(votePathRef, action.choice).catch(() => {});
               }
             }
+
+            // Check social-proof threshold (fire-and-forget)
+            notifyThresholdCheck(shellId, 'bracket_vote');
             break;
           }
 
@@ -185,6 +210,9 @@ export function useShellState(shellId: string | null): UseShellStateResult {
                 photoURL: meta?.photoURL ?? null,
                 rsvpAt: Date.now(),
               }).catch(() => {});
+
+              // Check social-proof threshold (fire-and-forget, only on RSVP add)
+              notifyThresholdCheck(shellId, 'rsvp_toggle', meta?.displayName);
             }
             break;
           }

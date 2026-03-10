@@ -62,6 +62,7 @@ const GenerateToolRequestSchema = z.object({
 export async function POST(request: NextRequest) {
   // Track user ID for usage (optional - allow unauthenticated for demo)
   let userId: string | null = null;
+  let campusId: string | null = null;
 
   try {
     // Rate limit check - use IP for unauthenticated, user ID for authenticated
@@ -74,6 +75,7 @@ export async function POST(request: NextRequest) {
     try {
       const auth = await validateApiAuth(request, { operation: 'tool-generate' });
       userId = auth.userId;
+      campusId = auth.campusId;
     } catch {
       return NextResponse.json(
         { error: 'Authentication required', message: 'Sign in to create apps.' },
@@ -134,28 +136,27 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          const spaceCtx = validated.spaceContext ? {
+            type: validated.spaceContext.spaceType,
+            memberCount: validated.spaceContext.memberCount,
+            name: validated.spaceContext.spaceName,
+            campusId: campusId ?? undefined,
+          } : campusId ? { campusId } : undefined;
+
           const generator: AsyncGenerator<StreamMessage | CodeStreamMessage> = isCodeMode
             ? generateCodeToolStream({
                 prompt: validated.prompt,
                 existingCode: validated.existingCode,
                 existingName: validated.existingName,
                 isIteration: validated.isIteration,
-                spaceContext: validated.spaceContext ? {
-                  type: validated.spaceContext.spaceType,
-                  memberCount: validated.spaceContext.memberCount,
-                  name: validated.spaceContext.spaceName,
-                } : undefined,
+                spaceContext: spaceCtx,
               })
             : generateToolStream({
                 prompt: validated.prompt,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 existingComposition: validated.existingComposition as any,
                 isIteration: validated.isIteration,
-                spaceContext: validated.spaceContext ? {
-                  type: validated.spaceContext.spaceType,
-                  memberCount: validated.spaceContext.memberCount,
-                  name: validated.spaceContext.spaceName,
-                } : undefined,
+                spaceContext: spaceCtx,
               }) as AsyncGenerator<StreamMessage>;
 
           const genMode = validated.isIteration ? 'iteration' : 'new';

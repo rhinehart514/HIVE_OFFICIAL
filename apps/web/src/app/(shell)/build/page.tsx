@@ -24,6 +24,7 @@ import { IdleExamples } from './components/idle-examples';
 import { ShellMatchedEditor } from './components/shell-matched-editor';
 import { CompleteActions } from './components/complete-actions';
 import { BuildPreviewPanel } from './components/build-preview-panel';
+import { ImpactStrip } from './components/impact-strip';
 import { savePendingDeploy, loadPendingDeploy } from './components/deploy-storage';
 
 export default function BuildPage() {
@@ -127,8 +128,10 @@ export default function BuildPage() {
             style={{ background: 'radial-gradient(ellipse at 50% 30%, #FFD700, transparent 70%)' }}
           />
           <div className="relative px-5 py-6 flex flex-col overflow-y-auto">
+            {user && state.phase === 'idle' && <ImpactStrip />}
+
             <div className="mb-4">
-              <h1 className="text-base font-medium text-white mb-0.5">What do you need?</h1>
+              <h1 className="font-clash text-[32px] font-semibold tracking-[-0.03em] text-white mb-0.5">What do you need?</h1>
               {originSpaceName ? (
                 <p className="text-sm text-white/50">
                   Building for <span className="text-white/70 font-medium">{originSpaceName}</span>
@@ -180,7 +183,7 @@ export default function BuildPage() {
                 <p className="text-sm text-red-400/80 mb-3">{state.error}</p>
                 <button
                   onClick={reset}
-                  className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/60 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/50 transition-colors"
                 >
                   <RotateCcw className="w-3 h-3" />
                   Try again

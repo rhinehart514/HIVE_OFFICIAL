@@ -67,10 +67,10 @@ function CategoryPill({
     <button
       onClick={onClick}
       className={`
-        px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150
+        px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors duration-100
         ${isActive
           ? 'bg-white text-black'
-          : 'bg-white/[0.05] text-white/40 hover:bg-white/[0.08] hover:text-white/60'
+          : 'bg-white/[0.05] text-white/30 hover:bg-white/[0.08] hover:text-white/50'
         }
       `}
     >
@@ -90,20 +90,20 @@ function ToolCard({
     <motion.button
       onClick={() => onClick(tool.slug)}
       className="group text-left w-full p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06]
-        hover:bg-white/[0.06] hover:border-white/[0.1] transition-all duration-150"
+        hover:bg-white/[0.06] hover:border-white/[0.1] transition-colors duration-100"
       whileHover={{ y: -1 }}
       transition={{ duration: 0.15 }}
     >
       <div className="flex items-start justify-between mb-2">
-        <h3 className="text-[15px] font-medium text-white/80 group-hover:text-white transition-colors truncate pr-2">
+        <h3 className="text-[15px] font-medium text-white/70 group-hover:text-white transition-colors truncate pr-2">
           {tool.name}
         </h3>
         <span
           className={`
-            shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider
+            shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider
             ${tool.badge === 'official'
               ? 'bg-[#FFD700]/15 text-[#FFD700]'
-              : 'bg-white/[0.06] text-white/35'
+              : 'bg-white/[0.06] text-white/30'
             }
           `}
         >
@@ -112,7 +112,7 @@ function ToolCard({
       </div>
 
       {tool.description && (
-        <p className="text-sm text-white/35 line-clamp-2 mb-3 leading-relaxed">
+        <p className="text-sm text-white/30 line-clamp-2 mb-3 leading-relaxed">
           {tool.description}
         </p>
       )}
@@ -121,7 +121,7 @@ function ToolCard({
         <span className="inline-flex px-2 py-0.5 rounded-full bg-[#FFD700]/[0.08] text-[#FFD700] text-[11px] font-medium">
           {tool.category}
         </span>
-        <span className="text-[11px] text-white/25">
+        <span className="text-[11px] text-white/30">
           {tool.weeklyUsers > 0 ? `${tool.weeklyUsers} this week` : 'New'}
         </span>
       </div>
@@ -164,7 +164,7 @@ export default function CampusToolsDirectory() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-void flex items-center justify-center">
         <BrandSpinner size="md" variant="gold" />
       </div>
     );
@@ -172,7 +172,7 @@ export default function CampusToolsDirectory() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-void flex flex-col items-center justify-center px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -197,7 +197,7 @@ export default function CampusToolsDirectory() {
   }
 
   return (
-    <div className="min-h-screen bg-black px-6 py-8 max-w-5xl mx-auto">
+    <div className="min-h-screen bg-void px-6 py-8 max-w-5xl mx-auto">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: 12 }}
@@ -205,8 +205,8 @@ export default function CampusToolsDirectory() {
         transition={{ duration: durationSeconds.standard, ease: EASE }}
         className="mb-6"
       >
-        <h1 className="text-xl font-medium text-white/80">Campus Apps</h1>
-        <p className="text-sm text-white/35 mt-1">
+        <h1 className="text-xl font-medium text-white/70">Campus Apps</h1>
+        <p className="text-sm text-white/30 mt-1">
           Apps made and deployed for your campus
         </p>
       </motion.header>
@@ -244,7 +244,7 @@ export default function CampusToolsDirectory() {
       {/* Error */}
       {error && (
         <div className="text-center py-16">
-          <p className="text-white/40 text-sm">
+          <p className="text-white/30 text-sm">
             Failed to load campus apps. Try refreshing.
           </p>
         </div>
@@ -289,10 +289,10 @@ export default function CampusToolsDirectory() {
           >
             {filteredTools.length > 0 && (
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xs font-medium text-white/40 tracking-wide uppercase">
+                <h2 className="text-xs font-medium text-white/30 tracking-wide uppercase">
                   {activeCategory === 'All' ? 'All Apps' : activeCategory}
                 </h2>
-                <span className="text-xs text-white/25">{filteredTools.length}</span>
+                <span className="text-xs text-white/30">{filteredTools.length}</span>
               </div>
             )}
 
@@ -315,16 +315,16 @@ export default function CampusToolsDirectory() {
               </div>
             ) : (
               <div className="text-center py-20">
-                <p className="text-white/40 text-sm mb-2">
+                <p className="text-white/30 text-sm mb-2">
                   {activeCategory === 'All'
-                    ? 'No campus apps yet. Be the first to make something your campus needs.'
-                    : `No ${activeCategory.toLowerCase()} apps yet.`}
+                    ? 'Nobody has made one yet. Be the first — your campus will thank you.'
+                    : `No ${activeCategory.toLowerCase()} apps yet. You could fix that.`}
                 </p>
                 <button
-                  onClick={() => router.push('/lab')}
+                  onClick={() => router.push('/build')}
                   className="inline-flex items-center gap-1.5 text-[#FFD700]/70 hover:text-[#FFD700] text-sm font-medium transition-colors mt-2"
                 >
-                  Make one in Lab
+                  Make one
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>

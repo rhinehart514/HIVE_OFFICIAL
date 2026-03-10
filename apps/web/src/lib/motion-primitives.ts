@@ -284,9 +284,9 @@ export const GLOW_SUCCESS = '0 0 0 3px rgba(34, 197, 94, 0.15)';
 
 /** Common transition classes */
 export const TRANSITION_CLASSES = {
-  default: 'transition-all duration-200 ease-out',
-  fast: 'transition-all duration-150 ease-out',
-  slow: 'transition-all duration-300 ease-out',
+  default: 'transition-[color,opacity,transform] duration-200 ease-out',
+  fast: 'transition-[color,opacity,transform] duration-150 ease-out',
+  slow: 'transition-[color,opacity,transform] duration-300 ease-out',
   colors: 'transition-colors duration-200 ease-out',
   transform: 'transition-transform duration-200 ease-out',
 } as const;

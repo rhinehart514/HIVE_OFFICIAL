@@ -80,13 +80,15 @@ export async function notifyToolDeployed(params: {
   toolName: string;
   spaceId: string;
   spaceName: string;
+  spaceHandle?: string;
 }): Promise<number> {
   const actorName = params.deployedByName || 'Someone';
+  const spaceSlug = params.spaceHandle || params.spaceId;
   const payload = buildPayload('tool.deployed', {
     title: `${params.toolName} was added to ${params.spaceName}`,
-    body: `${actorName} deployed this tool in ${params.spaceName}.`,
+    body: `${actorName} added a new app to ${params.spaceName}.`,
     toolId: params.toolId,
-    actionUrl: `/s/${params.spaceId}?tool=${params.toolId}`,
+    actionUrl: `/s/${spaceSlug}`,
   });
 
   const recipientIds = params.memberIds.filter(
@@ -121,10 +123,10 @@ export async function notifyToolMilestone(params: {
   milestone: number;
 }): Promise<string | null> {
   const payload = buildPayload('tool.milestone', {
-    title: `Your ${params.toolName} hit ${params.milestone} uses!`,
-    body: `${params.toolName} just crossed ${params.milestone} total uses.`,
+    title: `Your ${params.toolName} hit ${params.milestone} responses!`,
+    body: `${params.toolName} just crossed ${params.milestone} total responses.`,
     toolId: params.toolId,
-    actionUrl: `/build/${params.toolId}/analytics`,
+    actionUrl: `/t/${params.toolId}`,
   });
 
   return createNotification({

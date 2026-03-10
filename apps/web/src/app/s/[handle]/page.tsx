@@ -23,7 +23,7 @@ import {
 } from '@hive/ui/design-system/primitives';
 import { toast, type ReportContentInput } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
-import { useSpaceResidenceState } from './hooks';
+import { useSpaceResidenceState, useParticipationCount } from './hooks';
 import {
   SpaceHeader,
   SpaceThreshold,
@@ -43,6 +43,8 @@ import { useClaimSpace } from '@/hooks/mutations/use-claim-space';
 import type { CreateEventData } from '@/components/events/create-event-modal';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
+import { SystemToolSuggestions } from './components/sidebar/system-tool-suggestions';
+import { ClaimOnboarding } from '@/components/spaces/claim-onboarding';
 
 // Dynamic imports — conditionally rendered components (modals, drawers, panels, overlays)
 const MembersList = dynamic(() =>
@@ -405,6 +407,17 @@ export default function SpacePageUnified() {
 
   // Removed: Keyboard navigation for board switching (multi-board deprecated)
 
+  // Member participation count — how many apps this user has interacted with in this space
+  const participationToolIds = React.useMemo(
+    () => sidebarTools.map((t) => t.toolId),
+    [sidebarTools]
+  );
+  const participationCount = useParticipationCount({
+    toolIds: participationToolIds,
+    userId: user?.id,
+    enabled: !!space?.isMember && !space?.isLeader && sidebarTools.length > 0,
+  });
+
   // Transform messages to Message type (called unconditionally)
   const feedMessages = React.useMemo(() => {
     return (messages || []).map((msg) => ({
@@ -626,6 +639,16 @@ export default function SpacePageUnified() {
             memberCount: space.memberCount,
             onlineCount: space.onlineCount,
             isClaimed: space.isClaimed,
+            orgTypeName: space.orgTypeName,
+          }}
+          activity={{
+            appCount: sidebarTools.length,
+            eventCount: upcomingEvents.length,
+            recentAppNames: sidebarTools.slice(0, 2).map(
+              t => t.titleOverride || t.name
+            ),
+            nextEventTitle: upcomingEvents[0]?.title,
+            messageCount: messages.length,
           }}
           onJoin={handleJoin}
           onClaim={!space.isClaimed ? handleClaimSpace : undefined}
@@ -708,8 +731,53 @@ export default function SpacePageUnified() {
               startDate: upcomingEvents[0].time || new Date().toISOString(),
               rsvpCount: upcomingEvents[0].goingCount || 0,
             } : null}
+            activePoll={(() => {
+              const poll = sidebarTools.find(t =>
+                t.elementType === 'poll' || t.category === 'poll'
+              );
+              if (!poll) return null;
+              return {
+                id: poll.toolId,
+                question: poll.titleOverride || poll.name,
+                responseCount: (poll.state?.responseCount as number) ?? 0,
+              };
+            })()}
             onEventClick={(eventId) => setSelectedEventId(eventId)}
+            onPollClick={(pollId) => {
+              const tool = sidebarTools.find(t => t.toolId === pollId);
+              if (tool) {
+                setActiveTool({
+                  toolId: tool.toolId,
+                  placementId: tool.placementId,
+                  name: tool.titleOverride || tool.name,
+                  description: tool.description,
+                });
+              }
+            }}
           />
+
+          {/* Experiment A: Leader impact banner — surface response data where leaders spend time */}
+          {space.isLeader && sidebarTools.length > 0 && (() => {
+            const totalResponses = sidebarTools.reduce(
+              (sum, t) => sum + (t.activityCount ?? 0),
+              0
+            );
+            if (totalResponses === 0) return null;
+            return (
+              <div className="px-4 py-2 flex items-center gap-2 border-b border-white/[0.04]">
+                <span className="font-mono text-[11px] text-white/50 uppercase tracking-wider">
+                  Impact
+                </span>
+                <span className="text-[13px] font-semibold text-[#FFD700]">
+                  {totalResponses}
+                </span>
+                <span className="text-[13px] text-white/50">
+                  {totalResponses === 1 ? 'response' : 'responses'} across{' '}
+                  {sidebarTools.length} {sidebarTools.length === 1 ? 'app' : 'apps'}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Space History Line */}
           <div className="px-4 py-1.5 flex items-center gap-2 text-[11px] text-white/30 border-b border-white/[0.04]">
@@ -725,6 +793,15 @@ export default function SpacePageUnified() {
             <span className="text-white/30">&middot;</span>
             <span>{sidebarTools.length} {sidebarTools.length === 1 ? 'app' : 'apps'} made</span>
           </div>
+
+          {/* Member participation accumulation — shows only for non-leader members who have engaged */}
+          {!space.isLeader && participationCount > 0 && (
+            <div className="px-4 py-1.5 border-b border-white/[0.04]">
+              <span className="font-mono text-[11px] text-white/30">
+                You&apos;ve responded to {participationCount} {participationCount === 1 ? 'app' : 'apps'} in {space.name}
+              </span>
+            </div>
+          )}
 
           {/* Apps strip — always visible when apps exist, one tap to interact */}
           {sidebarTools.length > 0 && (
@@ -765,6 +842,18 @@ export default function SpacePageUnified() {
                       </p>
                     )}
 
+                    {/* Claim onboarding — coaching card for leaders with new spaces */}
+                    {space.isLeader && ((space.memberCount ?? 0) <= 1 || sidebarTools.length === 0) && (
+                      <ClaimOnboarding
+                        spaceId={space.id}
+                        spaceName={space.name}
+                        spaceType={space.spaceType}
+                        sidebarToolCount={sidebarTools.length}
+                        memberCount={space.memberCount ?? 0}
+                        firstToolId={sidebarTools[0]?.toolId}
+                      />
+                    )}
+
                     {/* Upcoming events */}
                     {upcomingEvents.length > 0 && (
                       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
@@ -799,6 +888,17 @@ export default function SpacePageUnified() {
                           ))}
                         </div>
                       </div>
+                    )}
+
+                    {/* System tool suggestions for leaders with few apps */}
+                    {space.isLeader && sidebarTools.length < 3 && (
+                      <SystemToolSuggestions
+                        spaceId={space.id}
+                        spaceName={space.name}
+                        spaceType={space.spaceType || 'student'}
+                        placedToolCount={sidebarTools.length}
+                        isLeader={space.isLeader}
+                      />
                     )}
 
                     {/* CTA */}
@@ -1282,7 +1382,7 @@ export default function SpacePageUnified() {
 // Loading skeleton — full-width chat stream
 function SpacePageSkeleton() {
   return (
-    <div className="h-screen flex flex-col bg-black">
+    <div className="h-screen flex flex-col bg-void">
       {/* Header skeleton */}
       <div className="h-14 border-b border-white/[0.05] px-4 flex items-center gap-3 flex-shrink-0">
         <div className="h-8 w-8 rounded-lg bg-white/[0.04] animate-pulse" />

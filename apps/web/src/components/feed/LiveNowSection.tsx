@@ -3,7 +3,6 @@
 import { useEffect, useReducer } from 'react';
 import { Check, MapPin, Users, Video } from 'lucide-react';
 import { Mono } from '@hive/ui/design-system/primitives';
-import Link from 'next/link';
 import type { FeedEvent } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
 import { isHappeningNow, startsWithinHour, timeLabel } from './time-utils';
@@ -25,33 +24,12 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
     (e) => isHappeningNow(e.startDate, e.endDate) || startsWithinHour(e.startDate),
   );
 
-  if (liveEvents.length === 0) {
-    return (
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
-          <Mono size="label" className="text-white/50">
-            Live now
-          </Mono>
-        </div>
-        <p className="text-sm text-white/50 py-2">
-          Nobody&apos;s live right now. Scroll down to see what&apos;s coming up,
-          or be the first to start something.
-        </p>
-        <Link
-          href="/build"
-          className="inline-flex items-center px-4 py-2 mt-2 rounded-full bg-[#FFD700] text-black text-sm font-semibold hover:bg-[#FFE033] transition-colors duration-100"
-        >
-          Start something
-        </Link>
-      </section>
-    );
-  }
+  if (liveEvents.length === 0) return null;
 
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
-        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-breathe" />
         <Mono size="label" className="text-white/50">
           Live now
         </Mono>
@@ -66,7 +44,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
             <button
               key={event.id}
               onClick={() => onSelectEvent(event)}
-              className="shrink-0 w-[260px] text-left group cursor-pointer relative overflow-hidden rounded-xl border border-white/[0.05] hover:border-[#FFD700]/30 bg-card transition-colors duration-100"
+              className="shrink-0 w-[260px] text-left group cursor-pointer relative overflow-hidden rounded-2xl border border-white/[0.05] hover:border-[#FFD700]/30 bg-card transition-colors duration-100"
             >
               <div className="relative h-28 w-full overflow-hidden">
                 {coverSrc ? (
@@ -78,22 +56,22 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
                 ) : (
                   <div className="w-full h-full bg-card border-l-2 border-l-[#FFD700]" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 h-12 bg-card/80" />
 
                 {/* Badge */}
                 <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
                   {isLive ? (
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-[10px] font-semibold text-red-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-[11px] font-semibold text-red-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-breathe" />
                       LIVE
                     </span>
                   ) : (
-                    <span className="px-2 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-[10px] font-medium text-amber-400">
+                    <span className="px-2 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-[11px] font-medium text-amber-400">
                       {timeLabel(event.startDate)}
                     </span>
                   )}
                   {isGoing && (
-                    <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 text-[10px] text-[#FFD700]">
+                    <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 text-[11px] text-[#FFD700]">
                       <Check className="w-2.5 h-2.5" />
                     </span>
                   )}
@@ -110,7 +88,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
                 <p className="text-[13px] font-medium text-white/70 leading-snug line-clamp-2 group-hover:text-white transition-colors">
                   {event.title}
                 </p>
-                <div className="flex items-center gap-3 mt-1.5 text-[10px] text-white/50">
+                <div className="flex items-center gap-3 mt-1.5 text-[11px] text-white/50">
                   {event.location && (
                     <span className="flex items-center gap-1">
                       {event.isOnline ? (

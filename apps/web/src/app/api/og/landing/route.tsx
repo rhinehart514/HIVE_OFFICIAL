@@ -17,7 +17,7 @@ export async function GET() {
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: '#080808',
+          backgroundColor: '#0D0D0C',
           backgroundImage:
             'radial-gradient(circle at 30% 30%, rgba(16, 185, 129, 0.06) 0%, transparent 50%)',
           padding: '80px',

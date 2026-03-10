@@ -7,4 +7,5 @@
 
 export * from './dining';
 export * from './buildings';
+export * from './campus-context';
 export * from './data';

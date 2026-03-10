@@ -15,7 +15,7 @@ const CONTRIBUTORS = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-void text-white">
       {/* Minimal header */}
       <header className="px-6 py-6">
         <div className="max-w-[640px] mx-auto flex items-center justify-between">

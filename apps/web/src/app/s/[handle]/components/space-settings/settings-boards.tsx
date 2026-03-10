@@ -99,7 +99,7 @@ export function SettingsBoards({
 
       {boards.length === 0 ? (
         <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
-          <Text size="sm" tone="muted">No boards created yet — add one to organize your space</Text>
+          <Text size="sm" tone="muted">No boards yet — add one to keep things organized</Text>
         </div>
       ) : (
         <div className="space-y-3">

@@ -146,7 +146,7 @@ export function ViewAsPanel() {
           {isEnding ? 'Ending...' : 'End View As'}
         </motion.button>
 
-        <p className="text-[10px] text-white/50 text-center">
+        <p className="text-[11px] text-white/50 text-center">
           Read-only view — no session mutation
         </p>
       </div>
@@ -197,7 +197,7 @@ export function ViewAsPanel() {
               <motion.button
                 onClick={() => handleStartViewAs(user.id)}
                 disabled={isStarting === user.id}
-                className="opacity-0 group-hover:opacity-100 px-2 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded text-[11px] text-blue-400 font-medium transition-all"
+                className="opacity-0 group-hover:opacity-100 px-2 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded text-[11px] text-blue-400 font-medium transition-[color,opacity] duration-100"
                 whileTap={{ scale: 0.95 }}
               >
                 {isStarting === user.id ? <Loader2 size={12} className="" /> : 'View'}

@@ -371,7 +371,7 @@ export default function BuildStudioPage({ params }: Props) {
 
   if (authLoading || toolLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-void flex items-center justify-center">
         <BrandSpinner size="md" variant="gold" />
       </div>
     );
@@ -379,7 +379,7 @@ export default function BuildStudioPage({ params }: Props) {
 
   if (toolError || !tool) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+      <div className="min-h-screen bg-void flex items-center justify-center px-6">
         <div className="text-center max-w-sm">
           <h2 className="text-xl font-semibold text-white mb-2">Not found</h2>
           <p className="text-white/50 text-sm mb-6">
@@ -411,11 +411,11 @@ export default function BuildStudioPage({ params }: Props) {
             {tool.name || 'Untitled'}
           </h2>
           {tool.description && (
-            <p className="text-sm text-white/40 mt-1 line-clamp-2">
+            <p className="text-sm text-white/30 mt-1 line-clamp-2">
               {tool.description}
             </p>
           )}
-          <div className="flex items-center gap-3 mt-2 text-xs text-white/25">
+          <div className="flex items-center gap-3 mt-2 text-xs text-white/30">
             {tool.currentVersion && <span>v{tool.currentVersion}</span>}
             {tool.createdAt && (
               <span>
@@ -431,7 +431,7 @@ export default function BuildStudioPage({ params }: Props) {
 
         {/* Canvas */}
         {hasElements ? (
-          <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-5 sm:p-6">
+          <div className="rounded-2xl bg-void border border-white/[0.06] p-5 sm:p-6">
             <LazyToolCanvas
               elements={tool.elements!.map((el) => ({
                 elementId: el.elementId,
@@ -472,10 +472,10 @@ export default function BuildStudioPage({ params }: Props) {
             />
           </div>
         ) : (
-          <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-8 text-center">
-            <p className="text-white/40 text-sm mb-4">This app is empty</p>
-            <p className="text-white/25 text-xs">
-              Describe what you want below
+          <div className="rounded-2xl bg-void border border-white/[0.06] p-8 text-center">
+            <p className="text-white/30 text-sm mb-4">Nothing here yet</p>
+            <p className="text-white/30 text-xs">
+              Tell us what you need and we'll build it
             </p>
           </div>
         )}
@@ -505,7 +505,7 @@ export default function BuildStudioPage({ params }: Props) {
                 >
                   <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
                     {versions.length === 0 && (
-                      <p className="text-xs text-white/20 py-2">
+                      <p className="text-xs text-white/30 py-2">
                         No versions yet
                       </p>
                     )}
@@ -519,7 +519,7 @@ export default function BuildStudioPage({ params }: Props) {
                             v{v.version}
                           </span>
                           {v.changelog && (
-                            <span className="text-xs text-white/25 ml-2 truncate">
+                            <span className="text-xs text-white/30 ml-2 truncate">
                               {v.changelog}
                             </span>
                           )}
@@ -527,7 +527,7 @@ export default function BuildStudioPage({ params }: Props) {
                         <button
                           onClick={() => handleRestore(v.version)}
                           disabled={isRestoring}
-                          className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 transition-all disabled:opacity-30"
+                          className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[11px] text-white/30 hover:text-white/50 transition-[color,opacity] duration-100 disabled:opacity-30"
                         >
                           <RotateCcw className="w-3 h-3" />
                           Restore
@@ -549,7 +549,7 @@ export default function BuildStudioPage({ params }: Props) {
   const chatPanel = isOwner ? (
     <div className="border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-black/80 px-4 py-3 lg:py-6 lg:w-[360px] lg:flex lg:flex-col lg:justify-end">
       <div className="max-w-[520px] mx-auto lg:max-w-none w-full">
-        <p className="text-xs text-white/25 mb-2 hidden lg:block">
+        <p className="text-xs text-white/30 mb-2 hidden lg:block">
           Describe a change
         </p>
         <div className="flex items-end gap-2">
@@ -569,7 +569,7 @@ export default function BuildStudioPage({ params }: Props) {
             disabled={isIterating}
             rows={2}
             className="flex-1 resize-none bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5
-              text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-white/[0.15]
+              text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-white/[0.15]
               disabled:opacity-40 transition-colors"
           />
           <button
@@ -601,12 +601,12 @@ export default function BuildStudioPage({ params }: Props) {
   // ---------- Main layout ----------
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-void flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] shrink-0">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-white/40 hover:text-white/60 transition-colors text-sm"
+          className="flex items-center gap-2 text-white/30 hover:text-white/50 transition-colors text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -650,7 +650,7 @@ export default function BuildStudioPage({ params }: Props) {
                     </div>
                     <div className="max-h-48 overflow-y-auto py-1">
                       {spaces.length === 0 && (
-                        <p className="text-xs text-white/25 px-3 py-3 text-center">
+                        <p className="text-xs text-white/30 px-3 py-3 text-center">
                           No spaces found
                         </p>
                       )}
@@ -659,8 +659,8 @@ export default function BuildStudioPage({ params }: Props) {
                           key={space.id}
                           onClick={() => handleDeploy(space.id, space.name)}
                           disabled={isDeploying}
-                          className="w-full text-left px-3 py-2 text-sm text-white/60
-                            hover:bg-white/[0.06] hover:text-white/80 transition-colors
+                          className="w-full text-left px-3 py-2 text-sm text-white/50
+                            hover:bg-white/[0.06] hover:text-white/70 transition-colors
                             disabled:opacity-40"
                         >
                           {space.name}

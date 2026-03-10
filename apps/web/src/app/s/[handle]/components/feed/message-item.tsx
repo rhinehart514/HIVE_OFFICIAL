@@ -210,7 +210,7 @@ export function MessageItem({
                   onClick={handleEditSave}
                   disabled={!editContent.trim() || editContent === message.content}
                   className={cn(
-                    'flex items-center gap-1 px-2 py-1 rounded text-xs font-medium',
+                    'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium',
                     'bg-[var(--color-gold)] text-black',
                     'hover:bg-[var(--color-gold)]/90 transition-colors',
                     'disabled:opacity-50 disabled:cursor-not-allowed'
@@ -222,7 +222,7 @@ export function MessageItem({
                 <button
                   onClick={handleEditCancel}
                   className={cn(
-                    'flex items-center gap-1 px-2 py-1 rounded text-xs',
+                    'flex items-center gap-1 px-2 py-1 rounded-full text-xs',
                     'text-white/50 hover:text-white hover:bg-white/[0.06]',
                     'transition-colors'
                   )}
@@ -236,7 +236,7 @@ export function MessageItem({
               </div>
             </div>
           ) : (
-            <p className={cn(spaceTypographyClasses.messageContent, 'text-white/70 break-words')}>
+            <p className={cn(spaceTypographyClasses.messageContent, 'text-white break-words')}>
               {message.content}
               {message.isEdited && (
                 <span className="ml-1 text-xs text-white/50" title={message.editedAt ? `Edited ${new Date(message.editedAt).toLocaleString()}` : 'Edited'}>

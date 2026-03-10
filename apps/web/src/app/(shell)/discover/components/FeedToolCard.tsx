@@ -67,10 +67,10 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
         {/* Builder byline */}
         <div className="flex items-center gap-2 mb-3">
           <div className="w-6 h-6 rounded-full bg-[#FFD700]/15 flex items-center justify-center shrink-0">
-            <span className="text-[10px] font-semibold text-[#FFD700]">{initial}</span>
+            <span className="text-[11px] font-semibold text-[#FFD700]">{initial}</span>
           </div>
           <span className="text-[12px] text-white/50 truncate">{tool.creatorName || 'Anonymous'}</span>
-          <span className="text-[10px] text-white/30">{relativeTime(tool.createdAt)}</span>
+          <span className="text-[11px] text-white/30">{relativeTime(tool.createdAt)}</span>
         </div>
 
         {/* Title + description */}

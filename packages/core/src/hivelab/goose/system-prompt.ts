@@ -357,6 +357,7 @@ export function buildSystemPrompt(options: {
   existingComposition?: unknown;
   isIteration?: boolean;
   dynamicExamples?: string[];
+  campusContext?: string;
 } = {}): string {
   // Iteration uses its own focused prompt
   if (options.isIteration && options.existingComposition) {
@@ -364,6 +365,11 @@ export function buildSystemPrompt(options: {
   }
 
   const parts = [BASE_SYSTEM_PROMPT];
+
+  // Inject campus-specific context when available
+  if (options.campusContext) {
+    parts.push(options.campusContext);
+  }
 
   // Add element catalog
   parts.push(buildElementCatalog());
@@ -570,6 +576,7 @@ Current app code:
 export function buildCodeGenSystemPrompt(options: {
   existingCode?: { html: string; css: string; js: string };
   isIteration?: boolean;
+  campusContext?: string;
 } = {}): string {
   if (options.isIteration && options.existingCode) {
     return `${CODE_GEN_ITERATION_PROMPT_PREFIX}
@@ -589,7 +596,16 @@ ${CODE_GEN_SYSTEM_PROMPT.split('## RULES')[1] ? '## RULES' + CODE_GEN_SYSTEM_PRO
 OUTPUT: Valid JSON only, same schema as above but with a "reasoning" field explaining what you changed and why.`;
   }
 
-  return [CODE_GEN_SYSTEM_PROMPT, CODE_GEN_EXAMPLES].join('\n\n');
+  const parts = [CODE_GEN_SYSTEM_PROMPT];
+
+  // Inject campus-specific context when available
+  if (options.campusContext) {
+    parts.push(options.campusContext);
+  }
+
+  parts.push(CODE_GEN_EXAMPLES);
+
+  return parts.join('\n\n');
 }
 
 export default {

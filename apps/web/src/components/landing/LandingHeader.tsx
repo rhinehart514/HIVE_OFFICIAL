@@ -20,7 +20,7 @@ export function LandingHeader() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-[background-color,border-color] duration-300 ${
         scrolled
-          ? 'bg-[#0A0A09] border-b border-white/[0.10]'
+          ? 'bg-void border-b border-white/[0.10]'
           : 'bg-transparent'
       }`}
     >
@@ -38,7 +38,7 @@ export function LandingHeader() {
               fill="#FFD700"
             />
           </svg>
-          <span className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
+          <span className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
             HIVE
           </span>
         </Link>
