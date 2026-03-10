@@ -568,8 +568,49 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
         </div>
       </main>
 
-      {/* Non-blocking bottom conversion banner — after interaction, unauthenticated only */}
-      {showConvertBanner && !user && (
+      {/* Sticky viral CTA bar — appears after first interaction for all users */}
+      <div
+        className={`fixed bottom-0 inset-x-0 z-40 transition-transform duration-200 ${
+          hasInteracted ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        <div className="bg-surface border-t border-white/[0.05]">
+          <div className="mx-auto max-w-[480px] flex items-center justify-between px-4 h-[56px]">
+            <div className="flex items-center gap-2 min-w-0">
+              {responseCount > 0 && (
+                <span className="text-[13px] text-white/70 font-medium whitespace-nowrap">
+                  {responseCount} {responseCount === 1 ? 'person' : 'people'}{' '}
+                  {toolFormat === 'poll' ? 'voted' : toolFormat === 'rsvp' ? 'responded' : 'participated'}
+                </span>
+              )}
+              <Link
+                href="/"
+                className="flex items-center gap-1.5 shrink-0"
+              >
+                <span
+                  className="h-[5px] w-[5px] rounded-full bg-[#FFD700]"
+                  style={{ animation: 'pulse-breathe 3s ease-in-out infinite' }}
+                />
+                <span className="text-[11px] font-display font-semibold tracking-[0.06em] text-[#FFD700]/70">
+                  HIVE
+                </span>
+              </Link>
+            </div>
+            <Link
+              href={user
+                ? `/build?hint=${toolFormat}`
+                : `/enter?redirect=${encodeURIComponent(`/build?hint=${toolFormat}`)}`
+              }
+              className="shrink-0 rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black transition-opacity hover:opacity-90"
+            >
+              Make one for your org
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Non-blocking conversion banner for unauthenticated users — dismissed by sticky bar */}
+      {showConvertBanner && !user && !hasInteracted && (
         <div className="fixed bottom-0 inset-x-0 z-40 animate-in slide-in-from-bottom duration-300">
           <div className="mx-auto max-w-[480px] px-4 pb-4">
             <div className="flex items-center gap-3 rounded-2xl border border-[#FFD700]/15 bg-surface/95 px-5 py-3.5">
@@ -596,7 +637,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       )}
 
       {/* Made with HIVE — acquisition surface */}
-      <footer className="pb-8 pt-4 text-center space-y-2">
+      <footer className={`pt-4 text-center space-y-2 ${hasInteracted ? 'pb-[72px]' : 'pb-8'}`}>
         {/* Response social proof */}
         {responseCount > 0 && (
           <p className="text-[11px] font-mono text-white/50">
