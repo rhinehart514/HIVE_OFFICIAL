@@ -80,7 +80,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/30" />
           <Mono size="label" className="text-white/50">
-            Today
+            HAPPENING TODAY
           </Mono>
         </div>
         <p className="text-sm text-white/30 py-2">
@@ -102,7 +102,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
           <Mono size="label" className="text-white/50">
-            Today
+            HAPPENING TODAY
           </Mono>
         </div>
         <span className="text-[11px] text-white/30 tabular-nums">

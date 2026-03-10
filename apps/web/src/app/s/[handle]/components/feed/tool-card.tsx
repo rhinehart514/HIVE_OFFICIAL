@@ -50,7 +50,7 @@ export function ToolCard({
         'rounded-lg',
         'bg-white/[0.06] hover:bg-white/[0.06]',
         'border border-white/[0.06] hover:border-white/[0.06]',
-        'transition-all duration-150',
+        'transition-colors duration-100',
         className
       )}
       style={{

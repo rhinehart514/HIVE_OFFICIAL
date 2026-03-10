@@ -307,7 +307,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     return (
       <div className="min-h-screen bg-[var(--bg-void)] flex items-center justify-center p-6">
         <div className="w-full max-w-[480px]">
-          <div className="rounded-2xl bg-[#080808] border border-white/[0.06] p-8">
+          <div className="rounded-2xl bg-void border border-white/[0.06] p-8">
             <div className="space-y-4 animate-pulse">
               <div className="h-6 w-40 bg-white/[0.04] rounded-lg" />
               <div className="h-4 w-64 bg-white/[0.03] rounded-lg" />
@@ -329,7 +329,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
         <div className="text-center max-w-sm">
           <h2 className="text-xl font-semibold text-white mb-2">Private Creation</h2>
           <p className="text-white/50 text-sm mb-6">
-            Sign in to view this tool if you have access.
+            Sign in to view this app if you have access.
           </p>
           <button
             onClick={() => router.push('/enter')}
@@ -363,6 +363,16 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
   }
 
   const usageCount = tool.useCount || tool.viewCount || 0;
+  const toolFormat = tool.shellFormat || tool.elements?.[0]?.elementId || 'poll';
+
+  // Derive response count from shell state if available
+  const responseCount = (() => {
+    if (!isShellTool || !shellState.state) return usageCount;
+    const s = shellState.state;
+    const voteCount = 'votes' in s && s.votes ? Object.keys(s.votes as Record<string, unknown>).length : 0;
+    const attendeeCount = 'attendees' in s && s.attendees ? Object.keys(s.attendees as Record<string, unknown>).length : 0;
+    return voteCount + attendeeCount || usageCount;
+  })();
 
   return (
     <div className="min-h-screen bg-[var(--bg-void)] flex flex-col">
@@ -373,13 +383,13 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           className="flex items-center gap-2 rounded-full px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
         >
           <span className="h-4 w-4 rounded-full bg-[var(--life-gold,#FFD700)]" aria-hidden />
-          <span className="font-display text-[12px] font-semibold tracking-[0.08em] text-white/40">
+          <span className="font-display text-[12px] font-semibold tracking-[0.08em] text-white/50">
             HIVE
           </span>
         </Link>
         <div className="flex items-center gap-3">
           {tool.ownerName && (
-            <span className="text-[12px] text-white/25 font-sans tracking-wide">
+            <span className="text-[12px] text-white/30 font-sans tracking-wide">
               by {tool.ownerName}
             </span>
           )}
@@ -416,12 +426,12 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                 {usageCount > 0 && (
                   <span className="flex items-center gap-1 text-[11px] text-white/30">
                     <Users className="h-3 w-3" />
-                    {usageCount} {usageCount === 1 ? 'person' : 'people'} used this
+                    {usageCount} {usageCount === 1 ? 'person' : 'people'} participated
                   </span>
                 )}
                 {spaceName && (
                   <>
-                    {usageCount > 0 && <span className="text-white/15 text-[11px]">·</span>}
+                    {usageCount > 0 && <span className="text-white/30 text-[11px]">·</span>}
                     <span className="text-[11px] text-white/30">
                       Built for {spaceName}
                     </span>
@@ -510,7 +520,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                 </Link>
                 <button
                   onClick={handleShare}
-                  className="px-4 py-2.5 bg-white/[0.06] text-white/60 text-sm font-medium rounded-full border border-white/[0.06] hover:bg-white/[0.08] transition-colors"
+                  className="px-4 py-2.5 bg-white/[0.06] text-white/50 text-sm font-medium rounded-full border border-white/[0.06] hover:bg-white/[0.08] transition-colors"
                 >
                   {copied ? 'Copied!' : 'Share'}
                 </button>
@@ -536,7 +546,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                 </button>
                 <button
                   onClick={() => router.push(`/build/${toolId}`)}
-                  className="px-4 py-2.5 bg-white/[0.06] text-white/60 text-sm font-medium rounded-full border border-white/[0.06] hover:bg-white/[0.08] transition-colors"
+                  className="px-4 py-2.5 bg-white/[0.06] text-white/50 text-sm font-medium rounded-full border border-white/[0.06] hover:bg-white/[0.08] transition-colors"
                 >
                   Edit
                 </button>
@@ -562,10 +572,10 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       {showConvertBanner && !user && (
         <div className="fixed bottom-0 inset-x-0 z-40 animate-in slide-in-from-bottom duration-300">
           <div className="mx-auto max-w-[480px] px-4 pb-4">
-            <div className="flex items-center gap-3 rounded-2xl border border-[#FFD700]/15 bg-[#111]/95 px-5 py-3.5">
+            <div className="flex items-center gap-3 rounded-2xl border border-[#FFD700]/15 bg-surface/95 px-5 py-3.5">
               <div className="flex-1">
-                <p className="text-[13px] font-medium text-white/80">Like this?</p>
-                <p className="text-[11px] text-white/40">Create your own in seconds.</p>
+                <p className="text-[13px] font-medium text-white/70">Like this?</p>
+                <p className="text-[11px] text-white/30">Create your own in seconds.</p>
               </div>
               <Link
                 href="/enter"
@@ -587,6 +597,13 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
 
       {/* Made with HIVE — acquisition surface */}
       <footer className="pb-8 pt-4 text-center space-y-2">
+        {/* Response social proof */}
+        {responseCount > 0 && (
+          <p className="text-[11px] font-mono text-white/50">
+            {responseCount} {responseCount === 1 ? 'person' : 'people'} {toolFormat === 'poll' ? 'voted' : toolFormat === 'rsvp' ? 'responded' : 'participated'}
+          </p>
+        )}
+
         <div className="flex items-center justify-center gap-3">
           <Link
             href="/"
@@ -596,23 +613,29 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               className="h-[6px] w-[6px] rounded-full bg-[#FFD700]"
               style={{ animation: 'pulse-breathe 3s ease-in-out infinite' }}
             />
-            <span className="font-display text-[11px] font-semibold tracking-[0.06em] text-white/30 group-hover:text-white/50 transition-colors">
-              Made with HIVE
+            <span className="font-display text-[11px] font-semibold tracking-[0.06em] text-white/50 group-hover:text-white/70 transition-colors">
+              Made with HIVE{tool.campusId === 'ub' ? ' at UB' : ''}
             </span>
           </Link>
-          <span className="text-white/15">·</span>
+          <span className="text-white/30">·</span>
           <Link
-            href={`/enter?from_tool=${tool.shellFormat || tool.elements?.[0]?.elementId || 'poll'}`}
-            className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-white/30 hover:text-[#FFD700]/60 transition-colors"
+            href={`/enter?redirect=${encodeURIComponent(`/build?hint=${toolFormat}`)}`}
+            className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/70 hover:text-[#FFD700]/60 transition-colors"
           >
-            Create your own
+            {toolFormat === 'poll'
+              ? 'Make a poll for your org'
+              : toolFormat === 'rsvp'
+                ? 'Create an RSVP for your next event'
+                : toolFormat === 'bracket'
+                  ? 'Run a bracket for your group'
+                  : 'Create your own app'}
           </Link>
         </div>
 
         {/* Share button — always visible */}
         <button
           onClick={handleShare}
-          className="text-[12px] text-white/20 hover:text-white/40 transition-colors"
+          className="text-[12px] text-white/30 hover:text-white/50 transition-colors"
         >
           {copied ? 'Copied!' : 'Share'}
         </button>

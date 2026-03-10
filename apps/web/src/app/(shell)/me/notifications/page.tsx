@@ -212,7 +212,7 @@ export default function NotificationsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center" role="status" aria-label="Loading notifications">
+      <div className="min-h-screen bg-void flex items-center justify-center" role="status" aria-label="Loading notifications">
         <Loader2 className="w-6 h-6 text-[#FFD700] animate-spin" aria-hidden="true" />
         <span className="sr-only">Loading notifications...</span>
       </div>
@@ -220,7 +220,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black" aria-label="Notifications">
+    <main className="min-h-screen bg-void" aria-label="Notifications">
       <div className="max-w-2xl px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

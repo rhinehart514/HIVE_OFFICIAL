@@ -13,7 +13,7 @@ import type { ShellFormat, ShellConfig, ShellAction } from '@/lib/shells/types';
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
-interface RecentTool {
+interface TrendingTool {
   id: string;
   name: string;
   description: string;
@@ -28,17 +28,50 @@ interface RecentTool {
   spaceHandle: string | null;
 }
 
+/* ─── Discover API response shape ────────────────────────────────── */
+
+interface DiscoverTool {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  shellFormat: string | null;
+  shellConfig: Record<string, unknown> | null;
+  category: string;
+  creator: { id: string | null; name: string };
+  spaceOrigin: { id: string | null; name: string | null; type: string | null };
+  forkCount: number;
+  useCount: number;
+  createdAt: string;
+  thumbnail: string | null;
+}
+
 /* ─── Data fetching ─────────────────────────────────────────────── */
 
-async function fetchRecentTools(): Promise<RecentTool[]> {
-  const res = await fetch('/api/tools/recent?limit=10', { credentials: 'include' });
+async function fetchTrendingTools(): Promise<TrendingTool[]> {
+  const res = await fetch('/api/tools/discover?sort=trending&limit=6', { credentials: 'include' });
   if (!res.ok) return [];
   const payload = await res.json();
-  const tools = payload?.data?.tools ?? [];
+  const tools: DiscoverTool[] = payload?.data?.tools ?? [];
   // Only return tools with a native shell format
-  return tools.filter(
-    (t: RecentTool) => t.shellFormat && ['poll', 'bracket', 'rsvp'].includes(t.shellFormat)
-  );
+  return tools
+    .filter(
+      (t) => t.shellFormat && ['poll', 'bracket', 'rsvp'].includes(t.shellFormat)
+    )
+    .map((t) => ({
+      id: t.id,
+      name: t.title,
+      description: t.description,
+      shellFormat: t.shellFormat as ShellFormat | null,
+      shellConfig: t.shellConfig as ShellConfig,
+      ownerId: t.creator.id,
+      ownerName: t.creator.name || null,
+      ownerHandle: null,
+      createdAt: t.createdAt,
+      spaceId: t.spaceOrigin.id,
+      spaceName: t.spaceOrigin.name,
+      spaceHandle: null,
+    }));
 }
 
 /* ─── Individual app card with its own shell state ──────────────── */
@@ -48,7 +81,7 @@ function AppCard({
   userId,
   index,
 }: {
-  tool: RecentTool;
+  tool: TrendingTool;
   userId: string;
   index: number;
 }) {
@@ -111,7 +144,7 @@ function AppCard({
             )}
             {tool.spaceName && (
               <>
-                <span className="text-[10px] text-white/30">in</span>
+                <span className="text-[11px] text-white/30">in</span>
                 {tool.spaceHandle ? (
                   <Link
                     href={`/s/${tool.spaceHandle}`}
@@ -161,9 +194,9 @@ function AppCard({
               className="mt-3 pt-3 border-t border-white/[0.04]"
             >
               <div className="flex items-center gap-2 text-[13px]">
-                <span className="text-white/40">
+                <span className="text-white/30">
                   From{' '}
-                  <span className="text-white/60 font-medium">{tool.spaceName}</span>
+                  <span className="text-white/50 font-medium">{tool.spaceName}</span>
                 </span>
                 <button
                   onClick={() => handleJoin(tool.spaceId!)}
@@ -186,8 +219,8 @@ export function NewAppsSection() {
   const { user } = useAuth();
 
   const { data: tools = [] } = useQuery({
-    queryKey: ['feed-new-apps'],
-    queryFn: fetchRecentTools,
+    queryKey: ['feed-trending-apps'],
+    queryFn: fetchTrendingTools,
     staleTime: 60_000,
     enabled: !!user,
   });
@@ -199,7 +232,7 @@ export function NewAppsSection() {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <Mono size="label" className="text-white/50">
-            New Apps
+            TRENDING APPS
           </Mono>
         </div>
         <p className="text-sm text-white/30 py-2">
@@ -220,7 +253,7 @@ export function NewAppsSection() {
     <section>
       <div className="flex items-center gap-2 mb-3">
         <Mono size="label" className="text-white/50">
-          New Apps
+          TRENDING APPS
         </Mono>
       </div>
 

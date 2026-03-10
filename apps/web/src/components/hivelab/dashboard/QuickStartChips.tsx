@@ -103,7 +103,7 @@ export function QuickStartChips({
                 }}
                 onClick={() => handleClick(template)}
                 disabled={disabled || !!loadingId}
-                className="group relative p-3 rounded-2xl border border-white/[0.06] bg-[#080808]
+                className="group relative p-3 rounded-2xl border border-white/[0.06] bg-void
                   hover:border-white/[0.10]
                   transition-colors duration-200 text-center
                   disabled:opacity-50 disabled:cursor-not-allowed"
@@ -116,10 +116,10 @@ export function QuickStartChips({
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                       >
-                        <IconComponent className="w-5 h-5 text-white/40" />
+                        <IconComponent className="w-5 h-5 text-white/30" />
                       </motion.div>
                     ) : (
-                      <IconComponent className="w-5 h-5 text-white/30 group-hover:text-white/60
+                      <IconComponent className="w-5 h-5 text-white/30 group-hover:text-white/50
                         transition-colors" />
                     )}
                   </div>
@@ -180,7 +180,7 @@ export function QuickStartChips({
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               >
-                <IconComponent className="w-3 h-3 text-white/40" />
+                <IconComponent className="w-3 h-3 text-white/30" />
               </motion.div>
             ) : (
               <IconComponent className="w-3 h-3" />

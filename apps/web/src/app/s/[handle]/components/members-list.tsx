@@ -229,7 +229,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
       return (
         <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--color-gold)]/10">
           <Crown className="w-3 h-3 text-[var(--color-gold)]" />
-          <span className="text-[10px] font-medium text-[var(--color-gold)]">Owner</span>
+          <span className="text-[11px] font-medium text-[var(--color-gold)]">Owner</span>
         </span>
       );
     }
@@ -238,7 +238,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
       return (
         <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--color-gold)]/10">
           <Crown className="w-3 h-3 text-[var(--color-gold)]/70" />
-          <span className="text-[10px] font-medium text-[var(--color-gold)]/70">Admin</span>
+          <span className="text-[11px] font-medium text-[var(--color-gold)]/70">Admin</span>
         </span>
       );
     }
@@ -246,7 +246,7 @@ function MemberRow({ member, isCurrentUser, onClick, index }: MemberRowProps) {
       return (
         <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.06]">
           <Shield className="w-3 h-3 text-white/50" />
-          <span className="text-[10px] font-medium text-white/50">Mod</span>
+          <span className="text-[11px] font-medium text-white/50">Mod</span>
         </span>
       );
     }

@@ -81,7 +81,7 @@ export function EventsList({
             {/* Date/time */}
             <div className="flex items-center gap-1.5 mt-1.5 ml-5">
               <Clock className="w-3 h-3 text-white/50" />
-              <span className="text-[10px] text-white/50 font-sans">
+              <span className="text-[11px] text-white/50 font-sans">
                 {dateLabel} · {timeStr}
               </span>
             </div>
@@ -94,7 +94,7 @@ export function EventsList({
                 ) : (
                   <MapPin className="w-3 h-3 text-white/50" />
                 )}
-                <span className="text-[10px] text-white/50 truncate">
+                <span className="text-[11px] text-white/50 truncate">
                   {event.isOnline ? 'Online' : event.location}
                 </span>
               </div>

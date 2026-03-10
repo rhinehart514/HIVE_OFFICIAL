@@ -43,6 +43,8 @@ import { useClaimSpace } from '@/hooks/mutations/use-claim-space';
 import type { CreateEventData } from '@/components/events/create-event-modal';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
+import { SystemToolSuggestions } from './components/sidebar/system-tool-suggestions';
+import { ClaimOnboarding } from '@/components/spaces/claim-onboarding';
 
 // Dynamic imports — conditionally rendered components (modals, drawers, panels, overlays)
 const MembersList = dynamic(() =>
@@ -626,6 +628,16 @@ export default function SpacePageUnified() {
             memberCount: space.memberCount,
             onlineCount: space.onlineCount,
             isClaimed: space.isClaimed,
+            orgTypeName: space.orgTypeName,
+          }}
+          activity={{
+            appCount: sidebarTools.length,
+            eventCount: upcomingEvents.length,
+            recentAppNames: sidebarTools.slice(0, 2).map(
+              t => t.titleOverride || t.name
+            ),
+            nextEventTitle: upcomingEvents[0]?.title,
+            messageCount: messages.length,
           }}
           onJoin={handleJoin}
           onClaim={!space.isClaimed ? handleClaimSpace : undefined}
@@ -708,7 +720,29 @@ export default function SpacePageUnified() {
               startDate: upcomingEvents[0].time || new Date().toISOString(),
               rsvpCount: upcomingEvents[0].goingCount || 0,
             } : null}
+            activePoll={(() => {
+              const poll = sidebarTools.find(t =>
+                t.elementType === 'poll' || t.category === 'poll'
+              );
+              if (!poll) return null;
+              return {
+                id: poll.toolId,
+                question: poll.titleOverride || poll.name,
+                responseCount: (poll.state?.responseCount as number) ?? 0,
+              };
+            })()}
             onEventClick={(eventId) => setSelectedEventId(eventId)}
+            onPollClick={(pollId) => {
+              const tool = sidebarTools.find(t => t.toolId === pollId);
+              if (tool) {
+                setActiveTool({
+                  toolId: tool.toolId,
+                  placementId: tool.placementId,
+                  name: tool.titleOverride || tool.name,
+                  description: tool.description,
+                });
+              }
+            }}
           />
 
           {/* Space History Line */}
@@ -765,6 +799,15 @@ export default function SpacePageUnified() {
                       </p>
                     )}
 
+                    {/* Claim onboarding — leader just claimed, empty space */}
+                    {space.isLeader && (space.memberCount ?? 0) <= 1 && sidebarTools.length === 0 && (
+                      <ClaimOnboarding
+                        spaceId={space.id}
+                        spaceName={space.name}
+                        spaceType={space.spaceType}
+                      />
+                    )}
+
                     {/* Upcoming events */}
                     {upcomingEvents.length > 0 && (
                       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
@@ -799,6 +842,17 @@ export default function SpacePageUnified() {
                           ))}
                         </div>
                       </div>
+                    )}
+
+                    {/* System tool suggestions for leaders with few apps */}
+                    {space.isLeader && sidebarTools.length < 3 && (
+                      <SystemToolSuggestions
+                        spaceId={space.id}
+                        spaceName={space.name}
+                        spaceType={space.spaceType || 'student'}
+                        placedToolCount={sidebarTools.length}
+                        isLeader={space.isLeader}
+                      />
                     )}
 
                     {/* CTA */}
@@ -1282,7 +1336,7 @@ export default function SpacePageUnified() {
 // Loading skeleton — full-width chat stream
 function SpacePageSkeleton() {
   return (
-    <div className="h-screen flex flex-col bg-black">
+    <div className="h-screen flex flex-col bg-void">
       {/* Header skeleton */}
       <div className="h-14 border-b border-white/[0.05] px-4 flex items-center gap-3 flex-shrink-0">
         <div className="h-8 w-8 rounded-lg bg-white/[0.04] animate-pulse" />

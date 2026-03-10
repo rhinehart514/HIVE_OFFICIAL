@@ -71,7 +71,7 @@ function ActionButton({
         'group relative px-3 py-1.5 rounded-lg',
         'flex items-center gap-1.5',
         'text-xs font-medium',
-        'transition-all duration-150',
+        'transition-colors duration-100',
         variant === 'primary'
           ? 'bg-white/[0.06] hover:bg-white/[0.06] text-white'
           : 'bg-white/[0.06] hover:bg-white/[0.06] text-white/50 hover:text-white'
@@ -169,7 +169,7 @@ export function SpaceQuickActions({
           'flex items-center gap-1',
           'text-xs font-medium text-white/50 hover:text-white/50',
           'hover:bg-white/[0.06]',
-          'transition-all duration-150'
+          'transition-colors duration-100'
         )}
         whileHover={{ opacity: 0.8 }}
       >

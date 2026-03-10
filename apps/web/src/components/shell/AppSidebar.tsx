@@ -93,7 +93,7 @@ export function LeftSidebar() {
         >
           <Search className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
           <span className="text-[14px] font-medium">Search</span>
-          <kbd className="ml-auto font-mono text-[10px] text-white/30">⌘K</kbd>
+          <kbd className="ml-auto font-mono text-[11px] text-white/30">⌘K</kbd>
         </button>
 
         {/* Notifications */}
@@ -119,7 +119,7 @@ export function LeftSidebar() {
         {!pathname.startsWith('/build') && (
           <Link
             href="/build"
-            className="flex items-center justify-center gap-2 h-10 mt-2 rounded-full bg-[#FFD700] text-black text-[14px] font-semibold hover:bg-[#FFE033] transition-colors duration-100 shadow-[0_0_20px_rgba(255,215,0,0.15)] hover:shadow-[0_0_30px_rgba(255,215,0,0.25)]"
+            className="flex items-center justify-center gap-2 h-10 mt-2 rounded-full bg-[#FFD700] text-black text-[14px] font-semibold hover:bg-[#FFE033] transition-colors duration-100"
           >
             <Plus className="h-4 w-4" strokeWidth={2} />
             Create
@@ -160,7 +160,7 @@ function MobileNavItem({
           </span>
         ) : null}
       </div>
-      <span className={cn('font-mono text-[10px] uppercase tracking-label', isActive && 'font-semibold')}>
+      <span className={cn('font-mono text-[11px] uppercase tracking-label', isActive && 'font-semibold')}>
         {item.label}
       </span>
     </>
@@ -168,7 +168,7 @@ function MobileNavItem({
 
   const className = cn(
     'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors duration-100',
-    isActive ? 'text-white' : 'text-white/30',
+    isActive ? 'text-white' : 'text-white/50',
   );
 
   // Make tab opens creation sheet instead of navigating
@@ -195,7 +195,7 @@ export function MobileBottomBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch border-t border-white/[0.05] bg-[#0A0A09] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch border-t border-white/[0.05] bg-void md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {navItems.map((item) => (
@@ -260,4 +260,3 @@ export function MobileHeader() {
   );
 }
 
-export default LeftSidebar;

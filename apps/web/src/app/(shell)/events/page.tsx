@@ -133,7 +133,7 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/[0.06] bg-[#080808] p-4 transition-colors hover:border-white/[0.1]"
+      className="rounded-2xl border border-white/[0.06] bg-void p-4 transition-colors hover:border-white/[0.1]"
     >
       <div className="flex items-start justify-between gap-3">
         {/* Left: Info */}
@@ -144,12 +144,12 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
               {event.spaceHandle ? (
                 <Link
                   href={`/s/${event.spaceHandle}`}
-                  className="text-[12px] text-white/40 hover:text-white/70 transition-colors truncate"
+                  className="text-[12px] text-white/30 hover:text-white/70 transition-colors truncate"
                 >
                   {event.spaceName}
                 </Link>
               ) : (
-                <span className="text-[12px] text-white/40 truncate">{event.spaceName}</span>
+                <span className="text-[12px] text-white/30 truncate">{event.spaceName}</span>
               )}
             </div>
           )}
@@ -181,7 +181,7 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
             )}
 
             {event.rsvpCount > 0 && (
-              <span className="flex items-center gap-1 text-[12px] text-white/60">
+              <span className="flex items-center gap-1 text-[12px] text-white/50">
                 <Users className="w-3 h-3 flex-shrink-0" />
                 {event.rsvpCount} going
               </span>
@@ -190,7 +190,7 @@ function EventCard({ event, onRsvp }: { event: CampusEvent; onRsvp: (status: 'go
 
           {/* Friends attending */}
           {event.friendsAttending && event.friendsAttending > 0 && (
-            <p className="mt-1.5 text-[12px] text-white/40">
+            <p className="mt-1.5 text-[12px] text-white/30">
               {event.friendsAttending === 1 ? '1 friend' : `${event.friendsAttending} friends`} going
             </p>
           )}
@@ -235,9 +235,9 @@ function EventGroup({ label, events, onRsvp }: {
   return (
     <section>
       <div className="flex items-center gap-3 mb-3">
-        <h2 className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/40">{label}</h2>
+        <h2 className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30">{label}</h2>
         {(label === 'Today' || label === 'Tonight') && (
-          <span className="h-1.5 w-1.5 rounded-full bg-[#FFD700] animate-pulse" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#FFD700] animate-breathe" />
         )}
       </div>
       <div className="flex flex-col gap-2">
@@ -260,8 +260,8 @@ function EventGroup({ label, events, onRsvp }: {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <Calendar className="w-8 h-8 text-white/20 mb-3" />
-      <p className="text-[15px] font-medium text-white/40 mb-1">Nothing coming up</p>
+      <Calendar className="w-8 h-8 text-white/30 mb-3" />
+      <p className="text-[15px] font-medium text-white/30 mb-1">Nothing coming up</p>
       <p className="text-[13px] text-white/30 mb-5">
         Join spaces like SGA or Greek orgs to see their events here
       </p>
@@ -339,9 +339,9 @@ export default function EventsPage() {
   const hasEvents = events.length > 0;
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-void">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black">
+      <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-void">
         <div className="max-w-xl px-6 py-4">
           <div className="flex items-baseline gap-3">
             <h1 className="text-[18px] font-medium text-white">Events</h1>
@@ -361,7 +361,7 @@ export default function EventsPage() {
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="rounded-2xl border border-white/[0.06] bg-[#080808] p-4 h-24 animate-pulse"
+                className="rounded-2xl border border-white/[0.06] bg-void p-4 h-24 animate-pulse"
               />
             ))}
           </div>

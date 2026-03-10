@@ -168,7 +168,7 @@ export default function CampusToolPage() {
   // Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-void flex items-center justify-center">
         <BrandSpinner size="md" variant="gold" />
       </div>
     );
@@ -177,7 +177,7 @@ export default function CampusToolPage() {
   // Not found
   if (error || !tool) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-void flex flex-col items-center justify-center px-6">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -200,7 +200,7 @@ export default function CampusToolPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-void">
       <div className="max-w-[560px] mx-auto px-6 py-6">
         {/* Navigation + share */}
         <motion.div
@@ -211,14 +211,14 @@ export default function CampusToolPage() {
         >
           <Link
             href="/campus"
-            className="flex items-center gap-1.5 text-white/35 hover:text-white/60 transition-colors text-sm"
+            className="flex items-center gap-1.5 text-white/30 hover:text-white/50 transition-colors text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             Campus
           </Link>
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/30 hover:text-white/55 hover:bg-white/[0.04] transition-colors text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/30 hover:text-white/50 hover:bg-white/[0.04] transition-colors text-sm"
           >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
             {copied ? 'Copied' : 'Share'}
@@ -238,10 +238,10 @@ export default function CampusToolPage() {
             </h1>
             <span
               className={`
-                shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider
+                shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider
                 ${tool.badge === 'official'
                   ? 'bg-[#FFD700]/15 text-[#FFD700]'
-                  : 'bg-white/[0.06] text-white/35'
+                  : 'bg-white/[0.06] text-white/30'
                 }
               `}
             >
@@ -250,12 +250,12 @@ export default function CampusToolPage() {
           </div>
 
           {tool.description && (
-            <p className="text-sm text-white/45 leading-relaxed mb-3">
+            <p className="text-sm text-white/50 leading-relaxed mb-3">
               {tool.description}
             </p>
           )}
 
-          <div className="flex items-center gap-3 text-[12px] text-white/25">
+          <div className="flex items-center gap-3 text-[12px] text-white/30">
             <span className="inline-flex px-2 py-0.5 rounded-full bg-[#FFD700]/[0.06] text-[#FFD700]/70 text-[11px]">
               {tool.category}
             </span>
@@ -276,7 +276,7 @@ export default function CampusToolPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: durationSeconds.standard, delay: 0.1, ease: EASE }}
-          className="rounded-2xl bg-[#080808] border border-white/[0.06] p-6 sm:p-8"
+          className="rounded-2xl bg-void border border-white/[0.06] p-6 sm:p-8"
         >
           {tool.elements && tool.elements.length > 0 ? (
             <LazyToolCanvas

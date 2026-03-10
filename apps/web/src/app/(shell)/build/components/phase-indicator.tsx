@@ -54,7 +54,7 @@ export function PhaseIndicator({ phase }: { phase: BuildPhase }) {
       <motion.div
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-2 text-xs text-white/40 mt-3"
+        className="flex items-center gap-2 text-xs text-white/30 mt-3"
       >
         {(phase === 'classifying' || phase === 'generating') && (
           <Loader2 className="w-3 h-3 animate-spin text-white/30" />

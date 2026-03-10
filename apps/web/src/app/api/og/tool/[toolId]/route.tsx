@@ -57,7 +57,7 @@ export async function GET(
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#080808',
+                backgroundColor: '#0D0D0C',
                 backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.05) 0%, transparent 50%)',
               }}
             >
@@ -99,7 +99,7 @@ export async function GET(
               width: '100%',
               display: 'flex',
               flexDirection: 'column',
-              backgroundColor: '#080808',
+              backgroundColor: '#0D0D0C',
               backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.05) 0%, transparent 50%)',
               padding: '80px',
             }}
@@ -254,7 +254,7 @@ export async function GET(
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#080808',
+              backgroundColor: '#0D0D0C',
             }}
           >
             <div

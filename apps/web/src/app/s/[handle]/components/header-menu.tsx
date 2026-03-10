@@ -72,7 +72,7 @@ export function HeaderMenu({
               'rounded-t-2xl max-h-[80vh] overflow-y-auto',
               'md:bottom-auto md:top-0 md:left-auto md:right-0 md:h-full md:w-72 md:max-h-none',
               'md:rounded-t-none',
-              'bg-black border-t border-white/[0.05] md:border-t-0 md:border-l md:border-white/[0.05]'
+              'bg-void border-t border-white/[0.05] md:border-t-0 md:border-l md:border-white/[0.05]'
             )}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -101,7 +101,7 @@ export function HeaderMenu({
               {/* ── Apps section ── */}
               {(tools.length > 0 || isLoadingTools) && (
                 <div className="mt-3 mb-4">
-                  <span className="font-mono text-[10px] uppercase tracking-label text-white/30 mb-2 block">
+                  <span className="font-mono text-[11px] uppercase tracking-label text-white/30 mb-2 block">
                     Apps
                   </span>
                   {isLoadingTools ? (
@@ -145,7 +145,7 @@ export function HeaderMenu({
               {/* ── Events section ── */}
               {events.length > 0 && (
                 <div className="mb-4">
-                  <span className="font-mono text-[10px] uppercase tracking-label text-white/30 mb-2 block">
+                  <span className="font-mono text-[11px] uppercase tracking-label text-white/30 mb-2 block">
                     Upcoming
                   </span>
                   <div className="space-y-1">

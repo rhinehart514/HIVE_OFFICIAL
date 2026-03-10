@@ -440,7 +440,7 @@ export function ModerationPanel({
                                 </Text>
                                 <span
                                   className={cn(
-                                    'px-1.5 py-0.5 rounded text-[10px] font-medium uppercase',
+                                    'px-1.5 py-0.5 rounded text-[11px] font-medium uppercase',
                                     item.status === 'flagged' && 'bg-amber-400/20 text-amber-400',
                                     item.status === 'hidden' && 'bg-amber-400/20 text-amber-400',
                                     item.status === 'removed' && 'bg-red-500/20 text-red-400'

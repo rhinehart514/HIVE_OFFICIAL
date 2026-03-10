@@ -131,14 +131,14 @@ function BracketCard({
                     ? 'text-white font-medium'
                     : hasVoted
                       ? 'text-white/30'
-                      : 'text-white/80'
+                      : 'text-white/70'
               }`}>
                 {entry}
               </span>
               {hasVoted && (
                 <motion.span
                   className={`block font-mono text-[12px] tabular-nums mt-1 ${
-                    isMyChoice ? 'text-[#FFD700]/70' : isLeading ? 'text-white/50' : 'text-white/20'
+                    isMyChoice ? 'text-[#FFD700]/70' : isLeading ? 'text-white/50' : 'text-white/30'
                   }`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -159,7 +159,7 @@ function BracketCard({
         {!compact && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-[12px] text-white/40 hover:text-white/60 transition-colors duration-100"
+            className="text-[12px] text-white/30 hover:text-white/50 transition-colors duration-100"
           >
             {expanded ? 'Hide bracket' : 'Show bracket'}
           </button>
@@ -183,7 +183,7 @@ function BracketCard({
                   className={`text-[12px] px-2 py-1.5 rounded-lg ${
                     entry === winner
                       ? 'text-[#FFD700] bg-[#FFD700]/[0.06]'
-                      : 'text-white/40 bg-white/[0.03]'
+                      : 'text-white/30 bg-white/[0.03]'
                   }`}
                 >
                   {entry}

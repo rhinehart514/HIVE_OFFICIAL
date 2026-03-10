@@ -57,23 +57,26 @@ export function CompleteActions({
         </div>
       )}
 
-      <div className="flex gap-2 pt-1">
-        <button
-          onClick={() => onNavigate(`/t/${toolId}?just_created=true`)}
-          className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/50 transition-colors"
-        >
-          <ExternalLink className="w-3 h-3" />
-          View standalone
-        </button>
+      <div className="flex flex-wrap gap-2 pt-1">
         <button
           onClick={onShare}
-          className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/50 transition-colors"
+          className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-white text-black text-xs font-semibold hover:bg-white/90 transition-colors duration-100"
         >
-          Copy link
+          <ExternalLink className="w-3 h-3" />
+          Send to your group
         </button>
+        {!originSpaceId && hasUser && (
+          <button
+            onClick={() => onNavigate(`/t/${toolId}?just_created=true`)}
+            className="flex items-center gap-1.5 px-5 py-2 rounded-full border border-white/10 text-white text-xs hover:bg-white/[0.04] transition-colors duration-100"
+          >
+            <MapPin className="w-3 h-3" />
+            Place in Space
+          </button>
+        )}
         <button
           onClick={onReset}
-          className="flex items-center gap-1.5 text-xs text-white/25 hover:text-white/40 transition-colors"
+          className="flex items-center gap-1.5 px-5 py-2 rounded-full border border-white/10 text-white text-xs hover:bg-white/[0.04] transition-colors duration-100"
         >
           <RotateCcw className="w-3 h-3" />
           Make another

@@ -1,4 +1,5 @@
 export { CampusHeader } from './CampusHeader';
+export { CampusPulse } from './CampusPulse';
 export { LiveNowSection } from './LiveNowSection';
 export { TodayEventsSection } from './TodayEventsSection';
 export { SpacesActivitySection } from './SpacesActivitySection';

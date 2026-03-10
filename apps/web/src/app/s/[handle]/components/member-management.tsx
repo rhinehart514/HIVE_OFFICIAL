@@ -750,7 +750,7 @@ export function MemberManagement({
               'bg-white/[0.06] border border-white/[0.06]',
               'text-white placeholder:text-white/50',
               'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
-              'transition-all duration-150'
+              'transition-colors duration-100'
             )}
           />
         </div>

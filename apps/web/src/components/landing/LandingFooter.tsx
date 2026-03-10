@@ -12,13 +12,13 @@ export function LandingFooter() {
         <div className="flex items-center gap-4">
           <Link
             href="/legal/terms"
-            className="text-[11px] text-white/30 transition-colors hover:text-white/40"
+            className="text-[11px] text-white/30 transition-colors hover:text-white/30"
           >
             Terms
           </Link>
           <Link
             href="/legal/privacy"
-            className="text-[11px] text-white/30 transition-colors hover:text-white/40"
+            className="text-[11px] text-white/30 transition-colors hover:text-white/30"
           >
             Privacy
           </Link>

@@ -177,10 +177,10 @@ export function ToolCanvasInline({ toolId, onAddToSpace }: ToolCanvasInlineProps
             className="overflow-hidden"
           >
             <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-white/[0.06] bg-white/[0.02]">
-              <span className="text-[12px] text-white/35">Like this? Add it to your space</span>
+              <span className="text-[12px] text-white/30">Like this? Add it to your space</span>
               <button
                 onClick={() => onAddToSpace(toolId)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white/[0.06] border border-white/[0.08] text-white/50 hover:bg-white/[0.08] hover:text-white/70 transition-all active:scale-[0.97]"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white/[0.06] border border-white/[0.08] text-white/50 hover:bg-white/[0.08] hover:text-white/70 transition-colors duration-100"
               >
                 <Plus className="w-3 h-3" />
                 Add to space

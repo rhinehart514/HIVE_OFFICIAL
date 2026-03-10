@@ -80,7 +80,7 @@ function PollCard({
 
   return (
     <div className={CARD_CLASSES}>
-      <p className="text-white/90 text-sm font-medium mb-3 leading-snug">
+      <p className="text-white text-sm font-medium mb-3 leading-snug">
         {question}
       </p>
 
@@ -128,7 +128,7 @@ function PollCard({
                       ? 'text-[#FFD700]'
                       : isLeading && showResults
                         ? 'text-[#FFD700]/80'
-                        : 'text-white/80'
+                        : 'text-white/70'
                   }`}
                 >
                   {option}
@@ -136,7 +136,7 @@ function PollCard({
                 {showResults && (
                   <span
                     className={`text-xs ml-2 shrink-0 ${
-                      isMyVote ? 'text-[#FFD700]/80' : 'text-white/40'
+                      isMyVote ? 'text-[#FFD700]/80' : 'text-white/30'
                     }`}
                   >
                     {pct}%
@@ -204,9 +204,9 @@ function RsvpCard({
   return (
     <div className={CARD_CLASSES}>
       <div className="mb-3">
-        <p className="text-white/90 text-sm font-medium leading-snug">{title}</p>
+        <p className="text-white text-sm font-medium leading-snug">{title}</p>
         {formattedDate && (
-          <p className="text-xs text-white/40 mt-0.5 flex items-center gap-1">
+          <p className="text-xs text-white/30 mt-0.5 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {formattedDate}
           </p>
@@ -227,7 +227,7 @@ function RsvpCard({
             px-4 h-9 rounded-3xl text-sm font-medium transition-colors duration-200
             ${userResponse === 'yes'
               ? 'bg-[#22C55E]/[0.15] text-[#22C55E] border border-[#22C55E]/30'
-              : 'bg-white/[0.04] text-white/60 border border-white/[0.08] hover:bg-white/[0.08]'
+              : 'bg-white/[0.04] text-white/50 border border-white/[0.08] hover:bg-white/[0.08]'
             }
           `}
         >
@@ -241,7 +241,7 @@ function RsvpCard({
               px-4 h-9 rounded-3xl text-sm font-medium transition-colors duration-200
               ${userResponse === 'maybe'
                 ? 'bg-[#FFD700]/[0.10] text-[#FFD700] border border-[#FFD700]/30'
-                : 'bg-white/[0.04] text-white/60 border border-white/[0.08] hover:bg-white/[0.08]'
+                : 'bg-white/[0.04] text-white/50 border border-white/[0.08] hover:bg-white/[0.08]'
               }
             `}
           >
@@ -297,7 +297,7 @@ function CountdownCard({
 
   return (
     <div className={CARD_CLASSES}>
-      <p className="text-white/90 text-sm font-medium mb-3 leading-snug flex items-center gap-1.5">
+      <p className="text-white text-sm font-medium mb-3 leading-snug flex items-center gap-1.5">
         <Clock className="w-3.5 h-3.5 text-[#FFD700]/60" />
         {title}
       </p>
@@ -330,7 +330,7 @@ function TimeUnit({ value, label }: { value: number; label: string }) {
       <span className="text-white text-lg font-semibold tabular-nums leading-none">
         {String(value).padStart(2, '0')}
       </span>
-      <span className="text-[10px] text-white/30 mt-1 uppercase tracking-wider">
+      <span className="text-[11px] text-white/30 mt-1 uppercase tracking-wider">
         {label}
       </span>
     </div>
@@ -396,7 +396,7 @@ function SignupCard({
 
   return (
     <div className={CARD_CLASSES}>
-      <p className="text-white/90 text-sm font-medium mb-3 leading-snug">
+      <p className="text-white text-sm font-medium mb-3 leading-snug">
         {title}
       </p>
 
@@ -420,7 +420,7 @@ function SignupCard({
               `}
             >
               <div className="flex-1 min-w-0">
-                <span className={`truncate ${isMine ? 'text-[#FFD700]' : 'text-white/80'}`}>
+                <span className={`truncate ${isMine ? 'text-[#FFD700]' : 'text-white/70'}`}>
                   {slot}
                 </span>
                 {members.length > 0 && (
@@ -505,10 +505,10 @@ function EventCard({
 
   return (
     <div className={`${CARD_CLASSES} border-l-2 border-l-[#FFD700]/40`}>
-      <p className="text-white/90 text-sm font-medium leading-snug">{title}</p>
+      <p className="text-white text-sm font-medium leading-snug">{title}</p>
 
       {description && (
-        <p className="text-xs text-white/40 mt-1 line-clamp-2">{description}</p>
+        <p className="text-xs text-white/30 mt-1 line-clamp-2">{description}</p>
       )}
 
       <div className="flex flex-col gap-1 mt-2">
@@ -519,7 +519,7 @@ function EventCard({
           </p>
         )}
         {location && (
-          <p className="text-xs text-white/40 flex items-center gap-1.5">
+          <p className="text-xs text-white/30 flex items-center gap-1.5">
             <MapPin className="w-3 h-3 text-white/30" />
             {location}
           </p>
@@ -534,7 +534,7 @@ function EventCard({
             px-4 h-8 rounded-3xl text-xs font-medium transition-colors duration-200
             ${userResponse === 'yes'
               ? 'bg-[#22C55E]/[0.15] text-[#22C55E] border border-[#22C55E]/30'
-              : 'bg-white/[0.04] text-white/60 border border-white/[0.08] hover:bg-white/[0.08]'
+              : 'bg-white/[0.04] text-white/50 border border-white/[0.08] hover:bg-white/[0.08]'
             }
           `}
         >

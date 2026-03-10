@@ -70,8 +70,8 @@ export function HeroSection() {
           className={`flex flex-col items-center gap-4 transition-[opacity,transform] duration-500 ${show(3)}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
         >
-          {/* Functional prompt input */}
-          <form onSubmit={handleSubmit} className="relative w-full max-w-lg">
+          {/* Functional prompt input — intentionally wider than text column above */}
+          <form onSubmit={handleSubmit} className="relative w-full max-w-xl">
             {/* Gold glow behind prompt */}
             <div
               className="pointer-events-none absolute inset-0 -inset-x-8 -inset-y-12"
@@ -115,12 +115,12 @@ export function HeroSection() {
 
       {/* Scroll indicator */}
       <div
-        className={`absolute bottom-8 left-1/2 -translate-x-1/2 transition-opacity duration-700 delay-700 ${
+        className={`absolute bottom-8 left-1/2 -translate-x-1/2 transition-opacity duration-200 delay-300 ${
           step >= 3 ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div className="flex flex-col items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/30">
+          <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/30">
             Scroll
           </span>
           <div className="h-6 w-px bg-white/10" />

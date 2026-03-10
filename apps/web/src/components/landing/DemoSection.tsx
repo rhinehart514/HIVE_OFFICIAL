@@ -122,7 +122,7 @@ export function DemoSection() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FFD700]" />
               </span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/30">
+              <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/30">
                 Live
               </span>
             </div>

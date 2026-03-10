@@ -549,7 +549,7 @@ function ToolContent({
                       className="w-4 h-4 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-4 h-4 rounded-full bg-white/[0.06] flex items-center justify-center text-[10px] text-white/50">
+                    <div className="w-4 h-4 rounded-full bg-white/[0.06] flex items-center justify-center text-[11px] text-white/50">
                       {deployment.tool.creatorName.charAt(0).toUpperCase()}
                     </div>
                   )}

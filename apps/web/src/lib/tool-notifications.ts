@@ -121,10 +121,10 @@ export async function notifyToolMilestone(params: {
   milestone: number;
 }): Promise<string | null> {
   const payload = buildPayload('tool.milestone', {
-    title: `Your ${params.toolName} hit ${params.milestone} uses!`,
-    body: `${params.toolName} just crossed ${params.milestone} total uses.`,
+    title: `Your ${params.toolName} hit ${params.milestone} responses!`,
+    body: `${params.toolName} just crossed ${params.milestone} total responses.`,
     toolId: params.toolId,
-    actionUrl: `/build/${params.toolId}/analytics`,
+    actionUrl: `/t/${params.toolId}`,
   });
 
   return createNotification({

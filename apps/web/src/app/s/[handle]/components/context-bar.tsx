@@ -111,7 +111,7 @@ export function ContextBar({
             'text-[11px] font-medium flex-shrink-0 px-2 py-0.5 rounded-full',
             isStartingSoon
               ? 'bg-[var(--color-gold)]/15 text-[var(--color-gold)]'
-              : 'text-white/40'
+              : 'text-white/30'
           )}
         >
           {isStartingSoon && <Zap className="w-2.5 h-2.5 inline mr-0.5" />}
@@ -136,7 +136,7 @@ export function ContextBar({
         <span className="text-[13px] text-white/70 truncate flex-1">
           {activePoll.question}
         </span>
-        <span className="text-[11px] text-white/40 flex-shrink-0">
+        <span className="text-[11px] text-white/30 flex-shrink-0">
           {activePoll.responseCount} responses
         </span>
       </button>

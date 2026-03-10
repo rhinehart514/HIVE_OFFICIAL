@@ -185,7 +185,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                           setStep('identity');
                         }}
                         className={cn(
-                          'w-full flex items-center gap-4 p-4 rounded-lg transition-all',
+                          'w-full flex items-center gap-4 p-4 rounded-lg transition-colors duration-100',
                           'hover:bg-white/[0.06] hover:border-white/[0.06]',
                           template === t.id
                             ? 'border-white/[0.06] bg-white/[0.06]'
@@ -279,7 +279,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                         key={opt.id}
                         onClick={() => setAccess(opt.id)}
                         className={cn(
-                          'w-full flex items-center gap-4 p-4 rounded-lg transition-all',
+                          'w-full flex items-center gap-4 p-4 rounded-lg transition-colors duration-100',
                           access === opt.id
                             ? 'border-white/50 bg-white/[0.06]'
                             : 'border-white/[0.06] hover:border-white/15'

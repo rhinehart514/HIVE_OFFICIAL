@@ -12,6 +12,14 @@
     {
       "path": "/api/cron/event-reminders",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/creation-nudge",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/share-nudge",
+      "schedule": "0 */2 * * *"
     }
   ],
   "headers": [

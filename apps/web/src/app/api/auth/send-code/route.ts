@@ -497,13 +497,12 @@ export const POST = withValidation(
         return respond.error("Request validation failed", "INVALID_INPUT", { status: 400 });
       }
 
-      // UB launch gate: enforce @buffalo.edu domain
-      // Remove or gate behind env var when expanding to other campuses
+      // Campus gate: enforce .edu domain for campus mode
       if (!isGlobalMode) {
         const emailDomain = email.toLowerCase().trim().split('@')[1];
-        if (emailDomain !== 'buffalo.edu') {
+        if (!emailDomain?.endsWith('.edu')) {
           return respond.error(
-            "HIVE is currently only available to @buffalo.edu email addresses.",
+            "HIVE is available to .edu email addresses. Enter your campus email to get started.",
             "FORBIDDEN",
             { status: 403 }
           );

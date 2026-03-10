@@ -191,7 +191,7 @@ export function SearchCommand() {
             'sm:inset-auto sm:left-[50%] sm:top-[15%] sm:translate-x-[-50%] sm:translate-y-0',
             'sm:w-full sm:max-w-xl sm:rounded-2xl sm:max-h-[60vh]',
             // Surface
-            'bg-black/90 backdrop-blur-2xl border border-white/[0.08]',
+            'bg-[var(--bg-void)] border border-white/[0.08]',
             'flex flex-col overflow-hidden',
             // Animation
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
@@ -228,7 +228,7 @@ export function SearchCommand() {
               autoCorrect="off"
               spellCheck={false}
             />
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-sans text-white/30">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[11px] font-sans text-white/30">
               ESC
             </kbd>
           </div>
@@ -261,7 +261,7 @@ export function SearchCommand() {
             {!loading && grouped.map((group) => (
               <div key={group.type}>
                 <div className="flex items-center gap-2 px-4 py-1.5">
-                  <span className="text-[10px] uppercase tracking-label text-white/30 font-sans font-medium">
+                  <span className="text-[11px] uppercase tracking-label text-white/30 font-sans font-medium">
                     {group.label}
                   </span>
                 </div>
@@ -278,7 +278,7 @@ export function SearchCommand() {
                   >
                     <ResultIcon type={result.type} metadata={result.metadata} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-sans font-medium text-white/70 group-hover:text-white/90 truncate transition-colors">
+                      <p className="text-[13px] font-sans font-medium text-white/70 group-hover:text-white truncate transition-colors">
                         {result.title}
                       </p>
                       {result.description && (

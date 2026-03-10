@@ -128,7 +128,7 @@ function SpaceCard({
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium text-white truncate">{space.name}</div>
           {space.memberCount != null && (
-            <div className="text-[11px] text-white/20 font-sans">
+            <div className="text-[11px] text-white/30 font-sans">
               {space.memberCount > 0 ? `${space.memberCount} members` : 'Be the first to join'}
             </div>
           )}
@@ -730,7 +730,7 @@ export function EntryFlowV2() {
                 </Button>
               </div>
 
-              <p className="text-[11px] text-white/20 uppercase tracking-[0.15em] font-sans text-center mt-4">
+              <p className="text-[11px] text-white/30 uppercase tracking-[0.15em] font-sans text-center mt-4">
                 @buffalo.edu required
               </p>
             </motion.div>
@@ -784,7 +784,7 @@ export function EntryFlowV2() {
                         onKeyDown={event => handleOtpKeyDown(index, event)}
                         onPaste={handleOtpPaste}
                         className={[
-                          'h-12 w-full rounded-[12px] border bg-[#080808] text-center text-[18px] text-white',
+                          'h-12 w-full rounded-[12px] border bg-void text-center text-[18px] text-white',
                           'outline-none transition-colors duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
                           'focus:border-white/[0.15]',
                           codeErrorFlash
@@ -827,7 +827,7 @@ export function EntryFlowV2() {
                 )}
 
                 {!isCodeVerified && resendCountdown > 0 && (
-                  <p className="text-[13px] text-white/20 font-sans">
+                  <p className="text-[13px] text-white/30 font-sans">
                     Resend in {resendCountdown}s
                   </p>
                 )}
@@ -852,7 +852,7 @@ export function EntryFlowV2() {
                   transition={{ delay: 1.5, duration: 0.4 }}
                   className="mt-6 rounded-xl bg-white/[0.02] border border-white/[0.06] p-4"
                 >
-                  <p className="text-[11px] text-white/20 uppercase tracking-[0.15em] font-sans mb-3">
+                  <p className="text-[11px] text-white/30 uppercase tracking-[0.15em] font-sans mb-3">
                     Happening at UB
                   </p>
                   <div className="grid grid-cols-3 gap-3 text-center">
@@ -861,7 +861,7 @@ export function EntryFlowV2() {
                         <div className="text-[20px] font-semibold text-white font-display">
                           {campusActivity.spaces.toLocaleString()}
                         </div>
-                        <div className="text-[11px] text-white/25 font-sans">Spaces</div>
+                        <div className="text-[11px] text-white/30 font-sans">Spaces</div>
                       </div>
                     )}
                     {campusActivity.students > 0 && (
@@ -869,7 +869,7 @@ export function EntryFlowV2() {
                         <div className="text-[20px] font-semibold text-white font-display">
                           {campusActivity.students.toLocaleString()}
                         </div>
-                        <div className="text-[11px] text-white/25 font-sans">Students</div>
+                        <div className="text-[11px] text-white/30 font-sans">Students</div>
                       </div>
                     )}
                     {campusActivity.apps > 0 && (
@@ -877,7 +877,7 @@ export function EntryFlowV2() {
                         <div className="text-[20px] font-semibold text-white font-display">
                           {campusActivity.apps.toLocaleString()}
                         </div>
-                        <div className="text-[11px] text-white/25 font-sans">Apps</div>
+                        <div className="text-[11px] text-white/30 font-sans">Apps</div>
                       </div>
                     )}
                   </div>
@@ -951,7 +951,7 @@ export function EntryFlowV2() {
                 </Button>
               </div>
 
-              <p className="text-[11px] text-white/20 text-center mt-3">
+              <p className="text-[11px] text-white/30 text-center mt-3">
                 This is how you appear in spaces
               </p>
             </motion.div>
@@ -1042,7 +1042,7 @@ export function EntryFlowV2() {
                 type="button"
                 onClick={submitProfile}
                 disabled={isSubmittingName}
-                className="w-full text-center text-[11px] text-white/20 hover:text-white/40 transition-colors"
+                className="w-full text-center text-[11px] text-white/30 hover:text-white/30 transition-colors"
               >
                 Skip for now
               </button>

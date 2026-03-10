@@ -381,7 +381,7 @@ export function SidebarToolSection({
                   'flex items-center gap-2',
                   'text-white/50 hover:text-white/50',
                   'hover:bg-white/[0.06]',
-                  'transition-all duration-150',
+                  'transition-colors duration-100',
                   'border border-dashed border-white/[0.06] hover:border-white/[0.06]'
                 )}
                 whileHover={{ opacity: 0.96 }}

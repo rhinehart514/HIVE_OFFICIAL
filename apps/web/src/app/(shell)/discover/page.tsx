@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@hive/auth-logic';
 import {
   CampusHeader,
+  CampusPulse,
   LiveNowSection,
   TodayEventsSection,
   NewAppsSection,
@@ -18,6 +19,13 @@ import type { FeedEvent } from '@/components/feed';
 
 /* ─── Data fetching ─────────────────────────────────────────────── */
 
+/**
+ * Fetch events sorted by time, then use relevanceScore as tiebreaker
+ * within the same calendar day. The API computes relevanceScore but
+ * callers previously ignored it by requesting sort=soonest. Now we
+ * request sort=soonest (for primary ordering) then re-sort events
+ * on the same day by relevanceScore descending.
+ */
 async function fetchFeedEvents(): Promise<FeedEvent[]> {
   const params = new URLSearchParams({
     timeRange: 'upcoming',
@@ -30,7 +38,7 @@ async function fetchFeedEvents(): Promise<FeedEvent[]> {
   if (!res.ok) return [];
   const payload = await res.json();
   const raw = (payload.data || payload).events || [];
-  return raw.map((e: Record<string, unknown>) => ({
+  const events: FeedEvent[] = raw.map((e: Record<string, unknown>) => ({
     id: e.id as string,
     title: e.title as string,
     description: e.description as string | undefined,
@@ -54,6 +62,26 @@ async function fetchFeedEvents(): Promise<FeedEvent[]> {
     matchReasons: e.matchReasons as string[] | undefined,
     relevanceScore: e.relevanceScore as number | undefined,
   }));
+
+  // Use relevanceScore as tiebreaker within the same calendar day.
+  // Events are already sorted by soonest. Group by date, sort within
+  // each group by relevanceScore descending, then flatten.
+  const byDay = new Map<string, FeedEvent[]>();
+  for (const event of events) {
+    const dayKey = event.startDate.slice(0, 10); // YYYY-MM-DD
+    const group = byDay.get(dayKey);
+    if (group) {
+      group.push(event);
+    } else {
+      byDay.set(dayKey, [event]);
+    }
+  }
+  const sorted: FeedEvent[] = [];
+  for (const [, group] of byDay) {
+    group.sort((a, b) => (b.relevanceScore ?? 0) - (a.relevanceScore ?? 0));
+    sorted.push(...group);
+  }
+  return sorted;
 }
 
 /* ─── Page ──────────────────────────────────────────────────────── */
@@ -112,19 +140,22 @@ export default function DiscoverPage() {
           <FeedSkeleton />
         ) : (
           <div className="space-y-8">
-            {/* 1. Live Now — events happening or starting within 1hr */}
+            {/* 1. Campus Pulse — dining hours, study spot busyness */}
+            <CampusPulse />
+
+            {/* 2. Live Now — events happening or starting within 1hr */}
             <LiveNowSection events={events} onSelectEvent={handleSelectEvent} />
 
-            {/* 2. Today's Events — time-sorted, inline RSVP */}
+            {/* 3. Happening Today — time-sorted with relevance tiebreaker, inline RSVP */}
             <TodayEventsSection events={events} onSelectEvent={handleSelectEvent} />
 
-            {/* 3. New Apps — shell tools with inline engagement */}
+            {/* 4. Trending Apps — shell apps with inline engagement */}
             <NewAppsSection />
 
-            {/* 4. Your Spaces Activity — hidden for new users */}
+            {/* 5. Your Spaces Activity — hidden for new users */}
             <SpacesActivitySection />
 
-            {/* 5. Discover — unjoined spaces, cursor-paginated */}
+            {/* 6. Discover Spaces — unjoined spaces, cursor-paginated */}
             <DiscoverSection />
           </div>
         )}

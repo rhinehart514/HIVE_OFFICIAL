@@ -153,7 +153,7 @@ export function DiscoverSection() {
         </Mono>
         <Link
           href="/discover"
-          className="text-[10px] text-white/30 hover:text-white/50 transition-colors flex items-center gap-1"
+          className="text-[11px] text-white/30 hover:text-white/50 transition-colors flex items-center gap-1"
         >
           Browse all <ArrowRight className="w-2.5 h-2.5" />
         </Link>
@@ -169,11 +169,11 @@ export function DiscoverSection() {
               <SpaceAvatar name={space.name} url={space.avatarUrl} size={40} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[13px] font-medium text-white/70 group-hover:text-white/90 transition-colors truncate">
+                  <span className="text-[13px] font-medium text-white/70 group-hover:text-white transition-colors truncate">
                     {space.name}
                   </span>
                   {space.isVerified && (
-                    <span className="text-[10px] text-[#FFD700]/50">&#10003;</span>
+                    <span className="text-[11px] text-[#FFD700]/50">&#10003;</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5 text-[11px] text-white/30">

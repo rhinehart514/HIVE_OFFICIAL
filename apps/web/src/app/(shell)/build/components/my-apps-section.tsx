@@ -44,8 +44,8 @@ export function MyAppsSection() {
   if (tools.length === 0) {
     return (
       <div className="mt-6">
-        <span className="text-xs text-white/25 uppercase tracking-wider">Your Apps</span>
-        <p className="text-sm text-white/20 mt-2">
+        <span className="text-xs text-white/30 uppercase tracking-wider">Your Apps</span>
+        <p className="text-sm text-white/30 mt-2">
           Apps you make show up here. Try typing what you need above.
         </p>
       </div>
@@ -60,9 +60,9 @@ export function MyAppsSection() {
       className="mt-6"
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-white/25 uppercase tracking-wider">Your Apps</span>
+        <span className="text-xs text-white/30 uppercase tracking-wider">Your Apps</span>
         {stats && stats.totalUsers > 0 && (
-          <span className="text-[10px] text-white/20">
+          <span className="text-[11px] text-white/30">
             {stats.totalUsers} user{stats.totalUsers !== 1 ? 's' : ''} reached
           </span>
         )}
@@ -76,11 +76,11 @@ export function MyAppsSection() {
               bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left group"
           >
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-white/60 group-hover:text-white/80 truncate transition-colors">
+              <p className="text-sm text-white/50 group-hover:text-white/70 truncate transition-colors">
                 {tool.name}
               </p>
             </div>
-            <div className="flex items-center gap-2 text-[10px] text-white/20 flex-shrink-0">
+            <div className="flex items-center gap-2 text-[11px] text-white/30 flex-shrink-0">
               {tool.deployments > 0 && (
                 <span>{tool.deployments} space{tool.deployments !== 1 ? 's' : ''}</span>
               )}

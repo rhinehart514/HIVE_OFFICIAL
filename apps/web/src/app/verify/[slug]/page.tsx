@@ -86,7 +86,7 @@ function MetricCard({
       className="p-4 rounded-lg bg-white/[0.04] border border-white/[0.06]"
     >
       <div className="flex items-center gap-2 mb-2">
-        <Icon className="w-4 h-4 text-white/40" />
+        <Icon className="w-4 h-4 text-white/30" />
         <span className="text-xs text-white/50">{label}</span>
       </div>
       <div className="text-2xl font-semibold text-white tabular-nums">{value}</div>
@@ -129,14 +129,14 @@ export default function VerifyPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-ground,#0A0A09)] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-ground,#0D0D0C)] flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex flex-col items-center gap-3"
         >
-          <Shield className="w-8 h-8 text-white/20 animate-pulse" />
-          <span className="text-sm text-white/40">Verifying leadership record...</span>
+          <Shield className="w-8 h-8 text-white/30 animate-pulse" />
+          <span className="text-sm text-white/30">Verifying leadership record...</span>
         </motion.div>
       </div>
     );
@@ -144,13 +144,13 @@ export default function VerifyPage() {
 
   if (error || !record) {
     return (
-      <div className="min-h-screen bg-[var(--bg-ground,#0A0A09)] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-ground,#0D0D0C)] flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-sm"
         >
-          <Shield className="w-10 h-10 text-white/20 mx-auto mb-4" />
+          <Shield className="w-10 h-10 text-white/30 mx-auto mb-4" />
           <h1 className="text-lg font-medium text-white mb-2">Record not found</h1>
           <p className="text-sm text-white/50">
             This leadership record doesn't exist or the user is no longer a leader of this space.
@@ -161,7 +161,7 @@ export default function VerifyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-ground,#0A0A09)]">
+    <div className="min-h-screen bg-[var(--bg-ground,#0D0D0C)]">
       <div className="max-w-lg mx-auto px-6 py-12">
         {/* Verified Badge */}
         <motion.div
@@ -204,14 +204,14 @@ export default function VerifyPage() {
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-xs text-white/40 mb-1">Role</div>
+              <div className="text-xs text-white/30 mb-1">Role</div>
               <div className="text-sm font-medium text-white">
                 {roleLabel(record.leadership.role)} of {record.space.name}
               </div>
             </div>
             <a
               href={`/s/${record.space.handle}`}
-              className="text-xs text-white/40 hover:text-white/60 transition-colors flex items-center gap-1"
+              className="text-xs text-white/30 hover:text-white/50 transition-colors flex items-center gap-1"
             >
               View space <ExternalLink className="w-3 h-3" />
             </a>
@@ -219,7 +219,7 @@ export default function VerifyPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-xs text-white/40 mb-1 flex items-center gap-1">
+              <div className="text-xs text-white/30 mb-1 flex items-center gap-1">
                 <Clock className="w-3 h-3" /> Tenure
               </div>
               <div className="text-sm font-medium text-white">
@@ -227,7 +227,7 @@ export default function VerifyPage() {
               </div>
             </div>
             <div>
-              <div className="text-xs text-white/40 mb-1 flex items-center gap-1">
+              <div className="text-xs text-white/30 mb-1 flex items-center gap-1">
                 <Users className="w-3 h-3" /> Members
               </div>
               <div className="text-sm font-medium text-white">
@@ -253,7 +253,7 @@ export default function VerifyPage() {
             transition={{ duration: 0.4, delay: 0.6, ease: EASE }}
             className="mb-8"
           >
-            <h3 className="text-xs font-medium text-white/40 tracking-wide mb-3">
+            <h3 className="text-xs font-medium text-white/30 tracking-wide mb-3">
               Earned Badges ({record.badges.total})
             </h3>
             <div className="flex flex-wrap gap-2">
@@ -315,7 +315,7 @@ export default function VerifyPage() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-1 mt-3 text-xs text-white/40 hover:text-white/60 transition-colors"
+            className="inline-flex items-center gap-1 mt-3 text-xs text-white/30 hover:text-white/50 transition-colors"
           >
             <Shield className="w-3 h-3" />
             Powered by HIVE

@@ -60,6 +60,8 @@ export interface SpaceResidenceData {
   isClaimed: boolean;
   // Gatherers (for ghost/gathering spaces - who's waiting for quorum)
   gatherers: GathererProfile[];
+  // Space taxonomy
+  spaceType?: 'uni' | 'student' | 'greek' | 'residential';
   // CampusLabs imported metadata (P2.2, P2.3)
   email?: string;
   contactName?: string;
@@ -291,6 +293,8 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
           isClaimed,
           // Gatherers (for ghost/gathering spaces)
           gatherers: spaceData.gatherers || [],
+          // Space taxonomy
+          spaceType: spaceData.spaceType || undefined,
           // CampusLabs imported metadata (P2.2, P2.3)
           email: spaceData.email,
           contactName: spaceData.contactName,

@@ -9,13 +9,11 @@ const UB_ORGS = [
   'Dance Marathon',
   'Alpha Phi',
   'UB Esports',
-  'Society of Asian Scientists & Engineers',
+  'SASE',
   'UB Hacking',
   'Pre-Med Society',
   'Black Student Union',
-  'Residence Hall Association',
   'Club Running',
-  'UB Debate',
   'Engineers Without Borders',
 ] as const;
 
@@ -79,25 +77,20 @@ export function SocialProofSection() {
           </h2>
         </div>
 
-        {/* Org name ticker */}
+        {/* Static org name pills */}
         <div
-          className={`relative overflow-hidden py-4 transition-opacity duration-500 ${
+          className={`flex flex-wrap items-center justify-center gap-3 py-4 transition-opacity duration-200 ${
             visible ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-black to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-black to-transparent" />
-
-          <div className="flex gap-3 animate-marquee">
-            {[...UB_ORGS, ...UB_ORGS].map((org, i) => (
-              <span
-                key={`${org}-${i}`}
-                className="shrink-0 rounded-full border border-white/[0.12] bg-white/[0.06] px-4 py-2 text-[13px] text-white/70"
-              >
-                {org}
-              </span>
-            ))}
-          </div>
+          {UB_ORGS.map((org) => (
+            <span
+              key={org}
+              className="rounded-2xl border border-white/[0.05] bg-card px-4 py-2 text-[13px] text-white/70"
+            >
+              {org}
+            </span>
+          ))}
         </div>
 
         {/* Stats row */}
@@ -126,25 +119,6 @@ export function SocialProofSection() {
           <StatBlock label="idea to live app" value="<60s" />
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .animate-marquee {
-            animation: none;
-          }
-        }
-      `}</style>
     </section>
   );
 }

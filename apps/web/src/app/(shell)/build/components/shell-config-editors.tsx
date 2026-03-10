@@ -3,7 +3,7 @@
 import type { ShellFormat, ShellConfig, PollConfig, BracketConfig, RSVPConfig } from '@/lib/shells/types';
 
 const INPUT = `w-full px-3 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
-  text-white placeholder:text-white/25 focus:outline-none focus:outline-2 focus:outline-[#FFD700]`;
+  text-white placeholder:text-white/30 focus:outline-none focus:outline-2 focus:outline-[#FFD700]`;
 
 function PollConfigEditor({ config, onChange }: { config: PollConfig; onChange: (c: PollConfig) => void }) {
   return (
@@ -26,12 +26,12 @@ function PollConfigEditor({ config, onChange }: { config: PollConfig; onChange: 
                   onChange({ ...config, options: next });
                 }}
                 placeholder={`Option ${i + 1}`}
-                className={`flex-1 ${INPUT} placeholder:text-white/20`}
+                className={`flex-1 ${INPUT} placeholder:text-white/30`}
               />
               {config.options.length > 2 && (
                 <button
                   onClick={() => onChange({ ...config, options: config.options.filter((_, j) => j !== i) })}
-                  className="text-white/20 hover:text-white/40 text-[11px] px-1.5"
+                  className="text-white/30 hover:text-white/30 text-[11px] px-1.5"
                 >
                   x
                 </button>
@@ -39,7 +39,7 @@ function PollConfigEditor({ config, onChange }: { config: PollConfig; onChange: 
             </div>
           ))}
           {config.options.length < 6 && (
-            <button onClick={() => onChange({ ...config, options: [...config.options, ''] })} className="text-[11px] text-white/25 hover:text-white/50 transition-colors">
+            <button onClick={() => onChange({ ...config, options: [...config.options, ''] })} className="text-[11px] text-white/30 hover:text-white/50 transition-colors">
               + Add option
             </button>
           )}
@@ -70,12 +70,12 @@ function BracketConfigEditor({ config, onChange }: { config: BracketConfig; onCh
                   onChange({ ...config, entries: next });
                 }}
                 placeholder={`Entry ${i + 1}`}
-                className={`flex-1 ${INPUT} placeholder:text-white/20`}
+                className={`flex-1 ${INPUT} placeholder:text-white/30`}
               />
               {config.entries.length > 4 && (
                 <button
                   onClick={() => onChange({ ...config, entries: config.entries.filter((_, j) => j !== i) })}
-                  className="text-white/20 hover:text-white/40 text-[11px] px-1.5"
+                  className="text-white/30 hover:text-white/30 text-[11px] px-1.5"
                 >
                   x
                 </button>
@@ -83,7 +83,7 @@ function BracketConfigEditor({ config, onChange }: { config: BracketConfig; onCh
             </div>
           ))}
           {config.entries.length < 16 && (
-            <button onClick={() => onChange({ ...config, entries: [...config.entries, ''] })} className="text-[11px] text-white/25 hover:text-white/50 transition-colors">
+            <button onClick={() => onChange({ ...config, entries: [...config.entries, ''] })} className="text-[11px] text-white/30 hover:text-white/50 transition-colors">
               + Add entry
             </button>
           )}
@@ -107,7 +107,7 @@ function RSVPConfigEditor({ config, onChange }: { config: RSVPConfig; onChange: 
           value={config.location ?? ''}
           onChange={(e) => onChange({ ...config, location: e.target.value || undefined })}
           placeholder="e.g. Student Union Room 210"
-          className={`${INPUT} placeholder:text-white/20`}
+          className={`${INPUT} placeholder:text-white/30`}
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -131,7 +131,7 @@ function RSVPConfigEditor({ config, onChange }: { config: RSVPConfig; onChange: 
             onChange={(e) => onChange({ ...config, capacity: e.target.value ? Number(e.target.value) : undefined })}
             placeholder="No limit"
             className="w-full px-2 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
-              text-white placeholder:text-white/20 focus:outline-none focus:outline-2 focus:outline-[#FFD700]"
+              text-white placeholder:text-white/30 focus:outline-none focus:outline-2 focus:outline-[#FFD700]"
           />
         </div>
       </div>

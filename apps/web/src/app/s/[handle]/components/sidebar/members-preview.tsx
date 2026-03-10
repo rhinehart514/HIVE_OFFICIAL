@@ -67,12 +67,12 @@ export function MembersPreview({
               <Avatar
                 size="xs"
                 className={cn(
-                  'border-2 border-[#0A0A09]',
+                  'border-2 border-void',
                   'relative'
                 )}
               >
                 {member.avatarUrl && <AvatarImage src={member.avatarUrl} />}
-                <AvatarFallback className="text-[10px]">
+                <AvatarFallback className="text-[11px]">
                   {getInitials(member.name)}
                 </AvatarFallback>
               </Avatar>
@@ -91,8 +91,8 @@ export function MembersPreview({
 
         {/* Overflow count */}
         {remainingCount > 0 && (
-          <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center border-2 border-[#0A0A09]">
-            <span className="text-[10px] font-medium text-white/50">
+          <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center border-2 border-void">
+            <span className="text-[11px] font-medium text-white/50">
               +{remainingCount}
             </span>
           </div>

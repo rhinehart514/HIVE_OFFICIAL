@@ -53,7 +53,7 @@ export function SpacesActivitySection() {
       <section>
         <div className="flex items-center gap-2 mb-3">
           <Mono size="label" className="text-white/50">
-            Your Spaces
+            YOUR SPACES
           </Mono>
         </div>
         <p className="text-sm text-white/30 py-2">
@@ -90,11 +90,11 @@ export function SpacesActivitySection() {
                   {item.type === 'event' && (
                     <>
                       :{' '}
-                      <span className="text-white/60">{item.preview.split(' - ')[0]}</span>
+                      <span className="text-white/50">{item.preview.split(' - ')[0]}</span>
                     </>
                   )}
                 </p>
-                <span className="text-[10px] text-white/30 tabular-nums">
+                <span className="text-[11px] text-white/30 tabular-nums">
                   {relativeTime(item.timestamp)}
                 </span>
               </div>

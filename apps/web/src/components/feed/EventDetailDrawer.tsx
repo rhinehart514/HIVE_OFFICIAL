@@ -102,7 +102,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
           {/* Panel — slides up on mobile, centered on desktop */}
           <motion.div
             ref={modalRef}
-            className="relative w-full sm:max-w-[520px] max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-[#111] border border-white/[0.08] shadow-md shadow-black/40 flex flex-col"
+            className="relative w-full sm:max-w-[520px] max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-surface border border-white/[0.08] shadow-md shadow-black/40 flex flex-col"
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
@@ -111,7 +111,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 border border-white/[0.1] flex items-center justify-center text-white/60 hover:text-white hover:bg-black/70 transition-colors"
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 border border-white/[0.1] flex items-center justify-center text-white/50 hover:text-white hover:bg-black/70 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -123,13 +123,13 @@ export function EventDetailDrawer({ event, onClose }: Props) {
               ) : (
                 <div className="w-full h-full bg-surface border-l-2 border-l-[#FFD700]" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121210] via-[#121210]/30 to-transparent" />
 
               {/* Badges */}
               <div className="absolute top-3 left-3 flex items-center gap-2">
                 {live && (
                   <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/25 border border-red-500/20 text-[11px] font-semibold text-red-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-breathe" />
                     Live now
                   </span>
                 )}
@@ -149,10 +149,10 @@ export function EventDetailDrawer({ event, onClose }: Props) {
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center shrink-0 mt-0.5">
-                    <Calendar className="w-4 h-4 text-white/40" />
+                    <Calendar className="w-4 h-4 text-white/30" />
                   </div>
                   <div>
-                    <p className="text-[14px] text-white/80 font-medium">
+                    <p className="text-[14px] text-white/70 font-medium">
                       {fullTimeLabel(event.startDate, event.endDate)}
                     </p>
                     <p className="text-[12px] text-white/30 mt-0.5">
@@ -165,13 +165,13 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                   <div className="flex items-start gap-3">
                     <div className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center shrink-0 mt-0.5">
                       {event.isOnline ? (
-                        <Video className="w-4 h-4 text-white/40" />
+                        <Video className="w-4 h-4 text-white/30" />
                       ) : (
-                        <MapPin className="w-4 h-4 text-white/40" />
+                        <MapPin className="w-4 h-4 text-white/30" />
                       )}
                     </div>
                     <div>
-                      <p className="text-[14px] text-white/80 font-medium">
+                      <p className="text-[14px] text-white/70 font-medium">
                         {event.isOnline ? 'Online event' : event.location}
                       </p>
                     </div>
@@ -182,10 +182,10 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                   (event.friendsAttending && event.friendsAttending > 0)) && (
                   <div className="flex items-start gap-3">
                     <div className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center shrink-0 mt-0.5">
-                      <Users className="w-4 h-4 text-white/40" />
+                      <Users className="w-4 h-4 text-white/30" />
                     </div>
                     <div>
-                      <p className="text-[14px] text-white/80 font-medium">
+                      <p className="text-[14px] text-white/70 font-medium">
                         {event.rsvpCount} going
                         {event.friendsAttending && event.friendsAttending > 0 && (
                           <span className="text-[#FFD700]/60">
@@ -208,7 +208,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
 
               {/* Description */}
               {desc && (
-                <p className="text-[13px] text-white/40 leading-relaxed">{desc}</p>
+                <p className="text-[13px] text-white/30 leading-relaxed">{desc}</p>
               )}
 
               {/* Match reasons */}
@@ -217,7 +217,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                   {event.matchReasons.map((reason, i) => (
                     <span
                       key={i}
-                      className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/35"
+                      className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/30"
                     >
                       {reason}
                     </span>
@@ -238,7 +238,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                     size={28}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] text-white/70 font-medium truncate group-hover:text-white/90 transition-colors">
+                    <p className="text-[13px] text-white/70 font-medium truncate group-hover:text-white transition-colors">
                       {event.spaceName}
                     </p>
                     <p className="text-[11px] text-white/30">View space</p>
@@ -249,7 +249,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
             </div>
 
             {/* Sticky footer */}
-            <div className="shrink-0 px-6 py-4 border-t border-white/[0.06] bg-[#111]">
+            <div className="shrink-0 px-6 py-4 border-t border-white/[0.06] bg-surface">
               <button
                 onClick={() =>
                   rsvpMutation.mutate({ eventId: event.id, spaceId: event.spaceId })

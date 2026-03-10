@@ -16,6 +16,7 @@ import {
   buildCodeGenSystemPrompt,
   type ToolComposition,
 } from '@hive/core/hivelab/goose';
+import { buildCampusContextPrompt } from '@hive/core/domain';
 import { generateObject, generateText } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
 import { z } from 'zod';
@@ -82,6 +83,7 @@ export interface SpaceContext {
   type?: string;       // e.g. 'social', 'academic', 'project', 'club'
   memberCount?: number;
   name?: string;
+  campusId?: string;   // e.g. 'ub-buffalo' — enables campus-specific content in AI prompts
 }
 
 export interface GenerateRequest {
@@ -1570,9 +1572,13 @@ export async function generateTool(
   }
 
   const enhancedPrompt = promptPrefix + request.prompt;
+  const campusContext = request.spaceContext?.campusId
+    ? buildCampusContextPrompt(request.spaceContext.campusId) ?? undefined
+    : undefined;
   const fullSystemPrompt = buildSystemPrompt({
     existingComposition: request.existingComposition,
     isIteration: request.isIteration,
+    campusContext,
   });
 
   let rawOutput: string;
@@ -1846,9 +1852,13 @@ export async function generateCodeTool(
   }
 
   const enhancedPrompt = promptPrefix + request.prompt;
+  const codeGenCampusContext = request.spaceContext?.campusId
+    ? buildCampusContextPrompt(request.spaceContext.campusId) ?? undefined
+    : undefined;
   const systemPrompt = buildCodeGenSystemPrompt({
     existingCode: request.existingCode,
     isIteration: request.isIteration,
+    campusContext: codeGenCampusContext,
   });
 
   // Try Groq text generation with JSON parsing

@@ -60,7 +60,7 @@ export function BuildPreviewPanel({
           >
             <div className="text-center">
               <BrandSpinner size="md" variant="gold" />
-              <p className="text-xs text-white/25 mt-4">Understanding your idea...</p>
+              <p className="text-xs text-white/30 mt-4">Understanding your idea...</p>
             </div>
           </motion.div>
         ) : state.phase === 'error' ? (

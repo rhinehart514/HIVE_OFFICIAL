@@ -258,7 +258,7 @@ export function SparkleCreateSheet({
           <motion.div
             className={cn(
               'fixed bottom-0 left-0 right-0 z-50',
-              'bg-black border-t border-white/[0.05] rounded-t-2xl',
+              'bg-void border-t border-white/[0.05] rounded-t-2xl',
               'overflow-y-auto'
             )}
             style={{ maxHeight: sheetHeight }}

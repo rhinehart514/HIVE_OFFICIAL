@@ -96,7 +96,7 @@ export function ToolPreviewCard({
   }, [toolId, onShare]);
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden">
+    <div className="rounded-2xl border border-white/[0.06] bg-void overflow-hidden">
       {/* Preview area */}
       <div className="p-4 sm:p-5 min-h-[180px]">
         {elements.length === 0 && phase !== 'error' ? (
@@ -104,7 +104,7 @@ export function ToolPreviewCard({
             <motion.span
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="text-white/25 text-sm"
+              className="text-white/30 text-sm"
             >
               Making...
             </motion.span>
@@ -145,8 +145,8 @@ export function ToolPreviewCard({
           >
             {/* Share link row */}
             <div className="flex items-center gap-2 mb-3 px-2 py-1.5 rounded-xl bg-white/[0.03]">
-              <Link2 className="w-3.5 h-3.5 text-white/25 flex-shrink-0" />
-              <span className="text-[11px] text-white/35 truncate flex-1 font-mono">
+              <Link2 className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
+              <span className="text-[11px] text-white/30 truncate flex-1 font-mono">
                 {typeof window !== 'undefined' ? window.location.origin : ''}/t/{toolId}
               </span>
             </div>
@@ -165,8 +165,8 @@ export function ToolPreviewCard({
               <button
                 onClick={onEdit}
                 className="flex items-center justify-center gap-1.5 px-3 py-2
-                  rounded-full bg-white/[0.06] text-white/60 text-sm border border-white/[0.06]
-                  hover:bg-white/[0.08] hover:text-white/80 transition-colors duration-100"
+                  rounded-full bg-white/[0.06] text-white/50 text-sm border border-white/[0.06]
+                  hover:bg-white/[0.08] hover:text-white/70 transition-colors duration-100"
               >
                 <Pencil className="w-3.5 h-3.5" />
                 Edit

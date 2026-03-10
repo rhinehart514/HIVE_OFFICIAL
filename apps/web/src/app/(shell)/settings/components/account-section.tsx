@@ -69,7 +69,7 @@ export function AccountSection({
           <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
             <CalendarClock className="h-5 w-5 text-white/30 shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-white/60 font-medium">Google Calendar</p>
+              <p className="text-sm text-white/50 font-medium">Google Calendar</p>
               <p className="text-xs text-white/30">Coming this spring</p>
             </div>
           </div>

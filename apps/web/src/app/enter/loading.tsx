@@ -7,7 +7,7 @@
 
 export default function EntryLoading() {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+    <div className="min-h-screen bg-void flex items-center justify-center px-4">
       <div className="absolute inset-0 pointer-events-none bg-white/[0.06]" />
 
       <div className="relative z-10 text-center">
@@ -18,7 +18,7 @@ export default function EntryLoading() {
           </div>
         </div>
 
-        <p className="text-sm text-white/40">Loading</p>
+        <p className="text-sm text-white/30">Loading</p>
       </div>
     </div>
   );

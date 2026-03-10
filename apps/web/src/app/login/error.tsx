@@ -27,7 +27,7 @@ export default function LoginError({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+    <div className="min-h-screen bg-void flex items-center justify-center px-4">
       <div className="mx-auto max-w-md text-center">
         {/* Ambient glow (matches entry flow error state) */}
         <div

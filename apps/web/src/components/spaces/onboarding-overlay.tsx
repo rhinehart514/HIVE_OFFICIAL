@@ -222,7 +222,7 @@ export function OnboardingOverlay({
             className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-2xl mx-auto z-50 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-[var(--color-bg-ground,#0A0A09)] border border-white/[0.06] rounded-lg p-6 sm:p-8">
+            <div className="bg-[var(--color-bg-ground,#0D0D0C)] border border-white/[0.06] rounded-lg p-6 sm:p-8">
               {/* Close button */}
               <button
                 onClick={handleSkip}
