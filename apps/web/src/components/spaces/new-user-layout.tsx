@@ -54,7 +54,7 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: MOTION.duration.gentle / 1000, ease: MOTION.ease.premium }}
-      className="relative mb-10 overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.06] p-10"
+      className="relative mb-10 overflow-hidden rounded-lg border border-white/[0.05] bg-white/[0.05] p-10"
     >
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-20">
@@ -64,7 +64,7 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
       <div className="relative z-10">
         {/* Badge */}
         <motion.div
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.06] mb-6"
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.05] mb-6"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.1, ease: MOTION.ease.premium }}
@@ -96,7 +96,7 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
         {/* CTA */}
         <motion.button
           onClick={onScrollToDiscover}
-          className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors duration-100"
+          className="group inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors duration-100"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.7, ease: MOTION.ease.premium }}
@@ -133,11 +133,11 @@ function CompactIdentitySection({
     >
       {/* Section header with "also try" language */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="flex-1 h-px bg-white/[0.06]" />
+        <div className="flex-1 h-px bg-white/[0.05]" />
         <Text size="xs" className="text-white/50 px-2">
           or claim your identity
         </Text>
-        <div className="flex-1 h-px bg-white/[0.06]" />
+        <div className="flex-1 h-px bg-white/[0.05]" />
       </div>
 
       <IdentityCards

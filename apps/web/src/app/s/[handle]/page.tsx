@@ -780,7 +780,7 @@ export default function SpacePageUnified() {
           })()}
 
           {/* Space History Line */}
-          <div className="px-4 py-1.5 flex items-center gap-2 text-[11px] text-white/30 border-b border-white/[0.04]">
+          <div className="px-4 py-2 flex items-center gap-2 text-[11px] text-white/30 border-b border-white/[0.04]">
             <span>
               {space.activatedAt
                 ? `Active since ${new Date(space.activatedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
@@ -796,7 +796,7 @@ export default function SpacePageUnified() {
 
           {/* Member participation accumulation — shows only for non-leader members who have engaged */}
           {!space.isLeader && participationCount > 0 && (
-            <div className="px-4 py-1.5 border-b border-white/[0.04]">
+            <div className="px-4 py-2 border-b border-white/[0.04]">
               <span className="font-mono text-[11px] text-white/30">
                 You&apos;ve responded to {participationCount} {participationCount === 1 ? 'app' : 'apps'} in {space.name}
               </span>
@@ -816,9 +816,9 @@ export default function SpacePageUnified() {
                       name: tool.titleOverride || tool.name,
                       description: tool.description,
                     })}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full
-                      bg-white/[0.04] border border-white/[0.06]
-                      hover:bg-white/[0.08] transition-colors duration-100
+                    className="flex items-center gap-2 px-3 py-2 rounded-full
+                      bg-white/[0.05] border border-white/[0.05]
+                      hover:bg-white/[0.10] transition-colors duration-100
                       flex-shrink-0"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
@@ -856,7 +856,7 @@ export default function SpacePageUnified() {
 
                     {/* Upcoming events */}
                     {upcomingEvents.length > 0 && (
-                      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                      <div className="rounded-2xl border border-white/[0.05] bg-white/[0.03] p-4">
                         <p className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30 mb-3">Upcoming</p>
                         <div className="flex flex-col gap-2">
                           {upcomingEvents.slice(0, 2).map((event) => (
@@ -875,13 +875,13 @@ export default function SpacePageUnified() {
 
                     {/* Apps */}
                     {sidebarTools.length > 0 && (
-                      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                      <div className="rounded-2xl border border-white/[0.05] bg-white/[0.03] p-4">
                         <p className="text-[11px] font-sans uppercase tracking-[0.14em] text-white/30 mb-3">Apps</p>
                         <div className="flex flex-wrap gap-2">
                           {sidebarTools.slice(0, 3).map((tool) => (
                             <span
                               key={tool.toolId}
-                              className="px-3 py-1 rounded-full border border-white/[0.06] text-[13px] text-white/70 bg-white/[0.03]"
+                              className="px-3 py-1 rounded-full border border-white/[0.05] text-[13px] text-white/70 bg-white/[0.03]"
                             >
                               {tool.titleOverride || tool.name}
                             </span>
@@ -1026,14 +1026,14 @@ export default function SpacePageUnified() {
 
               {/* Panel */}
               <motion.div
-                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06]"
+                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.05]"
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
               >
                 <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05]">
                     <h2 className="text-lg font-semibold text-white">
                       Members
                     </h2>
@@ -1081,13 +1081,13 @@ export default function SpacePageUnified() {
 
               {/* Panel */}
               <motion.div
-                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.06] overflow-y-auto"
+                className="relative h-full w-full max-w-md bg-[var(--bg-ground)] border-l border-white/[0.05] overflow-y-auto"
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ duration: MOTION.duration.quick, ease: MOTION.ease.premium }}
               >
-                <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[var(--bg-ground)]">
+                <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.05] bg-[var(--bg-ground)]">
                   <h2 className="text-lg font-semibold text-white">
                     Dashboard
                   </h2>
@@ -1171,13 +1171,13 @@ export default function SpacePageUnified() {
 
               {/* Modal */}
               <motion.div
-                className="relative w-full max-w-4xl max-h-[90vh] bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg overflow-hidden"
+                className="relative w-full max-w-4xl max-h-[90vh] bg-[var(--bg-ground)] border border-white/[0.05] rounded-lg overflow-hidden"
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
                 transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
               >
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05]">
                   <h2 className="text-lg font-semibold text-white">
                     Space Settings
                   </h2>
@@ -1385,10 +1385,10 @@ function SpacePageSkeleton() {
     <div className="h-screen flex flex-col bg-void">
       {/* Header skeleton */}
       <div className="h-14 border-b border-white/[0.05] px-4 flex items-center gap-3 flex-shrink-0">
-        <div className="h-8 w-8 rounded-lg bg-white/[0.04] animate-pulse" />
+        <div className="h-8 w-8 rounded-lg bg-white/[0.05] animate-pulse" />
         <div className="space-y-1.5">
-          <div className="h-4 w-28 rounded bg-white/[0.04] animate-pulse" />
-          <div className="h-3 w-20 rounded bg-white/[0.04] animate-pulse" />
+          <div className="h-4 w-28 rounded bg-white/[0.05] animate-pulse" />
+          <div className="h-3 w-20 rounded bg-white/[0.05] animate-pulse" />
         </div>
       </div>
 
@@ -1396,10 +1396,10 @@ function SpacePageSkeleton() {
       <div className="flex-1 p-4 space-y-4 overflow-hidden">
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="flex gap-3">
-            <div className="h-8 w-8 rounded-full bg-white/[0.04] animate-pulse flex-shrink-0" />
+            <div className="h-8 w-8 rounded-full bg-white/[0.05] animate-pulse flex-shrink-0" />
             <div className="space-y-1.5 flex-1">
-              <div className="h-3 w-24 rounded bg-white/[0.04] animate-pulse" />
-              <div className="h-4 rounded bg-white/[0.04] animate-pulse" style={{ width: `${60 + (i * 7) % 30}%` }} />
+              <div className="h-3 w-24 rounded bg-white/[0.05] animate-pulse" />
+              <div className="h-4 rounded bg-white/[0.05] animate-pulse" style={{ width: `${60 + (i * 7) % 30}%` }} />
             </div>
           </div>
         ))}
@@ -1407,7 +1407,7 @@ function SpacePageSkeleton() {
 
       {/* Input skeleton */}
       <div className="p-3 border-t border-white/[0.05]">
-        <div className="h-10 rounded-lg bg-white/[0.04] animate-pulse" />
+        <div className="h-10 rounded-lg bg-white/[0.05] animate-pulse" />
       </div>
     </div>
   );

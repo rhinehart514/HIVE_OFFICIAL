@@ -177,17 +177,17 @@ function SearchInput({ value, onChange, onClear, placeholder }: SearchInputProps
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || 'Search spaces...'}
         className={cn(
-          'w-full bg-white/[0.06] border border-white/[0.06]',
-          'rounded-lg py-2.5 pl-9 pr-9',
+          'w-full bg-white/[0.05] border border-white/[0.05]',
+          'rounded-lg py-3 pl-9 pr-9',
           'text-sm text-white placeholder:text-white/50',
-          'focus:outline-none focus:outline-2 focus:outline-[#FFD700] focus:bg-white/[0.06]',
+          'focus:outline-none focus:outline-2 focus:outline-[#FFD700] focus:bg-white/[0.05]',
           'transition-colors duration-100'
         )}
       />
       {value && (
         <button
           onClick={onClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] transition-colors"
           aria-label="Clear search"
         >
           <XMarkIcon className="w-3 h-3 text-white/50" aria-hidden="true" />
@@ -500,7 +500,7 @@ export function DiscoverSection({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.15 }}
-          className="rounded-lg border border-white/[0.06] overflow-hidden"
+          className="rounded-lg border border-white/[0.05] overflow-hidden"
         >
           {loading ? (
             // Loading skeleton
@@ -508,7 +508,7 @@ export function DiscoverSection({
               {Array.from({ length: 6 }).map((_, i) => (
                 <motion.div
                   key={i}
-                  className={cn(i !== 5 && 'border-b border-white/[0.06]')}
+                  className={cn(i !== 5 && 'border-b border-white/[0.05]')}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{
@@ -534,7 +534,7 @@ export function DiscoverSection({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: Math.min(index * 0.02, 0.3), duration: 0.15 }}
                   className={cn(
-                    'border-b border-white/[0.06] last:border-b-0'
+                    'border-b border-white/[0.05] last:border-b-0'
                   )}
                 >
                   <SpaceListRow
@@ -556,7 +556,7 @@ export function DiscoverSection({
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div
                       key={`loading-${i}`}
-                      className={cn(i !== 2 && 'border-b border-white/[0.06]')}
+                      className={cn(i !== 2 && 'border-b border-white/[0.05]')}
                     >
                       <SpaceListRowSkeleton />
                     </div>

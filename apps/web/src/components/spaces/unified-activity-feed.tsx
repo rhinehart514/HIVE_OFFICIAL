@@ -208,8 +208,8 @@ function MessageFeedItem({
                   'flex items-center gap-1',
                   'transition-colors duration-150',
                   reaction.userReacted
-                    ? 'bg-white/[0.06] text-white'
-                    : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.06]'
+                    ? 'bg-white/[0.05] text-white'
+                    : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.05]'
                 )}
               >
                 <span>{reaction.emoji}</span>
@@ -237,7 +237,7 @@ function MessageFeedItem({
             <button
               onClick={() => setShowActions(!showActions)}
               className={cn(
-                'p-1.5 rounded hover:bg-white/[0.06] transition-colors',
+                'p-1.5 rounded hover:bg-white/[0.05] transition-colors',
                 'text-white/50 hover:text-white/70'
               )}
             >
@@ -253,14 +253,14 @@ function MessageFeedItem({
                 />
                 <div className={cn(
                   'absolute right-0 top-full mt-1 z-20',
-                  'bg-[var(--bg-elevated)] border border-white/[0.06] rounded-lg',
+                  'bg-[var(--bg-elevated)] border border-white/[0.05] rounded-lg',
                   'py-1 min-w-[120px]'
                 )}>
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
                     className={cn(
-                      'w-full px-3 py-1.5 text-left text-sm',
+                      'w-full px-3 py-2 text-left text-sm',
                       'text-red-400 hover:bg-red-500/10',
                       'flex items-center gap-2',
                       'disabled:opacity-50'
@@ -377,7 +377,7 @@ function ToolFeedItem({
   onRun?: (toolId: string, placementId: string) => void;
 }) {
   return (
-    <div className="mx-4 my-3 p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+    <div className="mx-4 my-3 p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
       <div className="flex items-start gap-3">
         {/* Icon */}
         <div className="w-10 h-10 rounded-lg bg-[#FFD700]/[0.08] flex items-center justify-center flex-shrink-0">
@@ -434,7 +434,7 @@ function PostFeedItem({
   }, [item.timestamp]);
 
   return (
-    <div className="px-4 py-4 border-b border-white/[0.06]">
+    <div className="px-4 py-4 border-b border-white/[0.05]">
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <Avatar size="sm" className="flex-shrink-0">
@@ -497,7 +497,7 @@ function SinceYouLeftDivider({ unreadCount }: { unreadCount: number }) {
         <div className="flex-1 h-px bg-[var(--color-gold)]/30" />
 
         {/* Badge */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-gold)]/[0.08] border border-[var(--color-gold)]/20">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-[var(--color-gold)]/[0.08] border border-[var(--color-gold)]/20">
           <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)]" />
           <Text size="xs" weight="medium" className="text-[var(--color-gold)]">
             {unreadCount === 1 ? '1 new message' : `${unreadCount} new messages`} since you left
@@ -520,11 +520,11 @@ function FeedSkeleton() {
     <div className="space-y-4 px-4 py-4">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex-shrink-0" />
+          <div className="w-8 h-8 rounded-lg bg-white/[0.05] flex-shrink-0" />
           <div className="flex-1 space-y-2">
-            <div className="h-3 w-24 rounded bg-white/[0.06]" />
-            <div className="h-4 w-full rounded bg-white/[0.06]" />
-            <div className="h-4 w-3/4 rounded bg-white/[0.06]" />
+            <div className="h-3 w-24 rounded bg-white/[0.05]" />
+            <div className="h-4 w-full rounded bg-white/[0.05]" />
+            <div className="h-4 w-3/4 rounded bg-white/[0.05]" />
           </div>
         </div>
       ))}
@@ -545,7 +545,7 @@ function EmptyState() {
       transition={{ duration: 0.6, ease: MOTION.ease.premium }}
     >
       <motion.div
-        className="w-16 h-16 mx-auto mb-6 rounded-lg bg-white/[0.08] border border-white/[0.06] flex items-center justify-center"
+        className="w-16 h-16 mx-auto mb-6 rounded-lg bg-white/[0.10] border border-white/[0.05] flex items-center justify-center"
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
@@ -720,7 +720,7 @@ export function UnifiedActivityFeed({
       {loading && items.length > 0 && (
         <div className="py-4 text-center">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-white/[0.06]" />
+            <div className="w-3 h-3 rounded-full bg-white/[0.05]" />
             <Text size="xs" className="text-white/50">
               Loading older messages...
             </Text>

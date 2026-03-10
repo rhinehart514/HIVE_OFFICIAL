@@ -233,7 +233,7 @@ export default function NotificationsPage() {
             </h1>
             {unreadCount > 0 && (
               <span
-                className="px-2.5 py-0.5 text-[11px] font-sans uppercase tracking-wider bg-[#FFD700]/15 text-[#FFD700] rounded-full"
+                className="px-3 py-0.5 text-[11px] font-sans uppercase tracking-wider bg-[#FFD700]/15 text-[#FFD700] rounded-full"
                 aria-label={`${unreadCount} new notifications`}
               >
                 {unreadCount} new
@@ -244,7 +244,7 @@ export default function NotificationsPage() {
             <button
               onClick={handleMarkAllRead}
               disabled={isMarkingRead || unreadCount === 0}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-[#1A1A1A] border border-white/[0.08] rounded-full transition-colors duration-150 hover:bg-white/[0.06] disabled:opacity-30"
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-card border border-white/[0.10] rounded-full transition-colors duration-150 hover:bg-white/[0.05] disabled:opacity-30"
               aria-label="Mark all notifications as read"
             >
               {isMarkingRead ? (
@@ -255,7 +255,7 @@ export default function NotificationsPage() {
               Mark all read
             </button>
             <Link href="/me/settings" aria-label="Go to notification settings">
-              <button className="p-2 text-white/50 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors duration-150" aria-label="Settings">
+              <button className="p-2 text-white/50 hover:text-white hover:bg-white/[0.05] rounded-full transition-colors duration-150" aria-label="Settings">
                 <Settings className="w-4 h-4" aria-hidden="true" />
               </button>
             </Link>
@@ -277,7 +277,7 @@ export default function NotificationsPage() {
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-150 ${
                 activeFilter === tab.id
                   ? 'bg-white text-black'
-                  : 'bg-white/[0.03] text-white/50 hover:text-white hover:bg-white/[0.06]'
+                  : 'bg-white/[0.03] text-white/50 hover:text-white hover:bg-white/[0.05]'
               }`}
             >
               {tab.label}
@@ -288,7 +288,7 @@ export default function NotificationsPage() {
         {/* Notification list */}
         <div id="notification-list" role="tabpanel" className="space-y-2 pb-8" aria-label={`${activeFilter} notifications`}>
           {notifications.length === 0 ? (
-            <div className="bg-[#0A0A0A] rounded-[16px] border border-white/[0.08] p-8" role="status">
+            <div className="bg-void rounded-[16px] border border-white/[0.10] p-8" role="status">
               <NotificationsEmptyState
                 variant={activeFilter === 'all' ? 'new_user' : 'filtered'}
                 filterName={activeFilter !== 'all' ? activeFilter : undefined}
@@ -298,7 +298,7 @@ export default function NotificationsPage() {
             notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 bg-[#0A0A0A] rounded-[16px] border border-white/[0.08] cursor-pointer transition-colors duration-150 hover:bg-white/[0.03] ${
+                className={`p-4 bg-void rounded-[16px] border border-white/[0.10] cursor-pointer transition-colors duration-150 hover:bg-white/[0.03] ${
                   !notification.isRead ? 'border-l-2 border-l-[#FFD700]' : ''
                 }`}
                 onClick={() => handleNotificationClick(notification)}
@@ -319,7 +319,7 @@ export default function NotificationsPage() {
                     </p>
                   </div>
                   <button
-                    className="shrink-0 p-2 text-white/50 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors duration-150"
+                    className="shrink-0 p-2 text-white/50 hover:text-white hover:bg-white/[0.05] rounded-full transition-colors duration-150"
                     aria-label={`Delete notification: ${notification.title}`}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -335,7 +335,7 @@ export default function NotificationsPage() {
 
           {/* All caught up message */}
           {notifications.length > 0 && unreadCount === 0 && (
-            <div className="bg-[#0A0A0A] rounded-[16px] border border-white/[0.08] p-8" role="status" aria-live="polite">
+            <div className="bg-void rounded-[16px] border border-white/[0.10] p-8" role="status" aria-live="polite">
               <NotificationsEmptyState variant="caught_up" />
             </div>
           )}

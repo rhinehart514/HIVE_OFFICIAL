@@ -121,11 +121,11 @@ export function SpacePlacementFlow({
           key={space.id}
           onClick={() => handleDeploy(space)}
           disabled={!!deploying}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl
-            bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06]
+          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl
+            bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.05]
             disabled:opacity-50 transition-colors text-left"
         >
-          <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center flex-shrink-0 overflow-hidden">
             {space.iconURL ? (
               <img src={space.iconURL} alt="" className="w-full h-full object-cover" />
             ) : (

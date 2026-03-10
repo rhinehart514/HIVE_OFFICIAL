@@ -48,8 +48,8 @@ export async function notifyToolForked(params: {
 }): Promise<string | null> {
   const actorName = params.forkedByName || 'Someone';
   const payload = buildPayload('tool.forked', {
-    title: `Someone forked your ${params.toolName}`,
-    body: `${actorName} forked your tool.`,
+    title: `Someone remixed your ${params.toolName}`,
+    body: `${actorName} remixed your app.`,
     toolId: params.toolId,
     actionUrl: `/build/${params.toolId}`,
   });
@@ -191,7 +191,7 @@ export async function notifyToolUpdated(params: {
   const actorName = params.updatedByName || 'A creator';
   const payload = buildPayload('tool.updated', {
     title: `${params.toolName} was updated`,
-    body: `${actorName} published updates to a tool you forked.`,
+    body: `${actorName} published updates to an app you remixed.`,
     toolId: params.toolId,
     actionUrl: `/t/${params.toolId}`,
   });

@@ -308,11 +308,11 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
     return (
       <div className="min-h-screen bg-[var(--bg-void)] flex items-center justify-center p-6">
         <div className="w-full max-w-[480px]">
-          <div className="rounded-2xl bg-void border border-white/[0.06] p-8">
+          <div className="rounded-2xl bg-void border border-white/[0.05] p-8">
             <div className="space-y-4 animate-pulse">
-              <div className="h-6 w-40 bg-white/[0.04] rounded-lg" />
+              <div className="h-6 w-40 bg-white/[0.05] rounded-lg" />
               <div className="h-4 w-64 bg-white/[0.03] rounded-lg" />
-              <div className="h-px bg-white/[0.06] my-4" />
+              <div className="h-px bg-white/[0.05] my-4" />
               <div className="h-11 bg-white/[0.03] rounded-lg" />
               <div className="h-11 bg-white/[0.03] rounded-lg" />
               <div className="h-11 bg-white/[0.03] rounded-lg" />
@@ -334,7 +334,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           </p>
           <button
             onClick={() => router.push('/enter')}
-            className="px-6 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
+            className="px-6 py-3 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
           >
             Sign In
           </button>
@@ -354,7 +354,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           </p>
           <button
             onClick={() => router.push('/discover')}
-            className="px-6 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
+            className="px-6 py-3 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
           >
             Explore
           </button>
@@ -381,7 +381,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       <header className="flex items-center justify-between px-6 py-4 flex-shrink-0">
         <Link
           href="/discover"
-          className="flex items-center gap-2 rounded-full px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
+          className="flex items-center gap-2 rounded-full px-2 py-2 transition-colors hover:bg-white/[0.05]"
         >
           <span className="h-4 w-4 rounded-full bg-[var(--life-gold,#FFD700)]" aria-hidden />
           <span className="font-display text-[12px] font-semibold tracking-[0.08em] text-white/50">
@@ -398,7 +398,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
           <button
             onClick={handleRemix}
             disabled={isRemixing}
-            className="flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[12px] font-medium text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white/70 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-full border border-white/[0.05] bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/50 transition-colors hover:bg-white/[0.05] hover:text-white/70 disabled:opacity-50"
           >
             <Shuffle className="h-3 w-3" />
             {isRemixing ? 'Remixing...' : 'Remix this'}
@@ -410,7 +410,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-6">
         <div className="w-full max-w-[480px]">
           {/* Tool surface */}
-          <div className="rounded-2xl bg-[var(--bg-surface)] border border-white/[0.06] p-6 sm:p-8">
+          <div className="rounded-2xl bg-[var(--bg-surface)] border border-white/[0.05] p-6 sm:p-8">
             {/* Tool title inside the card */}
             <div className="mb-5">
               <h1 className="font-display text-lg font-semibold text-white leading-tight">
@@ -500,7 +500,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
 
           {/* Creator impact banner — shows when creator views their own tool (from push notification) */}
           {user && tool.ownerId === user.uid && !showCreatedBanner && (
-            <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+            <div className="mt-4 rounded-2xl border border-white/[0.05] bg-white/[0.03] p-5">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[13px] text-white/50">
                   {isShellTool && shellState.state ? (
@@ -524,13 +524,13 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               <div className="flex gap-2">
                 <Link
                   href="/build"
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#FFD700] text-black text-sm font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 bg-[#FFD700] text-black text-sm font-semibold rounded-full hover:bg-[#FFD700]/90 transition-colors"
                 >
                   Make another
                 </Link>
                 <button
                   onClick={handleShare}
-                  className="px-4 py-2.5 bg-white/[0.06] text-white/50 text-sm font-medium rounded-full border border-white/[0.06] hover:bg-white/[0.08] transition-colors"
+                  className="px-4 py-3 bg-white/[0.05] text-white/50 text-sm font-medium rounded-full border border-white/[0.05] hover:bg-white/[0.10] transition-colors"
                 >
                   {copied ? 'Copied!' : 'Share'}
                 </button>
@@ -550,13 +550,13 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               <div className="flex gap-2">
                 <button
                   onClick={handleShare}
-                  className="flex-1 px-4 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
+                  className="flex-1 px-4 py-3 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
                 >
                   {copied ? 'Copied!' : 'Share link'}
                 </button>
                 <button
                   onClick={() => router.push(`/build/${toolId}`)}
-                  className="px-4 py-2.5 bg-white/[0.06] text-white/50 text-sm font-medium rounded-full border border-white/[0.06] hover:bg-white/[0.08] transition-colors"
+                  className="px-4 py-3 bg-white/[0.05] text-white/50 text-sm font-medium rounded-full border border-white/[0.05] hover:bg-white/[0.10] transition-colors"
                 >
                   Edit
                 </button>
@@ -569,7 +569,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
             <div className="mt-6 text-center animate-in fade-in duration-300">
               <Link
                 href="/enter"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
               >
                 Create your own
               </Link>

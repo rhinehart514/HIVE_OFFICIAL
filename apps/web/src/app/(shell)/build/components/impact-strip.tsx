@@ -146,7 +146,7 @@ export function ImpactStrip() {
               key={tool.id}
               onClick={() => router.push(`/t/${tool.id}`)}
               className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-full
-                bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.06]
+                bg-white/[0.05] border border-white/[0.05] hover:bg-white/[0.10]
                 transition-colors duration-100 group"
             >
               <span className="text-[13px] text-white/50 group-hover:text-white/70 truncate max-w-[120px] transition-colors">
@@ -165,7 +165,7 @@ export function ImpactStrip() {
         {suggestion && (
           <button
             onClick={() => router.push(`/build?prompt=${encodeURIComponent(suggestion.prompt)}`)}
-            className="mt-3 flex items-center gap-1.5 text-[13px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors duration-100"
+            className="mt-3 flex items-center gap-2 text-[13px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors duration-100"
           >
             <Sparkles className="w-3 h-3" />
             {suggestion.label}

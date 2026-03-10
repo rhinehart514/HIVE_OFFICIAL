@@ -11,7 +11,7 @@ interface ActivityItem {
   spaceName: string;
   spaceHandle?: string;
   spaceAvatarUrl?: string;
-  type: 'message' | 'event' | 'post';
+  type: 'message' | 'event' | 'post' | 'app';
   preview: string;
   authorName?: string;
   timestamp: string;
@@ -38,6 +38,7 @@ function relativeTime(iso: string): string {
 function typeLabel(type: string): string {
   if (type === 'event') return 'posted a new event';
   if (type === 'post') return 'shared a post';
+  if (type === 'app') return 'added a new app';
   return 'sent a message';
 }
 
@@ -74,10 +75,10 @@ export function SpacesActivitySection() {
                 <p className="text-[13px] text-white/50 group-hover:text-white/70 transition-colors leading-snug">
                   <span className="text-white/70 font-medium">{item.spaceName}</span>{' '}
                   {typeLabel(item.type)}
-                  {item.type === 'event' && (
+                  {(item.type === 'event' || item.type === 'app') && (
                     <>
                       :{' '}
-                      <span className="text-white/50">{item.preview.split(' - ')[0]}</span>
+                      <span className="text-white/50">{item.type === 'event' ? item.preview.split(' - ')[0] : item.preview}</span>
                     </>
                   )}
                 </p>

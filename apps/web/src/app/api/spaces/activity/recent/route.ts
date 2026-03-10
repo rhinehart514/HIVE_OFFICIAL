@@ -16,7 +16,7 @@ interface RecentActivityItem {
   spaceName: string;
   spaceHandle?: string;
   spaceAvatarUrl?: string;
-  type: 'message' | 'event' | 'post';
+  type: 'message' | 'event' | 'post' | 'app';
   preview: string;
   authorName?: string;
   authorAvatarUrl?: string;
@@ -71,13 +71,13 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, r
   });
 
   const activityItems: RecentActivityItem[] = [];
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   // Fetch recent messages from spaceMessages
   const messagesSnapshot = await dbAdmin
     .collection('spaceMessages')
     .where('spaceId', 'in', spaceIds.slice(0, 10))
-    .where('createdAt', '>=', oneDayAgo)
+    .where('createdAt', '>=', sevenDaysAgo)
     .orderBy('createdAt', 'desc')
     .limit(20)
     .get();
@@ -113,7 +113,7 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, r
   const eventsSnapshot = await dbAdmin
     .collection('events')
     .where('spaceId', 'in', spaceIds.slice(0, 10))
-    .where('createdAt', '>=', oneDayAgo)
+    .where('createdAt', '>=', sevenDaysAgo)
     .orderBy('createdAt', 'desc')
     .limit(10)
     .get();
@@ -145,7 +145,7 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, r
   // Fetch recent posts using collection group query
   const postsSnapshot = await dbAdmin
     .collectionGroup('posts')
-    .where('createdAt', '>=', oneDayAgo)
+    .where('createdAt', '>=', sevenDaysAgo)
     .orderBy('createdAt', 'desc')
     .limit(30)
     .get();
@@ -181,6 +181,56 @@ const _GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, r
     });
 
     if (activityItems.filter(i => i.type === 'post').length >= 10) break;
+  }
+
+  // Fetch recently placed tools/apps in user's spaces
+  for (const sid of spaceIds.slice(0, 10)) {
+    try {
+      const placedToolsSnap = await dbAdmin
+        .collection('spaces')
+        .doc(sid)
+        .collection('placed_tools')
+        .where('createdAt', '>=', sevenDaysAgo)
+        .orderBy('createdAt', 'desc')
+        .limit(5)
+        .get();
+
+      const spaceInfo = spaceMap.get(sid);
+      if (!spaceInfo) continue;
+
+      for (const doc of placedToolsSnap.docs) {
+        const placed = doc.data();
+        if (placed.placedBy === userId) continue;
+
+        // Fetch tool name
+        let toolName = 'New app';
+        if (placed.toolId) {
+          const toolDoc = await dbAdmin.collection('tools').doc(placed.toolId).get();
+          if (toolDoc.exists) {
+            toolName = (toolDoc.data()?.name as string) || 'New app';
+          }
+        }
+
+        const timestamp = placed.createdAt?.toDate?.() || new Date();
+
+        activityItems.push({
+          id: `app-${doc.id}`,
+          spaceId: sid,
+          spaceName: spaceInfo.name,
+          spaceHandle: spaceInfo.handle,
+          spaceAvatarUrl: spaceInfo.avatarUrl,
+          type: 'app',
+          preview: toolName,
+          authorName: undefined,
+          timestamp: timestamp.toISOString(),
+          metadata: {
+            postId: placed.toolId,
+          },
+        });
+      }
+    } catch {
+      // Silent fail — placed_tools query is non-critical
+    }
   }
 
   // Sort by timestamp and dedupe by space

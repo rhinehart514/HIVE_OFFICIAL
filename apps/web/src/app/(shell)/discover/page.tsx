@@ -67,13 +67,17 @@ function formatTimeSince(ms: number): string {
   return `${days}d ago`;
 }
 
-function SinceYouLeftDivider({ lastVisit }: { lastVisit: number }) {
+function SinceYouLeftDivider({ lastVisit, newAppsCount }: { lastVisit: number; newAppsCount?: number }) {
   const elapsed = Date.now() - lastVisit;
+  const parts = [formatTimeSince(elapsed)];
+  if (newAppsCount && newAppsCount > 0) {
+    parts.push(`${newAppsCount} new app${newAppsCount !== 1 ? 's' : ''}`);
+  }
   return (
     <div className="relative py-4">
       <div className="border-t border-white/[0.05]" />
       <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-void px-3 font-mono text-[11px] uppercase tracking-wider text-white/30">
-        Since you left &middot; {formatTimeSince(elapsed)}
+        Since you left &middot; {parts.join(' · ')}
       </span>
     </div>
   );
@@ -376,6 +380,22 @@ export default function DiscoverPage() {
     enabled: !authLoading && !!user,
   });
 
+  // Count new apps in user's spaces since last visit (for SinceYouLeftDivider)
+  const { data: newAppsCount } = useQuery({
+    queryKey: ['feed-new-apps-count', lastFeedVisit],
+    queryFn: async () => {
+      const res = await fetch('/api/spaces/activity/recent?limit=30', { credentials: 'include' });
+      if (!res.ok) return 0;
+      const data = await res.json();
+      const items = data?.data?.items ?? [];
+      return items.filter((item: { type: string; timestamp: string }) =>
+        item.type === 'app' && lastFeedVisit && new Date(item.timestamp).getTime() > lastFeedVisit
+      ).length;
+    },
+    staleTime: 60_000,
+    enabled: !authLoading && !!user && !!lastFeedVisit,
+  });
+
   const handleSelectEvent = useCallback((event: FeedEvent) => {
     setSelectedEvent(event);
   }, []);
@@ -452,7 +472,7 @@ export default function DiscoverPage() {
 
             {/* "Since you left" divider — separates new from seen events */}
             {showDivider && lastFeedVisit && (
-              <SinceYouLeftDivider lastVisit={lastFeedVisit} />
+              <SinceYouLeftDivider lastVisit={lastFeedVisit} newAppsCount={newAppsCount} />
             )}
 
             {/* Events the user likely already saw */}

@@ -54,8 +54,8 @@ function ProfileLoadingState() {
       <div className="flex items-stretch py-2 px-4 animate-pulse">
         {[0, 1, 2, 3].map(i => (
           <div key={i} className="flex-1 flex flex-col items-center gap-2 py-4">
-            <div className="h-8 w-12 rounded bg-white/[0.06]" />
-            <div className="h-3 w-16 rounded bg-white/[0.06]" />
+            <div className="h-8 w-12 rounded bg-white/[0.05]" />
+            <div className="h-3 w-16 rounded bg-white/[0.05]" />
           </div>
         ))}
       </div>
@@ -63,26 +63,26 @@ function ProfileLoadingState() {
       {/* Zone 2+3: 2-col bento skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-pulse">
         <div className="space-y-4">
-          <div className="h-3 w-20 rounded bg-white/[0.06]" />
-          <div className="rounded-3xl bg-white/[0.06] h-[200px]" />
-          <div className="rounded-3xl bg-white/[0.06] h-[180px]" />
+          <div className="h-3 w-20 rounded bg-white/[0.05]" />
+          <div className="rounded-3xl bg-white/[0.05] h-[200px]" />
+          <div className="rounded-3xl bg-white/[0.05] h-[180px]" />
         </div>
         <div className="space-y-4">
-          <div className="h-3 w-16 rounded bg-white/[0.06]" />
+          <div className="h-3 w-16 rounded bg-white/[0.05]" />
           <div className="space-y-3">
             {[0, 1, 2].map(i => (
-              <div key={i} className="rounded-2xl bg-white/[0.06] h-[68px]" />
+              <div key={i} className="rounded-2xl bg-white/[0.05] h-[68px]" />
             ))}
           </div>
         </div>
       </div>
 
       {/* Zone 4: Activity heatmap skeleton */}
-      <div className="rounded-3xl bg-white/[0.06] h-[240px] animate-pulse" />
+      <div className="rounded-3xl bg-white/[0.05] h-[240px] animate-pulse" />
 
       {/* Connections skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-pulse">
-        <div className="rounded-3xl bg-white/[0.06] h-[160px]" />
+        <div className="rounded-3xl bg-white/[0.05] h-[160px]" />
       </div>
     </div>
   );
@@ -94,7 +94,7 @@ function ProfileNotFoundState({ handle }: { handle: string }) {
       <div className="text-center max-w-sm">
         <h1 className="text-2xl font-semibold text-white mb-3">Not found</h1>
         <p className="text-sm text-white/50 mb-6">No one with handle <span className="font-sans">@{handle}</span> exists.</p>
-        <Link href="/discover" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/[0.06] text-white/50 text-sm font-medium hover:bg-white/[0.09]">
+        <Link href="/discover" className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.05] text-white/50 text-sm font-medium hover:bg-white/[0.09]">
           Go home
         </Link>
       </div>
@@ -107,7 +107,7 @@ function ProfileErrorState({ onRetry }: { onRetry: () => void }) {
     <div className="flex items-center justify-center py-32">
       <div className="text-center">
         <p className="text-white/50 mb-4">Couldn't load this profile.</p>
-        <button onClick={onRetry} className="px-5 py-2.5 rounded-full bg-white text-black text-sm font-medium">
+        <button onClick={onRetry} className="px-5 py-2 rounded-full bg-white text-black text-sm font-medium">
           Try again
         </button>
       </div>
@@ -308,12 +308,12 @@ export default function ProfilePageContent() {
           Get Started Checklist — own profile, incomplete
           ════════════════════════════════════════════════════════════════════════ */}
       {isOwnProfile && profileIncomplete && (
-        <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-5">
+        <div className="rounded-2xl border border-white/[0.05] bg-void p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[13px] font-medium text-white/50">Make your profile yours</p>
             <span className="text-[11px] text-white/30 tabular-nums">{completenessScore}%</span>
           </div>
-          <div className="w-full h-1 rounded-full bg-white/[0.06] mb-4 overflow-hidden">
+          <div className="w-full h-1 rounded-full bg-white/[0.05] mb-4 overflow-hidden">
             <div
               className="h-full rounded-full bg-[#FFD700]/60"
               style={{ width: `${completenessScore}%` }}
@@ -333,7 +333,7 @@ export default function ProfilePageContent() {
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-100 ${
                   item.done
                     ? 'opacity-50 pointer-events-none'
-                    : 'hover:bg-white/[0.04] cursor-pointer'
+                    : 'hover:bg-white/[0.05] cursor-pointer'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
@@ -421,7 +421,7 @@ export default function ProfilePageContent() {
                 ))}
               </div>
             ) : isOwnProfile ? (
-              <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0a0a0a] p-6">
+              <div className="relative overflow-hidden rounded-2xl border border-white/[0.05] bg-void p-6">
                 <div className="relative flex items-center gap-4">
                   <div className="flex-1">
                     <p className="text-[13px] font-medium text-white/50">Join spaces to show where you belong</p>
@@ -440,13 +440,13 @@ export default function ProfilePageContent() {
                 {interests.slice(0, 12).map(interest => (
                   <span
                     key={interest}
-                    className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/50"
+                    className="px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.05] text-[11px] text-white/50"
                   >
                     {interest}
                   </span>
                 ))}
                 {sharedInterests.length > 0 && !isOwnProfile && (
-                  <span className="px-2.5 py-1 rounded-full bg-[#FFD700]/[0.06] border border-[#FFD700]/[0.15] text-[11px] text-[#FFD700]/50">
+                  <span className="px-3 py-1 rounded-full bg-[#FFD700]/[0.05] border border-[#FFD700]/30 text-[11px] text-[#FFD700]/50">
                     {sharedInterests.length} shared
                   </span>
                 )}

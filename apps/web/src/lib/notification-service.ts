@@ -727,8 +727,8 @@ export async function notifyToolDeployment(params: {
   const notificationParams: Omit<CreateNotificationParams, 'userId'> = {
     type: 'tool_deployed',
     category: 'tools',
-    title: `New tool in ${params.spaceName}: ${params.toolName}`,
-    body: `Deployed by ${params.deployerName}`,
+    title: `New app in ${params.spaceName}: ${params.toolName}`,
+    body: `${params.deployerName} added a new app to ${params.spaceName}.`,
     actionUrl: spaceUrl(params.spaceId, params.spaceHandle, `?tool=${params.toolId}`),
     metadata: {
       actorId: params.deployerId,
@@ -758,8 +758,8 @@ export async function notifyToolMilestone(params: {
     userId: params.creatorId,
     type: 'tool_milestone',
     category: 'tools',
-    title: `Your tool "${params.toolName}" just hit ${params.milestone} users!`,
-    body: `${params.milestone} people have used your tool. Keep building!`,
+    title: `Your app "${params.toolName}" just hit ${params.milestone} users!`,
+    body: `${params.milestone} people have used your app. Keep building!`,
     actionUrl: `/t/${params.toolId}`,
     metadata: {
       toolId: params.toolId,
