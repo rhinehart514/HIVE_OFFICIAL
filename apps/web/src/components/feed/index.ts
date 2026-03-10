@@ -5,6 +5,7 @@ export { TodayEventsSection } from './TodayEventsSection';
 export { SpacesActivitySection } from './SpacesActivitySection';
 export { NewAppsSection } from './NewAppsSection';
 export { DiscoverSection } from './DiscoverSection';
+export { QuickCreateStrip } from './QuickCreateStrip';
 export { EventDetailDrawer } from './EventDetailDrawer';
 export { FeedSkeleton } from './FeedSkeleton';
 export { SpaceAvatar } from './SpaceAvatar';

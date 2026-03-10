@@ -16,6 +16,7 @@ import {
   DiscoverSection,
   EventDetailDrawer,
   FeedSkeleton,
+  QuickCreateStrip,
 } from '@/components/feed';
 import { SpaceAvatar } from '@/components/feed';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
@@ -457,6 +458,9 @@ export default function DiscoverPage() {
 
             {/* 1. Campus Pulse — dining hours, study spot busyness */}
             <CampusPulse />
+
+            {/* 1.5. Quick create — one-tap creation at all densities */}
+            <QuickCreateStrip />
 
             {/* 2. Live Now — events happening or starting within 1hr */}
             <LiveNowSection events={newEvents} onSelectEvent={handleSelectEvent} />
