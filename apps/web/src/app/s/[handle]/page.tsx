@@ -745,6 +745,29 @@ export default function SpacePageUnified() {
             }}
           />
 
+          {/* Experiment A: Leader impact banner — surface response data where leaders spend time */}
+          {space.isLeader && sidebarTools.length > 0 && (() => {
+            const totalResponses = sidebarTools.reduce(
+              (sum, t) => sum + (t.activityCount ?? 0),
+              0
+            );
+            if (totalResponses === 0) return null;
+            return (
+              <div className="px-4 py-2 flex items-center gap-2 border-b border-white/[0.04]">
+                <span className="font-mono text-[11px] text-white/50 uppercase tracking-wider">
+                  Impact
+                </span>
+                <span className="text-[13px] font-semibold text-[#FFD700]">
+                  {totalResponses}
+                </span>
+                <span className="text-[13px] text-white/50">
+                  {totalResponses === 1 ? 'response' : 'responses'} across{' '}
+                  {sidebarTools.length} {sidebarTools.length === 1 ? 'app' : 'apps'}
+                </span>
+              </div>
+            );
+          })()}
+
           {/* Space History Line */}
           <div className="px-4 py-1.5 flex items-center gap-2 text-[11px] text-white/30 border-b border-white/[0.04]">
             <span>
@@ -799,12 +822,15 @@ export default function SpacePageUnified() {
                       </p>
                     )}
 
-                    {/* Claim onboarding — leader just claimed, empty space */}
-                    {space.isLeader && (space.memberCount ?? 0) <= 1 && sidebarTools.length === 0 && (
+                    {/* Claim onboarding — coaching card for leaders with new spaces */}
+                    {space.isLeader && ((space.memberCount ?? 0) <= 1 || sidebarTools.length === 0) && (
                       <ClaimOnboarding
                         spaceId={space.id}
                         spaceName={space.name}
                         spaceType={space.spaceType}
+                        sidebarToolCount={sidebarTools.length}
+                        memberCount={space.memberCount ?? 0}
+                        firstToolId={sidebarTools[0]?.toolId}
                       />
                     )}
 

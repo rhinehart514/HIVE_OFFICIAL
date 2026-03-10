@@ -432,6 +432,7 @@ export const POST = withAuthValidationAndErrors(
             toolName: (toolData?.name as string | undefined) || 'Untitled Tool',
             spaceId,
             spaceName: (spaceData?.name as string | undefined) || 'a space',
+            spaceHandle: (spaceData?.handle as string | undefined) || undefined,
             deployedByUserId: userId,
             deployedByName: deployerName,
             campusId: campusId!,
@@ -449,6 +450,7 @@ export const POST = withAuthValidationAndErrors(
             toolName: (toolData?.name as string | undefined) || 'Untitled Tool',
             spaceId,
             spaceName: (spaceData?.name as string | undefined) || 'a space',
+            spaceHandle: (spaceData?.handle as string | undefined) || undefined,
           });
         } catch (fallbackError) {
           logger.warn('Failed to send deployment notifications', {

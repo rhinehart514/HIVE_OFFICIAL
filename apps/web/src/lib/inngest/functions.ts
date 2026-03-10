@@ -210,7 +210,7 @@ export const handleToolDeployed = inngest.createFunction(
   },
   { event: 'tool/deployed' },
   async ({ event, step }) => {
-    const { toolId, toolName, spaceId, spaceName, deployedByUserId, deployedByName, memberIds } = event.data;
+    const { toolId, toolName, spaceId, spaceName, deployedByUserId, deployedByName, memberIds, spaceHandle } = event.data;
 
     const { notifyToolDeployed } = await import('@/lib/tool-notifications');
 
@@ -223,6 +223,7 @@ export const handleToolDeployed = inngest.createFunction(
         toolName,
         spaceId,
         spaceName,
+        spaceHandle: spaceHandle as string | undefined,
       });
     });
 

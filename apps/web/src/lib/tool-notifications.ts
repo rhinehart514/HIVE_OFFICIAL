@@ -80,13 +80,15 @@ export async function notifyToolDeployed(params: {
   toolName: string;
   spaceId: string;
   spaceName: string;
+  spaceHandle?: string;
 }): Promise<number> {
   const actorName = params.deployedByName || 'Someone';
+  const spaceSlug = params.spaceHandle || params.spaceId;
   const payload = buildPayload('tool.deployed', {
     title: `${params.toolName} was added to ${params.spaceName}`,
-    body: `${actorName} deployed this tool in ${params.spaceName}.`,
+    body: `${actorName} added a new app to ${params.spaceName}.`,
     toolId: params.toolId,
-    actionUrl: `/s/${params.spaceId}?tool=${params.toolId}`,
+    actionUrl: `/s/${spaceSlug}`,
   });
 
   const recipientIds = params.memberIds.filter(
