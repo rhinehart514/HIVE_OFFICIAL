@@ -38,7 +38,7 @@ export function HeroSection() {
     step >= n ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3';
 
   return (
-    <section className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--bg-void)] px-6">
+    <section className="relative flex flex-col items-center justify-center bg-[var(--bg-void)] px-6 pt-20 pb-4 md:pt-24 md:pb-8">
       {/* Grain texture overlay */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
@@ -50,7 +50,7 @@ export function HeroSection() {
       />
       <div className="mx-auto max-w-3xl text-center">
         <h1
-          className={`${displayFont} mb-6 text-[clamp(40px,8vw,56px)] font-bold leading-[1.05] tracking-[-0.03em] text-white transition-[opacity,transform] duration-500 ${show(1)}`}
+          className={`${displayFont} mb-4 text-[clamp(36px,7vw,48px)] font-bold leading-[1.05] tracking-[-0.03em] text-white transition-[opacity,transform] duration-500 ${show(1)}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
         >
           Rally your people
@@ -59,7 +59,7 @@ export function HeroSection() {
         </h1>
 
         <p
-          className={`mx-auto mb-8 max-w-md text-[15px] leading-relaxed text-white/50 transition-[opacity,transform] duration-500 ${show(2)}`}
+          className={`mx-auto mb-6 max-w-md text-[15px] leading-relaxed text-white/50 transition-[opacity,transform] duration-500 ${show(2)}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
         >
           Polls, brackets, RSVPs — describe what you need and
@@ -98,6 +98,11 @@ export function HeroSection() {
             </div>
           </form>
 
+          {/* Social proof — visible immediately */}
+          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/30">
+            650+ student orgs · &lt;60s from idea to live app
+          </p>
+
           <div className="flex items-center gap-3">
             <Link
               href={enterHref}
@@ -113,19 +118,6 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div
-        className={`absolute bottom-8 left-1/2 -translate-x-1/2 transition-opacity duration-200 delay-300 ${
-          step >= 3 ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <div className="flex flex-col items-center gap-2">
-          <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/30">
-            Scroll
-          </span>
-          <div className="h-6 w-px bg-white/10" />
-        </div>
-      </div>
     </section>
   );
 }

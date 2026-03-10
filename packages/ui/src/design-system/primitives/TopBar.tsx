@@ -266,8 +266,7 @@ export function TopBarNotifications({ count = 0, onClick }: TopBarNotificationsP
       </svg>
       {count > 0 && (
         <span
-          className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center text-label-xs font-semibold rounded-full px-1"
-          style={{ background: '#EF4444', color: '#fff' }}
+          className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center text-label-xs font-semibold rounded-full px-1 bg-red-400 text-white"
         >
           {count > 99 ? '99+' : count}
         </span>
@@ -310,8 +309,7 @@ export function TopBarProfile({ name, avatarUrl, onClick }: TopBarProfileProps) 
         <Image src={avatarUrl} alt={name || 'Profile'} width={28} height={28} className="rounded-lg object-cover" sizes="28px" />
       ) : (
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-semibold"
-          style={{ background: 'rgba(255, 255, 255, 0.1)', color: TOPBAR_TOKENS.textSecondary }}
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-semibold bg-white/[0.08] text-white/50"
         >
           {initials}
         </div>

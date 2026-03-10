@@ -685,7 +685,7 @@ export function EntryFlowV2() {
   // ── Render ─────────────────────────────────────────────────
 
   return (
-    <div className="min-h-dvh bg-[#000000] flex items-center justify-center px-6">
+    <div className="min-h-dvh bg-void flex items-center justify-center px-6">
       <div className="w-full max-w-[400px]">
         <ProgressDots step={step} />
 
@@ -704,7 +704,7 @@ export function EntryFlowV2() {
                 <h1 className="font-display text-[48px] font-semibold tracking-tight text-[#FFD700]">
                   HIVE
                 </h1>
-                <p className="text-sm text-white/30 mt-1">The platform for UB</p>
+                <p className="text-sm text-white/30 mt-1">Build apps your campus actually uses</p>
               </div>
 
               <div className="space-y-3">

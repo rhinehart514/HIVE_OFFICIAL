@@ -120,6 +120,7 @@ const _GET = withAuthAndErrors(async (request, _context, respond) => {
         id: doc.id,
         name: (data.name as string) || "Untitled Tool",
         description: (data.description as string) || "",
+        shellFormat: (data.shellFormat as string | undefined) ?? null,
         status,
         updatedAt,
         createdAt,

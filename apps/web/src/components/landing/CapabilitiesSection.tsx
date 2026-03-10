@@ -16,24 +16,26 @@ export function CapabilitiesSection() {
     }
     const el = sectionRef.current;
     if (!el) return;
+    const fallback = setTimeout(() => setVisible(true), 1500);
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setVisible(true);
           obs.disconnect();
+          clearTimeout(fallback);
         }
       },
-      { threshold: 0.15 }
+      { threshold: 0.05 }
     );
     obs.observe(el);
-    return () => obs.disconnect();
+    return () => { obs.disconnect(); clearTimeout(fallback); };
   }, []);
 
   return (
-    <section ref={sectionRef} className="bg-[var(--bg-void)] px-6 py-16 md:py-24">
+    <section ref={sectionRef} className="bg-[var(--bg-void)] px-6 pt-4 pb-8 md:pt-8 md:pb-12">
       <div className="mx-auto max-w-5xl">
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center">
           <span className="mb-3 block font-mono text-[11px] uppercase tracking-[0.2em] text-white/50">
             What students are making
           </span>
@@ -44,7 +46,7 @@ export function CapabilitiesSection() {
           </h2>
         </div>
 
-        {/* Asymmetric grid — poll card spans 2 cols */}
+        {/* Asymmetric grid — alternating 2:1 / 1:2 rows */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card delay={0} visible={visible} className="md:col-span-2">
             <PollCard />
@@ -54,6 +56,9 @@ export function CapabilitiesSection() {
           </Card>
           <Card delay={200} visible={visible}>
             <BracketCard />
+          </Card>
+          <Card delay={300} visible={visible} className="md:col-span-2">
+            <CountdownCard />
           </Card>
         </div>
       </div>
@@ -242,6 +247,62 @@ function BracketCard() {
       <p className="mt-3 text-[12px] text-white/30">
         Round 2 of 4
       </p>
+    </div>
+  );
+}
+
+function CountdownCard() {
+  return (
+    <div>
+      <div className="mb-1 flex items-center gap-2">
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        </span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/50">
+          Countdown
+        </span>
+      </div>
+      <h3 className={`${displayFont} mb-4 text-[20px] font-semibold text-white`}>
+        Spring Fest 2026
+      </h3>
+      <div className="flex items-center gap-8">
+        {[
+          { value: '12', label: 'days' },
+          { value: '06', label: 'hrs' },
+          { value: '43', label: 'min' },
+          { value: '17', label: 'sec' },
+        ].map((unit) => (
+          <div key={unit.label} className="text-center">
+            <div className={`${displayFont} text-[32px] font-semibold tabular-nums text-white`}>
+              {unit.value}
+            </div>
+            <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-white/30">
+              {unit.label}
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Interest bar */}
+      <div className="mt-4 mb-1">
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-[13px] text-white/50">
+            <span className="text-white font-medium">2,400</span> interested
+          </span>
+          <span className="font-mono text-[12px] text-white/30">3,000 cap</span>
+        </div>
+        <div className="h-2.5 overflow-hidden rounded-full bg-white/[0.06]">
+          <div className="h-full rounded-full bg-white/30" style={{ width: '80%' }} />
+        </div>
+      </div>
+      <div className="mt-3 flex gap-2">
+        <span className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50">
+          Apr 26 · Alumni Arena
+        </span>
+        <span className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50">
+          UB SA + CPMC
+        </span>
+      </div>
     </div>
   );
 }

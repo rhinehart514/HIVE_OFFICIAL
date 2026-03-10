@@ -11,7 +11,7 @@ export function CTASection() {
   const enterHref = buildEnterUrl(searchParams.get('redirect'));
 
   return (
-    <section className="relative overflow-hidden bg-[var(--bg-void)] px-6 py-24 md:py-32">
+    <section className="relative overflow-hidden bg-[var(--bg-void)] px-6 pt-8 pb-16 md:pt-12 md:pb-20">
       {/* Gold radial glow behind CTA */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -39,11 +39,8 @@ export function CTASection() {
           Get started
         </Link>
 
-        <p className="mt-4 text-[13px] text-white/50">
-          Free with your .edu email
-        </p>
-        <p className="mt-2 font-mono text-[11px] text-white/30">
-          your .edu email · takes 30 seconds
+        <p className="mt-4 font-mono text-[11px] text-white/30">
+          free · .edu email · 30 seconds
         </p>
       </div>
     </section>

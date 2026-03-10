@@ -21,7 +21,7 @@ const STUDENT_THRESHOLD = 50; // Don't show student count below this
 
 export function SocialProofSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [stats, setStats] = useState<{ students: number; spaces: number; apps: number } | null>(
     null
   );
@@ -47,23 +47,26 @@ export function SocialProofSection() {
     }
     const el = sectionRef.current;
     if (!el) return;
+    // Fallback: always reveal after 1.5s in case IO doesn't fire
+    const fallback = setTimeout(() => setVisible(true), 1500);
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setVisible(true);
           obs.disconnect();
+          clearTimeout(fallback);
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.05 }
     );
     obs.observe(el);
-    return () => obs.disconnect();
+    return () => { obs.disconnect(); clearTimeout(fallback); };
   }, []);
 
   const showStudents = stats && stats.students >= STUDENT_THRESHOLD;
 
   return (
-    <section ref={sectionRef} className="bg-[var(--bg-void)] px-6 py-16 md:py-24">
+    <section ref={sectionRef} className="bg-[var(--bg-void)] px-6 pt-8 pb-8 md:pt-12 md:pb-12">
       <div className="mx-auto max-w-7xl">
         <div
           className={`mb-8 text-center transition-[opacity,transform] duration-500 ease-out ${

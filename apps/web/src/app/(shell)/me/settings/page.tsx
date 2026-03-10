@@ -393,7 +393,7 @@ function SettingsContent() {
         <motion.section className="mb-16" initial="hidden" animate="visible">
           <motion.div
             className="grid gap-3 md:grid-cols-2 p-4 -mx-4 rounded-lg"
-            style={{ backgroundColor: 'rgba(255,255,255,0.015)' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
           >
             <motion.div variants={staggerItemVariants}>
               <Card

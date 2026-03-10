@@ -3,7 +3,6 @@ import { Suspense } from 'react';
 import {
   LandingHeader,
   HeroSection,
-  DemoSection,
   SocialProofSection,
   CapabilitiesSection,
   CTASection,
@@ -41,9 +40,8 @@ export default function LandingPage() {
       <Suspense fallback={null}>
         <HeroSection />
       </Suspense>
-      <DemoSection />
-      <SocialProofSection />
       <CapabilitiesSection />
+      <SocialProofSection />
       <Suspense fallback={null}>
         <CTASection />
       </Suspense>

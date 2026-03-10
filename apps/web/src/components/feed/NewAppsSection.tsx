@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { Mono } from '@hive/ui/design-system/primitives';
 import { useAuth } from '@hive/auth-logic';
 import ShellRenderer from '@/components/shells/ShellRenderer';
@@ -227,8 +227,6 @@ export function NewAppsSection() {
 
   if (!user) return null;
 
-  if (tools.length === 0) return null;
-
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
@@ -237,19 +235,39 @@ export function NewAppsSection() {
         </Mono>
       </div>
 
-      <div className="space-y-3">
-        {tools.map((tool, i) => (
-          <AppCard key={tool.id} tool={tool} userId={user.uid} index={i} />
-        ))}
-      </div>
+      {tools.length > 0 ? (
+        <div className="space-y-3">
+          {tools.map((tool, i) => (
+            <AppCard key={tool.id} tool={tool} userId={user.uid} index={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-white/[0.05] bg-card p-5">
+          <p className="text-[15px] text-white/70 mb-1">
+            No one&apos;s made anything yet today.
+          </p>
+          <p className="text-[13px] text-white/30 mb-4">
+            Be the first — polls, brackets, RSVPs. Takes 30 seconds.
+          </p>
+          <Link
+            href="/build"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#FFD700] text-black text-[13px] font-semibold hover:opacity-90 transition-opacity duration-100"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Make something
+          </Link>
+        </div>
+      )}
 
-      <Link
-        href="/build"
-        className="flex items-center gap-1.5 mt-4 text-[13px] text-white/30 hover:text-white/50 transition-colors"
-      >
-        Make your own
-        <ArrowRight className="w-3.5 h-3.5" />
-      </Link>
+      {tools.length > 0 && (
+        <Link
+          href="/build"
+          className="flex items-center gap-1.5 mt-4 text-[13px] text-white/30 hover:text-white/50 transition-colors"
+        >
+          Make your own
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      )}
     </section>
   );
 }

@@ -102,7 +102,10 @@ export function DemoSection() {
             <div className="rounded-xl border border-white/[0.06] bg-[var(--bg-void)] px-4 py-3 font-mono text-[13px] text-white/50">
               {typed}
               {phase === 'typing' && (
-                <span className="ml-0.5 inline-block h-4 w-[2px] bg-[#FFD700] animate-pulse" />
+                <span
+                  className="ml-0.5 inline-block h-4 w-[2px] bg-[#FFD700]"
+                  style={{ animation: 'pulse 1.2s cubic-bezier(0.4,0,0.6,1) infinite' }}
+                />
               )}
               {phase === 'idle' && !prefersReduced && (
                 <span className="ml-0.5 inline-block h-4 w-[2px] bg-white/30" />
