@@ -322,7 +322,16 @@ export function EntryFlowV2() {
   const goToApp = React.useCallback((fallback = '/discover') => {
     clearState();
     const storedRedirect = consumeRedirect();
-    router.push(redirectRef.current || storedRedirect || fallback);
+    const destination = redirectRef.current || storedRedirect;
+
+    if (destination) {
+      // User came from a specific link — send them back there
+      router.push(destination);
+    } else {
+      // Organic signup — flag for welcome experience on /discover
+      try { localStorage.setItem('hive:just-onboarded', '1'); } catch { /* ignore */ }
+      router.push(fallback);
+    }
   }, [router]);
 
   // ── OTP focus on step enter ────────────────────────────────
@@ -610,7 +619,7 @@ export function EntryFlowV2() {
       });
       analytics.trackOnboardingCompleted(0, ['welcome', 'verify', 'name', 'interests', 'spaces']);
 
-      goToApp(result.redirect || '/build');
+      goToApp(result.redirect || '/discover');
     } catch (error) {
       setNameError(error instanceof Error ? error.message : 'Failed to complete entry');
       setStep('name');
