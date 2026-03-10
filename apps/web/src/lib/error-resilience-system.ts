@@ -404,14 +404,16 @@ export class RetryManager {
       });
 
       // Could also send to external error tracking service
-      if (typeof window !== 'undefined' && (window as Record<string, unknown>).gtag) {
-        ((window as Record<string, unknown>).gtag as (event: string, action: string, params: Record<string, unknown>) => void)('event', 'exception', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- gtag is injected globally by Google Analytics
+      const win = typeof window !== 'undefined' ? (window as unknown as { gtag?: (...args: unknown[]) => void }) : null;
+      if (win?.gtag) {
+        win.gtag('event', 'exception', {
           description: error.message,
           fatal: error.severity === ErrorSeverity._CRITICAL
         });
       }
     } catch (logError) {
-      logger.error('Failed to log error', { component: 'error-resilience' }, logError instanceof Error ? logError : undefined);
+      logger.error('Failed to log error', { component: 'error-resilience', error: logError instanceof Error ? logError.message : 'unknown' });
     }
   }
 
@@ -467,7 +469,7 @@ export class GracefulDegradation {
         try {
           return await config.fallbackFunction();
         } catch (fallbackError) {
-          logger.warn('Fallback operation failed', { component: 'error-resilience' }, fallbackError instanceof Error ? fallbackError : undefined);
+          logger.warn('Fallback operation failed', { component: 'error-resilience', error: fallbackError instanceof Error ? fallbackError.message : 'unknown' });
           throw classifiedError;
         }
       }

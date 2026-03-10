@@ -27,6 +27,7 @@ import {
   EllipsisHorizontalIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
   Text,
@@ -185,13 +186,13 @@ function MessageFeedItem({
           <Text size="sm" weight="medium" className="text-white">
             {item.authorName}
           </Text>
-          <Text size="xs" className="text-white/50">
+          <Text size="xs" className="text-white/30">
             {timeAgo}
           </Text>
         </div>
 
         {/* Message Content */}
-        <Text size="sm" className="text-white/50 mb-2 break-words">
+        <Text size="sm" className="text-white/70 mb-2 break-words">
           {item.content}
         </Text>
 
@@ -379,8 +380,8 @@ function ToolFeedItem({
     <div className="mx-4 my-3 p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
       <div className="flex items-start gap-3">
         {/* Icon */}
-        <div className="w-10 h-10 rounded-lg bg-purple-500/[0.12] flex items-center justify-center flex-shrink-0">
-          <WrenchScrewdriverIcon className="w-5 h-5 text-purple-400/80" />
+        <div className="w-10 h-10 rounded-lg bg-[#FFD700]/[0.08] flex items-center justify-center flex-shrink-0">
+          <WrenchScrewdriverIcon className="w-5 h-5 text-[#FFD700]/70" />
         </div>
 
         {/* Content */}
@@ -445,7 +446,7 @@ function PostFeedItem({
             <Text size="sm" weight="medium" className="text-white">
               {item.authorName}
             </Text>
-            <Text size="xs" className="text-white/50">
+            <Text size="xs" className="text-white/30">
               {timeAgo}
             </Text>
             {item.isPinned && (
@@ -459,7 +460,7 @@ function PostFeedItem({
               {item.title}
             </Text>
           )}
-          <Text size="sm" className="text-white/50">
+          <Text size="sm" className="text-white/70">
             {item.content}
           </Text>
         </div>
@@ -544,12 +545,12 @@ function EmptyState() {
       transition={{ duration: 0.6, ease: MOTION.ease.premium }}
     >
       <motion.div
-        className="w-16 h-16 mx-auto mb-6 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center justify-center"
+        className="w-16 h-16 mx-auto mb-6 rounded-lg bg-white/[0.08] border border-white/[0.06] flex items-center justify-center"
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <MegaphoneIcon className="w-7 h-7 text-white/50" />
+        <MegaphoneIcon className="w-7 h-7 text-white/70" />
       </motion.div>
       <h3
         className="text-title-lg font-semibold text-white mb-3"
@@ -557,9 +558,17 @@ function EmptyState() {
       >
         No activity yet
       </h3>
-      <p className="text-body text-white/50 max-w-sm mx-auto">
+      <p className="text-body text-white/50 max-w-sm mx-auto mb-4">
         Start a conversation, create an event, or deploy an app to get things moving.
       </p>
+      <div className="flex items-center justify-center gap-3">
+        <Link
+          href="/build"
+          className="inline-flex items-center px-4 py-2 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors duration-100"
+        >
+          Build an app
+        </Link>
+      </div>
     </motion.div>
   );
 }

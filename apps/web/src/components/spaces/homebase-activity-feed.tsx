@@ -24,6 +24,7 @@ import {
   MegaphoneIcon,
   ArrowRightIcon,
 } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Text, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui/design-system/primitives';
 import { MOTION } from '@hive/tokens';
@@ -75,9 +76,9 @@ function ActivityIcon({ type }: { type: ActivityType }) {
     case 'event':
       return <CalendarIcon className={cn(iconClass, 'text-[var(--color-gold)]/60')} />;
     case 'announcement':
-      return <MegaphoneIcon className={cn(iconClass, 'text-blue-400/60')} />;
+      return <MegaphoneIcon className={cn(iconClass, 'text-[#FFD700]/50')} />;
     case 'tool_deployed':
-      return <SparklesIcon className={cn(iconClass, 'text-purple-400/60')} />;
+      return <SparklesIcon className={cn(iconClass, 'text-[#FFD700]/60')} />;
     default:
       return <ChatBubbleLeftIcon className={cn(iconClass, 'text-white/50')} />;
   }
@@ -252,10 +253,16 @@ function EmptyState({ message }: { message?: string }) {
         >
           No activity yet
         </h3>
-        <p className="text-body text-white/50 max-w-xs mx-auto">
+        <p className="text-body text-white/50 max-w-xs mx-auto mb-4">
           {message ||
             'Join spaces and start conversations. Your activity feed will show up here.'}
         </p>
+        <Link
+          href="/discover"
+          className="inline-flex items-center px-4 py-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
+        >
+          Browse spaces
+        </Link>
       </motion.div>
     </motion.div>
   );

@@ -41,7 +41,7 @@ export function HeroSection() {
     <section className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--bg-void)] px-6">
       <div className="mx-auto max-w-3xl text-center">
         <h1
-          className={`${displayFont} mb-6 text-[clamp(40px,8vw,56px)] font-bold leading-[1.05] tracking-[-0.03em] text-white transition-all duration-500 ${show(1)}`}
+          className={`${displayFont} mb-6 text-[clamp(40px,8vw,56px)] font-bold leading-[1.05] tracking-[-0.03em] text-white transition-[opacity,transform] duration-500 ${show(1)}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
         >
           Rally your people
@@ -50,7 +50,7 @@ export function HeroSection() {
         </h1>
 
         <p
-          className={`mx-auto mb-8 max-w-md text-[15px] leading-relaxed text-white/50 transition-all duration-500 ${show(2)}`}
+          className={`mx-auto mb-8 max-w-md text-[15px] leading-relaxed text-white/50 transition-[opacity,transform] duration-500 ${show(2)}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
         >
           Polls, brackets, RSVPs — describe what you need and
@@ -58,11 +58,18 @@ export function HeroSection() {
         </p>
 
         <div
-          className={`flex flex-col items-center gap-4 transition-all duration-500 ${show(3)}`}
+          className={`flex flex-col items-center gap-4 transition-[opacity,transform] duration-500 ${show(3)}`}
           style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
         >
           {/* Functional prompt input */}
-          <form onSubmit={handleSubmit} className="w-full max-w-lg">
+          <form onSubmit={handleSubmit} className="relative w-full max-w-lg">
+            {/* Gold glow behind prompt */}
+            <div
+              className="pointer-events-none absolute inset-0 -inset-x-8 -inset-y-12"
+              style={{
+                background: 'radial-gradient(ellipse at center, rgba(255,215,0,0.05) 0%, transparent 70%)',
+              }}
+            />
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
               <input
                 type="text"

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { buildEnterUrl } from './entry-url';
 
-const displayFont = "font-sans";
+const displayFont = "font-display";
 
 export function CTASection() {
   const searchParams = useSearchParams();

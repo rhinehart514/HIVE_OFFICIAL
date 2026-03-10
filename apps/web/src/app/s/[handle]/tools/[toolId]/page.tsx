@@ -332,7 +332,7 @@ function ToolContent({
       const result = await response.json();
       const newToolId = result.data?.toolId;
       if (newToolId) {
-        router.push(`/lab/${newToolId}`);
+        router.push(`/build/${newToolId}`);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to remix');
@@ -564,7 +564,7 @@ function ToolContent({
                   <span>
                     Based on{' '}
                     <button
-                      onClick={() => router.push(`/lab/${deployment.tool.remixedFrom!.toolId}`)}
+                      onClick={() => router.push(`/build/${deployment.tool.remixedFrom!.toolId}`)}
                       className="text-white/50 hover:text-white/50 underline-offset-2 hover:underline transition-colors"
                     >
                       {deployment.tool.remixedFrom.toolName}

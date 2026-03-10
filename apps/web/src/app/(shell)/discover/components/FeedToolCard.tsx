@@ -41,11 +41,11 @@ export interface FeedToolCardProps {
 }
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
-  productivity: 'from-blue-500/40 to-indigo-500/40',
-  social: 'from-pink-500/40 to-rose-500/40',
-  game: 'from-green-500/40 to-emerald-500/40',
-  utility: 'from-amber-500/40 to-orange-500/40',
-  creative: 'from-purple-500/40 to-violet-500/40',
+  productivity: 'from-[#FFD700]/30 to-amber-400/20',
+  social: 'from-[#FFD700]/20 to-white/10',
+  game: 'from-emerald-400/30 to-emerald-400/10',
+  utility: 'from-amber-400/30 to-amber-400/10',
+  creative: 'from-[#FFD700]/40 to-amber-400/20',
 };
 
 function getCategoryGradient(category?: string): string {

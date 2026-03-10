@@ -5,6 +5,18 @@
 
 import { Result } from '../domain';
 
+// Structured logger for base service
+const logger = {
+  info: (message: string, data?: Record<string, unknown>) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(message, data || ''); // eslint-disable-line no-console
+    }
+  },
+  error: (message: string, data?: Record<string, unknown>) => {
+    console.error(message, data || ''); // eslint-disable-line no-console
+  },
+};
+
 export interface ApplicationServiceContext {
   userId?: string;
   campusId: string;
@@ -34,7 +46,7 @@ export abstract class BaseApplicationService {
     const startTime = Date.now();
 
     try {
-      console.log(`[${operationName}] Starting operation`, {
+      logger.info(`[${operationName}] Starting operation`, {
         requestId: this.context.requestId,
         userId: this.context.userId,
         campusId: this.context.campusId
@@ -45,12 +57,12 @@ export abstract class BaseApplicationService {
       const duration = Date.now() - startTime;
 
       if (result.isSuccess) {
-        console.log(`[${operationName}] Completed successfully`, {
+        logger.info(`[${operationName}] Completed successfully`, {
           requestId: this.context.requestId,
           duration
         });
       } else {
-        console.error(`[${operationName}] Failed`, {
+        logger.error(`[${operationName}] Failed`, {
           requestId: this.context.requestId,
           error: result.error,
           duration
@@ -60,9 +72,9 @@ export abstract class BaseApplicationService {
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(`[${operationName}] Unexpected error`, {
+      logger.error(`[${operationName}] Unexpected error`, {
         requestId: this.context.requestId,
-        error,
+        error: error instanceof Error ? error.message : String(error),
         duration
       });
 

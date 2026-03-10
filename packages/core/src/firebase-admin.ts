@@ -1,5 +1,20 @@
 import * as admin from "firebase-admin";
 
+// Structured logger for firebase-admin initialization
+const logger = {
+  info: (message: string) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log(message); // eslint-disable-line no-console
+    }
+  },
+  warn: (message: string, data?: unknown) => {
+    console.warn(message, data ?? ""); // eslint-disable-line no-console
+  },
+  error: (message: string, data?: unknown) => {
+    console.error(message, data ?? ""); // eslint-disable-line no-console
+  },
+};
+
 // Environment detection
 function getCurrentEnvironment(): "development" | "staging" | "production" {
   const env = (process.env.NODE_ENV as string) || "development";
@@ -36,11 +51,11 @@ try {
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
           privateKey: decodedKey,
         });
-        console.log(
-          `🔐 Firebase Admin: Using base64 private key for ${currentEnvironment}`
+        logger.info(
+          `Firebase Admin: Using base64 private key for ${currentEnvironment}`
         );
       } catch (error) {
-        console.error("Failed to decode base64 private key:", error);
+        logger.error("Failed to decode base64 private key:", error);
       }
     } else if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
       // Format 2: Individual environment variables (raw key with \n escapes)
@@ -49,8 +64,8 @@ try {
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
       });
-      console.log(
-        `🔐 Firebase Admin: Using individual env vars for ${currentEnvironment}`
+      logger.info(
+        `Firebase Admin: Using individual env vars for ${currentEnvironment}`
       );
     } else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
       // Format 2: Base64 encoded service account (existing pattern)
@@ -62,22 +77,22 @@ try {
           ).toString("ascii")
         ) as admin.ServiceAccount;
         credential = admin.credential.cert(serviceAccountJson);
-        console.log(
-          `🔐 Firebase Admin: Using base64 service account for ${currentEnvironment}`
+        logger.info(
+          `Firebase Admin: Using base64 service account for ${currentEnvironment}`
         );
       } catch (error) {
-        console.warn("Failed to parse base64 service account:", error);
+        logger.warn("Failed to parse base64 service account:", error);
       }
     } else {
       // Format 3: Application default credentials (development fallback)
       try {
         credential = admin.credential.applicationDefault();
-        console.log(
-          `🔑 Firebase Admin: Using application default credentials for ${currentEnvironment}`
+        logger.info(
+          `Firebase Admin: Using application default credentials for ${currentEnvironment}`
         );
       } catch (credError) {
-        console.warn(
-          `⚠️ No Firebase Admin credentials available for ${currentEnvironment}`
+        logger.warn(
+          `No Firebase Admin credentials available for ${currentEnvironment}`
         );
         throw credError;
       }
@@ -93,8 +108,8 @@ try {
       authAdmin = admin.auth();
       firebaseInitialized = true;
 
-      console.log(
-        `✅ Firebase Admin initialized successfully for ${currentEnvironment}`
+      logger.info(
+        `Firebase Admin initialized successfully for ${currentEnvironment}`
       );
     } else {
       throw new Error("No valid Firebase credentials found");
@@ -104,13 +119,13 @@ try {
     dbAdmin = admin.firestore();
     authAdmin = admin.auth();
     firebaseInitialized = true;
-    console.log(
-      `🔄 Firebase Admin: Using existing app for ${currentEnvironment}`
+    logger.info(
+      `Firebase Admin: Using existing app for ${currentEnvironment}`
     );
   }
 } catch (error) {
-  console.warn(
-    `⚠️ Firebase Admin initialization failed for ${currentEnvironment}:`,
+  logger.warn(
+    `Firebase Admin initialization failed for ${currentEnvironment}:`,
     error
   );
 
@@ -118,16 +133,16 @@ try {
   dbAdmin = {
     collection: (path: string) => ({
       get: async () => {
-        console.log(
-          `🔄 Mock Firebase call: collection(${path}).get() - returning development data`
+        logger.warn(
+          `Mock Firebase call: collection(${path}).get() - returning development data`
         );
         throw new Error(
           `Firebase Admin not configured for ${currentEnvironment}. Add credentials to environment variables.`
         );
       },
       add: async () => {
-        console.log(
-          `🔄 Mock Firebase call: collection(${path}).add() - development mode`
+        logger.warn(
+          `Mock Firebase call: collection(${path}).add() - development mode`
         );
         throw new Error(
           `Firebase Admin not configured for ${currentEnvironment}.`
@@ -135,16 +150,16 @@ try {
       },
       doc: (id: string) => ({
         get: async () => {
-          console.log(
-            `🔄 Mock Firebase call: collection(${path}).doc(${id}).get() - development mode`
+          logger.warn(
+            `Mock Firebase call: collection(${path}).doc(${id}).get() - development mode`
           );
           throw new Error(
             `Firebase Admin not configured for ${currentEnvironment}.`
           );
         },
         set: async () => {
-          console.log(
-            `🔄 Mock Firebase call: collection(${path}).doc(${id}).set() - development mode`
+          logger.warn(
+            `Mock Firebase call: collection(${path}).doc(${id}).set() - development mode`
           );
           throw new Error(
             `Firebase Admin not configured for ${currentEnvironment}.`
@@ -156,14 +171,14 @@ try {
 
   authAdmin = {
     verifyIdToken: async () => {
-      console.log(`🔄 Mock Firebase call: verifyIdToken() - development mode`);
+      logger.warn(`Mock Firebase call: verifyIdToken() - development mode`);
       throw new Error(
         `Firebase Auth not configured for ${currentEnvironment}.`
       );
     },
     createCustomToken: async (uid: string) => {
-      console.log(
-        `🔄 Mock Firebase call: createCustomToken(${uid}) - development mode`
+      logger.warn(
+        `Mock Firebase call: createCustomToken(${uid}) - development mode`
       );
       throw new Error(
         `Firebase Auth not configured for ${currentEnvironment}.`

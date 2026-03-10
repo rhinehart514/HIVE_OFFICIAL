@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const displayFont = "font-sans";
+const displayFont = "font-display";
 
 export function CapabilitiesSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -44,9 +44,9 @@ export function CapabilitiesSection() {
           </h2>
         </div>
 
-        {/* 3-col grid */}
+        {/* Asymmetric grid — poll card spans 2 cols */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card delay={0} visible={visible}>
+          <Card delay={0} visible={visible} className="md:col-span-2">
             <PollCard />
           </Card>
           <Card delay={100} visible={visible}>
@@ -65,16 +65,18 @@ function Card({
   children,
   delay,
   visible,
+  className = '',
 }: {
   children: React.ReactNode;
   delay: number;
   visible: boolean;
+  className?: string;
 }) {
   return (
     <div
-      className={`rounded-2xl border border-white/[0.08] bg-[#0A0A0A] p-6 transition-all duration-500 ease-out ${
+      className={`rounded-2xl border border-white/[0.08] bg-[var(--bg-surface)] p-6 transition-[opacity,transform] duration-500 ease-out ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-      }`}
+      } ${className}`}
       style={{
         transitionDelay: `${delay}ms`,
         transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',

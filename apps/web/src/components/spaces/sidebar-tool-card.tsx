@@ -87,9 +87,9 @@ function ToolIcon({
   const categoryColors: Record<string, string> = {
     productivity: 'text-white/50',
     academic: 'text-emerald-400',
-    social: 'text-pink-400',
+    social: 'text-[#FFD700]/70',
     utility: 'text-amber-400',
-    entertainment: 'text-purple-400',
+    entertainment: 'text-white/70',
     other: 'text-white/50',
   };
 

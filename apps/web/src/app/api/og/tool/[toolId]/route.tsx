@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'edge';
 
@@ -240,7 +241,7 @@ export async function GET(
       )
     );
   } catch (error) {
-    console.error('Failed to generate OG image:', error);
+    logger.error('Failed to generate OG image', error instanceof Error ? error : undefined);
 
     // Return error card
     return withCacheHeaders(

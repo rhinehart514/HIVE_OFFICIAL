@@ -364,7 +364,7 @@ export function ChatInput({
               'border border-white/[0.06]',
               'text-white placeholder:text-white/30',
               'resize-none',
-              'focus:outline-none focus:ring-1 focus:ring-white/20',
+              'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
               'disabled:opacity-50',
               'transition-colors'
             )}

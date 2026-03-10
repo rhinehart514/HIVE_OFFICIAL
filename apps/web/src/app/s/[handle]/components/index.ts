@@ -8,7 +8,7 @@ export { SpaceHeader } from './space-header';
 export { SpaceThreshold } from './space-threshold';
 export { MembersList } from './members-list';
 export type { Member } from './members-list';
-export { SpaceSettings } from './space-settings';
+export { SpaceSettings } from './space-settings/index';
 export { SpaceInfoDrawer } from './space-info-drawer';
 export { ModerationPanel } from './moderation-panel';
 export { MemberManagement } from './member-management';

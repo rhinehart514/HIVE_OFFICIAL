@@ -199,7 +199,7 @@ export function MessageItem({
                   'w-full px-4 py-2.5 rounded-xl',
                   'bg-white/[0.03] border border-white/[0.06]',
                   'text-white text-[15px] placeholder:text-white/30',
-                  'focus:outline-none focus:ring-1 focus:ring-white/20',
+                  'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
                   'resize-none'
                 )}
                 rows={Math.max(2, editContent.split('\n').length)}

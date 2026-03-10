@@ -27,6 +27,13 @@ import { CampusId } from '../../../domain/profile/value-objects/campus-id.value'
 import { ProfileId } from '../../../domain/profile/value-objects/profile-id.value';
 import { Participation } from '../../../domain/rituals/entities/participation';
 
+// Structured logger for ritual repository
+const logger = {
+  error: (message: string, data?: unknown) => {
+    console.error(message, data ?? ''); // eslint-disable-line no-console
+  },
+};
+
 export class FirebaseRitualRepository implements IRitualRepository {
   private readonly collectionName = 'rituals';
 
@@ -458,7 +465,7 @@ export class FirebaseRitualRepository implements IRitualRepository {
         }
       },
       (error) => {
-        console.error('[ritual.repository] subscribeToRitual error:', error);
+        logger.error('[ritual.repository] subscribeToRitual error:', error);
       }
     );
 
@@ -485,7 +492,7 @@ export class FirebaseRitualRepository implements IRitualRepository {
         callback(rituals);
       },
       (error) => {
-        console.error('[ritual.repository] subscribeToActiveRituals error:', error);
+        logger.error('[ritual.repository] subscribeToActiveRituals error:', error);
       }
     );
 

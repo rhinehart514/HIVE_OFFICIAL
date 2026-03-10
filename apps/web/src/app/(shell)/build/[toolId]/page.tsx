@@ -547,7 +547,7 @@ export default function BuildStudioPage({ params }: Props) {
   // ---------- Chat / iterate panel ----------
 
   const chatPanel = isOwner ? (
-    <div className="border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-black/80 backdrop-blur-sm px-4 py-3 lg:py-6 lg:w-[360px] lg:flex lg:flex-col lg:justify-end">
+    <div className="border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-black/80 px-4 py-3 lg:py-6 lg:w-[360px] lg:flex lg:flex-col lg:justify-end">
       <div className="max-w-[520px] mx-auto lg:max-w-none w-full">
         <p className="text-xs text-white/25 mb-2 hidden lg:block">
           Describe a change

@@ -301,7 +301,23 @@ export default function CampusToolPage() {
             />
           ) : (
             <div className="text-center py-12">
-              <p className="text-white/40 text-sm">This app has no elements yet.</p>
+              <p className="text-white/50 text-sm mb-4">This app has no elements yet.</p>
+              <div className="flex items-center justify-center gap-3">
+                <Link
+                  href="/build"
+                  className="inline-flex items-center px-4 py-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
+                >
+                  Back to build
+                </Link>
+                {user?.uid === tool.creatorId && (
+                  <Link
+                    href={`/build/${tool.toolId || tool.id}`}
+                    className="inline-flex items-center px-4 py-2 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors duration-100"
+                  >
+                    Edit this app
+                  </Link>
+                )}
+              </div>
             </div>
           )}
         </motion.div>

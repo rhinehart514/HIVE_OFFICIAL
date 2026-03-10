@@ -112,7 +112,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md border border-white/[0.1] flex items-center justify-center text-white/60 hover:text-white hover:bg-black/70 transition-colors"
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 border border-white/[0.1] flex items-center justify-center text-white/60 hover:text-white hover:bg-black/70 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -134,7 +134,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
               {/* Badges */}
               <div className="absolute top-3 left-3 flex items-center gap-2">
                 {live && (
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/25 backdrop-blur-md border border-red-500/20 text-[11px] font-semibold text-red-400">
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/25 border border-red-500/20 text-[11px] font-semibold text-red-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
                     Live now
                   </span>

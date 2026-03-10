@@ -399,7 +399,7 @@ export function InviteLinkModal({
                       'flex-1 px-3 py-2 rounded-lg',
                       'bg-white/[0.06] border border-white/[0.06]',
                       'text-white text-sm',
-                      'focus:outline-none focus:ring-2 focus:ring-white/50'
+                      'focus:outline-none focus:outline-2 focus:outline-[#FFD700]'
                     )}
                   >
                     {EXPIRY_OPTIONS.map((opt) => (
@@ -419,7 +419,7 @@ export function InviteLinkModal({
                       'flex-1 px-3 py-2 rounded-lg',
                       'bg-white/[0.06] border border-white/[0.06]',
                       'text-white text-sm',
-                      'focus:outline-none focus:ring-2 focus:ring-white/50'
+                      'focus:outline-none focus:outline-2 focus:outline-[#FFD700]'
                     )}
                   >
                     {MAX_USE_OPTIONS.map((opt) => (

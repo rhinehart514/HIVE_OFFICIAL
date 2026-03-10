@@ -95,10 +95,21 @@ const _GET = withAuthAndErrors(async (
       .orderBy("createdAt", "asc")
       .get();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const commentMap = new Map<string, any>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rootComments: any[] = [];
+    interface CommentNode {
+      id: string;
+      content: string;
+      authorId: string;
+      author: { id: string; fullName: string; handle: string; photoURL: string | null };
+      createdAt: unknown;
+      updatedAt: unknown;
+      parentCommentId: string | null;
+      replies: CommentNode[];
+      reactions: Record<string, number>;
+      isEdited: boolean;
+      isDeleted: boolean;
+    }
+    const commentMap = new Map<string, CommentNode>();
+    const rootComments: CommentNode[] = [];
 
     for (const doc of commentsSnapshot.docs) {
       const data = doc.data();

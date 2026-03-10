@@ -114,7 +114,7 @@ export function MembersList({
               'rounded-xl text-[15px]',
               'bg-white/[0.03] border border-white/[0.06]',
               'text-white placeholder:text-white/30',
-              'focus:outline-none focus:ring-1 focus:ring-white/20',
+              'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
               'transition-colors'
             )}
           />
@@ -129,6 +129,17 @@ export function MembersList({
             <Text tone="muted">
               {searchQuery ? 'No members found' : 'No members yet'}
             </Text>
+            {!searchQuery && (
+              <button
+                onClick={() => {
+                  const url = window.location.href;
+                  navigator.clipboard.writeText(url);
+                }}
+                className="inline-flex items-center px-4 py-2 mt-4 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
+              >
+                Share your space
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-6">

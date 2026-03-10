@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const displayFont = "font-sans";
+const displayFont = "font-display";
 
 const UB_ORGS = [
   'SWE Club',
@@ -68,7 +68,7 @@ export function SocialProofSection() {
     <section ref={sectionRef} className="bg-[var(--bg-void)] px-6 py-16 md:py-24">
       <div className="mx-auto max-w-7xl">
         <div
-          className={`mb-8 text-center transition-all duration-500 ease-out ${
+          className={`mb-8 text-center transition-[opacity,transform] duration-500 ease-out ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
           }`}
         >
@@ -92,7 +92,7 @@ export function SocialProofSection() {
             {[...UB_ORGS, ...UB_ORGS].map((org, i) => (
               <span
                 key={`${org}-${i}`}
-                className="shrink-0 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-[13px] text-white/50"
+                className="shrink-0 rounded-full border border-white/[0.12] bg-white/[0.06] px-4 py-2 text-[13px] text-white/70"
               >
                 {org}
               </span>
@@ -102,7 +102,7 @@ export function SocialProofSection() {
 
         {/* Stats row */}
         <div
-          className={`mt-6 flex flex-wrap items-center justify-center gap-8 md:gap-16 transition-all duration-500 ease-out delay-100 ${
+          className={`mt-6 flex flex-wrap items-center justify-center gap-8 md:gap-16 transition-[opacity,transform] duration-500 ease-out delay-100 ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
           }`}
         >

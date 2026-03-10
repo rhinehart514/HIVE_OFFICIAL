@@ -38,10 +38,10 @@ const CATEGORY_COLORS: Record<string, { accent: string; text: string; bg: string
     border: 'border-emerald-500/20',
   },
   greek: {
-    accent: 'bg-purple-500',
-    text: 'text-purple-400',
-    bg: 'bg-purple-500/10',
-    border: 'border-purple-500/20',
+    accent: 'bg-[#FFD700]',
+    text: 'text-[#FFD700]',
+    bg: 'bg-[#FFD700]/10',
+    border: 'border-[#FFD700]/20',
   },
 };
 
@@ -389,7 +389,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                             'w-full pl-10 pr-4 py-3',
                             'bg-white/[0.06] border border-white/[0.06]',
                             'rounded-lg text-white placeholder:text-white/50',
-                            'focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50',
+                            'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
                             'transition-colors duration-300'
                           )}
                         />
@@ -520,7 +520,7 @@ export function SpaceClaimModal({ isOpen, onClose, defaultQuery = '' }: SpaceCla
                             'bg-white/[0.06] border border-white/[0.06]',
                             'text-white',
                             'transition-colors duration-300',
-                            'focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50',
+                            'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
                             'hover:bg-white/[0.06] hover:border-white/25',
                             'appearance-none bg-no-repeat bg-right cursor-pointer'
                           )}

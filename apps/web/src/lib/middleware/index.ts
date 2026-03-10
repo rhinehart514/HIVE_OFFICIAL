@@ -280,10 +280,15 @@ export function withAuthAndErrors<T = RouteParams>(
   ) => Promise<Response>,
   options?: MiddlewareOptions
 ): ApiHandler {
+  // withResponse adds the ResponseFormatter param, withAuth adds user context
+  // The generics don't align perfectly across middleware layers, so we
+  // compose them with compatible function signatures.
+  const withRespond = withResponse<T, AuthenticatedRequest>(handler);
+  const withAuthentication = withAuth<{ params?: Record<string, string> }>(
+    withRespond as (req: AuthenticatedRequest, ctx: { params?: Record<string, string> }) => Promise<Response>
+  );
   let baseHandler = withErrorHandling(
-    withAuth(
-      withResponse(handler as unknown as (req: Request, ctx: unknown, respond: typeof ResponseFormatter) => Promise<Response>)
-    ) as unknown as ApiHandler
+    withAuthentication as ApiHandler
   );
 
   // Apply CSRF protection unless explicitly disabled
@@ -314,10 +319,12 @@ export function withAdminAuthAndErrors<T = RouteParams>(
   ) => Promise<Response>,
   options?: MiddlewareOptions
 ): ApiHandler {
+  const withRespond = withResponse<T, AuthenticatedRequest>(handler);
+  const withAuthentication = withAdminAuth<{ params?: Record<string, string> }>(
+    withRespond as (req: AuthenticatedRequest, ctx: { params?: Record<string, string> }) => Promise<Response>
+  );
   let baseHandler = withErrorHandling(
-    withAdminAuth(
-      withResponse(handler as unknown as (req: Request, ctx: unknown, respond: typeof ResponseFormatter) => Promise<Response>)
-    ) as unknown as ApiHandler
+    withAuthentication as ApiHandler
   );
 
   // Always apply CSRF protection for admin routes (no skip option)

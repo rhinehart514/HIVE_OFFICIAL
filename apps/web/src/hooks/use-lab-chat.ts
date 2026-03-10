@@ -23,6 +23,7 @@ import {
 } from '@/lib/hivelab/create-tool';
 // template-matcher removed — all creation goes through AI generation
 import { useAnalytics } from '@/hooks/use-analytics';
+import { logger } from '@/lib/logger';
 import type { StreamingChunk } from '@/lib/ai-generator';
 
 /** Code output from code generation mode */
@@ -307,7 +308,7 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
                         if (retries > 0) {
                           setTimeout(() => patchOutcome(retries - 1), 2000);
                         } else {
-                          console.warn('[useLabChat] Failed to persist generationOutcomeId:', err);
+                          logger.warn('[useLabChat] Failed to persist generationOutcomeId', { component: 'useLabChat', metadata: { error: String(err) } });
                         }
                       });
                     };
@@ -353,7 +354,7 @@ export function useLabChat({ originSpaceId, spaceContext, onToolCreated }: UseLa
               visibility: 'public',
             }),
           }).catch(err => {
-            console.warn('[useLabChat] Failed to auto-save generated elements:', err);
+            logger.warn('[useLabChat] Failed to auto-save generated elements', { component: 'useLabChat', metadata: { error: String(err) } });
           });
         }
 

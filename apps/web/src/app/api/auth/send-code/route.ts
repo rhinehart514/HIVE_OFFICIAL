@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from "zod";
 import { createHash, randomInt } from 'crypto';
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
@@ -466,8 +466,8 @@ export const POST = withValidation(
 
     try {
       // Origin validation (CSRF protection for pre-auth endpoints)
-      if (!validateOrigin(request as NextRequest)) {
-        await auditAuthEvent('suspicious', request as unknown as NextRequest, {
+      if (!validateOrigin(request)) {
+        await auditAuthEvent('suspicious', request, {
           operation: 'send_code',
           error: 'invalid_origin'
         });
@@ -475,7 +475,7 @@ export const POST = withValidation(
       }
 
       // Rate limiting - SECURITY: Use signinCode preset (10 requests per 5 min)
-      const rateLimitResult = await enforceRateLimit('signinCode', request as NextRequest);
+      const rateLimitResult = await enforceRateLimit('signinCode', request);
       if (!rateLimitResult.allowed) {
         return respond.error(rateLimitResult.error || "Rate limit exceeded", "RATE_LIMITED", {
           status: rateLimitResult.status
@@ -489,7 +489,7 @@ export const POST = withValidation(
       });
 
       if (!validationResult.success || validationResult.securityLevel === 'dangerous') {
-        await auditAuthEvent('suspicious', request as unknown as NextRequest, {
+        await auditAuthEvent('suspicious', request, {
           operation: 'send_code',
           threats: validationResult.errors?.map((e: { code: string }) => e.code).join(',') || 'unknown',
           securityLevel: validationResult.securityLevel
@@ -537,7 +537,7 @@ export const POST = withValidation(
             domain: schoolData.domain,
           };
         } else {
-          await auditAuthEvent('failure', request as unknown as NextRequest, {
+          await auditAuthEvent('failure', request, {
             operation: 'send_code',
             error: 'invalid_school'
           });
@@ -550,7 +550,7 @@ export const POST = withValidation(
 
       // Check if associated school is in waitlist mode (only if we found one)
       if (!isGlobalMode && schoolLookup && schoolLookup.status === 'waitlist') {
-        await auditAuthEvent('forbidden', request as unknown as NextRequest, {
+        await auditAuthEvent('forbidden', request, {
           operation: 'send_code',
           error: 'school_not_active',
           schoolId: schoolLookup.campusId,
@@ -574,7 +574,7 @@ export const POST = withValidation(
       // Check access whitelist (gated launch)
       const whitelisted = await checkAccessWhitelist(normalizedEmail);
       if (!whitelisted) {
-        await auditAuthEvent('forbidden', request as unknown as NextRequest, {
+        await auditAuthEvent('forbidden', request, {
           operation: 'send_code',
           error: 'not_whitelisted'
         });
@@ -590,7 +590,7 @@ export const POST = withValidation(
       // Check email-specific rate limit
       const emailAllowed = await checkEmailRateLimit(normalizedEmail);
       if (!emailAllowed) {
-        await auditAuthEvent('failure', request as unknown as NextRequest, {
+        await auditAuthEvent('failure', request, {
           operation: 'send_code',
           error: 'email_rate_limit'
         });
@@ -632,7 +632,7 @@ export const POST = withValidation(
       const emailSent = await sendVerificationCodeEmail(normalizedEmail, code, schoolLookup?.schoolName || 'HIVE');
 
       if (!emailSent && currentEnvironment === 'production') {
-        await auditAuthEvent('failure', request as unknown as NextRequest, {
+        await auditAuthEvent('failure', request, {
           operation: 'send_code',
           error: 'email_send_failed'
         });
@@ -643,7 +643,7 @@ export const POST = withValidation(
       }
 
       // Audit success
-      await auditAuthEvent('success', request as unknown as NextRequest, {
+      await auditAuthEvent('success', request, {
         operation: 'send_code'
       });
 
@@ -667,7 +667,7 @@ export const POST = withValidation(
       });
 
     } catch (error) {
-      await auditAuthEvent('failure', request as unknown as NextRequest, {
+      await auditAuthEvent('failure', request, {
         operation: 'send_code',
         error: error instanceof Error ? error.message : 'unknown'
       });

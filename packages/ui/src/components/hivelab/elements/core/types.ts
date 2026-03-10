@@ -5,7 +5,7 @@
  * These provide the foundation for consistent element behavior.
  */
 
-import type { ElementProps, ElementSharedState, ElementUserState } from '../../../../lib/hivelab/element-system';
+import type { ElementProps, ElementSharedState, ElementUserState } from '../../../../lib/hivelab/element-types';
 
 // ============================================================
 // Element Mode - Edit vs Runtime

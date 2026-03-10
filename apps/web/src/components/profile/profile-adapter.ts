@@ -67,6 +67,15 @@ type ApiSuggestion = {
   category?: string;
 };
 
+/** Extended ProfileSystem with extra fields that the adapter attaches for UI consumption */
+export interface ProfileSystemWithExtras extends ProfileSystem {
+  stats: ProfileV2ApiResponse["profile"]["stats"];
+  spaces: ApiSpace[];
+  activities: Array<Record<string, unknown>>;
+  connectionSummaries: Array<Connection & { displayName?: string; avatarUrl?: string | null }>;
+  viewer: ViewerMeta;
+}
+
 export type ProfileV2ApiResponse = {
   profile: {
     id: string;
@@ -98,8 +107,8 @@ export type ProfileV2ApiResponse = {
     };
   };
   grid: {
-    cards: Array<Record<string, unknown>>;
-    mobileLayout: Array<Record<string, unknown>>;
+    cards: BentoGridLayout["cards"];
+    mobileLayout: BentoGridLayout["mobileLayout"];
     lastModified?: string;
   };
   stats: ProfileV2ApiResponse["profile"]["stats"];
@@ -183,8 +192,8 @@ const buildSuggestions = (suggestions: ApiSuggestion[] | undefined) => {
 };
 
 const buildGrid = (grid: ProfileV2ApiResponse["grid"]): BentoGridLayout => ({
-  cards: grid.cards as unknown as BentoGridLayout["cards"],
-  mobileLayout: grid.mobileLayout as unknown as BentoGridLayout["mobileLayout"],
+  cards: grid.cards,
+  mobileLayout: grid.mobileLayout,
   lastModified: toDate(grid.lastModified ?? Date.now()),
 });
 
@@ -200,14 +209,14 @@ const buildBadges = (badges: string[] | undefined): Badge[] => {
   }));
 };
 
-export const profileApiResponseToProfileSystem = (payload: ProfileV2ApiResponse): ProfileSystem => {
+export const profileApiResponseToProfileSystem = (payload: ProfileV2ApiResponse): ProfileSystemWithExtras => {
   const { profile, grid, connections, intelligence, stats } = payload;
   const now = new Date();
   const { friends, others, summaries } = buildConnections(connections);
   const suggestions = buildSuggestions(intelligence?.suggestions);
   const primaryStats = stats ?? profile.stats ?? {};
 
-  const system: ProfileSystem = {
+  const system: ProfileSystemWithExtras = {
     userId: profile.id,
     campusId: profile.campusId || 'ub-buffalo',
     handle: profile.handle || '',
@@ -258,17 +267,14 @@ export const profileApiResponseToProfileSystem = (payload: ProfileV2ApiResponse)
     },
     createdAt: now,
     updatedAt: now,
-    completeness: (primaryStats as Record<string, unknown> | undefined)?.completionPercentage as number ?? 70,
+    completeness: (primaryStats as Record<string, number | undefined>)?.completionPercentage ?? 70,
     isSetupComplete: true,
+    stats: { ...primaryStats },
+    spaces: payload.spaces,
+    activities: payload.activities,
+    connectionSummaries: summaries,
+    viewer: payload.viewer,
   };
-
-  (system as unknown as Record<string, unknown>).stats = {
-    ...primaryStats,
-  };
-  (system as unknown as Record<string, unknown>).spaces = payload.spaces;
-  (system as unknown as Record<string, unknown>).activities = payload.activities;
-  (system as unknown as Record<string, unknown>).connectionSummaries = summaries;
-  (system as unknown as Record<string, unknown>).viewer = payload.viewer;
 
   return system;
 };

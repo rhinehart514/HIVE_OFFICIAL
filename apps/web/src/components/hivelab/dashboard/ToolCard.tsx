@@ -52,9 +52,9 @@ const STATUS_CONFIG = {
   },
   published: {
     label: 'Published',
-    bg: 'bg-green-500/15',
-    text: 'text-green-400',
-    dot: 'bg-green-400',
+    bg: 'bg-emerald-400/15',
+    text: 'text-emerald-400',
+    dot: 'bg-emerald-400',
   },
   pending_review: {
     label: 'Pending',
@@ -77,17 +77,17 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
 
   const handleEdit = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/lab/${tool.id}`);
+    router.push(`/build/${tool.id}`);
   }, [router, tool.id]);
 
   const handleAnalytics = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/lab/${tool.id}?analytics=true`);
+    router.push(`/build/${tool.id}?analytics=true`);
   }, [router, tool.id]);
 
   const handleDeploy = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/lab/${tool.id}?deploy=true`);
+    router.push(`/build/${tool.id}?deploy=true`);
   }, [router, tool.id]);
 
   const handleDelete = useCallback((e: React.MouseEvent) => {

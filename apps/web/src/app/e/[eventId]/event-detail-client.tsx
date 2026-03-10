@@ -242,7 +242,7 @@ export function EventDetailPageClient({ eventId }: { eventId: string }) {
   return (
     <div className="min-h-screen bg-[var(--bg-ground)]">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[var(--bg-ground)]/80 backdrop-blur-lg border-b border-white/[0.06]">
+      <div className="sticky top-0 z-10 bg-[var(--bg-ground)] border-b border-white/[0.06]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-white/50 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" />

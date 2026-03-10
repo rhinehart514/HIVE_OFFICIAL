@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 import type { ErrorInfo } from 'react';
-import type { ElementProps } from '../../../lib/hivelab/element-system';
+import type { ElementProps } from '../../../lib/hivelab/element-types';
 import { validateAndCoerceConfig } from '../../../lib/hivelab/element-config-validation';
 import { ElementErrorBoundary } from './shared/error-boundary';
 

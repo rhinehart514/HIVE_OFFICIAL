@@ -481,7 +481,7 @@ function MemberMenu({
           {canSuspend && (
             <button
               onClick={onSuspend}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-orange-400/70 hover:text-orange-400 hover:bg-orange-500/[0.04]"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-400/70 hover:text-amber-400 hover:bg-amber-400/[0.04]"
             >
               <Ban className="w-4 h-4" />
               Suspend
@@ -749,7 +749,7 @@ export function MemberManagement({
               'rounded-lg text-sm',
               'bg-white/[0.06] border border-white/[0.06]',
               'text-white placeholder:text-white/50',
-              'focus:outline-none focus:ring-2 focus:ring-white/50',
+              'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
               'transition-all duration-150'
             )}
           />

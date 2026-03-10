@@ -590,9 +590,9 @@ export const INTENT_ELEMENTS: Record<Intent, ElementSpec[]> = {
     config: {
       title: 'Request Pipeline',
       stages: [
-        { id: 'submitted', name: 'Submitted', color: 'bg-blue-500' },
-        { id: 'review', name: 'In Review', color: 'bg-amber-500' },
-        { id: 'approved', name: 'Approved', color: 'bg-green-500' },
+        { id: 'submitted', name: 'Submitted', color: 'bg-white/30' },
+        { id: 'review', name: 'In Review', color: 'bg-amber-400' },
+        { id: 'approved', name: 'Approved', color: 'bg-emerald-400' },
       ],
       intakeFields: [
         { key: 'title', label: 'Title', type: 'text', required: true },

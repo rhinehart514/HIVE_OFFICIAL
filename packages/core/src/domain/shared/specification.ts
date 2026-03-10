@@ -63,55 +63,67 @@ class NotSpecification<T> extends CompositeSpecification<T> {
 }
 
 /**
+ * Feed item shape for specification matching
+ */
+interface FeedItemCandidate {
+  source?: { spaceId?: string };
+  content?: { authorId?: { id?: string } };
+  createdAt: Date;
+  interactions?: Array<{ isEngagement(): boolean }>;
+  isTrending?: boolean;
+  tags?: string[];
+}
+
+/**
  * Feed Specifications
  */
 export class FeedItemSpecifications {
-  static fromSpace(spaceId: string): Specification<any> {
+  static fromSpace(spaceId: string): Specification<FeedItemCandidate> {
     return new FromSpaceSpecification(spaceId);
   }
 
-  static byAuthor(authorId: string): Specification<any> {
+  static byAuthor(authorId: string): Specification<FeedItemCandidate> {
     return new ByAuthorSpecification(authorId);
   }
 
-  static isRecent(hoursAgo: number): Specification<any> {
+  static isRecent(hoursAgo: number): Specification<FeedItemCandidate> {
     return new IsRecentSpecification(hoursAgo);
   }
 
-  static hasMinimumEngagement(minEngagement: number): Specification<any> {
+  static hasMinimumEngagement(minEngagement: number): Specification<FeedItemCandidate> {
     return new HasMinimumEngagementSpecification(minEngagement);
   }
 
-  static isTrending(): Specification<any> {
+  static isTrending(): Specification<FeedItemCandidate> {
     return new IsTrendingSpecification();
   }
 
-  static hasTag(tag: string): Specification<any> {
+  static hasTag(tag: string): Specification<FeedItemCandidate> {
     return new HasTagSpecification(tag);
   }
 }
 
-class FromSpaceSpecification extends CompositeSpecification<any> {
+class FromSpaceSpecification extends CompositeSpecification<FeedItemCandidate> {
   constructor(private spaceId: string) {
     super();
   }
 
-  isSatisfiedBy(candidate: any): boolean {
+  isSatisfiedBy(candidate: FeedItemCandidate): boolean {
     return candidate.source?.spaceId === this.spaceId;
   }
 }
 
-class ByAuthorSpecification extends CompositeSpecification<any> {
+class ByAuthorSpecification extends CompositeSpecification<FeedItemCandidate> {
   constructor(private authorId: string) {
     super();
   }
 
-  isSatisfiedBy(candidate: any): boolean {
+  isSatisfiedBy(candidate: FeedItemCandidate): boolean {
     return candidate.content?.authorId?.id === this.authorId;
   }
 }
 
-class IsRecentSpecification extends CompositeSpecification<any> {
+class IsRecentSpecification extends CompositeSpecification<FeedItemCandidate> {
   private cutoffTime: Date;
 
   constructor(hoursAgo: number) {
@@ -119,100 +131,118 @@ class IsRecentSpecification extends CompositeSpecification<any> {
     this.cutoffTime = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
   }
 
-  isSatisfiedBy(candidate: any): boolean {
+  isSatisfiedBy(candidate: FeedItemCandidate): boolean {
     return candidate.createdAt > this.cutoffTime;
   }
 }
 
-class HasMinimumEngagementSpecification extends CompositeSpecification<any> {
+class HasMinimumEngagementSpecification extends CompositeSpecification<FeedItemCandidate> {
   constructor(private minEngagement: number) {
     super();
   }
 
-  isSatisfiedBy(candidate: any): boolean {
-    const engagements = candidate.interactions?.filter((i: any) => i.isEngagement()) || [];
+  isSatisfiedBy(candidate: FeedItemCandidate): boolean {
+    const engagements = candidate.interactions?.filter((i) => i.isEngagement()) || [];
     return engagements.length >= this.minEngagement;
   }
 }
 
-class IsTrendingSpecification extends CompositeSpecification<any> {
-  isSatisfiedBy(candidate: any): boolean {
+class IsTrendingSpecification extends CompositeSpecification<FeedItemCandidate> {
+  isSatisfiedBy(candidate: FeedItemCandidate): boolean {
     return candidate.isTrending === true;
   }
 }
 
-class HasTagSpecification extends CompositeSpecification<any> {
+class HasTagSpecification extends CompositeSpecification<FeedItemCandidate> {
   constructor(private tag: string) {
     super();
   }
 
-  isSatisfiedBy(candidate: any): boolean {
+  isSatisfiedBy(candidate: FeedItemCandidate): boolean {
     return candidate.tags?.includes(this.tag) || false;
   }
+}
+
+/**
+ * Ritual candidate shape for specification matching
+ */
+interface RitualParticipation {
+  participantId?: { id?: string };
+  isActive: boolean;
+}
+
+interface RitualCandidate {
+  status?: { isActive(): boolean };
+  type?: { type: string };
+  startDate: Date;
+  endDate: Date;
+  participantCount?: number;
+  participations?: RitualParticipation[];
+  canJoin?: () => boolean;
 }
 
 /**
  * Ritual Specifications
  */
 export class RitualSpecifications {
-  static isActive(): Specification<any> {
+  static isActive(): Specification<RitualCandidate> {
     return new IsActiveRitualSpecification();
   }
 
-  static hasType(type: string): Specification<any> {
+  static hasType(type: string): Specification<RitualCandidate> {
     return new HasTypeSpecification(type);
   }
 
-  static hasAvailableSlots(): Specification<any> {
+  static hasAvailableSlots(): Specification<RitualCandidate> {
     return new HasAvailableSlotsSpecification();
   }
 
-  static isEndingSoon(daysRemaining: number): Specification<any> {
+  static isEndingSoon(daysRemaining: number): Specification<RitualCandidate> {
     return new IsEndingSoonSpecification(daysRemaining);
   }
 
-  static hasMinimumParticipants(min: number): Specification<any> {
+  static hasMinimumParticipants(min: number): Specification<RitualCandidate> {
     return new HasMinimumParticipantsSpecification(min);
   }
 
-  static isJoinableBy(userId: string): Specification<any> {
+  static isJoinableBy(userId: string): Specification<RitualCandidate> {
     return new IsJoinableBySpecification(userId);
   }
 }
 
-class IsActiveRitualSpecification extends CompositeSpecification<any> {
-  isSatisfiedBy(candidate: any): boolean {
+class IsActiveRitualSpecification extends CompositeSpecification<RitualCandidate> {
+  isSatisfiedBy(candidate: RitualCandidate): boolean {
     const now = new Date();
-    return candidate.status?.isActive() &&
+    return candidate.status?.isActive() === true &&
            candidate.startDate <= now &&
            candidate.endDate >= now;
   }
 }
 
-class HasTypeSpecification extends CompositeSpecification<any> {
+class HasTypeSpecification extends CompositeSpecification<RitualCandidate> {
   constructor(private type: string) {
     super();
   }
 
-  isSatisfiedBy(candidate: any): boolean {
+  isSatisfiedBy(candidate: RitualCandidate): boolean {
     return candidate.type?.type === this.type;
   }
 }
 
-class HasAvailableSlotsSpecification extends CompositeSpecification<any> {
-  isSatisfiedBy(candidate: any): boolean {
+class HasAvailableSlotsSpecification extends CompositeSpecification<RitualCandidate> {
+  isSatisfiedBy(candidate: RitualCandidate): boolean {
     // Assuming max 1000 participants per ritual
     const maxParticipants = 1000;
     return (candidate.participantCount || 0) < maxParticipants;
   }
 }
 
-class IsEndingSoonSpecification extends CompositeSpecification<any> {
+class IsEndingSoonSpecification extends CompositeSpecification<RitualCandidate> {
   constructor(private daysRemaining: number) {
     super();
   }
 
-  isSatisfiedBy(candidate: any): boolean {
+  isSatisfiedBy(candidate: RitualCandidate): boolean {
     const now = new Date();
     const daysLeft = Math.ceil(
       (candidate.endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
@@ -221,27 +251,27 @@ class IsEndingSoonSpecification extends CompositeSpecification<any> {
   }
 }
 
-class HasMinimumParticipantsSpecification extends CompositeSpecification<any> {
+class HasMinimumParticipantsSpecification extends CompositeSpecification<RitualCandidate> {
   constructor(private min: number) {
     super();
   }
 
-  isSatisfiedBy(candidate: any): boolean {
+  isSatisfiedBy(candidate: RitualCandidate): boolean {
     return (candidate.participantCount || 0) >= this.min;
   }
 }
 
-class IsJoinableBySpecification extends CompositeSpecification<any> {
+class IsJoinableBySpecification extends CompositeSpecification<RitualCandidate> {
   constructor(private userId: string) {
     super();
   }
 
-  isSatisfiedBy(candidate: any): boolean {
+  isSatisfiedBy(candidate: RitualCandidate): boolean {
     // Check if user can join (not already participating)
     const isParticipating = candidate.participations?.some(
-      (p: any) => p.participantId?.id === this.userId && p.isActive
+      (p: RitualParticipation) => p.participantId?.id === this.userId && p.isActive
     );
-    return candidate.canJoin?.() && !isParticipating;
+    return candidate.canJoin?.() === true && !isParticipating;
   }
 }
 

@@ -179,8 +179,8 @@ export function SpacePreviewModal({
             </div>
             {space.onlineCount !== undefined && space.onlineCount > 0 && (
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-green-400">{space.onlineCount} online</span>
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-emerald-400">{space.onlineCount} online</span>
               </div>
             )}
           </div>

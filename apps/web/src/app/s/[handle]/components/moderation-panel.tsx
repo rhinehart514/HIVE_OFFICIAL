@@ -74,8 +74,8 @@ interface ModerationPanelProps {
 type ModerationAction = 'approve' | 'hide' | 'unhide' | 'remove' | 'restore';
 
 const ACTION_CONFIG: Record<ModerationAction, { icon: typeof Check; label: string; color: string }> = {
-  approve: { icon: Check, label: 'Approve', color: 'text-green-400' },
-  hide: { icon: EyeOff, label: 'Hide', color: 'text-yellow-400' },
+  approve: { icon: Check, label: 'Approve', color: 'text-emerald-400' },
+  hide: { icon: EyeOff, label: 'Hide', color: 'text-amber-400' },
   unhide: { icon: RotateCcw, label: 'Unhide', color: 'text-white/50' },
   remove: { icon: Trash2, label: 'Remove', color: 'text-red-400' },
   restore: { icon: RotateCcw, label: 'Restore', color: 'text-white/50' },
@@ -327,7 +327,7 @@ export function ModerationPanel({
                     size="sm"
                     onClick={() => handleBulkAction('approve')}
                     disabled={!!actionInProgress}
-                    className="text-green-400 hover:bg-green-400/10"
+                    className="text-emerald-400 hover:bg-emerald-400/10"
                   >
                     <Check className="h-4 w-4 mr-1" />
                     Approve
@@ -337,7 +337,7 @@ export function ModerationPanel({
                     size="sm"
                     onClick={() => handleBulkAction('hide')}
                     disabled={!!actionInProgress}
-                    className="text-yellow-400 hover:bg-yellow-400/10"
+                    className="text-amber-400 hover:bg-amber-400/10"
                   >
                     <EyeOff className="h-4 w-4 mr-1" />
                     Hide
@@ -441,8 +441,8 @@ export function ModerationPanel({
                                 <span
                                   className={cn(
                                     'px-1.5 py-0.5 rounded text-[10px] font-medium uppercase',
-                                    item.status === 'flagged' && 'bg-yellow-500/20 text-yellow-400',
-                                    item.status === 'hidden' && 'bg-orange-500/20 text-orange-400',
+                                    item.status === 'flagged' && 'bg-amber-400/20 text-amber-400',
+                                    item.status === 'hidden' && 'bg-amber-400/20 text-amber-400',
                                     item.status === 'removed' && 'bg-red-500/20 text-red-400'
                                   )}
                                 >
@@ -489,8 +489,8 @@ export function ModerationPanel({
                                   const isLoading = actionInProgress === `${item.id}-${action}`;
 
                                   const hoverBgMap: Record<string, string> = {
-                                    green: 'hover:bg-green-400/10',
-                                    yellow: 'hover:bg-yellow-400/10',
+                                    emerald: 'hover:bg-emerald-400/10',
+                                    amber: 'hover:bg-amber-400/10',
                                     white: 'hover:bg-white/[0.06]',
                                     red: 'hover:bg-red-400/10',
                                   };

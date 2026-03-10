@@ -94,11 +94,11 @@ export const formatEventTime = (startTime: string, endTime: string) => {
 
 export const getEventTypeColor = (type: EventData['type']) => {
   switch (type) {
-    case 'academic': return 'bg-blue-500';
-    case 'social': return 'bg-pink-500';
-    case 'professional': return 'bg-green-500';
+    case 'academic': return 'bg-[#FFD700]/30';
+    case 'social': return 'bg-[#FFD700]/20';
+    case 'professional': return 'bg-emerald-400';
     case 'recreational': return 'bg-life-gold';
-    case 'official': return 'bg-purple-500';
+    case 'official': return 'bg-white/30';
     default: return 'bg-white/[0.20]';
   }
 };

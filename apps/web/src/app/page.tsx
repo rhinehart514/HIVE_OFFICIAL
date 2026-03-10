@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import {
   LandingHeader,
   HeroSection,
@@ -33,13 +34,19 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      <LandingHeader />
-      <HeroSection />
+    <div className="min-h-screen bg-[var(--bg-void)] text-white overflow-x-hidden">
+      <Suspense fallback={null}>
+        <LandingHeader />
+      </Suspense>
+      <Suspense fallback={null}>
+        <HeroSection />
+      </Suspense>
       <DemoSection />
       <SocialProofSection />
       <CapabilitiesSection />
-      <CTASection />
+      <Suspense fallback={null}>
+        <CTASection />
+      </Suspense>
       <LandingFooter />
     </div>
   );

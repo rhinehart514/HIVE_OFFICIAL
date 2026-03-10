@@ -108,7 +108,7 @@ const _GET = withOptionalAuth(
       }
 
       // Build response based on privacy settings
-      const publicData = buildProfileResponse(profile, privacy, isOwnProfile, viewerType);
+      const publicData = buildProfileResponse(profile as unknown as ProfileData, privacy, isOwnProfile, viewerType);
 
       logger.info('Public profile fetched', {
         targetUserId,
@@ -137,11 +137,27 @@ const _GET = withOptionalAuth(
 /**
  * Build profile response with field-level privacy gating
  */
+interface ProfileData {
+  profileId: { value: string }; handle: { value: string }; email: { value: string };
+  displayName: string; firstName: string; lastName: string;
+  personalInfo: { profilePhoto?: string; coverPhoto?: string; dorm?: string; phoneNumber?: string; [k: string]: unknown };
+  socialInfo: { clubs?: string[]; sports?: string[]; instagram?: string; snapchat?: string; twitter?: string; linkedin?: string; [k: string]: unknown };
+  bio?: string; major?: string; graduationYear?: number | null;
+  interests?: string[]; spaces?: unknown[]; connections?: unknown[];
+  badges?: unknown[]; connectionCount?: number; followerCount?: number;
+  followingCount?: number; activityScore?: number;
+  campusId: { id: string }; isVerified?: boolean; isOnboarded?: boolean;
+  createdAt?: unknown; lastActive?: unknown;
+}
+
+interface PrivacySettings {
+  level: string; showEmail: boolean; showPhone: boolean;
+  showDorm: boolean; showSchedule: boolean; showActivity: boolean;
+}
+
 function buildProfileResponse(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  profile: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  privacy: any,
+  profile: ProfileData,
+  privacy: PrivacySettings,
   isOwnProfile: boolean,
   viewerType: 'public' | 'campus' | 'connection'
 ) {

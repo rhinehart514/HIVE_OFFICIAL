@@ -12,7 +12,7 @@
  */
 
 import { useMemo } from 'react';
-import type { ElementSharedState, ElementUserState } from '../../../../lib/hivelab/element-system';
+import type { ElementSharedState, ElementUserState } from '../../../../lib/hivelab/element-types';
 import type { ElementState, ElementStatus } from './types';
 
 // ============================================================

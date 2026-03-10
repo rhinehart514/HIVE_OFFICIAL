@@ -73,7 +73,7 @@ interface RateLimitResponse {
 /**
  * Extract secure client ID from request
  */
-export function getSecureClientId(request: NextRequest): string {
+export function getSecureClientId(request: Request): string {
   // Try various header sources for the real IP
   const forwardedFor = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
@@ -168,7 +168,7 @@ function checkMemoryRateLimit(
  */
 export async function enforceRateLimit(
   preset: RateLimitPreset | string,
-  request: NextRequest,
+  request: Request,
   userId?: string
 ): Promise<RateLimitResponse> {
   const validPreset = (preset as RateLimitPreset) in RATE_LIMIT_CONFIGS

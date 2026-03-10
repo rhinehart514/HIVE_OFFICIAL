@@ -23,7 +23,7 @@ import type {
   ElementConnectionRef,
   ElementSharedState,
   ElementInstanceRef,
-} from './element-system';
+} from './element-types';
 
 // ============================================================================
 // Types

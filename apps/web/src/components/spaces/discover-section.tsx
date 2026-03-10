@@ -180,7 +180,7 @@ function SearchInput({ value, onChange, onClear, placeholder }: SearchInputProps
           'w-full bg-white/[0.06] border border-white/[0.06]',
           'rounded-lg py-2.5 pl-9 pr-9',
           'text-sm text-white placeholder:text-white/50',
-          'focus:outline-none focus:ring-1 focus:ring-white/50 focus:bg-white/[0.06]',
+          'focus:outline-none focus:outline-2 focus:outline-[#FFD700] focus:bg-white/[0.06]',
           'transition-all duration-150'
         )}
       />

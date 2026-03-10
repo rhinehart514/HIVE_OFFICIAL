@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const displayFont = "font-sans";
+const displayFont = "font-display";
 
 const PROMPT_TEXT = '"Best late-night food near campus?"';
 const CHAR_DELAY = 50;
@@ -126,7 +126,7 @@ export function DemoSection() {
                   <span className="w-24 shrink-0 text-[13px] text-white/50">{opt.label}</span>
                   <div className="relative h-7 flex-1 overflow-hidden rounded-full bg-white/[0.04]">
                     <div
-                      className="absolute inset-y-0 left-0 rounded-full bg-white/[0.08] transition-all duration-700 ease-out"
+                      className="absolute inset-y-0 left-0 rounded-full bg-white/[0.08] transition-[width] duration-700 ease-out"
                       style={{ width: barsAnimated ? `${opt.pct}%` : '0%' }}
                     />
                     <span

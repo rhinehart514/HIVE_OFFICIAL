@@ -59,6 +59,13 @@ export interface SpaceActivityData {
   trendingTopics: string[];
 }
 
+/** Minimal shape for space posts used in activity calculations */
+interface SpacePost {
+  id: { id: string };
+  createdAt: Date;
+  toData(): { content: string };
+}
+
 export class SpaceDiscoveryService extends BaseApplicationService {
   private spaceRepo: ISpaceRepository;
   private profileRepo: IProfileRepository;
@@ -166,7 +173,7 @@ export class SpaceDiscoveryService extends BaseApplicationService {
       // Get spaces user is already in
       const userEnhancedSpacesResult = await this.spaceRepo.findByMember(profileId.id);
       const userSpaceIds = userEnhancedSpacesResult.isSuccess
-        ? userEnhancedSpacesResult.getValue().map((s: any) => typeof s.id === 'string' ? s.id : s.id)
+        ? userEnhancedSpacesResult.getValue().map((s: EnhancedSpace) => s.id)
         : [];
 
       // Build recommendation based on multiple factors
@@ -401,7 +408,7 @@ export class SpaceDiscoveryService extends BaseApplicationService {
       }
 
       // Check if last admin
-      const member = space.toData().members.find((m: { profileId: ProfileId; role: string }) => m.profileId.id === userId);
+      const member = space.toData().members.find((m: { profileId: string; role: string }) => m.profileId === userId);
       if (member?.role === 'admin' && space.adminCount === 1) {
         return Result.fail<void>('Cannot leave space as the only admin. Transfer ownership first.');
       }
@@ -435,10 +442,11 @@ export class SpaceDiscoveryService extends BaseApplicationService {
       const spaceData = space.toData();
 
       // Get recent posts
-      const recentPosts = spaceData.posts
-        .sort((a: any, b: any) => b.createdAt.getTime() - a.createdAt.getTime())
+      const posts = spaceData.posts as SpacePost[];
+      const recentPosts = posts
+        .sort((a: SpacePost, b: SpacePost) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, 5)
-        .map((post: any) => ({
+        .map((post: SpacePost) => ({
           id: post.id.id,
           content: post.toData().content,
           authorName: 'Anonymous', // Would fetch actual name
@@ -448,12 +456,12 @@ export class SpaceDiscoveryService extends BaseApplicationService {
       // Count today's posts
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todaysPosts = spaceData.posts.filter(
-        (post: any) => post.createdAt >= today
+      const todaysPosts = posts.filter(
+        (post: SpacePost) => post.createdAt >= today
       ).length;
 
       // Get trending topics (simplified)
-      const trendingTopics = this.extractTrendingTopics(spaceData.posts);
+      const trendingTopics = this.extractTrendingTopics(posts);
 
       const activity: ServiceResult<SpaceActivityData> = {
         data: {
@@ -531,11 +539,11 @@ export class SpaceDiscoveryService extends BaseApplicationService {
     return actions;
   }
 
-  private extractTrendingTopics(posts: any[]): string[] {
+  private extractTrendingTopics(posts: SpacePost[]): string[] {
     // Simple word frequency analysis (would be more sophisticated in production)
     const wordFrequency = new Map<string, number>();
 
-    posts.forEach((post: any) => {
+    posts.forEach((post: SpacePost) => {
       const words = post.toData().content.toLowerCase().split(/\s+/);
       words.forEach((word: string) => {
         if (word.length > 4) { // Only consider words longer than 4 chars
@@ -552,6 +560,9 @@ export class SpaceDiscoveryService extends BaseApplicationService {
 
   private async scheduleRSSFetch(space: EnhancedSpace): Promise<void> {
     // This would trigger an RSS fetch job in production
-    console.log(`Scheduling RSS fetch for space ${typeof space.id === 'string' ? space.id : space.id}`);
+    // RSS fetch scheduling placeholder — logged at info level during development only
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Scheduling RSS fetch for space ${typeof space.id === 'string' ? space.id : space.id}`); // eslint-disable-line no-console
+    }
   }
 }

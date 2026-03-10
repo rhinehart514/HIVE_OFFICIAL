@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from "zod";
 import { createHash } from 'crypto';
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
@@ -97,8 +97,8 @@ export const POST = withValidation(
 
     try {
       // Origin validation (CSRF protection for pre-auth endpoints)
-      if (!validateOrigin(request as NextRequest)) {
-        await auditAuthEvent('suspicious', request as unknown as NextRequest, {
+      if (!validateOrigin(request)) {
+        await auditAuthEvent('suspicious', request, {
           operation: 'verify_code',
           error: 'invalid_origin'
         });
@@ -106,7 +106,7 @@ export const POST = withValidation(
       }
 
       // Rate limiting
-      const rateLimitResult = await enforceRateLimit('magicLink', request as NextRequest);
+      const rateLimitResult = await enforceRateLimit('magicLink', request);
       if (!rateLimitResult.allowed) {
         return respond.error(rateLimitResult.error || "Rate limit exceeded", "RATE_LIMITED", {
           status: rateLimitResult.status
@@ -116,7 +116,7 @@ export const POST = withValidation(
       // Check lockout
       const lockout = await checkLockout(normalizedEmail);
       if (lockout.locked) {
-        await auditAuthEvent('failure', request as unknown as NextRequest, {
+        await auditAuthEvent('failure', request, {
           operation: 'verify_code',
           error: 'lockout_active'
         });
@@ -150,7 +150,7 @@ export const POST = withValidation(
         .get();
 
       if (pendingCodes.empty) {
-        await auditAuthEvent('failure', request as unknown as NextRequest, {
+        await auditAuthEvent('failure', request, {
           operation: 'verify_code',
           error: 'no_pending_code'
         });
@@ -164,7 +164,7 @@ export const POST = withValidation(
       const expiresAt = codeData.expiresAt?.toDate?.() || new Date(codeData.expiresAt);
       if (new Date() > expiresAt) {
         await codeDoc.ref.update({ status: 'expired' });
-        await auditAuthEvent('failure', request as unknown as NextRequest, {
+        await auditAuthEvent('failure', request, {
           operation: 'verify_code',
           error: 'code_expired'
         });
@@ -179,7 +179,7 @@ export const POST = withValidation(
           burnedReason: 'max_attempts'
         });
         await applyLockout(normalizedEmail);
-        await auditAuthEvent('failure', request as unknown as NextRequest, {
+        await auditAuthEvent('failure', request, {
           operation: 'verify_code',
           error: 'max_attempts_exceeded'
         });
@@ -201,7 +201,7 @@ export const POST = withValidation(
       if (inputHash !== codeData.codeHash) {
         const remainingAttempts = MAX_ATTEMPTS_PER_CODE - currentAttempts - 1;
 
-        await auditAuthEvent('failure', request as unknown as NextRequest, {
+        await auditAuthEvent('failure', request, {
           operation: 'verify_code',
           error: 'invalid_code',
           attemptNumber: currentAttempts + 1
@@ -237,7 +237,7 @@ export const POST = withValidation(
       // Create session - use campusId from code data or fall back to schoolId (both may be null)
       const response = await createSessionResponse(normalizedEmail, codeData.campusId || schoolId || null, false, respond);
 
-      await auditAuthEvent('success', request as unknown as NextRequest, {
+      await auditAuthEvent('success', request, {
         operation: 'verify_code'
       });
 
@@ -249,7 +249,7 @@ export const POST = withValidation(
       return response;
 
     } catch (error) {
-      await auditAuthEvent('failure', request as unknown as NextRequest, {
+      await auditAuthEvent('failure', request, {
         operation: 'verify_code',
         error: error instanceof Error ? error.message : 'unknown'
       });

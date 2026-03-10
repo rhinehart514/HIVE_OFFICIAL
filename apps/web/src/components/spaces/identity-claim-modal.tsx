@@ -348,7 +348,7 @@ export function IdentityClaimModal({
                     'w-full bg-white/[0.06] border border-white/[0.06]',
                     'rounded-lg py-2.5 pl-9 pr-4',
                     'text-sm text-white placeholder:text-white/50',
-                    'focus:outline-none focus:ring-2 focus:ring-white/50'
+                    'focus:outline-none focus:outline-2 focus:outline-[#FFD700]'
                   )}
                 />
               </div>

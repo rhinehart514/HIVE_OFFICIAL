@@ -14,6 +14,13 @@ import type { WebhookEventPayload } from "../../domain/webhooks/webhook-event";
 import { createWebhookHeaders } from "../../utils/crypto/hmac";
 import type { IWebhookRepository } from "./webhook.service";
 
+// Structured logger for webhook delivery
+const logger = {
+  error: (message: string, data?: unknown) => {
+    console.error(message, data ?? ""); // eslint-disable-line no-console
+  },
+};
+
 /**
  * Retry intervals in milliseconds
  */
@@ -121,7 +128,7 @@ export class WebhookDeliveryService {
     );
 
     if (webhooksResult.isFailure) {
-      console.error(`Failed to fetch webhooks for event ${payload.type}:`, webhooksResult.error);
+      logger.error(`Failed to fetch webhooks for event ${payload.type}:`, webhooksResult.error);
       return [];
     }
 
@@ -309,7 +316,7 @@ export class WebhookDeliveryService {
     try {
       await this.deliveryLogRepository.save(entry);
     } catch (error) {
-      console.error("Failed to log webhook delivery:", error);
+      logger.error("Failed to log webhook delivery:", error);
     }
   }
 

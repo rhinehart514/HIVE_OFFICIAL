@@ -51,7 +51,7 @@ export async function notifyToolForked(params: {
     title: `Someone forked your ${params.toolName}`,
     body: `${actorName} forked your tool.`,
     toolId: params.toolId,
-    actionUrl: `/lab/${params.toolId}`,
+    actionUrl: `/build/${params.toolId}`,
   });
 
   return createNotification({
@@ -124,7 +124,7 @@ export async function notifyToolMilestone(params: {
     title: `Your ${params.toolName} hit ${params.milestone} uses!`,
     body: `${params.toolName} just crossed ${params.milestone} total uses.`,
     toolId: params.toolId,
-    actionUrl: `/lab/${params.toolId}/analytics`,
+    actionUrl: `/build/${params.toolId}/analytics`,
   });
 
   return createNotification({

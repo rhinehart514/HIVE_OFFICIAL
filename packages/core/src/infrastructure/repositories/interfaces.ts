@@ -4,22 +4,26 @@
  */
 
 import { Result } from '../../domain/shared/base/Result';
+import { DomainEvent } from '../../domain/shared/domain-event';
 import { EnhancedProfile } from '../../domain/profile/aggregates/enhanced-profile';
+import { ProfileId } from '../../domain/profile/value-objects/profile-id.value';
 import { Connection } from '../../domain/profile/aggregates/connection';
 import { EnhancedRitual } from '../../domain/rituals/aggregates/enhanced-ritual';
+import { RitualId } from '../../domain/rituals/value-objects/ritual-id.value';
 import { EnhancedSpace } from '../../domain/spaces/aggregates/enhanced-space';
+import { SpaceId } from '../../domain/spaces/value-objects/space-id.value';
 import { Participation } from '../../domain/rituals/entities/participation';
 import { RitualPhase, RitualUnion, RitualArchetype } from '../../domain/rituals/archetypes';
 
 // Base repository interface
-export interface IRepository<T> {
-  findById(id: any): Promise<Result<T>>;
+export interface IRepository<T, ID = string> {
+  findById(id: ID): Promise<Result<T>>;
   save(entity: T): Promise<Result<void>>;
-  delete(id: any): Promise<Result<void>>;
+  delete(id: ID): Promise<Result<void>>;
 }
 
 // Profile repository
-export interface IProfileRepository extends IRepository<EnhancedProfile> {
+export interface IProfileRepository extends IRepository<EnhancedProfile, ProfileId | string> {
   findByEmail(email: string): Promise<Result<EnhancedProfile>>;
   findByHandle(handle: string): Promise<Result<EnhancedProfile>>;
   findByCampus(campusId: string, limit?: number): Promise<Result<EnhancedProfile[]>>;
@@ -33,16 +37,16 @@ export interface IProfileRepository extends IRepository<EnhancedProfile> {
 }
 
 // Connection repository
-export interface IConnectionRepository extends IRepository<Connection> {
+export interface IConnectionRepository extends IRepository<Connection, string> {
   findByProfiles(profileId1: string, profileId2: string): Promise<Result<Connection>>;
   findUserConnections(profileId: string, type?: string): Promise<Result<Connection[]>>;
   getConnectionCount(profileId: string, type: string): Promise<number>;
 }
 
 // Space repository
-export interface ISpaceRepository extends IRepository<EnhancedSpace> {
+export interface ISpaceRepository extends IRepository<EnhancedSpace, SpaceId | string> {
   // Override to support options for eager loading PlacedTools
-  findById(id: any, options?: { loadMembers?: boolean; loadPlacedTools?: boolean }): Promise<Result<EnhancedSpace>>;
+  findById(id: SpaceId | string, options?: { loadMembers?: boolean; loadPlacedTools?: boolean }): Promise<Result<EnhancedSpace>>;
   findByName(name: string, campusId: string): Promise<Result<EnhancedSpace>>;
   findBySlug(slug: string, campusId: string): Promise<Result<EnhancedSpace>>;
   findByCampus(campusId: string, limit?: number): Promise<Result<EnhancedSpace[]>>;
@@ -73,21 +77,21 @@ export interface ISpaceRepository extends IRepository<EnhancedSpace> {
 }
 
 // Ritual repository
-export interface IRitualRepository extends IRepository<EnhancedRitual> {
+export interface IRitualRepository extends IRepository<EnhancedRitual, RitualId | string> {
   findByCampus(campusId: string): Promise<Result<EnhancedRitual[]>>;
   findActive(campusId: string): Promise<Result<EnhancedRitual[]>>;
   findByType(type: string, campusId: string): Promise<Result<EnhancedRitual[]>>;
   findActiveByType(type: string, campusId: string): Promise<Result<EnhancedRitual>>;
   findUserRituals(userId: string): Promise<Result<EnhancedRitual[]>>;
-  findParticipation(ritualId: any, profileId: any): Promise<Result<Participation>>;
+  findParticipation(ritualId: RitualId | string, profileId: ProfileId | string): Promise<Result<Participation>>;
   saveParticipation(participation: Participation): Promise<Result<void>>;
-  findLeaderboard(ritualId: any, limit: number): Promise<Result<Participation[]>>;
-  findByParticipant(profileId: any): Promise<Result<EnhancedRitual[]>>;
-  subscribeToRitual(ritualId: any, callback: (ritual: EnhancedRitual) => void): () => void;
+  findLeaderboard(ritualId: RitualId | string, limit: number): Promise<Result<Participation[]>>;
+  findByParticipant(profileId: ProfileId | string): Promise<Result<EnhancedRitual[]>>;
+  subscribeToRitual(ritualId: RitualId | string, callback: (ritual: EnhancedRitual) => void): () => void;
   subscribeToActiveRituals(campusId: string, callback: (rituals: EnhancedRitual[]) => void): () => void;
 }
 
-export interface IRitualConfigRepository extends IRepository<RitualUnion> {
+export interface IRitualConfigRepository extends IRepository<RitualUnion, string> {
   findByCampus(campusId: string, options?: { phases?: RitualPhase[] }): Promise<Result<RitualUnion[]>>;
   findActive(campusId: string, referenceDate?: Date): Promise<Result<RitualUnion[]>>;
   findBySlug(slug: string, campusId: string): Promise<Result<RitualUnion>>;
@@ -110,12 +114,12 @@ export interface IUnitOfWork {
 
 // Event dispatcher
 export interface IEventDispatcher {
-  dispatch(events: any[]): Promise<void>;
-  subscribe(eventType: string, handler: (event: any) => Promise<void>): void;
-  unsubscribe(eventType: string, handler: (event: any) => Promise<void>): void;
+  dispatch(events: DomainEvent[]): Promise<void>;
+  subscribe(eventType: string, handler: (event: DomainEvent) => Promise<void>): void;
+  unsubscribe(eventType: string, handler: (event: DomainEvent) => Promise<void>): void;
 }
 
 // Feed repository interface (deferred — using direct Firestore queries)
 export interface IFeedRepository {
-  [key: string]: any;
+  [key: string]: unknown;
 }

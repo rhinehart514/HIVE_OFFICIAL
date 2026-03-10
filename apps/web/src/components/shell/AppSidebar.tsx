@@ -63,7 +63,7 @@ export function LeftSidebar() {
       {/* Logo */}
       <Link href="/discover" className="flex items-center gap-2.5 h-14 px-5" aria-label="Home">
         <HiveLogoGold size={20} />
-        <span className="font-display text-[13px] font-semibold tracking-[0.08em] text-white/50">
+        <span className="font-display text-[13px] font-semibold tracking-[0.08em] text-white">
           HIVE
         </span>
       </Link>
@@ -192,7 +192,7 @@ export function MobileBottomBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch border-t border-white/[0.05] bg-[#0A0A09]/90 backdrop-blur-[12px] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-stretch border-t border-white/[0.05] bg-[#0A0A09] md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {navItems.map((item) => (
@@ -225,7 +225,7 @@ export function MobileHeader() {
     <header className="sticky top-0 z-30 flex items-center justify-between h-12 px-4 border-b border-white/[0.05] bg-[var(--bg-void)] md:hidden">
       <Link href="/discover" className="flex items-center gap-2" aria-label="Home">
         <HiveLogoGold size={18} />
-        <span className="font-display text-[13px] font-semibold tracking-[0.08em] text-white/50">
+        <span className="font-display text-[13px] font-semibold tracking-[0.08em] text-white">
           HIVE
         </span>
       </Link>

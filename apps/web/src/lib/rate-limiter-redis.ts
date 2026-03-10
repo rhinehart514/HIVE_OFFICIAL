@@ -252,7 +252,7 @@ export function getRateLimitHeaders(result: RateLimitResult): Record<string, str
  * Check IP-based rate limit
  */
 export async function checkIpRateLimit(
-  request: NextRequest,
+  request: Request,
   limit?: number,
   windowMs?: number
 ): Promise<RateLimitResult> {
@@ -311,7 +311,7 @@ export async function checkApiRateLimit(
  * Combined rate limit check (IP + User if authenticated)
  */
 export async function checkCombinedRateLimit(
-  request: NextRequest,
+  request: Request,
   userId?: string,
   action: string = 'api',
   limits?: { ip?: number; user?: number; windowMs?: number }

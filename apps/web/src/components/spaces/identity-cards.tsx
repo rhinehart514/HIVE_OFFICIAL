@@ -70,14 +70,14 @@ const IDENTITY_CONFIG: Record<
     emptyLabel: 'Claim your dorm',
     icon: HomeIcon,
     description: 'Your residential community',
-    borderColor: 'border-blue-400/10',
+    borderColor: 'border-[#FFD700]/10',
   },
   major: {
     label: 'Major',
     emptyLabel: 'Claim your major',
     icon: AcademicCapIcon,
     description: 'Your academic department',
-    borderColor: 'border-purple-400/10',
+    borderColor: 'border-white/[0.05]',
   },
   greek: {
     label: 'Greek',

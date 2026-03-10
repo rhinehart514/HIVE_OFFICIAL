@@ -89,7 +89,7 @@ function MetricCard({ icon: Icon, label, value, growth, color = 'text-white/50' 
         {hasGrowth && (
           <div className={cn(
             'flex items-center gap-1 text-xs font-medium',
-            isPositive ? 'text-green-400' : 'text-red-400'
+            isPositive ? 'text-emerald-400' : 'text-red-400'
           )}>
             <TrendingUp className={cn('w-3 h-3', !isPositive && 'rotate-180')} />
             <span>{Math.abs(growth!)}%</span>

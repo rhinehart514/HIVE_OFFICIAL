@@ -112,7 +112,7 @@ export function enforceRateLimit(
 /**
  * Validate request origin
  */
-export function validateOrigin(request: NextRequest): boolean {
+export function validateOrigin(request: Request): boolean {
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
 

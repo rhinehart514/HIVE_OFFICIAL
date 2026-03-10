@@ -261,7 +261,7 @@ export function ThreadPanel({
                     'flex-1 px-4 py-2.5 rounded-2xl',
                     'bg-white/[0.03] border border-white/[0.06]',
                     'text-white text-[15px] placeholder:text-white/30',
-                    'focus:outline-none focus:ring-1 focus:ring-white/20',
+                    'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
                     'resize-none min-h-[40px] max-h-[120px]'
                   )}
                   style={{

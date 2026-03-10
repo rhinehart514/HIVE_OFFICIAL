@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { Check, MapPin, Users, Video } from 'lucide-react';
 import { Mono } from '@hive/ui/design-system/primitives';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { FeedEvent } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
@@ -82,9 +83,15 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
             Today
           </Mono>
         </div>
-        <p className="text-sm text-white/25 py-2">
+        <p className="text-sm text-white/30 py-2">
           Nothing on campus today — good day to start something.
         </p>
+        <Link
+          href="/build"
+          className="inline-flex items-center px-4 py-2 mt-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
+        >
+          Build an app
+        </Link>
       </section>
     );
   }

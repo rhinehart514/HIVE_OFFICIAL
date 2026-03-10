@@ -341,7 +341,7 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black/80 backdrop-blur-md">
+      <div className="sticky top-0 z-10 border-b border-white/[0.06] bg-black">
         <div className="max-w-xl px-6 py-4">
           <div className="flex items-baseline gap-3">
             <h1 className="text-[18px] font-medium text-white">Events</h1>

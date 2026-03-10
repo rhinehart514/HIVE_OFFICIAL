@@ -15,6 +15,7 @@
  */
 
 import { currentEnvironment } from './env';
+import { logger } from './logger';
 
 // ============================================================================
 // TYPES
@@ -80,7 +81,7 @@ async function getSentryClient(): Promise<SentryLike | null> {
         const Sentry = await dynamicImport(moduleName);
         sentryClient = Sentry as unknown as SentryLike;
       } catch {
-        console.warn('[Error Monitoring] @sentry/nextjs not installed, using console fallback');
+        logger.warn('[Error Monitoring] @sentry/nextjs not installed, using console fallback');
         sentryClient = null;
       }
     })();
@@ -104,17 +105,17 @@ function consoleCapture(
 
   switch (level) {
     case LogLevel.DEBUG:
-      console.warn(`[${timestamp}] [DEBUG]`, error.message, contextStr);
+      logger.debug(`[${timestamp}] [DEBUG] ${error.message}${contextStr}`);
       break;
     case LogLevel.INFO:
-      console.warn(`[${timestamp}] [INFO]`, error.message, contextStr);
+      logger.info(`[${timestamp}] [INFO] ${error.message}${contextStr}`);
       break;
     case LogLevel.WARN:
-      console.warn(`[${timestamp}] [WARN]`, error.message, contextStr);
+      logger.warn(`[${timestamp}] [WARN] ${error.message}${contextStr}`);
       break;
     case LogLevel.ERROR:
     case LogLevel.FATAL:
-      console.error(`[${timestamp}] [${level.toUpperCase()}]`, error.message, error.stack, contextStr);
+      logger.error(`[${timestamp}] [${level.toUpperCase()}] ${error.message}${contextStr}`, error);
       break;
   }
 }
@@ -130,14 +131,14 @@ function consoleCapture(
 export async function initErrorMonitoring(): Promise<void> {
   if (!SENTRY_ENABLED) {
     if (IS_DEVELOPMENT) {
-      console.warn('[Error Monitoring] Development mode - using console fallback');
+      logger.warn('[Error Monitoring] Development mode - using console fallback');
     }
     return;
   }
 
   const sentry = await getSentryClient();
   if (sentry) {
-    console.warn(`[Error Monitoring] Sentry initialized for ${currentEnvironment}`);
+    logger.info(`[Error Monitoring] Sentry initialized for ${currentEnvironment}`);
   }
 }
 
@@ -192,7 +193,7 @@ export async function trackApiCall(metrics: ApiCallMetrics): Promise<void> {
   // Development logging
   if (IS_DEVELOPMENT) {
     const status = metrics.success ? 'OK' : 'FAIL';
-    console.warn(
+    logger.info(
       `${status} [API] ${metrics.method} ${metrics.endpoint} - ${metrics.statusCode} (${metrics.duration}ms)`
     );
   }
@@ -232,7 +233,7 @@ export function trackError(error: Error, context?: Record<string, unknown>): voi
  */
 export async function setUserContext(userId: string, email?: string): Promise<void> {
   if (IS_DEVELOPMENT) {
-    console.warn('[Error Monitoring] User context set:', { userId, email: email || 'N/A' });
+    logger.info('[Error Monitoring] User context set', { userId, metadata: { email: email || 'N/A' } });
   }
 
   if (SENTRY_ENABLED) {
@@ -251,7 +252,7 @@ export async function setUserContext(userId: string, email?: string): Promise<vo
  */
 export async function clearUserContext(): Promise<void> {
   if (IS_DEVELOPMENT) {
-    console.warn('[Error Monitoring] User context cleared');
+    logger.info('[Error Monitoring] User context cleared');
   }
 
   if (SENTRY_ENABLED) {
@@ -272,7 +273,7 @@ export async function addBreadcrumb(
   data?: Record<string, unknown>
 ): Promise<void> {
   if (IS_DEVELOPMENT) {
-    console.warn(`[Breadcrumb] [${category}] ${message}`, data || '');
+    logger.debug(`[Breadcrumb] [${category}] ${message}`, { metadata: data });
   }
 
   if (SENTRY_ENABLED) {

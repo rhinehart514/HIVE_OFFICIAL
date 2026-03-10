@@ -42,12 +42,12 @@ const FORMAT_CHIPS: Array<{ id: FormatChip; label: string; icon: React.Component
 
 const inputClass = cn(
   'w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/[0.06]',
-  'text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#FFD700]/40',
+  'text-white placeholder:text-white/30 focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
 );
 
 const smallInputClass = cn(
   'flex-1 px-3 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]',
-  'text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#FFD700]/40',
+  'text-white placeholder:text-white/30 focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
 );
 
 function PollEditor({ config, onChange }: { config: PollConfig; onChange: (c: PollConfig) => void }) {
@@ -324,7 +324,7 @@ export function SparkleCreateSheet({
                         'w-full px-4 py-3 pr-12 rounded-2xl text-[14px]',
                         'bg-white/[0.03] border border-white/[0.06]',
                         'text-white placeholder:text-white/30',
-                        'focus:outline-none focus:ring-1 focus:ring-[#FFD700]/40',
+                        'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
                         'resize-none'
                       )}
                     />

@@ -10,6 +10,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { logger } from '@/lib/logger';
 
 interface UseUnreadNotificationsOptions {
   userId?: string | null;
@@ -77,7 +78,7 @@ export function useUnreadNotifications({
       },
       (error) => {
         // Firestore permission error or index missing — fail silently
-        console.error('Unread notifications listener error:', error);
+        logger.error('Unread notifications listener error', { component: 'useUnreadNotifications' });
         setIsLoading(false);
       }
     );

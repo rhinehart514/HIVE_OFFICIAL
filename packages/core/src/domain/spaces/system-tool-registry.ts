@@ -5,7 +5,7 @@
  * These tools make spaces useful from day one, before any leader claims them.
  */
 
-import type { SpaceType } from './aggregates/enhanced-space';
+import type { SpaceType } from './space-types';
 import type { PlacementLocation } from './entities/placed-tool';
 
 /**

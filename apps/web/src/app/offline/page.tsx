@@ -81,32 +81,32 @@ export default function OfflinePage() {
         <div className="flex items-center justify-center gap-2 text-sm">
           <span
             className={`w-2 h-2 rounded-full ${
-              isOnline ? 'bg-green-500' : 'bg-red-500'
+              isOnline ? 'bg-emerald-400' : 'bg-red-400'
             }`}
           />
-          <span className={isOnline ? 'text-green-500' : 'text-red-500'}>
+          <span className={isOnline ? 'text-emerald-400' : 'text-red-400'}>
             {isOnline ? 'Back online! Redirecting...' : 'No internet connection'}
           </span>
         </div>
 
         {/* Offline Features */}
-        <div className="bg-[#080808] rounded-lg p-4 text-left">
+        <div className="bg-surface rounded-lg p-4 text-left">
           <h3 className="font-semibold mb-3">Available Offline:</h3>
           <ul className="space-y-2 text-sm text-white/50">
             <li className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               Previously viewed spaces
             </li>
             <li className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               Cached feed content
             </li>
             <li className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
               Draft messages (will sync when online)

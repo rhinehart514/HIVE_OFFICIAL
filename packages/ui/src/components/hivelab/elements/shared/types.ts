@@ -2,7 +2,7 @@
  * Shared types for HiveLab elements
  */
 
-import type { ElementProps } from '../../../../lib/hivelab/element-system';
+import type { ElementProps } from '../../../../lib/hivelab/element-types';
 
 export type { ElementProps };
 

@@ -259,7 +259,7 @@ export default function VerifyPage() {
             <div className="flex flex-wrap gap-2">
               {record.badges.earned.map((badge) => {
                 const tierColors = {
-                  bronze: 'bg-orange-500/10 border-orange-500/20 text-orange-300',
+                  bronze: 'bg-amber-400/10 border-amber-400/20 text-amber-300',
                   silver: 'bg-white/[0.06] border-white/[0.08] text-white/50',
                   gold: 'bg-[var(--color-gold)]/10 border-[var(--color-gold)]/20 text-[var(--color-gold)]',
                 };

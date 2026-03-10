@@ -1,9 +1,8 @@
-import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createHash } from 'crypto';
 import { FieldValue } from 'firebase-admin/firestore';
-import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter, type AuthenticatedRequest } from '@/lib/middleware';
+import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter } from '@/lib/middleware';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { createTokenPair, setTokenPairCookies, getSession } from '@/lib/session';
 import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction, validateHandleFormat } from '@/lib/handle-service';
@@ -71,6 +70,13 @@ async function checkGravatar(email: string): Promise<string | null> {
 
 // Schema with identity fields for The Threshold entry flow
 // UPDATED: Jan 28, 2026 - Handle now auto-generated if not provided
+/** Lightweight result type for in-memory filtered Firestore query results */
+interface FilteredQueryResult {
+  docs: FirebaseFirestore.QueryDocumentSnapshot[];
+  empty: boolean;
+  size: number;
+}
+
 const schema = z.object({
   firstName: z.string().min(1, 'First name is required').max(50),
   lastName: z.string().min(1, 'Last name is required').max(50),
@@ -99,10 +105,10 @@ const schema = z.object({
 type EntryBody = z.infer<typeof schema>;
 
 export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Record<string, string | string[]>, body: EntryBody, _respondFmt: typeof ResponseFormatter) => {
-  const userId = getUserId(request as unknown as AuthenticatedRequest);
+  const userId = getUserId(request);
 
   // Get session for campus isolation
-  const session = await getSession(request as unknown as NextRequest);
+  const session = await getSession(request);
   if (!session) {
     return respond.error('Session not found', 'UNAUTHORIZED', { status: 401 });
   }
@@ -129,7 +135,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
   }
 
   // Rate limit
-  const rateLimitResult = await enforceRateLimit('authStrict', request as NextRequest);
+  const rateLimitResult = await enforceRateLimit('authStrict', request);
   if (!rateLimitResult.allowed) {
     logger.warn('Complete-entry rate limit exceeded', {
       component: 'complete-entry',
@@ -237,7 +243,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       }
 
       // Pre-fetch major space if major is provided
-      let majorSpaceSnapshot: FirebaseFirestore.QuerySnapshot | null = null;
+      let majorSpaceSnapshot: FilteredQueryResult | null = null;
       if (body.major && campusId) {
         const rawMajorSnapshot = await transaction.get(
           dbAdmin.collection('spaces')
@@ -250,9 +256,9 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
           (d) => !d.data().campusId || d.data().campusId === campusId
         );
         if (filteredDocs.length > 0) {
-          majorSpaceSnapshot = { ...rawMajorSnapshot, docs: filteredDocs, empty: false, size: filteredDocs.length } as unknown as FirebaseFirestore.QuerySnapshot;
+          majorSpaceSnapshot = { docs: filteredDocs, empty: false, size: filteredDocs.length };
         } else {
-          majorSpaceSnapshot = { ...rawMajorSnapshot, docs: [], empty: true, size: 0 } as unknown as FirebaseFirestore.QuerySnapshot;
+          majorSpaceSnapshot = { docs: [], empty: true, size: 0 };
         }
       }
 
@@ -269,7 +275,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       const communitySpaceReads: Array<{
         key: string;
         communityType: string;
-        snapshot: FirebaseFirestore.QuerySnapshot;
+        snapshot: FilteredQueryResult;
       }> = [];
 
       if (body.communityIdentities && campusId) {
@@ -286,9 +292,9 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
             const filteredDocs = rawSnapshot.docs.filter(
               (d) => !d.data().campusId || d.data().campusId === campusId
             );
-            const snapshot = filteredDocs.length > 0
-              ? { ...rawSnapshot, docs: filteredDocs, empty: false, size: filteredDocs.length } as unknown as FirebaseFirestore.QuerySnapshot
-              : { ...rawSnapshot, docs: [], empty: true, size: 0 } as unknown as FirebaseFirestore.QuerySnapshot;
+            const snapshot: FilteredQueryResult = filteredDocs.length > 0
+              ? { docs: filteredDocs, empty: false, size: filteredDocs.length }
+              : { docs: [], empty: true, size: 0 };
             communitySpaceReads.push({ key, communityType, snapshot });
           }
         }

@@ -3,6 +3,7 @@
 import { useEffect, useReducer } from 'react';
 import { Check, MapPin, Users, Video } from 'lucide-react';
 import { Mono } from '@hive/ui/design-system/primitives';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { FeedEvent } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
@@ -29,15 +30,21 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
     return (
       <section>
         <div className="flex items-center gap-2 mb-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
           <Mono size="label" className="text-white/50">
             Live now
           </Mono>
         </div>
-        <p className="text-sm text-white/25 py-2">
+        <p className="text-sm text-white/50 py-2">
           Nothing happening right now — but your orgs are always posting.
           Scroll down to see what&apos;s coming up.
         </p>
+        <Link
+          href="/build"
+          className="inline-flex items-center px-4 py-2 mt-2 rounded-full bg-[#FFD700] text-black text-sm font-semibold hover:bg-[#FFE033] transition-colors duration-100"
+        >
+          Start something
+        </Link>
       </section>
     );
   }
@@ -82,12 +89,12 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
                 {/* Badge */}
                 <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
                   {isLive ? (
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/20 backdrop-blur-sm border border-red-500/20 text-[10px] font-semibold text-red-400">
+                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/20 border border-red-500/20 text-[10px] font-semibold text-red-400">
                       <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
                       LIVE
                     </span>
                   ) : (
-                    <span className="px-2 py-1 rounded-full bg-amber-500/15 backdrop-blur-sm border border-amber-500/20 text-[10px] font-medium text-amber-400/80">
+                    <span className="px-2 py-1 rounded-full bg-amber-500/15 border border-amber-500/20 text-[10px] font-medium text-amber-400/80">
                       {timeLabel(event.startDate)}
                     </span>
                   )}

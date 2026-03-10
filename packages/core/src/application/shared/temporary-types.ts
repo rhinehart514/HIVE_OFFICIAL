@@ -26,7 +26,7 @@ export { FeedItem } from '../../domain/feed/feed-item';
 export type { Milestone, Reward } from '../../domain/rituals/aggregates/enhanced-ritual';
 
 // Profile utility functions
-export function getProfileCompleteness(profile: any): number {
+export function getProfileCompleteness(profile: Record<string, unknown>): number {
   if (!profile) return 0;
 
   const requiredFields = ['displayName', 'email', 'handle'];
@@ -65,7 +65,7 @@ export function validateEmailDomain(email: string, allowedDomains: string[] = ['
 export interface Feed {
   userId: string;
   lastUpdated: Date;
-  toData?: () => any;
+  toData?: () => Record<string, unknown>;
 }
 
 export interface PostContent {
@@ -75,7 +75,7 @@ export interface PostContent {
 
 // These classes provide backward compatibility wrappers
 export class FeedFilter {
-  constructor(public type: string, public value: any) {}
+  constructor(public type: string, public value: string | null) {}
 
   static create(type: string) {
     return {
@@ -98,10 +98,20 @@ export class Ritual {
     public id: string,
     public name: string,
     public description: string,
-    public milestones: any[]
+    public milestones: Array<{ id: string; name: string; description: string; targetValue: number }>
   ) {}
 
-  static create(data: any) {
+  static create(data: {
+    id: string;
+    name: string;
+    description: string;
+    milestones?: Array<{ id: string; name: string; description: string; targetValue: number }>;
+    participants?: number;
+    isActive?: boolean;
+    settings?: { isVisible: boolean };
+    startDate?: Date;
+    endDate?: Date;
+  }) {
     return {
       isSuccess: true,
       isFailure: false,
@@ -144,18 +154,27 @@ export class Ritual {
 
 export class Participation {
   public streak: number = 0;
-  public achievements: any[] = [];
+  public achievements: string[] = [];
   public totalPoints: number = 0;
 
   constructor(
     public id: string,
-    public profileId: any,
-    public ritualId: any,
+    public profileId: string,
+    public ritualId: string,
     public completedMilestones: string[] = [],
     public progress: number = 0
   ) {}
 
-  static create(data: any) {
+  static create(data: {
+    id: string;
+    profileId: string;
+    ritualId: string;
+    completedMilestones?: string[];
+    progress?: number;
+    streak?: number;
+    achievements?: string[];
+    totalPoints?: number;
+  }) {
     return {
       isSuccess: true,
       isFailure: false,
@@ -218,21 +237,36 @@ export class Space {
   public lastActivityAt: Date = new Date();
   public createdAt: Date = new Date();
   public spaceType: string = 'general';
-  public posts: any[] = [];
-  public settings: any = {};
-  public members: Array<{ profileId: any; role: string }> = [];
+  public posts: Array<Record<string, unknown>> = [];
+  public settings: Record<string, unknown> = {};
+  public members: Array<{ profileId: string | { id?: string; value?: string }; role: string }> = [];
   private memberSet: Set<string> = new Set();
 
   constructor(
-    public id: any,
-    public name: any,
+    public id: string,
+    public name: string,
     public description: string,
     public category: string,
     public campusId: string,
-    public createdBy?: any
+    public createdBy?: string
   ) {}
 
-  static create(data: any) {
+  static create(data: {
+    id: string;
+    name: string;
+    description: string;
+    category?: string;
+    spaceType?: string;
+    campusId: string;
+    createdBy?: string;
+    visibility?: string;
+    memberCount?: number;
+    lastActivityAt?: Date;
+    createdAt?: Date;
+    posts?: Array<Record<string, unknown>>;
+    settings?: Record<string, unknown>;
+    members?: Array<{ profileId: string | { id?: string; value?: string }; role: string }>;
+  }) {
     return {
       isSuccess: true,
       isFailure: false,
@@ -241,7 +275,7 @@ export class Space {
           data.id,
           data.name,
           data.description,
-          data.category || data.spaceType,
+          data.category || data.spaceType || 'general',
           data.campusId,
           data.createdBy
         );
@@ -259,11 +293,11 @@ export class Space {
     };
   }
 
-  addMember(profileId: string | any) {
-    const id = typeof profileId === 'string' ? profileId : profileId.id || profileId.value;
+  addMember(profileId: string | { id?: string; value?: string }) {
+    const id = typeof profileId === 'string' ? profileId : (profileId.id || profileId.value || '');
     this.memberSet.add(id);
     if (!this.members.find(m => {
-      const memberId = typeof m.profileId === 'string' ? m.profileId : m.profileId.id || m.profileId.value;
+      const memberId = typeof m.profileId === 'string' ? m.profileId : (m.profileId.id || m.profileId.value || '');
       return memberId === id;
     })) {
       this.members.push({
@@ -275,19 +309,19 @@ export class Space {
     return { isSuccess: true, isFailure: false };
   }
 
-  removeMember(profileId: string | any) {
-    const id = typeof profileId === 'string' ? profileId : profileId.id || profileId.value;
+  removeMember(profileId: string | { id?: string; value?: string }) {
+    const id = typeof profileId === 'string' ? profileId : (profileId.id || profileId.value || '');
     this.memberSet.delete(id);
     this.members = this.members.filter(m => {
-      const memberId = typeof m.profileId === 'string' ? m.profileId : m.profileId.id || m.profileId.value;
+      const memberId = typeof m.profileId === 'string' ? m.profileId : (m.profileId.id || m.profileId.value || '');
       return memberId !== id;
     });
     this.memberCount = this.memberSet.size;
     return { isSuccess: true, isFailure: false };
   }
 
-  isMember(profileId: string | any): boolean {
-    const id = typeof profileId === 'string' ? profileId : profileId.id || profileId.value;
+  isMember(profileId: string | { id?: string; value?: string }): boolean {
+    const id = typeof profileId === 'string' ? profileId : (profileId.id || profileId.value || '');
     return this.memberSet.has(id);
   }
 
@@ -419,8 +453,8 @@ export interface Post {
   reactedUsers?: ReactedUsers;
 
   // Timestamps
-  createdAt: Date | any;
-  updatedAt?: Date | any;
+  createdAt: Date | { toDate?: () => Date };
+  updatedAt?: Date | { toDate?: () => Date };
 
   // Flags and visibility
   isPromoted?: boolean;
@@ -442,7 +476,7 @@ export interface EventSource {
   type: 'campuslabs' | 'presence' | 'generic_rss' | 'atom';
   url: string;
   enabled: boolean;
-  lastSyncAt?: Date | any;
+  lastSyncAt?: Date | { toDate?: () => Date };
   syncFrequency: 'daily' | 'weekly';
   hostMatchField?: string; // Field in RSS that maps to org names
 }
@@ -466,8 +500,8 @@ export interface School {
   campusId: string;
   isActive: boolean; // Kept for backwards compatibility
   status: 'waitlist' | 'beta' | 'active' | 'suspended';
-  createdAt: Date | any;
-  updatedAt?: Date | any;
+  createdAt: Date | { toDate?: () => Date };
+  updatedAt?: Date | { toDate?: () => Date };
 
   // Email domain validation (multi-domain support)
   emailDomains: {
@@ -505,8 +539,8 @@ export interface User {
   emailVerified: boolean;
   campusId: string;
   role?: 'student' | 'faculty' | 'alumni' | 'staff' | 'admin';
-  createdAt: Date | any;
-  lastActive?: Date | any;
+  createdAt: Date | { toDate?: () => Date };
+  lastActive?: Date | { toDate?: () => Date };
   metadata?: {
     school?: string;
     major?: string;
@@ -526,8 +560,8 @@ export interface Element {
   category: string;
   name: string;
   description: string;
-  defaultConfig: any;
-  schema?: any;
+  defaultConfig: Record<string, unknown>;
+  schema?: Record<string, unknown>;
 }
 
 export {

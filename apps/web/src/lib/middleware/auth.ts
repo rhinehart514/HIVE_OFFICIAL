@@ -63,11 +63,16 @@ export interface UserContext {
   decodedToken: DecodedIdToken;
 }
 
+/** Request with symbol-keyed user context for type-safe access */
+interface RequestWithUserSymbol {
+  [key: symbol]: UserContext | undefined;
+}
+
 /**
  * Attach user context to a request (internal use only)
  */
 export function attachUser(request: NextRequest, user: UserContext): void {
-  (request as unknown as { [USER_SYMBOL]: UserContext })[USER_SYMBOL] = user;
+  (request as unknown as RequestWithUserSymbol)[USER_SYMBOL] = user;
 }
 
 /**
@@ -75,7 +80,7 @@ export function attachUser(request: NextRequest, user: UserContext): void {
  * Returns undefined if no user is attached (use getUserId/getCampusId for guaranteed access)
  */
 export function getUser(request: NextRequest): UserContext | undefined {
-  return (request as unknown as { [USER_SYMBOL]?: UserContext })[USER_SYMBOL];
+  return (request as unknown as RequestWithUserSymbol)[USER_SYMBOL];
 }
 
 /**
@@ -700,7 +705,7 @@ interface AuthEventContext {
   [key: string]: unknown;
 }
 
-function getClientIP(request: NextRequest): string {
+function getClientIP(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) return forwarded.split(',')[0].trim();
   const realIP = request.headers.get('x-real-ip');
@@ -708,7 +713,7 @@ function getClientIP(request: NextRequest): string {
   return 'unknown';
 }
 
-function getRequestUserAgent(request: NextRequest): string {
+function getRequestUserAgent(request: Request): string {
   return request.headers.get('user-agent') || 'unknown';
 }
 
@@ -717,7 +722,7 @@ function getRequestUserAgent(request: NextRequest): string {
  */
 export async function auditAuthEvent(
   eventType: AuthEventType,
-  request: NextRequest,
+  request: Request,
   context: AuthEventContext
 ): Promise<void> {
   const timestamp = new Date().toISOString();
@@ -730,7 +735,7 @@ export async function auditAuthEvent(
     eventType,
     ip,
     userAgent,
-    path: request.nextUrl.pathname,
+    path: new URL(request.url).pathname,
     requestId,
     ...context,
   };
@@ -754,7 +759,7 @@ export async function auditAuthEvent(
 /**
  * Check if request should be blocked based on security heuristics
  */
-export function shouldBlockRequest(request: NextRequest): { blocked: boolean; reason?: string } {
+export function shouldBlockRequest(request: Request): { blocked: boolean; reason?: string } {
   const userAgent = getRequestUserAgent(request);
 
   if (userAgent === 'unknown' || userAgent.length < 10) {

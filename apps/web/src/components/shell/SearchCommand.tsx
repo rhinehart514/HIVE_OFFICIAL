@@ -245,7 +245,8 @@ export function SearchCommand() {
             {/* Empty state */}
             {!loading && query.length >= 2 && results.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-10 px-4">
-                <span className="text-sm text-white/25 font-sans">No results for &quot;{query}&quot;</span>
+                <span className="text-sm text-white/30 font-sans">No results for &quot;{query}&quot;</span>
+                <span className="text-[13px] text-white/30 font-sans">Try searching for a space name or app type</span>
               </div>
             )}
 

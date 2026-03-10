@@ -86,7 +86,7 @@ export function FlagOverrides() {
                     ? 'bg-emerald-500/40'
                     : 'bg-white/[0.06]'
                   }
-                  ${hasOverride ? 'ring-2 ring-blue-500/50' : ''}
+                  ${hasOverride ? 'outline outline-2 outline-[#FFD700]' : ''}
                 `}
               >
                 <span

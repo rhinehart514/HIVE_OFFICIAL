@@ -15,6 +15,7 @@
  */
 
 import * as React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Users,
@@ -144,7 +145,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
 
   const healthScore = data?.summary?.healthScore ?? 0;
   const healthColor =
-    healthScore >= 70 ? 'text-green-400' : healthScore >= 40 ? 'text-yellow-400' : 'text-red-400';
+    healthScore >= 70 ? 'text-emerald-400' : healthScore >= 40 ? 'text-amber-400' : 'text-red-400';
 
   return (
     <motion.div
@@ -184,7 +185,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                   'appearance-none px-3 py-1.5 pr-8 rounded-lg',
                   'bg-white/[0.06] border border-white/[0.06]',
                   'text-white text-sm',
-                  'focus:outline-none focus:ring-2 focus:ring-white/50'
+                  'focus:outline-none focus:outline-2 focus:outline-[#FFD700]'
                 )}
               >
                 <option value="7d">Last 7 days</option>
@@ -265,7 +266,17 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                       </li>
                     ))}
                     {(!data.summary?.topInsights || data.summary.topInsights.length === 0) && (
-                      <li className="text-sm text-white/50">No insights available</li>
+                      <li className="text-sm text-white/50">Deploy an app to start seeing data</li>
+                    )}
+                    {(!data.summary?.topInsights || data.summary.topInsights.length === 0) && (
+                      <li className="mt-3">
+                        <Link
+                          href="/build"
+                          className="inline-flex items-center px-4 py-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
+                        >
+                          Build an app
+                        </Link>
+                      </li>
                     )}
                   </ul>
                 </div>
@@ -413,7 +424,7 @@ function MetricCard({ icon: Icon, label, value, change, changeLabel, subValue }:
       </div>
       <div className="text-2xl font-semibold text-white">{value.toLocaleString()}</div>
       {change !== undefined && change > 0 && (
-        <div className="text-xs text-green-400 mt-1">
+        <div className="text-xs text-emerald-400 mt-1">
           +{change} {changeLabel}
         </div>
       )}

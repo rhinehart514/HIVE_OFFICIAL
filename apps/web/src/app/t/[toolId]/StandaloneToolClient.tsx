@@ -562,7 +562,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
       {showConvertBanner && !user && (
         <div className="fixed bottom-0 inset-x-0 z-40 animate-in slide-in-from-bottom duration-300">
           <div className="mx-auto max-w-[480px] px-4 pb-4">
-            <div className="flex items-center gap-3 rounded-2xl border border-[#FFD700]/15 bg-[#111]/95 backdrop-blur-lg px-5 py-3.5">
+            <div className="flex items-center gap-3 rounded-2xl border border-[#FFD700]/15 bg-[#111]/95 px-5 py-3.5">
               <div className="flex-1">
                 <p className="text-[13px] font-medium text-white/80">Like this?</p>
                 <p className="text-[11px] text-white/40">Create your own in seconds.</p>
