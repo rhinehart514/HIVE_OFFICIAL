@@ -19,7 +19,7 @@ const SOCIAL_PROOF_THRESHOLDS = [5, 15, 50, 100] as const;
 const ACTION_VERBS: Record<string, string> = {
   poll_vote: 'voted on',
   bracket_vote: 'voted on',
-  rsvp_toggle: 'RSVP'd to',
+  rsvp_toggle: "RSVP'd to",
 };
 
 /**

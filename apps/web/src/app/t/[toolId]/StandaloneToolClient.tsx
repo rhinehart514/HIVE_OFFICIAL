@@ -486,8 +486,8 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                   {isShellTool && shellState.state ? (
                     (() => {
                       const s = shellState.state;
-                      const voteCount = s.votes ? Object.keys(s.votes).length : 0;
-                      const attendeeCount = s.attendees ? Object.keys(s.attendees).length : 0;
+                      const voteCount = 'votes' in s && s.votes ? Object.keys(s.votes).length : 0;
+                      const attendeeCount = 'attendees' in s && s.attendees ? Object.keys(s.attendees).length : 0;
                       const total = voteCount + attendeeCount;
                       if (total > 0) {
                         return <span className="text-white/70 font-medium">{total} {total === 1 ? 'response' : 'responses'} so far</span>;
