@@ -34,18 +34,20 @@ function buildInitialPollState(config: PollConfig): PollState {
 }
 
 function buildInitialBracketState(config: BracketConfig): BracketState {
-  const entries = config.entries;
+  // Pad to even count — odd entries would silently drop the last one
+  const entries = [...config.entries];
+  if (entries.length % 2 !== 0) {
+    entries.push('Bye');
+  }
   const matchups = [];
   for (let i = 0; i < entries.length; i += 2) {
-    if (i + 1 < entries.length) {
-      matchups.push({
-        id: `r1-m${Math.floor(i / 2)}`,
-        round: 1,
-        entryA: entries[i],
-        entryB: entries[i + 1],
-        votes: {},
-      });
-    }
+    matchups.push({
+      id: `r1-m${Math.floor(i / 2)}`,
+      round: 1,
+      entryA: entries[i],
+      entryB: entries[i + 1],
+      votes: {},
+    });
   }
   const totalRounds = Math.ceil(Math.log2(entries.length));
   return {
