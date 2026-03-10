@@ -160,8 +160,8 @@ export function MessageFeed({
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-white/50 text-sm">This space is quiet — start the conversation.</p>
-          <p className="text-white/30 text-xs mt-1">Try /poll to ask the group something</p>
+          <p className="text-white/50 text-sm">This space is quiet — be the one to break the silence.</p>
+          <p className="text-white/30 text-xs mt-1">Say something, or drop a poll to get the group talking.</p>
         </div>
       </div>
     );
@@ -281,9 +281,9 @@ export function MessageFeed({
               'flex items-center gap-1.5',
               'px-3 py-1.5 rounded-full',
               'bg-[var(--bg-surface)]',
-              'border border-white/[0.06]',
+              'border border-white/[0.05]',
               'text-xs font-medium text-white/50',
-              'hover:bg-white/[0.06] hover:text-white',
+              'hover:bg-white/[0.10] hover:text-white',
               'transition-colors duration-150',
               'mx-auto w-fit'
             )}
