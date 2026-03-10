@@ -720,6 +720,7 @@ export default function BuildPage() {
     acceptShell,
     escalateToCustom,
     reset,
+    dispatch,
   } = useBuildMachine({
     spaceId: originSpaceId,
     spaceContext: originSpaceId && originSpaceName ? {
@@ -738,7 +739,20 @@ export default function BuildPage() {
     if (!authLoading && user) {
       const pending = loadPendingDeploy();
       if (pending?.prompt) {
-        submitPrompt(pending.prompt);
+        if (pending.format && pending.config && isNativeFormat(pending.format as ShellFormat)) {
+          // Restore directly to shell-matched — skip re-classification
+          dispatch({ type: 'SUBMIT_PROMPT', prompt: pending.prompt });
+          dispatch({
+            type: 'CLASSIFICATION_SUCCESS',
+            result: {
+              format: pending.format as ShellFormat,
+              confidence: 1.0,
+              config: pending.config,
+            },
+          });
+        } else {
+          submitPrompt(pending.prompt);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
