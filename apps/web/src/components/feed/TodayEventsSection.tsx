@@ -79,7 +79,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
     <section>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/60" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/50" />
           <Mono size="label" className="text-white/50">
             HAPPENING TODAY
           </Mono>
@@ -99,7 +99,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
             <div
               key={event.id}
               onClick={() => onSelectEvent(event)}
-              className="group cursor-pointer rounded-xl border border-white/[0.06] bg-card overflow-hidden hover:border-white/[0.12] transition-colors duration-100"
+              className="group cursor-pointer rounded-xl border border-white/[0.05] bg-card overflow-hidden hover:border-white/[0.10] transition-colors duration-100"
             >
               <div className="flex">
                 {/* Image thumbnail */}
@@ -116,10 +116,10 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0 px-3.5 py-2.5">
+                <div className="flex-1 min-w-0 px-4 py-3">
                   {/* Space + time row */}
                   <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
                       {event.spaceName && (
                         <>
                           <SpaceAvatar
@@ -144,7 +144,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                   </p>
 
                   {/* Meta row */}
-                  <div className="flex items-center gap-2.5 mt-1.5 text-[11px] text-white/50">
+                  <div className="flex items-center gap-3 mt-2 text-[11px] text-white/50">
                     {event.location && (
                       <span className="flex items-center gap-1">
                         {event.isOnline ? (
@@ -177,8 +177,8 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                       className={cn(
                         'px-3 py-1 rounded-full text-[11px] font-medium transition-colors',
                         isGoing
-                          ? 'bg-white/[0.06] border border-white/[0.10] text-white/50'
-                          : 'bg-white/[0.08] border border-white/[0.10] text-white/70 hover:bg-white/[0.12]',
+                          ? 'bg-white/[0.05] border border-white/[0.05] text-white/50'
+                          : 'bg-white/[0.05] border border-white/[0.05] text-white/70 hover:bg-white/[0.10]',
                       )}
                     >
                       {isGoing ? (
@@ -195,7 +195,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                           e.stopPropagation();
                           maybeMutation.mutate({ eventId: event.id, spaceId: event.spaceId });
                         }}
-                        className="px-3 py-1 rounded-full text-[11px] font-medium bg-transparent border border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-colors"
+                        className="px-3 py-1 rounded-full text-[11px] font-medium bg-transparent border border-white/[0.05] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-colors"
                       >
                         Maybe
                       </button>

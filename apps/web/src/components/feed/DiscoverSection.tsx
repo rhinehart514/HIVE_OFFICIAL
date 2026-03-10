@@ -114,13 +114,13 @@ export function DiscoverSection() {
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-4 animate-pulse"
+              className="rounded-xl bg-white/[0.05] border border-white/[0.05] p-4 animate-pulse"
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-white/[0.04]" />
-                <div className="space-y-1.5 flex-1">
-                  <div className="h-3 w-24 bg-white/[0.04] rounded" />
-                  <div className="h-2.5 w-16 bg-white/[0.03] rounded" />
+                <div className="w-10 h-10 rounded-full bg-white/[0.05]" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-3 w-24 bg-white/[0.05] rounded" />
+                  <div className="h-2.5 w-16 bg-white/[0.05] rounded" />
                 </div>
               </div>
             </div>
@@ -164,11 +164,11 @@ export function DiscoverSection() {
           <div key={space.id}>
             <Link
               href={`/s/${space.handle || space.id}`}
-              className="group flex items-start gap-3 rounded-xl border border-white/[0.05] bg-card px-3.5 py-3 hover:border-white/[0.12] transition-colors duration-100"
+              className="group flex items-start gap-3 rounded-xl border border-white/[0.05] bg-card px-3.5 py-3 hover:border-white/[0.05] transition-colors duration-100"
             >
               <SpaceAvatar name={space.name} url={space.avatarUrl} size={40} />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <span className="text-[13px] font-medium text-white/70 group-hover:text-white transition-colors truncate">
                     {space.name}
                   </span>
@@ -203,7 +203,7 @@ export function DiscoverSection() {
               <button
                 onClick={(e) => handleJoin(e, space.id)}
                 disabled={joiningId === space.id}
-                className="shrink-0 mt-1 px-3 py-1 rounded-full text-[11px] font-medium bg-white/[0.08] border border-white/[0.10] text-white/50 hover:bg-white/[0.14] hover:text-white/70 transition-colors disabled:opacity-50"
+                className="shrink-0 mt-1 px-3 py-1 rounded-full text-[11px] font-medium bg-white/[0.05] border border-white/[0.05] text-white/50 hover:bg-white/[0.10] hover:text-white/70 transition-colors disabled:opacity-50"
               >
                 {joiningId === space.id ? '...' : 'Join'}
               </button>
@@ -216,7 +216,7 @@ export function DiscoverSection() {
         <button
           onClick={() => fetchNextPage()}
           disabled={isFetchingNextPage}
-          className="w-full mt-3 py-2.5 rounded-xl border border-white/[0.06] text-[12px] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-colors disabled:opacity-50"
+          className="w-full mt-3 py-2.5 rounded-xl border border-white/[0.05] text-[12px] text-white/30 hover:text-white/50 hover:border-white/[0.05] transition-colors disabled:opacity-50"
         >
           {isFetchingNextPage ? 'Loading...' : 'Load more spaces'}
         </button>

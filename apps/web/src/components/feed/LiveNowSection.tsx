@@ -34,7 +34,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
           Live now
         </Mono>
       </div>
-      <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
         {liveEvents.map((event) => {
           const isLive = isHappeningNow(event.startDate, event.endDate);
           const isGoing = event.isUserRsvped || event.userRsvp === 'going';
@@ -44,7 +44,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
             <button
               key={event.id}
               onClick={() => onSelectEvent(event)}
-              className="shrink-0 w-[260px] text-left group cursor-pointer relative overflow-hidden rounded-2xl border border-white/[0.05] hover:border-[#FFD700]/30 bg-card transition-colors duration-100"
+              className="shrink-0 w-[260px] text-left group cursor-pointer relative overflow-hidden rounded-2xl border border-white/[0.05] hover:border-[#FFD700]/50 bg-card transition-colors duration-100"
             >
               <div className="relative h-28 w-full overflow-hidden">
                 {coverSrc ? (
@@ -59,26 +59,26 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
                 <div className="absolute inset-x-0 bottom-0 h-12 bg-card/80" />
 
                 {/* Badge */}
-                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                <div className="absolute top-3 left-3 flex items-center gap-2">
                   {isLive ? (
-                    <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-[11px] font-semibold text-red-400">
+                    <span className="flex items-center gap-2 px-2 py-1 rounded-full bg-red-500/30 border border-red-500/30 text-[11px] font-semibold text-red-400">
                       <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-breathe" />
                       LIVE
                     </span>
                   ) : (
-                    <span className="px-2 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-[11px] font-medium text-amber-400">
+                    <span className="px-2 py-1 rounded-full bg-amber-500/30 border border-amber-500/30 text-[11px] font-medium text-amber-400">
                       {timeLabel(event.startDate)}
                     </span>
                   )}
                   {isGoing && (
-                    <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 text-[11px] text-[#FFD700]">
+                    <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#FFD700]/[0.05] border border-[#FFD700]/30 text-[11px] text-[#FFD700]">
                       <Check className="w-2.5 h-2.5" />
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="px-3 pb-3 pt-1.5">
+              <div className="px-3 pb-3 pt-2">
                 {event.spaceName && (
                   <div className="flex items-center gap-1.5 mb-1">
                     <SpaceAvatar name={event.spaceName} url={event.spaceAvatarUrl} size={14} />
@@ -88,7 +88,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
                 <p className="text-[13px] font-medium text-white/70 leading-snug line-clamp-2 group-hover:text-white transition-colors">
                   {event.title}
                 </p>
-                <div className="flex items-center gap-3 mt-1.5 text-[11px] text-white/50">
+                <div className="flex items-center gap-3 mt-2 text-[11px] text-white/50">
                   {event.location && (
                     <span className="flex items-center gap-1">
                       {event.isOnline ? (

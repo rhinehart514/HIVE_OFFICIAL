@@ -131,7 +131,7 @@ function AppCard({
         {/* Header: title + creator */}
         <div className="mb-1">
           <h3 className="text-[15px] font-semibold text-white leading-snug">{tool.name}</h3>
-          <div className="flex items-center gap-1.5 mt-1">
+          <div className="flex items-center gap-2 mt-1">
             {tool.ownerHandle && tool.ownerId !== 'hive-system' ? (
               <Link
                 href={`/u/${tool.ownerHandle}`}
@@ -191,7 +191,7 @@ function AppCard({
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="mt-3 pt-3 border-t border-white/[0.04]"
+              className="mt-3 pt-3 border-t border-white/[0.05]"
             >
               <div className="flex items-center gap-2 text-[13px]">
                 <span className="text-white/30">
@@ -251,7 +251,7 @@ export function NewAppsSection() {
           </p>
           <Link
             href="/build"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#FFD700] text-black text-[13px] font-semibold hover:opacity-90 transition-opacity duration-100"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFD700] text-black text-[13px] font-semibold hover:opacity-90 transition-opacity duration-100"
           >
             <Sparkles className="w-3.5 h-3.5" />
             Make something
@@ -262,7 +262,7 @@ export function NewAppsSection() {
       {tools.length > 0 && (
         <Link
           href="/build"
-          className="flex items-center gap-1.5 mt-4 text-[13px] text-white/30 hover:text-white/50 transition-colors"
+          className="flex items-center gap-2 mt-4 text-[13px] text-white/30 hover:text-white/50 transition-colors"
         >
           Make your own
           <ArrowRight className="w-3.5 h-3.5" />
