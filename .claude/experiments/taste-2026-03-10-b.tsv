@@ -1,0 +1,11 @@
+commit	score	delta	status	description	learning
+---	---	---	mode	exploitation — 5 known patterns, 2 dead ends. Previous taste session 28→44. This session targets 52→65+ via mechanical fixes + personality injection.
+baseline	52	0	baseline	Taste score from eval: token=45, typo=90, spacing=70, motion=75, personality=35, components=45	Starting point — biggest gap is visual personality (35) and token discipline (45)
+8739b44d	55	+3	keep	Feed surface opacity + spacing normalization — 7 files, ~30 violations fixed	3-tier structural opacity system (0.03/0.05/0.10) works well for dark UI. Mechanical, zero risk.
+cea26844	57	+2	keep	Build + landing opacity/spacing normalization — 7 files, scale transform removed	Same pattern applied to build surface. Removed anti-slop scale-0.97. Non-token #0a0a0a→warm black.
+4390d19d	58	+1	keep	EventDetailDrawer opacity normalization	Diminishing returns on opacity normalization — fewer violations per file now.
+7e8cfa7a	60	+2	keep	Campus personality status line — time-aware UB voice + alive dot	Campus-specific copy that's context-aware (time of day) creates more distinctiveness than generic stat labels. "Between classes energy" > "3 events today".
+09b27cb1	62	+2	keep	Creation celebration gold ring ping — one-shot on deploy complete	Celebration moment uses unused design budget (rule 24). Gold ring ping + check scale-in makes best feature feel premium.
+ce3185d5	62	+0	keep	Sidebar spacing normalization	Minimal impact — sidebar already mostly clean. Micro-improvement.
+95346904	63	+1	keep	Hero section opacity + spacing normalization	text-white/10 was invisible — raised to white/30. Small but noticeable on landing.
+---	---	---	note	52 → 63 after 7 exps (7 kept) | mode: exploitation | top pattern: mechanical opacity normalization | personality injection higher ROI per experiment
