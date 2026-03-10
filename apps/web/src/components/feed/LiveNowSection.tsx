@@ -3,7 +3,6 @@
 import { useEffect, useReducer } from 'react';
 import { Check, MapPin, Users, Video } from 'lucide-react';
 import { Mono } from '@hive/ui/design-system/primitives';
-import Link from 'next/link';
 import type { FeedEvent } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
 import { isHappeningNow, startsWithinHour, timeLabel } from './time-utils';
@@ -25,28 +24,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
     (e) => isHappeningNow(e.startDate, e.endDate) || startsWithinHour(e.startDate),
   );
 
-  if (liveEvents.length === 0) {
-    return (
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
-          <Mono size="label" className="text-white/50">
-            LIVE NOW
-          </Mono>
-        </div>
-        <p className="text-sm text-white/50 py-2">
-          Nobody&apos;s live right now. Scroll down to see what&apos;s coming up,
-          or be the first to start something.
-        </p>
-        <Link
-          href="/build"
-          className="inline-flex items-center px-4 py-2 mt-2 rounded-full bg-[#FFD700] text-black text-sm font-semibold hover:bg-[#FFE033] transition-colors duration-100"
-        >
-          Start something
-        </Link>
-      </section>
-    );
-  }
+  if (liveEvents.length === 0) return null;
 
   return (
     <section>

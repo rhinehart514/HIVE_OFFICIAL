@@ -227,27 +227,7 @@ export function NewAppsSection() {
 
   if (!user) return null;
 
-  if (tools.length === 0) {
-    return (
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <Mono size="label" className="text-white/50">
-            TRENDING APPS
-          </Mono>
-        </div>
-        <p className="text-sm text-white/30 py-2">
-          Nobody&apos;s made anything yet — be the first.{' '}
-          <Link
-            href="/build"
-            className="text-white/50 hover:text-white/70 transition-colors underline underline-offset-2"
-          >
-            Make a poll or bracket
-          </Link>{' '}
-          and see what your campus thinks.
-        </p>
-      </section>
-    );
-  }
+  if (tools.length === 0) return null;
 
   return (
     <section>

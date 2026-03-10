@@ -3,7 +3,6 @@
 import { useCallback } from 'react';
 import { Check, MapPin, Video } from 'lucide-react';
 import { Mono } from '@hive/ui/design-system/primitives';
-import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { FeedEvent } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
@@ -74,27 +73,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
     [rsvpMutation],
   );
 
-  if (todayEvents.length === 0) {
-    return (
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/30" />
-          <Mono size="label" className="text-white/50">
-            HAPPENING TODAY
-          </Mono>
-        </div>
-        <p className="text-sm text-white/30 py-2">
-          Nothing on the calendar today. Good day to make something happen.
-        </p>
-        <Link
-          href="/build"
-          className="inline-flex items-center px-4 py-2 mt-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
-        >
-          Build an app
-        </Link>
-      </section>
-    );
-  }
+  if (todayEvents.length === 0) return null;
 
   return (
     <section>

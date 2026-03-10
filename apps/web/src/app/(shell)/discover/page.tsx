@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@hive/auth-logic';
@@ -16,6 +16,51 @@ import {
   FeedSkeleton,
 } from '@/components/feed';
 import type { FeedEvent } from '@/components/feed';
+
+/* ─── "Since you left" helpers ─────────────────────────────────── */
+
+const LAST_FEED_VISIT_KEY = 'lastFeedVisit';
+
+function getLastFeedVisit(): number | null {
+  try {
+    const stored = localStorage.getItem(LAST_FEED_VISIT_KEY);
+    if (!stored) return null;
+    const ts = Number(stored);
+    return Number.isFinite(ts) ? ts : null;
+  } catch {
+    return null;
+  }
+}
+
+function setLastFeedVisit(): void {
+  try {
+    localStorage.setItem(LAST_FEED_VISIT_KEY, String(Date.now()));
+  } catch {
+    // localStorage unavailable — silent fail
+  }
+}
+
+function formatTimeSince(ms: number): string {
+  const mins = Math.floor(ms / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function SinceYouLeftDivider({ lastVisit }: { lastVisit: number }) {
+  const elapsed = Date.now() - lastVisit;
+  return (
+    <div className="relative py-4">
+      <div className="border-t border-white/[0.05]" />
+      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-void px-3 font-mono text-[11px] uppercase tracking-wider text-white/30">
+        Since you left &middot; {formatTimeSince(elapsed)}
+      </span>
+    </div>
+  );
+}
 
 /* ─── Data fetching ─────────────────────────────────────────────── */
 
@@ -91,9 +136,22 @@ export default function DiscoverPage() {
   const { user, isLoading: authLoading } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState<FeedEvent | null>(null);
 
+  // Capture lastFeedVisit on mount (before we overwrite it)
+  const lastFeedVisitRef = useRef<number | null>(null);
+  const [lastFeedVisit, setLastFeedVisitState] = useState<number | null>(null);
+
   useEffect(() => {
     if (!authLoading && !user) router.replace('/enter?redirect=/discover');
   }, [authLoading, user, router]);
+
+  // Read lastFeedVisit once on mount, then update it
+  useEffect(() => {
+    if (lastFeedVisitRef.current !== null) return; // already read
+    const prev = getLastFeedVisit();
+    lastFeedVisitRef.current = prev;
+    setLastFeedVisitState(prev);
+    setLastFeedVisit();
+  }, []);
 
   const eventsQuery = useQuery({
     queryKey: ['feed-events'],
@@ -109,7 +167,26 @@ export default function DiscoverPage() {
 
   const events = eventsQuery.data || [];
 
-  // Removed: ?view=spaces scroll behavior (Spaces has its own page now)
+  // Split events into "new since last visit" and "already seen" for today's events
+  const { newEvents, seenEvents, showDivider } = useMemo(() => {
+    if (!lastFeedVisit) return { newEvents: events, seenEvents: [] as FeedEvent[], showDivider: false };
+    const cutoff = lastFeedVisit;
+    const newer: FeedEvent[] = [];
+    const older: FeedEvent[] = [];
+    for (const e of events) {
+      const start = new Date(e.startDate).getTime();
+      if (start > cutoff) {
+        newer.push(e);
+      } else {
+        older.push(e);
+      }
+    }
+    return {
+      newEvents: newer,
+      seenEvents: older,
+      showDivider: newer.length > 0 && older.length > 0,
+    };
+  }, [events, lastFeedVisit]);
 
   if (authLoading || !user) {
     return (
@@ -144,16 +221,29 @@ export default function DiscoverPage() {
             <CampusPulse />
 
             {/* 2. Live Now — events happening or starting within 1hr */}
-            <LiveNowSection events={events} onSelectEvent={handleSelectEvent} />
+            <LiveNowSection events={newEvents} onSelectEvent={handleSelectEvent} />
 
-            {/* 3. Happening Today — time-sorted with relevance tiebreaker, inline RSVP */}
-            <TodayEventsSection events={events} onSelectEvent={handleSelectEvent} />
+            {/* 3. Happening Today — new events since last visit */}
+            <TodayEventsSection events={newEvents} onSelectEvent={handleSelectEvent} />
 
             {/* 4. Trending Apps — shell apps with inline engagement */}
             <NewAppsSection />
 
-            {/* 5. Your Spaces Activity — hidden for new users */}
+            {/* 5. Your Spaces Activity */}
             <SpacesActivitySection />
+
+            {/* "Since you left" divider — separates new from seen events */}
+            {showDivider && lastFeedVisit && (
+              <SinceYouLeftDivider lastVisit={lastFeedVisit} />
+            )}
+
+            {/* Events the user likely already saw */}
+            {seenEvents.length > 0 && (
+              <>
+                <LiveNowSection events={seenEvents} onSelectEvent={handleSelectEvent} />
+                <TodayEventsSection events={seenEvents} onSelectEvent={handleSelectEvent} />
+              </>
+            )}
 
             {/* 6. Discover Spaces — unjoined spaces, cursor-paginated */}
             <DiscoverSection />

@@ -48,20 +48,7 @@ export function SpacesActivitySection() {
     staleTime: 60_000,
   });
 
-  if (items.length === 0) {
-    return (
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <Mono size="label" className="text-white/50">
-            YOUR SPACES
-          </Mono>
-        </div>
-        <p className="text-sm text-white/30 py-2">
-          Your spaces have been quiet — join a few more below or make something to get things going.
-        </p>
-      </section>
-    );
-  }
+  if (items.length === 0) return null;
 
   return (
     <section>
