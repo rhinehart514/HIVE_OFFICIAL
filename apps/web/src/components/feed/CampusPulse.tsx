@@ -105,9 +105,15 @@ export function CampusPulse() {
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-breathe" />
         <Mono size="label" className="text-white/50">
-          CAMPUS NOW
+          OPEN NOW
         </Mono>
+        {diningItems.filter(d => d.minutesUntilClose !== undefined && d.minutesUntilClose <= 30).length > 0 && (
+          <span className="text-[11px] font-mono text-amber-400/70">
+            {diningItems.filter(d => d.minutesUntilClose !== undefined && d.minutesUntilClose <= 30).length} closing soon
+          </span>
+        )}
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">

@@ -17,6 +17,17 @@ import {
 } from '@/components/feed';
 import type { FeedEvent } from '@/components/feed';
 
+/* ─── Time-aware greeting ─────────────────────────────────────── */
+
+function timeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 6) return 'Late night at UB';
+  if (hour < 12) return 'This morning at UB';
+  if (hour < 17) return 'This afternoon at UB';
+  if (hour < 21) return 'Tonight at UB';
+  return 'Late night at UB';
+}
+
 /* ─── "Since you left" helpers ─────────────────────────────────── */
 
 const LAST_FEED_VISIT_KEY = 'lastFeedVisit';
@@ -207,7 +218,7 @@ export default function DiscoverPage() {
         {/* Page header */}
         <div className="relative mb-6">
           <div className="absolute -inset-x-8 -inset-y-4 pointer-events-none" style={{ background: 'radial-gradient(circle at center, rgba(255,215,0,0.04), transparent 60%)' }} />
-          <h1 className="relative font-clash text-[32px] font-semibold text-white mb-1">What&apos;s happening</h1>
+          <h1 className="relative font-clash text-[32px] font-semibold text-white mb-1">{timeGreeting()}</h1>
           <div className="relative">
             <CampusHeader />
           </div>
