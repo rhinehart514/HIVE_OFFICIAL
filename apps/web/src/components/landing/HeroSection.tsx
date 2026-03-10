@@ -79,7 +79,7 @@ export function HeroSection() {
                 background: 'radial-gradient(ellipse at center, rgba(255,215,0,0.05) 0%, transparent 70%)',
               }}
             />
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+            <div className="flex items-center gap-2 rounded-full border border-white/[0.05] bg-white/[0.05] px-4 py-2">
               <input
                 type="text"
                 value={prompt}
@@ -90,7 +90,7 @@ export function HeroSection() {
               <button
                 type="submit"
                 disabled={!prompt.trim()}
-                className="flex items-center gap-1.5 rounded-full bg-white px-5 py-2 text-[14px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="flex items-center gap-2 rounded-full bg-white px-5 py-2 text-[14px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 Build
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -110,7 +110,7 @@ export function HeroSection() {
             >
               or sign up first
             </Link>
-            <span className="text-white/10">·</span>
+            <span className="text-white/30">·</span>
             <p className="font-mono text-[11px] text-white/30">
               free · .edu email
             </p>
