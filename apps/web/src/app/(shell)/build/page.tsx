@@ -596,11 +596,11 @@ function SpacePlacementFlow({
   const handleDeploy = async (space: UserSpace) => {
     setDeploying(space.id);
     try {
-      const res = await fetch(`/api/tools/${toolId}/deploy`, {
+      const res = await fetch(`/api/spaces/${space.id}/tools`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ spaceId: space.id }),
+        body: JSON.stringify({ toolId }),
       });
 
       if (res.ok) {
