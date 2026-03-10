@@ -87,6 +87,7 @@ interface ToolData {
   updatedAt?: string;
   viewCount?: number;
   useCount?: number;
+  forkCount?: number;
   deployedSpaces?: string[];
   provenance?: {
     spaceId?: string;
@@ -421,7 +422,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                 </p>
               )}
 
-              {/* Usage counter + space context */}
+              {/* Usage counter + space context + remix chain */}
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {usageCount > 0 && (
                   <span className="flex items-center gap-1 text-[11px] text-white/30">
@@ -429,9 +430,18 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
                     {usageCount} {usageCount === 1 ? 'person' : 'people'} participated
                   </span>
                 )}
-                {spaceName && (
+                {(tool.forkCount ?? 0) > 0 && (
                   <>
                     {usageCount > 0 && <span className="text-white/30 text-[11px]">·</span>}
+                    <span className="flex items-center gap-1 text-[11px] text-[#FFD700]/50">
+                      <Shuffle className="h-3 w-3" />
+                      {tool.forkCount} {tool.forkCount === 1 ? 'remix' : 'remixes'}
+                    </span>
+                  </>
+                )}
+                {spaceName && (
+                  <>
+                    {(usageCount > 0 || (tool.forkCount ?? 0) > 0) && <span className="text-white/30 text-[11px]">·</span>}
                     <span className="text-[11px] text-white/30">
                       Built for {spaceName}
                     </span>
