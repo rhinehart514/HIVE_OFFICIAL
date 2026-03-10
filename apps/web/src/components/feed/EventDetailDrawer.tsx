@@ -102,7 +102,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
           {/* Panel — slides up on mobile, centered on desktop */}
           <motion.div
             ref={modalRef}
-            className="relative w-full sm:max-w-[520px] max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-surface border border-white/[0.08] shadow-md shadow-black/40 flex flex-col"
+            className="relative w-full sm:max-w-[520px] max-h-[90vh] sm:max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-surface border border-white/[0.10] shadow-md shadow-black/40 flex flex-col"
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
@@ -217,7 +217,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                   {event.matchReasons.map((reason, i) => (
                     <span
                       key={i}
-                      className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/30"
+                      className="px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.05] text-[11px] text-white/30"
                     >
                       {reason}
                     </span>
@@ -230,7 +230,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                 <Link
                   href={event.spaceHandle ? `/s/${event.spaceHandle}` : '#'}
                   onClick={onClose}
-                  className="flex items-center gap-3 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3 hover:bg-white/[0.05] hover:border-white/[0.1] transition-colors group"
+                  className="flex items-center gap-3 rounded-xl bg-white/[0.03] border border-white/[0.05] px-4 py-3 hover:bg-white/[0.05] hover:border-white/[0.10] transition-colors group"
                 >
                   <SpaceAvatar
                     name={event.spaceName}
@@ -249,7 +249,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
             </div>
 
             {/* Sticky footer */}
-            <div className="shrink-0 px-6 py-4 border-t border-white/[0.06] bg-surface">
+            <div className="shrink-0 px-6 py-4 border-t border-white/[0.05] bg-surface">
               <button
                 onClick={() =>
                   rsvpMutation.mutate({ eventId: event.id, spaceId: event.spaceId })
@@ -257,7 +257,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                 className={cn(
                   'flex items-center justify-center gap-2 w-full py-3 rounded-full text-[14px] font-semibold transition-colors duration-100 active:scale-[0.98]',
                   isGoing
-                    ? 'bg-white/[0.06] border border-white/[0.10] text-white/50 hover:bg-white/[0.08]'
+                    ? 'bg-white/[0.05] border border-white/[0.10] text-white/50 hover:bg-white/[0.10]'
                     : 'bg-white text-black hover:bg-white/90',
                 )}
               >

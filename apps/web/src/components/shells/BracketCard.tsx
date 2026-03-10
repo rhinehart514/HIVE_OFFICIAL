@@ -98,7 +98,7 @@ function BracketCard({
       </div>
 
       {/* Matchup — split panel */}
-      <div className="flex overflow-hidden rounded-xl border border-white/[0.08]">
+      <div className="flex overflow-hidden rounded-xl border border-white/[0.10]">
         {(['A', 'B'] as const).map((choice) => {
           const entry = choice === 'A' ? activeMatchup.entryA : activeMatchup.entryB;
           const isMyChoice = myVote === choice;
@@ -114,14 +114,14 @@ function BracketCard({
               className={`
                 flex-1 relative overflow-hidden p-3 text-center
                 transition-colors duration-100
-                ${hasVoted ? 'cursor-default' : 'cursor-pointer hover:bg-white/[0.06]'}
+                ${hasVoted ? 'cursor-default' : 'cursor-pointer hover:bg-white/[0.05]'}
                 ${isMyChoice
-                  ? 'bg-[#FFD700]/[0.08]'
+                  ? 'bg-[#FFD700]/[0.10]'
                   : hasVoted && isLeading
-                    ? 'bg-white/[0.06]'
+                    ? 'bg-white/[0.05]'
                     : 'bg-white/[0.02]'
                 }
-                ${choice === 'A' ? 'border-r border-white/[0.06]' : ''}
+                ${choice === 'A' ? 'border-r border-white/[0.05]' : ''}
               `}
             >
               <span className={`block text-sm truncate ${
@@ -174,7 +174,7 @@ function BracketCard({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden mt-3 border-t border-white/[0.06] pt-3"
+            className="overflow-hidden mt-3 border-t border-white/[0.05] pt-3"
           >
             <div className="grid grid-cols-2 gap-1">
               {entries.map((entry, i) => (
@@ -182,7 +182,7 @@ function BracketCard({
                   key={i}
                   className={`text-[12px] px-2 py-1.5 rounded-lg ${
                     entry === winner
-                      ? 'text-[#FFD700] bg-[#FFD700]/[0.06]'
+                      ? 'text-[#FFD700] bg-[#FFD700]/[0.05]'
                       : 'text-white/30 bg-white/[0.03]'
                   }`}
                 >

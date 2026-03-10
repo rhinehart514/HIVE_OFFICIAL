@@ -195,9 +195,9 @@ export function CampusPulse() {
                 key={`skel-${i}`}
                 className="shrink-0 w-[180px] rounded-2xl border border-white/[0.05] bg-card p-4 animate-pulse"
               >
-                <div className="h-2 w-12 bg-white/[0.06] rounded mb-3" />
-                <div className="h-4 w-24 bg-white/[0.06] rounded mb-2" />
-                <div className="h-3 w-16 bg-white/[0.06] rounded" />
+                <div className="h-2 w-12 bg-white/[0.05] rounded mb-3" />
+                <div className="h-4 w-24 bg-white/[0.05] rounded mb-2" />
+                <div className="h-3 w-16 bg-white/[0.05] rounded" />
               </div>
             ))}
           </>

@@ -76,10 +76,10 @@ function PollCard({
               className={`
                 relative overflow-hidden rounded-xl h-10 text-left text-sm
                 transition-colors duration-100
-                ${showResults ? 'cursor-default' : 'cursor-pointer hover:bg-white/[0.06]'}
+                ${showResults ? 'cursor-default' : 'cursor-pointer hover:bg-white/[0.05]'}
                 ${isMyVote
-                  ? 'border border-[#FFD700]/40 bg-[#FFD700]/[0.06]'
-                  : 'border border-white/[0.08] bg-white/[0.03]'
+                  ? 'border border-[#FFD700]/40 bg-[#FFD700]/[0.05]'
+                  : 'border border-white/[0.10] bg-white/[0.03]'
                 }
                 disabled:cursor-default
               `}

@@ -94,7 +94,7 @@ function RSVPCard({
             </span>
             {isFull && <span className="text-[#FFD700]/60 font-medium">Full</span>}
           </div>
-          <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
+          <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
             <motion.div
               className={`h-full rounded-full ${
                 isFull ? 'bg-[#FFD700]/40' : 'bg-white/25'
@@ -118,7 +118,7 @@ function RSVPCard({
               ? 'bg-white/[0.10] text-white border border-white/30'
               : canRSVP
                 ? 'bg-white text-black hover:bg-white/90'
-                : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.06]'
+                : 'bg-white/[0.05] text-white/30 cursor-not-allowed border border-white/[0.05]'
             }
           `}
         >
@@ -131,7 +131,7 @@ function RSVPCard({
             {attendeeList.map((a, i) => (
               <div
                 key={a.userId}
-                className="w-7 h-7 rounded-full border-2 border-surface bg-white/[0.08] flex items-center justify-center overflow-hidden"
+                className="w-7 h-7 rounded-full border-2 border-surface bg-white/[0.10] flex items-center justify-center overflow-hidden"
                 style={{ zIndex: 5 - i }}
               >
                 {a.photoURL ? (
