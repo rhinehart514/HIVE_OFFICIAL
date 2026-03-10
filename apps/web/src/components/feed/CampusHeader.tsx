@@ -34,25 +34,29 @@ export function CampusHeader() {
     staleTime: 5 * 60_000,
   });
 
-  const campusName = data?.campusName ?? 'UB';
   const spaceCount = data?.spaces ?? 0;
   const eventsToday = data?.eventsToday ?? 0;
 
+  // Campus-specific status line with personality
+  function campusStatus(): string {
+    const hour = new Date().getHours();
+    if (eventsToday > 3) return `${eventsToday} things happening today`;
+    if (eventsToday > 0) return `${eventsToday} event${eventsToday !== 1 ? 's' : ''} today`;
+    if (hour < 10) return 'Campus is waking up';
+    if (hour < 14) return 'Between classes energy';
+    if (hour < 18) return 'Afternoon on campus';
+    if (hour < 22) return 'Campus is alive';
+    return 'Night owls only';
+  }
+
   return (
-    <div className="flex items-center gap-1.5 text-[13px] text-white/30 tabular-nums">
-      <span className="text-white/50 font-medium">{campusName}</span>
+    <div className="flex items-center gap-2 text-[13px] text-white/30 tabular-nums">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]/50 animate-breathe" />
+      <span>{campusStatus()}</span>
       {spaceCount > 0 && (
         <>
           <span className="text-white/30">&middot;</span>
           <span>{spaceCount} orgs</span>
-        </>
-      )}
-      {eventsToday > 0 && (
-        <>
-          <span className="text-white/30">&middot;</span>
-          <span>
-            {eventsToday} event{eventsToday !== 1 ? 's' : ''} today
-          </span>
         </>
       )}
     </div>
