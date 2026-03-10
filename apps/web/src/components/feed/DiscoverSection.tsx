@@ -138,7 +138,7 @@ export function DiscoverSection() {
             Find your people
           </Mono>
         </div>
-        <p className="text-sm text-white/25 py-2">
+        <p className="text-sm text-white/30 py-2">
           You&apos;ve explored all available spaces. Nice.
         </p>
       </section>
@@ -153,7 +153,7 @@ export function DiscoverSection() {
         </Mono>
         <Link
           href="/discover"
-          className="text-[10px] text-white/20 hover:text-white/40 transition-colors flex items-center gap-1"
+          className="text-[10px] text-white/30 hover:text-white/50 transition-colors flex items-center gap-1"
         >
           Browse all <ArrowRight className="w-2.5 h-2.5" />
         </Link>
@@ -164,7 +164,7 @@ export function DiscoverSection() {
           <div key={space.id}>
             <Link
               href={`/s/${space.handle || space.id}`}
-              className="group flex items-start gap-3 rounded-xl border border-white/[0.06] bg-[#0a0a0a] px-3.5 py-3 hover:border-white/[0.12] transition-colors duration-100"
+              className="group flex items-start gap-3 rounded-xl border border-white/[0.05] bg-card px-3.5 py-3 hover:border-white/[0.12] transition-colors duration-100"
             >
               <SpaceAvatar name={space.name} url={space.avatarUrl} size={40} />
               <div className="flex-1 min-w-0">
@@ -176,9 +176,9 @@ export function DiscoverSection() {
                     <span className="text-[10px] text-[#FFD700]/50">&#10003;</span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-white/25">
+                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-white/30">
                   {space.mutualCount && space.mutualCount > 0 ? (
-                    <span className="text-[#FFD700]/40">
+                    <span className="text-[#FFD700]/50">
                       {space.mutualCount} friend{space.mutualCount !== 1 ? 's' : ''} joined
                     </span>
                   ) : (
@@ -203,7 +203,7 @@ export function DiscoverSection() {
               <button
                 onClick={(e) => handleJoin(e, space.id)}
                 disabled={joiningId === space.id}
-                className="shrink-0 mt-1 px-3 py-1 rounded-lg text-[11px] font-medium bg-white/[0.08] border border-white/[0.10] text-white/60 hover:bg-white/[0.14] hover:text-white/80 transition-colors active:scale-[0.97] disabled:opacity-50"
+                className="shrink-0 mt-1 px-3 py-1 rounded-full text-[11px] font-medium bg-white/[0.08] border border-white/[0.10] text-white/50 hover:bg-white/[0.14] hover:text-white/70 transition-colors disabled:opacity-50"
               >
                 {joiningId === space.id ? '...' : 'Join'}
               </button>

@@ -39,17 +39,17 @@ export function CampusHeader() {
   const eventsToday = data?.eventsToday ?? 0;
 
   return (
-    <div className="flex items-center gap-1.5 text-[13px] text-white/35 tabular-nums">
+    <div className="flex items-center gap-1.5 text-[13px] text-white/30 tabular-nums">
       <span className="text-white/50 font-medium">{campusName}</span>
       {spaceCount > 0 && (
         <>
-          <span className="text-white/15">&middot;</span>
+          <span className="text-white/30">&middot;</span>
           <span>{spaceCount} orgs</span>
         </>
       )}
       {eventsToday > 0 && (
         <>
-          <span className="text-white/15">&middot;</span>
+          <span className="text-white/30">&middot;</span>
           <span>
             {eventsToday} event{eventsToday !== 1 ? 's' : ''} today
           </span>

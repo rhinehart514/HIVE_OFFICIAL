@@ -160,10 +160,10 @@ function EmptyState({
       {isLeader ? (
         <>
           <Text size="sm" className="text-white/50 mb-1">
-            Add apps for your space
+            Make something for your members
           </Text>
           <Text size="xs" className="text-white/50 mb-3">
-            Polls, RSVPs, countdowns, and more
+            Run a poll, collect RSVPs, start a bracket
           </Text>
           {onAddTool && (
             <button
@@ -184,7 +184,7 @@ function EmptyState({
         </>
       ) : (
         <Text size="sm" className="text-white/50">
-          No apps yet
+          No apps here yet — leaders can add them
         </Text>
       )}
     </div>

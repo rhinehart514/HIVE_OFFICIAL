@@ -99,7 +99,7 @@ export function ToolsList({
       {tools.length === 0 && !isLeader && (
         <div className="text-center py-4">
           <Wrench className="w-5 h-5 text-white/50 mx-auto mb-2" />
-          <p className="text-xs text-white/50">No apps here yet — leaders can add them</p>
+          <p className="text-xs text-white/50">No apps yet — leaders can build them from the Make tab</p>
         </div>
       )}
 

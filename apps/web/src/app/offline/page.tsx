@@ -69,12 +69,12 @@ export default function OfflinePage() {
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-bold">You&apos;re Offline</h1>
+        <h1 className="text-2xl font-bold">You&apos;re offline</h1>
 
         {/* Description */}
         <p className="text-white/50">
-          It looks like you&apos;ve lost your internet connection. Don&apos;t worry - some
-          features are still available offline.
+          Lost connection — maybe you&apos;re in Lockwood basement again.
+          Some things still work while you&apos;re offline.
         </p>
 
         {/* Status Indicator */}

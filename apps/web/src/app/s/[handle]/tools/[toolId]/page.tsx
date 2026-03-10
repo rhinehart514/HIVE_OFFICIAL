@@ -673,8 +673,8 @@ function ToolContent({
                 <div className="w-12 h-12 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-4">
                   <AlertTriangle className="w-6 h-6 text-white/50" />
                 </div>
-                <p className="text-white/50 font-medium mb-1">Nothing here yet</p>
-                <p className="text-white/50 text-sm mb-6">This creation hasn't been set up with any elements.</p>
+                <p className="text-white/50 font-medium mb-1">This app is empty</p>
+                <p className="text-white/50 text-sm mb-6">It hasn't been set up with any content yet. Head back and try another.</p>
                 <Button
                   variant="outline"
                   size="sm"

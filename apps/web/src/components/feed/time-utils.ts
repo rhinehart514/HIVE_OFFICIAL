@@ -73,19 +73,15 @@ export function cleanDescription(raw?: string): string | undefined {
   return stripped.length > 0 ? stripped : undefined;
 }
 
-export function eventGradient(category?: string, eventType?: string): string {
-  const key = (category || eventType || '').toLowerCase();
-  if (key.includes('social') || key.includes('party') || key.includes('networking'))
-    return 'from-amber-950/80 to-stone-950/60';
-  if (key.includes('academic') || key.includes('lecture') || key.includes('class') || key.includes('study'))
-    return 'from-indigo-950/80 to-slate-950/60';
-  if (key.includes('sport') || key.includes('game') || key.includes('athletic') || key.includes('fitness'))
-    return 'from-emerald-950/80 to-teal-950/60';
-  if (key.includes('art') || key.includes('music') || key.includes('perform') || key.includes('creat'))
-    return 'from-violet-950/80 to-purple-950/60';
-  if (key.includes('greek') || key.includes('fraternity') || key.includes('sorority'))
-    return 'from-rose-950/80 to-red-950/60';
-  if (key.includes('food') || key.includes('dining') || key.includes('cook'))
-    return 'from-orange-950/80 to-amber-950/60';
-  return 'from-zinc-900/80 to-zinc-950/60';
+/**
+ * Returns a category key for event styling.
+ * Note: gradient fills on cards are banned by design rules (rule 55).
+ * Use solid bg-card / bg-surface with a gold accent border instead.
+ * This function is kept for backward compatibility but callers should
+ * migrate to solid backgrounds.
+ */
+export function eventGradient(_category?: string, _eventType?: string): string {
+  // All event categories now use the same warm-black surface.
+  // Differentiation comes from border accents, not gradient fills.
+  return '';
 }

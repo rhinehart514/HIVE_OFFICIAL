@@ -76,8 +76,8 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
             </div>
           ) : eligible.length === 0 ? (
             <div className="py-10 px-6 text-center">
-              <p className="text-[14px] text-white/40 font-medium">No spaces yet</p>
-              <p className="text-[12px] text-white/25 mt-1.5 leading-relaxed">
+              <p className="text-[14px] text-white/50 font-medium">No spaces yet</p>
+              <p className="text-[12px] text-white/30 mt-1.5 leading-relaxed">
                 Join a space to start adding apps
               </p>
               <Link
@@ -108,7 +108,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
                   <SpaceIcon space={space} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] text-white/70 font-medium truncate">{space.name}</p>
-                    <p className="text-[11px] text-white/25 truncate">{space.type} · {space.membership.role}</p>
+                    <p className="text-[11px] text-white/30 truncate">{space.type} · {space.membership.role}</p>
                   </div>
                   {isDeployed ? (
                     <motion.div
@@ -121,7 +121,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
                   ) : isDeploying ? (
                     <div className="w-5 h-5 rounded-full border-2 border-white/[0.08] border-t-white/30 animate-spin" />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center text-white/25 group-hover:text-white/40">
+                    <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center text-white/30 group-hover:text-white/50">
                       <Plus className="w-3.5 h-3.5" />
                     </div>
                   )}
@@ -141,7 +141,7 @@ function SpaceIcon({ space }: { space: MySpace }) {
   }
   return (
     <div className="w-9 h-9 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0">
-      <span className="text-[13px] font-medium text-white/40">{space.name[0]?.toUpperCase()}</span>
+      <span className="text-[13px] font-medium text-white/50">{space.name[0]?.toUpperCase()}</span>
     </div>
   );
 }

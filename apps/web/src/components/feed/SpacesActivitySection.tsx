@@ -56,7 +56,7 @@ export function SpacesActivitySection() {
             Your Spaces
           </Mono>
         </div>
-        <p className="text-sm text-white/25 py-2">
+        <p className="text-sm text-white/30 py-2">
           Your spaces have been quiet — join a few more below or make something to get things going.
         </p>
       </section>
@@ -94,7 +94,7 @@ export function SpacesActivitySection() {
                     </>
                   )}
                 </p>
-                <span className="text-[10px] text-white/20 tabular-nums">
+                <span className="text-[10px] text-white/30 tabular-nums">
                   {relativeTime(item.timestamp)}
                 </span>
               </div>

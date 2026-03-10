@@ -89,10 +89,10 @@ function EmptyState({ onBrowse }: { onBrowse?: () => void }) {
         <HomeIcon className="w-6 h-6 text-white/50" />
       </div>
       <Text weight="medium" className="text-white/50 mb-2">
-        Ready to explore?
+        Find your people
       </Text>
       <Text size="sm" className="text-white/50 mb-4 max-w-xs mx-auto">
-        Browse spaces below to find your communities and connect with your campus.
+        Join spaces to see what your orgs are up to — from SGA to Greek life to dorm communities.
       </Text>
       {onBrowse && (
         <button

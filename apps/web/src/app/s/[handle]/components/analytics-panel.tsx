@@ -266,7 +266,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                       </li>
                     ))}
                     {(!data.summary?.topInsights || data.summary.topInsights.length === 0) && (
-                      <li className="text-sm text-white/50">Deploy an app to start seeing data</li>
+                      <li className="text-sm text-white/50">This is where the good stuff shows up. Deploy an app to start seeing data.</li>
                     )}
                     {(!data.summary?.topInsights || data.summary.topInsights.length === 0) && (
                       <li className="mt-3">

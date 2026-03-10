@@ -760,7 +760,7 @@ export function MemberManagement({
       {filteredMembers.length === 0 ? (
         <div className="py-12 text-center">
           <Text tone="muted">
-            {searchQuery ? 'No members found' : 'No members yet'}
+            {searchQuery ? 'Nobody by that name here' : 'No members yet — share your space to get people in'}
           </Text>
         </div>
       ) : (

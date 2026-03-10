@@ -42,7 +42,7 @@ const VARIANT_CONFIG: Record<
     iconColor: 'text-white/50',
     iconBg: 'bg-white/[0.06]',
     title: 'Stay in the loop',
-    subtitle: 'Join spaces and participate to start receiving updates about activity that matters to you.',
+    subtitle: 'Join spaces and start engaging — updates from your orgs will show up here.',
     showCta: true,
     ctaLabel: 'Browse Spaces',
     ctaHref: '/discover',
@@ -51,8 +51,8 @@ const VARIANT_CONFIG: Record<
     icon: Inbox,
     iconColor: 'text-white/50',
     iconBg: 'bg-white/[0.06]',
-    title: 'Nothing here',
-    subtitle: 'No notifications match this filter. Try checking a different category.',
+    title: 'Nothing in this filter',
+    subtitle: 'Try switching to a different category.',
     showCta: false,
   },
   caught_up: {
@@ -60,7 +60,7 @@ const VARIANT_CONFIG: Record<
     iconColor: 'text-emerald-400',
     iconBg: 'bg-emerald-500/10',
     title: "You're all caught up",
-    subtitle: "Nice work! We'll let you know when there's something new.",
+    subtitle: "We'll ping you when something new comes in.",
     showCta: false,
   },
 };

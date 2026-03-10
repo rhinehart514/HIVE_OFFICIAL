@@ -92,7 +92,7 @@ function AppCard({
 
   return (
     <div
-      className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden"
+      className="rounded-2xl border border-white/[0.05] bg-card overflow-hidden"
     >
       <div className="p-4">
         {/* Header: title + creator */}
@@ -102,16 +102,16 @@ function AppCard({
             {tool.ownerHandle && tool.ownerId !== 'hive-system' ? (
               <Link
                 href={`/u/${tool.ownerHandle}`}
-                className="text-[12px] text-white/40 hover:text-white/60 transition-colors"
+                className="text-[12px] text-white/50 hover:text-white/70 transition-colors"
               >
                 {creatorLabel}
               </Link>
             ) : (
-              <span className="text-[12px] text-white/40">{creatorLabel}</span>
+              <span className="text-[12px] text-white/50">{creatorLabel}</span>
             )}
             {tool.spaceName && (
               <>
-                <span className="text-[10px] text-white/20">in</span>
+                <span className="text-[10px] text-white/30">in</span>
                 {tool.spaceHandle ? (
                   <Link
                     href={`/s/${tool.spaceHandle}`}
@@ -128,7 +128,7 @@ function AppCard({
         </div>
 
         {tool.description && (
-          <p className="mt-1 mb-3 text-[13px] text-white/35 line-clamp-2 leading-relaxed">
+          <p className="mt-1 mb-3 text-[13px] text-white/50 line-clamp-2 leading-relaxed">
             {tool.description}
           </p>
         )}
@@ -202,11 +202,11 @@ export function NewAppsSection() {
             New Apps
           </Mono>
         </div>
-        <p className="text-sm text-white/25 py-2">
+        <p className="text-sm text-white/30 py-2">
           Nobody&apos;s made anything yet — be the first.{' '}
           <Link
             href="/build"
-            className="text-white/40 hover:text-white/60 transition-colors underline underline-offset-2"
+            className="text-white/50 hover:text-white/70 transition-colors underline underline-offset-2"
           >
             Make a poll or bracket
           </Link>{' '}

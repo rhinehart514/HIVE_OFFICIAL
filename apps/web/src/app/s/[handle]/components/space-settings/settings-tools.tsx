@@ -60,10 +60,10 @@ export function SettingsTools({ spaceId, spaceName }: SettingsToolsProps) {
         <div className="text-center py-12 rounded-lg bg-white/[0.06] border border-white/[0.06]">
           <Wrench className="w-10 h-10 mx-auto mb-4 text-white/50" />
           <Text weight="medium" className="text-white/50 mb-1">
-            No creations deployed yet
+            No apps deployed yet
           </Text>
           <Text size="sm" tone="muted" className="mb-6 max-w-sm mx-auto">
-            Add polls, sign-ups, countdowns, and more to make your space.
+            Add polls, sign-ups, brackets, and more — give your members something to do.
           </Text>
           <div className="flex items-center justify-center gap-3">
             <Button variant="cta" size="default" onClick={handleAddTool}>

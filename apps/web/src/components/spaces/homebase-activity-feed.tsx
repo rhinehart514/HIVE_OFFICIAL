@@ -251,11 +251,11 @@ function EmptyState({ message }: { message?: string }) {
           className="text-title font-semibold text-white mb-2"
           style={{ fontFamily: 'var(--font-clash)' }}
         >
-          No activity yet
+          It&apos;s quiet here
         </h3>
         <p className="text-body text-white/50 max-w-xs mx-auto mb-4">
           {message ||
-            'Join spaces and start conversations. Your activity feed will show up here.'}
+            'Join a few spaces and this feed fills up with everything happening across your campus.'}
         </p>
         <Link
           href="/discover"

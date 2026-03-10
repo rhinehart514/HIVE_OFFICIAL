@@ -256,12 +256,12 @@ function EmptyState({ isSearch }: { isSearch?: boolean }) {
           className="text-title-lg md:text-heading-sm font-semibold text-white mb-3"
           style={{ fontFamily: 'var(--font-clash)' }}
         >
-          {isSearch ? 'Nothing here yet' : 'This category is empty'}
+          {isSearch ? 'No matches' : 'Nothing in this category yet'}
         </h3>
         <p className="text-body-lg text-white/50 max-w-sm mx-auto mb-6">
           {isSearch
-            ? 'Try adjusting your search or explore other categories to find your community.'
-            : 'Check back soon — new spaces are being created every day.'
+            ? 'Try a different search or switch categories to find your people.'
+            : 'Spaces show up here as they get created. Try Student Orgs or browse all.'
           }
         </p>
 

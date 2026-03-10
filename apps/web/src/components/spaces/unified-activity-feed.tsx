@@ -556,10 +556,10 @@ function EmptyState() {
         className="text-title-lg font-semibold text-white mb-3"
         style={{ fontFamily: 'var(--font-clash)' }}
       >
-        No activity yet
+        Your space is quiet
       </h3>
       <p className="text-body text-white/50 max-w-sm mx-auto mb-4">
-        Start a conversation, create an event, or deploy an app to get things moving.
+        Drop a poll, post an update, or build an app to get things moving.
       </p>
       <div className="flex items-center justify-center gap-3">
         <Link

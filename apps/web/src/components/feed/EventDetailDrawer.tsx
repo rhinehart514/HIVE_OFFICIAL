@@ -12,7 +12,6 @@ import {
   Video,
   X,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { FeedEvent } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
 import {
@@ -21,7 +20,6 @@ import {
   dayLabel,
   fullTimeLabel,
   cleanDescription,
-  eventGradient,
 } from './time-utils';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -122,12 +120,7 @@ export function EventDetailDrawer({ event, onClose }: Props) {
               {coverSrc ? (
                 <img src={coverSrc} alt={event.title} className="w-full h-full object-cover" />
               ) : (
-                <div
-                  className={cn(
-                    'w-full h-full bg-gradient-to-br',
-                    eventGradient(event.category, event.eventType),
-                  )}
-                />
+                <div className="w-full h-full bg-surface border-l-2 border-l-[#FFD700]" />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/30 to-transparent" />
 
@@ -247,9 +240,9 @@ export function EventDetailDrawer({ event, onClose }: Props) {
                     <p className="text-[13px] text-white/70 font-medium truncate group-hover:text-white/90 transition-colors">
                       {event.spaceName}
                     </p>
-                    <p className="text-[11px] text-white/25">View space</p>
+                    <p className="text-[11px] text-white/30">View space</p>
                   </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors shrink-0" />
+                  <ExternalLink className="w-3.5 h-3.5 text-white/30 group-hover:text-white/50 transition-colors shrink-0" />
                 </Link>
               )}
             </div>

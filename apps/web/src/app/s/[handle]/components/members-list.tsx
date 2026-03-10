@@ -127,7 +127,7 @@ export function MembersList({
           <div className="py-12 text-center">
             <UsersIcon className="w-8 h-8 text-white/50 mx-auto mb-3" />
             <Text tone="muted">
-              {searchQuery ? 'No members found' : 'No members yet'}
+              {searchQuery ? 'Nobody by that name here' : 'No members yet — share your space to get people in'}
             </Text>
             {!searchQuery && (
               <button
@@ -137,7 +137,7 @@ export function MembersList({
                 }}
                 className="inline-flex items-center px-4 py-2 mt-4 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
               >
-                Share your space
+                Copy invite link
               </button>
             )}
           </div>

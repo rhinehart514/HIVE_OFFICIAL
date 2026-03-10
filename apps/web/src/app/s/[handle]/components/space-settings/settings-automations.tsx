@@ -117,9 +117,9 @@ export function SettingsAutomations({ spaceId }: SettingsAutomationsProps) {
       {automations.length === 0 && !automationsLoading && (
         <div className="text-center py-12 rounded-lg bg-white/[0.06] border border-white/[0.06]">
           <Zap className="w-12 h-12 mx-auto mb-4 text-amber-500/40" />
-          <Text weight="medium" className="mb-2">No automations yet</Text>
+          <Text weight="medium" className="mb-2">No automations set up</Text>
           <Text size="sm" tone="muted" className="mb-6 max-w-sm mx-auto">
-            Automations let you send welcome messages, schedule reminders, and more.
+            Auto-welcome new members, schedule reminders, and keep your space running on autopilot.
           </Text>
           <div className="flex items-center justify-center gap-3">
             <Button variant="cta" size="default" onClick={() => setShowTemplates(true)}>

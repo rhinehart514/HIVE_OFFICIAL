@@ -371,7 +371,7 @@ export function IdentityClaimModal({
               ) : filteredResults.length === 0 ? (
                 <div className="py-12 text-center">
                   <Text className="text-white/50">
-                    {searchQuery ? 'No results found' : 'No options available'}
+                    {searchQuery ? 'Nothing matching that search' : 'No options available right now'}
                   </Text>
                 </div>
               ) : (

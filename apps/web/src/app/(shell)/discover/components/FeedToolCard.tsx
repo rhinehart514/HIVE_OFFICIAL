@@ -40,19 +40,6 @@ export interface FeedToolCardProps {
   expandedContent?: React.ReactNode;
 }
 
-const CATEGORY_GRADIENTS: Record<string, string> = {
-  productivity: 'from-[#FFD700]/30 to-amber-400/20',
-  social: 'from-[#FFD700]/20 to-white/10',
-  game: 'from-emerald-400/30 to-emerald-400/10',
-  utility: 'from-amber-400/30 to-amber-400/10',
-  creative: 'from-[#FFD700]/40 to-amber-400/20',
-};
-
-function getCategoryGradient(category?: string): string {
-  if (!category) return 'from-white/10 to-white/5';
-  return CATEGORY_GRADIENTS[category.toLowerCase()] || 'from-white/10 to-white/5';
-}
-
 export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, isExpanded, onToggleExpand, expandedContent }: FeedToolCardProps) {
   const [localExpanded, setLocalExpanded] = useState(false);
   const expanded = isExpanded ?? localExpanded;
@@ -71,24 +58,25 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-2xl border border-white/[0.06] bg-[#080808] overflow-hidden hover:border-white/[0.10] transition-colors duration-200"
+      transition={{ duration: 0.2, delay: Math.min(index * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
+      className="rounded-2xl border border-white/[0.05] bg-card overflow-hidden hover:border-white/[0.10] transition-colors duration-200"
     >
-      <div className={cn('h-10 bg-gradient-to-r', getCategoryGradient(tool.category))} />
+      {/* Accent bar — solid color, no gradient */}
+      <div className="h-1 bg-[#FFD700]/30" />
       <div className="p-4">
         {/* Builder byline */}
         <div className="flex items-center gap-2 mb-3">
           <div className="w-6 h-6 rounded-full bg-[#FFD700]/15 flex items-center justify-center shrink-0">
-            <span className="text-[10px] font-semibold text-[#FFD700]/80">{initial}</span>
+            <span className="text-[10px] font-semibold text-[#FFD700]">{initial}</span>
           </div>
           <span className="text-[12px] text-white/50 truncate">{tool.creatorName || 'Anonymous'}</span>
-          <span className="text-[10px] text-white/20">{relativeTime(tool.createdAt)}</span>
+          <span className="text-[10px] text-white/30">{relativeTime(tool.createdAt)}</span>
         </div>
 
         {/* Title + description */}
         <h3 className="text-[16px] font-semibold text-white leading-snug">{tool.title}</h3>
         {tool.description && (
-          <p className="mt-1.5 text-[13px] text-white/40 line-clamp-3 leading-relaxed">{tool.description}</p>
+          <p className="mt-1.5 text-[13px] text-white/50 line-clamp-3 leading-relaxed">{tool.description}</p>
         )}
 
         {/* Stats */}
@@ -106,7 +94,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
             </span>
           )}
           {tool.useCount === 0 && tool.forkCount === 0 && (
-            <span className="text-white/20">New</span>
+            <span className="text-white/30">New</span>
           )}
         </div>
 
@@ -115,9 +103,9 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
           <button
             onClick={handleToggle}
             className={cn(
-              'flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium transition-colors duration-150 active:scale-[0.97]',
+              'flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium transition-colors duration-100',
               expanded
-                ? 'bg-white/[0.08] border border-white/[0.10] text-white/60'
+                ? 'bg-white/[0.08] border border-white/[0.10] text-white/50'
                 : 'bg-white/[0.06] border border-white/[0.06] text-white/70 hover:bg-white/[0.08] hover:border-white/[0.10]'
             )}
           >
@@ -129,7 +117,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
               onRemix(tool.id);
             }}
             disabled={isRemixing}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium border border-[#FFD700]/20 text-[#FFD700]/70 hover:border-[#FFD700]/30 hover:text-[#FFD700]/90 hover:bg-[#FFD700]/[0.04] transition-colors duration-150 active:scale-[0.97] disabled:opacity-40"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium border border-[#FFD700]/30 text-[#FFD700]/70 hover:border-[#FFD700]/50 hover:text-[#FFD700] hover:bg-[#FFD700]/[0.04] transition-colors duration-100 disabled:opacity-50"
           >
             <GitFork className="w-3.5 h-3.5" />
             {isRemixing ? 'Remixing...' : 'Remix'}
@@ -140,7 +128,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
                 e.stopPropagation();
                 onAddToSpace(tool.id);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium bg-white/[0.04] border border-white/[0.06] text-white/40 hover:bg-white/[0.06] hover:border-white/[0.10] hover:text-white/60 transition-colors duration-150 active:scale-[0.97]"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium bg-white/[0.04] border border-white/[0.06] text-white/50 hover:bg-white/[0.06] hover:border-white/[0.10] hover:text-white/70 transition-colors duration-100"
             >
               <Plus className="w-3.5 h-3.5" />
               Add to space

@@ -177,8 +177,8 @@ export function SearchOverlay({ isOpen, onClose, spaceId, spaceHandle }: SearchO
                     </div>
                   ) : results.length === 0 ? (
                     <div className="text-center py-8 px-4">
-                      <p className="text-sm text-white/50">No results for &ldquo;{query}&rdquo;</p>
-                      <p className="text-xs text-white/50 mt-1">Try different keywords</p>
+                      <p className="text-sm text-white/50">Nothing matching &ldquo;{query}&rdquo;</p>
+                      <p className="text-xs text-white/50 mt-1">Try a different search term</p>
                     </div>
                   ) : (
                     results.map((result, index) => {

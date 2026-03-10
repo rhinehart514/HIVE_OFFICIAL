@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback } from 'react';
-import { Check, MapPin, Users, Video } from 'lucide-react';
+import { Check, MapPin, Video } from 'lucide-react';
 import { Mono } from '@hive/ui/design-system/primitives';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { FeedEvent } from './types';
 import { SpaceAvatar } from './SpaceAvatar';
-import { isHappeningNow, isToday, timeLabel, eventGradient } from './time-utils';
+import { isHappeningNow, isToday, timeLabel } from './time-utils';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -84,7 +84,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
           </Mono>
         </div>
         <p className="text-sm text-white/30 py-2">
-          Nothing on campus today — good day to start something.
+          Nothing on the calendar today. Good day to make something happen.
         </p>
         <Link
           href="/build"
@@ -105,13 +105,13 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
             Today
           </Mono>
         </div>
-        <span className="text-[11px] text-white/20 tabular-nums">
+        <span className="text-[11px] text-white/30 tabular-nums">
           {todayEvents.length} event{todayEvents.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       <div className="space-y-2">
-        {todayEvents.map((event, i) => {
+        {todayEvents.map((event) => {
           const isGoing = event.isUserRsvped || event.userRsvp === 'going';
           const coverSrc = event.imageUrl || event.coverImageUrl;
           const signal = socialSignal(event);
@@ -120,7 +120,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
             <div
               key={event.id}
               onClick={() => onSelectEvent(event)}
-              className="group cursor-pointer rounded-xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden hover:border-white/[0.12] transition-colors duration-100"
+              className="group cursor-pointer rounded-xl border border-white/[0.06] bg-card overflow-hidden hover:border-white/[0.12] transition-colors duration-100"
             >
               <div className="flex">
                 {/* Image thumbnail */}
@@ -132,12 +132,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                       className="w-full h-full object-cover min-h-[88px]"
                     />
                   ) : (
-                    <div
-                      className={cn(
-                        'w-full h-full min-h-[88px] bg-gradient-to-br',
-                        eventGradient(event.category, event.eventType),
-                      )}
-                    />
+                    <div className="w-full h-full min-h-[88px] bg-surface border-l-2 border-l-[#FFD700]" />
                   )}
                 </div>
 
@@ -165,12 +160,12 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                   </div>
 
                   {/* Title */}
-                  <p className="text-[14px] font-medium text-white/80 leading-snug line-clamp-1 group-hover:text-white transition-colors">
+                  <p className="text-[14px] font-medium text-white/70 leading-snug line-clamp-1 group-hover:text-white transition-colors">
                     {event.title}
                   </p>
 
                   {/* Meta row */}
-                  <div className="flex items-center gap-2.5 mt-1.5 text-[11px] text-white/60">
+                  <div className="flex items-center gap-2.5 mt-1.5 text-[11px] text-white/50">
                     {event.location && (
                       <span className="flex items-center gap-1">
                         {event.isOnline ? (
@@ -187,8 +182,8 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                       <span
                         className={cn(
                           event.friendsAttending && event.friendsAttending > 0
-                            ? 'text-[#FFD700]/40'
-                            : 'text-white/60',
+                            ? 'text-[#FFD700]/50'
+                            : 'text-white/50',
                         )}
                       >
                         {signal}
@@ -201,7 +196,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                     <button
                       onClick={(e) => handleRsvp(e, event.id, event.spaceId)}
                       className={cn(
-                        'px-3 py-1 rounded-lg text-[11px] font-medium transition-colors active:scale-[0.97]',
+                        'px-3 py-1 rounded-full text-[11px] font-medium transition-colors',
                         isGoing
                           ? 'bg-white/[0.06] border border-white/[0.10] text-white/50'
                           : 'bg-white/[0.08] border border-white/[0.10] text-white/70 hover:bg-white/[0.12]',
@@ -221,7 +216,7 @@ export function TodayEventsSection({ events, onSelectEvent }: Props) {
                           e.stopPropagation();
                           maybeMutation.mutate({ eventId: event.id, spaceId: event.spaceId });
                         }}
-                        className="px-3 py-1 rounded-lg text-[11px] font-medium bg-transparent border border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-colors active:scale-[0.97]"
+                        className="px-3 py-1 rounded-full text-[11px] font-medium bg-transparent border border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-colors"
                       >
                         Maybe
                       </button>

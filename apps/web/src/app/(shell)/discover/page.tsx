@@ -100,9 +100,12 @@ export default function DiscoverPage() {
 
       <div className="w-full max-w-[960px] mx-auto px-4 py-8 md:px-8">
         {/* Page header */}
-        <div className="mb-6">
-          <h1 className="font-clash text-[32px] font-semibold text-white mb-1">What&apos;s happening</h1>
-          <CampusHeader />
+        <div className="relative mb-6">
+          <div className="absolute -inset-x-8 -inset-y-4 pointer-events-none" style={{ background: 'radial-gradient(circle at center, rgba(255,215,0,0.04), transparent 60%)' }} />
+          <h1 className="relative font-clash text-[32px] font-semibold text-white mb-1">What&apos;s happening</h1>
+          <div className="relative">
+            <CampusHeader />
+          </div>
         </div>
 
         {isLoading ? (
