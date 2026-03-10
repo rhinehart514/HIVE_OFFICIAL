@@ -30,7 +30,7 @@ export function BuildPreviewPanel({
   const isShellMatched = state.phase === 'shell-matched' && isShellFormat;
 
   return (
-    <div className="flex-1 flex flex-col min-h-[50vh] lg:min-h-0 bg-white/[0.03]">
+    <div className="flex-1 flex flex-col min-h-[50vh] lg:min-h-0 bg-white/[0.05]">
       <AnimatePresence mode="wait">
         {!showPreview ? (
           <IdleInspiration key="inspiration" />
@@ -43,7 +43,7 @@ export function BuildPreviewPanel({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="flex-1 flex flex-col rounded-2xl overflow-hidden m-3 lg:m-4
-              border border-white/[0.06] bg-[#0a0a0a]"
+              border border-white/[0.05] bg-void"
           >
             <CodePreview
               status={state.phase === 'generating' ? state.streamingStatus : ''}
@@ -81,15 +81,15 @@ function ShellPreview({
   return (
     <motion.div
       key="shell-preview"
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.25, ease: EASE }}
       className="flex-1 flex items-start justify-center px-6 pt-12 lg:pt-16"
     >
       <div className="w-full max-w-md">
         <PreviewErrorBoundary>
-          <Suspense fallback={<div className="h-48 rounded-2xl bg-white/[0.03] animate-pulse" />}>
+          <Suspense fallback={<div className="h-48 rounded-2xl bg-white/[0.05] animate-pulse" />}>
             <ShellRenderer
               format={shellFormat}
               shellId="preview"
@@ -127,7 +127,7 @@ function ErrorPanel({ onReset }: { onReset: () => void }) {
         </p>
         <button
           onClick={onReset}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-sm font-medium text-white hover:bg-white/[0.04] transition-colors duration-100"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.05] text-sm font-medium text-white hover:bg-white/[0.05] transition-colors duration-100"
         >
           <RotateCcw className="w-4 h-4" />
           Try again

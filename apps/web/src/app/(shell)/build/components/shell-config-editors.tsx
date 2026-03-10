@@ -2,7 +2,7 @@
 
 import type { ShellFormat, ShellConfig, PollConfig, BracketConfig, RSVPConfig } from '@/lib/shells/types';
 
-const INPUT = `w-full px-3 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
+const INPUT = `w-full px-3 py-2 rounded-lg text-sm bg-white/[0.05] border border-white/[0.05]
   text-white placeholder:text-white/30 focus:outline-none focus:outline-2 focus:outline-[#FFD700]`;
 
 function PollConfigEditor({ config, onChange }: { config: PollConfig; onChange: (c: PollConfig) => void }) {
@@ -14,9 +14,9 @@ function PollConfigEditor({ config, onChange }: { config: PollConfig; onChange: 
       </div>
       <div>
         <label className="text-[11px] text-white/30 mb-0.5 block">Options</label>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {config.options.map((opt, i) => (
-            <div key={i} className="flex gap-1.5">
+            <div key={i} className="flex gap-2">
               <input
                 type="text"
                 value={opt}
@@ -31,7 +31,7 @@ function PollConfigEditor({ config, onChange }: { config: PollConfig; onChange: 
               {config.options.length > 2 && (
                 <button
                   onClick={() => onChange({ ...config, options: config.options.filter((_, j) => j !== i) })}
-                  className="text-white/30 hover:text-white/30 text-[11px] px-1.5"
+                  className="text-white/30 hover:text-white/30 text-[11px] px-2"
                 >
                   x
                 </button>
@@ -58,9 +58,9 @@ function BracketConfigEditor({ config, onChange }: { config: BracketConfig; onCh
       </div>
       <div>
         <label className="text-[11px] text-white/30 mb-0.5 block">Entries</label>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {config.entries.map((entry, i) => (
-            <div key={i} className="flex gap-1.5">
+            <div key={i} className="flex gap-2">
               <input
                 type="text"
                 value={entry}
@@ -75,7 +75,7 @@ function BracketConfigEditor({ config, onChange }: { config: BracketConfig; onCh
               {config.entries.length > 4 && (
                 <button
                   onClick={() => onChange({ ...config, entries: config.entries.filter((_, j) => j !== i) })}
-                  className="text-white/30 hover:text-white/30 text-[11px] px-1.5"
+                  className="text-white/30 hover:text-white/30 text-[11px] px-2"
                 >
                   x
                 </button>
@@ -117,7 +117,7 @@ function RSVPConfigEditor({ config, onChange }: { config: RSVPConfig; onChange: 
             type="datetime-local"
             value={config.dateTime ?? ''}
             onChange={(e) => onChange({ ...config, dateTime: e.target.value || undefined })}
-            className="w-full px-2 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
+            className="w-full px-2 py-2 rounded-lg text-sm bg-white/[0.05] border border-white/[0.05]
               text-white focus:outline-none focus:outline-2 focus:outline-[#FFD700] [color-scheme:dark]"
           />
         </div>
@@ -130,7 +130,7 @@ function RSVPConfigEditor({ config, onChange }: { config: RSVPConfig; onChange: 
             value={config.capacity ?? ''}
             onChange={(e) => onChange({ ...config, capacity: e.target.value ? Number(e.target.value) : undefined })}
             placeholder="No limit"
-            className="w-full px-2 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]
+            className="w-full px-2 py-2 rounded-lg text-sm bg-white/[0.05] border border-white/[0.05]
               text-white placeholder:text-white/30 focus:outline-none focus:outline-2 focus:outline-[#FFD700]"
           />
         </div>

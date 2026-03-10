@@ -27,7 +27,7 @@ export function CodePreview({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { background: #0a0a0a; color: #fff; font-family: system-ui, sans-serif; }
+          body { background: #0D0D0C; color: #fff; font-family: system-ui, sans-serif; }
           ${codeOutput.css}
         </style>
       </head>
@@ -43,7 +43,7 @@ export function CodePreview({
   return (
     <div className="w-full h-full flex flex-col">
       {status && (
-        <div className="flex items-center gap-2 px-4 py-2 text-xs text-white/30 border-b border-white/[0.06]">
+        <div className="flex items-center gap-2 px-4 py-2 text-xs text-white/30 border-b border-white/[0.05]">
           <Loader2 className="w-3 h-3 animate-spin" />
           {status}
         </div>
@@ -51,7 +51,7 @@ export function CodePreview({
       {codeOutput ? (
         <iframe
           ref={iframeRef}
-          className="flex-1 w-full border-0 rounded-b-2xl bg-[#0a0a0a]"
+          className="flex-1 w-full border-0 rounded-b-2xl bg-[#0D0D0C]"
           sandbox="allow-scripts"
           title="App preview"
         />

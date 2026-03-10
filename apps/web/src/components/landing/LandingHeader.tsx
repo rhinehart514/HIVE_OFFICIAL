@@ -20,12 +20,12 @@ export function LandingHeader() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-[background-color,border-color] duration-300 ${
         scrolled
-          ? 'bg-void border-b border-white/[0.10]'
+          ? 'bg-void border-b border-white/[0.05]'
           : 'bg-transparent'
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="HIVE home">
+        <Link href="/" className="flex items-center gap-3" aria-label="HIVE home">
           <svg
             width="20"
             height="20"

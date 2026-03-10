@@ -79,7 +79,7 @@ function Card({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-white/[0.08] bg-[var(--bg-surface)] p-6 transition-[opacity,transform] duration-500 ease-out ${
+      className={`rounded-2xl border border-white/[0.05] bg-[var(--bg-surface)] p-6 transition-[opacity,transform] duration-500 ease-out ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       } ${className}`}
       style={{
@@ -118,7 +118,7 @@ function PollCard() {
         {options.map((opt, i) => (
           <div
             key={opt.label}
-            className="group relative h-10 overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.03]"
+            className="group relative h-10 overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.03]"
           >
             {/* Fill bar */}
             <div
@@ -180,10 +180,10 @@ function RSVPCard() {
 
       {/* Meta pills */}
       <div className="flex gap-2">
-        <span className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50">
+        <span className="rounded-full border border-white/[0.05] bg-white/[0.05] px-3 py-2 text-[12px] text-white/50">
           Sat, Apr 12
         </span>
-        <span className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50">
+        <span className="rounded-full border border-white/[0.05] bg-white/[0.05] px-3 py-2 text-[12px] text-white/50">
           Student Union 230
         </span>
       </div>
@@ -214,28 +214,28 @@ function BracketCard() {
           return (
             <div
               key={i}
-              className="flex items-center overflow-hidden rounded-xl border border-white/[0.08]"
+              className="flex items-center overflow-hidden rounded-xl border border-white/[0.05]"
             >
               {/* Side A */}
               <div
-                className={`flex-1 px-3 py-2.5 text-[13px] ${
+                className={`flex-1 px-3 py-3 text-[13px] ${
                   m.winner === 'a'
-                    ? 'bg-white/[0.08] text-white font-medium'
-                    : 'bg-white/[0.02] text-white/30'
+                    ? 'bg-white/[0.05] text-white font-medium'
+                    : 'bg-white/[0.03] text-white/30'
                 }`}
               >
                 {m.a}
               </div>
               {/* Divider */}
-              <span className="shrink-0 bg-white/[0.04] px-2 py-2.5 font-mono text-[11px] text-white/30">
+              <span className="shrink-0 bg-white/[0.05] px-2 py-3 font-mono text-[11px] text-white/30">
                 vs
               </span>
               {/* Side B */}
               <div
-                className={`flex-1 px-3 py-2.5 text-right text-[13px] ${
+                className={`flex-1 px-3 py-3 text-right text-[13px] ${
                   m.winner === 'b'
-                    ? 'bg-white/[0.08] text-white font-medium'
-                    : 'bg-white/[0.02] text-white/30'
+                    ? 'bg-white/[0.05] text-white font-medium'
+                    : 'bg-white/[0.03] text-white/30'
                 }`}
               >
                 {m.b}
@@ -296,10 +296,10 @@ function CountdownCard() {
         </div>
       </div>
       <div className="mt-3 flex gap-2">
-        <span className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50">
+        <span className="rounded-full border border-white/[0.05] bg-white/[0.05] px-3 py-2 text-[12px] text-white/50">
           Apr 26 · Alumni Arena
         </span>
-        <span className="rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/50">
+        <span className="rounded-full border border-white/[0.05] bg-white/[0.05] px-3 py-2 text-[12px] text-white/50">
           UB SA + CPMC
         </span>
       </div>

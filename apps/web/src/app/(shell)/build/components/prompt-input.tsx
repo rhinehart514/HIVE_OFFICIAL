@@ -98,7 +98,7 @@ export function PromptInput({
         className="relative rounded-2xl transition-shadow duration-200"
         style={{
           boxShadow: isTyping
-            ? 'inset 0 0 20px rgba(255,215,0,0.08)'
+            ? 'inset 0 0 20px rgba(255,215,0,0.05)'
             : undefined,
         }}
       >
@@ -111,13 +111,13 @@ export function PromptInput({
           disabled={disabled}
           rows={1}
           className={[
-            'w-full px-4 py-3 pr-12 rounded-2xl text-[15px] bg-white/[0.03] border',
+            'w-full px-4 py-3 pr-12 rounded-2xl text-[15px] bg-white/[0.05] border',
             'text-white placeholder:text-white/30 resize-none',
             'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
-            'focus:shadow-[inset_0_0_20px_rgba(255,215,0,0.06)]',
+            'focus:shadow-[inset_0_0_20px_rgba(255,215,0,0.05)]',
             'focus:border-[#FFD700]/30',
             'disabled:opacity-50 transition-shadow transition-colors duration-200',
-            isTyping ? 'border-[#FFD700]/20' : 'border-white/[0.08]',
+            isTyping ? 'border-[#FFD700]/30' : 'border-white/[0.05]',
           ].join(' ')}
           style={{ minHeight: 48, maxHeight: 120 }}
         />
