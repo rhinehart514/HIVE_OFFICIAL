@@ -608,10 +608,7 @@ export const POST = withValidation(
 
       // Log code in development for testing
       if (currentEnvironment === 'development') {
-        console.warn('\n========================================');
-        console.warn(`DEV OTP CODE: ${code}`);
-        console.warn(`Email: ${normalizedEmail}`);
-        console.warn('========================================\n');
+        logger.warn(`DEV OTP CODE: ${code} | Email: ${normalizedEmail}`);
       }
 
       // Store in Firestore (skip in development to avoid quota issues)

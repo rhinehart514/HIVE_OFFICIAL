@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck — pipeline return types incompatible between MockRedis and UpstashAdapter
 // Advanced Redis-based caching layer for HIVE platform
 // Supports Upstash Redis (REST API) with fallback to in-memory mock
 // Optimized for multi-tenant architecture and cross-campus scaling

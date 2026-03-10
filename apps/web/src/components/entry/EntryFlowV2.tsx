@@ -610,7 +610,7 @@ export function EntryFlowV2() {
       });
       analytics.trackOnboardingCompleted(0, ['welcome', 'verify', 'name', 'interests', 'spaces']);
 
-      goToApp(result.redirect || '/discover');
+      goToApp(result.redirect || '/build');
     } catch (error) {
       setNameError(error instanceof Error ? error.message : 'Failed to complete entry');
       setStep('name');

@@ -6,6 +6,7 @@
  */
 
 import { dbAdmin } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
 
 const MAX_TRIGGER_DEPTH = 5;
 
@@ -120,9 +121,9 @@ export async function executeAutomationActions(
 
         const currentDepth = context.depth ?? 0;
         if (currentDepth >= MAX_TRIGGER_DEPTH) {
-          console.warn(
-            `[automation-executor] triggerTool refused: depth ${currentDepth} exceeds max ${MAX_TRIGGER_DEPTH}. ` +
-            `Deployment ${targetDeploymentId}, event ${eventName}`
+          logger.warn(
+            `triggerTool refused: depth ${currentDepth} exceeds max ${MAX_TRIGGER_DEPTH}`,
+            { targetDeploymentId, eventName }
           );
           break;
         }
@@ -142,9 +143,9 @@ export async function executeAutomationActions(
             },
           });
         } catch (err) {
-          console.warn(
-            `[automation-executor] triggerTool failed for deployment ${targetDeploymentId} event ${eventName}:`,
-            err instanceof Error ? err.message : 'Inngest unavailable'
+          logger.warn(
+            `triggerTool failed for deployment ${targetDeploymentId}`,
+            { eventName, error: err instanceof Error ? err.message : 'Inngest unavailable' }
           );
         }
         break;

@@ -613,9 +613,9 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       onboardingCompleted: true,
     });
 
-    // Determine best redirect: first auto-joined space or discover
+    // Determine best redirect: first auto-joined space or build (creation-first)
     const firstSpace = autoJoinedSpaces[0];
-    const redirect = firstSpace ? `/s/${firstSpace.handle}` : '/discover';
+    const redirect = firstSpace ? `/s/${firstSpace.handle}` : '/build';
 
     const response = NextResponse.json({
       success: true,

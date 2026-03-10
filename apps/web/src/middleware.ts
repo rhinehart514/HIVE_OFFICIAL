@@ -434,7 +434,7 @@ export async function middleware(request: NextRequest) {
 
   // Legacy /onboarding redirect - PERMANENT (301) canonical route change
   if (pathname === '/onboarding') {
-    return NextResponse.redirect(new URL('/discover', request.url), 301);
+    return NextResponse.redirect(new URL('/build', request.url), 301);
   }
 
   return NextResponse.next();

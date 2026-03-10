@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix details type and window cast for gtag analytics
 import { z } from 'zod';
 import { logger } from './structured-logger';
 
@@ -298,7 +296,7 @@ export class ErrorClassifier {
       category,
       severity,
       message,
-      details: errorDetails.response?.data ?? errorDetails.details ?? undefined,
+      details: (errorDetails.response?.data ?? errorDetails.details ?? undefined) as Record<string, unknown> | undefined,
       timestamp,
       retryable,
       stack: errorDetails.stack

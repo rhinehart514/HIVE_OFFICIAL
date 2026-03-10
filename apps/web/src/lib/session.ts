@@ -45,7 +45,7 @@ function generateDevSecret(): string {
     return `dev-${nodeCrypto.randomBytes(32).toString('hex')}`;
   } catch {
     // Last resort fallback - only for development
-    console.warn('⚠️ Using weak random generation for dev session secret. This is a security concern if NODE_ENV is not development.');
+    logger.warn('Using weak random generation for dev session secret — security concern if not development');
     return `dev-fallback-${Date.now()}-${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`;
   }
 }
@@ -54,7 +54,7 @@ const SESSION_SECRET = rawSecret || generateDevSecret();
 
 // Log session secret source on startup (only in development)
 if (isDevelopment) {
-  console.warn(`Session secret: ${rawSecret ? 'using .env.local (persistent)' : 'generated random (sessions will NOT persist)'}`);
+  logger.warn(`Session secret: ${rawSecret ? 'using .env.local (persistent)' : 'generated random (sessions will NOT persist)'}`);
 }
 
 // Cookie names

@@ -156,15 +156,13 @@ function parseEnv() {
     
     return result;
   } catch (error) {
-    console.error("❌ Environment validation failed:", error);
-    
+    // Environment validation failed — throw with context
     if (currentEnv === 'production') {
       throw new Error(
         `PRODUCTION CRITICAL: Environment configuration is invalid. Application cannot start. Please check your environment variables.`
       );
     }
-    
-    console.warn("⚠️ Environment validation failed in development mode, continuing with warnings");
+
     throw new Error(
       `Environment configuration is invalid. Please check your environment variables.`
     );
@@ -232,8 +230,6 @@ try {
 } catch (error) {
   // CRITICAL: In production runtime (not build), we MUST fail
   if (isProductionRuntime && !isBuildTime) {
-    console.error("🚨 CRITICAL: Environment validation failed in production!");
-    console.error(error);
     throw new Error(
       `PRODUCTION STARTUP BLOCKED: Environment configuration is invalid. ` +
       `Check server logs for details. Application cannot start with invalid configuration.`
@@ -241,8 +237,7 @@ try {
   }
 
   // In development or build time, warn but continue with fallbacks
-  console.warn("⚠️ Environment parsing failed, using fallbacks:", error);
-  console.warn("⚠️ This is acceptable during build time or development.");
+  // Environment parsing failed — using fallbacks (acceptable during build/dev)
 
   // Provide safe fallbacks for build time / development
   env = {
