@@ -22,7 +22,7 @@ import {
   ISpaceRepository,
   IFeedRepository
 } from '../infrastructure/repositories/interfaces';
-import type { SpaceMemberRole } from '../domain/spaces/aggregates/enhanced-space';
+import type { SpaceMemberRole, EnhancedSpace } from '../domain/spaces/aggregates/enhanced-space';
 
 /**
  * Callback for saving space membership during onboarding
@@ -123,7 +123,7 @@ export class ProfileOnboardingService extends BaseApplicationService {
         data: {
           profile,
           suggestedSpaces: suggestedSpaces.getValue().slice(0, 5).map(space => ({
-            id: space.id.id,
+            id: space.spaceId.value,
             name: space.name.name,
             memberCount: space.getMemberCount()
           })),
@@ -317,14 +317,17 @@ export class ProfileOnboardingService extends BaseApplicationService {
 
   private async initializeFeed(profileId: ProfileId): Promise<void> {
     // Feed initialization is non-critical - will be created on first access if needed
-    await this.feedRepo.findByUserId(profileId);
+    const findByUserId = this.feedRepo.findByUserId as ((id: ProfileId) => Promise<unknown>) | undefined;
+    if (findByUserId) {
+      await findByUserId(profileId);
+    }
   }
 
   private async getSuggestedSpaces(
     major?: string,
     interests: string[] = []
-  ): Promise<Result<any[]>> {
-    const suggestions: any[] = [];
+  ): Promise<Result<EnhancedSpace[]>> {
+    const suggestions: EnhancedSpace[] = [];
 
     // Get spaces by major
     if (major) {
