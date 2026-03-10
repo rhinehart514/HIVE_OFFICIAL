@@ -61,7 +61,7 @@ export function LeftSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[200px] flex-col bg-[var(--bg-void)] md:flex">
       {/* Logo */}
-      <Link href="/discover" className="flex items-center gap-2.5 h-14 px-5" aria-label="Home">
+      <Link href="/discover" className="flex items-center gap-3 h-14 px-5" aria-label="Home">
         <HiveLogoGold size={20} />
         <span className="font-display text-[13px] font-semibold tracking-[0.08em] text-white">
           HIVE
