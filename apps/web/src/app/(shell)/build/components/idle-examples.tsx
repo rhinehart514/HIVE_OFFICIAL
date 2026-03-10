@@ -3,10 +3,11 @@
 import { MyAppsSection } from './my-apps-section';
 
 const EXAMPLE_PROMPTS = [
-  'Best dining hall on campus?',
-  'Who\'s coming to the pregame tonight?',
-  'Rate the professors — tournament style',
-  'Sign up for the bake sale',
+  'Best dining hall at UB?',
+  'Who\'s coming to the pregame?',
+  'Rate the professors — bracket style',
+  'Sign up for our fundraiser',
+  'Vote on next meeting topic',
 ];
 
 export function IdleExamples({
@@ -18,7 +19,7 @@ export function IdleExamples({
 }) {
   return (
     <div className="mt-4 space-y-2">
-      <p className="text-xs text-white/50">People are making:</p>
+      <p className="font-mono text-[11px] uppercase tracking-wider text-white/30">Try one</p>
       <div className="flex flex-wrap gap-2">
         {EXAMPLE_PROMPTS.map((example) => (
           <button
