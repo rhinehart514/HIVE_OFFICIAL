@@ -1,0 +1,12 @@
+commit	score	delta	status	description
+baseline	0.50	—	baseline	MyAppsSection dead code, SpacePlacementFlow calls nonexistent /api/tools/:id/deploy (404), auth gate loses format/config on roundtrip, no empty state for new creators on build page
+c4084fac	0.55	+0.05	keep	fix SpacePlacementFlow — call correct /api/spaces/:id/tools endpoint
+9c5fd37f	0.60	+0.05	keep	wire MyAppsSection into build page + add empty state for new creators
+5e346c0c	0.65	+0.05	keep	restore shell format/config after auth gate — skip re-classification
+2516ce02	0.67	+0.02	keep	fix bracket odd-entry bug — pad to even count
+2cadd4ea	0.70	+0.03	keep	clean shell config before save — strip blank options/entries
+---	---	---	note	0.50 → 0.70 after 5 experiments (5 kept)
+845286ae	0.75	+0.05	keep	save generated code to Firestore — code tools were missing elements after creation
+35b76e4c	0.73	+0.03	keep	add error boundary around shell preview — prevents creation state loss
+e96c1ace	0.75	+0.02	keep	handle unauthed code gen gracefully — show sign-in message not generic error
+---	---	---	note	0.50 → 0.75 after 8 experiments (8 kept)
