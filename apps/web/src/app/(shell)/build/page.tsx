@@ -42,6 +42,33 @@ import { emitValueMoment } from '@/lib/pwa-triggers';
 
 const ShellRenderer = lazy(() => import('@/components/shells/ShellRenderer'));
 
+/** Lightweight error boundary for shell preview — prevents creation state loss on render crash */
+class PreviewErrorBoundary extends React.Component<
+  { children: React.ReactNode; onReset?: () => void },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-48 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-sm text-white/40">Preview couldn't load</p>
+            <button
+              onClick={() => { this.setState({ hasError: false }); this.props.onReset?.(); }}
+              className="text-xs text-white/25 hover:text-white/40 mt-2 transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const EASE = MOTION.ease.premium;
 
 const DEPLOY_STORAGE_KEY = 'hive_pending_deploy';
@@ -1079,23 +1106,25 @@ export default function BuildPage() {
                 className="flex-1 flex items-start justify-center px-6 pt-12 lg:pt-16"
               >
                 <div className="w-full max-w-md">
-                  <Suspense
-                    fallback={
-                      <div className="h-48 rounded-2xl bg-white/[0.03] animate-pulse" />
-                    }
-                  >
-                    <ShellRenderer
-                      format={shellFormat!}
-                      shellId="preview"
-                      config={state.shellConfig}
-                      state={null}
-                      currentUserId="preview-user"
-                      creatorId="preview-user"
-                      isCreator={true}
-                      onAction={() => {}}
-                      compact={false}
-                    />
-                  </Suspense>
+                  <PreviewErrorBoundary>
+                    <Suspense
+                      fallback={
+                        <div className="h-48 rounded-2xl bg-white/[0.03] animate-pulse" />
+                      }
+                    >
+                      <ShellRenderer
+                        format={shellFormat!}
+                        shellId="preview"
+                        config={state.shellConfig}
+                        state={null}
+                        currentUserId="preview-user"
+                        creatorId="preview-user"
+                        isCreator={true}
+                        onAction={() => {}}
+                        compact={false}
+                      />
+                    </Suspense>
+                  </PreviewErrorBoundary>
                 </div>
               </motion.div>
             ) : (state.phase === 'generating' || state.phase === 'complete') ? (
