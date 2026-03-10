@@ -30,7 +30,7 @@ export function EventsList({
     return (
       <div className="text-center py-4">
         <Calendar className="w-5 h-5 text-white/50 mx-auto mb-2" />
-        <p className="text-xs text-white/50">Nothing coming up yet</p>
+        <p className="text-xs text-white/50">No events planned — quiet week</p>
       </div>
     );
   }

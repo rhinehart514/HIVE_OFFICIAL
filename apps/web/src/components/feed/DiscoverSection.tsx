@@ -139,7 +139,7 @@ export function DiscoverSection() {
           </Mono>
         </div>
         <p className="text-sm text-white/30 py-2">
-          You&apos;ve explored all available spaces. Nice.
+          You&apos;ve joined everything. Legend status.
         </p>
       </section>
     );

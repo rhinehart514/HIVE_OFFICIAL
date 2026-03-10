@@ -475,7 +475,7 @@ export function StandaloneToolClient({ toolId, baseUrl: _baseUrl }: { toolId: st
               />
             ) : (
               <div className="text-center py-12">
-                <p className="text-white/50 text-sm mb-4">This creation is empty</p>
+                <p className="text-white/50 text-sm mb-4">This app isn't ready yet — the creator is still working on it</p>
                 {user && tool.ownerId === user.uid && (
                   <button
                     onClick={() => router.push(`/build/${toolId}`)}

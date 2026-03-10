@@ -76,9 +76,9 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
             </div>
           ) : eligible.length === 0 ? (
             <div className="py-10 px-6 text-center">
-              <p className="text-[14px] text-white/50 font-medium">No spaces yet</p>
+              <p className="text-[14px] text-white/50 font-medium">No spaces to place this in</p>
               <p className="text-[12px] text-white/30 mt-1.5 leading-relaxed">
-                Join a space to start adding apps
+                Join a space first — then you can drop apps into it
               </p>
               <Link
                 href="/discover"

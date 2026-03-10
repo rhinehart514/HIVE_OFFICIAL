@@ -135,7 +135,7 @@ export function ToolCanvasInline({ toolId, onAddToSpace }: ToolCanvasInlineProps
   if (tool.elements.length === 0) {
     return (
       <div className="py-6 text-center">
-        <p className="text-[13px] text-white/30">Nothing to show yet</p>
+        <p className="text-[13px] text-white/30">This app is still cooking</p>
       </div>
     );
   }

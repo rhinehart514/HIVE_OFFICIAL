@@ -473,9 +473,9 @@ export default function BuildStudioPage({ params }: Props) {
           </div>
         ) : (
           <div className="rounded-2xl bg-void border border-white/[0.06] p-8 text-center">
-            <p className="text-white/30 text-sm mb-4">This app is empty</p>
+            <p className="text-white/30 text-sm mb-4">Nothing here yet</p>
             <p className="text-white/30 text-xs">
-              Describe what you want below
+              Tell us what you need and we'll build it
             </p>
           </div>
         )}

@@ -317,8 +317,8 @@ export default function CampusToolsDirectory() {
               <div className="text-center py-20">
                 <p className="text-white/30 text-sm mb-2">
                   {activeCategory === 'All'
-                    ? 'No campus apps yet. Be the first to make something your campus needs.'
-                    : `No ${activeCategory.toLowerCase()} apps yet.`}
+                    ? 'Nobody has made one yet. Be the first — your campus will thank you.'
+                    : `No ${activeCategory.toLowerCase()} apps yet. You could fix that.`}
                 </p>
                 <button
                   onClick={() => router.push('/build')}

@@ -164,7 +164,7 @@ export function ClaimOnboarding({
                     Drop something in
                   </p>
                   <p className="text-[13px] text-white/50 mt-1">
-                    Polls, brackets, signups — your members can respond without downloading anything
+                    Polls, brackets, signups — your people can respond right from the link, no download
                   </p>
                   <div className="mt-3 flex flex-col gap-2">
                     <Link
@@ -202,7 +202,7 @@ export function ClaimOnboarding({
                   Get it to your people
                 </p>
                 <p className="text-[13px] text-white/50 mt-1">
-                  Share the link — they can vote and respond without an account
+                  Drop it in your GroupMe or text chain — no account needed to respond
                 </p>
                 <div className="mt-3 flex gap-2">
                   <button

@@ -998,7 +998,7 @@ export function EntryFlowV2() {
                 Spaces for you
               </h1>
               <p className="text-sm text-white/30">
-                Join a few to get started
+                Tap a few — these are your campus orgs
               </p>
 
               {isLoadingSpaces ? (

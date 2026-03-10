@@ -140,7 +140,7 @@ export function InterestsSection({
       {/* Current Interests */}
       <div className="flex flex-wrap gap-2 mb-4">
         {localInterests.length === 0 ? (
-          <p className="text-sm text-white/50 italic">No interests added yet</p>
+          <p className="text-sm text-white/50 italic">None yet — add a few so we know what to show you</p>
         ) : (
           localInterests.map((interest) => (
             <span

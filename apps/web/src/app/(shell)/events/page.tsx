@@ -261,9 +261,9 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <Calendar className="w-8 h-8 text-white/30 mb-3" />
-      <p className="text-[15px] font-medium text-white/30 mb-1">Nothing coming up</p>
+      <p className="text-[15px] font-medium text-white/30 mb-1">No events on your radar</p>
       <p className="text-[13px] text-white/30 mb-5">
-        Join spaces like SGA or Greek orgs to see their events here
+        Join SGA, Greek life, or your floor — their events show up here automatically
       </p>
       <Link
         href="/discover"

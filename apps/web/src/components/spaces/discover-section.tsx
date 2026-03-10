@@ -244,8 +244,8 @@ function EmptyState({ isSearch, onClear }: { isSearch?: boolean; onClear?: () =>
       </h3>
       <p className="text-[14px] text-white/50 max-w-xs mx-auto mb-4">
         {isSearch
-          ? 'Try different words or switch categories — your people are in here somewhere.'
-          : 'No spaces in this category yet. Check Student Orgs — that\'s where most of campus lives.'
+          ? 'Try different words or switch categories — 650+ orgs are in here, from SGA to club rugby.'
+          : 'Nothing in this category yet. Try Student Orgs — that\'s where most of UB lives.'
         }
       </p>
 

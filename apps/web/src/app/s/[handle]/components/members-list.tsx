@@ -127,7 +127,7 @@ export function MembersList({
           <div className="py-12 text-center">
             <UsersIcon className="w-8 h-8 text-white/50 mx-auto mb-3" />
             <Text tone="muted">
-              {searchQuery ? 'Nobody by that name here' : 'No members yet — share your space to get people in'}
+              {searchQuery ? 'No one by that name here' : 'No members yet — drop your invite link in the GroupMe'}
             </Text>
             {!searchQuery && (
               <button
