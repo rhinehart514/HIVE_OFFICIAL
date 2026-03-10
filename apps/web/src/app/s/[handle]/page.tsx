@@ -23,7 +23,7 @@ import {
 } from '@hive/ui/design-system/primitives';
 import { toast, type ReportContentInput } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
-import { useSpaceResidenceState } from './hooks';
+import { useSpaceResidenceState, useParticipationCount } from './hooks';
 import {
   SpaceHeader,
   SpaceThreshold,
@@ -407,6 +407,17 @@ export default function SpacePageUnified() {
 
   // Removed: Keyboard navigation for board switching (multi-board deprecated)
 
+  // Member participation count — how many apps this user has interacted with in this space
+  const participationToolIds = React.useMemo(
+    () => sidebarTools.map((t) => t.toolId),
+    [sidebarTools]
+  );
+  const participationCount = useParticipationCount({
+    toolIds: participationToolIds,
+    userId: user?.id,
+    enabled: !!space?.isMember && !space?.isLeader && sidebarTools.length > 0,
+  });
+
   // Transform messages to Message type (called unconditionally)
   const feedMessages = React.useMemo(() => {
     return (messages || []).map((msg) => ({
@@ -782,6 +793,15 @@ export default function SpacePageUnified() {
             <span className="text-white/30">&middot;</span>
             <span>{sidebarTools.length} {sidebarTools.length === 1 ? 'app' : 'apps'} made</span>
           </div>
+
+          {/* Member participation accumulation — shows only for non-leader members who have engaged */}
+          {!space.isLeader && participationCount > 0 && (
+            <div className="px-4 py-1.5 border-b border-white/[0.04]">
+              <span className="font-mono text-[11px] text-white/30">
+                You&apos;ve responded to {participationCount} {participationCount === 1 ? 'app' : 'apps'} in {space.name}
+              </span>
+            </div>
+          )}
 
           {/* Apps strip — always visible when apps exist, one tap to interact */}
           {sidebarTools.length > 0 && (
