@@ -356,7 +356,18 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
 
       try {
         const name = generateToolName(prompt);
-        const toolId = await createBlankTool(name, prompt);
+        let toolId: string;
+        try {
+          toolId = await createBlankTool(name, prompt);
+        } catch (createErr) {
+          // If tool creation fails (likely 401 for unauthed), show a helpful error
+          const msg = createErr instanceof Error ? createErr.message : 'Failed to create tool';
+          if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('auth')) {
+            dispatch({ type: 'ERROR', error: 'Sign in to create custom apps' });
+            return;
+          }
+          throw createErr;
+        }
         dispatch({ type: 'GENERATION_STARTED', toolId, toolName: name });
         onToolCreated?.(toolId);
 
