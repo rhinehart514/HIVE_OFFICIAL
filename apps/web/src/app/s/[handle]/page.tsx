@@ -13,7 +13,7 @@
 
 import * as React from 'react';
 import dynamic from 'next/dynamic';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { logger } from '@/lib/logger';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -125,6 +125,17 @@ export default function SpacePageUnified() {
     name: string;
     description?: string;
   } | null>(null);
+
+  // Auto-open tool from ?tool= query param (e.g., from notification deep link)
+  const searchParams = useSearchParams();
+  const toolParam = searchParams.get('tool');
+  const toolParamHandled = React.useRef(false);
+  React.useEffect(() => {
+    if (toolParam && !toolParamHandled.current && !activeTool) {
+      toolParamHandled.current = true;
+      setActiveTool({ toolId: toolParam, name: 'Loading...' });
+    }
+  }, [toolParam, activeTool]);
 
   // Thread panel state - driven by URL param
   const [activeThreadId, setActiveThreadId] = React.useState<string | null>(null);

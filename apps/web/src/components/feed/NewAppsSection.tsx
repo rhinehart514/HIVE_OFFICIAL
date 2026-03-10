@@ -49,16 +49,24 @@ interface DiscoverTool {
 /* ─── Data fetching ─────────────────────────────────────────────── */
 
 async function fetchTrendingTools(): Promise<TrendingTool[]> {
-  const res = await fetch('/api/tools/discover?sort=trending&limit=6', { credentials: 'include' });
-  if (!res.ok) return [];
-  const payload = await res.json();
-  const tools: DiscoverTool[] = payload?.data?.tools ?? [];
-  // Only return tools with a native shell format
-  return tools
-    .filter(
-      (t) => t.shellFormat && ['poll', 'bracket', 'rsvp'].includes(t.shellFormat)
-    )
-    .map((t) => ({
+  // Fetch trending tools and user's spaces in parallel
+  const [discoverRes, spacesRes] = await Promise.all([
+    fetch('/api/tools/discover?sort=trending&limit=10', { credentials: 'include' }),
+    fetch('/api/profile/my-spaces', { credentials: 'include' }),
+  ]);
+
+  const discoverPayload = discoverRes.ok ? await discoverRes.json() : { data: { tools: [] } };
+  const spacesPayload = spacesRes.ok ? await spacesRes.json() : { spaces: [] };
+
+  const allTools: DiscoverTool[] = discoverPayload?.data?.tools ?? [];
+  const userSpaceIds = new Set(
+    ((spacesPayload.spaces || []) as { id: string }[]).map((s) => s.id)
+  );
+
+  // Filter to shell-format tools only
+  const shellTools = allTools
+    .filter((t) => t.shellFormat && ['poll', 'bracket', 'rsvp'].includes(t.shellFormat))
+    .map((t): TrendingTool => ({
       id: t.id,
       name: t.title,
       description: t.description,
@@ -72,6 +80,12 @@ async function fetchTrendingTools(): Promise<TrendingTool[]> {
       spaceName: t.spaceOrigin.name,
       spaceHandle: null,
     }));
+
+  // Prioritize tools from user's spaces
+  const fromMySpaces = shellTools.filter((t) => t.spaceId && userSpaceIds.has(t.spaceId));
+  const fromOthers = shellTools.filter((t) => !t.spaceId || !userSpaceIds.has(t.spaceId));
+
+  return [...fromMySpaces, ...fromOthers].slice(0, 6);
 }
 
 /* ─── Individual app card with its own shell state ──────────────── */
@@ -227,11 +241,14 @@ export function NewAppsSection() {
 
   if (!user) return null;
 
+  // Check if first tool is from user's space (personalized)
+  const hasPersonalized = tools.length > 0 && tools[0].spaceId && tools[0].spaceName;
+
   return (
     <section>
       <div className="flex items-center gap-2 mb-3">
         <Mono size="label" className="text-white/50">
-          TRENDING APPS
+          {hasPersonalized ? 'FROM YOUR SPACES' : 'TRENDING APPS'}
         </Mono>
       </div>
 

@@ -27,6 +27,17 @@ import { BuildPreviewPanel } from './components/build-preview-panel';
 import { ImpactStrip } from './components/impact-strip';
 import { savePendingDeploy, loadPendingDeploy } from './components/deploy-storage';
 
+function hintToPrompt(hint: string): string {
+  const prompts: Record<string, string> = {
+    poll: 'Create a poll for my group',
+    bracket: 'Create a bracket tournament',
+    rsvp: 'Create an RSVP for an event',
+    signup: 'Create a signup sheet',
+    countdown: 'Create a countdown timer',
+  };
+  return prompts[hint] || `Create a ${hint}`;
+}
+
 export default function BuildPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,7 +46,8 @@ export default function BuildPage() {
 
   const originSpaceId = searchParams.get('spaceId');
   const originSpaceName = searchParams.get('spaceName');
-  const autoPrompt = searchParams.get('prompt') || undefined;
+  const hint = searchParams.get('hint');
+  const autoPrompt = searchParams.get('prompt') || (hint ? hintToPrompt(hint) : undefined);
 
   const {
     state,
