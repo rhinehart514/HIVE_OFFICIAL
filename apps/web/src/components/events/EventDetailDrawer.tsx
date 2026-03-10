@@ -192,7 +192,7 @@ export function EventDetailDrawer({ eventId, isOpen, onClose }: EventDetailDrawe
 
           {/* Drawer */}
           <motion.div
-            className="relative w-full max-w-lg max-h-[85vh] bg-[var(--bg-ground)] border-t border-white/[0.06] rounded-t-2xl flex flex-col overflow-hidden"
+            className="relative w-full max-w-lg max-h-[85vh] bg-[var(--bg-ground)] border-t border-white/[0.05] rounded-t-2xl flex flex-col overflow-hidden"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -200,11 +200,11 @@ export function EventDetailDrawer({ eventId, isOpen, onClose }: EventDetailDrawe
           >
             {/* Drag handle */}
             <div className="flex justify-center py-2">
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+              <div className="w-10 h-1 rounded-full bg-white/30" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-3 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-4 pb-3 border-b border-white/[0.05]">
               <span className="text-sm font-medium text-white/50">Event details</span>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon-sm" onClick={handleShare} aria-label="Share">
@@ -220,9 +220,9 @@ export function EventDetailDrawer({ eventId, isOpen, onClose }: EventDetailDrawe
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
               {isLoading && (
                 <div className="space-y-4 animate-pulse">
-                  <div className="h-6 w-3/4 rounded bg-white/[0.06]" />
-                  <div className="h-20 rounded-xl bg-white/[0.06]" />
-                  <div className="h-16 rounded-xl bg-white/[0.06]" />
+                  <div className="h-6 w-3/4 rounded bg-white/[0.05]" />
+                  <div className="h-20 rounded-xl bg-white/[0.05]" />
+                  <div className="h-16 rounded-xl bg-white/[0.05]" />
                 </div>
               )}
 
@@ -254,7 +254,7 @@ export function EventDetailDrawer({ eventId, isOpen, onClose }: EventDetailDrawe
                   </h2>
 
                   {/* Date/time */}
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-3">
+                  <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-3">
                     <div className="flex items-center gap-3">
                       <Calendar className="w-4 h-4 text-[var(--color-gold)]" />
                       <div>
@@ -271,7 +271,7 @@ export function EventDetailDrawer({ eventId, isOpen, onClose }: EventDetailDrawe
                   </div>
 
                   {/* Location */}
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-3">
+                  <div className="rounded-xl border border-white/[0.05] bg-white/[0.05] p-3">
                     <div className="flex items-center gap-3">
                       {isOnline ? (
                         <Video className="w-4 h-4 text-[var(--color-gold)]" />
@@ -364,7 +364,7 @@ export function EventDetailDrawer({ eventId, isOpen, onClose }: EventDetailDrawe
                   {/* Organizer */}
                   {event.organizer && (
                     <div className="flex items-center gap-3 pt-2">
-                      <Avatar size="sm" className="ring-1 ring-white/[0.06]">
+                      <Avatar size="sm" className="ring-1 ring-white/[0.05]">
                         {event.organizer.photoURL && <AvatarImage src={event.organizer.photoURL} />}
                         <AvatarFallback>{getInitials(event.organizer.name)}</AvatarFallback>
                       </Avatar>
