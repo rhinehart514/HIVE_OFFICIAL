@@ -491,6 +491,9 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
     const format = state.classification.format as ShellFormat;
     const config = state.shellConfig;
 
+    // Validate and clean config — strip empty options/entries before saving
+    let cleanedConfig = config;
+
     if (format === 'poll') {
       const pollConfig = config as PollConfig;
       if (!pollConfig.question?.trim()) {
@@ -502,6 +505,7 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
         toast.error('Add at least 2 options to your poll');
         return;
       }
+      cleanedConfig = { ...pollConfig, question: pollConfig.question.trim(), options: validOptions };
     } else if (format === 'bracket') {
       const bracketConfig = config as BracketConfig;
       if (!bracketConfig.topic?.trim()) {
@@ -513,19 +517,21 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
         toast.error('Add at least 4 entries to your bracket');
         return;
       }
+      cleanedConfig = { ...bracketConfig, topic: bracketConfig.topic.trim(), entries: validEntries };
     } else if (format === 'rsvp') {
       const rsvpConfig = config as RSVPConfig;
       if (!rsvpConfig.title?.trim()) {
         toast.error('Your RSVP needs a title');
         return;
       }
+      cleanedConfig = { ...rsvpConfig, title: rsvpConfig.title.trim() };
     }
 
     try {
       const name = generateToolName(state.prompt);
       const toolId = await createBlankTool(name, state.prompt);
 
-      // Save as a shell-format tool
+      // Save as a shell-format tool (use cleaned config)
       const putRes = await fetch(`/api/tools/${toolId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -534,7 +540,7 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
           name,
           type: 'shell',
           shellFormat: state.classification.format,
-          shellConfig: state.shellConfig,
+          shellConfig: cleanedConfig,
           status: 'published',
           visibility: 'public',
         }),
@@ -547,11 +553,11 @@ export function useBuildMachine({ spaceId, spaceContext, onToolCreated }: UseBui
       // Non-blocking: don't await — Firebase client auth may not be initialized
       // (user authenticates via session cookies, not Firebase client SDK)
       const shellFormat = state.classification.format as ShellFormat;
-      if (shellFormat !== 'custom' && state.shellConfig) {
+      if (shellFormat !== 'custom' && cleanedConfig) {
         try {
           const database = getDatabase(app);
           const stateRef = ref(database, `shell_states/${toolId}`);
-          const shellInitialState = buildInitialShellState(shellFormat, state.shellConfig);
+          const shellInitialState = buildInitialShellState(shellFormat, cleanedConfig);
           set(stateRef, shellInitialState).catch(() => {
             // RTDB write failed — shell will init state on first interaction
           });
