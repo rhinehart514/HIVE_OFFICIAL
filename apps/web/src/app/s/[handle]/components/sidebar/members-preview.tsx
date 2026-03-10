@@ -67,7 +67,7 @@ export function MembersPreview({
               <Avatar
                 size="xs"
                 className={cn(
-                  'ring-2 ring-[#0A0A09]',
+                  'border-2 border-[#0A0A09]',
                   'relative'
                 )}
               >
@@ -91,7 +91,7 @@ export function MembersPreview({
 
         {/* Overflow count */}
         {remainingCount > 0 && (
-          <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center ring-2 ring-[#0A0A09]">
+          <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center border-2 border-[#0A0A09]">
             <span className="text-[10px] font-medium text-white/50">
               +{remainingCount}
             </span>

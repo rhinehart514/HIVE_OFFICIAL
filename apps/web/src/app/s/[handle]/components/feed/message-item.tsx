@@ -236,7 +236,7 @@ export function MessageItem({
               </div>
             </div>
           ) : (
-            <p className={cn(spaceTypographyClasses.messageContent, 'text-white break-words')}>
+            <p className={cn(spaceTypographyClasses.messageContent, 'text-white/70 break-words')}>
               {message.content}
               {message.isEdited && (
                 <span className="ml-1 text-xs text-white/50" title={message.editedAt ? `Edited ${new Date(message.editedAt).toLocaleString()}` : 'Edited'}>
@@ -316,7 +316,7 @@ export function MessageItem({
           {message.replyCount && message.replyCount > 0 && (
             <button
               onClick={onReply}
-              className="mt-2 text-xs text-white/40 hover:text-white/70 transition-colors"
+              className="mt-2 text-xs text-white/50 hover:text-white/70 transition-colors"
             >
               {message.replyCount} {message.replyCount === 1 ? 'reply' : 'replies'}
             </button>

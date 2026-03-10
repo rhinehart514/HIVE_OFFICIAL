@@ -173,7 +173,7 @@ function CountUpStat({
       return;
     }
 
-    const duration = 1200;
+    const duration = 800;
     const start = performance.now();
     const step = (now: number) => {
       const progress = Math.min((now - start) / duration, 1);

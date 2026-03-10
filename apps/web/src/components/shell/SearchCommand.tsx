@@ -221,14 +221,14 @@ export function SearchCommand() {
               onChange={(e) => search(e.target.value)}
               placeholder="Search spaces, people, events, apps..."
               className={cn(
-                'flex-1 bg-transparent text-[15px] text-white placeholder:text-white/25',
+                'flex-1 bg-transparent text-[15px] text-white placeholder:text-white/30',
                 'font-sans outline-none',
               )}
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
             />
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-sans text-white/20">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-sans text-white/30">
               ESC
             </kbd>
           </div>
@@ -253,7 +253,7 @@ export function SearchCommand() {
             {/* Idle state */}
             {!loading && query.length < 2 && (
               <div className="flex flex-col items-center gap-2 py-10 px-4">
-                <span className="text-sm text-white/20 font-sans">Search spaces, people, and apps across UB</span>
+                <span className="text-sm text-white/30 font-sans">Search spaces, people, and apps across UB</span>
               </div>
             )}
 
@@ -261,7 +261,7 @@ export function SearchCommand() {
             {!loading && grouped.map((group) => (
               <div key={group.type}>
                 <div className="flex items-center gap-2 px-4 py-1.5">
-                  <span className="text-[10px] uppercase tracking-label text-white/25 font-sans font-medium">
+                  <span className="text-[10px] uppercase tracking-label text-white/30 font-sans font-medium">
                     {group.label}
                   </span>
                 </div>
@@ -282,12 +282,12 @@ export function SearchCommand() {
                         {result.title}
                       </p>
                       {result.description && (
-                        <p className="text-[11px] font-sans text-white/25 truncate mt-0.5">
+                        <p className="text-[11px] font-sans text-white/30 truncate mt-0.5">
                           {result.description}
                         </p>
                       )}
                     </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-white/10 group-hover:text-white/25 shrink-0 transition-colors" />
+                    <ArrowRight className="h-3.5 w-3.5 text-white/30 group-hover:text-white/50 shrink-0 transition-colors" />
                   </button>
                 ))}
               </div>

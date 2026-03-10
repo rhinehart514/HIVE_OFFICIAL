@@ -222,7 +222,7 @@ function BracketCard() {
                 {m.a}
               </div>
               {/* Divider */}
-              <span className="shrink-0 bg-white/[0.04] px-2 py-2.5 font-mono text-[10px] text-white/20">
+              <span className="shrink-0 bg-white/[0.04] px-2 py-2.5 font-mono text-[10px] text-white/30">
                 vs
               </span>
               {/* Side B */}

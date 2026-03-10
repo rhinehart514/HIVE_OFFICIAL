@@ -106,7 +106,10 @@ export function LeftSidebar() {
           <div className="relative">
             <Bell className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 h-[7px] w-[7px] rounded-full bg-[#FFD700]" />
+              <>
+                <span className="absolute -top-0.5 -right-0.5 h-[7px] w-[7px] rounded-full bg-[#FFD700]/30 animate-ping" />
+                <span className="absolute -top-0.5 -right-0.5 h-[7px] w-[7px] rounded-full bg-[#FFD700]" />
+              </>
             )}
           </div>
           <span className="text-[14px] font-medium">Notifications</span>
@@ -116,7 +119,7 @@ export function LeftSidebar() {
         {!pathname.startsWith('/build') && (
           <Link
             href="/build"
-            className="flex items-center justify-center gap-2 h-10 mt-2 rounded-full bg-[#FFD700] text-black text-[14px] font-semibold hover:bg-[#FFE033] transition-colors duration-100"
+            className="flex items-center justify-center gap-2 h-10 mt-2 rounded-full bg-[#FFD700] text-black text-[14px] font-semibold hover:bg-[#FFE033] transition-colors duration-100 shadow-[0_0_20px_rgba(255,215,0,0.15)] hover:shadow-[0_0_30px_rgba(255,215,0,0.25)]"
           >
             <Plus className="h-4 w-4" strokeWidth={2} />
             Create
@@ -165,7 +168,7 @@ function MobileNavItem({
 
   const className = cn(
     'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors duration-100',
-    isActive ? 'text-white' : 'text-white/35',
+    isActive ? 'text-white' : 'text-white/30',
   );
 
   // Make tab opens creation sheet instead of navigating
@@ -246,7 +249,10 @@ export function MobileHeader() {
         >
           <Bell className="h-[20px] w-[20px]" strokeWidth={1.5} />
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full bg-[#FFD700]" />
+            <>
+              <span className="absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full bg-[#FFD700]/30 animate-ping" />
+              <span className="absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full bg-[#FFD700]" />
+            </>
           )}
         </button>
       </div>

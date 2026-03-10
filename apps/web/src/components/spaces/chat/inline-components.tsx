@@ -440,9 +440,9 @@ function SignupCard({
                 {isMine ? (
                   <span className="text-xs text-[#FFD700]/80">Claimed</span>
                 ) : isFull ? (
-                  <span className="text-xs text-white/20">Full</span>
+                  <span className="text-xs text-white/30">Full</span>
                 ) : (
-                  <span className="text-xs text-white/40">Open</span>
+                  <span className="text-xs text-white/50">Open</span>
                 )}
               </div>
             </div>

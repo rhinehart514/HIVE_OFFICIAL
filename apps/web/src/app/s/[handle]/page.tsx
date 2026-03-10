@@ -712,7 +712,7 @@ export default function SpacePageUnified() {
           />
 
           {/* Space History Line */}
-          <div className="px-4 py-1.5 flex items-center gap-2 text-[11px] text-white/25 border-b border-white/[0.04]">
+          <div className="px-4 py-1.5 flex items-center gap-2 text-[11px] text-white/30 border-b border-white/[0.04]">
             <span>
               {space.activatedAt
                 ? `Active since ${new Date(space.activatedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
@@ -720,9 +720,9 @@ export default function SpacePageUnified() {
                   ? `Founded ${new Date(space.foundedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
                   : 'New space'}
             </span>
-            <span className="text-white/15">&middot;</span>
+            <span className="text-white/30">&middot;</span>
             <span>{upcomingEvents.length} {upcomingEvents.length === 1 ? 'event' : 'events'}</span>
-            <span className="text-white/15">&middot;</span>
+            <span className="text-white/30">&middot;</span>
             <span>{sidebarTools.length} {sidebarTools.length === 1 ? 'app' : 'apps'} made</span>
           </div>
 
@@ -774,7 +774,7 @@ export default function SpacePageUnified() {
                             <div key={event.id} className="flex items-center justify-between gap-3">
                               <div className="min-w-0">
                                 <p className="text-[14px] font-medium text-white truncate">{event.title}</p>
-                                <p className="text-[12px] text-white/40">
+                                <p className="text-[12px] text-white/50">
                                   {new Date(event.time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                 </p>
                               </div>
@@ -792,7 +792,7 @@ export default function SpacePageUnified() {
                           {sidebarTools.slice(0, 3).map((tool) => (
                             <span
                               key={tool.toolId}
-                              className="px-3 py-1 rounded-full border border-white/[0.06] text-[13px] text-white/60 bg-white/[0.03]"
+                              className="px-3 py-1 rounded-full border border-white/[0.06] text-[13px] text-white/70 bg-white/[0.03]"
                             >
                               {tool.titleOverride || tool.name}
                             </span>
@@ -806,7 +806,7 @@ export default function SpacePageUnified() {
                       <p className="text-[13px] text-white/30 mb-1">
                         {space.isLeader ? 'Set the tone for your space.' : `${space.memberCount ?? ''} ${(space.memberCount ?? 0) === 1 ? 'member is' : 'members are'} here.`}
                       </p>
-                      <p className="text-[13px] text-white/20">Send the first message ↓</p>
+                      <p className="text-[13px] text-white/30">Send the first message ↓</p>
                     </div>
                   </div>
                 ) : (

@@ -39,6 +39,15 @@ export function HeroSection() {
 
   return (
     <section className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--bg-void)] px-6">
+      {/* Grain texture overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '128px 128px',
+        }}
+      />
       <div className="mx-auto max-w-3xl text-center">
         <h1
           className={`${displayFont} mb-6 text-[clamp(40px,8vw,56px)] font-bold leading-[1.05] tracking-[-0.03em] text-white transition-[opacity,transform] duration-500 ${show(1)}`}
@@ -111,7 +120,7 @@ export function HeroSection() {
         }`}
       >
         <div className="flex flex-col items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/20">
+          <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/30">
             Scroll
           </span>
           <div className="h-6 w-px bg-white/10" />

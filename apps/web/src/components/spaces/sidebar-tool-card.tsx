@@ -63,8 +63,8 @@ function ActivityBadge({ count }: { count: number }) {
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       className={cn(
-        'px-1.5 py-0.5 text-label-xs font-medium rounded-full',
-        'bg-[var(--color-accent-gold,#FFD700)] text-black'
+        'px-1.5 py-0.5 text-label-xs font-medium rounded-full whitespace-nowrap',
+        'bg-[#FFD700]/[0.15] text-[#FFD700]'
       )}
     >
       {displayCount}
@@ -163,7 +163,7 @@ function HoverActions({
           className={cn(
             'p-1 rounded transition-colors',
             'hover:bg-white/[0.06]',
-            'text-white/50 hover:text-white/50'
+            'text-white/50 hover:text-white/70'
           )}
           title="View in Lab"
         >
@@ -232,19 +232,24 @@ export function SidebarToolCard({
       className={cn(
         'group w-full px-2 py-2 rounded-lg',
         'flex items-center gap-2',
-        'transition-all duration-150',
+        'transition-colors duration-150',
         'text-left',
         // Active state
         isActive && [
           'bg-white/[0.06]',
           'text-white',
-          'border-l-2 border-[var(--color-accent-gold,#FFD700)]',
+          'border-l-2 border-l-[#FFD700]',
+          'ml-[-2px]',
+        ],
+        // Popular tool (has activity) — subtle gold left border
+        !isActive && (tool.activityCount ?? 0) > 0 && [
+          'border-l-2 border-l-[#FFD700]/50',
           'ml-[-2px]',
         ],
         // Inactive state
         !isActive && [
           'hover:bg-white/[0.06]',
-          'text-white/50 hover:text-white',
+          'text-white hover:text-white',
         ]
       )}
       whileTap={{ scale: 0.98 }}

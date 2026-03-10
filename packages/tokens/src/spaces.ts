@@ -134,7 +134,7 @@ export const spaceTypographyClasses = {
   sectionLabel: 'text-[11px] font-semibold uppercase tracking-wider text-white/50 font-mono',
   messageAuthor: 'text-sm font-semibold',
   messageContent: 'text-sm font-normal leading-relaxed',
-  timestamp: 'text-xs text-white/50 font-mono',
+  timestamp: 'text-xs text-white/30 font-mono',
 } as const;
 
 // ============================================

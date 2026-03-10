@@ -88,7 +88,15 @@ export function DemoSection() {
         </div>
 
         {/* Demo frame */}
-        <div className="mx-auto max-w-lg rounded-2xl border border-white/[0.08] bg-[#0A0A0A]">
+        <div className="relative mx-auto max-w-lg">
+          {/* Gold radial glow behind demo */}
+          <div
+            className="pointer-events-none absolute -inset-12"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(255,215,0,0.04), transparent 60%)',
+            }}
+          />
+        <div className="relative rounded-2xl border border-white/[0.08] bg-[var(--bg-card)]">
           {/* Prompt area */}
           <div className="border-b border-white/[0.08] px-5 py-4">
             <div className="rounded-xl border border-white/[0.06] bg-[var(--bg-void)] px-4 py-3 font-mono text-[13px] text-white/50">
@@ -97,7 +105,7 @@ export function DemoSection() {
                 <span className="ml-0.5 inline-block h-4 w-[2px] bg-[#FFD700] animate-pulse" />
               )}
               {phase === 'idle' && !prefersReduced && (
-                <span className="ml-0.5 inline-block h-4 w-[2px] bg-white/20" />
+                <span className="ml-0.5 inline-block h-4 w-[2px] bg-white/30" />
               )}
             </div>
           </div>
@@ -141,6 +149,7 @@ export function DemoSection() {
               ))}
             </div>
           </div>
+        </div>
         </div>
       </div>
     </section>

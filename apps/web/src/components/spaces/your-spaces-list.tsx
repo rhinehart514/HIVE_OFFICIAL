@@ -219,13 +219,32 @@ export function YourSpacesList({
               showActivityIndicator={true}
             />
 
-            {/* Notification badge */}
+            {/* Notification badge with pulse */}
             {space.membership.notifications > 0 && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                <span className="px-1.5 py-0.5 text-label-xs font-medium bg-[var(--color-accent-gold,#FFD700)] text-black rounded-full">
-                  {space.membership.notifications}
+                <span className="relative flex items-center justify-center">
+                  <span className="absolute h-full w-full rounded-full bg-[#FFD700]/30 animate-ping" />
+                  <span className="relative px-1.5 py-0.5 text-label-xs font-medium bg-[#FFD700] text-black rounded-full">
+                    {space.membership.notifications}
+                  </span>
                 </span>
               </div>
+            )}
+
+            {/* Gold dot — aliveness indicator for spaces with recent activity */}
+            {space.membership.notifications === 0 && space.lastActivityAt && (
+              (() => {
+                const hoursSinceActivity = (Date.now() - new Date(space.lastActivityAt).getTime()) / (1000 * 60 * 60);
+                if (hoursSinceActivity > 24) return null;
+                return (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <span
+                      className="block w-1.5 h-1.5 rounded-full bg-[#FFD700]"
+                      style={{ animation: 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+                    />
+                  </div>
+                );
+              })()
             )}
           </motion.div>
         ))}

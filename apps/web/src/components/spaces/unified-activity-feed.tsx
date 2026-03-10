@@ -223,7 +223,7 @@ function MessageFeedItem({
         {item.threadCount && item.threadCount > 0 && onOpenThread && (
           <button
             onClick={() => onOpenThread(item.id)}
-            className="text-xs text-white/50 hover:text-white/50 transition-colors"
+            className="text-xs text-white/50 hover:text-white/70 transition-colors"
           >
             {item.threadCount} {item.threadCount === 1 ? 'reply' : 'replies'}
           </button>
@@ -238,7 +238,7 @@ function MessageFeedItem({
               onClick={() => setShowActions(!showActions)}
               className={cn(
                 'p-1.5 rounded hover:bg-white/[0.06] transition-colors',
-                'text-white/50 hover:text-white/50'
+                'text-white/50 hover:text-white/70'
               )}
             >
               <EllipsisHorizontalIcon className="w-4 h-4" />
@@ -470,7 +470,7 @@ function PostFeedItem({
       {item.replyCount && item.replyCount > 0 && onReply && (
         <button
           onClick={() => onReply(item.id)}
-          className="ml-11 text-xs text-white/50 hover:text-white/50 transition-colors"
+          className="ml-11 text-xs text-white/50 hover:text-white/70 transition-colors"
         >
           {item.replyCount} {item.replyCount === 1 ? 'reply' : 'replies'}
         </button>
@@ -735,7 +735,7 @@ export function UnifiedActivityFeed({
             variant="ghost"
             size="sm"
             onClick={onLoadMore}
-            className="text-white/50 hover:text-white/50"
+            className="text-white/50 hover:text-white/70"
           >
             Load older messages
           </Button>
