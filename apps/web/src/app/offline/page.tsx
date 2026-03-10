@@ -41,10 +41,10 @@ export default function OfflinePage() {
   }, [isOnline]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-void)] text-white p-6">
       <div className="max-w-md w-full text-center space-y-6">
         {/* Offline Icon */}
-        <div className="mx-auto w-24 h-24 rounded-full bg-[#080808] flex items-center justify-center">
+        <div className="mx-auto w-24 h-24 rounded-full bg-[var(--bg-surface)] flex items-center justify-center">
           <svg
             className="w-12 h-12 text-white/50"
             fill="none"

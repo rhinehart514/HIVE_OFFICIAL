@@ -38,7 +38,7 @@ export function LandingHeader() {
               fill="#FFD700"
             />
           </svg>
-          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60">
+          <span className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
             HIVE
           </span>
         </Link>
