@@ -287,11 +287,17 @@ export default function ProfilePageContent() {
           />
         )}
 
-        {/* Participation count — prominent with gold number */}
+        {/* Participation count — emotional, campus-aware */}
         {totalToolRuns > 0 && (
           <p className="text-base text-white/50">
             <span className="text-white font-medium">{totalToolRuns.toLocaleString()}</span>
-            {' '}people participated in {isOwnProfile ? 'your' : `${heroUser.fullName.split(' ')[0]}'s`} creations
+            {isOwnProfile
+              ? totalToolRuns >= 100
+                ? ` people reached — you're building something real`
+                : totalToolRuns >= 25
+                  ? ` people engaged across ${belongingSpaces.length} space${belongingSpaces.length !== 1 ? 's' : ''}`
+                  : ' people engaged with your apps'
+              : ` people engaged with ${heroUser.fullName.split(' ')[0]}'s apps`}
           </p>
         )}
 
@@ -310,7 +316,7 @@ export default function ProfilePageContent() {
       {isOwnProfile && profileIncomplete && (
         <div className="rounded-2xl border border-white/[0.05] bg-void p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[13px] font-medium text-white/50">Make your profile yours</p>
+            <p className="text-[13px] font-medium text-white/50">Set up your profile — people will find you here</p>
             <span className="text-[11px] text-white/30 tabular-nums">{completenessScore}%</span>
           </div>
           <div className="w-full h-1 rounded-full bg-white/[0.05] mb-4 overflow-hidden">
@@ -386,7 +392,8 @@ export default function ProfilePageContent() {
               </div>
             ) : (
               <div className="flex flex-col items-center text-center py-8 gap-4">
-                <p className="text-[15px] text-white/50">Build your first app to unlock your portfolio</p>
+                <p className="text-[15px] text-white/50">Your first app shows up here — poll, bracket, RSVP, anything</p>
+                <p className="text-[13px] text-white/30">Takes 30 seconds. Your org will thank you.</p>
                 <Link
                   href="/build"
                   className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors duration-100"
