@@ -27,6 +27,14 @@ import { BuildPreviewPanel } from './components/build-preview-panel';
 import { ImpactStrip } from './components/impact-strip';
 import { savePendingDeploy, loadPendingDeploy } from './components/deploy-storage';
 
+function getBuildGreeting(): { headline: string; subtext: string } {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return { headline: 'Morning build sesh', subtext: 'What does your org need today?' };
+  if (hour >= 12 && hour < 17) return { headline: 'What do you need?', subtext: 'Poll, bracket, RSVP — say what and we handle the rest.' };
+  if (hour >= 17 && hour < 21) return { headline: 'Evening build mode', subtext: 'Perfect time to set something up for tomorrow.' };
+  return { headline: 'Late night builder', subtext: 'The best ideas happen after midnight.' };
+}
+
 function hintToPrompt(hint: string): string {
   const prompts: Record<string, string> = {
     poll: 'Create a poll for my group',
@@ -143,16 +151,25 @@ export default function BuildPage() {
             {user && state.phase === 'idle' && <ImpactStrip />}
 
             <div className="mb-4">
-              <h1 className="font-clash text-[32px] font-semibold tracking-[-0.03em] text-white mb-0.5">What do you need?</h1>
-              {originSpaceName ? (
-                <p className="text-sm text-white/50">
-                  Building for <span className="text-white/70 font-medium">{originSpaceName}</span>
-                </p>
-              ) : (
-                <p className="text-sm text-white/30">
-                  Poll, bracket, RSVP — just say what and we handle the rest.
-                </p>
-              )}
+              {(() => {
+                const greeting = getBuildGreeting();
+                return (
+                  <>
+                    <h1 className="font-clash text-[32px] font-semibold tracking-[-0.03em] text-white mb-0.5">
+                      {greeting.headline}
+                    </h1>
+                    {originSpaceName ? (
+                      <p className="text-sm text-white/50">
+                        Building for <span className="text-white/70 font-medium">{originSpaceName}</span>
+                      </p>
+                    ) : (
+                      <p className="text-sm text-white/30">
+                        {greeting.subtext}
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             <PromptInput onSubmit={submitPrompt} disabled={isWorking} autoPrompt={autoPrompt} />

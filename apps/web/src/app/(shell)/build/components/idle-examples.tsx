@@ -2,13 +2,24 @@
 
 import { MyAppsSection } from './my-apps-section';
 
-const EXAMPLE_PROMPTS = [
-  'Best dining hall at UB?',
-  'Who\'s coming to the pregame?',
-  'Rate the professors — bracket style',
-  'Sign up for our fundraiser',
-  'Vote on next meeting topic',
-];
+function getExamplePrompts(): string[] {
+  const hour = new Date().getHours();
+  const base = [
+    'Best dining hall at UB?',
+    'Rate the professors — bracket style',
+    'Vote on next meeting topic',
+  ];
+  if (hour >= 5 && hour < 12) {
+    return [...base, 'Sign up for today\'s study group', 'Where should we get lunch?'];
+  }
+  if (hour >= 17 && hour < 22) {
+    return [...base, 'Who\'s coming to the pregame?', 'RSVP for tonight\'s event'];
+  }
+  if (hour >= 22 || hour < 5) {
+    return [...base, 'Best late-night food near campus?', 'Who\'s still studying?'];
+  }
+  return [...base, 'Sign up for our fundraiser', 'Who\'s coming to the pregame?'];
+}
 
 export function IdleExamples({
   onSubmit,
@@ -17,11 +28,13 @@ export function IdleExamples({
   onSubmit: (prompt: string) => void;
   showMyApps: boolean;
 }) {
+  const examples = getExamplePrompts();
+
   return (
     <div className="mt-4 space-y-2">
       <p className="font-mono text-[11px] uppercase tracking-wider text-white/30">Try one</p>
       <div className="flex flex-wrap gap-2">
-        {EXAMPLE_PROMPTS.map((example) => (
+        {examples.map((example) => (
           <button
             key={example}
             onClick={() => onSubmit(example)}

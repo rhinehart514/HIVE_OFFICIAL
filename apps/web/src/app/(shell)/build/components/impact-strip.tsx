@@ -122,7 +122,11 @@ export function ImpactStrip() {
             <span className="text-white font-semibold">
               <CountUp target={data.totalResponses} />
             </span>
-            {' '}people engaged with your apps
+            {data.totalResponses >= 50
+              ? ' people reached — your stuff is spreading'
+              : data.totalResponses >= 10
+                ? ' people engaged — keep building'
+                : ' people engaged with your apps'}
           </span>
         </div>
 
