@@ -924,6 +924,7 @@ export default function SpacePageUnified() {
                   <MessageFeed
                     messages={feedMessages}
                     currentUserId={user?.id}
+                    spaceName={space?.name}
                     lastReadAt={lastReadAt ? new Date(lastReadAt) : null}
                     unreadCount={unreadCount}
                     isLoading={isLoadingMessages}

@@ -23,6 +23,8 @@ import { SPACE_MOTION } from '@hive/tokens';
 interface MessageFeedProps {
   messages: Message[];
   currentUserId?: string;
+  /** Space name for early-life state */
+  spaceName?: string;
   /** Timestamp of last read message */
   lastReadAt?: Date | string | null;
   /** Number of unread messages */
@@ -52,6 +54,7 @@ interface MessageFeedProps {
 export function MessageFeed({
   messages,
   currentUserId,
+  spaceName,
   lastReadAt,
   unreadCount = 0,
   isLoading = false,
@@ -191,6 +194,17 @@ export function MessageFeed({
         >
           Load earlier messages
         </button>
+      )}
+
+      {/* Early-life welcome — sparse feeds get a beginning instead of a void */}
+      {!hasMore && messages.length > 0 && messages.length <= 10 && (
+        <div className="text-center py-6 mb-4 border-b border-white/[0.05]">
+          <p className="text-[13px] text-white/30">
+            {spaceName
+              ? `This is the beginning of ${spaceName}`
+              : 'This is where it starts'}
+          </p>
+        </div>
       )}
 
       {/* Messages */}
