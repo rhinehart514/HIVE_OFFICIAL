@@ -44,7 +44,7 @@ const territoryConfig: Record<SpaceTerritory, {
     gradient: 'from-white/[0.08] to-white/[0.03]',
     label: 'Academic',
     color: 'text-white/50 border-white/[0.08]',
-    fallbackBg: 'bg-white/[0.06]',
+    fallbackBg: 'bg-white/[0.05]',
   },
   creative: {
     gradient: 'from-purple-600/80 to-purple-900/60',
@@ -278,7 +278,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
         )}
 
         {/* LOCKED: Stat row with "X you know" in gold */}
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
           {/* Members + Health */}
           <div className="flex items-center gap-3">
             {members.length > 0 && (
@@ -344,10 +344,10 @@ const SpaceCardSkeleton: React.FC<SpaceCardSkeletonProps> = ({
     return (
       <Card className={cn('p-3', className)}>
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-white/[0.06] animate-pulse" />
+          <div className="h-8 w-8 rounded-lg bg-white/[0.05] animate-pulse" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-24 rounded bg-white/[0.06] animate-pulse" />
-            <div className="h-3 w-16 rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-4 w-24 rounded bg-white/[0.05] animate-pulse" />
+            <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
           </div>
         </div>
       </Card>
@@ -357,7 +357,7 @@ const SpaceCardSkeleton: React.FC<SpaceCardSkeletonProps> = ({
   return (
     <Card noPadding className={cn('overflow-hidden', className)}>
       {/* Header skeleton */}
-      <div className="h-28 bg-white/[0.06] animate-pulse relative">
+      <div className="h-28 bg-white/[0.05] animate-pulse relative">
         <div className="absolute -bottom-10 left-6">
           <div className="w-20 h-20 rounded-2xl bg-white/[0.08] animate-pulse ring-4 ring-[rgba(18,18,18,0.92)]" />
         </div>
@@ -365,24 +365,24 @@ const SpaceCardSkeleton: React.FC<SpaceCardSkeletonProps> = ({
 
       {/* Content skeleton */}
       <div className="pt-14 pb-5 px-6 space-y-3">
-        <div className="h-5 w-32 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-5 w-32 rounded bg-white/[0.05] animate-pulse" />
         <div className="space-y-2">
-          <div className="h-4 w-full rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-4 w-3/4 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-4 w-full rounded bg-white/[0.05] animate-pulse" />
+          <div className="h-4 w-3/4 rounded bg-white/[0.05] animate-pulse" />
         </div>
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
           <div className="flex items-center gap-2">
             <div className="flex -space-x-1">
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-5 w-5 rounded-lg bg-white/[0.06] animate-pulse ring-2 ring-[#0a0a09]"
+                  className="h-5 w-5 rounded-lg bg-white/[0.05] animate-pulse ring-2 ring-[#0a0a09]"
                 />
               ))}
             </div>
-            <div className="h-3 w-20 rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-3 w-20 rounded bg-white/[0.05] animate-pulse" />
           </div>
-          <div className="h-3 w-16 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
         </div>
       </div>
     </Card>

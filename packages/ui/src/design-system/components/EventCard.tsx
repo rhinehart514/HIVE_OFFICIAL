@@ -309,10 +309,10 @@ const EventCardSkeleton: React.FC<EventCardSkeletonProps> = ({
       <Card className={cn('p-3', className)}>
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-center min-w-[40px] gap-1">
-            <div className="h-3 w-10 rounded bg-white/[0.06] animate-pulse" />
-            <div className="h-4 w-8 rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-3 w-10 rounded bg-white/[0.05] animate-pulse" />
+            <div className="h-4 w-8 rounded bg-white/[0.05] animate-pulse" />
           </div>
-          <div className="h-4 flex-1 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-4 flex-1 rounded bg-white/[0.05] animate-pulse" />
         </div>
       </Card>
     );
@@ -321,23 +321,23 @@ const EventCardSkeleton: React.FC<EventCardSkeletonProps> = ({
   return (
     <Card className={cn('p-4', className)}>
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="h-5 w-40 rounded bg-white/[0.06] animate-pulse" />
-        <div className="h-7 w-20 rounded-full bg-white/[0.06] animate-pulse" />
+        <div className="h-5 w-40 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-7 w-20 rounded-full bg-white/[0.05] animate-pulse" />
       </div>
       <div className="flex items-center gap-2 mb-3">
-        <div className="h-4 w-4 rounded bg-white/[0.06] animate-pulse" />
-        <div className="h-4 w-32 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-4 w-4 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-4 w-32 rounded bg-white/[0.05] animate-pulse" />
       </div>
       <div className="flex items-center gap-3">
         <div className="flex -space-x-1">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-5 w-5 rounded-lg bg-white/[0.06] animate-pulse ring-2 ring-[#0a0a09]"
+              className="h-5 w-5 rounded-lg bg-white/[0.05] animate-pulse ring-2 ring-[#0a0a09]"
             />
           ))}
         </div>
-        <div className="h-3 w-16 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
       </div>
     </Card>
   );
