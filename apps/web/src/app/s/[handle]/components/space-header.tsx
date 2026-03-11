@@ -7,6 +7,26 @@ import { cn } from '@/lib/utils';
 
 const displayFont = "font-display";
 
+function getActivityPulse(space: SpaceHeaderProps['space']): string | null {
+  const { recentMessageCount, lastActivityAt, newMembers7d, onlineCount } = space;
+
+  // Priority: online now > recent messages > new members > last activity
+  if (onlineCount >= 3) return `${onlineCount} people here right now`;
+  if (recentMessageCount && recentMessageCount >= 5) return `${recentMessageCount} messages today — things are moving`;
+  if (recentMessageCount && recentMessageCount >= 1) return `${recentMessageCount} new since you last checked`;
+  if (newMembers7d && newMembers7d >= 3) return `${newMembers7d} new members this week`;
+  if (newMembers7d === 1) return `Someone new just joined`;
+
+  if (lastActivityAt) {
+    const last = typeof lastActivityAt === 'string' ? new Date(lastActivityAt) : lastActivityAt;
+    const hoursAgo = Math.floor((Date.now() - last.getTime()) / (1000 * 60 * 60));
+    if (hoursAgo < 1) return 'Active just now';
+    if (hoursAgo < 24) return `Last active ${hoursAgo}h ago`;
+  }
+
+  return null;
+}
+
 interface SpaceHeaderProps {
   space: {
     id: string;
@@ -51,6 +71,8 @@ export function SpaceHeader({
   onClaimClick,
   className,
 }: SpaceHeaderProps) {
+  const activityPulse = getActivityPulse(space);
+
   return (
     <header
       className={cn(
@@ -58,7 +80,7 @@ export function SpaceHeader({
         className
       )}
     >
-      {/* Left: Back + Space name */}
+      {/* Left: Back + Space name + activity pulse */}
       <div className="flex items-center gap-1 min-w-0">
         <Link
           href="/discover"
@@ -67,16 +89,26 @@ export function SpaceHeader({
         >
           <ChevronLeft className="h-4 w-4" />
         </Link>
-        <button
-          onClick={onSpaceInfoClick}
-          className="flex items-center gap-3 min-w-0 group"
-        >
-          <h1
-            className={`${displayFont} text-[20px] font-semibold text-white truncate`}
+        <div className="min-w-0">
+          <button
+            onClick={onSpaceInfoClick}
+            className="flex items-center gap-3 min-w-0 group"
           >
-            {space.name}
-          </h1>
-        </button>
+            <h1
+              className={`${displayFont} text-[20px] font-semibold text-white truncate`}
+            >
+              {space.name}
+            </h1>
+          </button>
+          {activityPulse && (
+            <p className="text-[11px] font-mono text-white/50 truncate pl-0.5">
+              {space.onlineCount >= 3 && (
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 relative -top-px" />
+              )}
+              {activityPulse}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Right: Member count pill + gear */}
