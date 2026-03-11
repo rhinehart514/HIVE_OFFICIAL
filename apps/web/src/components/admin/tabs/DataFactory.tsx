@@ -85,7 +85,7 @@ export function DataFactory() {
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder="Space name..."
-          className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/[0.15]"
+          className="w-full px-3 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/10"
           onKeyDown={e => e.key === 'Enter' && handleCreate()}
         />
 
@@ -98,7 +98,7 @@ export function DataFactory() {
               onChange={e => setMemberCount(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
               min={0}
               max={20}
-              className="w-full px-3 py-1.5 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white focus:outline-none focus:border-white/[0.15]"
+              className="w-full px-3 py-1.5 bg-white/[0.05] border border-white/[0.05] rounded-lg text-sm text-white focus:outline-none focus:border-white/10"
             />
           </div>
           <div>
@@ -109,7 +109,7 @@ export function DataFactory() {
               onChange={e => setPostCount(Math.min(50, Math.max(0, parseInt(e.target.value) || 0)))}
               min={0}
               max={50}
-              className="w-full px-3 py-1.5 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white focus:outline-none focus:border-white/[0.15]"
+              className="w-full px-3 py-1.5 bg-white/[0.05] border border-white/[0.05] rounded-lg text-sm text-white focus:outline-none focus:border-white/10"
             />
           </div>
         </div>
@@ -132,7 +132,7 @@ export function DataFactory() {
             Created This Session
           </div>
           {created.map(space => (
-            <div key={space.id} className="flex items-center justify-between px-3 py-2 bg-white/[0.06] rounded-lg">
+            <div key={space.id} className="flex items-center justify-between px-3 py-2 bg-white/[0.05] rounded-lg">
               <div className="min-w-0">
                 <p className="text-sm text-white truncate">{space.handle}</p>
                 <p className="text-[11px] text-white/50 font-sans">{space.id.slice(0, 12)}...</p>
@@ -141,7 +141,7 @@ export function DataFactory() {
                 href={space.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-1.5 hover:bg-white/[0.06] rounded-md transition-colors"
+                className="p-1.5 hover:bg-white/[0.10] rounded-md transition-colors"
               >
                 <ExternalLink size={14} className="text-white/50" />
               </a>
@@ -151,7 +151,7 @@ export function DataFactory() {
       )}
 
       {/* Cleanup */}
-      <div className="pt-2 border-t border-white/[0.06]">
+      <div className="pt-2 border-t border-white/[0.05]">
         <motion.button
           onClick={handleCleanup}
           disabled={isCleaning}

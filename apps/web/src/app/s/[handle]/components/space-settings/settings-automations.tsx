@@ -115,7 +115,7 @@ export function SettingsAutomations({ spaceId }: SettingsAutomationsProps) {
 
       {/* Empty state with templates */}
       {automations.length === 0 && !automationsLoading && (
-        <div className="text-center py-12 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+        <div className="text-center py-12 rounded-lg bg-white/[0.05] border border-white/[0.05]">
           <Zap className="w-12 h-12 mx-auto mb-4 text-amber-500/40" />
           <Text weight="medium" className="mb-2">No automations set up</Text>
           <Text size="sm" tone="muted" className="mb-6 max-w-sm mx-auto">
@@ -160,13 +160,13 @@ export function SettingsAutomations({ spaceId }: SettingsAutomationsProps) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative z-10 bg-[var(--bg-surface-hover)] rounded-lg border border-white/[0.06] max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+            className="relative z-10 bg-[var(--bg-surface-hover)] rounded-lg border border-white/[0.05] max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
           >
-            <div className="sticky top-0 bg-[var(--bg-surface-hover)] border-b border-white/[0.06] p-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-[var(--bg-surface-hover)] border-b border-white/[0.05] p-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Automation Templates</h3>
               <button
                 onClick={() => setShowTemplates(false)}
-                className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/50 hover:text-white transition-colors"
+                className="p-1.5 rounded-lg hover:bg-white/[0.10] text-white/50 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -188,7 +188,7 @@ export function SettingsAutomations({ spaceId }: SettingsAutomationsProps) {
                     });
                     setShowAutomationBuilder(true);
                   }}
-                  className="w-full p-4 rounded-lg bg-white/[0.06] border border-white/[0.06] hover:border-amber-500/30 transition-colors text-left group"
+                  className="w-full p-4 rounded-lg bg-white/[0.05] border border-white/[0.05] hover:border-amber-500/30 transition-colors text-left group"
                 >
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
@@ -201,7 +201,7 @@ export function SettingsAutomations({ spaceId }: SettingsAutomationsProps) {
                   </div>
                 </button>
               ))}
-              <div className="pt-4 border-t border-white/[0.06] text-center">
+              <div className="pt-4 border-t border-white/[0.05] text-center">
                 <button
                   onClick={() => {
                     setShowTemplates(false);

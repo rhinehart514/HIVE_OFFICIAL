@@ -100,7 +100,7 @@ export function TransferOwnership({
         'text-xs px-1.5 py-0.5 rounded-md',
         role === 'admin'
           ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
-          : 'bg-white/[0.06] text-white/50'
+          : 'bg-white/[0.05] text-white/50'
       )}
     >
       {role === 'admin' ? 'Leader' : role === 'moderator' ? 'Mod' : 'Member'}
@@ -127,12 +127,12 @@ export function TransferOwnership({
           </Text>
 
           {isLoadingCandidates ? (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.05]">
               <Loader2 className="w-4 h-4 text-white/50" />
               <Text size="sm" tone="muted">Loading members...</Text>
             </div>
           ) : transferCandidates.length === 0 ? (
-            <div className="px-3 py-2.5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+            <div className="px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.05]">
               <Text size="sm" tone="muted">No eligible members found</Text>
             </div>
           ) : (
@@ -143,14 +143,14 @@ export function TransferOwnership({
                 className={cn(
                   'w-full flex items-center justify-between px-3 py-2.5',
                   'rounded-lg text-sm text-left',
-                  'bg-white/[0.06] border border-white/[0.06]',
-                  'hover:bg-white/[0.06] transition-colors',
+                  'bg-white/[0.05] border border-white/[0.05]',
+                  'hover:bg-white/[0.10] transition-colors',
                   showTransferDropdown && 'outline outline-2 outline-[#FFD700]'
                 )}
               >
                 {selectedCandidate ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-white/[0.06] flex items-center justify-center text-xs font-medium text-white/50 overflow-hidden flex-shrink-0">
+                    <div className="w-6 h-6 rounded-md bg-white/[0.05] flex items-center justify-center text-xs font-medium text-white/50 overflow-hidden flex-shrink-0">
                       {selectedCandidate.avatar ? (
                         <img src={selectedCandidate.avatar} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -176,7 +176,7 @@ export function TransferOwnership({
                     className={cn(
                       'absolute left-0 right-0 top-full mt-1 z-50',
                       'max-h-[240px] overflow-y-auto',
-                      'rounded-lg border border-white/[0.06] bg-[var(--bg-elevated)]',
+                      'rounded-lg border border-white/[0.05] bg-[var(--bg-elevated)]',
                       'py-1'
                     )}
                   >
@@ -190,11 +190,11 @@ export function TransferOwnership({
                         }}
                         className={cn(
                           'w-full flex items-center gap-2 px-3 py-2 text-left',
-                          'hover:bg-white/[0.06] transition-colors',
-                          selectedTransferTarget === candidate.id && 'bg-white/[0.06]'
+                          'hover:bg-white/[0.10] transition-colors',
+                          selectedTransferTarget === candidate.id && 'bg-white/[0.05]'
                         )}
                       >
-                        <div className="w-6 h-6 rounded-md bg-white/[0.06] flex items-center justify-center text-xs font-medium text-white/50 overflow-hidden flex-shrink-0">
+                        <div className="w-6 h-6 rounded-md bg-white/[0.05] flex items-center justify-center text-xs font-medium text-white/50 overflow-hidden flex-shrink-0">
                           {candidate.avatar ? (
                             <img src={candidate.avatar} alt="" className="w-full h-full object-cover" />
                           ) : (

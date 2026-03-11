@@ -48,7 +48,7 @@ export default function BuildError({
             onClick={() => window.location.href = '/build'}
             className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-full
               text-sm text-white/50 border border-white/10
-              hover:bg-white/[0.06] hover:text-white/70 transition-colors duration-100"
+              hover:bg-white/[0.10] hover:text-white/70 transition-colors duration-100"
           >
             <Sparkles className="h-4 w-4" />
             Start fresh
@@ -56,7 +56,7 @@ export default function BuildError({
         </div>
 
         {process.env.NODE_ENV === 'development' && error.message && (
-          <div className="mt-6 rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 text-left">
+          <div className="mt-6 rounded-xl bg-white/[0.03] border border-white/[0.05] p-3 text-left">
             <p className="text-xs font-mono text-white/30 break-all">
               {error.message}
             </p>

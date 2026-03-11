@@ -160,13 +160,13 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
         animate={{ scale: 1 }}
         className={cn(
           'w-full max-w-4xl max-h-[90vh] overflow-y-auto',
-          'bg-[var(--bg-ground)] border border-white/[0.06] rounded-lg',
+          'bg-[var(--bg-ground)] border border-white/[0.05] rounded-lg',
           ''
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[var(--bg-ground)]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.05] bg-[var(--bg-ground)]">
           <div>
             <h2 className="text-lg font-semibold text-white">Space Analytics</h2>
             <p className="text-sm text-white/50">
@@ -183,7 +183,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                 onChange={(e) => setPeriod(e.target.value as Period)}
                 className={cn(
                   'appearance-none px-3 py-1.5 pr-8 rounded-lg',
-                  'bg-white/[0.06] border border-white/[0.06]',
+                  'bg-white/[0.05] border border-white/[0.05]',
                   'text-white text-sm',
                   'focus:outline-none focus:outline-2 focus:outline-[#FFD700]'
                 )}
@@ -201,7 +201,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
               disabled={isLoading}
               className={cn(
                 'p-2 rounded-lg',
-                'hover:bg-white/[0.06] transition-colors',
+                'hover:bg-white/[0.05] transition-colors',
                 'text-white/50 hover:text-white',
                 'disabled:opacity-50'
               )}
@@ -214,7 +214,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
               onClick={onClose}
               className={cn(
                 'p-2 rounded-lg',
-                'hover:bg-white/[0.06] transition-colors',
+                'hover:bg-white/[0.05] transition-colors',
                 'text-white/50 hover:text-white'
               )}
             >
@@ -243,7 +243,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
             <div className="space-y-6">
               {/* Health Score + Insights */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
                   <div className="flex items-center gap-3 mb-3">
                     <Activity className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Health Score</span>
@@ -254,7 +254,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
                   <div className="flex items-center gap-3 mb-3">
                     <TrendingUp className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Insights</span>
@@ -272,7 +272,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                       <li className="mt-3">
                         <Link
                           href="/build"
-                          className="inline-flex items-center px-4 py-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.04] transition-colors duration-100"
+                          className="inline-flex items-center px-4 py-2 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.05] transition-colors duration-100"
                         >
                           Build an app
                         </Link>
@@ -313,7 +313,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
 
               {/* Peak Activity Times */}
               {data.engagement?.peakActivityTimes && (
-                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
                   <div className="flex items-center gap-3 mb-4">
                     <Clock className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Peak Activity</span>
@@ -339,7 +339,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
 
               {/* Top Contributors */}
               {data.topContributors && data.topContributors.length > 0 && (
-                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
                   <div className="flex items-center gap-3 mb-4">
                     <Award className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Top Contributors</span>
@@ -353,7 +353,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                         <div className="flex items-center gap-3">
                           <span className="text-sm text-white/50 w-4">{i + 1}</span>
                           <div
-                            className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-xs text-white/50"
+                            className="w-8 h-8 rounded-full bg-white/[0.05] flex items-center justify-center text-xs text-white/50"
                             style={{
                               backgroundImage: contributor.photoURL
                                 ? `url(${contributor.photoURL})`
@@ -376,7 +376,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
 
               {/* Top Content */}
               {data.topContent && data.topContent.length > 0 && (
-                <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                <div className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
                   <div className="flex items-center gap-3 mb-4">
                     <TrendingUp className="w-5 h-5 text-white/50" />
                     <span className="text-sm font-medium text-white">Top Performing Content</span>
@@ -385,7 +385,7 @@ export function AnalyticsPanel({ spaceId, isOpen, onClose }: AnalyticsPanelProps
                     {data.topContent.slice(0, 3).map((post) => (
                       <div
                         key={post.id}
-                        className="p-3 rounded-lg bg-white/[0.06] border border-white/[0.06]"
+                        className="p-3 rounded-lg bg-white/[0.05] border border-white/[0.05]"
                       >
                         <p className="text-sm text-white mb-2">{post.content}</p>
                         <div className="flex items-center gap-4 text-xs text-white/50">
@@ -417,7 +417,7 @@ interface MetricCardProps {
 
 function MetricCard({ icon: Icon, label, value, change, changeLabel, subValue }: MetricCardProps) {
   return (
-    <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+    <div className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
       <div className="flex items-center gap-2 mb-2">
         <Icon className="w-4 h-4 text-white/50" />
         <span className="text-xs text-white/50">{label}</span>

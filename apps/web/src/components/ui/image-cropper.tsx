@@ -90,7 +90,7 @@ export function ImageCropper({
       style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-[var(--color-bg-void,#050504)] border-b border-white/[0.06]">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-[var(--color-bg-void,#050504)] border-b border-white/[0.05]">
         <button
           type="button"
           onClick={onCancel}
@@ -141,7 +141,7 @@ export function ImageCropper({
       </div>
 
       {/* Controls */}
-      <div className="flex-shrink-0 px-6 py-4 bg-[var(--color-bg-void,#050504)] border-t border-white/[0.06] space-y-4">
+      <div className="flex-shrink-0 px-6 py-4 bg-[var(--color-bg-void,#050504)] border-t border-white/[0.05] space-y-4">
         {/* Zoom slider */}
         <div className="flex items-center gap-3">
           <button

@@ -40,7 +40,7 @@ const VARIANT_CONFIG: Record<
   new_user: {
     icon: Bell,
     iconColor: 'text-white/50',
-    iconBg: 'bg-white/[0.06]',
+    iconBg: 'bg-white/[0.05]',
     title: 'Nothing here yet',
     subtitle: 'Join a few spaces and this lights up — votes, RSVPs, everything your orgs are doing.',
     showCta: true,
@@ -50,7 +50,7 @@ const VARIANT_CONFIG: Record<
   filtered: {
     icon: Inbox,
     iconColor: 'text-white/50',
-    iconBg: 'bg-white/[0.06]',
+    iconBg: 'bg-white/[0.05]',
     title: 'Nothing in this filter',
     subtitle: 'Try a different category — your updates are probably in another tab.',
     showCta: false,

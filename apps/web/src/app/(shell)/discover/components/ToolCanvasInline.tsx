@@ -143,7 +143,7 @@ export function ToolCanvasInline({ toolId, onAddToSpace }: ToolCanvasInlineProps
   const hasInteracted = interactionRef.current;
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-void overflow-hidden">
+    <div className="rounded-xl border border-white/[0.05] bg-void overflow-hidden">
       <div className="p-4 max-h-[400px] overflow-y-auto">
         <LazyToolCanvas
           elements={tool.elements}
@@ -176,11 +176,11 @@ export function ToolCanvasInline({ toolId, onAddToSpace }: ToolCanvasInlineProps
             transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-white/[0.06] bg-white/[0.02]">
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-white/[0.05] bg-white/[0.03]">
               <span className="text-[12px] text-white/30">Like this? Add it to your space</span>
               <button
                 onClick={() => onAddToSpace(toolId)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white/[0.06] border border-white/[0.08] text-white/50 hover:bg-white/[0.08] hover:text-white/70 transition-colors duration-100"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-white/[0.05] border border-white/[0.05] text-white/50 hover:bg-white/[0.10] hover:text-white/70 transition-colors duration-100"
               >
                 <Plus className="w-3 h-3" />
                 Add to space

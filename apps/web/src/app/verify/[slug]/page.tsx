@@ -83,7 +83,7 @@ function MetricCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.4 + index * 0.08, ease: EASE }}
-      className="p-4 rounded-lg bg-white/[0.04] border border-white/[0.06]"
+      className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]"
     >
       <div className="flex items-center gap-2 mb-2">
         <Icon className="w-4 h-4 text-white/30" />
@@ -188,7 +188,7 @@ export default function VerifyPage() {
             <img
               src={record.user.avatarUrl}
               alt={record.user.fullName}
-              className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-white/[0.06]"
+              className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-white/[0.05]"
             />
           )}
           <h1 className="text-xl font-semibold text-white">{record.user.fullName}</h1>
@@ -200,7 +200,7 @@ export default function VerifyPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2, ease: EASE }}
-          className="p-5 rounded-xl bg-white/[0.04] border border-white/[0.06] mb-6"
+          className="p-5 rounded-xl bg-white/[0.05] border border-white/[0.05] mb-6"
         >
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -260,7 +260,7 @@ export default function VerifyPage() {
               {record.badges.earned.map((badge) => {
                 const tierColors = {
                   bronze: 'bg-amber-400/10 border-amber-400/20 text-amber-300',
-                  silver: 'bg-white/[0.06] border-white/[0.08] text-white/50',
+                  silver: 'bg-white/[0.05] border-white/[0.05] text-white/50',
                   gold: 'bg-[var(--color-gold)]/10 border-[var(--color-gold)]/20 text-[var(--color-gold)]',
                 };
                 return (
@@ -284,7 +284,7 @@ export default function VerifyPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.7, ease: EASE }}
-            className="mb-8 p-4 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+            className="mb-8 p-4 rounded-lg bg-white/[0.03] border border-white/[0.05]"
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-white/50">Next: {record.badges.next.name}</span>
@@ -292,7 +292,7 @@ export default function VerifyPage() {
                 {record.badges.next.current}/{record.badges.next.threshold}
               </span>
             </div>
-            <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+            <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-[var(--color-gold)]/50"
                 initial={{ width: 0 }}

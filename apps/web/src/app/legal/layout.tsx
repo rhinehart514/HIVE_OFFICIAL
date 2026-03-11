@@ -25,7 +25,7 @@ export default function LegalLayout({
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[var(--color-bg-void)]/80">
+      <header className="sticky top-0 z-50 border-b border-white/[0.05] bg-[var(--color-bg-void)]/80">
         <div className="mx-auto max-w-3xl px-6">
           <div className="flex h-14 items-center justify-between">
             <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
@@ -54,7 +54,7 @@ export default function LegalLayout({
       <main className="relative">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8">
+      <footer className="border-t border-white/[0.05] py-8">
         <div className="mx-auto max-w-3xl px-6">
           <div className="flex items-center justify-between text-label text-white/50">
             <span>&copy; {new Date().getFullYear()} HIVE</span>

@@ -57,7 +57,7 @@ export function SettingsTools({ spaceId, spaceName }: SettingsToolsProps) {
           <Loader2 className="w-6 h-6 text-white/50" />
         </div>
       ) : spaceTools.length === 0 ? (
-        <div className="text-center py-12 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+        <div className="text-center py-12 rounded-lg bg-white/[0.05] border border-white/[0.05]">
           <Wrench className="w-10 h-10 mx-auto mb-4 text-white/50" />
           <Text weight="medium" className="text-white/50 mb-1">
             No apps yet
@@ -94,7 +94,7 @@ export function SettingsTools({ spaceId, spaceName }: SettingsToolsProps) {
             {spaceTools.map((tool) => (
               <div
                 key={tool.id}
-                className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06] flex items-center gap-3"
+                className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05] flex items-center gap-3"
               >
                 <span className="text-xl">{tool.icon || '🔧'}</span>
                 <div className="flex-1 min-w-0">
@@ -110,7 +110,7 @@ export function SettingsTools({ spaceId, spaceName }: SettingsToolsProps) {
               </div>
             ))}
           </div>
-          <div className="pt-4 border-t border-white/[0.06]">
+          <div className="pt-4 border-t border-white/[0.05]">
             <a
               href={`/lab?spaceId=${spaceId}&spaceName=${encodeURIComponent(spaceName)}`}
               className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white/50 transition-colors"

@@ -57,7 +57,7 @@ export function AccountSection({
 }: AccountSectionProps) {
   return (
     <div className="space-y-6">
-      <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
+      <Card className="p-6 bg-white/[0.05] border-white/[0.05]">
         <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
           <CalendarClock className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Connected Calendars
@@ -66,7 +66,7 @@ export function AccountSection({
           <p className="text-white/50 text-sm">
             Connect your calendar to help space leaders find the best times for events. Only your free/busy times are shared.
           </p>
-          <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <div className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-white/[0.03] px-4 py-3">
             <CalendarClock className="h-5 w-5 text-white/30 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white/50 font-medium">Google Calendar</p>
@@ -76,7 +76,7 @@ export function AccountSection({
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
+      <Card className="p-6 bg-white/[0.05] border-white/[0.05]">
         <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
           <SettingsIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Preferences
@@ -94,7 +94,7 @@ export function AccountSection({
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
+      <Card className="p-6 bg-white/[0.05] border-white/[0.05]">
         <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
           <ShieldCheckIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Data Management
@@ -105,7 +105,7 @@ export function AccountSection({
             onClick={onDownloadData}
             disabled={isDownloading}
             aria-label={isDownloading ? 'Downloading your data' : 'Download a complete copy of all your data'}
-            className="border-white/[0.06] text-white hover:bg-white/[0.06]"
+            className="border-white/[0.05] text-white hover:bg-white/[0.10]"
           >
             {isDownloading ? (
               <>
@@ -129,7 +129,7 @@ export function AccountSection({
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/[0.06] border-white/[0.06] space-y-4">
+      <Card className="p-6 bg-white/[0.05] border-white/[0.05] space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-white font-medium mb-1">Sign Out</h3>
@@ -137,7 +137,7 @@ export function AccountSection({
           </div>
           <Button
             variant="secondary"
-            className="border-white/[0.06] text-white hover:bg-white/[0.06]"
+            className="border-white/[0.05] text-white hover:bg-white/[0.10]"
             onClick={onLogout}
             aria-label="Sign out of your HIVE account"
           >
@@ -145,14 +145,14 @@ export function AccountSection({
             Sign Out
           </Button>
         </div>
-        <div className="border-t border-white/[0.06] pt-4 flex items-center justify-between">
+        <div className="border-t border-white/[0.05] pt-4 flex items-center justify-between">
           <div>
             <h3 className="text-white font-medium mb-1">Sign Out Everywhere</h3>
             <p className="text-white/50 text-sm">Sign out on all devices and browsers</p>
           </div>
           <Button
             variant="secondary"
-            className="border-white/[0.06] text-white hover:bg-white/[0.06]"
+            className="border-white/[0.05] text-white hover:bg-white/[0.10]"
             onClick={onLogoutAll}
             aria-label="Sign out of all sessions"
           >

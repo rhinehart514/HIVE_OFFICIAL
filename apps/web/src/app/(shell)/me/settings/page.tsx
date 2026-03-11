@@ -501,7 +501,7 @@ function SettingsContent() {
         variants={fadeInUpVariants}
         initial="initial"
         animate="animate"
-        className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/[0.06] pt-6 text-xs text-white/30"
+        className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/[0.05] pt-6 text-xs text-white/30"
       >
         <a href="/about" className="hover:text-white/50 transition-colors">About HIVE</a>
         <a href="/legal/terms" className="hover:text-white/50 transition-colors">Terms</a>

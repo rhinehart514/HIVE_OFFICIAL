@@ -30,7 +30,7 @@ function AdminToolbarInner() {
       {/* FAB — left side to avoid HiveLab deploy button, above BottomNav on mobile */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-24 left-4 lg:bottom-6 lg:left-6 z-[9990] w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.06] transition-colors"
+        className="fixed bottom-24 left-4 lg:bottom-6 lg:left-6 z-[9990] w-9 h-9 rounded-full bg-white/[0.05] border border-white/[0.05] flex items-center justify-center hover:bg-white/[0.05] transition-colors"
         whileHover={{ opacity: 0.92 }}
         whileTap={{ scale: 0.95 }}
         title="Admin Toolbar (⌘⇧D)"
@@ -53,14 +53,14 @@ function AdminToolbarInner() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed bottom-36 left-4 lg:bottom-[72px] lg:left-6 z-[9990] w-[min(400px,calc(100vw-2rem))] max-h-[70vh] bg-white/[0.06]/95 border border-white/[0.06] rounded-lg overflow-hidden flex flex-col"
+            className="fixed bottom-36 left-4 lg:bottom-[72px] lg:left-6 z-[9990] w-[min(400px,calc(100vw-2rem))] max-h-[70vh] bg-white/[0.05]/95 border border-white/[0.05] rounded-lg overflow-hidden flex flex-col"
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
             transition={{ duration: 0.2, ease: EASE }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05]">
               <div className="flex items-center gap-2">
                 <ShieldCheck size={14} className="text-white/50" />
                 <span className="text-[12px] font-semibold text-white/50 tracking-wide uppercase">
@@ -69,14 +69,14 @@ function AdminToolbarInner() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-white/[0.06] rounded-md transition-colors"
+                className="p-1 hover:bg-white/[0.05] rounded-md transition-colors"
               >
                 <X size={14} className="text-white/50" />
               </button>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-white/[0.06]">
+            <div className="flex border-b border-white/[0.05]">
               {TABS.map(tab => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;

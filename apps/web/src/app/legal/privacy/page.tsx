@@ -46,7 +46,7 @@ export default function PrivacyPage() {
         </div>
 
         {/* Table of Contents */}
-        <nav className="mb-16 rounded-lg border border-white/[0.06] bg-white/[0.06] p-6">
+        <nav className="mb-16 rounded-lg border border-white/[0.05] bg-white/[0.05] p-6">
           <p className="mb-4 text-label-sm font-semibold uppercase tracking-wider text-white/50">
             Contents
           </p>
@@ -215,7 +215,7 @@ export default function PrivacyPage() {
         </article>
 
         {/* Version footer */}
-        <footer className="mt-20 border-t border-white/[0.06] pt-8">
+        <footer className="mt-20 border-t border-white/[0.05] pt-8">
           <p className="text-label text-white/50">
             Version 1.0 · Effective January 15, 2025
           </p>

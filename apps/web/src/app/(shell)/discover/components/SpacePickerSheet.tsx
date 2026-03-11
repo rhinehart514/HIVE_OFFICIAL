@@ -40,21 +40,21 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
 
       {/* Sheet */}
       <motion.div
-        className="relative w-full max-w-[400px] max-h-[70vh] rounded-t-2xl sm:rounded-2xl bg-surface border border-white/[0.08] shadow-md shadow-black/50 overflow-hidden flex flex-col"
+        className="relative w-full max-w-[400px] max-h-[70vh] rounded-t-2xl sm:rounded-2xl bg-surface border border-white/[0.05] shadow-md shadow-black/50 overflow-hidden flex flex-col"
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 80, opacity: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
           <div>
             <h3 className="text-[15px] font-semibold text-white">Add to space</h3>
             <p className="text-[12px] text-white/30 mt-0.5">Pick a space to install this app</p>
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/50 hover:bg-white/[0.10] transition-colors"
+            className="w-7 h-7 rounded-full bg-white/[0.05] flex items-center justify-center text-white/30 hover:text-white/50 hover:bg-white/[0.10] transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -66,9 +66,9 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
             <div className="space-y-1 px-3 py-2">
               {[0, 1, 2].map(i => (
                 <div key={i} className="flex items-center gap-3 py-3">
-                  <div className="w-9 h-9 rounded-full bg-white/[0.04] animate-pulse" />
+                  <div className="w-9 h-9 rounded-full bg-white/[0.03] animate-pulse" />
                   <div className="flex-1 space-y-1.5">
-                    <div className="h-3 w-24 bg-white/[0.04] rounded animate-pulse" />
+                    <div className="h-3 w-24 bg-white/[0.03] rounded animate-pulse" />
                     <div className="h-2 w-16 bg-white/[0.03] rounded animate-pulse" />
                   </div>
                 </div>
@@ -83,7 +83,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
               <Link
                 href="/discover"
                 onClick={onClose}
-                className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-[13px] text-white/50 hover:text-white/70 hover:bg-white/[0.08] transition-colors font-medium"
+                className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-white/[0.05] border border-white/[0.05] text-[13px] text-white/50 hover:text-white/70 hover:bg-white/[0.10] transition-colors font-medium"
               >
                 Browse spaces
               </Link>
@@ -102,7 +102,7 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
                     'flex items-center gap-3 w-full rounded-xl px-3 py-3 text-left transition-colors duration-150',
                     isDeployed
                       ? 'bg-emerald-500/[0.06]'
-                      : 'hover:bg-white/[0.04] active:scale-[0.98]'
+                      : 'hover:bg-white/[0.05] active:scale-[0.98]'
                   )}
                 >
                   <SpaceIcon space={space} />
@@ -119,9 +119,9 @@ export function SpacePickerSheet({ toolId, onDeploy, onClose, deployingSpaceId, 
                       <Check className="w-3.5 h-3.5 text-emerald-400" />
                     </motion.div>
                   ) : isDeploying ? (
-                    <div className="w-5 h-5 rounded-full border-2 border-white/[0.08] border-t-white/30 animate-spin" />
+                    <div className="w-5 h-5 rounded-full border-2 border-white/[0.05] border-t-white/30 animate-spin" />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-white/[0.04] flex items-center justify-center text-white/30 group-hover:text-white/50">
+                    <div className="w-7 h-7 rounded-full bg-white/[0.05] flex items-center justify-center text-white/30 group-hover:text-white/50">
                       <Plus className="w-3.5 h-3.5" />
                     </div>
                   )}
@@ -140,7 +140,7 @@ function SpaceIcon({ space }: { space: MySpace }) {
     return <img src={space.iconURL} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />;
   }
   return (
-    <div className="w-9 h-9 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0">
+    <div className="w-9 h-9 rounded-full bg-white/[0.05] flex items-center justify-center shrink-0">
       <span className="text-[13px] font-medium text-white/50">{space.name[0]?.toUpperCase()}</span>
     </div>
   );

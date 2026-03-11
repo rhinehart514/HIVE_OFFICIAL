@@ -75,9 +75,9 @@ export function ToolsList({
             'w-full px-3 py-2 rounded-lg',
             'flex items-center gap-2',
             'text-white/50 hover:text-white',
-            'hover:bg-white/[0.06]',
+            'hover:bg-white/[0.05]',
             'transition-colors',
-            'border border-dashed border-white/[0.06]',
+            'border border-dashed border-white/[0.05]',
             tools.length > 0 && 'mt-2'
           )}
         >
@@ -109,7 +109,7 @@ export function ToolsList({
         className={cn(
           'flex items-center gap-2 px-3 py-1.5 rounded-lg',
           'text-xs text-white/50 hover:text-white',
-          'hover:bg-white/[0.06]',
+          'hover:bg-white/[0.05]',
           'transition-colors',
           tools.length > 0 && 'mt-1'
         )}

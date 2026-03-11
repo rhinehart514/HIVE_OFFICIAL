@@ -63,8 +63,8 @@ export function EventsList({
             className={cn(
               'w-full p-2 rounded-lg',
               'text-left',
-              'bg-white/[0.06] hover:bg-white/[0.06]',
-              'border border-white/[0.06] hover:border-white/[0.06]',
+              'bg-white/[0.05] hover:bg-white/[0.10]',
+              'border border-white/[0.05] hover:border-white/[0.10]',
               'transition-colors'
             )}
           >

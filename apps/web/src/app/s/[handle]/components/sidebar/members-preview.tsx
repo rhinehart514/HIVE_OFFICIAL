@@ -48,7 +48,7 @@ export function MembersPreview({
       className={cn(
         'w-full px-2 py-2 rounded-lg',
         'flex items-center gap-3',
-        'hover:bg-white/[0.06]',
+        'hover:bg-white/[0.05]',
         'transition-colors',
         'text-left group'
       )}
@@ -84,14 +84,14 @@ export function MembersPreview({
             </motion.div>
           ))
         ) : (
-          <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full bg-white/[0.05] flex items-center justify-center">
             <Users className="w-3 h-3 text-white/50" />
           </div>
         )}
 
         {/* Overflow count */}
         {remainingCount > 0 && (
-          <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center border-2 border-void">
+          <div className="w-6 h-6 rounded-full bg-white/[0.05] flex items-center justify-center border-2 border-void">
             <span className="text-[11px] font-medium text-white/50">
               +{remainingCount}
             </span>

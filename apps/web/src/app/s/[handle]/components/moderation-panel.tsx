@@ -264,7 +264,7 @@ export function ModerationPanel({
           {/* Drawer Panel */}
           <motion.div
             className={cn(
-              'relative h-full w-full max-w-lg bg-[var(--bg-ground)] border-l border-white/[0.06] overflow-hidden flex flex-col',
+              'relative h-full w-full max-w-lg bg-[var(--bg-ground)] border-l border-white/[0.05] overflow-hidden flex flex-col',
               className
             )}
             initial={{ x: '100%' }}
@@ -273,7 +273,7 @@ export function ModerationPanel({
             transition={{ duration: durationSeconds.smooth, ease: MOTION.ease.premium }}
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[var(--bg-ground)]">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.05] bg-[var(--bg-ground)]">
               <div className="flex items-center gap-3">
                 <Shield className="h-5 w-5 text-white/50" />
                 <div>
@@ -296,7 +296,7 @@ export function ModerationPanel({
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-2 px-6 py-3 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2 px-6 py-3 border-b border-white/[0.05]">
               {(['flagged', 'hidden', 'all'] as const).map(tab => (
                 <button
                   key={tab}
@@ -304,8 +304,8 @@ export function ModerationPanel({
                   className={cn(
                     'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
                     filter === tab
-                      ? 'bg-white/[0.06] text-white'
-                      : 'text-white/50 hover:text-white/50 hover:bg-white/[0.06]'
+                      ? 'bg-white/[0.10] text-white'
+                      : 'text-white/50 hover:text-white/50 hover:bg-white/[0.05]'
                   )}
                 >
                   {tab === 'flagged' && `Flagged (${summary.flagged})`}
@@ -317,7 +317,7 @@ export function ModerationPanel({
 
             {/* Bulk Actions Bar */}
             {selectedIds.size > 0 && (
-              <div className="flex items-center justify-between px-6 py-3 bg-white/[0.06] border-b border-white/[0.06]">
+              <div className="flex items-center justify-between px-6 py-3 bg-white/[0.05] border-b border-white/[0.05]">
                 <Text size="sm" className="text-white/50">
                   {selectedIds.size} selected
                 </Text>
@@ -378,7 +378,7 @@ export function ModerationPanel({
               ) : (
                 <>
                   {/* Select All Header */}
-                  <div className="flex items-center gap-3 px-6 py-2 border-b border-white/[0.06]">
+                  <div className="flex items-center gap-3 px-6 py-2 border-b border-white/[0.05]">
                     <button
                       onClick={toggleAllSelection}
                       className="p-0.5 text-white/50 hover:text-white/50"
@@ -395,7 +395,7 @@ export function ModerationPanel({
                   </div>
 
                   {/* Items List */}
-                  <div className="divide-y divide-white/[0.06]">
+                  <div className="divide-y divide-white/[0.05]">
                     {items.map(item => {
                       const TypeIcon = TYPE_ICON[item.type] || FileText;
                       const availableActions = getAvailableActions(item);
@@ -404,8 +404,8 @@ export function ModerationPanel({
                         <div
                           key={`${item.type}-${item.id}`}
                           className={cn(
-                            'px-6 py-4 hover:bg-white/[0.06] transition-colors',
-                            selectedIds.has(item.id) && 'bg-white/[0.06]'
+                            'px-6 py-4 hover:bg-white/[0.05] transition-colors',
+                            selectedIds.has(item.id) && 'bg-white/[0.10]'
                           )}
                         >
                           <div className="flex items-start gap-3">
@@ -474,7 +474,7 @@ export function ModerationPanel({
 
                               {/* Reason if present */}
                               {item.reason && (
-                                <div className="mt-2 p-2 rounded bg-white/[0.06] border border-white/[0.06]">
+                                <div className="mt-2 p-2 rounded bg-white/[0.05] border border-white/[0.05]">
                                   <Text size="xs" tone="muted">
                                     Reason: {item.reason}
                                   </Text>
@@ -491,11 +491,11 @@ export function ModerationPanel({
                                   const hoverBgMap: Record<string, string> = {
                                     emerald: 'hover:bg-emerald-400/10',
                                     amber: 'hover:bg-amber-400/10',
-                                    white: 'hover:bg-white/[0.06]',
+                                    white: 'hover:bg-white/[0.05]',
                                     red: 'hover:bg-red-400/10',
                                   };
                                   const colorKey = config.color.split('-')[1] || '';
-                                  const hoverBg = hoverBgMap[colorKey] || 'hover:bg-white/[0.06]';
+                                  const hoverBg = hoverBgMap[colorKey] || 'hover:bg-white/[0.05]';
 
                                   return (
                                     <Button

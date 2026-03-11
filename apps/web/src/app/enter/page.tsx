@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 function EntryFallback() {
   return (
     <div className="min-h-dvh bg-void flex items-center justify-center">
-      <div className="w-3 h-3 rounded-full bg-white/[0.06]" />
+      <div className="w-3 h-3 rounded-full bg-white/[0.05]" />
     </div>
   );
 }

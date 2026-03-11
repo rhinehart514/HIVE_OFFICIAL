@@ -103,7 +103,7 @@ export function ViewAsPanel() {
 
         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg space-y-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center overflow-hidden flex-shrink-0">
               {impersonation.profile.avatarUrl ? (
                 <img src={impersonation.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -168,7 +168,7 @@ export function ViewAsPanel() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search by email or handle..."
-          className="w-full pl-9 pr-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/[0.15]"
+          className="w-full pl-9 pr-3 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/10"
         />
         {isSearching && (
           <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 " />
@@ -181,9 +181,9 @@ export function ViewAsPanel() {
           {results.map(user => (
             <div
               key={user.id}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.06] transition-colors group"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[0.10] transition-colors group"
             >
-              <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center overflow-hidden flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-white/[0.05] flex items-center justify-center overflow-hidden flex-shrink-0">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
                 ) : (

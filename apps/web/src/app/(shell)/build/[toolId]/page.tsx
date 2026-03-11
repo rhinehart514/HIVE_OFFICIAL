@@ -431,7 +431,7 @@ export default function BuildStudioPage({ params }: Props) {
 
         {/* Canvas */}
         {hasElements ? (
-          <div className="rounded-2xl bg-void border border-white/[0.06] p-5 sm:p-6">
+          <div className="rounded-2xl bg-void border border-white/[0.05] p-5 sm:p-6">
             <LazyToolCanvas
               elements={tool.elements!.map((el) => ({
                 elementId: el.elementId,
@@ -472,7 +472,7 @@ export default function BuildStudioPage({ params }: Props) {
             />
           </div>
         ) : (
-          <div className="rounded-2xl bg-void border border-white/[0.06] p-8 text-center">
+          <div className="rounded-2xl bg-void border border-white/[0.05] p-8 text-center">
             <p className="text-white/30 text-sm mb-4">Nothing here yet</p>
             <p className="text-white/30 text-xs">
               Tell us what you need and we'll build it
@@ -547,7 +547,7 @@ export default function BuildStudioPage({ params }: Props) {
   // ---------- Chat / iterate panel ----------
 
   const chatPanel = isOwner ? (
-    <div className="border-t lg:border-t-0 lg:border-l border-white/[0.06] bg-black/80 px-4 py-3 lg:py-6 lg:w-[360px] lg:flex lg:flex-col lg:justify-end">
+    <div className="border-t lg:border-t-0 lg:border-l border-white/[0.05] bg-black/80 px-4 py-3 lg:py-6 lg:w-[360px] lg:flex lg:flex-col lg:justify-end">
       <div className="max-w-[520px] mx-auto lg:max-w-none w-full">
         <p className="text-xs text-white/30 mb-2 hidden lg:block">
           Describe a change
@@ -568,8 +568,8 @@ export default function BuildStudioPage({ params }: Props) {
             }
             disabled={isIterating}
             rows={2}
-            className="flex-1 resize-none bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5
-              text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-white/[0.15]
+            className="flex-1 resize-none bg-white/[0.05] border border-white/[0.05] rounded-xl px-4 py-2.5
+              text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-white/10
               disabled:opacity-40 transition-colors"
           />
           <button
@@ -603,7 +603,7 @@ export default function BuildStudioPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-void flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] shrink-0">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05] shrink-0">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-white/30 hover:text-white/50 transition-colors text-sm"
@@ -640,10 +640,10 @@ export default function BuildStudioPage({ params }: Props) {
                       duration: durationSeconds.quick,
                       ease: EASE,
                     }}
-                    className="absolute right-0 top-full mt-2 w-64 bg-card border border-white/[0.08]
+                    className="absolute right-0 top-full mt-2 w-64 bg-card border border-white/[0.05]
                       rounded-xl shadow-md z-50 overflow-hidden"
                   >
-                    <div className="px-3 py-2 border-b border-white/[0.06]">
+                    <div className="px-3 py-2 border-b border-white/[0.05]">
                       <p className="text-xs font-medium text-white/50">
                         Deploy to Space
                       </p>
@@ -660,7 +660,7 @@ export default function BuildStudioPage({ params }: Props) {
                           onClick={() => handleDeploy(space.id, space.name)}
                           disabled={isDeploying}
                           className="w-full text-left px-3 py-2 text-sm text-white/50
-                            hover:bg-white/[0.06] hover:text-white/70 transition-colors
+                            hover:bg-white/[0.10] hover:text-white/70 transition-colors
                             disabled:opacity-40"
                         >
                           {space.name}
@@ -690,7 +690,7 @@ export default function BuildStudioPage({ params }: Props) {
 
       {/* Mobile tab toggle */}
       {isOwner && (
-        <div className="flex lg:hidden border-b border-white/[0.06]">
+        <div className="flex lg:hidden border-b border-white/[0.05]">
           <button
             onClick={() => setMobileTab('preview')}
             className={`flex-1 py-2 text-xs font-medium text-center transition-colors ${

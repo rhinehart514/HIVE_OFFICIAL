@@ -105,8 +105,8 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
             className={cn(
               'flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium transition-colors duration-100',
               expanded
-                ? 'bg-white/[0.08] border border-white/[0.10] text-white/50'
-                : 'bg-white/[0.06] border border-white/[0.06] text-white/70 hover:bg-white/[0.08] hover:border-white/[0.10]'
+                ? 'bg-white/[0.10] border border-white/10 text-white/50'
+                : 'bg-white/[0.05] border border-white/[0.05] text-white/70 hover:bg-white/[0.10] hover:border-white/10'
             )}
           >
             {expanded ? 'Close' : 'Try it'}
@@ -128,7 +128,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
                 e.stopPropagation();
                 onAddToSpace(tool.id);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium bg-white/[0.04] border border-white/[0.06] text-white/50 hover:bg-white/[0.06] hover:border-white/[0.10] hover:text-white/70 transition-colors duration-100"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium bg-white/[0.05] border border-white/[0.05] text-white/50 hover:bg-white/[0.05] hover:border-white/10 hover:text-white/70 transition-colors duration-100"
             >
               <Plus className="w-3.5 h-3.5" />
               Add to space
@@ -147,7 +147,7 @@ export function FeedToolCard({ tool, onRemix, onAddToSpace, isRemixing, index, i
             transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
             className="overflow-hidden"
           >
-            <div className="max-h-[400px] overflow-y-auto border-t border-white/[0.06]">
+            <div className="max-h-[400px] overflow-y-auto border-t border-white/[0.05]">
               <div className="p-4">
                 {expandedContent}
               </div>

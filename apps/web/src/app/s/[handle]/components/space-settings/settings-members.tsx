@@ -38,7 +38,7 @@ export function SettingsMembers({
 
       {/* Invite Members Section */}
       {isLeader && (
-        <div className="mb-8 pb-6 border-b border-white/[0.06]">
+        <div className="mb-8 pb-6 border-b border-white/[0.05]">
           <div className="flex items-center justify-between">
             <div>
               <Text weight="medium" className="mb-1">Invite Members</Text>

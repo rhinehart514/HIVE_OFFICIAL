@@ -36,7 +36,7 @@ export function FlagOverrides() {
         {hasOverrides && (
           <button
             onClick={clearAllOverrides}
-            className="flex items-center gap-1 px-2 py-1 text-[11px] text-white/50 hover:text-white/50 hover:bg-white/[0.06] rounded transition-colors"
+            className="flex items-center gap-1 px-2 py-1 text-[11px] text-white/50 hover:text-white/50 hover:bg-white/[0.10] rounded transition-colors"
           >
             <RotateCcw size={10} />
             Reset All
@@ -54,7 +54,7 @@ export function FlagOverrides() {
           return (
             <div
               key={flagId}
-              className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.06] transition-colors"
+              className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.10] transition-colors"
             >
               <div className="min-w-0">
                 <p className="text-[12px] text-white/50 font-sans truncate">{flagId}</p>
@@ -84,7 +84,7 @@ export function FlagOverrides() {
                   relative w-9 h-5 rounded-full transition-colors flex-shrink-0
                   ${effectiveValue
                     ? 'bg-emerald-500/40'
-                    : 'bg-white/[0.06]'
+                    : 'bg-white/[0.05]'
                   }
                   ${hasOverride ? 'outline outline-2 outline-[#FFD700]' : ''}
                 `}

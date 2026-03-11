@@ -412,7 +412,7 @@ const CURRENT_GUIDELINES: LegalDocument = {
         </li>
       </ul>
 
-      <div className="mt-12 border-t border-white/[0.06] pt-8">
+      <div className="mt-12 border-t border-white/[0.05] pt-8">
         <h3 className="text-lg font-semibold text-[var(--hive-brand-primary)]">Version History</h3>
         <div className="mt-4 space-y-2 text-sm text-white/50">
           <div className="flex items-center gap-2">
@@ -438,7 +438,7 @@ export default function CommunityGuidelinesPage() {
     <Suspense fallback={<div>Loading...</div>}>
       <div className="min-h-screen bg-void">
       {/* Header */}
-      <div className="border-b border-white/[0.06] bg-[var(--bg-void)]/50">
+      <div className="border-b border-white/[0.05] bg-[var(--bg-void)]/50">
         <div className="mx-auto max-w-4xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -446,7 +446,7 @@ export default function CommunityGuidelinesPage() {
                 <ArrowLeft className="h-4 w-4" />
                 Back to HIVE
               </Link>
-              <div className="h-6 w-px bg-white/[0.06]" />
+              <div className="h-6 w-px bg-white/[0.05]" />
               <div className="flex items-center gap-2 text-white/50">
                 <Heart className="h-4 w-4" />
                 <span className="text-sm">Community Standards</span>

@@ -20,19 +20,19 @@ function ProfilePageSkeleton() {
     <div className="w-full px-6 py-6 pb-24 md:pb-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Portrait — tall left card */}
-        <div className="md:row-span-2 h-[320px] md:h-full rounded-2xl bg-white/[0.04] animate-pulse" />
+        <div className="md:row-span-2 h-[320px] md:h-full rounded-2xl bg-white/[0.03] animate-pulse" />
         {/* Stats */}
-        <div className="h-28 rounded-2xl bg-white/[0.04] animate-pulse" />
+        <div className="h-28 rounded-2xl bg-white/[0.03] animate-pulse" />
         {/* Interests */}
-        <div className="h-28 rounded-2xl bg-white/[0.04] animate-pulse" />
+        <div className="h-28 rounded-2xl bg-white/[0.03] animate-pulse" />
         {/* Spaces */}
-        <div className="h-28 rounded-2xl bg-white/[0.04] animate-pulse md:col-span-2" />
+        <div className="h-28 rounded-2xl bg-white/[0.03] animate-pulse md:col-span-2" />
         {/* Tools row */}
-        <div className="h-24 rounded-2xl bg-white/[0.04] animate-pulse" />
-        <div className="h-24 rounded-2xl bg-white/[0.04] animate-pulse" />
-        <div className="h-24 rounded-2xl bg-white/[0.04] animate-pulse" />
+        <div className="h-24 rounded-2xl bg-white/[0.03] animate-pulse" />
+        <div className="h-24 rounded-2xl bg-white/[0.03] animate-pulse" />
+        <div className="h-24 rounded-2xl bg-white/[0.03] animate-pulse" />
         {/* Event */}
-        <div className="h-32 rounded-2xl bg-white/[0.04] animate-pulse md:col-span-3" />
+        <div className="h-32 rounded-2xl bg-white/[0.03] animate-pulse md:col-span-3" />
       </div>
     </div>
   );
@@ -46,14 +46,14 @@ function ProfileShell({ user }: { user: { id: string; email?: string | null; dis
     <div className="min-h-screen bg-void pb-24">
       <div className="mx-auto max-w-2xl px-4 pt-16">
         <div className="flex flex-col items-center text-center">
-          <div className="h-20 w-20 rounded-full bg-white/[0.06] border border-white/[0.06] flex items-center justify-center mb-4">
+          <div className="h-20 w-20 rounded-full bg-white/[0.05] border border-white/[0.05] flex items-center justify-center mb-4">
             <span className="text-2xl font-medium text-white/30">{initial}</span>
           </div>
           <h1 className="text-xl font-semibold text-white mb-1">{displayName}</h1>
           {user.email && (
             <p className="text-sm text-white/30 font-sans">{user.email}</p>
           )}
-          <div className="mt-8 p-6 rounded-2xl bg-white/[0.03] border border-white/[0.06] max-w-sm w-full">
+          <div className="mt-8 p-6 rounded-2xl bg-white/[0.03] border border-white/[0.05] max-w-sm w-full">
             <p className="text-sm text-white/50 mb-4">
               Complete your profile to get a shareable link and start building.
             </p>

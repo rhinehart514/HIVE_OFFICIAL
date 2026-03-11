@@ -21,12 +21,12 @@ export function PrivacySection({
 }: PrivacySectionProps) {
   return (
     <div className="space-y-6">
-      <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
+      <Card className="p-6 bg-white/[0.05] border-white/[0.05]">
         <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
           <EyeIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
           Profile Visibility
         </h3>
-        <div className="divide-y divide-white/[0.06]">
+        <div className="divide-y divide-white/[0.05]">
           <SettingRow
             label="Show Activity Feed"
             description="Let others see your recent activity and interactions"
@@ -58,7 +58,7 @@ export function PrivacySection({
             onCheckedChange={(v) => onPrivacyChange('allowDirectMessages', v)}
           />
         </div>
-        <div className="mt-4 pt-4 border-t border-white/[0.06]">
+        <div className="mt-4 pt-4 border-t border-white/[0.05]">
           <Button
             onClick={onSavePrivacy}
             disabled={isUpdating}

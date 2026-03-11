@@ -93,7 +93,7 @@ export default function DesignSystemPage() {
           <h2 className="text-xl font-semibold">Dev Tools</h2>
           <p className="text-white/50">Quick links to development tools</p>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Link className="rounded-lg p-5 hover:bg-white/[0.06] transition" href="/lab">
+            <Link className="rounded-lg p-5 hover:bg-white/[0.10] transition" href="/lab">
               <div className="text-lg font-medium mb-1">HiveLab IDE</div>
               <div className="text-sm text-white/50">Visual tool builder</div>
             </Link>

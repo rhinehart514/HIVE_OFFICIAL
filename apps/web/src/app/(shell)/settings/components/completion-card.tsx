@@ -85,7 +85,7 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
           </button>
 
           {/* Progress bar */}
-          <div className="h-1 w-full bg-white/[0.06] mb-4">
+          <div className="h-1 w-full bg-white/[0.03] mb-4">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${percentage}%` }}
@@ -122,10 +122,10 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
                 <Link
                   key={field}
                   href={config.href}
-                  className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-white/[0.06] transition-colors group"
+                  className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-white/[0.10] transition-colors group"
                 >
                   <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${required ? 'bg-amber-400' : 'bg-white/[0.06]'}`} />
+                    <div className={`w-1.5 h-1.5 rounded-full ${required ? 'bg-amber-400' : 'bg-white/[0.05]'}`} />
                     <Text size="sm" className="text-white/50 group-hover:text-white transition-colors">
                       {config.label}
                     </Text>
@@ -143,7 +143,7 @@ export function CompletionCard({ onDismiss }: CompletionCardProps) {
           </div>
 
           {/* Action */}
-          <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
+          <div className="mt-4 pt-4 border-t border-white/[0.05] flex items-center justify-between">
             <Text size="xs" className="text-white/50">
               Dismiss for 7 days
             </Text>

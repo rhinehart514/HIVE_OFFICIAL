@@ -34,7 +34,7 @@ export function ImpersonationBanner() {
       </span>
       <button
         onClick={handleEnd}
-        className="ml-2 px-2 py-0.5 bg-white/[0.06] hover:bg-white/50 rounded text-xs font-semibold transition-colors flex items-center gap-1"
+        className="ml-2 px-2 py-0.5 bg-white/[0.05] hover:bg-white/50 rounded text-xs font-semibold transition-colors flex items-center gap-1"
       >
         <X size={12} />
         Exit

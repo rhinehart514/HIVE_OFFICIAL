@@ -22,7 +22,7 @@ export function SettingRow({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between py-3 border-b border-white/[0.06] last:border-0">
+    <div className="flex items-start justify-between py-3 border-b border-white/[0.05] last:border-0">
       <div className="flex-1 pr-4">
         <p className="text-sm font-medium text-white">{label}</p>
         <p className="text-xs text-white/50 mt-0.5">{description}</p>
@@ -78,7 +78,7 @@ export function ConfirmModal({
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className={`relative w-full max-w-md mx-4 rounded-lg bg-[var(--bg-ground)] p-6 ${
-          variant === 'danger' ? 'border-red-500/30' : 'border-white/[0.06]'
+          variant === 'danger' ? 'border-red-500/30' : 'border-white/[0.05]'
         }`}
       >
         <button
@@ -106,8 +106,8 @@ export function ConfirmModal({
               value={typedText}
               onChange={(e) => setTypedText(e.target.value)}
               placeholder={`Type ${typingWord}`}
-              className={`w-full p-3 bg-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:outline-none ${
-                variant === 'danger' ? 'border-red-500/30 focus:border-red-500' : 'border-white/[0.06] focus:border-white/50'
+              className={`w-full p-3 bg-white/[0.05] rounded-lg text-white placeholder:text-white/50 focus:outline-none ${
+                variant === 'danger' ? 'border-red-500/30 focus:border-red-500' : 'border-white/[0.05] focus:border-white/50'
               }`}
             />
           </div>
@@ -159,12 +159,12 @@ export function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-white/[0.06] rounded-lg overflow-hidden">
+    <div className="border border-white/[0.05] rounded-lg overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${title} section`}
-        className="w-full flex items-center justify-between p-4 bg-white/[0.06] hover:bg-white/[0.06] transition-colors"
+        className="w-full flex items-center justify-between p-4 bg-white/[0.05] hover:bg-white/[0.10] transition-colors"
       >
         <div className="flex items-center gap-3">
           <Icon className="h-5 w-5 text-[var(--hive-brand-primary)]" aria-hidden="true" />

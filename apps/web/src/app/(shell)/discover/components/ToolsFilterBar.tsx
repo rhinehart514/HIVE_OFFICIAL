@@ -61,7 +61,7 @@ export function ToolsFilterBar({
               animate={{ width: '100%', opacity: 1 }}
               exit={{ width: 120, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="flex-1 flex items-center gap-2 rounded-xl bg-white/[0.04] border border-white/[0.08] px-3 py-2"
+              className="flex-1 flex items-center gap-2 rounded-xl bg-white/[0.05] border border-white/[0.05] px-3 py-2"
             >
               <Search className="w-3.5 h-3.5 text-white/30 shrink-0" />
               <input
@@ -83,7 +83,7 @@ export function ToolsFilterBar({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleSearchOpen}
-              className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/50 hover:bg-white/[0.06] transition-colors"
+              className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.05] flex items-center justify-center text-white/30 hover:text-white/50 hover:bg-white/[0.05] transition-colors"
             >
               <Search className="w-3.5 h-3.5" />
             </motion.button>
@@ -99,7 +99,7 @@ export function ToolsFilterBar({
                 className={cn(
                   'px-3 py-1.5 rounded-full text-[11px] font-medium transition-colors duration-100 capitalize',
                   sort === opt
-                    ? 'bg-white/[0.08] text-white/70 border border-white/[0.10]'
+                    ? 'bg-white/[0.10] text-white/70 border border-white/10'
                     : 'text-white/30 hover:text-white/50'
                 )}
               >
@@ -120,7 +120,7 @@ export function ToolsFilterBar({
               'shrink-0 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors duration-150 whitespace-nowrap',
               category === cat.value
                 ? 'bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700]/70'
-                : 'bg-white/[0.03] border border-white/[0.06] text-white/30 hover:bg-white/[0.05] hover:text-white/50'
+                : 'bg-white/[0.03] border border-white/[0.05] text-white/30 hover:bg-white/[0.05] hover:text-white/50'
             )}
           >
             {cat.label}

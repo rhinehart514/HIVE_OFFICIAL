@@ -19,7 +19,7 @@ export class PreviewErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="h-48 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center">
+        <div className="h-48 rounded-2xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-center">
           <div className="text-center">
             <p className="text-sm text-white/30">Preview couldn&apos;t load</p>
             <button

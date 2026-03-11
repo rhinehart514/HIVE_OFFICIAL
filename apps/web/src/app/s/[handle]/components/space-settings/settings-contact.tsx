@@ -10,7 +10,7 @@ import type { SpaceData } from './types';
 const inputClassName = cn(
   'w-full px-4 py-2.5',
   'rounded-lg text-sm',
-  'bg-white/[0.06] border border-white/[0.06]',
+  'bg-white/[0.05] border border-white/[0.05]',
   'text-white placeholder:text-white/50',
   'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
   'transition-colors duration-150'
@@ -171,7 +171,7 @@ export function SettingsContact({ space, onUpdate }: SettingsContactProps) {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 pt-4 border-t border-white/[0.06]"
+            className="flex items-center gap-3 pt-4 border-t border-white/[0.05]"
           >
             <Button
               variant="cta"

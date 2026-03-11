@@ -216,15 +216,15 @@ function ContextLoadingSkeleton() {
         animate={{ opacity: 0.6 }}
         transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse' }}
       >
-        <div className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-5">
+        <div className="rounded-lg border border-white/[0.05] bg-white/[0.03] p-5">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-5 h-5 rounded bg-white/[0.06]" />
-            <div className="h-4 w-36 bg-white/[0.06] rounded" />
+            <div className="w-5 h-5 rounded bg-white/[0.03]" />
+            <div className="h-4 w-36 bg-white/[0.03] rounded" />
           </div>
           <div className="space-y-3">
-            <div className="h-11 bg-white/[0.06] rounded-lg" />
-            <div className="h-11 bg-white/[0.06] rounded-lg" />
-            <div className="h-11 bg-white/[0.06] rounded-lg" />
+            <div className="h-11 bg-white/[0.03] rounded-lg" />
+            <div className="h-11 bg-white/[0.03] rounded-lg" />
+            <div className="h-11 bg-white/[0.03] rounded-lg" />
           </div>
         </div>
       </motion.div>
@@ -234,13 +234,13 @@ function ContextLoadingSkeleton() {
         animate={{ opacity: 0.6 }}
         transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse', delay: 0.1 }}
       >
-        <div className="rounded-lg border border-white/[0.06] bg-white/[0.06] p-5">
+        <div className="rounded-lg border border-white/[0.05] bg-white/[0.03] p-5">
           <div className="text-center">
-            <div className="h-3 w-20 bg-white/[0.06] rounded mx-auto mb-4" />
+            <div className="h-3 w-20 bg-white/[0.03] rounded mx-auto mb-4" />
             <div className="flex items-center justify-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-white/[0.06]" />
-              <div className="h-12 w-24 bg-white/[0.06] rounded-lg" />
-              <div className="h-12 w-12 rounded-full bg-white/[0.06]" />
+              <div className="h-12 w-12 rounded-full bg-white/[0.03]" />
+              <div className="h-12 w-24 bg-white/[0.03] rounded-lg" />
+              <div className="h-12 w-12 rounded-full bg-white/[0.03]" />
             </div>
           </div>
         </div>
@@ -254,7 +254,7 @@ function PageLoadingSkeleton() {
   return (
     <div className="min-h-screen bg-[var(--bg-ground)]">
       {/* Header skeleton */}
-      <div className="sticky top-0 z-10 bg-[var(--bg-ground)] border-b border-white/[0.06]">
+      <div className="sticky top-0 z-10 bg-[var(--bg-ground)] border-b border-white/[0.05]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -277,7 +277,7 @@ function PageLoadingSkeleton() {
       </div>
       {/* Content skeleton with element shapes */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="bg-[var(--bg-surface)] rounded-lg border border-white/[0.06] p-4 sm:p-6">
+        <div className="bg-[var(--bg-surface)] rounded-lg border border-white/[0.05] p-4 sm:p-6">
           <ContextLoadingSkeleton />
         </div>
       </div>
@@ -398,7 +398,7 @@ function ToolContent({
     return (
       <div className="min-h-screen bg-[var(--bg-ground)]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="bg-[var(--bg-surface)] rounded-lg border border-white/[0.06] p-4 sm:p-6">
+          <div className="bg-[var(--bg-surface)] rounded-lg border border-white/[0.05] p-4 sm:p-6">
             <ContextLoadingSkeleton />
           </div>
         </div>
@@ -414,14 +414,14 @@ function ToolContent({
       transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
     >
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[var(--bg-ground)] border-b border-white/[0.06]">
+      <div className="sticky top-0 z-10 bg-[var(--bg-ground)] border-b border-white/[0.05]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           {/* Top row: back + title + actions */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={onBack}
-                className="shrink-0 p-2 -ml-2 rounded-lg hover:bg-white/[0.06] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="shrink-0 p-2 -ml-2 rounded-lg hover:bg-white/[0.05] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <ArrowLeft className="w-5 h-5 text-white/50" />
               </button>
@@ -440,7 +440,7 @@ function ToolContent({
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               {/* Remix count badge */}
               {deployment.tool.remixCount != null && deployment.tool.remixCount > 0 && (
-                <div className="hidden sm:flex items-center gap-1.5 text-xs text-white/50 px-2 py-1 rounded-md bg-white/[0.06]">
+                <div className="hidden sm:flex items-center gap-1.5 text-xs text-white/50 px-2 py-1 rounded-md bg-white/[0.05]">
                   <GitFork className="w-3.5 h-3.5" />
                   <span>{deployment.tool.remixCount} remix{deployment.tool.remixCount !== 1 ? 'es' : ''}</span>
                 </div>
@@ -448,7 +448,7 @@ function ToolContent({
 
               {/* Usage count */}
               {deployment.tool.useCount != null && deployment.tool.useCount > 0 && (
-                <div className="hidden sm:flex items-center gap-1.5 text-xs text-white/50 px-2 py-1 rounded-md bg-white/[0.06]">
+                <div className="hidden sm:flex items-center gap-1.5 text-xs text-white/50 px-2 py-1 rounded-md bg-white/[0.05]">
                   <Users className="w-3.5 h-3.5" />
                   <span>{deployment.tool.useCount}</span>
                 </div>
@@ -459,7 +459,7 @@ function ToolContent({
                 <button
                   onClick={handleRemix}
                   disabled={remixing}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.06] hover:bg-white/[0.06] text-white hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[36px]"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.05] hover:bg-white/[0.10] text-white hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[36px]"
                 >
                   {remixing ? (
                     <Loader2 className="w-3.5 h-3.5 " />
@@ -477,7 +477,7 @@ function ToolContent({
                     setFeedbackVariant('review');
                     setFeedbackOpen(true);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.06] hover:bg-white/[0.06] text-white hover:text-white transition-colors min-h-[36px]"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.05] hover:bg-white/[0.10] text-white hover:text-white transition-colors min-h-[36px]"
                   title="Leave feedback"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
@@ -502,7 +502,7 @@ function ToolContent({
               {/* Share button */}
               <button
                 onClick={handleShare}
-                className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-2 rounded-lg hover:bg-white/[0.05] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Copy link"
               >
                 <AnimatePresence mode="wait">
@@ -549,7 +549,7 @@ function ToolContent({
                       className="w-4 h-4 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-4 h-4 rounded-full bg-white/[0.06] flex items-center justify-center text-[11px] text-white/50">
+                    <div className="w-4 h-4 rounded-full bg-white/[0.05] flex items-center justify-center text-[11px] text-white/50">
                       {deployment.tool.creatorName.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -618,7 +618,7 @@ function ToolContent({
           </motion.div>
         )}
 
-        <div className="bg-[var(--bg-surface)] rounded-lg border border-white/[0.06] p-4 sm:p-6 overflow-x-hidden">
+        <div className="bg-[var(--bg-surface)] rounded-lg border border-white/[0.05] p-4 sm:p-6 overflow-x-hidden">
           <ToolErrorBoundary onRetry={() => runtime.reload()}>
             {elements.length > 0 ? (
               <ToolCanvas
@@ -670,7 +670,7 @@ function ToolContent({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
               >
-                <div className="w-12 h-12 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 rounded-lg bg-white/[0.05] flex items-center justify-center mx-auto mb-4">
                   <AlertTriangle className="w-6 h-6 text-white/50" />
                 </div>
                 <p className="text-white/50 font-medium mb-1">This app isn't ready yet</p>
@@ -756,7 +756,7 @@ export default function SpaceToolPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
         >
-          <div className="w-14 h-14 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-5">
+          <div className="w-14 h-14 rounded-lg bg-white/[0.05] flex items-center justify-center mx-auto mb-5">
             <AlertTriangle className="w-7 h-7 text-white/50" />
           </div>
           <h2 className="text-xl font-semibold text-white mb-2">Space not found</h2>
@@ -781,7 +781,7 @@ export default function SpaceToolPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
         >
-          <div className="w-14 h-14 rounded-lg bg-white/[0.06] flex items-center justify-center mx-auto mb-5">
+          <div className="w-14 h-14 rounded-lg bg-white/[0.05] flex items-center justify-center mx-auto mb-5">
             <AlertTriangle className="w-7 h-7 text-white/50" />
           </div>
           <h2 className="text-xl font-semibold text-white mb-2">Not found</h2>

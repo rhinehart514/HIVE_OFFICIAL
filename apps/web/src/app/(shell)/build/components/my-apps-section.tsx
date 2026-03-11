@@ -73,7 +73,7 @@ export function MyAppsSection() {
             key={tool.id}
             onClick={() => router.push(`/build/${tool.id}`)}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg
-              bg-white/[0.02] hover:bg-white/[0.04] transition-colors text-left group"
+              bg-white/[0.03] hover:bg-white/[0.05] transition-colors text-left group"
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white/50 group-hover:text-white/70 truncate transition-colors">

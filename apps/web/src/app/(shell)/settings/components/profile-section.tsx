@@ -109,14 +109,14 @@ export function ProfileSection({
     : '?';
 
   return (
-    <Card className="p-6 bg-white/[0.06] border-white/[0.06]">
+    <Card className="p-6 bg-white/[0.05] border-white/[0.05]">
       <h3 className="text-lg font-semibold text-white mb-6">Profile Information</h3>
       <div className="space-y-4">
         {/* Photo Upload Section */}
-        <div className="flex items-center gap-4 pb-4 border-b border-white/[0.06]">
+        <div className="flex items-center gap-4 pb-4 border-b border-white/[0.05]">
           <div className="relative">
             {/* Avatar Preview */}
-            <div className="w-20 h-20 rounded-lg overflow-hidden bg-white/[0.06] flex items-center justify-center">
+            <div className="w-20 h-20 rounded-lg overflow-hidden bg-white/[0.05] flex items-center justify-center">
               {formData.avatarUrl ? (
                 <img
                   src={formData.avatarUrl}
@@ -148,7 +148,7 @@ export function ProfileSection({
               variant="secondary"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="border-white/[0.06] text-white hover:bg-white/[0.06]"
+              className="border-white/[0.05] text-white hover:bg-white/[0.10]"
             >
               <CameraIcon className="h-4 w-4 mr-2" />
               {formData.avatarUrl ? 'Change Photo' : 'Upload Photo'}
@@ -173,7 +173,7 @@ export function ProfileSection({
               type="text"
               value={formData.fullName}
               onChange={(e) => setFormData((prev) => ({ ...prev, fullName: e.target.value }))}
-              className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:border-[var(--hive-brand-primary)] focus:outline-none"
+              className="w-full px-3 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-white placeholder:text-white/50 focus:border-[var(--hive-brand-primary)] focus:outline-none"
             />
           </div>
           <div>
@@ -182,7 +182,7 @@ export function ProfileSection({
               type="text"
               value={formData.handle}
               onChange={(e) => setFormData((prev) => ({ ...prev, handle: e.target.value }))}
-              className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:border-[var(--hive-brand-primary)] focus:outline-none"
+              className="w-full px-3 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-white placeholder:text-white/50 focus:border-[var(--hive-brand-primary)] focus:outline-none"
             />
             <p className="text-xs text-white/50 mt-1">Handle changes are rate-limited</p>
           </div>
@@ -193,7 +193,7 @@ export function ProfileSection({
             type="email"
             defaultValue={userEmail}
             disabled
-            className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white/50 cursor-not-allowed"
+            className="w-full px-3 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-white/50 cursor-not-allowed"
           />
           <p className="text-xs text-white/50 mt-1">Email cannot be changed</p>
         </div>
@@ -203,12 +203,12 @@ export function ProfileSection({
             rows={3}
             value={formData.bio}
             onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
-            className="w-full px-3 py-2 bg-white/[0.06] border border-white/[0.06] rounded-lg text-white placeholder:text-white/50 focus:border-[var(--hive-brand-primary)] focus:outline-none resize-none"
+            className="w-full px-3 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-white placeholder:text-white/50 focus:border-[var(--hive-brand-primary)] focus:outline-none resize-none"
             placeholder="Tell others about yourself..."
           />
         </div>
       </div>
-      <div className="flex items-center justify-end mt-6 pt-4 border-t border-white/[0.06]">
+      <div className="flex items-center justify-end mt-6 pt-4 border-t border-white/[0.05]">
         <Button
           onClick={onSave}
           disabled={isSaving || !hasChanges}

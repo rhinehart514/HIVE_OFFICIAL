@@ -40,10 +40,10 @@ function SettingsNavItem({
         'transition-colors duration-150',
         'text-left',
         active
-          ? 'bg-white/[0.06] text-white'
+          ? 'bg-white/[0.05] text-white'
           : variant === 'danger'
-          ? 'text-red-400/60 hover:text-red-400 hover:bg-red-500/[0.04]'
-          : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
+          ? 'text-red-400/60 hover:text-red-400 hover:bg-red-500/[0.05]'
+          : 'text-white/50 hover:text-white hover:bg-white/[0.10]'
       )}
     >
       <span className="flex-shrink-0">{icon}</span>
@@ -76,7 +76,7 @@ export function SettingsNav({
   onAnalyticsClick,
 }: SettingsNavProps) {
   return (
-    <div className="w-56 border-r border-white/[0.06] p-4 flex-shrink-0">
+    <div className="w-56 border-r border-white/[0.05] p-4 flex-shrink-0">
       <nav className="space-y-1">
         <SettingsNavItem
           active={activeSection === 'general'}

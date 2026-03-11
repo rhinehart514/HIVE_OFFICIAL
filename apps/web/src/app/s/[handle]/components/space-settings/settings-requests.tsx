@@ -85,7 +85,7 @@ export function SettingsRequests({ spaceId }: SettingsRequestsProps) {
           <Loader2 className="w-6 h-6 text-white/50" />
         </div>
       ) : joinRequests.length === 0 ? (
-        <div className="text-center py-12 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+        <div className="text-center py-12 rounded-lg bg-white/[0.05] border border-white/[0.05]">
           <Inbox className="w-10 h-10 mx-auto mb-4 text-white/50" />
           <Text weight="medium" className="text-white/50 mb-1">
             No pending requests
@@ -108,7 +108,7 @@ export function SettingsRequests({ spaceId }: SettingsRequestsProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2, ease: MOTION.ease.premium }}
-                className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]"
+                className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]"
               >
                 <div className="flex items-center gap-3">
                   <Avatar size="default">
@@ -173,7 +173,7 @@ export function SettingsRequests({ spaceId }: SettingsRequestsProps) {
                 </div>
 
                 {request.message && (
-                  <div className="mt-3 p-3 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+                  <div className="mt-3 p-3 rounded-lg bg-white/[0.05] border border-white/[0.05]">
                     <Text size="xs" tone="muted" className="mb-1">Message</Text>
                     <Text size="sm" className="text-white/50">
                       {request.message}

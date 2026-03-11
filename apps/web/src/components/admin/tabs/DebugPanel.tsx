@@ -124,7 +124,7 @@ export function DebugPanel() {
       {/* Copy */}
       <button
         onClick={handleCopy}
-        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/[0.06] hover:bg-white/8 border border-white/[0.06] rounded-lg text-[12px] text-white/50 font-medium transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.05] rounded-lg text-[12px] text-white/50 font-medium transition-colors"
       >
         {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
         {copied ? 'Copied!' : 'Copy Debug JSON'}

@@ -21,11 +21,11 @@ export function SettingsModeration({ onOpenPanel }: SettingsModerationProps) {
       </Text>
 
       <div
-        className="p-6 rounded-lg bg-white/[0.06] border border-white/[0.06] cursor-pointer hover:bg-white/[0.06] transition-colors"
+        className="p-6 rounded-lg bg-white/[0.05] border border-white/[0.05] cursor-pointer hover:bg-white/[0.10] transition-colors"
         onClick={onOpenPanel}
       >
         <div className="flex items-center gap-4">
-          <div className="p-3 rounded-lg bg-white/[0.06]">
+          <div className="p-3 rounded-lg bg-white/[0.05]">
             <Shield className="w-6 h-6 text-white/50" />
           </div>
           <div className="flex-1">

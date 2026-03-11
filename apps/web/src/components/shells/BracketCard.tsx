@@ -119,7 +119,7 @@ function BracketCard({
                   ? 'bg-[#FFD700]/[0.10]'
                   : hasVoted && isLeading
                     ? 'bg-white/[0.05]'
-                    : 'bg-white/[0.02]'
+                    : 'bg-white/[0.03]'
                 }
                 ${choice === 'A' ? 'border-r border-white/[0.05]' : ''}
               `}

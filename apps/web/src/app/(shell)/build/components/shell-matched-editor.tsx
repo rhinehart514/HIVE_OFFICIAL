@@ -43,12 +43,12 @@ export function ShellMatchedEditor({
             {registryName} detected
           </span>
         </div>
-        <span className="text-[11px] text-white/30 px-2 py-0.5 rounded-full bg-white/[0.04]">
+        <span className="text-[11px] text-white/30 px-2 py-0.5 rounded-full bg-white/[0.05]">
           {Math.round(confidence * 100)}% match
         </span>
       </div>
 
-      <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+      <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
         <ShellConfigEditor
           format={shellFormat}
           config={shellConfig}
@@ -68,7 +68,7 @@ export function ShellMatchedEditor({
         <button
           onClick={onEscalate}
           className="flex items-center justify-center gap-1.5 h-10 px-4 rounded-full
-            text-sm text-white/50 bg-white/[0.04] hover:bg-white/[0.06] hover:text-white
+            text-sm text-white/50 bg-white/[0.05] hover:bg-white/[0.10] hover:text-white
             transition-colors duration-100"
         >
           <Sparkles className="w-3.5 h-3.5" />

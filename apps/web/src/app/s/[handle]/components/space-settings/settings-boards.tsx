@@ -9,7 +9,7 @@ import type { Board } from './types';
 const inputClassName = cn(
   'w-full px-3 py-2',
   'rounded-lg text-sm',
-  'bg-white/[0.06] border border-white/[0.06]',
+  'bg-white/[0.05] border border-white/[0.05]',
   'text-white placeholder:text-white/50',
   'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
   'transition-colors duration-150'
@@ -98,7 +98,7 @@ export function SettingsBoards({
       </Text>
 
       {boards.length === 0 ? (
-        <div className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+        <div className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]">
           <Text size="sm" tone="muted">No boards yet — add one to keep things organized</Text>
         </div>
       ) : (
@@ -106,7 +106,7 @@ export function SettingsBoards({
           {boards.map((board) => (
             <div
               key={board.id}
-              className="p-4 rounded-lg bg-white/[0.06] border border-white/[0.06]"
+              className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05]"
             >
               {editingBoardId === board.id ? (
                 <div className="space-y-4">
@@ -188,7 +188,7 @@ export function SettingsBoards({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleBoardEdit(board)}
-                          className="text-white/50 hover:text-white hover:bg-white/[0.06]"
+                          className="text-white/50 hover:text-white hover:bg-white/[0.10]"
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>

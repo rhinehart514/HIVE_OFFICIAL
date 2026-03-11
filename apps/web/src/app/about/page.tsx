@@ -166,7 +166,7 @@ export default function AboutPage() {
             </Link>
             <Link
               href="/discover"
-              className="px-7 py-3.5 bg-white/[0.06] text-white text-[15px] font-medium rounded-full border border-white/[0.1] hover:bg-white/[0.06] transition-colors"
+              className="px-7 py-3.5 bg-white/[0.05] text-white text-[15px] font-medium rounded-full border border-white/[0.10] hover:bg-white/[0.10] transition-colors"
             >
               Browse spaces
             </Link>
@@ -175,7 +175,7 @@ export default function AboutPage() {
       </main>
 
       {/* Footer */}
-      <footer className="px-6 py-8 border-t border-white/[0.06]">
+      <footer className="px-6 py-8 border-t border-white/[0.05]">
         <div className="max-w-[640px] mx-auto flex items-center justify-between text-[12px] text-white/30">
           <span>&copy; {new Date().getFullYear()} HIVE</span>
           <div className="flex gap-4">

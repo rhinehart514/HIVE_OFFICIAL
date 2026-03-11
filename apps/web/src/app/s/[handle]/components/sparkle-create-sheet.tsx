@@ -41,12 +41,12 @@ const FORMAT_CHIPS: Array<{ id: FormatChip; label: string; icon: React.Component
 // ── Inline Shell Config Editors ──────────────────────────────────────
 
 const inputClass = cn(
-  'w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/[0.06]',
+  'w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/[0.05]',
   'text-white placeholder:text-white/30 focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
 );
 
 const smallInputClass = cn(
-  'flex-1 px-3 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.06]',
+  'flex-1 px-3 py-1.5 rounded-lg text-sm bg-white/[0.03] border border-white/[0.05]',
   'text-white placeholder:text-white/30 focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
 );
 
@@ -269,7 +269,7 @@ export function SparkleCreateSheet({
           >
             {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-8 h-1 rounded-full bg-white/[0.12]" />
+              <div className="w-8 h-1 rounded-full bg-white/[0.10]" />
             </div>
 
             <div className="px-4 pb-8">
@@ -293,9 +293,9 @@ export function SparkleCreateSheet({
                           onClick={() => handleFormatSelect(chip.id)}
                           className={cn(
                             'flex items-center gap-2 px-4 py-2.5 rounded-full',
-                            'border border-white/[0.08]',
+                            'border border-white/[0.05]',
                             'text-[13px] font-medium text-white/50',
-                            'hover:text-white hover:border-white/[0.15]',
+                            'hover:text-white hover:border-white/10',
                             'transition-colors duration-100'
                           )}
                         >
@@ -322,7 +322,7 @@ export function SparkleCreateSheet({
                       rows={2}
                       className={cn(
                         'w-full px-4 py-3 pr-12 rounded-2xl text-[14px]',
-                        'bg-white/[0.03] border border-white/[0.06]',
+                        'bg-white/[0.03] border border-white/[0.05]',
                         'text-white placeholder:text-white/30',
                         'focus:outline-none focus:outline-2 focus:outline-[#FFD700]',
                         'resize-none'
@@ -426,7 +426,7 @@ export function SparkleCreateSheet({
                   <p className="text-[13px] text-white/50 mb-3">{state.error}</p>
                   <button
                     onClick={() => { reset(); setTimeout(() => inputRef.current?.focus(), 100); }}
-                    className="px-4 py-2 rounded-full border border-white/[0.08] text-[13px] text-white/50 hover:text-white transition-colors duration-100"
+                    className="px-4 py-2 rounded-full border border-white/[0.05] text-[13px] text-white/50 hover:text-white transition-colors duration-100"
                   >
                     Try again
                   </button>
