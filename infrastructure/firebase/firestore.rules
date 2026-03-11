@@ -400,8 +400,8 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       // Users can read their own notifications
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
-      // System creates notifications (server-side)
-      allow create: if isAuthenticated();
+      // Notifications created server-side only (admin SDK bypasses rules)
+      allow create: if false;
       // Users can update (mark read) their own notifications
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       // Users can delete their own notifications
@@ -475,8 +475,8 @@ service cloud.firestore {
     match /toolStates/{stateId} {
       // Users can read tool states they have access to
       allow read: if isAuthenticated() && sameCampus();
-      // Authenticated users can write state (server validates)
-      allow write: if isAuthenticated() && sameCampusWrite();
+      // Tool state written server-side only (admin SDK bypasses rules)
+      allow write: if false;
     }
 
     // Activity events - Platform-wide activity log

@@ -143,7 +143,7 @@ export function ToolCanvasInline({ toolId, onAddToSpace }: ToolCanvasInlineProps
   const hasInteracted = interactionRef.current;
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0a] overflow-hidden">
+    <div className="rounded-xl border border-white/[0.06] bg-void overflow-hidden">
       <div className="p-4 max-h-[400px] overflow-y-auto">
         <LazyToolCanvas
           elements={tool.elements}

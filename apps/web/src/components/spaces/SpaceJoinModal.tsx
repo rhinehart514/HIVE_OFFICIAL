@@ -257,7 +257,7 @@ export function SpaceJoinModal({ isOpen, onClose, code }: SpaceJoinModalProps) {
                     <motion.div
                       className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8"
                       style={{
-                        background: 'linear-gradient(135deg, #FFD700, #B8860B)',
+                        background: '#FFD700',
                         boxShadow: '0 0 40px rgba(255,215,0,0.3)',
                       }}
                       initial={{ scale: 0 }}

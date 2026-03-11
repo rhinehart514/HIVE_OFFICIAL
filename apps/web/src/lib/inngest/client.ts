@@ -58,28 +58,4 @@ export type HiveEvents = {
     };
   };
 
-  // Scheduled automation trigger
-  'automation/scheduled': {
-    data: {
-      automationId: string;
-      deploymentId: string;
-      toolId: string;
-      spaceId?: string;
-      campusId: string;
-    };
-  };
-
-  // Threshold automation check
-  'automation/threshold.check': {
-    data: {
-      automationId: string;
-      deploymentId: string;
-      toolId: string;
-      path: string;
-      operator: string;
-      value: number;
-      currentValue: number;
-      campusId: string;
-    };
-  };
 };

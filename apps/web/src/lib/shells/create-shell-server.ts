@@ -151,7 +151,7 @@ export async function createShellToolServer(params: CreateShellToolParams): Prom
       placement: 'sidebar',
       visibility: 'all',
       name: title,
-      description: description ?? undefined,
+      description: description ?? null,
     });
 
     const compositeId = buildPlacementCompositeId(deploymentId, toolId);

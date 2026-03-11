@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Admin Tool Review Statistics Endpoint
  *

@@ -13,7 +13,7 @@
 
 import { NextResponse } from "next/server";
 import { currentEnvironment, isFirebaseAdminConfigured } from "@/lib/env";
-import { environmentInfo, dbAdmin, authAdmin } from "@/lib/firebase-admin";
+import { dbAdmin, authAdmin } from "@/lib/firebase-admin";
 import { getRedisRateLimiterHealth } from "@/lib/rate-limiter-redis";
 import { redisCache } from "@/lib/cache/redis-client";
 import { withCache } from '../../../lib/cache-headers';
@@ -33,7 +33,6 @@ interface HealthStatus {
   };
   details?: {
     firebaseConfigured: boolean;
-    environmentInfo: unknown;
     platform: string;
   };
 }
@@ -84,11 +83,10 @@ async function _GET(request: Request) {
     checks,
   };
 
-  // Include detailed info in verbose mode
+  // Verbose mode only shows safe info (no env vars, no config details)
   if (verbose) {
     response.details = {
       firebaseConfigured: isFirebaseAdminConfigured,
-      environmentInfo,
       platform: process.platform,
     };
   }

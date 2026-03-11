@@ -38,22 +38,6 @@ export type { ReturningUserLayoutProps } from './returning-user-layout';
 export { SpacePreviewModal } from './space-preview-modal';
 export type { SpacePreviewData, SpacePreviewModalProps } from './space-preview-modal';
 
-// Territory header (premium discovery)
-export { TerritoryHeader } from './territory-header';
-export type { TerritoryHeaderProps } from './territory-header';
-
-// Onboarding overlay (first-time users)
-export { OnboardingOverlay } from './onboarding-overlay';
-export type { OnboardingOverlayProps } from './onboarding-overlay';
-
-// Homebase activity feed (cross-space updates)
-export { HomebaseActivityFeed } from './homebase-activity-feed';
-export type { ActivityItem, ActivityType, HomebaseActivityFeedProps } from './homebase-activity-feed';
-
-// Space quick actions (homebase cards)
-export { SpaceQuickActions } from './space-quick-actions';
-export type { SpaceQuickActionsProps } from './space-quick-actions';
-
 // Unified activity feed (space residence)
 export { UnifiedActivityFeed } from './unified-activity-feed';
 export type {

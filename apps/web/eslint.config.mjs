@@ -3,7 +3,6 @@ import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
-import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,7 +40,6 @@ const eslintConfig = [
   // React config
   {
     plugins: {
-      react: reactPlugin,
       "react-hooks": reactHooksPlugin,
     },
     settings: {

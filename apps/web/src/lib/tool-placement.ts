@@ -34,7 +34,7 @@ export async function createPlacementDocument(params: {
   configOverrides?: Record<string, unknown>;
   // Tool metadata for profile display
   name?: string;
-  description?: string;
+  description?: string | null;
   icon?: string;
   // Legacy fields for backwards compat
   surface?: string;

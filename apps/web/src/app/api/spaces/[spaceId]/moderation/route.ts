@@ -1,5 +1,3 @@
-"use server";
-
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { getServerSpaceRepository } from "@hive/core/server";

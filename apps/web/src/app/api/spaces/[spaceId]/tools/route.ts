@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Space Tools API Route
  *

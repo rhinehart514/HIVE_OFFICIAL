@@ -51,7 +51,6 @@
     "playwright.simple.config.ts",
     "src/test/**/*",
     "tailwind.config.ts",
-    "src/components/landing/3d/**/*",
-    "src/lib/profile-transformers.ts"
+    "src/components/landing/3d/**/*"
   ]
 }

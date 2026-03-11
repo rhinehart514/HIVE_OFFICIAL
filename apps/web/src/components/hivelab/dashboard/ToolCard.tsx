@@ -115,7 +115,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
       >
         <div className="flex items-center justify-between w-full mb-1.5">
           <span className="text-white font-medium text-sm truncate pr-2 flex-1">
-            {tool.name || 'Untitled Tool'}
+            {tool.name || 'Untitled App'}
           </span>
           <span className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full
             ${status.bg} ${status.text} flex-shrink-0`}>
@@ -153,7 +153,7 @@ export function ToolCard({ tool, onClick, onDelete, variant = 'full' }: ToolCard
       {/* Header: Name + Status */}
       <div className="flex items-center justify-between w-full mb-2">
         <span className="text-white font-medium text-sm truncate pr-2 flex-1">
-          {tool.name || 'Untitled Tool'}
+          {tool.name || 'Untitled App'}
         </span>
         <span className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full
           ${status.bg} ${status.text} flex-shrink-0`}>

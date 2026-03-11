@@ -1,5 +1,3 @@
-"use server";
-
 import {
   getAllSpaceTemplates,
   getSpaceTemplateById,

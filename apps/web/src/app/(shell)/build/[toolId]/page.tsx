@@ -640,7 +640,7 @@ export default function BuildStudioPage({ params }: Props) {
                       duration: durationSeconds.quick,
                       ease: EASE,
                     }}
-                    className="absolute right-0 top-full mt-2 w-64 bg-[#141414] border border-white/[0.08]
+                    className="absolute right-0 top-full mt-2 w-64 bg-card border border-white/[0.08]
                       rounded-xl shadow-md z-50 overflow-hidden"
                   >
                     <div className="px-3 py-2 border-b border-white/[0.06]">

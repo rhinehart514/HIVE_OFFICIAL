@@ -10,7 +10,7 @@ import type { NextRequest } from 'next/server';
  */
 const _GET = withOptionalAuth(async (request, _context, respond) => {
   const user = getUser(request as NextRequest);
-  const campusId = user?.campusId;
+  const campusId = user?.campusId || 'ub-buffalo';
 
   const { searchParams } = new URL(request.url);
   const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
@@ -39,9 +39,7 @@ const _GET = withOptionalAuth(async (request, _context, respond) => {
   });
 
   // In-memory campus filter — campusId single-field index is exempted, cannot use .where()
-  if (campusId) {
-    spaces = spaces.filter(s => !s.campusId || s.campusId === campusId);
-  }
+  spaces = spaces.filter(s => s.campusId === campusId);
 
   // Client-side category filter (Firestore compound index may not exist)
   if (category) {

@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     // Query spaces ordered by member count, with campusId filter
     const spacesSnapshot = await dbAdmin
       .collection('spaces')
-      .where('campusId', '==', 'ub') // UB campus for launch
+      .where('campusId', '==', 'ub-buffalo') // UB campus for launch
       .orderBy('memberCount', 'desc')
       .limit(100) // Get top 100, we'll filter further
       .get();

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { withAuthAndErrors } from '@/lib/middleware';
 
 /**
  * GET /api/tools/browse
  * Stub: proxies to /api/tools/discover and reshapes the response.
  * Returns { tools: ToolSummary[] }
  */
-export async function GET(request: Request) {
+export const GET = withAuthAndErrors(async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const limit = searchParams.get('limit') || '20';
 
@@ -36,4 +37,4 @@ export async function GET(request: Request) {
   } catch {
     return NextResponse.json({ data: { tools: [] } });
   }
-}
+});

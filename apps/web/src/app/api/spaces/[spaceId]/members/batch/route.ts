@@ -1,5 +1,3 @@
-"use server";
-
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";

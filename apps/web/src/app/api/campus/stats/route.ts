@@ -20,8 +20,8 @@ export const GET = withErrors(async (request, _context, respond) => {
     ? db.collection('spaces').where('campusId', '==', campusId).where('isActive', '==', true).count()
     : db.collection('spaces').where('isActive', '==', true).count();
   const toolsQuery = campusId
-    ? db.collection('deployed_tools').where('campusId', '==', campusId).where('isActive', '==', true).count()
-    : db.collection('deployed_tools').where('isActive', '==', true).count();
+    ? db.collection('deployedTools').where('campusId', '==', campusId).where('isActive', '==', true).count()
+    : db.collection('deployedTools').where('isActive', '==', true).count();
 
   const [usersSnap, spacesSnap, toolsSnap] = await Promise.all([
     usersQuery.get(),
