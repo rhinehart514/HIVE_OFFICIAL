@@ -154,15 +154,6 @@ export { RitualId } from "./domain/rituals/value-objects/ritual-id.value";
 export { EnhancedRitual } from "./domain/rituals/aggregates/enhanced-ritual";
 export { FeedItem } from "./domain/feed/feed-item";
 export { EnhancedFeed } from "./domain/feed/enhanced-feed";
-export { FeedRankingService, DEFAULT_RANKING_CONFIG } from "./domain/feed/services/feed-ranking.service";
-export type {
-  RelevanceFactors,
-  RankingWeights,
-  FeedRankingConfig,
-  UserRankingContext,
-  RankingCandidate,
-  RankedItem
-} from "./domain/feed/services/feed-ranking.service";
 export {
   RitualArchetype,
   type RitualPhase,
@@ -646,8 +637,6 @@ export { feedListener } from "./infrastructure/realtime/feed-listener";
 export type { FeedUpdate, FeedListenerOptions } from "./infrastructure/realtime/feed-listener";
 export { GetFeedQueryHandler } from "./application/feed/queries/get-feed.query";
 export type { GetFeedQuery, GetFeedQueryResult } from "./application/feed/queries/get-feed.query";
-export { GetPersonalizedFeedQueryHandler, createPersonalizedFeedHandler } from "./application/feed/queries/get-personalized-feed.query";
-export type { GetPersonalizedFeedQuery, PersonalizedFeedResult } from "./application/feed/queries/get-personalized-feed.query";
 export { SearchType, SearchQueryHandler } from "./application/search/queries/search.query";
 export type { SearchResultItem, SearchQuery, SearchQueryResult } from "./application/search/queries/search.query";
 

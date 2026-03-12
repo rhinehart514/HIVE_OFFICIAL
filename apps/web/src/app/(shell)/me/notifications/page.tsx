@@ -14,14 +14,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@hive/ui';
 import {
   Bell,
-  Heart,
   MessageCircle,
   Users,
   Settings,
   Trash2,
   CalendarDays,
   Loader2,
-  Megaphone,
+  Zap,
   CheckCheck,
 } from 'lucide-react';
 import { NotificationsEmptyState } from '@/components/ui/NotificationsEmptyState';
@@ -45,26 +44,23 @@ interface Notification {
 
 const FILTER_TABS = [
   { id: 'all', label: 'All' },
-  { id: 'mentions', label: 'Mentions' },
-  { id: 'likes', label: 'Likes' },
-  { id: 'follows', label: 'Follows' },
+  { id: 'social', label: 'Social' },
+  { id: 'spaces', label: 'Spaces' },
   { id: 'events', label: 'Events' },
+  { id: 'tools', label: 'Apps' },
 ];
 
-function getNotificationIcon(type: string) {
+function getNotificationIcon(category: string) {
   const base = 'w-5 h-5 shrink-0 mt-0.5';
-  switch (type) {
-    case 'like':
-      return <Heart className={`${base} text-[#FFD700]`} aria-hidden="true" />;
-    case 'comment':
-    case 'mention':
-      return <MessageCircle className={`${base} text-white/50`} aria-hidden="true" />;
-    case 'follow':
+  switch (category) {
+    case 'social':
+      return <MessageCircle className={`${base} text-[#FFD700]`} aria-hidden="true" />;
+    case 'spaces':
       return <Users className={`${base} text-white/50`} aria-hidden="true" />;
-    case 'event':
+    case 'events':
       return <CalendarDays className={`${base} text-white/50`} aria-hidden="true" />;
-    case 'announcement':
-      return <Megaphone className={`${base} text-[#FFD700]`} aria-hidden="true" />;
+    case 'tools':
+      return <Zap className={`${base} text-[#FFD700]`} aria-hidden="true" />;
     default:
       return <Bell className={`${base} text-white/50`} aria-hidden="true" />;
   }
@@ -306,7 +302,7 @@ export default function NotificationsPage() {
                 aria-label={`${notification.isRead ? '' : 'Unread: '}${notification.title}`}
               >
                 <div className="flex items-start gap-4">
-                  {getNotificationIcon(notification.type)}
+                  {getNotificationIcon(notification.category)}
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-medium text-[15px]">{notification.title}</p>
                     {notification.body && (

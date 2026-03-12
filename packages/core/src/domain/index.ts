@@ -220,17 +220,6 @@ export {
 export { FeedItem } from './feed/feed-item';
 export { EnhancedFeed } from './feed/enhanced-feed';
 
-// Services
-export { FeedRankingService, DEFAULT_RANKING_CONFIG } from './feed/services/feed-ranking.service';
-export type {
-  RelevanceFactors,
-  RankingWeights,
-  FeedRankingConfig,
-  UserRankingContext,
-  RankingCandidate,
-  RankedItem
-} from './feed/services/feed-ranking.service';
-
 // =============================================================================
 // Rituals Domain
 // =============================================================================

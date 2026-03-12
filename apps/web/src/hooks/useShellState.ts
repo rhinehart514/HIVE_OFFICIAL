@@ -43,6 +43,7 @@ export function useShellState(shellId: string | null): UseShellStateResult {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const dbRef = useRef<ReturnType<typeof ref> | null>(null);
+  const pendingAction = useRef(false);
 
   useEffect(() => {
     if (!shellId) {
@@ -86,6 +87,10 @@ export function useShellState(shellId: string | null): UseShellStateResult {
   const dispatch = useCallback(
     (action: ShellAction, userId: string, meta?: Record<string, string>) => {
       if (!shellId) return;
+      // Debounce rapid clicks — ignore if previous action is still in flight
+      if (pendingAction.current) return;
+      pendingAction.current = true;
+      setTimeout(() => { pendingAction.current = false; }, 300);
 
       const database = getDatabase(app);
       const basePath = `shell_states/${shellId}`;

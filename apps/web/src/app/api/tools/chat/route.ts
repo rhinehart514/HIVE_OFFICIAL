@@ -41,7 +41,12 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
 
   const groqApiKey = process.env.GROQ_API_KEY;
   if (!groqApiKey) {
-    return respond.error('Chat service unavailable', 'SERVICE_UNAVAILABLE', { status: 503 });
+    // Fallback: suggest shell formats instead of blocking
+    return respond.success({
+      response: "I can't chat right now, but you can still build! Try a Poll, Bracket, or RSVP — or describe what you want and I'll generate it.",
+      readyToBuild: false,
+      buildPrompt: undefined,
+    });
   }
 
   const groq = createGroq({ apiKey: groqApiKey });
@@ -66,10 +71,17 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
 
     return respond.success(result.object);
   } catch (error) {
-    logger.error('Lab chat failed', {
+    logger.error('Lab chat failed, returning fallback', {
       component: 'api/tools/chat',
       error: error instanceof Error ? error.message : String(error),
     });
-    return respond.error('Chat failed', 'INTERNAL_ERROR', { status: 500 });
+
+    // Graceful fallback: let user proceed rather than dead-ending
+    const lastMessage = body.messages[body.messages.length - 1]?.content || '';
+    return respond.success({
+      response: "I'm having trouble connecting right now. You can still create — try typing a more specific description and I'll generate it directly.",
+      readyToBuild: lastMessage.length > 20,
+      buildPrompt: lastMessage.length > 20 ? lastMessage : undefined,
+    });
   }
 });

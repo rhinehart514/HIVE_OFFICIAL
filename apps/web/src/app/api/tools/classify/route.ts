@@ -143,19 +143,11 @@ export const POST = withAuthAndErrors(
     // Check Groq API key
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      if (process.env.NODE_ENV === 'production') {
-        logger.error('GROQ_API_KEY not configured in production', {
-          component: 'classify',
-        });
-        return respond.error(
-          'AI classification is temporarily unavailable. Please try again later.',
-          'SERVICE_UNAVAILABLE',
-          { status: 503 }
-        );
-      }
-      logger.warn('GROQ_API_KEY not configured, falling back to custom (dev mode)', {
+      logger.warn('GROQ_API_KEY not configured, falling back to custom format', {
         component: 'classify',
+        metadata: { env: process.env.NODE_ENV || 'unknown' },
       });
+      // Always fallback gracefully — don't block creation
       return respond.success({
         format: 'custom',
         confidence: 0,
@@ -195,7 +187,7 @@ export const POST = withAuthAndErrors(
 
       return respond.success(result.object);
     } catch (error) {
-      logger.error('Shell classification failed', {
+      logger.error('Shell classification failed, falling back to custom', {
         component: 'classify',
         metadata: {
           userId,
@@ -203,15 +195,8 @@ export const POST = withAuthAndErrors(
         },
       });
 
-      if (process.env.NODE_ENV === 'production') {
-        return respond.error(
-          'AI classification failed. Please try again.',
-          'SERVICE_UNAVAILABLE',
-          { status: 503 }
-        );
-      }
-
-      // Dev-only: graceful fallback to custom
+      // Graceful fallback: let the user proceed with custom format
+      // rather than blocking creation entirely
       return respond.success({
         format: 'custom' as const,
         confidence: 0,

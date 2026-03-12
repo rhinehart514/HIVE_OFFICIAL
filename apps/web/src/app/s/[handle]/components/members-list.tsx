@@ -14,6 +14,23 @@ import { cn } from '@/lib/utils';
 import { Text, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 
+function CopyLinkButton() {
+  const [copied, setCopied] = React.useState(false);
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        });
+      }}
+      className="inline-flex items-center px-4 py-2 mt-4 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.05] transition-colors duration-100"
+    >
+      {copied ? 'Copied!' : 'Copy invite link'}
+    </button>
+  );
+}
+
 export interface Member {
   id: string;
   name: string;
@@ -130,15 +147,7 @@ export function MembersList({
               {searchQuery ? 'No one by that name here' : 'No members yet — drop your invite link in the GroupMe'}
             </Text>
             {!searchQuery && (
-              <button
-                onClick={() => {
-                  const url = window.location.href;
-                  navigator.clipboard.writeText(url);
-                }}
-                className="inline-flex items-center px-4 py-2 mt-4 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/[0.05] transition-colors duration-100"
-              >
-                Copy invite link
-              </button>
+              <CopyLinkButton />
             )}
           </div>
         ) : (

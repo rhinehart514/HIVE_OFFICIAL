@@ -65,6 +65,14 @@ export const POST = withErrors(async (
     switch (action.type) {
       case "poll_vote": {
         const voteRef = rtdb.ref(`${basePath}/votes/${userId}`);
+        const existingVote = await voteRef.once("value");
+        if (existingVote.exists()) {
+          const prev = existingVote.val();
+          if (prev.optionIndex === action.optionIndex) {
+            // Same vote — skip write, return existing
+            return respond.success({ ok: true, duplicate: true });
+          }
+        }
         await voteRef.set({
           userId,
           optionIndex: action.optionIndex,
@@ -82,6 +90,11 @@ export const POST = withErrors(async (
             (m: { id: string }) => m?.id === action.matchupId
           );
           if (idx >= 0) {
+            const existingChoice = state.matchups[idx]?.votes?.[userId];
+            if (existingChoice === action.choice) {
+              // Same vote — skip write
+              return respond.success({ ok: true, duplicate: true });
+            }
             await rtdb
               .ref(`${basePath}/matchups/${idx}/votes/${userId}`)
               .set(action.choice);
