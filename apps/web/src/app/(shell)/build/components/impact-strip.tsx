@@ -111,7 +111,7 @@ export function ImpactStrip() {
       {/* Gold glow — creation surface emphasis (rule 19) */}
       <div
         className="absolute inset-0 rounded-2xl pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at top center, rgba(255,215,0,0.04), transparent 70%)' }}
+        style={{ background: 'radial-gradient(ellipse at top center, rgba(255,215,0,0.05), transparent 70%)' }}
       />
 
       <div className="relative">

@@ -34,7 +34,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
           Live now
         </Mono>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar snap-x snap-mandatory">
         {liveEvents.map((event) => {
           const isLive = isHappeningNow(event.startDate, event.endDate);
           const isGoing = event.isUserRsvped || event.userRsvp === 'going';
@@ -44,7 +44,7 @@ export function LiveNowSection({ events, onSelectEvent }: Props) {
             <button
               key={event.id}
               onClick={() => onSelectEvent(event)}
-              className="shrink-0 w-[260px] text-left group cursor-pointer relative overflow-hidden rounded-2xl border border-white/[0.05] hover:border-[#FFD700]/50 bg-card transition-colors duration-100"
+              className="shrink-0 w-[260px] snap-start text-left group cursor-pointer relative overflow-hidden rounded-2xl border border-white/[0.05] hover:border-[#FFD700]/50 bg-card transition-colors duration-100"
             >
               <div className="relative h-28 w-full overflow-hidden">
                 {coverSrc ? (

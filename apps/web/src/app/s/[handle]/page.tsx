@@ -845,7 +845,7 @@ export default function SpacePageUnified() {
           {/* Full-width chat stream */}
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 {feedMessages.length === 0 && !isLoadingMessages ? (
-                  <div className="flex-1 flex flex-col gap-5 px-4 py-8 max-w-lg mx-auto w-full">
+                  <div className="flex-1 flex flex-col gap-5 px-4 py-8 max-w-xl mx-auto w-full">
                     {/* Space description */}
                     {space.description && (
                       <p className="text-[14px] text-white/50 leading-relaxed">

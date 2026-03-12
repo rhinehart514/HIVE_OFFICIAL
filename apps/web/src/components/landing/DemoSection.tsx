@@ -93,7 +93,7 @@ export function DemoSection() {
           <div
             className="pointer-events-none absolute -inset-12"
             style={{
-              background: 'radial-gradient(circle at center, rgba(255,215,0,0.04), transparent 60%)',
+              background: 'radial-gradient(circle at center, rgba(255,215,0,0.05), transparent 60%)',
             }}
           />
         <div className="relative rounded-2xl border border-white/[0.10] bg-[var(--bg-card)]">

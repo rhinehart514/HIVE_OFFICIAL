@@ -144,7 +144,7 @@ export default function BuildPage() {
         {/* LEFT PANEL -- Prompt + controls */}
         <div className="relative w-full lg:w-[360px] lg:min-w-[320px] lg:border-r lg:border-white/[0.05] flex flex-col">
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            className="pointer-events-none absolute inset-0 opacity-[0.05]"
             style={{ background: 'radial-gradient(ellipse at 50% 30%, #FFD700, transparent 70%)' }}
           />
           <div className="relative px-5 py-6 flex flex-col overflow-y-auto">
