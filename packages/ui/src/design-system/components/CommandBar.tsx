@@ -387,7 +387,7 @@ export function CommandBar({
                       <div key={type} className="mb-2 last:mb-0">
                         {showHeader && (
                           <div className="flex items-center justify-between px-3 py-1.5">
-                            <Label size="sm" className="uppercase tracking-wider text-white/40">
+                            <Label size="sm" className="uppercase tracking-wider text-white/30">
                               {typeLabels[type]}
                             </Label>
                             <Text size="xs" tone="muted">
@@ -438,16 +438,16 @@ export function CommandBar({
               )}>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5">
-                    <Mono size="xs" className="text-white/40">↑↓</Mono>
+                    <Mono size="xs" className="text-white/30">↑↓</Mono>
                     <Text size="xs" tone="muted">navigate</Text>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Mono size="xs" className="text-white/40">↵</Mono>
+                    <Mono size="xs" className="text-white/30">↵</Mono>
                     <Text size="xs" tone="muted">select</Text>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Mono size="xs" className="text-white/40">esc</Mono>
+                  <Mono size="xs" className="text-white/30">esc</Mono>
                   <Text size="xs" tone="muted">close</Text>
                 </div>
               </div>

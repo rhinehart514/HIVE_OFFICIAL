@@ -145,7 +145,7 @@ const DeploymentTargetCard: React.FC<{
             )}
           </div>
           {target.memberCount !== undefined && (
-            <span className="text-xs text-white/40 tabular-nums">
+            <span className="text-xs text-white/30 tabular-nums">
               {target.memberCount.toLocaleString()} members
             </span>
           )}

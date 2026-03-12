@@ -241,7 +241,7 @@ function AppShellHeader({
             'bg-white/[0.05] hover:bg-white/[0.10]',
             'border border-white/[0.05]',
             'transition-all duration-150',
-            'text-white/40 hover:text-white/60',
+            'text-white/30 hover:text-white/60',
             'min-w-[240px]'
           )}
         >
@@ -408,7 +408,7 @@ function DefaultMobileNav({
               className={cn(
                 'flex flex-col items-center gap-0.5 px-3 py-1.5',
                 'transition-colors',
-                item.isActive ? 'text-white' : 'text-white/40'
+                item.isActive ? 'text-white' : 'text-white/30'
               )}
             >
               {item.icon}

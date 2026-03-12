@@ -51,7 +51,7 @@ const tagVariants = cva(
       variant: {
         default: 'text-white/60 hover:text-white',
         gold: 'text-[#FFD700]',
-        muted: 'text-white/40',
+        muted: 'text-white/30',
       },
       size: {
         sm: 'px-2.5 py-1 text-xs',

@@ -195,7 +195,7 @@ const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
           {onClose && (
             <button
               onClick={onClose}
-              className="flex-shrink-0 text-white/40 hover:text-white/60 transition-colors text-lg leading-none"
+              className="flex-shrink-0 text-white/30 hover:text-white/60 transition-colors text-lg leading-none"
             >
               ×
             </button>

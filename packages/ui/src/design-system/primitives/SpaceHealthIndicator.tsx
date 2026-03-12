@@ -28,7 +28,7 @@ const SpaceGrowthIndicator = React.forwardRef<HTMLDivElement, SpaceGrowthIndicat
   ({ trend, size = 'sm', showLabel = false, className }, ref) => {
     const colors = {
       growing: 'text-emerald-400',
-      stable: 'text-white/40',
+      stable: 'text-white/30',
       declining: 'text-red-400',
     };
 

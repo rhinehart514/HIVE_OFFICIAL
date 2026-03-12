@@ -198,7 +198,7 @@ const ActivityItem: React.FC<{ type: string; time: string }> = ({ type, time }) 
       <span className="text-lg">{icons[type as keyof typeof icons]}</span>
       <div className="flex-1">
         <p className="text-white/70 text-sm">Action taken</p>
-        <p className="text-white/40 text-xs">{time}</p>
+        <p className="text-white/30 text-xs">{time}</p>
       </div>
     </div>
   );

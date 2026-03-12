@@ -123,7 +123,7 @@ function EventsPreview({ events }: { events: SpaceThresholdProps['events'] }) {
           >
             <div className="w-2 h-2 rounded-full bg-[var(--life-gold)]" />
             <span className="text-sm text-white/70 flex-1 truncate">{event.title}</span>
-            <span className="text-xs text-white/40">{formatEventDate(event.date)}</span>
+            <span className="text-xs text-white/30">{formatEventDate(event.date)}</span>
           </div>
         ))}
       </div>
@@ -158,7 +158,7 @@ function PendingRequestStatus({
       <button
         onClick={onCancel}
         disabled={isCancelling}
-        className="w-full py-2 text-sm text-white/40 hover:text-white/60 transition-colors disabled:opacity-50"
+        className="w-full py-2 text-sm text-white/30 hover:text-white/60 transition-colors disabled:opacity-50"
       >
         {isCancelling ? 'Cancelling...' : 'Cancel Request'}
       </button>
@@ -312,7 +312,7 @@ export function SpaceThreshold({
               <p className="text-white/60 text-sm max-w-md">{space.description}</p>
             )}
 
-            <div className="flex items-center justify-center gap-4 text-sm text-white/40">
+            <div className="flex items-center justify-center gap-4 text-sm text-white/30">
               <span>{formatMemberCount(space.memberCount)}</span>
               {space.onlineCount && space.onlineCount > 0 && (
                 <span className="flex items-center gap-1.5">
@@ -391,7 +391,7 @@ export function SpaceThreshold({
                   className={cn(
                     'w-full px-4 py-3 rounded-xl',
                     'bg-[var(--bg-elevated)] border border-white/[0.05]',
-                    'text-white placeholder:text-white/40',
+                    'text-white placeholder:text-white/30',
                     'focus:outline-none focus:ring-2 focus:ring-white/20',
                     'resize-none'
                   )}
@@ -438,7 +438,7 @@ export function SpaceThreshold({
                     >
                       Request to Join
                     </button>
-                    <p className="text-xs text-white/40 text-center">
+                    <p className="text-xs text-white/30 text-center">
                       This space is private. A leader will review your request.
                     </p>
                   </>

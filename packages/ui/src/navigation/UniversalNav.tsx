@@ -242,10 +242,10 @@ export const CommandPalette: React.FC<{ open: boolean; onOpenChange: (open: bool
                 </button>
               ))}
               {filteredCommands.length === 0 && (
-                <div className="px-4 py-6 text-sm text-white/40">No matches</div>
+                <div className="px-4 py-6 text-sm text-white/30">No matches</div>
               )}
             </div>
-            <div className="border-t border-white/10 p-3 flex items-center justify-between text-xs text-white/40">
+            <div className="border-t border-white/10 p-3 flex items-center justify-between text-xs text-white/30">
               <span>↑↓ Navigate</span>
               <span>⏎ Select</span>
               <span>ESC Close</span>

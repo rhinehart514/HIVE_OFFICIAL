@@ -84,7 +84,7 @@ const HandleInput = React.forwardRef<HTMLInputElement, HandleInputProps>(
             onChange={handleChange}
             className={cn(
               'flex-1 bg-transparent px-1 pr-10',
-              'text-white placeholder:text-white/40',
+              'text-white placeholder:text-white/30',
               'outline-none border-0',
               'disabled:opacity-40 disabled:cursor-not-allowed'
             )}
@@ -94,7 +94,7 @@ const HandleInput = React.forwardRef<HTMLInputElement, HandleInputProps>(
 
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
             {status === 'checking' && (
-              <Loader2 className="w-4 h-4 text-white/40 animate-spin" />
+              <Loader2 className="w-4 h-4 text-white/30 animate-spin" />
             )}
             {status === 'available' && (
               <Check className="w-4 h-4 text-[#FFD700]" />

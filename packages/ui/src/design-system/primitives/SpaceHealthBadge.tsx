@@ -40,11 +40,11 @@ const healthBadgeContainerVariants = cva(
     compoundVariants: [
       { variant: 'badge', level: 'active', className: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
       { variant: 'badge', level: 'moderate', className: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' },
-      { variant: 'badge', level: 'quiet', className: 'bg-white/[0.05] text-white/40 border border-white/[0.05]' },
+      { variant: 'badge', level: 'quiet', className: 'bg-white/[0.05] text-white/30 border border-white/[0.05]' },
       { variant: 'badge', level: 'dormant', className: 'bg-white/[0.03] text-white/25 border border-white/[0.05]' },
       { variant: 'compact', level: 'active', className: 'text-emerald-400' },
       { variant: 'compact', level: 'moderate', className: 'text-amber-400' },
-      { variant: 'compact', level: 'quiet', className: 'text-white/40' },
+      { variant: 'compact', level: 'quiet', className: 'text-white/30' },
       { variant: 'compact', level: 'dormant', className: 'text-white/25' },
     ],
     defaultVariants: {

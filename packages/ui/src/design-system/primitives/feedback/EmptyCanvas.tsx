@@ -67,7 +67,7 @@ export function EmptyCanvas({
       {icon && (
         <div className="mb-4 text-white/20">{icon}</div>
       )}
-      <p className={cn('text-white/40 mb-2', styles.message)}>
+      <p className={cn('text-white/30 mb-2', styles.message)}>
         {message}
       </p>
       {hint && (

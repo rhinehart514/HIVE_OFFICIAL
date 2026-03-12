@@ -89,7 +89,7 @@ const DeploymentTarget = React.forwardRef<HTMLDivElement, DeploymentTargetProps>
 
         {targets.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm text-white/40">{emptyMessage}</p>
+            <p className="text-sm text-white/30">{emptyMessage}</p>
             <p className="text-xs text-white/20 mt-1">
               Join a space as a leader to deploy tools
             </p>

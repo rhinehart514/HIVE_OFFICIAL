@@ -139,7 +139,7 @@ function RequestCard({
                 {request.user?.displayName || 'Unknown User'}
               </span>
               {request.user?.handle && (
-                <span className="text-white/40 text-sm truncate">@{request.user.handle}</span>
+                <span className="text-white/30 text-sm truncate">@{request.user.handle}</span>
               )}
             </div>
             {!isPending && <StatusBadge status={request.status} />}
@@ -150,7 +150,7 @@ function RequestCard({
           )}
 
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-xs text-white/40">{formatRelativeTime(request.createdAt)}</span>
+            <span className="text-xs text-white/30">{formatRelativeTime(request.createdAt)}</span>
             {request.rejectionReason && (
               <span className="text-xs text-red-400/70 truncate">
                 Reason: {request.rejectionReason}
@@ -219,7 +219,7 @@ function RequestCard({
                 className={cn(
                   'w-full px-4 py-3 rounded-xl mb-4',
                   'bg-[var(--bg-ground)] border border-white/[0.05]',
-                  'text-white placeholder:text-white/40',
+                  'text-white placeholder:text-white/30',
                   'focus:outline-none focus:ring-2 focus:ring-white/20',
                   'resize-none'
                 )}

@@ -170,7 +170,7 @@ function SearchResultItem({
           </Text>
         </div>
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-          <MessageSquare className="w-4 h-4 text-white/40" />
+          <MessageSquare className="w-4 h-4 text-white/30" />
         </div>
       </div>
     </button>
@@ -204,7 +204,7 @@ function EmptyState({ query }: { query: string }) {
       {query ? (
         <>
           <Text className="text-white/70 font-medium mb-1">No messages found</Text>
-          <Text size="sm" className="text-white/40 max-w-xs">
+          <Text size="sm" className="text-white/30 max-w-xs">
             No messages match "{query}". Try a different search term or adjust your filters.
           </Text>
           <div className="mt-4 flex flex-wrap gap-2 justify-center max-w-xs">
@@ -222,7 +222,7 @@ function EmptyState({ query }: { query: string }) {
       ) : (
         <>
           <Text className="text-white/70 font-medium mb-1">Search messages</Text>
-          <Text size="sm" className="text-white/40">
+          <Text size="sm" className="text-white/30">
             Enter at least 2 characters to search
           </Text>
         </>
@@ -391,7 +391,7 @@ export function ChatSearchModal({
           <div className="flex-1 overflow-y-auto min-h-0 -mx-2 px-2">
             {/* Results count */}
             {results.length > 0 && (
-              <Text size="xs" className="text-white/40 mb-3">
+              <Text size="xs" className="text-white/30 mb-3">
                 {totalCount} {totalCount === 1 ? 'result' : 'results'}
               </Text>
             )}

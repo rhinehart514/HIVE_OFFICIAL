@@ -95,7 +95,7 @@ const modalTitleStyles = cn(
 
 const modalDescriptionStyles = cn(
   'text-sm',
-  'text-white/40'
+  'text-white/30'
 );
 
 const modalBodyStyles = cn(

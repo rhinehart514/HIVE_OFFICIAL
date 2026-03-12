@@ -108,7 +108,7 @@ const rsvpButtonVariants = cva(
         none: 'border border-[var(--color-border)] bg-transparent hover:bg-[var(--color-bg-hover)]',
         going: 'bg-life-gold text-black hover:bg-life-gold/80',
         maybe: 'border border-dashed border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-white/50',
-        not_going: 'border border-[var(--color-border)] bg-transparent text-white/40',
+        not_going: 'border border-[var(--color-border)] bg-transparent text-white/30',
       },
     },
     defaultVariants: {
@@ -231,7 +231,7 @@ const RSVPButton: React.FC<RSVPButtonProps> = ({
         className={cn(
           rsvpButtonVariants({ size }),
           'opacity-50 cursor-not-allowed',
-          'border border-[var(--color-border)] bg-transparent text-white/40',
+          'border border-[var(--color-border)] bg-transparent text-white/30',
           className
         )}
         disabled
@@ -260,7 +260,7 @@ const RSVPButton: React.FC<RSVPButtonProps> = ({
                 status === 'going' && 'bg-life-gold text-black',
                 status === 'maybe' && 'border border-dashed border-[var(--color-border)] bg-[var(--color-bg-elevated)]',
                 status === 'none' && 'border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]',
-                status === 'not_going' && 'border border-[var(--color-border)] text-white/40',
+                status === 'not_going' && 'border border-[var(--color-border)] text-white/30',
                 loading && 'opacity-50 cursor-wait',
                 disabled && 'opacity-50 cursor-not-allowed',
                 className

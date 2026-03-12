@@ -488,7 +488,7 @@ const ProfileCardFull: React.FC<ProfileCardFullProps> = ({
             {avatar ? (
               <AvatarImage src={avatar} alt={name} />
             ) : (
-              <AvatarFallback className="rounded-xl bg-white/[0.05] text-white/40 text-sm">
+              <AvatarFallback className="rounded-xl bg-white/[0.05] text-white/30 text-sm">
                 {initials}
               </AvatarFallback>
             )}

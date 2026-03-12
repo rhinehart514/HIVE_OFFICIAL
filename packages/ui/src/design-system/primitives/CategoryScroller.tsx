@@ -282,7 +282,7 @@ const CategoryScroller = React.forwardRef<HTMLDivElement, CategoryScrollerProps>
                   <span
                     className={cn(
                       'ml-1.5 tabular-nums',
-                      selected ? 'text-[#0A0A09]/60' : 'text-white/40'
+                      selected ? 'text-[#0A0A09]/60' : 'text-white/30'
                     )}
                   >
                     {item.count}

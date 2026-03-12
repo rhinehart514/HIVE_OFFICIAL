@@ -32,7 +32,7 @@ import { useAtmosphereOptional, type AtmosphereLevel, type WarmthLevel } from '.
 const cardVariants = cva(
   [
     'relative overflow-hidden',
-    'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
+    'transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
   ].join(' '),
   {
     variants: {
@@ -150,7 +150,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn('text-sm text-white/40', className)}
+    className={cn('text-sm text-white/30', className)}
     {...props}
   />
 ));

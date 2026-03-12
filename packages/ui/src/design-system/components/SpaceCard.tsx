@@ -164,7 +164,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
         warmth={warmthLevel}
         className={cn(
           'p-3 cursor-pointer',
-          'transition-all duration-[var(--duration-smooth)]',
+          'transition-[background-color,border-color,box-shadow] duration-[var(--duration-smooth)]',
           'hover:bg-[var(--color-bg-elevated)]',
           className
         )}
@@ -210,7 +210,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
       noPadding
       className={cn(
         'overflow-hidden cursor-pointer',
-        'transition-all duration-[var(--duration-smooth)]',
+        'transition-[background-color,border-color,box-shadow] duration-[var(--duration-smooth)]',
         // LOCKED: NO scale on hover, use opacity-90
         'hover:opacity-90',
         className

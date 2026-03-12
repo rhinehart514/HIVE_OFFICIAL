@@ -123,7 +123,7 @@ function RSVPToggle({ isGoing, onClick, disabled }: RSVPToggleProps) {
       className={cn(
         // LOCKED: Toggle chip styling
         'px-3 py-1.5 rounded-full text-sm font-medium',
-        'transition-all duration-150',
+        'transition-[background-color,border-color,opacity] duration-150',
         'focus:outline-none focus:ring-2 focus:ring-white/50',
         disabled && 'opacity-50 cursor-not-allowed',
         // LOCKED: Default state
@@ -222,7 +222,7 @@ const EventCard: React.FC<EventCardProps> = ({
       interactive={!!onClick}
       warmth={warmthLevel}
       className={cn(
-        'p-4 transition-all duration-[var(--duration-smooth)]',
+        'p-4 transition-[background-color,border-color,box-shadow] duration-[var(--duration-smooth)]',
         onClick && 'cursor-pointer',
         // LOCKED: NO scale on hover, use opacity-90
         onClick && 'hover:opacity-90',

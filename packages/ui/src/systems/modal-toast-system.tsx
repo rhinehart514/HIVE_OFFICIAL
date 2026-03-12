@@ -345,7 +345,7 @@ const ToastItem: React.FC<{
         {/* Close Button */}
         <button
           onClick={handleRemove}
-          className="flex-shrink-0 p-1 text-white/40 hover:text-white transition-colors"
+          className="flex-shrink-0 p-1 text-white/30 hover:text-white transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

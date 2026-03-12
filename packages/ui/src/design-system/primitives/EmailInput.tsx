@@ -48,14 +48,14 @@ const EmailInput = React.forwardRef<HTMLInputElement, EmailInputProps>(
         spellCheck={false}
         className={cn(
           'flex-1 bg-transparent pl-4 pr-1',
-          'text-white placeholder:text-white/40',
+          'text-white placeholder:text-white/30',
           'outline-none border-0',
           'disabled:opacity-40 disabled:cursor-not-allowed'
         )}
         aria-invalid={error}
         {...props}
       />
-      <span className="pr-4 text-white/40 font-medium select-none">
+      <span className="pr-4 text-white/30 font-medium select-none">
         @{domain}
       </span>
     </div>

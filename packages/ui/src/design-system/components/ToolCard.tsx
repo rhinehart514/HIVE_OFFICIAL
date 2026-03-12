@@ -212,7 +212,7 @@ const ToolCard: React.FC<ToolCardProps> = ({
         warmth={warmthLevel}
         className={cn(
           'p-3 cursor-pointer relative',
-          'transition-all duration-[var(--duration-smooth)]',
+          'transition-[background-color,border-color,box-shadow] duration-[var(--duration-smooth)]',
           className
         )}
         onClick={onClick}
@@ -261,7 +261,7 @@ const ToolCard: React.FC<ToolCardProps> = ({
       noPadding
       className={cn(
         'overflow-hidden cursor-pointer relative',
-        'transition-all duration-[var(--duration-smooth)]',
+        'transition-[background-color,border-color,box-shadow] duration-[var(--duration-smooth)]',
         className
       )}
       onClick={onClick}

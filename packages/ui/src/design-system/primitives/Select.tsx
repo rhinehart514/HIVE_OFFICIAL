@@ -72,7 +72,7 @@ const SelectTrigger = React.forwardRef<
     {children}
     <SelectPrimitive.Icon asChild>
       <svg
-        className="h-4 w-4 text-white/40 shrink-0"
+        className="h-4 w-4 text-white/30 shrink-0"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

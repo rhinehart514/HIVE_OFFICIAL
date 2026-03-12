@@ -25,7 +25,7 @@ export const STATUS_COLORS = {
   },
   draft: {
     bg: 'bg-white/10',
-    text: 'text-white/40',
+    text: 'text-white/30',
   },
   warning: {
     bg: 'bg-[var(--ide-status-warning-bg)]',
