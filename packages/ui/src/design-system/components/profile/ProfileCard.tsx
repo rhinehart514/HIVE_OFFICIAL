@@ -86,7 +86,7 @@ export function ProfileBentoCard({
                 e.stopPropagation();
                 action.onClick();
               }}
-              className="text-xs font-medium px-3 py-1.5 rounded-full transition-colors duration-100 hover:bg-white/[0.08]"
+              className="text-xs font-medium px-3 py-1.5 rounded-full transition-colors duration-100 hover:bg-white/[0.10]"
               style={{ color: 'var(--text-tertiary)' }}
             >
               {action.label}

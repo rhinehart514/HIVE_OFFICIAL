@@ -43,7 +43,7 @@ export function ContextPill({
         className={cn(
           'flex items-center gap-3 px-4 py-2.5 rounded-full',
           'bg-[#141312]/95 backdrop-blur-md',
-          'border border-white/[0.06]',
+          'border border-white/[0.05]',
           'shadow-lg shadow-black/20'
         )}
       >
@@ -81,7 +81,7 @@ export function ContextPill({
         className={cn(
           'p-2.5 rounded-full',
           'bg-[#141312]/95 backdrop-blur-md',
-          'border border-white/[0.06]',
+          'border border-white/[0.05]',
           'text-[#A3A19E] hover:text-white',
           'transition-colors duration-150',
           'focus:outline-none focus:ring-2 focus:ring-white/50',
@@ -119,7 +119,7 @@ export function ContextPillMobile({
         'fixed top-4 left-4 z-50',
         'p-2.5 rounded-full',
         'bg-[#141312]/95 backdrop-blur-md',
-        'border border-white/[0.06]',
+        'border border-white/[0.05]',
         'text-[#A3A19E]',
         'shadow-lg shadow-black/20',
         'focus:outline-none focus:ring-2 focus:ring-white/50',

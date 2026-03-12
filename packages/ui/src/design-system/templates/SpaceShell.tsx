@@ -216,7 +216,7 @@ function SpaceShellHeader({
         'fixed top-0 left-0 right-0 z-50',
         'flex items-center gap-3',
         'px-3 lg:px-4',
-        'border-b border-white/[0.06]'
+        'border-b border-white/[0.05]'
       )}
       style={{
         height: HEADER_HEIGHT,
@@ -344,7 +344,7 @@ function MobilePanelSheet({
             className={cn(
               'fixed inset-x-0 bottom-0 z-50',
               'bg-[var(--color-bg-page)]',
-              'border-t border-white/[0.06]',
+              'border-t border-white/[0.05]',
               'rounded-t-2xl',
               'max-h-[80vh] overflow-hidden'
             )}
@@ -489,7 +489,7 @@ export function SpaceShell({
 
         {/* Board Tabs */}
         <div
-          className="fixed left-0 right-0 z-40 border-b border-white/[0.06]"
+          className="fixed left-0 right-0 z-40 border-b border-white/[0.05]"
           style={{
             top: HEADER_HEIGHT,
             height: BOARD_TABS_HEIGHT,
@@ -530,7 +530,7 @@ export function SpaceShell({
             {/* Input Area */}
             {inputArea && (
               <div
-                className="fixed bottom-0 left-0 z-40 border-t border-white/[0.06]"
+                className="fixed bottom-0 left-0 z-40 border-t border-white/[0.05]"
                 style={{
                   height: INPUT_HEIGHT,
                   width: mainWidth,
@@ -606,25 +606,25 @@ export function SpaceShellSkeleton({ className }: SpaceShellSkeletonProps) {
     <div className={cn('relative min-h-screen', className)} style={{ backgroundColor: '#050504' }}>
       {/* Header skeleton */}
       <div
-        className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-4 border-b border-white/[0.06]"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-4 border-b border-white/[0.05]"
         style={{
           height: HEADER_HEIGHT,
           background: 'rgba(5, 5, 4, 0.95)',
         }}
       >
-        <div className="h-8 w-8 rounded bg-white/[0.06] animate-pulse" />
-        <div className="h-8 w-8 rounded-lg bg-white/[0.06] animate-pulse" />
+        <div className="h-8 w-8 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-8 w-8 rounded-lg bg-white/[0.05] animate-pulse" />
         <div className="flex-1 space-y-1">
-          <div className="h-3 w-24 rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-4 w-32 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-3 w-24 rounded bg-white/[0.05] animate-pulse" />
+          <div className="h-4 w-32 rounded bg-white/[0.05] animate-pulse" />
         </div>
-        <div className="h-4 w-8 rounded bg-white/[0.06] animate-pulse" />
-        <div className="h-8 w-8 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-4 w-8 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-8 w-8 rounded bg-white/[0.05] animate-pulse" />
       </div>
 
       {/* Board tabs skeleton */}
       <div
-        className="fixed left-0 right-0 z-40 flex items-center gap-2 px-4 border-b border-white/[0.06]"
+        className="fixed left-0 right-0 z-40 flex items-center gap-2 px-4 border-b border-white/[0.05]"
         style={{
           top: HEADER_HEIGHT,
           height: BOARD_TABS_HEIGHT,
@@ -635,7 +635,7 @@ export function SpaceShellSkeleton({ className }: SpaceShellSkeletonProps) {
           <div
             key={i}
             className={cn(
-              'h-7 rounded-full bg-white/[0.06] animate-pulse',
+              'h-7 rounded-full bg-white/[0.05] animate-pulse',
               i === 1 ? 'w-20' : 'w-16'
             )}
           />
@@ -654,10 +654,10 @@ export function SpaceShellSkeleton({ className }: SpaceShellSkeletonProps) {
         <div className="flex-1 p-4 space-y-4" style={{ width: '60%' }}>
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="flex gap-3">
-              <div className="h-8 w-8 rounded-lg bg-white/[0.06] animate-pulse flex-shrink-0" />
+              <div className="h-8 w-8 rounded-lg bg-white/[0.05] animate-pulse flex-shrink-0" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-24 rounded bg-white/[0.06] animate-pulse" />
-                <div className="h-4 w-full rounded bg-white/[0.06] animate-pulse" />
+                <div className="h-4 w-24 rounded bg-white/[0.05] animate-pulse" />
+                <div className="h-4 w-full rounded bg-white/[0.05] animate-pulse" />
               </div>
             </div>
           ))}
@@ -665,14 +665,14 @@ export function SpaceShellSkeleton({ className }: SpaceShellSkeletonProps) {
 
         {/* Panel */}
         <div
-          className="border-l border-white/[0.06] p-4 space-y-4 hidden lg:block"
+          className="border-l border-white/[0.05] p-4 space-y-4 hidden lg:block"
           style={{ width: '40%' }}
         >
-          <div className="h-3 w-12 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-3 w-12 rounded bg-white/[0.05] animate-pulse" />
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-lg bg-white/[0.06] animate-pulse" />
-              <div className="h-4 w-20 rounded bg-white/[0.06] animate-pulse" />
+              <div className="h-6 w-6 rounded-lg bg-white/[0.05] animate-pulse" />
+              <div className="h-4 w-20 rounded bg-white/[0.05] animate-pulse" />
             </div>
           ))}
         </div>

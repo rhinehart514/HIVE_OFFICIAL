@@ -27,7 +27,7 @@ const modalContentVariants = cva(
   [
     'fixed z-50',
     'bg-black/80 backdrop-blur-2xl',
-    'border border-white/[0.08]',
+    'border border-white/[0.10]',
     'data-[state=open]:animate-in data-[state=closed]:animate-out',
     'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
     'data-[state=closed]:zoom-out-[0.98] data-[state=open]:zoom-in-[0.98]',
@@ -108,7 +108,7 @@ const modalCloseStyles = cn(
   'w-8 h-8 rounded-lg',
   'flex items-center justify-center',
   'text-white/30 hover:text-white/50',
-  'hover:bg-white/[0.04]',
+  'hover:bg-white/[0.05]',
   'transition-all duration-150',
   'focus:outline-none',
   'disabled:pointer-events-none'

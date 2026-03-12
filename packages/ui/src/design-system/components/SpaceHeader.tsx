@@ -263,7 +263,7 @@ export function SpaceHeader({
       className={cn(
         'flex items-center gap-4 p-4',
         'bg-[var(--bg-surface)]',
-        'border-b border-white/[0.06]',
+        'border-b border-white/[0.05]',
         className
       )}
     >
@@ -300,7 +300,7 @@ export function SpaceHeader({
             className={cn(
               'p-2.5 rounded-lg',
               'text-neutral-400 hover:text-white',
-              'hover:bg-white/[0.06]',
+              'hover:bg-white/[0.05]',
               'transition-colors duration-100'
             )}
             aria-label="Share space"
@@ -316,7 +316,7 @@ export function SpaceHeader({
             className={cn(
               'p-2.5 rounded-lg',
               'text-neutral-400 hover:text-white',
-              'hover:bg-white/[0.06]',
+              'hover:bg-white/[0.05]',
               'transition-colors duration-100'
             )}
             aria-label="Space settings"
@@ -398,7 +398,7 @@ export function SpaceHeaderCompact({
       onClick={onClick}
       className={cn(
         'flex items-center gap-3 p-2 rounded-lg',
-        onClick && 'hover:bg-white/[0.04] transition-colors duration-100 w-full text-left',
+        onClick && 'hover:bg-white/[0.05] transition-colors duration-100 w-full text-left',
         className
       )}
     >

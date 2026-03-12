@@ -34,7 +34,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../pri
 
 // LOCKED: Glass pill surface for active tab
 // Active pill: flat bg, no gradient
-const activePillClass = "bg-white/[0.08]";
+const activePillClass = "bg-white/[0.10]";
 
 // LOCKED: Spring animation config
 const springConfig = {
@@ -51,7 +51,7 @@ const boardTabsContainerVariants = cva(
   [
     'flex items-center gap-1',
     'px-4 py-2',
-    'border-b border-white/[0.06]',
+    'border-b border-white/[0.05]',
     'overflow-x-auto scrollbar-none',
     // Scroll shadows
     '[mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)]',
@@ -182,7 +182,7 @@ const BoardTabs = React.forwardRef<HTMLDivElement, BoardTabsProps>(
               {/* Sliding active indicator */}
               {activeTabRect && (
                 <motion.div
-                  className="absolute inset-y-0 rounded-full pointer-events-none bg-white/[0.08]"
+                  className="absolute inset-y-0 rounded-full pointer-events-none bg-white/[0.10]"
                   style={{
                     width: activeTabRect.width,
                     left: activeTabRect.left,
@@ -308,12 +308,12 @@ const BoardTabsSkeleton: React.FC<BoardTabsSkeletonProps> = ({
           <div
             key={i}
             className={cn(
-              'h-7 rounded-full bg-white/[0.06] animate-pulse',
+              'h-7 rounded-full bg-white/[0.05] animate-pulse',
               i === 0 ? 'w-20' : 'w-16'
             )}
           />
         ))}
-        <div className="h-7 w-7 rounded-full bg-white/[0.04] animate-pulse" />
+        <div className="h-7 w-7 rounded-full bg-white/[0.05] animate-pulse" />
       </div>
     </div>
   );

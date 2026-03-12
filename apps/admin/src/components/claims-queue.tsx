@@ -266,7 +266,7 @@ export function ClaimsQueue() {
                               ? 'bg-green-500/20 text-green-400 text-xs'
                               : claim.activationStatus === 'gathering'
                               ? 'bg-blue-500/20 text-blue-400 text-xs'
-                              : 'bg-white/[0.08] text-white/50 text-xs'
+                              : 'bg-white/[0.10] text-white/50 text-xs'
                           }
                         >
                           {claim.activationStatus}

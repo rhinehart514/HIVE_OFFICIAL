@@ -49,7 +49,7 @@ const avatarImageStyles = cn(
 );
 
 // Flat fallback — no gradient
-const fallbackBgClass = 'bg-white/[0.06]';
+const fallbackBgClass = 'bg-white/[0.05]';
 
 const avatarFallbackStyles = cn(
   'flex h-full w-full items-center justify-center',

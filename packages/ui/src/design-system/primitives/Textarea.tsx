@@ -16,7 +16,7 @@ const textareaVariants = cva(
     'bg-[#080808]',
     'text-white',
     'placeholder:text-white/[0.35]',
-    'border border-white/[0.06]',
+    'border border-white/[0.05]',
     'rounded-[12px]',
     'resize-none',
     'outline-none',

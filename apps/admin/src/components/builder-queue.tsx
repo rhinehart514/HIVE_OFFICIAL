@@ -152,7 +152,7 @@ export function BuilderQueue() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-16 animate-pulse rounded-md border border-white/[0.08] bg-[var(--bg-ground)]/50"
+              className="h-16 animate-pulse rounded-md border border-white/[0.10] bg-[var(--bg-ground)]/50"
             />
           ))}
         </div>
@@ -202,7 +202,7 @@ export function BuilderQueue() {
         {tools.map((tool) => (
           <div
             key={tool.id}
-            className="rounded-md border border-white/[0.12] bg-[var(--bg-ground)]/50 p-3"
+            className="rounded-md border border-white/[0.10] bg-[var(--bg-ground)]/50 p-3"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -272,7 +272,7 @@ export function BuilderQueue() {
 
       {rejectDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg border border-white/[0.08] bg-[var(--bg-void)] p-4">
+          <div className="w-full max-w-md rounded-lg border border-white/[0.10] bg-[var(--bg-void)] p-4">
             <h3 className="mb-4 text-lg font-medium text-white">
               {rejectDialog.action === "reject" ? "Reject Tool" : "Request Changes"}
             </h3>
@@ -281,7 +281,7 @@ export function BuilderQueue() {
                 Reason (min 10 characters)
               </label>
               <textarea
-                className="w-full rounded-md border border-white/[0.12] bg-[var(--bg-ground)] p-2 text-sm text-white placeholder:text-white/30 focus:border-white focus:outline-none"
+                className="w-full rounded-md border border-white/[0.10] bg-[var(--bg-ground)] p-2 text-sm text-white placeholder:text-white/30 focus:border-white focus:outline-none"
                 rows={4}
                 placeholder="Explain why this tool is being rejected..."
                 value={rejectDialog.reason}
@@ -294,7 +294,7 @@ export function BuilderQueue() {
               <label className="flex items-center gap-2 text-sm text-white/50">
                 <input
                   type="checkbox"
-                  className="rounded border-white/[0.12] bg-[var(--bg-ground)]"
+                  className="rounded border-white/[0.10] bg-[var(--bg-ground)]"
                   checked={rejectDialog.action === "request_changes"}
                   onChange={(e) =>
                     setRejectDialog({

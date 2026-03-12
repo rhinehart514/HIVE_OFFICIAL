@@ -16,11 +16,11 @@ const selectTriggerVariants = cva(
     'flex items-center justify-between gap-2',
     'w-full',
     'bg-[#080808]',
-    'border border-white/[0.06]',
+    'border border-white/[0.05]',
     'rounded-[12px]',
     'text-white',
     'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
-    'hover:border-white/[0.08]',
+    'hover:border-white/[0.10]',
     'focus:outline-none focus:border-white/50',
     'disabled:cursor-not-allowed disabled:opacity-40',
     '[&>span]:line-clamp-1',
@@ -97,7 +97,7 @@ const SelectContent = React.forwardRef<
         'max-h-96 min-w-[8rem]',
         'overflow-hidden',
         'bg-[#080808]',
-        'border border-white/[0.06]',
+        'border border-white/[0.05]',
         'rounded-[16px]',
         'shadow-[0_16px_32px_rgba(0,0,0,0.5)]',
         'p-1',
@@ -139,9 +139,9 @@ const SelectItem = React.forwardRef<
       'outline-none',
       'transition-colors duration-150',
       'text-white/50',
-      'hover:text-white hover:bg-white/[0.06]',
-      'focus:text-white focus:bg-white/[0.06]',
-      'data-[state=checked]:text-white data-[state=checked]:bg-white/[0.06]',
+      'hover:text-white hover:bg-white/[0.05]',
+      'focus:text-white focus:bg-white/[0.05]',
+      'data-[state=checked]:text-white data-[state=checked]:bg-white/[0.05]',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-40',
       className
     )}
@@ -183,7 +183,7 @@ const SelectSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Separator
     ref={ref}
-    className={cn('h-px bg-white/[0.06] mx-2 my-1', className)}
+    className={cn('h-px bg-white/[0.05] mx-2 my-1', className)}
     {...props}
   />
 ));

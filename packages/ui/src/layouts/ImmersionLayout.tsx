@@ -53,7 +53,7 @@ export function ImmersionLayout({
 
         {/* Optional context bar (minimal orientation) */}
         {contextBar && (
-          <div className="flex-shrink-0 w-full border-b border-white/[0.06]">
+          <div className="flex-shrink-0 w-full border-b border-white/[0.05]">
             {contextBar}
           </div>
         )}
@@ -97,9 +97,9 @@ export function ImmersionPanel({
 }: ImmersionPanelProps) {
   const borderClass = bordered
     ? position === 'left'
-      ? 'border-r border-white/[0.06]'
+      ? 'border-r border-white/[0.05]'
       : position === 'right'
-        ? 'border-l border-white/[0.06]'
+        ? 'border-l border-white/[0.05]'
         : ''
     : '';
 

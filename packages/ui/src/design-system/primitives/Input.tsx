@@ -19,7 +19,7 @@ const inputVariants = cva(
     'bg-[#080808]',
     'text-white',
     'placeholder:text-white/[0.35]',
-    'border border-white/[0.06]',
+    'border border-white/[0.05]',
     'rounded-[12px]',
     'outline-none',
     'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',

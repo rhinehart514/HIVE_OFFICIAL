@@ -3,7 +3,7 @@
 function SkeletonBar({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`animate-pulse rounded bg-white/[0.06] ${className}`}
+      className={`animate-pulse rounded bg-white/[0.05] ${className}`}
     />
   );
 }
@@ -18,7 +18,7 @@ export function TableSkeleton({
   return (
     <div className="w-full space-y-3">
       {/* Header */}
-      <div className="flex gap-4 px-4 py-3 border-b border-white/[0.06]">
+      <div className="flex gap-4 px-4 py-3 border-b border-white/[0.05]">
         {Array.from({ length: columns }).map((_, i) => (
           <SkeletonBar key={i} className="h-4 flex-1" />
         ))}
@@ -44,7 +44,7 @@ export function CardGridSkeleton({ count = 4 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border border-white/[0.06] bg-[#141414] p-4 space-y-3"
+          className="rounded-xl border border-white/[0.05] bg-[#141414] p-4 space-y-3"
         >
           <SkeletonBar className="h-3 w-20" />
           <SkeletonBar className="h-8 w-24" />
@@ -64,7 +64,7 @@ export function ChartSkeleton({ height = 200 }: { height?: number }) {
       {Array.from({ length: 12 }).map((_, i) => (
         <div
           key={i}
-          className="flex-1 rounded-t bg-white/[0.06]"
+          className="flex-1 rounded-t bg-white/[0.05]"
           style={{ height: `${20 + Math.random() * 60}%` }}
         />
       ))}
@@ -103,17 +103,17 @@ export function PageSkeleton() {
       <CardGridSkeleton count={4} />
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4 space-y-3">
+        <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4 space-y-3">
           <SkeletonBar className="h-5 w-32" />
           <ChartSkeleton height={200} />
         </div>
-        <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4 space-y-3">
+        <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4 space-y-3">
           <SkeletonBar className="h-5 w-32" />
           <ChartSkeleton height={200} />
         </div>
       </div>
       {/* Table */}
-      <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+      <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
         <TableSkeleton rows={5} columns={4} />
       </div>
     </div>

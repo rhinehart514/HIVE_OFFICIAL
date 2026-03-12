@@ -175,7 +175,7 @@ export default function AIQualityDashboard() {
   }, [period]);
 
   return (
-    <div className="min-h-screen bg-white/[0.02] p-8">
+    <div className="min-h-screen bg-white/[0.03] p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -191,7 +191,7 @@ export default function AIQualityDashboard() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   period === p
                     ? 'bg-blue-600 text-white'
-                    : 'bg-white text-white/30 hover:bg-white/[0.04] border border-white/[0.06]'
+                    : 'bg-white text-white/30 hover:bg-white/[0.05] border border-white/[0.05]'
                 }`}
               >
                 {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -361,7 +361,7 @@ export default function AIQualityDashboard() {
                   {Object.entries(metrics.elementUsage)
                     .sort(([, a], [, b]) => b - a)
                     .map(([element, count]) => (
-                      <div key={element} className="bg-white/[0.02] rounded px-3 py-2">
+                      <div key={element} className="bg-white/[0.03] rounded px-3 py-2">
                         <div className="font-mono text-xs text-white/30">{element}</div>
                         <div className="font-bold">{count}</div>
                       </div>

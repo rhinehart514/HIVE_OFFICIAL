@@ -146,7 +146,7 @@ const ProfileCardMemberRow: React.FC<ProfileCardMemberRowProps> = ({
         <button
           className={cn(
             'flex items-center justify-center w-6 h-6 rounded',
-            'text-white/50 hover:text-white hover:bg-white/[0.08]',
+            'text-white/50 hover:text-white hover:bg-white/[0.10]',
             'transition-colors duration-150'
           )}
           onClick={(e) => {
@@ -165,7 +165,7 @@ const ProfileCardMemberRow: React.FC<ProfileCardMemberRowProps> = ({
             {menuItems.map((item, i) => (
               <button
                 key={i}
-                className="w-full px-3 py-1.5 text-left text-sm text-white/80 hover:bg-white/[0.06]"
+                className="w-full px-3 py-1.5 text-left text-sm text-white/80 hover:bg-white/[0.05]"
                 onClick={(e) => {
                   e.stopPropagation();
                   item.onClick();
@@ -488,7 +488,7 @@ const ProfileCardFull: React.FC<ProfileCardFullProps> = ({
             {avatar ? (
               <AvatarImage src={avatar} alt={name} />
             ) : (
-              <AvatarFallback className="rounded-xl bg-white/[0.06] text-white/40 text-sm">
+              <AvatarFallback className="rounded-xl bg-white/[0.05] text-white/40 text-sm">
                 {initials}
               </AvatarFallback>
             )}
@@ -576,10 +576,10 @@ const ProfileCardMemberRowSkeleton: React.FC<ProfileCardMemberRowSkeletonProps> 
   className,
 }) => (
   <div className={cn('flex items-center gap-3 px-2 h-10', className)}>
-    <div className="w-8 h-8 rounded-lg bg-white/[0.06] animate-pulse" />
+    <div className="w-8 h-8 rounded-lg bg-white/[0.05] animate-pulse" />
     <div className="flex-1 space-y-1.5">
-      <div className="h-3.5 w-24 rounded bg-white/[0.06] animate-pulse" />
-      <div className="h-3 w-16 rounded bg-white/[0.06] animate-pulse" />
+      <div className="h-3.5 w-24 rounded bg-white/[0.05] animate-pulse" />
+      <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
     </div>
   </div>
 );
@@ -595,15 +595,15 @@ const ProfileCardHoverSkeleton: React.FC<ProfileCardHoverSkeletonProps> = ({
 }) => (
   <Card elevation="floating" className={cn('w-[280px] p-4', className)}>
     <div className="flex gap-3">
-      <div className="w-10 h-10 rounded-lg bg-white/[0.06] animate-pulse" />
+      <div className="w-10 h-10 rounded-lg bg-white/[0.05] animate-pulse" />
       <div className="flex-1 space-y-2">
-        <div className="h-4 w-20 rounded bg-white/[0.06] animate-pulse" />
-        <div className="h-3 w-14 rounded bg-white/[0.06] animate-pulse" />
-        <div className="h-3 w-full rounded bg-white/[0.06] animate-pulse mt-2" />
-        <div className="h-3 w-3/4 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-4 w-20 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-3 w-14 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-3 w-full rounded bg-white/[0.05] animate-pulse mt-2" />
+        <div className="h-3 w-3/4 rounded bg-white/[0.05] animate-pulse" />
       </div>
     </div>
-    <div className="h-8 w-full rounded-lg bg-white/[0.06] animate-pulse mt-3" />
+    <div className="h-8 w-full rounded-lg bg-white/[0.05] animate-pulse mt-3" />
   </Card>
 );
 
@@ -617,15 +617,15 @@ const ProfileCardSearchRowSkeleton: React.FC<ProfileCardSearchRowSkeletonProps> 
   className,
 }) => (
   <div className={cn('flex items-center gap-3 px-2 h-11', className)}>
-    <div className="w-8 h-8 rounded-lg bg-white/[0.06] animate-pulse" />
+    <div className="w-8 h-8 rounded-lg bg-white/[0.05] animate-pulse" />
     <div className="flex-1 space-y-1.5">
       <div className="flex items-center gap-2">
-        <div className="h-3.5 w-20 rounded bg-white/[0.06] animate-pulse" />
-        <div className="h-3 w-14 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-3.5 w-20 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-3 w-14 rounded bg-white/[0.05] animate-pulse" />
       </div>
-      <div className="h-3 w-24 rounded bg-white/[0.06] animate-pulse" />
+      <div className="h-3 w-24 rounded bg-white/[0.05] animate-pulse" />
     </div>
-    <div className="h-3 w-12 rounded bg-white/[0.06] animate-pulse" />
+    <div className="h-3 w-12 rounded bg-white/[0.05] animate-pulse" />
   </div>
 );
 
@@ -640,23 +640,23 @@ const ProfileCardFullSkeleton: React.FC<ProfileCardFullSkeletonProps> = ({
 }) => (
   <Card elevation="raised" className={cn('p-5', className)}>
     <div className="flex items-start gap-4">
-      <div className="w-12 h-12 rounded-xl bg-white/[0.06] animate-pulse flex-shrink-0" />
+      <div className="w-12 h-12 rounded-xl bg-white/[0.05] animate-pulse flex-shrink-0" />
       <div className="flex-1 space-y-2">
-        <div className="h-5 w-28 rounded bg-white/[0.06] animate-pulse" />
-        <div className="h-3.5 w-20 rounded bg-white/[0.06] animate-pulse" />
+        <div className="h-5 w-28 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-3.5 w-20 rounded bg-white/[0.05] animate-pulse" />
       </div>
       <div className="flex gap-2 flex-shrink-0">
-        <div className="h-9 w-20 rounded-full bg-white/[0.06] animate-pulse" />
-        <div className="h-9 w-20 rounded-full bg-white/[0.06] animate-pulse" />
+        <div className="h-9 w-20 rounded-full bg-white/[0.05] animate-pulse" />
+        <div className="h-9 w-20 rounded-full bg-white/[0.05] animate-pulse" />
       </div>
     </div>
     <div className="mt-3 pl-16 space-y-1.5">
-      <div className="h-3.5 w-32 rounded bg-white/[0.06] animate-pulse" />
-      <div className="h-3.5 w-full rounded bg-white/[0.06] animate-pulse" />
+      <div className="h-3.5 w-32 rounded bg-white/[0.05] animate-pulse" />
+      <div className="h-3.5 w-full rounded bg-white/[0.05] animate-pulse" />
     </div>
     <div className="flex gap-6 mt-4 pl-16">
-      <div className="h-4 w-24 rounded bg-white/[0.06] animate-pulse" />
-      <div className="h-4 w-16 rounded bg-white/[0.06] animate-pulse" />
+      <div className="h-4 w-24 rounded bg-white/[0.05] animate-pulse" />
+      <div className="h-4 w-16 rounded bg-white/[0.05] animate-pulse" />
     </div>
   </Card>
 );

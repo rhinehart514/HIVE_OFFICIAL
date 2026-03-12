@@ -25,7 +25,7 @@ import * as React from 'react';
  *
  * LOCKED DECISIONS:
  * - Container: Apple Glass Dark (matches Popover/Modal)
- * - Item hover: Glass highlight (`bg-white/[0.08]`)
+ * - Item hover: Glass highlight (`bg-white/[0.10]`)
  * - Separator: Inset shadow gradient (matches Separator primitive)
  * - Destructive: Red text only, NO red background
  * - Animation: Scale 0.96→1, 150ms (matches Popover)
@@ -48,7 +48,7 @@ Dropdown provides contextual menus for actions and selection.
 | Decision | Value | Rationale |
 |----------|-------|-----------|
 | Container | Apple Glass Dark | Matches Popover/Modal surfaces |
-| Item hover | Glass highlight (\`bg-white/[0.08]\`) | Consistent with Select/Combobox |
+| Item hover | Glass highlight (\`bg-white/[0.10]\`) | Consistent with Select/Combobox |
 | Separator | Inset shadow gradient | Matches Separator primitive |
 | Destructive | Red text only | No red backgrounds |
 | Animation | Scale 0.96→1, 150ms | Matches Popover animation |
@@ -76,7 +76,7 @@ export default meta;
  *
  * This showcases the canonical Dropdown patterns:
  * - Apple Glass Dark container surface
- * - Glass highlight hover (`bg-white/[0.08]`)
+ * - Glass highlight hover (`bg-white/[0.10]`)
  * - Inset shadow separators
  * - Red text only for destructive items
  * - Scale + Fade animation (0.96→1, 150ms)
@@ -109,7 +109,7 @@ export const LockedDesignShowcase: StoryObj = {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem>
-              Edit (hover: <code className="text-label-xs text-[#FFD700]">bg-white/[0.08]</code>)
+              Edit (hover: <code className="text-label-xs text-[#FFD700]">bg-white/[0.10]</code>)
             </DropdownMenuItem>
             <DropdownMenuItem>Duplicate</DropdownMenuItem>
             <DropdownMenuSeparator />

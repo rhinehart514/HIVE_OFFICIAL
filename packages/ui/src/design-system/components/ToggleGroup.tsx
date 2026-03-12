@@ -7,7 +7,7 @@
  * Decisions:
  * - Variant: Outline Contained (default)
  * - Selected: Glass highlight (bg-white/10)
- * - Hover: Glass hover (bg-white/[0.06])
+ * - Hover: Glass hover (bg-white/[0.05])
  * - Gold variant: Gold TEXT only (text-[#FFD700]), not gold background
  * - Size: Default 36px (h-9)
  * - Focus: WHITE ring (ring-white/50)
@@ -144,10 +144,10 @@ const toggleItemVariants = cva(
         selectedVariant: 'gold',
         className: 'bg-white/10 text-[#FFD700]',
       },
-      // Unselected - LOCKED: Glass hover (bg-white/[0.06])
+      // Unselected - LOCKED: Glass hover (bg-white/[0.05])
       {
         selected: false,
-        className: 'text-[var(--color-text-muted)] hover:text-white hover:bg-white/[0.06]',
+        className: 'text-[var(--color-text-muted)] hover:text-white hover:bg-white/[0.05]',
       },
       // Pills unselected
       {

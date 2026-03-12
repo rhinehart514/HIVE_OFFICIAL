@@ -270,7 +270,7 @@ const NotificationCard: React.FC<{
   };
 
   return (
-    <Card className="border-white/[0.08] bg-[var(--bg-void)]/50 hover:bg-[var(--bg-ground)]/50 transition-all">
+    <Card className="border-white/[0.10] bg-[var(--bg-void)]/50 hover:bg-[var(--bg-ground)]/50 transition-all">
       <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
@@ -396,7 +396,7 @@ const NotificationCard: React.FC<{
 
         {/* Space System Context */}
         {notification.spaceCategory && (
-          <div className="mt-3 pt-3 border-t border-white/[0.08]">
+          <div className="mt-3 pt-3 border-t border-white/[0.10]">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center space-x-2">
                 <ShieldCheckIcon className="w-3 h-3 text-blue-400" />
@@ -422,7 +422,7 @@ const QuickStatsCard: React.FC<{
   color?: string;
 }> = ({ title, value, subtitle, trend, icon: Icon, color = 'text-white/50' }) => {
   return (
-    <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+    <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div>
@@ -553,7 +553,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
             onClick={loadNotifications}
             disabled={loading}
             variant="outline"
-            className="border-white/[0.12] text-white/70"
+            className="border-white/[0.10] text-white/70"
           >
             {loading ? (
               <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
@@ -630,7 +630,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
         >
           <BellIcon className="w-4 h-4" />
           <span>Notifications</span>
-          <Badge size="sm" className={selectedTab === 'notifications' ? 'bg-white/20' : 'bg-white/[0.08]'}>
+          <Badge size="sm" className={selectedTab === 'notifications' ? 'bg-white/20' : 'bg-white/[0.10]'}>
             {stats.total}
           </Badge>
         </button>
@@ -645,7 +645,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
         >
           <Megaphone className="w-4 h-4" />
           <span>Campaigns</span>
-          <Badge size="sm" className={selectedTab === 'campaigns' ? 'bg-white/20' : 'bg-white/[0.08]'}>
+          <Badge size="sm" className={selectedTab === 'campaigns' ? 'bg-white/20' : 'bg-white/[0.10]'}>
             {campaigns.length}
           </Badge>
         </button>
@@ -660,7 +660,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
         >
           <DocumentTextIcon className="w-4 h-4" />
           <span>Templates</span>
-          <Badge size="sm" className={selectedTab === 'templates' ? 'bg-white/20' : 'bg-white/[0.08]'}>
+          <Badge size="sm" className={selectedTab === 'templates' ? 'bg-white/20' : 'bg-white/[0.10]'}>
             {templates.length}
           </Badge>
         </button>
@@ -682,7 +682,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
       {selectedTab === 'notifications' && (
         <div className="space-y-4">
           {/* Filters */}
-          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+          <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
             <CardContent className="p-4">
               <div className="flex items-center space-x-4">
                 <div className="flex-1 relative">
@@ -692,14 +692,14 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
                     placeholder="MagnifyingGlassIcon notifications..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="w-full pl-10 pr-4 py-2 bg-[var(--bg-ground)] border border-white/[0.10] rounded-lg text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
                 
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value as NotificationType | 'all')}
-                  className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.10] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 >
                   <option value="all">All Types</option>
                   <option value="system_alert">System Alert</option>
@@ -715,7 +715,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as NotificationStatus | 'all')}
-                  className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="px-3 py-2 bg-[var(--bg-ground)] border border-white/[0.10] rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 >
                   <option value="all">All Status</option>
                   <option value="draft">Draft</option>

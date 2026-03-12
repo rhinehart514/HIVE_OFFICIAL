@@ -156,7 +156,7 @@ export function BuilderQueueEnhanced() {
               className={`rounded-lg border p-4 ${
                 request.urgency === 'urgent' 
                   ? 'border-red-500 bg-red-900/20' 
-                  : 'border-white/[0.08] bg-[var(--bg-ground)]'
+                  : 'border-white/[0.10] bg-[var(--bg-ground)]'
               }`}
             >
               <div className="flex items-start justify-between">

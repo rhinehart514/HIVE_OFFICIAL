@@ -187,7 +187,7 @@ function UsersPageContent() {
 
   return (
     <div>
-      <header className="flex items-center h-14 px-6 border-b border-white/[0.06] bg-[#0A0A0A] sticky top-0 z-10">
+      <header className="flex items-center h-14 px-6 border-b border-white/[0.05] bg-[#0A0A0A] sticky top-0 z-10">
         <h1 className="text-lg font-semibold text-white">Users</h1>
         <span className="ml-3 text-sm text-white/40">
           {total.toLocaleString()} total
@@ -208,14 +208,14 @@ function UsersPageContent() {
                 const t = setTimeout(() => updateParams({ q: value || null, page: 1 }), 400);
                 return () => clearTimeout(t);
               }}
-              className="w-full pl-9 pr-4 py-2 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#FFD700]/50"
+              className="w-full pl-9 pr-4 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#FFD700]/50"
             />
           </div>
 
           <select
             value={status}
             onChange={(e) => updateParams({ status: e.target.value, page: 1 })}
-            className="px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:border-[#FFD700]/50 appearance-none cursor-pointer"
+            className="px-3 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-white text-sm focus:outline-none focus:border-[#FFD700]/50 appearance-none cursor-pointer"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active</option>
@@ -255,7 +255,7 @@ function UsersPageContent() {
           {selected.size === 0 && (
             <button
               onClick={handleExport}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white/[0.04] border border-white/[0.06] text-white/60 rounded-lg hover:bg-white/[0.08] ml-auto"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white/[0.05] border border-white/[0.05] text-white/60 rounded-lg hover:bg-white/[0.10] ml-auto"
             >
               <ArrowDownTrayIcon className="h-4 w-4" />
               Export CSV
@@ -266,11 +266,11 @@ function UsersPageContent() {
         {error && <ErrorState message={error} onRetry={fetchUsers} />}
 
         {loading ? (
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
             <TableSkeleton rows={pageSize > 10 ? 10 : pageSize} columns={7} />
           </div>
         ) : users.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
             <EmptyState
               variant={search || status !== "all" ? "no-results" : "no-data"}
               title={search ? "No users match your search" : "No users yet"}
@@ -282,11 +282,11 @@ function UsersPageContent() {
             />
           </div>
         ) : (
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] overflow-hidden">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/[0.06]">
+                  <tr className="border-b border-white/[0.05]">
                     <th className="w-10 px-4 py-3">
                       <input
                         type="checkbox"
@@ -307,7 +307,7 @@ function UsersPageContent() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.04]">
+                <tbody className="divide-y divide-white/[0.05]">
                   {users.map((user) => (
                     <tr
                       key={user.id}
@@ -354,7 +354,7 @@ function UsersPageContent() {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.05]">
               <div className="flex items-center gap-3">
                 <span className="text-sm text-white/40">
                   Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
@@ -362,7 +362,7 @@ function UsersPageContent() {
                 <select
                   value={pageSize}
                   onChange={(e) => updateParams({ size: Number(e.target.value), page: 1 })}
-                  className="px-2 py-1 bg-white/[0.04] border border-white/[0.06] rounded text-white text-xs focus:outline-none"
+                  className="px-2 py-1 bg-white/[0.05] border border-white/[0.05] rounded text-white text-xs focus:outline-none"
                 >
                   {[10, 25, 50, 100].map((s) => (
                     <option key={s} value={s}>{s} per page</option>
@@ -374,7 +374,7 @@ function UsersPageContent() {
                 <button
                   onClick={() => updateParams({ page: page - 1 })}
                   disabled={page <= 1}
-                  className="p-1.5 rounded hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed text-white/60"
+                  className="p-1.5 rounded hover:bg-white/[0.05] disabled:opacity-30 disabled:cursor-not-allowed text-white/60"
                 >
                   <ChevronLeftIcon className="h-4 w-4" />
                 </button>
@@ -396,7 +396,7 @@ function UsersPageContent() {
                       className={`px-3 py-1 rounded text-sm ${
                         p === page
                           ? "bg-[#FFD700]/20 text-[#FFD700] font-medium"
-                          : "text-white/50 hover:bg-white/[0.06]"
+                          : "text-white/50 hover:bg-white/[0.05]"
                       }`}
                     >
                       {p}
@@ -406,7 +406,7 @@ function UsersPageContent() {
                 <button
                   onClick={() => updateParams({ page: page + 1 })}
                   disabled={page >= totalPages}
-                  className="p-1.5 rounded hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed text-white/60"
+                  className="p-1.5 rounded hover:bg-white/[0.05] disabled:opacity-30 disabled:cursor-not-allowed text-white/60"
                 >
                   <ChevronRightIcon className="h-4 w-4" />
                 </button>

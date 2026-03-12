@@ -42,7 +42,7 @@ export function DiscoveryLayout({
             className={`
               w-full
               bg-[var(--bg-ground,#0A0A09)]
-              border-b border-white/[0.06]
+              border-b border-white/[0.05]
               ${stickyHeader ? 'sticky top-0 z-10' : ''}
             `.trim()}
           >

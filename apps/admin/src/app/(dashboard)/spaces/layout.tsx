@@ -59,7 +59,7 @@ export default function SpacesLayout({ children }: SpacesLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0A0A0A] via-[#0F0F0F] to-[#1A1A1A]">
       {/* Sub-navigation header */}
-      <div className="border-b border-white/[0.08] bg-[#0A0A0A]/80 backdrop-blur-sm sticky top-0 z-40">
+      <div className="border-b border-white/[0.10] bg-[#0A0A0A]/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-14">
             {/* Title */}

@@ -154,7 +154,7 @@ export default function SpaceAnalyticsPage() {
             onClick={fetchAnalytics}
             disabled={loading}
             variant="outline"
-            className="border-white/[0.12] text-white/70"
+            className="border-white/[0.10] text-white/70"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -163,7 +163,7 @@ export default function SpaceAnalyticsPage() {
 
       {/* Engagement Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-white/[0.08] bg-[#141414]">
+        <Card className="border-white/[0.10] bg-[#141414]">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-500/20">
@@ -179,7 +179,7 @@ export default function SpaceAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/[0.08] bg-[#141414]">
+        <Card className="border-white/[0.10] bg-[#141414]">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-purple-500/20">
@@ -195,7 +195,7 @@ export default function SpaceAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/[0.08] bg-[#141414]">
+        <Card className="border-white/[0.10] bg-[#141414]">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-500/20">
@@ -211,7 +211,7 @@ export default function SpaceAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/[0.08] bg-[#141414]">
+        <Card className="border-white/[0.10] bg-[#141414]">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-amber-500/20">
@@ -229,7 +229,7 @@ export default function SpaceAnalyticsPage() {
       </div>
 
       {/* Activation Funnel */}
-      <Card className="border-white/[0.08] bg-[#141414]">
+      <Card className="border-white/[0.10] bg-[#141414]">
         <CardHeader>
           <CardTitle className="text-white">Activation Funnel</CardTitle>
         </CardHeader>
@@ -238,7 +238,7 @@ export default function SpaceAnalyticsPage() {
             {/* Ghost */}
             <div className="flex-1 flex flex-col items-center gap-2">
               <div
-                className="w-full bg-white/[0.08] rounded-t-lg transition-all"
+                className="w-full bg-white/[0.10] rounded-t-lg transition-all"
                 style={{ height: `${Math.max(20, (data.activationFunnel.ghost / (data.activationFunnel.ghost + data.activationFunnel.gathering + data.activationFunnel.open)) * 100)}%` }}
               />
               <div className="text-center">
@@ -283,7 +283,7 @@ export default function SpaceAnalyticsPage() {
       {/* Category Breakdown & Top Spaces */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Category Breakdown */}
-        <Card className="border-white/[0.08] bg-[#141414]">
+        <Card className="border-white/[0.10] bg-[#141414]">
           <CardHeader>
             <CardTitle className="text-white">Category Breakdown</CardTitle>
           </CardHeader>
@@ -295,7 +295,7 @@ export default function SpaceAnalyticsPage() {
                     <span className="text-white text-sm">{cat.category}</span>
                     <span className="text-white/50 text-sm">{cat.count} ({cat.percentage}%)</span>
                   </div>
-                  <div className="h-2 bg-white/[0.08] rounded-full overflow-hidden">
+                  <div className="h-2 bg-white/[0.10] rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"
                       style={{ width: `${cat.percentage}%` }}
@@ -308,7 +308,7 @@ export default function SpaceAnalyticsPage() {
         </Card>
 
         {/* Top Performing Spaces */}
-        <Card className="border-white/[0.08] bg-[#141414]">
+        <Card className="border-white/[0.10] bg-[#141414]">
           <CardHeader>
             <CardTitle className="text-white">Top Performing Spaces</CardTitle>
           </CardHeader>
@@ -323,7 +323,7 @@ export default function SpaceAnalyticsPage() {
                 {data.topSpaces.map((space, index) => (
                   <div
                     key={space.id}
-                    className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg"
+                    className="flex items-center justify-between p-3 bg-white/[0.03] rounded-lg"
                   >
                     <div className="flex items-center gap-3">
                       <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm font-medium">
@@ -332,7 +332,7 @@ export default function SpaceAnalyticsPage() {
                       <span className="text-white font-medium">{space.name}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge className="bg-white/[0.08] text-white/70">
+                      <Badge className="bg-white/[0.10] text-white/70">
                         {space.memberCount} members
                       </Badge>
                       <span className="text-green-400 text-sm font-medium">
@@ -349,7 +349,7 @@ export default function SpaceAnalyticsPage() {
 
       {/* Campus Comparison (HIVE team only) */}
       {!admin?.campusId && data.campusComparison && data.campusComparison.length > 0 && (
-        <Card className="border-white/[0.08] bg-[#141414]">
+        <Card className="border-white/[0.10] bg-[#141414]">
           <CardHeader>
             <CardTitle className="text-white">Campus Comparison</CardTitle>
           </CardHeader>
@@ -357,7 +357,7 @@ export default function SpaceAnalyticsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/[0.08]">
+                  <tr className="border-b border-white/[0.10]">
                     <th className="text-left p-3 text-white/50">Campus</th>
                     <th className="text-left p-3 text-white/50">Total Spaces</th>
                     <th className="text-left p-3 text-white/50">Active</th>
@@ -366,7 +366,7 @@ export default function SpaceAnalyticsPage() {
                 </thead>
                 <tbody>
                   {data.campusComparison.map(campus => (
-                    <tr key={campus.campusId} className="border-b border-white/[0.06]">
+                    <tr key={campus.campusId} className="border-b border-white/[0.05]">
                       <td className="p-3 text-white font-medium">{campus.campusName}</td>
                       <td className="p-3 text-white">{campus.totalSpaces}</td>
                       <td className="p-3 text-green-400">{campus.activeSpaces}</td>

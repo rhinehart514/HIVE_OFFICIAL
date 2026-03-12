@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import { cva } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
-const surfaceClass = 'bg-white/[0.02]';
+const surfaceClass = 'bg-white/[0.03]';
 
 const springConfig = {
   type: 'spring' as const,
@@ -26,7 +26,7 @@ const deploymentTargetCardVariants = cva(
     'relative',
     'rounded-xl',
     'p-4',
-    'border border-white/[0.06]',
+    'border border-white/[0.05]',
     'transition-all duration-200',
     'cursor-pointer',
     'hover:brightness-110',
@@ -62,7 +62,7 @@ const surfacePillVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-white/[0.06] text-white/60',
+        default: 'bg-white/[0.05] text-white/60',
         selected: 'bg-white/20 text-white',
         disabled: 'bg-white/[0.03] text-white/30',
       },
@@ -99,7 +99,7 @@ const DeploymentSpaceAvatar: React.FC<{
       className={cn(
         sizeClasses,
         'rounded-lg flex items-center justify-center shrink-0',
-        'bg-white/[0.06] border border-white/[0.06]',
+        'bg-white/[0.05] border border-white/[0.05]',
         'font-medium text-white/60'
       )}
     >

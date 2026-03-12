@@ -140,7 +140,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
   };
 
   return (
-    <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+    <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
                 className={`
                   p-3 rounded-lg border cursor-pointer transition-colors
                   ${notification.readAt 
-                    ? 'border-white/[0.08] bg-[var(--bg-ground)]/50 hover:bg-[var(--bg-ground)]' 
+                    ? 'border-white/[0.10] bg-[var(--bg-ground)]/50 hover:bg-[var(--bg-ground)]' 
                     : 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10'
                   }
                 `}

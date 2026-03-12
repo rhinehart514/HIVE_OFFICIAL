@@ -25,9 +25,9 @@ import { cn } from '../../lib/utils';
 
 // Flat surface classes — no gradients
 const surfaceClasses = {
-  default: 'bg-white/[0.06]',
+  default: 'bg-white/[0.05]',
   gold: 'bg-[#FFD700]/10',
-  muted: 'bg-white/[0.02] border border-white/[0.06]',
+  muted: 'bg-white/[0.03] border border-white/[0.05]',
 };
 
 const tagVariants = cva(

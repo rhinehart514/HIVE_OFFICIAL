@@ -5,7 +5,7 @@
  *
  * - No stagger animations, no spring physics
  * - No text-shadow glow
- * - Simple hover: bg-white/[0.04]
+ * - Simple hover: bg-white/[0.05]
  * - transition-colors duration-100 only
  *
  * @version 2.0.0 - Desktop rebuild, design rules compliant
@@ -54,7 +54,7 @@ function StatItem({
       className={cn(
         'flex-1 flex flex-col items-center justify-center py-4 px-2 rounded-lg',
         'transition-colors duration-100',
-        onClick && 'cursor-pointer hover:bg-white/[0.04]'
+        onClick && 'cursor-pointer hover:bg-white/[0.05]'
       )}
     >
       <span

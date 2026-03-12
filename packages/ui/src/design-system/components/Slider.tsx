@@ -233,7 +233,7 @@ const Slider = React.forwardRef<
                   'px-2 py-1 rounded-md text-xs text-white',
                   // Glass Dark (matches Tooltip primitive)
                   'bg-[rgba(20,20,20,0.85)] backdrop-blur-[20px]',
-                  'border border-white/[0.06]',
+                  'border border-white/[0.05]',
                   'opacity-0 transition-opacity duration-150',
                   isDragging && 'opacity-100'
                 )}

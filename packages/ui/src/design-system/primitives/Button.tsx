@@ -30,10 +30,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: [
-          'bg-white/[0.06]',
+          'bg-white/[0.05]',
           'text-white',
           'border-none',
-          'hover:bg-white/[0.08]',
+          'hover:bg-white/[0.10]',
           'active:bg-white/[0.10]',
         ].join(' '),
         primary: [
@@ -44,18 +44,18 @@ const buttonVariants = cva(
           'active:bg-white/80',
         ].join(' '),
         secondary: [
-          'bg-white/[0.06]',
+          'bg-white/[0.05]',
           'text-white',
           'border-none',
-          'hover:bg-white/[0.08]',
+          'hover:bg-white/[0.10]',
           'active:bg-white/[0.10]',
         ].join(' '),
         ghost: [
           'bg-transparent',
           'text-white/50',
           'border border-transparent',
-          'hover:text-white/80 hover:bg-white/[0.04]',
-          'active:bg-white/[0.08]',
+          'hover:text-white/80 hover:bg-white/[0.05]',
+          'active:bg-white/[0.10]',
         ].join(' '),
         destructive: [
           'bg-[#2A1212]',
@@ -82,7 +82,7 @@ const buttonVariants = cva(
         ].join(' '),
         // Legacy aliases
         solid: 'bg-white text-black border border-white hover:bg-white/90 active:bg-white/80',
-        outline: 'bg-white/[0.06] text-white border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.16] active:bg-[#171717]',
+        outline: 'bg-white/[0.05] text-white border border-white/[0.05] hover:bg-white/[0.10] hover:border-white/[0.16] active:bg-[#171717]',
         cta: 'bg-white text-black border border-white hover:bg-white/90 active:bg-white/80',
         brand: 'bg-white text-black border border-white hover:bg-white/90 active:bg-white/80',
       },

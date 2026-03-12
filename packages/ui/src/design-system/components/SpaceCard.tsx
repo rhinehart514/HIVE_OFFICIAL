@@ -41,9 +41,9 @@ const territoryConfig: Record<SpaceTerritory, {
   fallbackBg: string;
 }> = {
   academic: {
-    gradient: 'from-white/[0.08] to-white/[0.03]',
+    gradient: 'from-white/[0.10] to-white/[0.03]',
     label: 'Academic',
-    color: 'text-white/50 border-white/[0.08]',
+    color: 'text-white/50 border-white/[0.10]',
     fallbackBg: 'bg-white/[0.05]',
   },
   creative: {
@@ -359,7 +359,7 @@ const SpaceCardSkeleton: React.FC<SpaceCardSkeletonProps> = ({
       {/* Header skeleton */}
       <div className="h-28 bg-white/[0.05] animate-pulse relative">
         <div className="absolute -bottom-10 left-6">
-          <div className="w-20 h-20 rounded-2xl bg-white/[0.08] animate-pulse ring-4 ring-[rgba(18,18,18,0.92)]" />
+          <div className="w-20 h-20 rounded-2xl bg-white/[0.10] animate-pulse ring-4 ring-[rgba(18,18,18,0.92)]" />
         </div>
       </div>
 

@@ -109,7 +109,7 @@ export interface ToolRuntimeModalProps {
 
 const glass = {
   overlay: 'bg-black/60 backdrop-blur-sm',
-  modal: 'bg-black/80 backdrop-blur-2xl border border-white/[0.08]',
+  modal: 'bg-black/80 backdrop-blur-2xl border border-white/[0.10]',
 };
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40';
@@ -209,7 +209,7 @@ export function ToolRuntimeModal({
         )}
       >
         {/* Header */}
-        <DialogHeader className="px-4 py-3 border-b border-white/[0.06] shrink-0">
+        <DialogHeader className="px-4 py-3 border-b border-white/[0.05] shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <DialogTitle className="text-base font-semibold text-white truncate">
@@ -259,9 +259,9 @@ export function ToolRuntimeModal({
                 <div className="text-center space-y-4">
                   {/* Element-shaped skeleton for modal loading */}
                   <div className="w-64 mx-auto space-y-3">
-                    <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse" />
-                    <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse w-3/4" />
-                    <div className="h-10 bg-white/[0.04] rounded-lg animate-pulse w-1/2" />
+                    <div className="h-10 bg-white/[0.05] rounded-lg animate-pulse" />
+                    <div className="h-10 bg-white/[0.05] rounded-lg animate-pulse w-3/4" />
+                    <div className="h-10 bg-white/[0.05] rounded-lg animate-pulse w-1/2" />
                   </div>
                   <p className="text-sm text-white/50">Loading app...</p>
                 </div>
@@ -302,7 +302,7 @@ export function ToolRuntimeModal({
                 className="flex items-center justify-center py-16"
               >
                 <div className="text-center max-w-sm px-4">
-                  <div className="w-12 h-12 rounded-xl bg-white/[0.06] flex items-center justify-center mx-auto mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.05] flex items-center justify-center mx-auto mb-4">
                     <ExclamationCircleIcon className="h-6 w-6 text-white/50" />
                   </div>
                   <h3 className="text-base font-medium text-white mb-2">No elements</h3>
@@ -348,7 +348,7 @@ export function ToolRuntimeModal({
         </div>
 
         {/* Footer with actions */}
-        <div className="px-4 py-3 border-t border-white/[0.06] flex justify-end gap-2 shrink-0">
+        <div className="px-4 py-3 border-t border-white/[0.05] flex justify-end gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"

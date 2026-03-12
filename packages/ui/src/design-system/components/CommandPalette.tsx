@@ -65,8 +65,8 @@ const commandItemVariants = cva(
   {
     variants: {
       variant: {
-        default: 'hover:bg-white/[0.04]',
-        featured: 'bg-white/[0.02] hover:bg-white/[0.06]',
+        default: 'hover:bg-white/[0.05]',
+        featured: 'bg-white/[0.03] hover:bg-white/[0.05]',
       },
     },
     defaultVariants: {

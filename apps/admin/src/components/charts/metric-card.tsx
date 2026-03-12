@@ -25,7 +25,7 @@ export function MetricCard({
 
   return (
     <div
-      className="flex items-center justify-between rounded-[16px] border border-white/[0.06] px-5 py-4"
+      className="flex items-center justify-between rounded-[16px] border border-white/[0.05] px-5 py-4"
       style={{ backgroundColor: "#080808" }}
     >
       <div className="flex flex-col gap-1">

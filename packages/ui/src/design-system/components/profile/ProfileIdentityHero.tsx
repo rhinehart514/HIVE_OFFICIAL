@@ -231,7 +231,7 @@ export function ProfileIdentityHero({
               {isOwnProfile ? (
                 <button
                   onClick={onEdit}
-                  className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors duration-100 border border-white/[0.12] hover:bg-white/[0.12]"
+                  className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors duration-100 border border-white/[0.10] hover:bg-white/[0.10]"
                   style={{
                     backgroundColor: 'rgba(255,255,255,0.08)',
                     color: 'var(--text-primary)',
@@ -270,7 +270,7 @@ export function ProfileIdentityHero({
                   {showMessageButton && (
                     <button
                       onClick={onMessage}
-                      className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors duration-100 border border-[var(--border-default)] hover:bg-white/[0.06]"
+                      className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors duration-100 border border-[var(--border-default)] hover:bg-white/[0.05]"
                       style={{
                         backgroundColor: 'transparent',
                         color: 'var(--text-secondary)',
@@ -284,7 +284,7 @@ export function ProfileIdentityHero({
                     <div className="relative">
                       <button
                         onClick={() => setShowMoreMenu(!showMoreMenu)}
-                        className="p-2.5 rounded-full transition-colors duration-100 hover:bg-white/[0.06]"
+                        className="p-2.5 rounded-full transition-colors duration-100 hover:bg-white/[0.05]"
                         style={{ color: 'var(--text-tertiary)' }}
                         aria-label="More options"
                       >
@@ -301,7 +301,7 @@ export function ProfileIdentityHero({
                             <div
                               className={cn(
                                 'absolute right-0 top-full mt-2 z-20',
-                                'bg-[#1a1a1b] border border-white/[0.06] rounded-xl shadow-lg',
+                                'bg-[#1a1a1b] border border-white/[0.05] rounded-xl shadow-lg',
                                 'py-1 min-w-[140px]'
                               )}
                             >
@@ -312,7 +312,7 @@ export function ProfileIdentityHero({
                                 }}
                                 className={cn(
                                   'w-full px-4 py-2 text-left text-sm',
-                                  'text-white/50 hover:text-white hover:bg-white/[0.06]',
+                                  'text-white/50 hover:text-white hover:bg-white/[0.05]',
                                   'flex items-center gap-2'
                                 )}
                                 data-testid="report-profile-button"

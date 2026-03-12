@@ -100,7 +100,7 @@ export const MetricCards = () => {
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total UsersIcon */}
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white/70">
               Total UsersIcon
@@ -118,7 +118,7 @@ export const MetricCards = () => {
         </Card>
 
         {/* Conversion Rate */}
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white/70">
               Conversion Rate
@@ -136,7 +136,7 @@ export const MetricCards = () => {
         </Card>
 
         {/* Drop-off Rate */}
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white/70">
               Drop-off Rate
@@ -154,7 +154,7 @@ export const MetricCards = () => {
         </Card>
 
         {/* Active Builders */}
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-white/70">
               Active Tools

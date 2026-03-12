@@ -30,7 +30,7 @@ import {
 // ============================================================================
 
 const glass = {
-  empty: "bg-white/[0.02] border border-dashed border-white/[0.08]",
+  empty: "bg-white/[0.03] border border-dashed border-white/[0.10]",
   error: "bg-red-500/5 border border-red-500/20",
 };
 
@@ -528,50 +528,50 @@ function CanvasSkeleton() {
   const skeletonElements = [
     // Poll-like element
     { height: 'h-auto', content: (
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+      <div className="rounded-xl border border-white/[0.05] bg-white/[0.03] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-5 h-5 rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-4 w-36 bg-white/[0.06] rounded animate-pulse" />
+          <div className="w-5 h-5 rounded bg-white/[0.05] animate-pulse" />
+          <div className="h-4 w-36 bg-white/[0.05] rounded animate-pulse" />
         </div>
         <div className="space-y-3">
-          <div className="h-11 bg-white/[0.04] rounded-lg animate-pulse" />
-          <div className="h-11 bg-white/[0.04] rounded-lg animate-pulse" />
-          <div className="h-11 bg-white/[0.04] rounded-lg animate-pulse" />
+          <div className="h-11 bg-white/[0.05] rounded-lg animate-pulse" />
+          <div className="h-11 bg-white/[0.05] rounded-lg animate-pulse" />
+          <div className="h-11 bg-white/[0.05] rounded-lg animate-pulse" />
         </div>
         <div className="mt-3 flex justify-between">
-          <div className="h-3 w-16 bg-white/[0.04] rounded animate-pulse" />
-          <div className="h-3 w-12 bg-white/[0.04] rounded animate-pulse" />
+          <div className="h-3 w-16 bg-white/[0.05] rounded animate-pulse" />
+          <div className="h-3 w-12 bg-white/[0.05] rounded animate-pulse" />
         </div>
       </div>
     )},
     // Counter-like element
     { height: 'h-auto', content: (
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+      <div className="rounded-xl border border-white/[0.05] bg-white/[0.03] p-5">
         <div className="text-center">
-          <div className="h-3 w-20 bg-white/[0.06] rounded animate-pulse mx-auto mb-4" />
+          <div className="h-3 w-20 bg-white/[0.05] rounded animate-pulse mx-auto mb-4" />
           <div className="flex items-center justify-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-white/[0.04] animate-pulse" />
-            <div className="h-12 w-24 bg-white/[0.06] rounded-lg animate-pulse" />
-            <div className="h-12 w-12 rounded-full bg-white/[0.04] animate-pulse" />
+            <div className="h-12 w-12 rounded-full bg-white/[0.05] animate-pulse" />
+            <div className="h-12 w-24 bg-white/[0.05] rounded-lg animate-pulse" />
+            <div className="h-12 w-12 rounded-full bg-white/[0.05] animate-pulse" />
           </div>
         </div>
       </div>
     )},
     // RSVP/button-like element
     { height: 'h-auto', content: (
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+      <div className="rounded-xl border border-white/[0.05] bg-white/[0.03] p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="space-y-2">
-            <div className="h-4 w-28 bg-white/[0.06] rounded animate-pulse" />
-            <div className="h-3 w-20 bg-white/[0.04] rounded animate-pulse" />
+            <div className="h-4 w-28 bg-white/[0.05] rounded animate-pulse" />
+            <div className="h-3 w-20 bg-white/[0.05] rounded animate-pulse" />
           </div>
           <div className="flex items-center gap-1">
-            <div className="h-4 w-4 bg-white/[0.04] rounded animate-pulse" />
-            <div className="h-3 w-12 bg-white/[0.04] rounded animate-pulse" />
+            <div className="h-4 w-4 bg-white/[0.05] rounded animate-pulse" />
+            <div className="h-3 w-12 bg-white/[0.05] rounded animate-pulse" />
           </div>
         </div>
-        <div className="h-2 bg-white/[0.04] rounded-full mb-4 animate-pulse" />
-        <div className="h-10 bg-white/[0.06] rounded-lg animate-pulse" />
+        <div className="h-2 bg-white/[0.05] rounded-full mb-4 animate-pulse" />
+        <div className="h-10 bg-white/[0.05] rounded-lg animate-pulse" />
       </div>
     )},
   ];
@@ -672,7 +672,7 @@ function CanvasEmpty() {
       className={cn("rounded-xl p-16 text-center", glass.empty)}
     >
       <motion.div
-        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] flex items-center justify-center mx-auto mb-5"
+        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-white/[0.05] to-white/[0.03] flex items-center justify-center mx-auto mb-5"
         animate={prefersReducedMotion ? {} : {
           y: [0, -6, 0],
           rotate: [0, 3, -3, 0]

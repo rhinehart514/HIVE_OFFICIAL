@@ -223,7 +223,7 @@ const ToolCard: React.FC<ToolCardProps> = ({
         {spotlightOverlay}
         <div className="relative z-10 flex items-center gap-3">
           {/* LOCKED: Category icon */}
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/[0.06] flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/[0.05] flex-shrink-0">
             <CategoryIcon category={category} className="w-5 h-5 text-white/60" />
           </div>
 
@@ -319,7 +319,7 @@ const ToolCard: React.FC<ToolCardProps> = ({
         )}
 
         {/* LOCKED: Footer - space/author origin + uses */}
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
           {/* LOCKED: Space logo + origin */}
           <div className="flex items-center gap-2">
             <Avatar size="xs">
@@ -360,10 +360,10 @@ const ToolCardSkeleton: React.FC<ToolCardSkeletonProps> = ({
     return (
       <Card elevation="resting" className={cn('p-3', className)}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/[0.06] animate-pulse" />
+          <div className="w-10 h-10 rounded-xl bg-white/[0.05] animate-pulse" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-28 rounded bg-white/[0.06] animate-pulse" />
-            <div className="h-3 w-16 rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-4 w-28 rounded bg-white/[0.05] animate-pulse" />
+            <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
           </div>
         </div>
       </Card>
@@ -376,25 +376,25 @@ const ToolCardSkeleton: React.FC<ToolCardSkeletonProps> = ({
         {/* Header skeleton */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1 space-y-2">
-            <div className="h-3 w-20 rounded bg-white/[0.06] animate-pulse" />
-            <div className="h-5 w-40 rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-3 w-20 rounded bg-white/[0.05] animate-pulse" />
+            <div className="h-5 w-40 rounded bg-white/[0.05] animate-pulse" />
           </div>
-          <div className="w-12 h-12 rounded-xl bg-white/[0.06] animate-pulse" />
+          <div className="w-12 h-12 rounded-xl bg-white/[0.05] animate-pulse" />
         </div>
 
         {/* Description skeleton */}
         <div className="space-y-2 mb-4">
-          <div className="h-4 w-full rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-4 w-3/4 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-4 w-full rounded bg-white/[0.05] animate-pulse" />
+          <div className="h-4 w-3/4 rounded bg-white/[0.05] animate-pulse" />
         </div>
 
         {/* Footer skeleton */}
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-lg bg-white/[0.06] animate-pulse" />
-            <div className="h-3 w-24 rounded bg-white/[0.06] animate-pulse" />
+            <div className="w-5 h-5 rounded-lg bg-white/[0.05] animate-pulse" />
+            <div className="h-3 w-24 rounded bg-white/[0.05] animate-pulse" />
           </div>
-          <div className="h-3 w-16 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
         </div>
       </div>
     </Card>

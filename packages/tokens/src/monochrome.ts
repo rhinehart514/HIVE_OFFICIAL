@@ -33,13 +33,13 @@ export const MONOCHROME = {
 
   // === GRAYSCALE SURFACES ===
   /** Card background - barely-there glass */
-  cardBg: 'bg-white/[0.02]',
+  cardBg: 'bg-white/[0.03]',
   /** Card border - subtle */
-  cardBorder: 'border border-white/[0.06]',
+  cardBorder: 'border border-white/[0.05]',
   /** Card hover border - slightly more visible */
-  cardHoverBorder: 'hover:border-white/[0.12]',
+  cardHoverBorder: 'hover:border-white/[0.10]',
   /** Card hover background - subtle lift */
-  cardHoverBg: 'hover:bg-white/[0.04]',
+  cardHoverBg: 'hover:bg-white/[0.05]',
 
   // === INPUT STYLING ===
   /** Underline input - onboarding/hero style */
@@ -63,7 +63,7 @@ export const MONOCHROME = {
   /** Gold button - ONLY for final CTA (Enter HIVE, Confirm) - 1% rule */
   buttonGold: 'h-12 px-8 rounded-full bg-gold-500 text-black text-sm font-medium hover:bg-gold-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] transition-all duration-300 flex items-center justify-center',
   /** Secondary button - subtle outline */
-  buttonSecondary: 'h-12 px-8 rounded-full bg-white/[0.04] text-white text-sm font-medium border border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-300 flex items-center justify-center',
+  buttonSecondary: 'h-12 px-8 rounded-full bg-white/[0.05] text-white text-sm font-medium border border-white/[0.10] hover:bg-white/[0.10] hover:border-white/[0.10] transition-all duration-300 flex items-center justify-center',
   /** Ghost button - text only links */
   buttonGhost: 'text-sm font-medium text-neutral-600 hover:text-neutral-400 transition-colors',
 
@@ -126,10 +126,10 @@ export const monochromePatterns = {
   interactiveCard: `${MONOCHROME.cardBg} ${MONOCHROME.cardBorder} ${MONOCHROME.cardHoverBorder} ${MONOCHROME.cardHoverBg} rounded-xl transition-all duration-300`,
 
   /** Selected card with earned gold state */
-  selectedCard: `bg-white/[0.06] border-gold-500/30 shadow-[0_0_20px_rgba(255,215,0,0.1)] rounded-xl`,
+  selectedCard: `bg-white/[0.05] border-gold-500/30 shadow-[0_0_20px_rgba(255,215,0,0.1)] rounded-xl`,
 
   /** Glass surface for containers */
-  glassSurface: 'bg-white/[0.02] backdrop-blur-md border border-white/[0.06] rounded-xl',
+  glassSurface: 'bg-white/[0.03] backdrop-blur-md border border-white/[0.05] rounded-xl',
 
   /** Underline input for onboarding */
   underlineInput: `${MONOCHROME.inputBase} ${MONOCHROME.inputFocus}`,

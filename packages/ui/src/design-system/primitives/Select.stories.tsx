@@ -15,7 +15,7 @@ import { Text } from './Text';
 /**
  * Select — Dropdown selection
  *
- * Flat minimal: bg-[#080808], border-white/[0.06], border-only focus.
+ * Flat minimal: bg-[#080808], border-white/[0.05], border-only focus.
  * Radix-based. Supports groups, labels, and separators.
  *
  * @see docs/design-system/PRIMITIVES.md (Select)

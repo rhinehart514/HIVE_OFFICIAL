@@ -64,7 +64,7 @@ export default async function EnhancedAdminDashboard() {
 
         {/* Quick Actions */}
         <div className="mb-8">
-          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+          <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
             <CardHeader>
               <CardTitle className="text-white">Quick Actions</CardTitle>
             </CardHeader>
@@ -94,7 +94,7 @@ export default async function EnhancedAdminDashboard() {
         {/* Main Dashboard Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* User Management */}
-          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+          <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
             <CardHeader>
               <CardTitle className="text-white">User Management</CardTitle>
             </CardHeader>
@@ -104,7 +104,7 @@ export default async function EnhancedAdminDashboard() {
           </Card>
 
           {/* Builder Queue */}
-          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+          <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
             <CardHeader>
               <CardTitle className="text-white">Builder Approvals</CardTitle>
             </CardHeader>
@@ -116,7 +116,7 @@ export default async function EnhancedAdminDashboard() {
 
         {/* Analytics Section - Full Width */}
         <div className="mt-6">
-          <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+          <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
             <CardHeader>
               <CardTitle className="text-white">Platform Analytics</CardTitle>
             </CardHeader>
@@ -127,7 +127,7 @@ export default async function EnhancedAdminDashboard() {
         </div>
 
         {/* System Status Footer */}
-        <div className="mt-8 p-4 bg-[var(--bg-void)]/30 border border-white/[0.08] rounded-lg">
+        <div className="mt-8 p-4 bg-[var(--bg-void)]/30 border border-white/[0.10] rounded-lg">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">

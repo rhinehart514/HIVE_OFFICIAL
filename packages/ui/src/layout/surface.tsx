@@ -4,20 +4,20 @@ import * as React from "react";
 import { cn } from "../lib/utils";
 
 const surfaceVariants = cva(
-  "relative rounded-[12px] border border-white/[0.06] bg-[#080808] text-white transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]",
+  "relative rounded-[12px] border border-white/[0.05] bg-[#080808] text-white transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]",
   {
     variants: {
       tone: {
         // Canonical 3-tier surface set
-        standard: "bg-[#080808] border-white/[0.06] text-white",
-        subtle: "bg-[#0D0D0D] border-white/[0.06] text-white",
-        overlay: "bg-black/80 backdrop-blur-2xl border-white/[0.08] text-white",
+        standard: "bg-[#080808] border-white/[0.05] text-white",
+        subtle: "bg-[#0D0D0D] border-white/[0.05] text-white",
+        overlay: "bg-black/80 backdrop-blur-2xl border-white/[0.10] text-white",
 
         // Compatibility aliases
-        default: "bg-[#080808] border-white/[0.06] text-white",
-        contrast: "bg-[#0D0D0D] border-white/[0.08] text-white",
-        inverted: "bg-[#0D0D0D] border-white/[0.08] text-white",
-        glass: "bg-black/80 backdrop-blur-2xl border-white/[0.08] text-white",
+        default: "bg-[#080808] border-white/[0.05] text-white",
+        contrast: "bg-[#0D0D0D] border-white/[0.10] text-white",
+        inverted: "bg-[#0D0D0D] border-white/[0.10] text-white",
+        glass: "bg-black/80 backdrop-blur-2xl border-white/[0.10] text-white",
       },
       elevation: {
         flat: "shadow-none",
@@ -39,7 +39,7 @@ const surfaceVariants = cva(
         full: "rounded-[24px]",
       },
       interactive: {
-        true: "hover:bg-[#0D0D0D] hover:border-white/[0.08]",
+        true: "hover:bg-[#0D0D0D] hover:border-white/[0.10]",
       },
     },
     defaultVariants: {

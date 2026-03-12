@@ -89,7 +89,7 @@ const bannerVariants = cva(
   {
     variants: {
       variant: {
-        info: 'bg-white/[0.04] border-white/[0.08]',
+        info: 'bg-white/[0.05] border-white/[0.10]',
         success: 'bg-green-500/10 border-green-500/20',
         warning: 'bg-amber-500/10 border-amber-500/20',
         error: 'bg-red-500/10 border-red-500/20',

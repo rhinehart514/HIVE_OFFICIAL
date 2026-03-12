@@ -20,11 +20,11 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 // Container: frosted dark bar
-const containerClass = 'bg-black/95 backdrop-blur-xl border-t border-white/[0.06]';
+const containerClass = 'bg-black/95 backdrop-blur-xl border-t border-white/[0.05]';
 
 // LOCKED: Glass pill surface for active item
 // Active pill: flat bg, no gradient
-const activePillClass = "bg-white/[0.08]";
+const activePillClass = "bg-white/[0.10]";
 
 // LOCKED: Spring animation config
 const springConfig = {

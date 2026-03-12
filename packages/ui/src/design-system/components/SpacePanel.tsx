@@ -141,7 +141,7 @@ const NowSection: React.FC<NowSectionProps> = ({
                   key={member.id}
                   className={cn(
                     'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg',
-                    'hover:bg-white/[0.04] transition-colors',
+                    'hover:bg-white/[0.05] transition-colors',
                     'text-left'
                   )}
                   onClick={() => onMemberClick?.(member.id)}
@@ -321,7 +321,7 @@ const PinnedSection: React.FC<PinnedSectionProps> = ({
                   key={item.id}
                   className={cn(
                     'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg',
-                    'hover:bg-white/[0.04] transition-colors',
+                    'hover:bg-white/[0.05] transition-colors',
                     'text-left'
                   )}
                   onClick={() => onItemClick?.(item.id)}
@@ -395,14 +395,14 @@ const SpacePanel = React.forwardRef<HTMLDivElement, SpacePanelProps>(
         ref={ref}
         className={cn(
           'h-full flex flex-col',
-          'border-l border-white/[0.06]',
+          'border-l border-white/[0.05]',
           'bg-[var(--color-bg-page)]',
           'overflow-hidden',
           className
         )}
       >
         {/* Header with collapse toggle */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05]">
           <Text size="xs" tone="muted" className="uppercase tracking-wider">
             Context
           </Text>
@@ -450,7 +450,7 @@ const SpacePanel = React.forwardRef<HTMLDivElement, SpacePanelProps>(
         </div>
 
         {/* Footer with keyboard hint */}
-        <div className="px-4 py-2 border-t border-white/[0.06]">
+        <div className="px-4 py-2 border-t border-white/[0.05]">
           <Text size="xs" tone="muted" className="text-center">
             <span className="font-sans">⌘⇧P</span> to toggle
           </Text>
@@ -475,37 +475,37 @@ const SpacePanelSkeleton: React.FC<SpacePanelSkeletonProps> = ({ className }) =>
     <div
       className={cn(
         'h-full flex flex-col',
-        'border-l border-white/[0.06]',
+        'border-l border-white/[0.05]',
         'bg-[var(--color-bg-page)]',
         className
       )}
     >
-      <div className="px-4 py-3 border-b border-white/[0.06]">
-        <div className="h-3 w-16 rounded bg-white/[0.06] animate-pulse" />
+      <div className="px-4 py-3 border-b border-white/[0.05]">
+        <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
       </div>
       <div className="flex-1 px-4 py-3 space-y-4">
         {/* NOW section skeleton */}
         <div className="space-y-2">
-          <div className="h-3 w-12 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-3 w-12 rounded bg-white/[0.05] animate-pulse" />
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-lg bg-white/[0.06] animate-pulse" />
-              <div className="h-4 w-20 rounded bg-white/[0.06] animate-pulse" />
+              <div className="h-6 w-6 rounded-lg bg-white/[0.05] animate-pulse" />
+              <div className="h-4 w-20 rounded bg-white/[0.05] animate-pulse" />
             </div>
           ))}
         </div>
         {/* NEXT UP section skeleton */}
         <div className="space-y-2">
-          <div className="h-3 w-16 rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-16 rounded-xl bg-white/[0.04] animate-pulse" />
+          <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
+          <div className="h-16 rounded-xl bg-white/[0.05] animate-pulse" />
         </div>
         {/* PINNED section skeleton */}
         <div className="space-y-2">
-          <div className="h-3 w-14 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-3 w-14 rounded bg-white/[0.05] animate-pulse" />
           {[1, 2].map((i) => (
             <div key={i} className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded bg-white/[0.06] animate-pulse" />
-              <div className="h-4 w-24 rounded bg-white/[0.06] animate-pulse" />
+              <div className="h-4 w-4 rounded bg-white/[0.05] animate-pulse" />
+              <div className="h-4 w-24 rounded bg-white/[0.05] animate-pulse" />
             </div>
           ))}
         </div>

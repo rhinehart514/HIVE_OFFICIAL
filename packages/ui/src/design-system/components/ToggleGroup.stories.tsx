@@ -10,7 +10,7 @@ import { ToggleGroup, ToggleButton, type ToggleOption } from './ToggleGroup';
  * LOCKED DECISIONS:
  * - Variant: Outline Contained (default) - contained in elevated bg with border
  * - Selected: Glass highlight (bg-white/10) - subtle, not aggressive
- * - Hover: Glass hover (bg-white/[0.06]) - barely visible lift
+ * - Hover: Glass hover (bg-white/[0.05]) - barely visible lift
  * - Gold variant: Gold TEXT only (text-[#FFD700]), NEVER gold background
  * - Size: Default 36px (h-9)
  * - Focus: WHITE ring (ring-white/50), never gold
@@ -35,7 +35,7 @@ ToggleGroup provides single or multi-select button groups with consistent HIVE s
 |----------|-------|-----------|
 | Container | Outline Contained | Elevated bg with border for clear grouping |
 | Selected state | Glass highlight (\`bg-white/10\`) | Subtle, premium feel |
-| Hover state | Glass hover (\`bg-white/[0.06]\`) | Barely visible lift |
+| Hover state | Glass hover (\`bg-white/[0.05]\`) | Barely visible lift |
 | Gold variant | Gold TEXT only | Gold-as-light rule - never gold backgrounds |
 | Default size | 36px (h-9) | Touch-friendly without being bulky |
 | Focus ring | WHITE (\`ring-white/50\`) | Consistent focus treatment |
@@ -65,7 +65,7 @@ type Story = StoryObj<typeof ToggleGroup>;
  * This is the canonical representation of ToggleGroup showing all locked decisions:
  * - Outline Contained variant
  * - Glass highlight for selected (bg-white/10)
- * - Glass hover (bg-white/[0.06])
+ * - Glass hover (bg-white/[0.05])
  * - Gold text for CTA variant
  */
 export const LockedDesignShowcase: Story = {

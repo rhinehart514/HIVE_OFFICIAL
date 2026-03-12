@@ -76,7 +76,7 @@ function UserAvatar({ user }: { user: JoinRequestUser | null }) {
   const monogram = user?.displayName?.charAt(0)?.toUpperCase() || '?';
 
   return (
-    <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/[0.08] flex items-center justify-center flex-shrink-0">
+    <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/[0.10] flex items-center justify-center flex-shrink-0">
       {user?.avatarUrl ? (
         <Image src={user.avatarUrl} alt={user.displayName} width={40} height={40} className="object-cover" sizes="40px" />
       ) : (
@@ -127,7 +127,7 @@ function RequestCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-white/[0.06]"
+      className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-white/[0.05]"
     >
       <div className="flex items-start gap-3">
         <UserAvatar user={request.user} />
@@ -203,7 +203,7 @@ function RequestCard({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md p-6 rounded-2xl bg-[var(--bg-elevated)] border border-white/[0.06]"
+              className="w-full max-w-md p-6 rounded-2xl bg-[var(--bg-elevated)] border border-white/[0.05]"
             >
               <h3 className="text-lg font-semibold text-white mb-4">Reject Request</h3>
               <p className="text-sm text-white/60 mb-4">
@@ -218,7 +218,7 @@ function RequestCard({
                 rows={3}
                 className={cn(
                   'w-full px-4 py-3 rounded-xl mb-4',
-                  'bg-[var(--bg-ground)] border border-white/[0.06]',
+                  'bg-[var(--bg-ground)] border border-white/[0.05]',
                   'text-white placeholder:text-white/40',
                   'focus:outline-none focus:ring-2 focus:ring-white/20',
                   'resize-none'
@@ -227,7 +227,7 @@ function RequestCard({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowRejectModal(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-white/[0.06] text-white/70 hover:bg-white/[0.10] transition-colors"
+                  className="flex-1 py-2.5 rounded-xl bg-white/[0.05] text-white/70 hover:bg-white/[0.10] transition-colors"
                 >
                   Cancel
                 </button>
@@ -272,7 +272,7 @@ function FilterTabs({
   ];
 
   return (
-    <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04]">
+    <div className="flex gap-1 p-1 rounded-xl bg-white/[0.05]">
       {filters.map((filter) => (
         <button
           key={filter.value}
@@ -357,14 +357,14 @@ export function JoinRequestsPanel({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-24 rounded-xl bg-white/[0.04] animate-pulse"
+                className="h-24 rounded-xl bg-white/[0.05] animate-pulse"
               />
             ))}
           </div>
         ) : requests.length === 0 ? (
           // Empty state
           <div className="text-center py-12">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-white/[0.06] flex items-center justify-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-white/[0.05] flex items-center justify-center">
               <svg
                 className="w-6 h-6 text-white/30"
                 fill="none"

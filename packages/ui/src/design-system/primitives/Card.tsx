@@ -37,10 +37,10 @@ const cardVariants = cva(
   {
     variants: {
       elevation: {
-        subtle: 'bg-white/[0.02]',
-        resting: 'bg-white/[0.02] border border-white/[0.06]',
-        raised: 'bg-white/[0.04] border border-white/[0.06]',
-        floating: 'bg-[#0D0D0D] border border-white/[0.08] shadow-[0_16px_32px_rgba(0,0,0,0.45)]',
+        subtle: 'bg-white/[0.03]',
+        resting: 'bg-white/[0.03] border border-white/[0.05]',
+        raised: 'bg-white/[0.05] border border-white/[0.05]',
+        floating: 'bg-[#0D0D0D] border border-white/[0.10] shadow-[0_16px_32px_rgba(0,0,0,0.45)]',
       },
       size: {
         default: 'rounded-[16px]',
@@ -94,8 +94,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         interactive && [
           'cursor-pointer select-none',
           elevation === 'subtle'
-            ? 'hover:bg-white/[0.04]'
-            : 'hover:bg-white/[0.04] hover:border-white/[0.06]',
+            ? 'hover:bg-white/[0.05]'
+            : 'hover:bg-white/[0.05] hover:border-white/[0.05]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
           'focus-visible:ring-offset-2 focus-visible:ring-offset-[#000000]',
         ],

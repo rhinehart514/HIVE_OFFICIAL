@@ -141,7 +141,7 @@ export function DataTable<T extends { id: string }>({
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Search..."
-              className="w-full pl-9 pr-3 py-2 text-sm bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+              className="w-full pl-9 pr-3 py-2 text-sm bg-white/[0.05] border border-white/[0.05] rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
             />
           </div>
         )}
@@ -150,7 +150,7 @@ export function DataTable<T extends { id: string }>({
           <select
             value={pageSize}
             onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
-            className="bg-white/[0.04] border border-white/[0.06] rounded px-2 py-1 text-white text-xs focus:outline-none"
+            className="bg-white/[0.05] border border-white/[0.05] rounded px-2 py-1 text-white text-xs focus:outline-none"
           >
             {[10, 25, 50, 100].map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -161,7 +161,7 @@ export function DataTable<T extends { id: string }>({
 
       {/* Bulk actions */}
       {bulkActions && selected.size > 0 && (
-        <div className="flex items-center gap-3 px-4 py-2 bg-white/[0.04] border border-white/[0.06] rounded-lg">
+        <div className="flex items-center gap-3 px-4 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg">
           <span className="text-sm text-white/60">{selected.size} selected</span>
           <div className="flex gap-2 ml-auto">
             {bulkActions.map((action) => (
@@ -182,17 +182,17 @@ export function DataTable<T extends { id: string }>({
       )}
 
       {/* Table */}
-      <div className="border border-white/[0.06] rounded-xl overflow-hidden">
+      <div className="border border-white/[0.05] rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/[0.06]">
+            <tr className="border-b border-white/[0.05]">
               {bulkActions && (
                 <th className="w-10 px-4 py-3">
                   <input
                     type="checkbox"
                     checked={paginated.length > 0 && selected.size === paginated.length}
                     onChange={toggleAll}
-                    className="rounded border-white/20 bg-white/[0.04]"
+                    className="rounded border-white/20 bg-white/[0.05]"
                   />
                 </th>
               )}
@@ -222,7 +222,7 @@ export function DataTable<T extends { id: string }>({
             {paginated.map((row) => (
               <tr
                 key={row.id}
-                className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.04] transition-colors"
+                className="border-b border-white/[0.05] last:border-0 hover:bg-white/[0.05] transition-colors"
               >
                 {bulkActions && (
                   <td className="w-10 px-4 py-3">
@@ -230,7 +230,7 @@ export function DataTable<T extends { id: string }>({
                       type="checkbox"
                       checked={selected.has(row.id)}
                       onChange={() => toggleSelect(row.id)}
-                      className="rounded border-white/20 bg-white/[0.04]"
+                      className="rounded border-white/20 bg-white/[0.05]"
                     />
                   </td>
                 )}
@@ -262,7 +262,7 @@ export function DataTable<T extends { id: string }>({
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="p-1 rounded hover:bg-white/[0.04] disabled:opacity-30"
+            className="p-1 rounded hover:bg-white/[0.05] disabled:opacity-30"
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
@@ -272,7 +272,7 @@ export function DataTable<T extends { id: string }>({
           <button
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
-            className="p-1 rounded hover:bg-white/[0.04] disabled:opacity-30"
+            className="p-1 rounded hover:bg-white/[0.05] disabled:opacity-30"
           >
             <ChevronRightIcon className="h-4 w-4" />
           </button>

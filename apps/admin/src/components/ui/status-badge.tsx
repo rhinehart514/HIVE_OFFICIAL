@@ -6,7 +6,7 @@ type BadgeStatus = "active" | "inactive" | "pending" | "suspended" | "flagged";
 
 const statusStyles: Record<BadgeStatus, { dot: string; text: string; bg: string }> = {
   active: { dot: "bg-green-400", text: "text-green-400", bg: "bg-green-400/10" },
-  inactive: { dot: "bg-white/30", text: "text-white/50", bg: "bg-white/[0.06]" },
+  inactive: { dot: "bg-white/30", text: "text-white/50", bg: "bg-white/[0.05]" },
   pending: { dot: "bg-yellow-400", text: "text-yellow-400", bg: "bg-yellow-400/10" },
   suspended: { dot: "bg-red-400", text: "text-red-400", bg: "bg-red-400/10" },
   flagged: { dot: "bg-orange-400", text: "text-orange-400", bg: "bg-orange-400/10" },

@@ -301,7 +301,7 @@ export function ConnectButton({
                   <button
                     onClick={handleUnfriend}
                     disabled={loading === 'unfriend'}
-                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm transition-colors hover:bg-white/[0.06] rounded-xl disabled:opacity-70"
+                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm transition-colors hover:bg-white/[0.05] rounded-xl disabled:opacity-70"
                     style={{ color: '#ef4444' }}
                   >
                     {loading === 'unfriend' ? (

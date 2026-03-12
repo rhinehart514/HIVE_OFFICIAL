@@ -250,7 +250,7 @@ export function SchoolManagementDashboard() {
       case "suspended":
         return "bg-red-500/20 text-red-400 border-red-500/30";
       default:
-        return "bg-white/[0.20]/20 text-white/50 border-white/[0.12]/30";
+        return "bg-white/[0.20]/20 text-white/50 border-white/[0.10]/30";
     }
   };
 
@@ -279,7 +279,7 @@ export function SchoolManagementDashboard() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* School List */}
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50 lg:col-span-1">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50 lg:col-span-1">
           <CardHeader>
             <CardTitle className="text-white">Schools ({schools.length})</CardTitle>
           </CardHeader>
@@ -292,7 +292,7 @@ export function SchoolManagementDashboard() {
                   className={`w-full text-left p-3 rounded-lg transition-colors ${
                     selectedSchool?.id === school.id
                       ? "bg-amber-500/20 border border-amber-500/30"
-                      : "bg-[var(--bg-ground)] hover:bg-white/[0.08]"
+                      : "bg-[var(--bg-ground)] hover:bg-white/[0.10]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -318,7 +318,7 @@ export function SchoolManagementDashboard() {
         </Card>
 
         {/* School Form */}
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50 lg:col-span-2">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50 lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-white">
               {isCreating
@@ -339,7 +339,7 @@ export function SchoolManagementDashboard() {
                       value={formData.name || ""}
                       onChange={(e) => updateFormField("name", e.target.value)}
                       placeholder="University of Example"
-                      className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                      className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                     />
                   </div>
                   <div>
@@ -348,7 +348,7 @@ export function SchoolManagementDashboard() {
                       value={formData.domain || ""}
                       onChange={(e) => updateFormField("domain", e.target.value)}
                       placeholder="example.edu"
-                      className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                      className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                     />
                   </div>
                   <div>
@@ -359,7 +359,7 @@ export function SchoolManagementDashboard() {
                         updateFormField("shortName", e.target.value)
                       }
                       placeholder="UE"
-                      className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                      className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                     />
                   </div>
                   <div>
@@ -367,7 +367,7 @@ export function SchoolManagementDashboard() {
                     <select
                       value={formData.status || "waitlist"}
                       onChange={(e) => updateFormField("status", e.target.value)}
-                      className="w-full h-10 px-3 rounded-md bg-[var(--bg-ground)] border border-white/[0.08] text-white"
+                      className="w-full h-10 px-3 rounded-md bg-[var(--bg-ground)] border border-white/[0.10] text-white"
                     >
                       <option value="waitlist">Waitlist</option>
                       <option value="beta">Beta</option>
@@ -387,7 +387,7 @@ export function SchoolManagementDashboard() {
                         updateFormField("location.city", e.target.value)
                       }
                       placeholder="City"
-                      className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                      className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                     />
                     <Input
                       value={formData.location?.state || ""}
@@ -395,7 +395,7 @@ export function SchoolManagementDashboard() {
                         updateFormField("location.state", e.target.value)
                       }
                       placeholder="State"
-                      className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                      className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                     />
                     <Input
                       value={formData.location?.country || "USA"}
@@ -403,7 +403,7 @@ export function SchoolManagementDashboard() {
                         updateFormField("location.country", e.target.value)
                       }
                       placeholder="Country"
-                      className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                      className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                     />
                   </div>
                 </div>
@@ -422,7 +422,7 @@ export function SchoolManagementDashboard() {
                           updateEmailDomain("student", e.target.value)
                         }
                         placeholder="example.edu, mail.example.edu"
-                        className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                        className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                       />
                     </div>
                     <div>
@@ -433,7 +433,7 @@ export function SchoolManagementDashboard() {
                           updateEmailDomain("faculty", e.target.value)
                         }
                         placeholder="example.edu"
-                        className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                        className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                       />
                     </div>
                     <div>
@@ -444,7 +444,7 @@ export function SchoolManagementDashboard() {
                           updateEmailDomain("staff", e.target.value)
                         }
                         placeholder="example.edu"
-                        className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                        className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                       />
                     </div>
                     <div>
@@ -455,7 +455,7 @@ export function SchoolManagementDashboard() {
                           updateEmailDomain("alumni", e.target.value)
                         }
                         placeholder="alumni.example.edu"
-                        className="bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                        className="bg-[var(--bg-ground)] border-white/[0.10] text-white"
                       />
                     </div>
                   </div>
@@ -486,7 +486,7 @@ export function SchoolManagementDashboard() {
                             onChange={(e) =>
                               updateEventSource(index, "type", e.target.value)
                             }
-                            className="h-10 px-3 rounded-md bg-white/[0.08] border border-white/[0.12] text-white"
+                            className="h-10 px-3 rounded-md bg-white/[0.10] border border-white/[0.10] text-white"
                           >
                             <option value="campuslabs">CampusLabs</option>
                             <option value="presence">Presence</option>
@@ -499,7 +499,7 @@ export function SchoolManagementDashboard() {
                               updateEventSource(index, "url", e.target.value)
                             }
                             placeholder="https://school.campuslabs.com/engage/events.rss"
-                            className="md:col-span-2 bg-white/[0.08] border-white/[0.12] text-white"
+                            className="md:col-span-2 bg-white/[0.10] border-white/[0.10] text-white"
                           />
                           <div className="flex items-center gap-2">
                             <label className="flex items-center gap-2 text-sm text-white/50">
@@ -537,7 +537,7 @@ export function SchoolManagementDashboard() {
                                 e.target.value
                               )
                             }
-                            className="h-8 px-2 text-sm rounded-md bg-white/[0.08] border border-white/[0.12] text-white"
+                            className="h-8 px-2 text-sm rounded-md bg-white/[0.10] border border-white/[0.10] text-white"
                           >
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
@@ -552,7 +552,7 @@ export function SchoolManagementDashboard() {
                       </div>
                     ))}
                     {(formData.eventSources || []).length === 0 && (
-                      <div className="text-center text-white/40 py-4 border border-dashed border-white/[0.08] rounded-lg">
+                      <div className="text-center text-white/40 py-4 border border-dashed border-white/[0.10] rounded-lg">
                         No event sources configured
                       </div>
                     )}
@@ -601,7 +601,7 @@ export function SchoolManagementDashboard() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 pt-4 border-t border-white/[0.08]">
+                <div className="flex gap-3 pt-4 border-t border-white/[0.10]">
                   <Button
                     onClick={handleSave}
                     disabled={saving}

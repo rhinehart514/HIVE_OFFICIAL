@@ -214,7 +214,7 @@ function AppShellHeader({
         'fixed top-0 left-0 right-0 z-50',
         'flex items-center justify-between gap-4',
         'px-4 lg:px-6',
-        'border-b border-white/[0.06]'
+        'border-b border-white/[0.05]'
       )}
       style={{
         height: HEADER_HEIGHT,
@@ -238,8 +238,8 @@ function AppShellHeader({
           onClick={onCommandOpen}
           className={cn(
             'flex items-center gap-2 px-3 py-1.5 rounded-lg',
-            'bg-white/[0.04] hover:bg-white/[0.08]',
-            'border border-white/[0.06]',
+            'bg-white/[0.05] hover:bg-white/[0.10]',
+            'border border-white/[0.05]',
             'transition-all duration-150',
             'text-white/40 hover:text-white/60',
             'min-w-[240px]'
@@ -247,7 +247,7 @@ function AppShellHeader({
         >
           <Search className="h-4 w-4" />
           <span className="text-sm flex-1 text-left">Navigate...</span>
-          <span className="flex items-center gap-0.5 text-label-xs font-sans bg-white/[0.06] px-1.5 py-0.5 rounded">
+          <span className="flex items-center gap-0.5 text-label-xs font-sans bg-white/[0.05] px-1.5 py-0.5 rounded">
             <Command className="h-3 w-3" />K
           </span>
         </button>
@@ -271,7 +271,7 @@ function AppShellHeader({
           className={cn(
             'relative p-2 rounded-lg',
             'text-white/60 hover:text-white',
-            'hover:bg-white/[0.06]',
+            'hover:bg-white/[0.05]',
             'transition-colors'
           )}
         >
@@ -536,30 +536,30 @@ export function AppShellSkeleton({ className }: AppShellSkeletonProps) {
     <div className={cn('relative min-h-screen', className)} style={{ backgroundColor: '#050504' }}>
       {/* Header skeleton */}
       <div
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 lg:px-6 border-b border-white/[0.06]"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 lg:px-6 border-b border-white/[0.05]"
         style={{
           height: HEADER_HEIGHT,
           background: 'rgba(5, 5, 4, 0.95)',
         }}
       >
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-4 w-12 rounded bg-white/[0.06] animate-pulse hidden sm:block" />
+          <div className="h-6 w-6 rounded bg-white/[0.05] animate-pulse" />
+          <div className="h-4 w-12 rounded bg-white/[0.05] animate-pulse hidden sm:block" />
         </div>
-        <div className="h-8 w-60 rounded-lg bg-white/[0.04] animate-pulse hidden md:block" />
+        <div className="h-8 w-60 rounded-lg bg-white/[0.05] animate-pulse hidden md:block" />
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-white/[0.06] animate-pulse" />
-          <div className="h-8 w-8 rounded-lg bg-white/[0.06] animate-pulse" />
+          <div className="h-8 w-8 rounded-lg bg-white/[0.05] animate-pulse" />
+          <div className="h-8 w-8 rounded-lg bg-white/[0.05] animate-pulse" />
         </div>
       </div>
 
       {/* Content skeleton */}
       <div style={{ paddingTop: HEADER_HEIGHT }} className="p-6">
         <div className="max-w-6xl mx-auto space-y-6">
-          <div className="h-8 w-48 rounded bg-white/[0.06] animate-pulse" />
+          <div className="h-8 w-48 rounded bg-white/[0.05] animate-pulse" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-40 rounded-2xl bg-white/[0.04] animate-pulse" />
+              <div key={i} className="h-40 rounded-2xl bg-white/[0.05] animate-pulse" />
             ))}
           </div>
         </div>

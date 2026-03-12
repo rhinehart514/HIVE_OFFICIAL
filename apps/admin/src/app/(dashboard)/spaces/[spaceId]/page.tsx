@@ -270,7 +270,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={fetchSpace}
-            className="p-2 text-white/50 hover:text-white hover:bg-white/[0.06] rounded-lg border border-white/[0.06]"
+            className="p-2 text-white/50 hover:text-white hover:bg-white/[0.05] rounded-lg border border-white/[0.05]"
           >
             <ArrowPathIcon className="h-4 w-4" />
           </button>
@@ -278,7 +278,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
             <button
               onClick={() => handleAction("unfeature")}
               disabled={actionLoading}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-white/[0.04] text-white/60 rounded-lg hover:bg-white/[0.08] border border-white/[0.06] disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-white/[0.05] text-white/60 rounded-lg hover:bg-white/[0.10] border border-white/[0.05] disabled:opacity-50"
             >
               <StarIcon className="h-4 w-4" />
               Unfeature
@@ -305,7 +305,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-white/[0.06]">
+      <div className="flex items-center gap-1 border-b border-white/[0.05]">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -328,7 +328,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
       {/* Overview */}
       {activeTab === "overview" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4 space-y-3">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4 space-y-3">
             <h3 className="text-sm font-medium text-white/50">Basic Information</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -356,7 +356,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4 space-y-3">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4 space-y-3">
             <h3 className="text-sm font-medium text-white/50">Activation Status</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
@@ -376,7 +376,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
                   <span className="text-white/40">Progress</span>
                   <span className="text-white">{space.memberCount}/{space.activationThreshold}</span>
                 </div>
-                <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-amber-500 to-[#FFD700] rounded-full"
                     style={{ width: `${Math.min(100, (space.memberCount / space.activationThreshold) * 100)}%` }}
@@ -387,12 +387,12 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
           </div>
 
           {/* Leader Info */}
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4 space-y-3">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4 space-y-3">
             <h3 className="text-sm font-medium text-white/50">Leader</h3>
             {space.leader ? (
               <Link
                 href={`/users/${space.leader.id}`}
-                className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.05] transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFD700]/20 to-amber-600/20 flex items-center justify-center text-white text-sm font-medium">
                   {space.leader.displayName?.[0]?.toUpperCase() || "?"}
@@ -417,7 +417,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4 lg:col-span-3">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4 lg:col-span-3">
             <h3 className="text-sm font-medium text-white/50 mb-2">Description</h3>
             <p className="text-white/70 text-sm">{space.description || "No description provided."}</p>
           </div>
@@ -434,11 +434,11 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
               placeholder="Search members..."
               value={memberSearch}
               onChange={(e) => setMemberSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#FFD700]/50"
+              className="w-full pl-9 pr-4 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#FFD700]/50"
             />
           </div>
 
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] overflow-hidden">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] overflow-hidden">
             {membersLoading ? (
               <div className="p-4"><TableSkeleton rows={5} columns={4} /></div>
             ) : filteredMembers.length === 0 ? (
@@ -446,14 +446,14 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/[0.06]">
+                  <tr className="border-b border-white/[0.05]">
                     <th className="px-4 py-3 text-left text-xs font-medium text-white/50 uppercase">Name</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-white/50 uppercase">Email</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-white/50 uppercase">Role</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-white/50 uppercase">Joined</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.04]">
+                <tbody className="divide-y divide-white/[0.05]">
                   {filteredMembers.map((m) => (
                     <tr key={m.id} className="hover:bg-white/[0.03] transition-colors">
                       <td className="px-4 py-3">
@@ -494,7 +494,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
 
       {/* Events */}
       {activeTab === "events" && (
-        <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+        <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
           <EmptyState
             variant="no-data"
             title="Events view coming soon"
@@ -508,15 +508,15 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
         <div className="space-y-4">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+            <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
               <span className="text-white/50 text-sm">Active Flags</span>
               <p className="text-2xl font-bold text-white mt-1">{space.moderationInfo?.flags || 0}</p>
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+            <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
               <span className="text-white/50 text-sm">Reports</span>
               <p className="text-2xl font-bold text-white mt-1">{space.moderationInfo?.reports || 0}</p>
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+            <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
               <span className="text-white/50 text-sm">Last Reviewed</span>
               <p className="text-lg font-medium text-white mt-1">
                 {space.moderationInfo?.lastReviewedAt
@@ -527,13 +527,13 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
           </div>
 
           {/* Moderation Items */}
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] overflow-hidden">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] overflow-hidden">
             {moderationLoading ? (
               <div className="p-4"><ListSkeleton count={3} /></div>
             ) : moderation.length === 0 ? (
               <EmptyState variant="no-data" title="No flagged content" description="No reports or flags for this space." />
             ) : (
-              <div className="divide-y divide-white/[0.04]">
+              <div className="divide-y divide-white/[0.05]">
                 {moderation.map((item) => (
                   <div key={item.id} className="px-4 py-3 flex items-start justify-between">
                     <div className="flex items-start gap-3">
@@ -566,7 +566,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
           </div>
 
           {/* Quick Actions */}
-          <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+          <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
             <h3 className="text-sm font-medium text-white/50 mb-3">Quick Actions</h3>
             <div className="flex flex-wrap gap-2">
               <button className="flex items-center gap-1.5 px-3 py-2 text-sm bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 border border-yellow-500/30">
@@ -582,7 +582,7 @@ export default function SpaceDetailPage({ params }: { params: Promise<{ spaceId:
                 Freeze Space
               </button>
               <Link href={`/spaces/${spaceId}/moderation`}>
-                <button className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white/[0.04] text-white/60 rounded-lg hover:bg-white/[0.08] border border-white/[0.06]">
+                <button className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white/[0.05] text-white/60 rounded-lg hover:bg-white/[0.10] border border-white/[0.05]">
                   <ShieldCheckIcon className="h-4 w-4" />
                   Full Moderation Queue
                 </button>

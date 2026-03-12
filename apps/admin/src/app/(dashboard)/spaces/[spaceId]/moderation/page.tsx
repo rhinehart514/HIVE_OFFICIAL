@@ -133,7 +133,7 @@ export default function SpaceModerationPage({ params }: { params: Promise<{ spac
       case 'resolved':
         return <Badge className="bg-green-500/20 text-green-400">Resolved</Badge>;
       case 'dismissed':
-        return <Badge className="bg-white/[0.08] text-white/50">Dismissed</Badge>;
+        return <Badge className="bg-white/[0.10] text-white/50">Dismissed</Badge>;
       default:
         return null;
     }
@@ -192,7 +192,7 @@ export default function SpaceModerationPage({ params }: { params: Promise<{ spac
             onClick={fetchData}
             disabled={loading}
             variant="outline"
-            className="border-white/[0.12] text-white/70"
+            className="border-white/[0.10] text-white/70"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -210,7 +210,7 @@ export default function SpaceModerationPage({ params }: { params: Promise<{ spac
       )}
 
       {/* Reports List */}
-      <Card className="border-white/[0.08] bg-[#141414]">
+      <Card className="border-white/[0.10] bg-[#141414]">
         <CardHeader>
           <CardTitle className="text-white">
             Reports ({reports.length})
@@ -232,20 +232,20 @@ export default function SpaceModerationPage({ params }: { params: Promise<{ spac
                   className={`p-4 rounded-lg border ${
                     report.status === 'pending'
                       ? 'bg-yellow-500/5 border-yellow-500/20'
-                      : 'bg-white/[0.02] border-white/[0.08]'
+                      : 'bg-white/[0.03] border-white/[0.10]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className={`p-1.5 rounded ${report.status === 'pending' ? 'bg-yellow-500/20' : 'bg-white/[0.08]'}`}>
+                        <div className={`p-1.5 rounded ${report.status === 'pending' ? 'bg-yellow-500/20' : 'bg-white/[0.10]'}`}>
                           {getTypeIcon(report.type)}
                         </div>
                         <span className="text-white font-medium capitalize">{report.type} Report</span>
                         {getStatusBadge(report.status)}
                       </div>
 
-                      <div className="bg-white/[0.02] p-3 rounded-lg mb-3">
+                      <div className="bg-white/[0.03] p-3 rounded-lg mb-3">
                         <p className="text-white/70 text-sm">{report.targetPreview}</p>
                       </div>
 
@@ -290,7 +290,7 @@ export default function SpaceModerationPage({ params }: { params: Promise<{ spac
                           disabled={actionLoading === report.id}
                           size="sm"
                           variant="outline"
-                          className="border-white/[0.12] text-white/70"
+                          className="border-white/[0.10] text-white/70"
                         >
                           <XCircle className="h-4 w-4 mr-1" />
                           Dismiss

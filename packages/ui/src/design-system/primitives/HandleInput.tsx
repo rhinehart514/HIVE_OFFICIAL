@@ -62,7 +62,7 @@ const HandleInput = React.forwardRef<HTMLInputElement, HandleInputProps>(
             'relative flex items-center',
             'bg-[#080808]',
             'border',
-            isError ? 'border-[#EF4444]' : isSuccess ? 'border-[#FFD700]/30' : 'border-white/[0.06]',
+            isError ? 'border-[#EF4444]' : isSuccess ? 'border-[#FFD700]/30' : 'border-white/[0.05]',
             'rounded-[12px]',
             'transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
             'focus-within:border-white/[0.15] focus-within:bg-[#0D0D0D]',

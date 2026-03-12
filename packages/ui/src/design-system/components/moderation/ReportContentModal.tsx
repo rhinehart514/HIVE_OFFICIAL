@@ -223,7 +223,7 @@ export function ReportContentModal({
             <div
               className={cn(
                 'p-3 rounded-lg',
-                'bg-white/[0.02] border border-white/[0.06]'
+                'bg-white/[0.03] border border-white/[0.05]'
               )}
             >
               {authorName && (

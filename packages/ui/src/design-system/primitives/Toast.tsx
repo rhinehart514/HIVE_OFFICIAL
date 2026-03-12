@@ -16,7 +16,7 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
-const toastSurfaceClass = 'bg-[#080808] border border-white/[0.06] shadow-[0_12px_40px_rgba(0,0,0,0.5)]';
+const toastSurfaceClass = 'bg-[#080808] border border-white/[0.05] shadow-[0_12px_40px_rgba(0,0,0,0.5)]';
 
 const toastVariants = cva(
   [

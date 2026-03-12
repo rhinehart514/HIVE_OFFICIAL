@@ -96,7 +96,7 @@ export function GlassSurface({
       <motion.div
         className={cn(
           'relative',
-          interactive && 'transition-colors hover:bg-white/[0.02]',
+          interactive && 'transition-colors hover:bg-white/[0.03]',
           className
         )}
         style={baseStyles}
@@ -116,7 +116,7 @@ export function GlassSurface({
     <Tag
       className={cn(
         'relative',
-        interactive && 'transition-colors hover:bg-white/[0.02]',
+        interactive && 'transition-colors hover:bg-white/[0.03]',
         className
       )}
       style={baseStyles}
@@ -274,7 +274,7 @@ export function GlassPill({
         'backdrop-blur-sm',
         active
           ? 'bg-white/10 text-white'
-          : 'bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white/80',
+          : 'bg-white/[0.05] text-white/60 hover:bg-white/[0.10] hover:text-white/80',
         sizeStyles[size],
         className
       )}

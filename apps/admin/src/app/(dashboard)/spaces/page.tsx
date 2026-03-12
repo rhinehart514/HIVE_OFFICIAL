@@ -218,7 +218,7 @@ export default function SpacesPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full pl-9 pr-4 py-2 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#FFD700]/50"
+            className="w-full pl-9 pr-4 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#FFD700]/50"
           />
         </div>
 
@@ -228,7 +228,7 @@ export default function SpacesPage() {
             setCategory(e.target.value);
             setPage(1);
           }}
-          className="px-3 py-2 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:border-[#FFD700]/50 appearance-none cursor-pointer"
+          className="px-3 py-2 bg-white/[0.05] border border-white/[0.05] rounded-lg text-white text-sm focus:outline-none focus:border-[#FFD700]/50 appearance-none cursor-pointer"
         >
           {CATEGORIES.map((c) => (
             <option key={c.value} value={c.value}>{c.label}</option>
@@ -268,11 +268,11 @@ export default function SpacesPage() {
       {error && <ErrorState message={error} onRetry={fetchSpaces} />}
 
       {loading ? (
-        <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+        <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
           <TableSkeleton rows={10} columns={7} />
         </div>
       ) : spaces.length === 0 ? (
-        <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+        <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
           <EmptyState
             variant={search || category !== "all" ? "no-results" : "no-data"}
             title={search ? "No spaces match your search" : "No spaces yet"}
@@ -284,11 +284,11 @@ export default function SpacesPage() {
           />
         </div>
       ) : (
-        <div className="rounded-xl border border-white/[0.06] bg-[#141414] overflow-hidden">
+        <div className="rounded-xl border border-white/[0.05] bg-[#141414] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.06]">
+                <tr className="border-b border-white/[0.05]">
                   <th className="w-10 px-4 py-3">
                     <input
                       type="checkbox"
@@ -312,7 +312,7 @@ export default function SpacesPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04]">
+              <tbody className="divide-y divide-white/[0.05]">
                 {spaces.map((space) => (
                   <tr
                     key={space.id}
@@ -368,7 +368,7 @@ export default function SpacesPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06]">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.05]">
             <div className="flex items-center gap-3">
               <span className="text-sm text-white/40">
                 {total > 0
@@ -381,7 +381,7 @@ export default function SpacesPage() {
                   setPageSize(Number(e.target.value));
                   setPage(1);
                 }}
-                className="px-2 py-1 bg-white/[0.04] border border-white/[0.06] rounded text-white text-xs focus:outline-none"
+                className="px-2 py-1 bg-white/[0.05] border border-white/[0.05] rounded text-white text-xs focus:outline-none"
               >
                 {[10, 25, 50, 100].map((s) => (
                   <option key={s} value={s}>{s} per page</option>
@@ -392,7 +392,7 @@ export default function SpacesPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="p-1.5 rounded hover:bg-white/[0.06] disabled:opacity-30 text-white/60"
+                className="p-1.5 rounded hover:bg-white/[0.05] disabled:opacity-30 text-white/60"
               >
                 <ChevronLeftIcon className="h-4 w-4" />
               </button>
@@ -402,7 +402,7 @@ export default function SpacesPage() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="p-1.5 rounded hover:bg-white/[0.06] disabled:opacity-30 text-white/60"
+                className="p-1.5 rounded hover:bg-white/[0.05] disabled:opacity-30 text-white/60"
               >
                 <ChevronRightIcon className="h-4 w-4" />
               </button>

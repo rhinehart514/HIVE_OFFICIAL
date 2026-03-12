@@ -5,7 +5,7 @@
  * LOCKED: January 2026
  *
  * Decisions:
- * - Header hover: Glass highlight (bg-white/[0.08])
+ * - Header hover: Glass highlight (bg-white/[0.10])
  * - Chevron: 180° rotation, 300ms ease-smooth
  * - Content: 300ms height transition (animate-accordion-down/up)
  * - Focus: WHITE ring (ring-white/50)
@@ -142,9 +142,9 @@ const accordionTriggerVariants = cva(
   {
     variants: {
       variant: {
-        // LOCKED: Glass highlight hover (bg-white/[0.08])
-        default: 'px-4 hover:bg-white/[0.08]',
-        bordered: 'px-4 hover:bg-white/[0.08]',
+        // LOCKED: Glass highlight hover (bg-white/[0.10])
+        default: 'px-4 hover:bg-white/[0.10]',
+        bordered: 'px-4 hover:bg-white/[0.10]',
         ghost: 'hover:text-white/80',
       },
     },

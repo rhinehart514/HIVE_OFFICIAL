@@ -86,7 +86,7 @@ export default function ModerationLayout({ children }: ModerationLayoutProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Top Header with sub-navigation */}
-      <header className="border-b border-white/[0.08] bg-[#0A0A0A]">
+      <header className="border-b border-white/[0.10] bg-[#0A0A0A]">
         <div className="flex items-center justify-between h-14 px-6">
           {/* Title and sub-nav */}
           <div className="flex items-center gap-6">

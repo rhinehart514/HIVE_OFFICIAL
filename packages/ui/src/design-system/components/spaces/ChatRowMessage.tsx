@@ -161,7 +161,7 @@ export function ChatRowMessage({
         'group relative flex gap-4 px-6',
         isCompact ? 'py-1' : 'py-3',
         'transition-colors duration-150',
-        'hover:bg-white/[0.02]',
+        'hover:bg-white/[0.03]',
 
         // Gold left border for threads/reactions
         showGoldBorder && 'border-l-2',
@@ -257,7 +257,7 @@ export function ChatRowMessage({
                 key={`${reaction.emoji}-${i}`}
                 className={cn(
                   'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs',
-                  'bg-white/[0.06] hover:bg-white/[0.10]',
+                  'bg-white/[0.05] hover:bg-white/[0.10]',
                   'transition-colors duration-150',
                   reaction.hasReacted && 'ring-1 ring-[#FFD700]/50 bg-[#FFD700]/10',
                 )}
@@ -289,7 +289,7 @@ export function ChatRowMessage({
         <div className={cn(
           'absolute top-2 right-4',
           'flex items-center gap-0.5 p-1',
-          'bg-[#1E1D1B] rounded-lg border border-white/[0.06]',
+          'bg-[#1E1D1B] rounded-lg border border-white/[0.05]',
           'shadow-lg',
           'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
         )}>
@@ -297,7 +297,7 @@ export function ChatRowMessage({
           {onReact && QUICK_REACTIONS.slice(0, 3).map((emoji) => (
             <button
               key={emoji}
-              className="p-1.5 rounded hover:bg-white/[0.08] transition-colors"
+              className="p-1.5 rounded hover:bg-white/[0.10] transition-colors"
               onClick={() => onReact(emoji)}
               title={`React with ${emoji}`}
             >
@@ -308,7 +308,7 @@ export function ChatRowMessage({
           {/* Reply */}
           {onReply && (
             <button
-              className="p-1.5 rounded hover:bg-white/[0.08] transition-colors"
+              className="p-1.5 rounded hover:bg-white/[0.10] transition-colors"
               onClick={onReply}
               title="Reply in thread"
             >
@@ -320,7 +320,7 @@ export function ChatRowMessage({
 
           {/* More actions dropdown would go here */}
           <button
-            className="p-1.5 rounded hover:bg-white/[0.08] transition-colors"
+            className="p-1.5 rounded hover:bg-white/[0.10] transition-colors"
             title="More actions"
           >
             <svg className="w-4 h-4 text-[#A3A19E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -390,11 +390,11 @@ export function DateSeparator({ date, className }: DateSeparatorProps) {
       'flex items-center gap-4 px-6 py-4',
       className
     )}>
-      <div className="flex-1 h-px bg-white/[0.06]" />
+      <div className="flex-1 h-px bg-white/[0.05]" />
       <span className="text-[#6B6B70] text-xs font-medium uppercase tracking-wide">
         {formatted}
       </span>
-      <div className="flex-1 h-px bg-white/[0.06]" />
+      <div className="flex-1 h-px bg-white/[0.05]" />
     </div>
   );
 }

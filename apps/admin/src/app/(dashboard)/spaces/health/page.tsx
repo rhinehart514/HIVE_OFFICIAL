@@ -277,7 +277,7 @@ export default function SpaceHealthPage() {
           onClick={fetchHealth}
           disabled={loading}
           variant="outline"
-          className="border-white/[0.12] text-white/70"
+          className="border-white/[0.10] text-white/70"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -286,10 +286,10 @@ export default function SpaceHealthPage() {
 
       {/* Health Distribution */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-white/[0.08] bg-[#141414]">
+        <Card className="border-white/[0.10] bg-[#141414]">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-white/[0.08]">
+              <div className="p-2 rounded-lg bg-white/[0.10]">
                 <BarChart className="h-5 w-5 text-white/70" />
               </div>
               <div>
@@ -365,7 +365,7 @@ export default function SpaceHealthPage() {
       </div>
 
       {/* Unhealthy Spaces */}
-      <Card className="border-white/[0.08] bg-[#141414]">
+      <Card className="border-white/[0.10] bg-[#141414]">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <XCircle className="h-5 w-5 text-red-400" />
@@ -383,7 +383,7 @@ export default function SpaceHealthPage() {
               {data.unhealthySpaces.map(space => (
                 <div
                   key={space.id}
-                  className="flex items-center justify-between p-4 bg-white/[0.02] rounded-lg"
+                  className="flex items-center justify-between p-4 bg-white/[0.03] rounded-lg"
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-lg ${getHealthBg(space.healthScore)} flex items-center justify-center`}>
@@ -404,7 +404,7 @@ export default function SpaceHealthPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Link href={`/spaces/${space.id}`}>
-                      <Button size="sm" variant="outline" className="border-white/[0.12] text-white/70">
+                      <Button size="sm" variant="outline" className="border-white/[0.10] text-white/70">
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>
@@ -417,7 +417,7 @@ export default function SpaceHealthPage() {
       </Card>
 
       {/* Trending Down */}
-      <Card className="border-white/[0.08] bg-[#141414]">
+      <Card className="border-white/[0.10] bg-[#141414]">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <TrendingDown className="h-5 w-5 text-orange-400" />
@@ -435,7 +435,7 @@ export default function SpaceHealthPage() {
               {data.trendingDown.map(space => (
                 <div
                   key={space.id}
-                  className="flex items-center justify-between p-4 bg-white/[0.02] rounded-lg"
+                  className="flex items-center justify-between p-4 bg-white/[0.03] rounded-lg"
                 >
                   <div className="flex items-center gap-4">
                     <div>
@@ -450,7 +450,7 @@ export default function SpaceHealthPage() {
                       ↓ {space.decline}%
                     </Badge>
                     <Link href={`/spaces/${space.id}`}>
-                      <Button size="sm" variant="outline" className="border-white/[0.12] text-white/70">
+                      <Button size="sm" variant="outline" className="border-white/[0.10] text-white/70">
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>
@@ -463,7 +463,7 @@ export default function SpaceHealthPage() {
       </Card>
 
       {/* Stale Spaces */}
-      <Card className="border-white/[0.08] bg-[#141414]">
+      <Card className="border-white/[0.10] bg-[#141414]">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Clock className="h-5 w-5 text-white/50" />
@@ -481,7 +481,7 @@ export default function SpaceHealthPage() {
               {data.staleSpaces.map(space => (
                 <div
                   key={space.id}
-                  className="flex items-center justify-between p-4 bg-white/[0.02] rounded-lg"
+                  className="flex items-center justify-between p-4 bg-white/[0.03] rounded-lg"
                 >
                   <div>
                     <h4 className="text-white font-medium">{space.name}</h4>
@@ -490,11 +490,11 @@ export default function SpaceHealthPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-white/[0.08] text-white/50">
+                    <Badge className="bg-white/[0.10] text-white/50">
                       {space.daysSinceActivity} days
                     </Badge>
                     <Link href={`/spaces/${space.id}`}>
-                      <Button size="sm" variant="outline" className="border-white/[0.12] text-white/70">
+                      <Button size="sm" variant="outline" className="border-white/[0.10] text-white/70">
                         <Eye className="h-4 w-4" />
                       </Button>
                     </Link>

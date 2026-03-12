@@ -94,7 +94,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
           'p-3 cursor-pointer',
           'transition-all duration-[var(--duration-smooth)]',
           'hover:bg-[var(--color-bg-elevated)]',
-          'border-dashed border-white/[0.06]', // Dashed border = unclaimed
+          'border-dashed border-white/[0.05]', // Dashed border = unclaimed
           className
         )}
         onClick={onClick}
@@ -153,7 +153,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
           'p-3 cursor-pointer',
           'transition-all duration-[var(--duration-smooth)]',
           'hover:bg-[var(--color-bg-elevated)]',
-          'border-dashed border-white/[0.06]',
+          'border-dashed border-white/[0.05]',
           className
         )}
         onClick={onClick}
@@ -216,7 +216,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
         'overflow-hidden cursor-pointer',
         'transition-all duration-[var(--duration-smooth)]',
         'hover:opacity-90',
-        'border-dashed border-white/[0.06]',
+        'border-dashed border-white/[0.05]',
         className
       )}
       onClick={onClick}
@@ -272,7 +272,7 @@ const GhostSpaceCard: React.FC<GhostSpaceCardProps> = ({
         )}
 
         {/* Status row */}
-        <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between pt-3 border-t border-white/[0.05]">
           <div className="flex items-center gap-2">
             {/* Hollow dot */}
             <span className="w-2 h-2 rounded-full border border-muted-foreground/50" />
@@ -322,35 +322,35 @@ const GhostSpaceCardSkeleton: React.FC<GhostSpaceCardSkeletonProps> = ({
 }) => {
   if (variant === 'dense' || variant === 'compact') {
     return (
-      <Card className={cn('p-3 border-dashed border-white/[0.06]', className)}>
+      <Card className={cn('p-3 border-dashed border-white/[0.05]', className)}>
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-white/[0.04] animate-pulse" />
+          <div className="h-8 w-8 rounded-lg bg-white/[0.05] animate-pulse" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-24 rounded bg-white/[0.04] animate-pulse" />
-            <div className="h-3 w-16 rounded bg-white/[0.04] animate-pulse" />
+            <div className="h-4 w-24 rounded bg-white/[0.05] animate-pulse" />
+            <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
           </div>
-          <div className="h-7 w-14 rounded-full bg-white/[0.04] animate-pulse" />
+          <div className="h-7 w-14 rounded-full bg-white/[0.05] animate-pulse" />
         </div>
       </Card>
     );
   }
 
   return (
-    <Card noPadding className={cn('overflow-hidden border-dashed border-white/[0.06]', className)}>
-      <div className="h-20 bg-white/[0.04] animate-pulse relative">
+    <Card noPadding className={cn('overflow-hidden border-dashed border-white/[0.05]', className)}>
+      <div className="h-20 bg-white/[0.05] animate-pulse relative">
         <div className="absolute -bottom-8 left-5">
-          <div className="w-16 h-16 rounded-xl bg-white/[0.06] animate-pulse ring-4 ring-[rgba(18,18,18,0.92)]" />
+          <div className="w-16 h-16 rounded-xl bg-white/[0.05] animate-pulse ring-4 ring-[rgba(18,18,18,0.92)]" />
         </div>
       </div>
       <div className="pt-12 pb-4 px-5 space-y-3">
-        <div className="h-3 w-20 rounded bg-white/[0.04] animate-pulse" />
-        <div className="h-5 w-28 rounded bg-white/[0.04] animate-pulse" />
-        <div className="h-4 w-full rounded bg-white/[0.04] animate-pulse" />
-        <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
-          <div className="h-3 w-20 rounded bg-white/[0.04] animate-pulse" />
-          <div className="h-3 w-16 rounded bg-white/[0.04] animate-pulse" />
+        <div className="h-3 w-20 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-5 w-28 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-4 w-full rounded bg-white/[0.05] animate-pulse" />
+        <div className="flex items-center justify-between pt-3 border-t border-white/[0.05]">
+          <div className="h-3 w-20 rounded bg-white/[0.05] animate-pulse" />
+          <div className="h-3 w-16 rounded bg-white/[0.05] animate-pulse" />
         </div>
-        <div className="h-8 w-full rounded-full bg-white/[0.04] animate-pulse mt-4" />
+        <div className="h-8 w-full rounded-full bg-white/[0.05] animate-pulse mt-4" />
       </div>
     </Card>
   );

@@ -46,7 +46,7 @@ const MONTHS = [
 
 const eventColors: Record<string, string> = {
   gold: 'bg-[var(--color-accent-gold)] text-black',
-  blue: 'bg-white/[0.08] text-white',
+  blue: 'bg-white/[0.10] text-white',
   green: 'bg-green-500 text-white',
   red: 'bg-red-500 text-white',
   purple: 'bg-purple-500 text-white',

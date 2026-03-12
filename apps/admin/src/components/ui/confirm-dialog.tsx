@@ -45,7 +45,7 @@ export function ConfirmDialog({
         onClick={onClose}
       />
       {/* Card */}
-      <div className="relative z-10 w-full max-w-md mx-4 rounded-xl border border-white/[0.06] bg-[#141414] p-6 space-y-4">
+      <div className="relative z-10 w-full max-w-md mx-4 rounded-xl border border-white/[0.05] bg-[#141414] p-6 space-y-4">
         <h3 className="text-lg font-semibold text-white">{title}</h3>
         {description && (
           <p className="text-sm text-white/50">{description}</p>
@@ -53,7 +53,7 @@ export function ConfirmDialog({
         <div className="flex justify-end gap-3 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] rounded-lg transition-colors"
+            className="px-4 py-2 text-sm text-white/60 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] rounded-lg transition-colors"
           >
             Cancel
           </button>

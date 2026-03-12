@@ -173,8 +173,8 @@ function ResultRow({ result, isHighlighted, onSelect, onMouseEnter }: ResultRowP
         'transition-colors duration-100',
         'text-left',
         isHighlighted
-          ? 'bg-white/[0.08]'
-          : 'hover:bg-white/[0.04]'
+          ? 'bg-white/[0.10]'
+          : 'hover:bg-white/[0.05]'
       )}
     >
       {/* Icon or Avatar */}
@@ -195,7 +195,7 @@ function ResultRow({ result, isHighlighted, onSelect, onMouseEnter }: ResultRowP
         ) : (
           <div className={cn(
             'w-8 h-8 rounded-lg flex items-center justify-center',
-            'bg-white/[0.06] text-white/60'
+            'bg-white/[0.05] text-white/60'
           )}>
             {result.icon || typeIcons[result.type]}
           </div>
@@ -332,11 +332,11 @@ export function CommandBar({
               className="overflow-hidden"
             >
               {/* LOCKED: Search Input - ⌘ icon left, ESC hint right */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05]">
                 {/* ⌘ Icon */}
                 <div className={cn(
                   'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0',
-                  'bg-white/[0.08] text-white/50'
+                  'bg-white/[0.10] text-white/50'
                 )}>
                   <Mono size="sm">⌘</Mono>
                 </div>
@@ -434,7 +434,7 @@ export function CommandBar({
               {/* LOCKED: Contextual Footer - keyboard hints */}
               <div className={cn(
                 'flex items-center justify-between gap-4 px-4 py-2.5',
-                'bg-white/[0.02] border-t border-white/[0.06]'
+                'bg-white/[0.03] border-t border-white/[0.05]'
               )}>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5">

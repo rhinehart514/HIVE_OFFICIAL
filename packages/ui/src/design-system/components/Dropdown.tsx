@@ -6,7 +6,7 @@
  *
  * Decisions:
  * - Container: Apple Glass Dark (matches Popover)
- * - Item hover: Glass highlight (bg-white/[0.08])
+ * - Item hover: Glass highlight (bg-white/[0.10])
  * - Separator: Inset shadow (matches Separator primitive)
  * - Destructive: Red text only, no red bg
  * - Animation: Scale 0.96→1, 150ms (matches Popover)
@@ -153,7 +153,7 @@ const DropdownMenuItem = React.forwardRef<
     className={cn(
       'relative flex cursor-pointer select-none items-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition-colors',
       // LOCKED: Glass highlight hover (matches Select options)
-      'hover:bg-white/[0.08] focus:bg-white/[0.08]',
+      'hover:bg-white/[0.10] focus:bg-white/[0.10]',
       // LOCKED: Destructive = red text only
       destructive ? 'text-red-500' : 'text-white',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
@@ -176,7 +176,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
     className={cn(
       'relative flex cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-3 text-sm outline-none transition-colors',
       // LOCKED: Glass highlight hover
-      'hover:bg-white/[0.08] focus:bg-white/[0.08]',
+      'hover:bg-white/[0.10] focus:bg-white/[0.10]',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
@@ -207,7 +207,7 @@ const DropdownMenuRadioItem = React.forwardRef<
     className={cn(
       'relative flex cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-3 text-sm outline-none transition-colors',
       // LOCKED: Glass highlight hover
-      'hover:bg-white/[0.08] focus:bg-white/[0.08]',
+      'hover:bg-white/[0.10] focus:bg-white/[0.10]',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}

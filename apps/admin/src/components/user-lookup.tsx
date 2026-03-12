@@ -117,7 +117,7 @@ export function UserLookup() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1 rounded-md border border-white/[0.12] bg-[var(--bg-ground)] px-3 py-2 text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+          className="flex-1 rounded-md border border-white/[0.10] bg-[var(--bg-ground)] px-3 py-2 text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
         />
         <Button
           variant="default"
@@ -150,7 +150,7 @@ export function UserLookup() {
           {users.map((user) => (
             <div
               key={user.id}
-              className="cursor-pointer rounded-md border border-white/[0.12] bg-[var(--bg-ground)]/50 p-3 transition-colors hover:border-white/[0.12]"
+              className="cursor-pointer rounded-md border border-white/[0.10] bg-[var(--bg-ground)]/50 p-3 transition-colors hover:border-white/[0.10]"
               onClick={() => setSelectedUser(selectedUser?.id === user.id ? null : user)}
             >
               <div className="flex items-center justify-between">
@@ -162,7 +162,7 @@ export function UserLookup() {
                       className="h-10 w-10 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.08] text-sm font-medium text-white/70">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.10] text-sm font-medium text-white/70">
                       {user.displayName?.[0]?.toUpperCase() || "?"}
                     </div>
                   )}
@@ -190,7 +190,7 @@ export function UserLookup() {
               </div>
 
               {selectedUser?.id === user.id && (
-                <div className="mt-3 border-t border-white/[0.08] pt-3">
+                <div className="mt-3 border-t border-white/[0.10] pt-3">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-white/40">User ID:</span>

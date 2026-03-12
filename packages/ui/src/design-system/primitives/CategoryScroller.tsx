@@ -21,7 +21,7 @@ import { cn } from '../../lib/utils';
 
 // LOCKED: Glass pill surface for hover
 // Active pill: flat bg, no gradient
-const activePillClass = "bg-white/[0.08]";
+const activePillClass = "bg-white/[0.10]";
 
 // Container variants
 const categoryScrollerContainerVariants = cva(
@@ -100,7 +100,7 @@ const categoryScrollerItemVariants = cva(
         false: [
           'text-white/60',
           'hover:text-white/80',
-          'hover:bg-white/[0.06]',
+          'hover:bg-white/[0.05]',
         ].join(' '),
       },
     },

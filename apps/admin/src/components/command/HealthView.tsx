@@ -121,7 +121,7 @@ function IndicatorCard({ indicator }: { indicator: HealthIndicator }) {
 
 function AtRiskCard({ item }: { item: AtRiskItem }) {
   const severityColors = {
-    low: "border-white/[0.12]/30 bg-white/[0.20]/10",
+    low: "border-white/[0.10]/30 bg-white/[0.20]/10",
     medium: "border-amber-500/30 bg-amber-500/10",
     high: "border-red-500/30 bg-red-500/10",
   };

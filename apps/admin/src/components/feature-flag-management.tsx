@@ -64,7 +64,7 @@ interface FeatureFlag {
 const CATEGORY_COLORS: Record<string, string> = {
   core: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   experimental: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  infrastructure: "bg-white/[0.20]/20 text-white/50 border-white/[0.12]/30",
+  infrastructure: "bg-white/[0.20]/20 text-white/50 border-white/[0.10]/30",
   ui_ux: "bg-pink-500/20 text-pink-400 border-pink-500/30",
   tools: "bg-orange-500/20 text-orange-400 border-orange-500/30",
   spaces: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
@@ -203,7 +203,7 @@ export function FeatureFlagManagement() {
       )}
 
       {/* Filters */}
-      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+      <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
         <CardContent className="py-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
@@ -212,14 +212,14 @@ export function FeatureFlagManagement() {
                 placeholder="Search flags..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-[var(--bg-ground)] border-white/[0.08] text-white"
+                className="pl-10 bg-[var(--bg-ground)] border-white/[0.10] text-white"
               />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full sm:w-48 bg-[var(--bg-ground)] border-white/[0.08] text-white">
+              <SelectTrigger className="w-full sm:w-48 bg-[var(--bg-ground)] border-white/[0.10] text-white">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
-              <SelectContent className="bg-[var(--bg-ground)] border-white/[0.08]">
+              <SelectContent className="bg-[var(--bg-ground)] border-white/[0.10]">
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat} value={cat}>
@@ -234,13 +234,13 @@ export function FeatureFlagManagement() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-white">{flags.length}</div>
             <div className="text-sm text-white/50">Total Flags</div>
           </CardContent>
         </Card>
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-green-400">
               {flags.filter((f) => f.enabled).length}
@@ -248,7 +248,7 @@ export function FeatureFlagManagement() {
             <div className="text-sm text-white/50">Enabled</div>
           </CardContent>
         </Card>
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-red-400">
               {flags.filter((f) => !f.enabled).length}
@@ -256,7 +256,7 @@ export function FeatureFlagManagement() {
             <div className="text-sm text-white/50">Disabled</div>
           </CardContent>
         </Card>
-        <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+        <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-purple-400">
               {flags.filter((f) => f.category === "experimental").length}
@@ -267,7 +267,7 @@ export function FeatureFlagManagement() {
       </div>
 
       {/* Flags List */}
-      <Card className="border-white/[0.08] bg-[var(--bg-void)]/50">
+      <Card className="border-white/[0.10] bg-[var(--bg-void)]/50">
         <CardHeader>
           <CardTitle className="text-white">
             {filteredFlags.length} Feature Flag{filteredFlags.length !== 1 ? "s" : ""}
@@ -293,7 +293,7 @@ export function FeatureFlagManagement() {
                 return (
                   <div
                     key={flag.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-[var(--bg-ground)]/50 border border-white/[0.08] hover:border-white/[0.12] transition-colors"
+                    className="flex items-center justify-between p-4 rounded-lg bg-[var(--bg-ground)]/50 border border-white/[0.10] hover:border-white/[0.10] transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-1">
@@ -357,7 +357,7 @@ export function FeatureFlagManagement() {
               .map((flag) => (
                 <div
                   key={flag.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-ground)]/30 border border-white/[0.08]"
+                  className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-ground)]/30 border border-white/[0.10]"
                 >
                   <div>
                     <div className="font-medium text-white text-sm">{flag.name}</div>

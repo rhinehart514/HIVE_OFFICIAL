@@ -45,7 +45,7 @@ export function AreaChart({
           <h4 className="mb-3 text-sm font-medium text-white/50">{title}</h4>
         )}
         <div
-          className="flex items-center justify-center rounded-lg border border-white/[0.06] bg-black text-sm text-white/30"
+          className="flex items-center justify-center rounded-lg border border-white/[0.05] bg-black text-sm text-white/30"
           style={{ height: height - (title ? 32 : 0) }}
         >
           No data

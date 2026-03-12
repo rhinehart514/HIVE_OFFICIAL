@@ -189,7 +189,7 @@ export function AnalyticsDashboard() {
         <h2 className="text-2xl font-bold text-white">Platform Analytics</h2>
         <div className="flex items-center gap-3">
           {/* Time Range Selector */}
-          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-0.5 border border-white/[0.06]">
+          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-0.5 border border-white/[0.05]">
             {(["7d", "30d", "90d"] as const).map((range) => (
               <button
                 key={range}
@@ -206,7 +206,7 @@ export function AnalyticsDashboard() {
           </div>
 
           {lastUpdated && (
-            <Badge variant="outline" className="text-white/40 border-white/[0.06]">
+            <Badge variant="outline" className="text-white/40 border-white/[0.05]">
               {lastUpdated.toLocaleTimeString()}
             </Badge>
           )}
@@ -251,7 +251,7 @@ export function AnalyticsDashboard() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Growth Area Chart */}
-        <Card className="border-white/[0.06] bg-black">
+        <Card className="border-white/[0.05] bg-black">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-white/50 flex items-center gap-2">
               <UsersIcon className="h-4 w-4" />
@@ -269,7 +269,7 @@ export function AnalyticsDashboard() {
         </Card>
 
         {/* Space Activity Bar Chart */}
-        <Card className="border-white/[0.06] bg-black">
+        <Card className="border-white/[0.05] bg-black">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-white/50 flex items-center gap-2">
               <RectangleGroupIcon className="h-4 w-4" />
@@ -291,7 +291,7 @@ export function AnalyticsDashboard() {
       {/* Onboarding Funnel + Retention Cohort */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Onboarding Funnel */}
-        <Card className="border-white/[0.06] bg-black">
+        <Card className="border-white/[0.05] bg-black">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-white/50 flex items-center gap-2">
               <BoltIcon className="h-4 w-4" />
@@ -317,7 +317,7 @@ export function AnalyticsDashboard() {
                         )}
                       </div>
                     </div>
-                    <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
+                    <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-700"
                         style={{
@@ -335,7 +335,7 @@ export function AnalyticsDashboard() {
         </Card>
 
         {/* Retention Cohort */}
-        <Card className="border-white/[0.06] bg-black">
+        <Card className="border-white/[0.05] bg-black">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-white/50 flex items-center gap-2">
               <CalendarDaysIcon className="h-4 w-4" />
@@ -354,7 +354,7 @@ export function AnalyticsDashboard() {
                     <th className="text-center pb-3 font-medium">Week 4</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.04]">
+                <tbody className="divide-y divide-white/[0.05]">
                   {(chartData.retentionCohorts || []).map((cohort) => (
                     <tr key={cohort.cohort}>
                       <td className="py-2.5 text-white/60 text-xs">{cohort.cohort}</td>
@@ -387,7 +387,7 @@ export function AnalyticsDashboard() {
       {/* Detailed Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Users by Major */}
-        <Card className="border-white/[0.06] bg-black">
+        <Card className="border-white/[0.05] bg-black">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-white/50">Top Majors</CardTitle>
           </CardHeader>
@@ -407,7 +407,7 @@ export function AnalyticsDashboard() {
         </Card>
 
         {/* Builder Requests */}
-        <Card className="border-white/[0.06] bg-black">
+        <Card className="border-white/[0.05] bg-black">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-white/50">Builder Requests</CardTitle>
           </CardHeader>
@@ -421,7 +421,7 @@ export function AnalyticsDashboard() {
                 <span className="text-white/50">Avg Response</span>
                 <span className="text-white">{stats.builderRequests.averageResponseTime}h</span>
               </div>
-              <div className="pt-3 border-t border-white/[0.06] grid grid-cols-3 gap-4 text-center">
+              <div className="pt-3 border-t border-white/[0.05] grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-lg font-bold text-yellow-400">{stats.builderRequests.pending}</p>
                   <p className="text-xs text-white/30">Pending</p>
@@ -440,7 +440,7 @@ export function AnalyticsDashboard() {
         </Card>
 
         {/* System Health */}
-        <Card className="border-white/[0.06] bg-black">
+        <Card className="border-white/[0.05] bg-black">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-white/50">System</CardTitle>
           </CardHeader>

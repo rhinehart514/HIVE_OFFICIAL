@@ -19,7 +19,7 @@ export function FlagQueue() {
 
       {/* TODO: Implement content flag queue */}
       <div className="space-y-3">
-        <div className="rounded-md border border-white/[0.12] bg-[var(--bg-ground)]/50 p-4">
+        <div className="rounded-md border border-white/[0.10] bg-[var(--bg-ground)]/50 p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">

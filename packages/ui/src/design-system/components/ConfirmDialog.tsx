@@ -124,7 +124,7 @@ const variantConfig: Record<
         <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
       </svg>
     ),
-    iconBg: 'bg-white/[0.06] text-white/50',
+    iconBg: 'bg-white/[0.05] text-white/50',
     confirmColor: 'bg-life-gold hover:bg-life-gold/90 text-black',
   },
   success: {
@@ -209,7 +209,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <DialogPrimitive.Content
           className={cn(
             'fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2',
-            'bg-black/80 backdrop-blur-2xl border border-white/[0.08] rounded-2xl',
+            'bg-black/80 backdrop-blur-2xl border border-white/[0.10] rounded-2xl',
             'p-6',
             'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
             'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',

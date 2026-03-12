@@ -38,7 +38,7 @@ const tabsTriggerVariants = cva(
     'font-medium',
     'transition-colors duration-150',
     'text-white/50 hover:text-white/70',
-    'data-[state=active]:text-white data-[state=active]:bg-white/[0.08]',
+    'data-[state=active]:text-white data-[state=active]:bg-white/[0.10]',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-1 focus-visible:ring-offset-black',
     'disabled:pointer-events-none disabled:opacity-40',
   ].join(' '),
@@ -190,7 +190,7 @@ const AnimatedTabs: React.FC<AnimatedTabsProps> = ({
             {tab.value === value && (
               <motion.div
                 layoutId={layoutId}
-                className="absolute inset-0 bg-white/[0.08] rounded-full -z-10"
+                className="absolute inset-0 bg-white/[0.10] rounded-full -z-10"
                 transition={springConfig}
               />
             )}

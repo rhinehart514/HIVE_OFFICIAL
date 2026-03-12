@@ -19,7 +19,7 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '../../lib/utils';
 
 // Flat tooltip surface
-const tooltipClass = 'bg-[#080808] border border-white/[0.06] shadow-[0_8px_24px_rgba(0,0,0,0.5)]';
+const tooltipClass = 'bg-[#080808] border border-white/[0.05] shadow-[0_8px_24px_rgba(0,0,0,0.5)]';
 
 // Types
 export interface TooltipProps

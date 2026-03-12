@@ -83,7 +83,7 @@ export function TopBarBrand({ onClick }: TopBarBrandProps) {
       onClick={onClick}
       className={cn(
         'flex items-center gap-2 px-2 py-1.5 -ml-2 rounded-lg transition-colors',
-        'hover:bg-white/[0.04]',
+        'hover:bg-white/[0.05]',
         FOCUS_RING
       )}
     >
@@ -206,7 +206,7 @@ export function TopBarSearch({ onClick, shortcut = '⌘K' }: TopBarSearchProps) 
       onClick={onClick}
       className={cn(
         'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors',
-        'hover:bg-white/[0.04]',
+        'hover:bg-white/[0.05]',
         FOCUS_RING
       )}
       title={`Search (${shortcut})`}
@@ -249,7 +249,7 @@ export function TopBarNotifications({ count = 0, onClick }: TopBarNotificationsP
       onClick={onClick}
       className={cn(
         'relative flex items-center justify-center w-9 h-9 rounded-lg transition-colors',
-        'hover:bg-white/[0.04]',
+        'hover:bg-white/[0.05]',
         FOCUS_RING
       )}
       title="Notifications"
@@ -300,7 +300,7 @@ export function TopBarProfile({ name, avatarUrl, onClick }: TopBarProfileProps) 
       onClick={onClick}
       className={cn(
         'flex items-center justify-center w-9 h-9 rounded-lg transition-colors overflow-hidden',
-        'hover:bg-white/[0.04]',
+        'hover:bg-white/[0.05]',
         FOCUS_RING
       )}
       title={name || 'Profile'}
@@ -309,7 +309,7 @@ export function TopBarProfile({ name, avatarUrl, onClick }: TopBarProfileProps) 
         <Image src={avatarUrl} alt={name || 'Profile'} width={28} height={28} className="rounded-lg object-cover" sizes="28px" />
       ) : (
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-semibold bg-white/[0.08] text-white/50"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-semibold bg-white/[0.10] text-white/50"
         >
           {initials}
         </div>

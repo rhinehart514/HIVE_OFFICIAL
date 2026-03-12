@@ -208,7 +208,7 @@ export default function SchoolAdminInvitesPage() {
             onClick={fetchData}
             disabled={loading}
             variant="outline"
-            className="border-white/[0.12] text-white/70"
+            className="border-white/[0.10] text-white/70"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -259,7 +259,7 @@ export default function SchoolAdminInvitesPage() {
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="admin@university.edu"
                   required
-                  className="w-full px-4 py-2 bg-white/[0.05] border border-white/[0.12] rounded-lg text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none"
+                  className="w-full px-4 py-2 bg-white/[0.05] border border-white/[0.10] rounded-lg text-white placeholder:text-white/40 focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
@@ -269,7 +269,7 @@ export default function SchoolAdminInvitesPage() {
                   value={inviteCampusId}
                   onChange={(e) => setInviteCampusId(e.target.value)}
                   required
-                  className="w-full px-4 py-2 bg-white/[0.05] border border-white/[0.12] rounded-lg text-white focus:border-amber-500 focus:outline-none"
+                  className="w-full px-4 py-2 bg-white/[0.05] border border-white/[0.10] rounded-lg text-white focus:border-amber-500 focus:outline-none"
                 >
                   <option value="">Select a campus...</option>
                   {campuses.map(campus => (
@@ -315,7 +315,7 @@ export default function SchoolAdminInvitesPage() {
                   type="button"
                   onClick={() => setShowInviteForm(false)}
                   variant="outline"
-                  className="border-white/[0.12] text-white/70"
+                  className="border-white/[0.10] text-white/70"
                 >
                   Cancel
                 </Button>
@@ -341,7 +341,7 @@ export default function SchoolAdminInvitesPage() {
 
       {/* Pending Invitations */}
       {pendingAdmins.length > 0 && (
-        <Card className="border-white/[0.08] bg-[#141414]">
+        <Card className="border-white/[0.10] bg-[#141414]">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Clock className="h-5 w-5 text-yellow-400" />
@@ -387,7 +387,7 @@ export default function SchoolAdminInvitesPage() {
       )}
 
       {/* Active School Admins */}
-      <Card className="border-white/[0.08] bg-[#141414]">
+      <Card className="border-white/[0.10] bg-[#141414]">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-400" />
@@ -410,7 +410,7 @@ export default function SchoolAdminInvitesPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/[0.08]">
+                  <tr className="border-b border-white/[0.10]">
                     <th className="text-left p-3 text-white/50">Admin</th>
                     <th className="text-left p-3 text-white/50">Campus</th>
                     <th className="text-left p-3 text-white/50">Role</th>
@@ -420,7 +420,7 @@ export default function SchoolAdminInvitesPage() {
                 </thead>
                 <tbody>
                   {activeAdmins.map(activeAdmin => (
-                    <tr key={activeAdmin.id} className="border-b border-white/[0.06]">
+                    <tr key={activeAdmin.id} className="border-b border-white/[0.05]">
                       <td className="p-3">
                         <div>
                           <p className="text-white font-medium">

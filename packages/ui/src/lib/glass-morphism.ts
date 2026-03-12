@@ -11,23 +11,23 @@
 export const glass = {
   // Base glass panels
   panel: {
-    default: 'bg-neutral-900/80 backdrop-blur-[8px] border border-white/[0.06]',
-    light: 'bg-white/5 backdrop-blur-[8px] border border-white/[0.08]',
-    medium: 'bg-neutral-900/70 backdrop-blur-[8px] border border-white/[0.08]',
+    default: 'bg-neutral-900/80 backdrop-blur-[8px] border border-white/[0.05]',
+    light: 'bg-white/5 backdrop-blur-[8px] border border-white/[0.10]',
+    medium: 'bg-neutral-900/70 backdrop-blur-[8px] border border-white/[0.10]',
   },
 
   // Elevated glass (cards, modals)
   elevated: {
     card: 'bg-neutral-900/85 backdrop-blur-[8px] border border-neutral-800/50 shadow-xl',
     cardHover: 'hover:bg-neutral-900/90 hover:border-neutral-700/50',
-    modal: 'bg-neutral-900/92 backdrop-blur-[8px] border border-white/[0.08] shadow-2xl',
+    modal: 'bg-neutral-900/92 backdrop-blur-[8px] border border-white/[0.10] shadow-2xl',
     dropdown: 'bg-neutral-900/95 backdrop-blur-[8px] border border-neutral-700/50 shadow-xl',
   },
 
   // Sticky headers
   sticky: {
-    header: 'bg-black/85 backdrop-blur-[8px] border-b border-white/[0.06]',
-    transparent: 'bg-transparent backdrop-blur-[8px] border-b border-white/[0.04]',
+    header: 'bg-black/85 backdrop-blur-[8px] border-b border-white/[0.05]',
+    transparent: 'bg-transparent backdrop-blur-[8px] border-b border-white/[0.05]',
     solid: 'bg-neutral-950/95 backdrop-blur-[8px] border-b border-neutral-800',
   },
 
@@ -55,7 +55,7 @@ export const glass = {
 
   // Border variants - neutral only, gold removed
   border: {
-    subtle: 'border border-white/[0.06]',
+    subtle: 'border border-white/[0.05]',
     medium: 'border border-white/[0.1]',
     strong: 'border border-white/[0.15]',
     hover: 'hover:border-white/[0.15]',

@@ -35,7 +35,7 @@ export const ProfileBentoLayout: React.FC = () => {
                 <button className="px-6 py-2 bg-white text-black font-semibold rounded-full hover:bg-white/90 transition-colors">
                   Edit Profile
                 </button>
-                <button className="px-6 py-2 border border-white/10 text-white font-semibold rounded-full hover:bg-white/[0.06] transition-colors">
+                <button className="px-6 py-2 border border-white/10 text-white font-semibold rounded-full hover:bg-white/[0.05] transition-colors">
                   Share
                 </button>
               </div>

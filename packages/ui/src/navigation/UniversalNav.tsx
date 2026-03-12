@@ -84,12 +84,12 @@ const NavButton: React.FC<{
     default: cn(
       'flex items-center gap-3 px-4 py-3 rounded-lg font-medium',
       isActive
-        ? 'bg-white/[0.04] text-white border-l-2 border-[var(--hive-gold)]'
+        ? 'bg-white/[0.05] text-white border-l-2 border-[var(--hive-gold)]'
         : 'text-white/60 hover:text-white hover:bg-white/5'
     ),
     compact: cn(
       'relative p-2 rounded-lg',
-      isActive ? 'bg-white/[0.04] text-white' : 'text-white/60 hover:text-white'
+      isActive ? 'bg-white/[0.05] text-white' : 'text-white/60 hover:text-white'
     ),
     mobile: cn(
       'flex flex-col items-center justify-center p-3 min-w-[60px]',
@@ -233,8 +233,8 @@ export const CommandPalette: React.FC<{ open: boolean; onOpenChange: (open: bool
                   className={cn(
                     'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left',
                     index === selectedIndex
-                      ? 'bg-white/[0.06] text-white'
-                      : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+                      ? 'bg-white/[0.05] text-white'
+                      : 'text-white/60 hover:text-white hover:bg-white/[0.05]'
                   )}
                 >
                   <span className="text-xl">{cmd.icon}</span>
@@ -301,7 +301,7 @@ export const TabNav: React.FC<{
           className={cn(
             'flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all',
             activeTab === tab.id
-              ? 'bg-white/[0.08] text-white'
+              ? 'bg-white/[0.10] text-white'
               : 'text-white/60 hover:text-white hover:bg-white/5'
           )}
         >

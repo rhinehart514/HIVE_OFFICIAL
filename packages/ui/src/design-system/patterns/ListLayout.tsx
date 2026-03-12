@@ -433,10 +433,10 @@ const ListSkeleton: React.FC<ListSkeletonProps> = ({
         )}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-white/[0.06]" />
+          <div className="w-10 h-10 rounded-lg bg-white/[0.05]" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-3/4 rounded bg-white/[0.06]" />
-            <div className="h-3 w-1/2 rounded bg-white/[0.06]" />
+            <div className="h-4 w-3/4 rounded bg-white/[0.05]" />
+            <div className="h-3 w-1/2 rounded bg-white/[0.05]" />
           </div>
         </div>
       </div>

@@ -290,7 +290,7 @@ export function NotificationPanel({ isOpen, onClose, anchorRef }: NotificationPa
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className={`block px-4 py-3 border-b border-white/5 hover:bg-white/5 transition-colors ${
-                        !notification.read ? "bg-white/[0.02]" : ""
+                        !notification.read ? "bg-white/[0.03]" : ""
                       }`}
                     >
                       <div className="flex gap-3">

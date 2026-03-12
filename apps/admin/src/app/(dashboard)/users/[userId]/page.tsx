@@ -159,7 +159,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
   return (
     <div>
-      <header className="flex items-center gap-4 h-14 px-6 border-b border-white/[0.06] bg-[#0A0A0A] sticky top-0 z-10">
+      <header className="flex items-center gap-4 h-14 px-6 border-b border-white/[0.05] bg-[#0A0A0A] sticky top-0 z-10">
         <Link
           href="/users"
           className="p-2 -ml-2 text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
@@ -183,7 +183,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         ) : (
           <>
             {/* Profile Header */}
-            <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-6">
+            <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-6">
               <div className="flex items-start gap-6">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FFD700]/20 to-amber-600/20 flex items-center justify-center text-white text-3xl font-medium shrink-0">
                   {user.avatar ? (
@@ -234,7 +234,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
                   )}
                   <Link
                     href={`/preview/impersonate?userId=${userId}`}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-white/[0.04] text-white/60 rounded-lg hover:bg-white/[0.08] border border-white/[0.06]"
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-white/[0.05] text-white/60 rounded-lg hover:bg-white/[0.10] border border-white/[0.05]"
                   >
                     <EyeIcon className="h-4 w-4" />
                     View as User
@@ -244,7 +244,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-1 border-b border-white/[0.06] -mb-2">
+            <div className="flex items-center gap-1 border-b border-white/[0.05] -mb-2">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -266,14 +266,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             {/* Tab Content */}
             {activeTab === "overview" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+                <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
                   <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                     <UsersIcon className="h-4 w-4" />
                     Spaces
                   </div>
                   <p className="text-2xl font-semibold text-white">{user.spaceCount || 0}</p>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+                <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
                   <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                     <ClockIcon className="h-4 w-4" />
                     Days on Platform
@@ -282,7 +282,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
                     {Math.floor((Date.now() - new Date(user.createdAt).getTime()) / 86400000)}
                   </p>
                 </div>
-                <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4">
+                <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4">
                   <div className="flex items-center gap-2 text-white/50 text-sm mb-1">
                     <ShieldCheckIcon className="h-4 w-4" />
                     Role
@@ -290,7 +290,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
                   <p className="text-2xl font-semibold text-white capitalize">{user.role}</p>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4 md:col-span-2 space-y-3">
+                <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4 md:col-span-2 space-y-3">
                   <h3 className="text-sm font-medium text-white/50">Account Info</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -312,7 +312,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.06] bg-[#141414] p-4 space-y-3">
+                <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-4 space-y-3">
                   <h3 className="text-sm font-medium text-white/50 flex items-center gap-1.5">
                     <DevicePhoneMobileIcon className="h-4 w-4" />
                     Device
@@ -325,7 +325,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             )}
 
             {activeTab === "spaces" && (
-              <div className="rounded-xl border border-white/[0.06] bg-[#141414] overflow-hidden">
+              <div className="rounded-xl border border-white/[0.05] bg-[#141414] overflow-hidden">
                 {spacesLoading ? (
                   <div className="p-4"><TableSkeleton rows={3} columns={3} /></div>
                 ) : spaces.length === 0 ? (
@@ -333,13 +333,13 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-white/[0.06]">
+                      <tr className="border-b border-white/[0.05]">
                         <th className="px-4 py-3 text-left text-xs font-medium text-white/50 uppercase">Space</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-white/50 uppercase">Role</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-white/50 uppercase">Joined</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.04]">
+                    <tbody className="divide-y divide-white/[0.05]">
                       {spaces.map((s) => (
                         <tr
                           key={s.id}
@@ -373,17 +373,17 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             )}
 
             {activeTab === "activity" && (
-              <div className="rounded-xl border border-white/[0.06] bg-[#141414] overflow-hidden">
+              <div className="rounded-xl border border-white/[0.05] bg-[#141414] overflow-hidden">
                 {activityLoading ? (
                   <div className="p-4"><ListSkeleton count={5} /></div>
                 ) : activity.length === 0 ? (
                   <EmptyState variant="no-data" title="No recent activity" />
                 ) : (
-                  <div className="divide-y divide-white/[0.04]">
+                  <div className="divide-y divide-white/[0.05]">
                     {activity.map((a) => (
                       <div key={a.id} className="px-4 py-3 flex items-center justify-between">
                         <div>
-                          <span className="text-xs font-medium text-white/40 uppercase mr-2 bg-white/[0.06] px-1.5 py-0.5 rounded">
+                          <span className="text-xs font-medium text-white/40 uppercase mr-2 bg-white/[0.05] px-1.5 py-0.5 rounded">
                             {a.type}
                           </span>
                           <span className="text-sm text-white/70">{a.description}</span>

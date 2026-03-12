@@ -14,7 +14,7 @@ import * as React from 'react';
  * Accordion - LOCKED: January 2026
  *
  * LOCKED DECISIONS:
- * - Header hover: Glass highlight (`bg-white/[0.08]`)
+ * - Header hover: Glass highlight (`bg-white/[0.10]`)
  * - Chevron: 180° rotation, 200ms ease-out
  * - Content: Height transition (animate-accordion-down/up)
  * - Focus: WHITE ring (`ring-white/50`) - never gold
@@ -37,7 +37,7 @@ Accordion provides expandable content sections with smooth transitions.
 ### Locked Design Decisions
 | Decision | Value | Rationale |
 |----------|-------|-----------|
-| Header hover | Glass highlight (\`bg-white/[0.08]\`) | Subtle glass effect |
+| Header hover | Glass highlight (\`bg-white/[0.10]\`) | Subtle glass effect |
 | Chevron rotation | 180° with 200ms ease-out | Smooth reveal |
 | Content animation | Height transition | Native feel |
 | Focus ring | WHITE (\`ring-white/50\`) | Never gold |
@@ -65,7 +65,7 @@ export default meta;
  * **LOCKED DESIGN** - The final approved visual treatment
  *
  * This showcases the canonical Accordion patterns:
- * - Glass highlight hover (`bg-white/[0.08]`)
+ * - Glass highlight hover (`bg-white/[0.10]`)
  * - 180° chevron rotation with smooth easing
  * - Height-based content animation
  * - White focus ring (never gold)
@@ -96,7 +96,7 @@ export const LockedDesignShowcase: StoryObj = {
           <AccordionItem value="item-1">
             <AccordionTrigger>Hover to see glass highlight</AccordionTrigger>
             <AccordionContent>
-              Header hover: <code className="text-[#FFD700] bg-white/5 px-1.5 py-0.5 rounded text-xs">bg-white/[0.08]</code>
+              Header hover: <code className="text-[#FFD700] bg-white/5 px-1.5 py-0.5 rounded text-xs">bg-white/[0.10]</code>
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-2">

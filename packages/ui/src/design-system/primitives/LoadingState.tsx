@@ -50,7 +50,7 @@ function SkeletonBox({ className, style }: SkeletonProps) {
     <div
       className={cn(
         'animate-pulse rounded-lg',
-        'bg-gradient-to-r from-white/[0.04] via-white/[0.08] to-white/[0.04]',
+        'bg-gradient-to-r from-white/[0.05] via-white/[0.10] to-white/[0.05]',
         'bg-[length:200%_100%]',
         className
       )}
@@ -64,7 +64,7 @@ function SkeletonCircle({ className, style }: SkeletonProps) {
     <div
       className={cn(
         'animate-pulse rounded-full',
-        'bg-gradient-to-r from-white/[0.04] via-white/[0.08] to-white/[0.04]',
+        'bg-gradient-to-r from-white/[0.05] via-white/[0.10] to-white/[0.05]',
         'bg-[length:200%_100%]',
         className
       )}
@@ -78,7 +78,7 @@ function SkeletonText({ className, width }: SkeletonProps & { width?: string }) 
     <div
       className={cn(
         'animate-pulse rounded h-4',
-        'bg-gradient-to-r from-white/[0.04] via-white/[0.08] to-white/[0.04]',
+        'bg-gradient-to-r from-white/[0.05] via-white/[0.10] to-white/[0.05]',
         'bg-[length:200%_100%]',
         className
       )}
@@ -184,14 +184,14 @@ function CardLoading({ size = 'md', className }: Omit<LoadingStateProps, 'varian
     <div
       className={cn(
         'rounded-xl p-4',
-        'bg-white/[0.02] border border-white/[0.06]',
+        'bg-white/[0.03] border border-white/[0.05]',
         'animate-pulse',
         className
       )}
       role="status"
       aria-label="Loading"
     >
-      <div className={cn('rounded-lg bg-white/[0.04] mb-4', heightClasses[size])} />
+      <div className={cn('rounded-lg bg-white/[0.05] mb-4', heightClasses[size])} />
       <div className="space-y-2">
         <SkeletonText width="60%" />
         <SkeletonText width="40%" />

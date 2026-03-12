@@ -135,8 +135,8 @@ function SearchResultItem({
       onClick={onJump}
       className={cn(
         'w-full text-left p-3 rounded-xl',
-        'bg-white/[0.02] hover:bg-white/[0.05]',
-        'border border-white/[0.04] hover:border-white/[0.06]',
+        'bg-white/[0.03] hover:bg-white/[0.05]',
+        'border border-white/[0.05] hover:border-white/[0.05]',
         'transition-all duration-150',
         'group'
       )}
@@ -179,7 +179,7 @@ function SearchResultItem({
 
 function SearchResultSkeleton() {
   return (
-    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
       <div className="flex items-start gap-3">
         <Skeleton className="w-8 h-8 rounded-lg" />
         <div className="flex-1">
@@ -198,7 +198,7 @@ function SearchResultSkeleton() {
 function EmptyState({ query }: { query: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mb-4">
+      <div className="w-12 h-12 rounded-xl bg-white/[0.05] flex items-center justify-center mb-4">
         <Search className="w-6 h-6 text-white/30" />
       </div>
       {query ? (
@@ -212,7 +212,7 @@ function EmptyState({ query }: { query: string }) {
             {['links', 'images', 'announcements'].map((suggestion) => (
               <span
                 key={suggestion}
-                className="px-2.5 py-1 rounded-full text-xs text-white/50 bg-white/[0.04] border border-white/[0.06]"
+                className="px-2.5 py-1 rounded-full text-xs text-white/50 bg-white/[0.05] border border-white/[0.05]"
               >
                 {suggestion}
               </span>
@@ -344,7 +344,7 @@ export function ChatSearchModal({
 
           {/* Filters (collapsible) */}
           {showFilters && boards.length > 1 && (
-            <div className="mb-4 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+            <div className="mb-4 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
               <Text size="xs" className="text-white/50 mb-2">
                 Filter by board
               </Text>
@@ -355,7 +355,7 @@ export function ChatSearchModal({
                     'px-3 py-1.5 rounded-lg text-sm transition-colors',
                     !filters.boardId
                       ? 'bg-white/10 text-white'
-                      : 'bg-white/[0.02] text-white/60 hover:bg-white/[0.05]'
+                      : 'bg-white/[0.03] text-white/60 hover:bg-white/[0.05]'
                   )}
                 >
                   All boards
@@ -368,7 +368,7 @@ export function ChatSearchModal({
                       'px-3 py-1.5 rounded-lg text-sm transition-colors',
                       filters.boardId === board.id
                         ? 'bg-white/10 text-white'
-                        : 'bg-white/[0.02] text-white/60 hover:bg-white/[0.05]'
+                        : 'bg-white/[0.03] text-white/60 hover:bg-white/[0.05]'
                     )}
                   >
                     #{board.name}

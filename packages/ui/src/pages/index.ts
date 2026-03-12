@@ -5,7 +5,7 @@
 // ============================================
 // PAGE SKELETONS
 // Premium loading states with staggered wave animations
-// Base color: white/[0.08], stagger delay: 0.15s
+// Base color: white/[0.10], stagger delay: 0.15s
 // ============================================
 
 // Feed

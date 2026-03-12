@@ -97,17 +97,17 @@ function SearchTrigger({ onClick }: { onClick?: () => void }) {
       className={cn(
         'flex items-center gap-2 px-3 py-2 rounded-lg',
         'min-w-[180px] max-w-[320px] flex-1',
-        'bg-white/[0.03] border border-white/[0.06]',
+        'bg-white/[0.03] border border-white/[0.05]',
         'text-[var(--color-text-muted)]',
         'transition-all duration-150',
-        'hover:bg-white/[0.05] hover:border-white/[0.06]'
+        'hover:bg-white/[0.05] hover:border-white/[0.05]'
       )}
     >
       <SearchIcon className="w-4 h-4 flex-shrink-0" />
       <span className="text-body-sm flex-1 text-left">Search...</span>
       <kbd className={cn(
         'hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded text-label-sm',
-        'bg-white/[0.06] text-[var(--color-text-muted)]'
+        'bg-white/[0.05] text-[var(--color-text-muted)]'
       )}>
         ⌘K
       </kbd>
@@ -130,7 +130,7 @@ function NavItem({ label, isTeased = false, isActive = false, onClick }: NavItem
         'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-body-sm font-medium',
         'transition-all duration-150',
         isTeased && 'opacity-70 hover:opacity-100',
-        isActive ? 'bg-white/[0.06] text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'
+        isActive ? 'bg-white/[0.05] text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'
       )}
     >
       {label}
@@ -150,7 +150,7 @@ function CampusPulse({ campusName, onlineCount }: { campusName?: string; onlineC
   return (
     <div className={cn(
       'hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full',
-      'bg-white/[0.03] border border-white/[0.06]'
+      'bg-white/[0.03] border border-white/[0.05]'
     )}>
       <motion.span
         className="w-2 h-2 rounded-full bg-green-500"
@@ -183,7 +183,7 @@ function NotificationBell({
   return (
     <button
       onClick={onClick}
-      className="relative p-2 rounded-lg transition-colors text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/[0.04]"
+      className="relative p-2 rounded-lg transition-colors text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-white/[0.05]"
     >
       <BellIcon className="w-5 h-5" />
       {count > 0 && (
@@ -209,11 +209,11 @@ function ProfileButton({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 p-1 rounded-lg transition-colors hover:bg-white/[0.04]"
+      className="flex items-center gap-2 p-1 rounded-lg transition-colors hover:bg-white/[0.05]"
     >
       <div className={cn(
         'w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center',
-        'bg-white/[0.06] border border-white/[0.06]'
+        'bg-white/[0.05] border border-white/[0.05]'
       )}>
         {user?.avatarUrl ? (
           <Image src={user.avatarUrl} alt="" width={32} height={32} className="object-cover" sizes="32px" priority />
@@ -249,7 +249,7 @@ export function TopNavBar({
       className={cn(
         'fixed top-0 left-0 right-0 z-50',
         'flex items-center justify-between px-4 gap-4',
-        'bg-[var(--color-bg-ground)] border-b border-white/[0.06]',
+        'bg-[var(--color-bg-ground)] border-b border-white/[0.05]',
         className
       )}
       style={{ height: TOP_NAV_HEIGHT }}

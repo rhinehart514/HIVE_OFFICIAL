@@ -50,7 +50,7 @@ export const INPUT = {
   /** With focus ring — critical inputs */
   withRing: 'h-11 px-4 bg-[#111] border border-white/[0.05] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:outline-2 focus:outline-[#FFD700] transition-colors duration-100',
   /** Ghost input — no background */
-  ghost: 'h-10 px-3 bg-transparent border-0 text-white placeholder:text-white/30 focus:outline-none focus:bg-white/[0.02] rounded-xl transition-colors duration-100',
+  ghost: 'h-10 px-3 bg-transparent border-0 text-white placeholder:text-white/30 focus:outline-none focus:bg-white/[0.03] rounded-xl transition-colors duration-100',
 } as const;
 
 // ============================================
@@ -62,11 +62,11 @@ export const BUTTON = {
   /** Primary — gold pill CTA */
   primary: 'h-12 px-8 rounded-full bg-[#FFD700] text-black text-sm font-semibold hover:bg-[#FFD700]/90 transition-colors duration-100 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center',
   /** Secondary — ghost pill */
-  secondary: 'h-12 px-8 rounded-full bg-transparent text-white text-sm font-medium border border-white/10 hover:bg-white/[0.04] transition-colors duration-100 inline-flex items-center justify-center',
+  secondary: 'h-12 px-8 rounded-full bg-transparent text-white text-sm font-medium border border-white/10 hover:bg-white/[0.05] transition-colors duration-100 inline-flex items-center justify-center',
   /** Ghost — text only */
   ghost: 'px-3 py-2 text-sm font-medium text-white/50 hover:text-white transition-colors duration-100 inline-flex items-center justify-center',
   /** Icon — circle button */
-  icon: 'w-11 h-11 rounded-full bg-white/[0.04] border border-white/[0.05] hover:bg-white/[0.08] transition-colors duration-100 inline-flex items-center justify-center',
+  icon: 'w-11 h-11 rounded-full bg-white/[0.05] border border-white/[0.05] hover:bg-white/[0.10] transition-colors duration-100 inline-flex items-center justify-center',
 } as const;
 
 // ============================================
@@ -76,7 +76,7 @@ export const BUTTON = {
 
 export const BADGE = {
   /** Default badge - subtle gray */
-  default: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/[0.06] text-white/50',
+  default: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/[0.05] text-white/50',
   /** Leader badge - gold for earned distinction ONLY (logo/leader status) */
   leader: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gold-500/[0.1] text-gold-500 border border-gold-500/30',
   /** Success badge */
@@ -235,7 +235,7 @@ export const MODAL = {
   /** Backdrop - dark overlay, no blur or minimal */
   backdrop: 'fixed inset-0 bg-black/60',
   /** Content container - centered, elevated */
-  content: 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#141414] border border-white/[0.08] rounded-2xl shadow-2xl',
+  content: 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#141414] border border-white/[0.10] rounded-2xl shadow-2xl',
 } as const;
 
 // ============================================
@@ -246,7 +246,7 @@ export const TOAST = {
   /** Container - bottom-right slide */
   container: 'fixed bottom-4 right-4 z-[600]',
   /** Toast item */
-  item: 'bg-[#141414] border border-white/[0.08] rounded-xl shadow-lg px-4 py-3',
+  item: 'bg-[#141414] border border-white/[0.10] rounded-xl shadow-lg px-4 py-3',
 } as const;
 
 // Types
