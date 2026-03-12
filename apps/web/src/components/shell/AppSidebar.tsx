@@ -34,11 +34,13 @@ function NavItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
     <Link
       href={item.href}
       className={cn(
-        'flex items-center gap-3 h-10 px-4 transition-colors duration-100',
-        isActive ? 'text-white' : 'text-white/50 hover:text-white',
+        'flex items-center gap-3 h-10 px-4 rounded-lg transition-colors duration-100',
+        isActive
+          ? 'bg-[#FFD700]/10 text-[#FFD700]'
+          : 'text-white/50 hover:text-white hover:bg-white/[0.05]',
       )}
     >
-      {/* Active indicator — 6px yellow dot */}
+      {/* Active indicator — 6px gold dot */}
       <span
         className={cn(
           'w-1.5 h-1.5 rounded-full shrink-0 transition-colors duration-100',
@@ -119,7 +121,7 @@ export function LeftSidebar() {
         {!pathname.startsWith('/build') && (
           <Link
             href="/build"
-            className="flex items-center justify-center gap-2 h-10 mt-2 rounded-full bg-[#FFD700] text-black text-[14px] font-semibold hover:bg-[#FFE033] transition-colors duration-100"
+            className="flex items-center justify-center gap-2 h-10 mt-4 rounded-full bg-[#FFD700] text-black text-[14px] font-semibold hover:bg-[#FFE033] active:scale-[0.97] transition-[background-color,transform] duration-100"
           >
             <Plus className="h-4 w-4" strokeWidth={2} />
             Create
@@ -168,7 +170,7 @@ function MobileNavItem({
 
   const className = cn(
     'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-colors duration-100',
-    isActive ? 'text-white' : 'text-white/50',
+    isActive ? 'text-[#FFD700]' : 'text-white/50',
   );
 
   // Make tab opens creation sheet instead of navigating

@@ -66,7 +66,7 @@ export default function SpacesPage() {
   const { data: spaces = [], isLoading } = useMySpaces();
 
   return (
-    <div className="mx-auto max-w-[640px] py-8 px-4">
+    <div className="mx-auto max-w-[640px] px-4 md:px-6 pt-8 pb-24 md:pb-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-clash text-[32px] font-semibold text-white">Spaces</h1>

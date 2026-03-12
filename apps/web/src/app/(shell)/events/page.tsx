@@ -355,7 +355,7 @@ export default function EventsPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-xl px-6 py-5 pb-24">
+      <div className="max-w-xl px-4 md:px-6 pt-8 pb-24 md:pb-8">
         {isLoading ? (
           <div className="flex flex-col gap-2">
             {[...Array(4)].map((_, i) => (

@@ -13,7 +13,7 @@ const CREATE_OPTIONS = [
 
 export function QuickCreateStrip() {
   return (
-    <section>
+    <section className="py-4">
       <Mono size="label" className="text-white/50 mb-3">
         MAKE SOMETHING
       </Mono>

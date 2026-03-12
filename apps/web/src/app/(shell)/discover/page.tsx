@@ -373,6 +373,34 @@ export default function DiscoverPage() {
     setLastFeedVisit();
   }, []);
 
+  // Scroll position restoration — save on scroll, restore on back-nav
+  useEffect(() => {
+    const SCROLL_KEY = 'feed-scroll-y';
+    // Restore on mount
+    try {
+      const saved = sessionStorage.getItem(SCROLL_KEY);
+      if (saved) {
+        const y = Number(saved);
+        if (Number.isFinite(y) && y > 0) {
+          requestAnimationFrame(() => window.scrollTo(0, y));
+        }
+      }
+    } catch { /* noop */ }
+    // Save on scroll (debounced)
+    let timer: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        try { sessionStorage.setItem(SCROLL_KEY, String(window.scrollY)); } catch { /* noop */ }
+      }, 150);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
   const eventsQuery = useQuery({
     queryKey: ['feed-events'],
     queryFn: fetchFeedEvents,
@@ -439,7 +467,7 @@ export default function DiscoverPage() {
       {/* Event detail drawer */}
       <EventDetailDrawer event={selectedEvent} onClose={() => setSelectedEvent(null)} />
 
-      <div className="w-full max-w-[960px] mx-auto px-4 py-8 md:px-8">
+      <div className="w-full max-w-[960px] mx-auto px-4 md:px-6 pt-8 pb-24 md:pb-8">
         {/* Page header */}
         <div className="relative mb-6">
           <div className="absolute -inset-x-8 -inset-y-4 pointer-events-none" style={{ background: 'radial-gradient(circle at center, rgba(255,215,0,0.04), transparent 60%)' }} />
@@ -489,6 +517,16 @@ export default function DiscoverPage() {
 
             {/* 6. Discover Spaces — unjoined spaces, cursor-paginated */}
             <DiscoverSection />
+
+            {/* End of feed marker */}
+            <div className="flex flex-col items-center gap-2 py-12 text-center">
+              <span className="font-mono text-[11px] uppercase tracking-wider text-white/30">
+                You&apos;re all caught up
+              </span>
+              <span className="text-[13px] text-white/30">
+                Check back later — UB never sleeps for long
+              </span>
+            </div>
           </div>
         )}
       </div>
