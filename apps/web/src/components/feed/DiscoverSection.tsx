@@ -131,6 +131,15 @@ export function DiscoverSection() {
   }
 
   if (visibleSpaces.length === 0) {
+    const h = new Date().getHours();
+    const allJoinedCopy = h < 6
+      ? 'You joined every space on campus. Even the SU is impressed.'
+      : h < 12
+        ? 'You joined every space on campus. Capen Hall has nothing on you.'
+        : h < 17
+          ? 'You joined every space on campus. Now go make something in one of them.'
+          : 'You joined every space on campus. Lake LaSalle would be proud.';
+
     return (
       <section>
         <div className="flex items-center gap-2 mb-3">
@@ -138,9 +147,7 @@ export function DiscoverSection() {
             Find your people
           </Mono>
         </div>
-        <p className="text-sm text-white/30 py-2">
-          You&apos;ve joined everything. Legend status.
-        </p>
+        <p className="text-sm text-white/30 py-2">{allJoinedCopy}</p>
       </section>
     );
   }
@@ -164,7 +171,7 @@ export function DiscoverSection() {
           <div key={space.id}>
             <Link
               href={`/s/${space.handle || space.id}`}
-              className="group flex items-start gap-3 rounded-xl border border-white/[0.05] bg-card px-3.5 py-3 hover:border-white/[0.10] transition-colors duration-100"
+              className="group flex items-start gap-3 rounded-xl border border-white/[0.05] bg-card px-3.5 py-3 hover:border-white/[0.05] transition-colors duration-100"
             >
               <SpaceAvatar name={space.name} url={space.avatarUrl} size={40} />
               <div className="flex-1 min-w-0">
@@ -216,7 +223,7 @@ export function DiscoverSection() {
         <button
           onClick={() => fetchNextPage()}
           disabled={isFetchingNextPage}
-          className="w-full mt-3 py-2.5 rounded-xl border border-white/[0.05] text-[12px] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-colors disabled:opacity-50"
+          className="w-full mt-3 py-2.5 rounded-xl border border-white/[0.05] text-[12px] text-white/30 hover:text-white/50 hover:border-white/[0.05] transition-colors disabled:opacity-50"
         >
           {isFetchingNextPage ? 'Loading...' : 'Load more spaces'}
         </button>

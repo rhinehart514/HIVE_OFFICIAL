@@ -392,8 +392,8 @@ export default function ProfilePageContent() {
               </div>
             ) : (
               <div className="flex flex-col items-center text-center py-8 gap-4">
-                <p className="text-[15px] text-white/50">Your first app shows up here — poll, bracket, RSVP, anything</p>
-                <p className="text-[13px] text-white/30">Takes 30 seconds. Your org will thank you.</p>
+                <p className="text-[15px] text-white/50">Nothing here yet — but every creator started somewhere.</p>
+                <p className="text-[13px] text-white/30">Your first app takes 30 seconds.</p>
                 <Link
                   href="/build"
                   className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors duration-100"
@@ -431,8 +431,8 @@ export default function ProfilePageContent() {
               <div className="relative overflow-hidden rounded-2xl border border-white/[0.05] bg-void p-6">
                 <div className="relative flex items-center gap-4">
                   <div className="flex-1">
-                    <p className="text-[13px] font-medium text-white/50">Join spaces to show where you belong</p>
-                    <p className="text-[11px] text-white/30 mt-0.5">Greek life, clubs, dorms — your campus community</p>
+                    <p className="text-[13px] font-medium text-white/50">You're a lone wolf so far.</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">UB has 600+ spaces — find your people.</p>
                   </div>
                   <Link href="/discover" className="inline-flex items-center gap-1 text-[12px] text-[#FFD700]/50 hover:text-[#FFD700] transition-colors duration-100 shrink-0">
                     Browse <ArrowRight className="w-3 h-3" />

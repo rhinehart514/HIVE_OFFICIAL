@@ -845,7 +845,7 @@ export default function SpacePageUnified() {
           {/* Full-width chat stream */}
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 {feedMessages.length === 0 && !isLoadingMessages ? (
-                  <div className="flex-1 flex flex-col gap-5 px-4 py-8 max-w-xl mx-auto w-full">
+                  <div className="flex-1 flex flex-col gap-5 px-4 py-8 max-w-lg mx-auto w-full">
                     {/* Space description */}
                     {space.description && (
                       <p className="text-[14px] text-white/50 leading-relaxed">
@@ -915,7 +915,15 @@ export default function SpacePageUnified() {
                     {/* CTA */}
                     <div className="text-center pt-2">
                       <p className="text-[13px] text-white/30 mb-1">
-                        {space.isLeader ? 'Set the tone for your space.' : `${space.memberCount ?? ''} ${(space.memberCount ?? 0) === 1 ? 'member is' : 'members are'} here.`}
+                        {space.isLeader
+                          ? (space.spaceType === 'greek'
+                            ? 'Your chapter is here. Drop a poll to get things moving.'
+                            : space.spaceType === 'residential'
+                            ? 'Your floor is waiting. Post something worth knocking on doors for.'
+                            : space.spaceType === 'uni'
+                            ? 'Post your office hours or a quick poll — people are looking.'
+                            : 'Your members are waiting. Drop a poll to get the conversation started.')
+                          : `${space.memberCount ?? ''} ${(space.memberCount ?? 0) === 1 ? 'member is' : 'members are'} here.`}
                       </p>
                       <p className="text-[13px] text-white/30">Send the first message ↓</p>
                     </div>

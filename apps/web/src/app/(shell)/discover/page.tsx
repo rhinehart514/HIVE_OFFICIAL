@@ -35,6 +35,34 @@ function timeGreeting(): string {
   return 'Late night at UB';
 }
 
+/* ─── Time-aware end-of-feed messages ─────────────────────────── */
+
+const END_OF_FEED_MESSAGES: Record<string, string[]> = {
+  'morning': [
+    "You\u2019re all caught up \u2014 go grab a coffee at Tim Hortons",
+    "That\u2019s everything for now \u2014 campus is still waking up",
+  ],
+  'afternoon': [
+    "You\u2019re all caught up \u2014 check back after your next class",
+    "All caught up \u2014 the afternoon rush hasn\u2019t hit yet",
+  ],
+  'evening': [
+    "You\u2019re all caught up \u2014 the night owls will post something soon",
+    "That\u2019s everything \u2014 go touch grass on the Academic Spine",
+  ],
+  'late-night': [
+    "All caught up \u2014 even the SU is asleep",
+    "You\u2019re all caught up \u2014 the early birds will post at dawn",
+  ],
+};
+
+function getEndOfFeedMessage(): string {
+  const h = new Date().getHours();
+  const period = h < 6 ? 'late-night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 22 ? 'evening' : 'late-night';
+  const messages = END_OF_FEED_MESSAGES[period];
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
 /* ─── "Since you left" helpers ─────────────────────────────────── */
 
 const LAST_FEED_VISIT_KEY = 'lastFeedVisit';
@@ -250,7 +278,7 @@ function WelcomeSection({ onDismiss }: { onDismiss: () => void }) {
       {/* Subtle gold glow behind the section */}
       <div
         className="absolute inset-0 rounded-2xl pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at top center, rgba(255,215,0,0.05), transparent 70%)' }}
+        style={{ background: 'radial-gradient(ellipse at top center, rgba(255,215,0,0.04), transparent 70%)' }}
       />
 
       <div className="relative">
@@ -470,7 +498,7 @@ export default function DiscoverPage() {
       <div className="w-full max-w-[960px] mx-auto px-4 md:px-6 pt-8 pb-24 md:pb-8">
         {/* Page header */}
         <div className="relative mb-6">
-          <div className="absolute -inset-x-8 -inset-y-4 pointer-events-none" style={{ background: 'radial-gradient(circle at center, rgba(255,215,0,0.05), transparent 60%)' }} />
+          <div className="absolute -inset-x-8 -inset-y-4 pointer-events-none" style={{ background: 'radial-gradient(circle at center, rgba(255,215,0,0.04), transparent 60%)' }} />
           <h1 className="relative font-clash text-[32px] font-semibold text-white mb-1">{timeGreeting()}</h1>
           <div className="relative">
             <CampusHeader />
@@ -520,11 +548,8 @@ export default function DiscoverPage() {
 
             {/* End of feed marker */}
             <div className="flex flex-col items-center gap-2 py-12 text-center">
-              <span className="font-mono text-[11px] uppercase tracking-wider text-white/30">
-                You&apos;re all caught up
-              </span>
               <span className="text-[13px] text-white/30">
-                Check back later — UB never sleeps for long
+                {getEndOfFeedMessage()}
               </span>
             </div>
           </div>

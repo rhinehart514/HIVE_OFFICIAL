@@ -227,6 +227,32 @@ function AppCard({
   );
 }
 
+/* ─── Time-aware empty state copy ──────────────────────────────── */
+
+const getEmptyStateCopy = (): { headline: string; sub: string } => {
+  const h = new Date().getHours();
+  if (h < 6) return {
+    headline: 'The SU is closed but HIVE never sleeps.',
+    sub: 'Late-night poll? Bracket for best 2am food? Do it.',
+  };
+  if (h < 12) return {
+    headline: 'Campus is waking up. Be the first to make something today.',
+    sub: 'Polls, brackets, RSVPs. Takes 30 seconds.',
+  };
+  if (h < 17) return {
+    headline: 'Between classes? Perfect time to build a poll.',
+    sub: 'You could have 50 votes before your next lecture.',
+  };
+  if (h < 22) return {
+    headline: 'Night session? The best bracket ideas happen after dark.',
+    sub: 'Best Capen study snack? Best late-night take? Make it.',
+  };
+  return {
+    headline: 'The SU is closed but HIVE never sleeps.',
+    sub: 'Late-night poll? Bracket for best 2am food? Do it.',
+  };
+};
+
 /* ─── Section ───────────────────────────────────────────────────── */
 
 export function NewAppsSection() {
@@ -260,12 +286,15 @@ export function NewAppsSection() {
         </div>
       ) : (
         <div className="rounded-2xl border border-white/[0.05] bg-card p-5">
-          <p className="text-[15px] text-white/70 mb-1">
-            No one&apos;s made anything yet today.
-          </p>
-          <p className="text-[13px] text-white/30 mb-4">
-            Be the first — polls, brackets, RSVPs. Takes 30 seconds.
-          </p>
+          {(() => {
+            const copy = getEmptyStateCopy();
+            return (
+              <>
+                <p className="text-[15px] text-white/70 mb-1">{copy.headline}</p>
+                <p className="text-[13px] text-white/30 mb-4">{copy.sub}</p>
+              </>
+            );
+          })()}
           <Link
             href="/build"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFD700] text-black text-[13px] font-semibold hover:opacity-90 transition-opacity duration-100"

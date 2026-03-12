@@ -42,6 +42,21 @@ function typeLabel(type: string): string {
   return 'sent a message';
 }
 
+function spacesSubLabel(items: ActivityItem[]): string {
+  if (items.length === 0) return '';
+  // Count unique spaces
+  const spaceNames = [...new Set(items.map((i) => i.spaceName))];
+  // Find the most active space (most items)
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    counts.set(item.spaceName, (counts.get(item.spaceName) ?? 0) + 1);
+  }
+  const topSpace = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+  if (topSpace && topSpace[1] >= 2) return `${topSpace[0]} is buzzing`;
+  if (spaceNames.length === 1) return `New activity in ${spaceNames[0]}`;
+  return `${spaceNames.length} spaces had activity this week`;
+}
+
 export function SpacesActivitySection() {
   const { data: items = [] } = useQuery({
     queryKey: ['feed-spaces-activity'],
@@ -53,11 +68,14 @@ export function SpacesActivitySection() {
 
   return (
     <section>
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-1">
         <Mono size="label" className="text-white/50">
           Your Spaces
         </Mono>
       </div>
+      <p className="text-white/50 text-[14px] mb-3">
+        {spacesSubLabel(items)}
+      </p>
 
       <div className="space-y-1">
         {items.map((item) => (
