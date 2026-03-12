@@ -49,7 +49,7 @@ export function ToolCard({
       className={cn(
         'rounded-lg',
         'bg-white/[0.05] hover:bg-white/[0.10]',
-        'border border-white/[0.05] hover:border-white/[0.05]',
+        'border border-white/[0.05] hover:border-white/[0.10]',
         'transition-colors duration-100',
         className
       )}

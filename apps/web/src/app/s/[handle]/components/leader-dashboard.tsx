@@ -82,7 +82,7 @@ function MetricCard({ icon: Icon, label, value, growth, color = 'text-white/50' 
 
   return (
     <div
-      className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05] hover:border-white/[0.05] transition-colors"
+      className="p-4 rounded-lg bg-white/[0.05] border border-white/[0.05] hover:border-white/[0.10] transition-colors"
     >
       <div className="flex items-start justify-between mb-2">
         <Icon className={cn('w-5 h-5', color)} />

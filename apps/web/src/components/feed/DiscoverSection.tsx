@@ -164,7 +164,7 @@ export function DiscoverSection() {
           <div key={space.id}>
             <Link
               href={`/s/${space.handle || space.id}`}
-              className="group flex items-start gap-3 rounded-xl border border-white/[0.05] bg-card px-3.5 py-3 hover:border-white/[0.05] transition-colors duration-100"
+              className="group flex items-start gap-3 rounded-xl border border-white/[0.05] bg-card px-3.5 py-3 hover:border-white/[0.10] transition-colors duration-100"
             >
               <SpaceAvatar name={space.name} url={space.avatarUrl} size={40} />
               <div className="flex-1 min-w-0">
@@ -216,7 +216,7 @@ export function DiscoverSection() {
         <button
           onClick={() => fetchNextPage()}
           disabled={isFetchingNextPage}
-          className="w-full mt-3 py-2.5 rounded-xl border border-white/[0.05] text-[12px] text-white/30 hover:text-white/50 hover:border-white/[0.05] transition-colors disabled:opacity-50"
+          className="w-full mt-3 py-2.5 rounded-xl border border-white/[0.05] text-[12px] text-white/30 hover:text-white/50 hover:border-white/[0.10] transition-colors disabled:opacity-50"
         >
           {isFetchingNextPage ? 'Loading...' : 'Load more spaces'}
         </button>

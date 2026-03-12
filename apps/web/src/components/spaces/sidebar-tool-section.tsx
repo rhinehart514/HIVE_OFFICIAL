@@ -382,7 +382,7 @@ export function SidebarToolSection({
                   'text-white/50 hover:text-white/50',
                   'hover:bg-white/[0.10]',
                   'transition-colors duration-100',
-                  'border border-dashed border-white/[0.05] hover:border-white/[0.05]'
+                  'border border-dashed border-white/[0.05] hover:border-white/[0.10]'
                 )}
                 whileHover={{ opacity: 0.96 }}
                 whileTap={{ scale: 0.98 }}

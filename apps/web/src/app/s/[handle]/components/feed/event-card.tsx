@@ -106,7 +106,7 @@ export function EventCard({
         'cursor-pointer',
         isStartingSoon
           ? 'border border-[var(--color-gold)]/20 hover:border-[var(--color-gold)]/30'
-          : 'border border-white/[0.05] hover:border-white/[0.05]',
+          : 'border border-white/[0.05] hover:border-white/[0.10]',
         className
       )}
       style={{

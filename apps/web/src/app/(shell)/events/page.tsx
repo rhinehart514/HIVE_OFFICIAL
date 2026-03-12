@@ -342,9 +342,9 @@ export default function EventsPage() {
     <div className="min-h-screen bg-void">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-white/[0.05] bg-void">
-        <div className="max-w-xl px-6 py-4">
+        <div className="max-w-[640px] px-6 py-4">
           <div className="flex items-baseline gap-3">
-            <h1 className="text-[18px] font-medium text-white">Events</h1>
+            <h1 className="font-clash text-[20px] font-semibold text-white">Events</h1>
             {!isLoading && hasEvents && (
               <span className="text-[13px] text-white/30">
                 {events.length} upcoming
@@ -355,7 +355,7 @@ export default function EventsPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-xl px-4 md:px-6 pt-8 pb-24 md:pb-8">
+      <div className="max-w-[640px] px-4 md:px-6 pt-8 pb-24 md:pb-8">
         {isLoading ? (
           <div className="flex flex-col gap-2">
             {[...Array(4)].map((_, i) => (
