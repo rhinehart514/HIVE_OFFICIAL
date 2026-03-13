@@ -1,0 +1,46 @@
+# rhino.yml — HIVE project configuration for rhino-os
+# Keep minimal. Most behavior lives in .claude/ and docs/.
+
+# ── Project ─────────────────────────────────────────
+project:
+  stage: mvp  # mvp → early → growth → mature
+
+# ── Value Definition ───────────────────────────────
+value:
+  hypothesis: "A student org leader creates a functional app and gets responses from members faster than any existing workflow (GroupMe + Google Forms)"
+  user: "UB student org leaders who need functional tools for their members"
+  signals:
+    - name: first_loop_completes
+      description: "Leader goes from prompt to live app with real responses"
+      target: "3/3 test users complete the loop without getting stuck"
+      measurable: true
+    - name: path_collapse
+      description: "Creation-to-engagement is fewer steps than Forms+GroupMe"
+      target: "≤3 steps vs 7+ in current workflow"
+      measurable: true
+    - name: return_trigger
+      description: "Leader creates a second app within 7 days"
+      target: ">50% of creators make a 2nd app"
+      measurable: true
+    - name: member_engagement
+      description: "Members interact with placed apps without needing instructions"
+      target: ">60% of members who see an app interact with it"
+      measurable: true
+    - name: would_notice_removal
+      description: "Leader would go back to Google Forms if HIVE disappeared"
+      target: "Qualitative — ask after 2 weeks"
+      measurable: false
+
+# ── Scoring ────────────────────────────────────────
+scoring:
+  cache_ttl: 300
+
+# ── Experiments ────────────────────────────────────
+experiments:
+  keep_rate_target: 0.40
+  discard_rate_floor: 0.25
+  moonshot_every_n: 5
+
+# ── Evals ──────────────────────────────────────────
+evals:
+  block_on_failure: true
