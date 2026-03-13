@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import Link from 'next/link';
 import {
   LandingHeader,
   HeroSection,
@@ -34,6 +35,7 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-void)] text-white overflow-x-hidden">
+      <Link href="#hero" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-3 focus:bg-[#FFD700] focus:text-black focus:rounded-full focus:m-2 focus:font-semibold">Skip to content</Link>
       <Suspense fallback={null}>
         <LandingHeader />
       </Suspense>

@@ -14,7 +14,7 @@ import {
 } from '../config/api-helpers';
 
 // Find a space to test with
-async function getTestSpace(page: any): Promise<{ spaceId: string; boardId: string } | null> {
+async function getTestSpace(page: import('@playwright/test').Page): Promise<{ spaceId: string; boardId: string } | null> {
   const browse = await browseSpaces(page, { limit: 5 });
   if (!browse.ok || !browse.data.spaces?.length) return null;
 

@@ -1,67 +1,78 @@
 import { _vi } from 'vitest';
 
-type DocData = Record<string, any>;
+type DocData = Record<string, unknown>;
 
 let idCounter = 0;
 const genId = () => `id_${++idCounter}`;
 
-function getNested(obj: any, path: string) {
-  return path.split('.').reduce((o, k) => (o ? o[k] : undefined), obj);
+function getNested(obj: Record<string, unknown>, path: string): unknown {
+  return path.split('.').reduce<unknown>((o, k) => (o && typeof o === 'object' ? (o as Record<string, unknown>)[k] : undefined), obj);
 }
 
-function setNested(obj: any, path: string, value: any) {
+function setNested(obj: Record<string, unknown>, path: string, value: unknown) {
   const keys = path.split('.');
+  let current: Record<string, unknown> = obj;
   for (let i = 0; i < keys.length - 1; i++) {
     const k = keys[i];
-    if (!obj[k] || typeof obj[k] !== 'object') obj[k] = {};
-    obj = obj[k];
+    if (!current[k] || typeof current[k] !== 'object') current[k] = {};
+    current = current[k] as Record<string, unknown>;
   }
-  obj[keys[keys.length - 1]] = value;
+  current[keys[keys.length - 1]] = value;
 }
 
-function normalizeComparable(value: any): any {
+function normalizeComparable(value: unknown): unknown {
   if (value == null) return value;
 
   if (value instanceof Date) {
     return value.getTime();
   }
 
-  if (typeof value === 'object' && typeof value.toDate === 'function') {
-    const date = value.toDate();
+  if (typeof value === 'object' && 'toDate' in value && typeof (value as Record<string, unknown>).toDate === 'function') {
+    const date = (value as { toDate: () => unknown }).toDate();
     return date instanceof Date ? date.getTime() : date;
   }
 
   return value;
 }
 
-function compareValues(a: any, b: any): number {
+function compareValues(a: unknown, b: unknown): number {
   const av = normalizeComparable(a);
   const bv = normalizeComparable(b);
 
   if (av === bv) return 0;
   if (av == null && bv != null) return -1;
   if (av != null && bv == null) return 1;
-  return av > bv ? 1 : -1;
+  return (av as number | string) > (bv as number | string) ? 1 : -1;
 }
 
-function applyUpdate(target: any, updates: DocData) {
+interface FieldOp {
+  __op: string;
+  value?: number;
+  elements?: unknown[];
+}
+
+function isFieldOp(v: unknown): v is FieldOp {
+  return typeof v === 'object' && v !== null && '__op' in v;
+}
+
+function applyUpdate(target: Record<string, unknown>, updates: DocData) {
   for (const [k, v] of Object.entries(updates)) {
     if (k.includes('.')) {
       const prev = getNested(target, k);
-      if (v && v.__op === 'inc') {
-        const next = (typeof prev === 'number' ? prev : 0) + v.value;
+      if (isFieldOp(v) && v.__op === 'inc') {
+        const next = (typeof prev === 'number' ? prev : 0) + (v.value ?? 0);
         setNested(target, k, next);
-      } else if (v && v.__op === 'arrayUnion') {
+      } else if (isFieldOp(v) && v.__op === 'arrayUnion') {
         const existing = Array.isArray(prev) ? prev : [];
-        setNested(target, k, [...existing, ...v.elements]);
+        setNested(target, k, [...existing, ...(v.elements ?? [])]);
       } else {
         setNested(target, k, v);
       }
-    } else if (v && (v as any).__op === 'inc') {
-      target[k] = (typeof target[k] === 'number' ? target[k] : 0) + (v as any).value;
-    } else if (v && (v as any).__op === 'arrayUnion') {
+    } else if (isFieldOp(v) && v.__op === 'inc') {
+      target[k] = (typeof target[k] === 'number' ? target[k] : 0) + (v.value ?? 0);
+    } else if (isFieldOp(v) && v.__op === 'arrayUnion') {
       const existing = Array.isArray(target[k]) ? target[k] : [];
-      target[k] = [...existing, ...(v as any).elements];
+      target[k] = [...existing, ...(v.elements ?? [])];
     } else {
       target[k] = v;
     }
@@ -72,7 +83,7 @@ class InMemoryDocRef {
   constructor(private store: Map<string, DocData>, public id: string, private path: string) {}
   async get() {
     const data = this.store.get(this.id);
-    return { exists: !!data, id: this.id, data: () => data } as any;
+    return { exists: !!data, id: this.id, data: () => data };
   }
   async set(data: DocData) { this.store.set(this.id, { ...data }); }
   async update(data: DocData) {
@@ -86,12 +97,12 @@ class InMemoryDocRef {
 }
 
 class InMemoryQuery {
-  private filters: Array<{ field: string; op: string; value: any }> = [];
+  private filters: Array<{ field: string; op: string; value: unknown }> = [];
   private order?: { field: string; dir: 'asc'|'desc' };
   private _limit?: number;
   private _offset?: number;
   constructor(private coll: InMemoryCollection) {}
-  where(field: string, op: string, value: any) { this.filters.push({ field, op, value }); return this; }
+  where(field: string, op: string, value: unknown) { this.filters.push({ field, op, value }); return this; }
   orderBy(field: string, dir: 'asc'|'desc' = 'asc') { this.order = { field, dir }; return this; }
   limit(n: number) { this._limit = n; return this; }
   offset(n: number) { this._offset = n; return this; }
@@ -109,7 +120,7 @@ class InMemoryQuery {
       } else if (f.op === '<') {
         items = items.filter(d => compareValues(getNested(d.data, f.field), f.value) < 0);
       } else if (f.op === 'in') {
-        items = items.filter(d => (f.value || []).includes(getNested(d.data, f.field)));
+        items = items.filter(d => (Array.isArray(f.value) ? f.value : []).includes(getNested(d.data, f.field)));
       } else if (f.op === 'array-contains') {
         items = items.filter(d => {
           const arr = getNested(d.data, f.field);
@@ -143,7 +154,7 @@ class InMemoryQuery {
       size: items.length,
       empty: items.length === 0,
       docs: items.map(it => ({ id: it.id, data: () => it.data, ref: this.coll.doc(it.id) }))
-    } as any;
+    };
   }
 }
 
@@ -153,13 +164,13 @@ export class InMemoryCollection {
   doc(id?: string) { return new InMemoryDocRef(this.store, id ?? genId(), this.path); }
   async get() {
     const docs = this.allDocs().map(d => ({ id: d.id, data: () => d.data }));
-    return { docs } as any;
+    return { docs };
   }
-  where(field: string, op: string, value: any) { return new InMemoryQuery(this).where(field, op, value); }
+  where(field: string, op: string, value: unknown) { return new InMemoryQuery(this).where(field, op, value); }
   orderBy(field: string, dir: 'asc'|'desc' = 'asc') { return new InMemoryQuery(this).orderBy(field, dir); }
   limit(n: number) { return new InMemoryQuery(this).limit(n); }
   offset(n: number) { return new InMemoryQuery(this).offset(n); }
-  async add(data: DocData) { const ref = this.doc(); await ref.set(data); return { id: ref.id, get: () => ref.get() } as any; }
+  async add(data: DocData) { const ref = this.doc(); await ref.set(data); return { id: ref.id, get: () => ref.get() }; }
   allDocs(): Array<{ id: string; data: DocData }> {
     return Array.from(this.store.entries()).map(([id, data]) => ({ id, data }));
   }
@@ -167,26 +178,26 @@ export class InMemoryCollection {
 
 const collections: Record<string, InMemoryCollection> = {};
 export const getCollection = (path: string) => (collections[path] ||= new InMemoryCollection(path));
-export const resetCollections = () => { for (const k of Object.keys(collections)) delete (collections as any)[k]; idCounter = 0; };
+export const resetCollections = () => { for (const k of Object.keys(collections)) delete collections[k]; idCounter = 0; };
 
 export const dbAdminMock = {
   collection: (name: string) => getCollection(name),
-  getAll: async (...refs: Array<{ get: () => Promise<any> }>) => Promise.all(refs.map(ref => ref.get())),
+  getAll: async (...refs: Array<{ get: () => Promise<unknown> }>) => Promise.all(refs.map(ref => ref.get())),
   batch: () => {
     return {
-      set: (ref: any, data: DocData) => ref.set(data),
-      update: (ref: any, data: DocData) => ref.update(data),
-      delete: (_ref: any) => {},
+      set: (ref: InMemoryDocRef, data: DocData) => ref.set(data),
+      update: (ref: InMemoryDocRef, data: DocData) => ref.update(data),
+      delete: (_ref: InMemoryDocRef) => {},
       commit: async () => {}
     };
   },
-  runTransaction: async <T>(callback: (transaction: any) => Promise<T>): Promise<T> => {
+  runTransaction: async <T>(callback: (transaction: Record<string, unknown>) => Promise<T>): Promise<T> => {
     // Simple transaction mock that executes operations immediately
-    const transaction = {
-      get: async (ref: any) => ref.get(),
-      set: (ref: any, data: DocData) => { ref.set(data); return transaction; },
-      update: (ref: any, data: DocData) => { ref.update(data); return transaction; },
-      delete: (_ref: any) => { return transaction; },
+    const transaction: Record<string, unknown> = {
+      get: async (ref: InMemoryDocRef) => ref.get(),
+      set: (ref: InMemoryDocRef, data: DocData) => { ref.set(data); return transaction; },
+      update: (ref: InMemoryDocRef, data: DocData) => { ref.update(data); return transaction; },
+      delete: (_ref: InMemoryDocRef) => { return transaction; },
     };
     return await callback(transaction);
   }
@@ -197,7 +208,7 @@ export const adminMock = {
     FieldValue: {
       serverTimestamp: () => new Date(),
       increment: (n: number) => ({ __op: 'inc', value: n }),
-      arrayUnion: (...elements: any[]) => ({ __op: 'arrayUnion', elements })
+      arrayUnion: (...elements: unknown[]) => ({ __op: 'arrayUnion', elements })
     }
   }
 };

@@ -39,7 +39,7 @@ describe('Spaces Backend - Campus Isolation (GET/POST)', () => {
     );
 
     const body = await (res as any).json();
-    const names = (body.data?.spaces || body.spaces || []).map((s: any) => s.name);
+    const names = (body.data?.spaces || body.spaces || []).map((s: { name: string }) => s.name);
     expect(names).toContain('UB One');
     expect(names).not.toContain('Other One');
   });

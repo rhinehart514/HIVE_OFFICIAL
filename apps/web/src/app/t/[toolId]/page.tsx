@@ -6,6 +6,7 @@
  */
 
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { StandaloneToolLoader } from './StandaloneToolLoader';
 
 interface Props {
@@ -95,5 +96,14 @@ export default async function StandaloneToolPage({ params }: Props) {
   const { toolId } = await params;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://hive.college';
 
-  return <StandaloneToolLoader toolId={toolId} baseUrl={baseUrl} />;
+  return (
+    <>
+      <noscript>
+        <div className="bg-void p-4 text-center">
+          <Link href="/" className="text-[#FFD700] font-semibold">← Back to HIVE</Link>
+        </div>
+      </noscript>
+      <StandaloneToolLoader toolId={toolId} baseUrl={baseUrl} />
+    </>
+  );
 }

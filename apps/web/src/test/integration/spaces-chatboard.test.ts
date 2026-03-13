@@ -74,9 +74,9 @@ vi.mock('@/lib/space-permission-middleware', () => ({
 }));
 
 // Mock the DDD repositories with in-memory implementations
-const boardStore = new Map<string, any>();
-const messageStore = new Map<string, any>();
-const inlineComponentStore = new Map<string, any>();
+const boardStore = new Map<string, Record<string, unknown>>();
+const messageStore = new Map<string, Record<string, unknown>>();
+const inlineComponentStore = new Map<string, Record<string, unknown>>();
 
 let boardIdCounter = 0;
 let messageIdCounter = 0;
@@ -99,8 +99,8 @@ const mockBoardRepo = {
       }));
     return { isSuccess: true, isFailure: false, getValue: () => boards };
   }),
-  save: vi.fn(async (board: any) => {
-    const id = board.id || `board_${++boardIdCounter}`;
+  save: vi.fn(async (board: Record<string, unknown>) => {
+    const id = (board.id as string) || `board_${++boardIdCounter}`;
     boardStore.set(id, { ...board, id });
     return { isSuccess: true, isFailure: false, getValue: () => ({ id }) };
   }),
@@ -119,7 +119,7 @@ const mockMessageRepo = {
       toDTO: () => msg,
     })};
   }),
-  findByBoardId: vi.fn(async (boardId: string, options?: any) => {
+  findByBoardId: vi.fn(async (boardId: string, options?: { limit?: number }) => {
     let messages = Array.from(messageStore.entries())
       .filter(([_, m]) => m.boardId === boardId && !m.isDeleted)
       .map(([id, m]) => ({
@@ -142,13 +142,13 @@ const mockMessageRepo = {
       })
     };
   }),
-  save: vi.fn(async (message: any) => {
-    const id = message.id || `msg_${++messageIdCounter}`;
+  save: vi.fn(async (message: Record<string, unknown>) => {
+    const id = (message.id as string) || `msg_${++messageIdCounter}`;
     const timestamp = Date.now();
     messageStore.set(id, { ...message, id, timestamp });
     return { isSuccess: true, isFailure: false, getValue: () => ({ id, timestamp }) };
   }),
-  update: vi.fn(async (id: string, updates: any) => {
+  update: vi.fn(async (id: string, updates: Record<string, unknown>) => {
     const existing = messageStore.get(id);
     if (!existing) return { isSuccess: false, isFailure: true, error: 'Message not found' };
     messageStore.set(id, { ...existing, ...updates });
@@ -169,8 +169,8 @@ const mockInlineComponentRepo = {
     if (!component) return { isSuccess: false, isFailure: true, error: 'Component not found' };
     return { isSuccess: true, isFailure: false, getValue: () => component };
   }),
-  save: vi.fn(async (component: any) => {
-    inlineComponentStore.set(component.id, component);
+  save: vi.fn(async (component: Record<string, unknown>) => {
+    inlineComponentStore.set(component.id as string, component);
     return { isSuccess: true, isFailure: false };
   }),
 };
@@ -193,7 +193,7 @@ vi.mock('@hive/core/server', () => ({
         };
       }),
 
-      createBoard: vi.fn(async (userId: string, input: any) => {
+      createBoard: vi.fn(async (userId: string, input: Record<string, unknown>) => {
         const permCheck = await callbacks.checkPermission(userId, input.spaceId, 'leader');
         if (!permCheck.allowed) {
           return { isSuccess: false, isFailure: true, error: 'Only leaders can create boards' };
@@ -226,7 +226,7 @@ vi.mock('@hive/core/server', () => ({
         };
       }),
 
-      listMessages: vi.fn(async (userId: string, options: any) => {
+      listMessages: vi.fn(async (userId: string, options: Record<string, unknown>) => {
         const permCheck = await callbacks.checkPermission(userId, options.spaceId, 'member');
         if (!permCheck.allowed) {
           return { isSuccess: false, isFailure: true, error: 'Access denied' };
@@ -242,7 +242,7 @@ vi.mock('@hive/core/server', () => ({
         };
       }),
 
-      sendMessage: vi.fn(async (userId: string, input: any) => {
+      sendMessage: vi.fn(async (userId: string, input: Record<string, unknown>) => {
         const permCheck = await callbacks.checkPermission(userId, input.spaceId, 'member');
         if (!permCheck.allowed) {
           return { isSuccess: false, isFailure: true, error: 'Access denied' };

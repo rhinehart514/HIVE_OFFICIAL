@@ -42,7 +42,7 @@ describe('Firestore Operations', () => {
     it('should always include campusId in queries', () => {
       const createSpaceQuery = () => {
         return query(
-          collection({} as any, 'spaces'),
+          collection({} as Record<string, never>, 'spaces'),
           where('campusId', '==', 'ub-buffalo'),
           where('isActive', '==', true),
           orderBy('memberCount', 'desc'),
@@ -57,8 +57,8 @@ describe('Firestore Operations', () => {
     });
 
     it('should add campusId to all new documents', async () => {
-      const createDocument = async (collectionName: string, data: any) => {
-        const docRef = doc(collection({} as any, collectionName));
+      const createDocument = async (collectionName: string, data: Record<string, unknown>) => {
+        const docRef = doc(collection({} as Record<string, never>, collectionName));
         const documentData = {
           ...data,
           campusId: 'ub-buffalo',
@@ -70,9 +70,9 @@ describe('Firestore Operations', () => {
         return { id: docRef.id, ...documentData };
       };
 
-      (doc as any).mockReturnValue({ id: 'test-doc-id' });
-      (collection as any).mockReturnValue({});
-      (setDoc as any).mockResolvedValue(undefined);
+      vi.mocked(doc).mockReturnValue({ id: 'test-doc-id' });
+      vi.mocked(collection).mockReturnValue({});
+      vi.mocked(setDoc).mockResolvedValue(undefined);
 
       const result = await createDocument('spaces', {
         name: 'Test Space',
@@ -88,11 +88,11 @@ describe('Firestore Operations', () => {
       const updateDocument = async (
         collectionName: string,
         docId: string,
-        updates: any,
+        updates: Record<string, unknown>,
         userCampusId: string
       ) => {
         // First fetch the document to verify campus access
-        const docRef = doc({} as any, collectionName, docId);
+        const docRef = doc({} as Record<string, never>, collectionName, docId);
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
@@ -113,11 +113,11 @@ describe('Firestore Operations', () => {
         return true;
       };
 
-      (getDoc as any).mockResolvedValue({
+      vi.mocked(getDoc).mockResolvedValue({
         exists: () => true,
         data: () => ({ campusId: 'ub-buffalo' }),
       });
-      (updateDoc as any).mockResolvedValue(undefined);
+      vi.mocked(updateDoc).mockResolvedValue(undefined);
 
       // Should succeed with matching campus
       const result = await updateDocument(
@@ -129,7 +129,7 @@ describe('Firestore Operations', () => {
       expect(result).toBe(true);
 
       // Should fail with mismatched campus
-      (getDoc as any).mockResolvedValue({
+      vi.mocked(getDoc).mockResolvedValue({
         exists: () => true,
         data: () => ({ campusId: 'cornell' }),
       });
@@ -142,8 +142,8 @@ describe('Firestore Operations', () => {
 
   describe('Space Operations', () => {
     it('should create a new space with proper structure', async () => {
-      const createSpace = async (spaceData: any, userId: string) => {
-        const spaceRef = doc(collection({} as any, 'spaces'));
+      const createSpace = async (spaceData: Record<string, unknown>, userId: string) => {
+        const spaceRef = doc(collection({} as Record<string, never>, 'spaces'));
         const space = {
           id: spaceRef.id,
           ...spaceData,
@@ -164,7 +164,7 @@ describe('Firestore Operations', () => {
         await setDoc(spaceRef, space);
 
         // Add creator as first member
-        const memberRef = doc(collection({} as any, 'spaces', spaceRef.id, 'members'));
+        const memberRef = doc(collection({} as Record<string, never>, 'spaces', spaceRef.id, 'members'));
         await setDoc(memberRef, {
           userId,
           role: 'admin',
@@ -175,9 +175,9 @@ describe('Firestore Operations', () => {
         return space;
       };
 
-      (doc as any).mockReturnValue({ id: 'space-test-123' });
-      (collection as any).mockReturnValue({});
-      (setDoc as any).mockResolvedValue(undefined);
+      vi.mocked(doc).mockReturnValue({ id: 'space-test-123' });
+      vi.mocked(collection).mockReturnValue({});
+      vi.mocked(setDoc).mockResolvedValue(undefined);
 
       const space = await createSpace(
         {
@@ -197,7 +197,7 @@ describe('Firestore Operations', () => {
     });
 
     it('should fetch spaces with proper filtering', async () => {
-      const fetchSpaces = async (filters: any = {}) => {
+      const fetchSpaces = async (filters: { type?: string; visibility?: string; limit?: number } = {}) => {
         const constraints = [
           where('campusId', '==', 'ub-buffalo'),
           where('isActive', '==', true),
@@ -214,7 +214,7 @@ describe('Firestore Operations', () => {
         constraints.push(orderBy('memberCount', 'desc'));
         constraints.push(limit(filters.limit || 20));
 
-        const q = query(collection({} as any, 'spaces'), ...constraints);
+        const q = query(collection({} as Record<string, never>, 'spaces'), ...constraints);
         const snapshot = await getDocs(q);
 
         return snapshot.docs.map(doc => ({
@@ -223,9 +223,9 @@ describe('Firestore Operations', () => {
         }));
       };
 
-      (query as any).mockReturnValue({});
-      (collection as any).mockReturnValue({});
-      (getDocs as any).mockResolvedValue({
+      vi.mocked(query).mockReturnValue({});
+      vi.mocked(collection).mockReturnValue({});
+      vi.mocked(getDocs).mockResolvedValue({
         docs: [
           {
             id: 'space-1',
@@ -251,16 +251,16 @@ describe('Firestore Operations', () => {
 
   describe('Post Operations', () => {
     it('should create posts with proper validation', async () => {
-      const createPost = async (spaceId: string, postData: any, userId: string) => {
+      const createPost = async (spaceId: string, postData: Record<string, unknown>, userId: string) => {
         // Validate user is a member of the space
-        const memberRef = doc({} as any, 'spaces', spaceId, 'members', userId);
+        const memberRef = doc({} as Record<string, never>, 'spaces', spaceId, 'members', userId);
         const memberSnap = await getDoc(memberRef);
 
         if (!memberSnap.exists()) {
           throw new Error('You must be a member to post in this space');
         }
 
-        const postRef = doc(collection({} as any, 'spaces', spaceId, 'posts'));
+        const postRef = doc(collection({} as Record<string, never>, 'spaces', spaceId, 'posts'));
         const post = {
           id: postRef.id,
           ...postData,
@@ -279,12 +279,12 @@ describe('Firestore Operations', () => {
       };
 
       // User is a member
-      (getDoc as any).mockResolvedValue({
+      vi.mocked(getDoc).mockResolvedValue({
         exists: () => true,
         data: () => ({ role: 'member' }),
       });
-      (doc as any).mockReturnValue({ id: 'post-123' });
-      (setDoc as any).mockResolvedValue(undefined);
+      vi.mocked(doc).mockReturnValue({ id: 'post-123' });
+      vi.mocked(setDoc).mockResolvedValue(undefined);
 
       const post = await createPost(
         'space-123',
@@ -301,7 +301,7 @@ describe('Firestore Operations', () => {
       expect(post.campusId).toBe('ub-buffalo');
 
       // Non-member should fail
-      (getDoc as any).mockResolvedValue({
+      vi.mocked(getDoc).mockResolvedValue({
         exists: () => false,
       });
 
@@ -312,13 +312,13 @@ describe('Firestore Operations', () => {
 
     it('should handle post interactions (likes, comments)', async () => {
       const toggleLike = async (spaceId: string, postId: string, userId: string) => {
-        const likeRef = doc({} as any, 'spaces', spaceId, 'posts', postId, 'likes', userId);
+        const likeRef = doc({} as Record<string, never>, 'spaces', spaceId, 'posts', postId, 'likes', userId);
         const likeSnap = await getDoc(likeRef);
 
         if (likeSnap.exists()) {
           // Unlike
           await deleteDoc(likeRef);
-          await updateDoc(doc({} as any, 'spaces', spaceId, 'posts', postId), {
+          await updateDoc(doc({} as Record<string, never>, 'spaces', spaceId, 'posts', postId), {
             likes: -1, // Decrement (actual implementation would use FieldValue.increment)
           });
           return false;
@@ -329,7 +329,7 @@ describe('Firestore Operations', () => {
             timestamp: Timestamp.now(),
             campusId: 'ub-buffalo',
           });
-          await updateDoc(doc({} as any, 'spaces', spaceId, 'posts', postId), {
+          await updateDoc(doc({} as Record<string, never>, 'spaces', spaceId, 'posts', postId), {
             likes: 1, // Increment
           });
           return true;
@@ -337,17 +337,17 @@ describe('Firestore Operations', () => {
       };
 
       // First like
-      (getDoc as any).mockResolvedValue({ exists: () => false });
-      (setDoc as any).mockResolvedValue(undefined);
-      (updateDoc as any).mockResolvedValue(undefined);
+      vi.mocked(getDoc).mockResolvedValue({ exists: () => false });
+      vi.mocked(setDoc).mockResolvedValue(undefined);
+      vi.mocked(updateDoc).mockResolvedValue(undefined);
 
       const liked = await toggleLike('space-123', 'post-123', 'user-123');
       expect(liked).toBe(true);
       expect(setDoc).toHaveBeenCalled();
 
       // Unlike
-      (getDoc as any).mockResolvedValue({ exists: () => true });
-      (deleteDoc as any).mockResolvedValue(undefined);
+      vi.mocked(getDoc).mockResolvedValue({ exists: () => true });
+      vi.mocked(deleteDoc).mockResolvedValue(undefined);
 
       const unliked = await toggleLike('space-123', 'post-123', 'user-123');
       expect(unliked).toBe(false);
@@ -357,8 +357,8 @@ describe('Firestore Operations', () => {
 
   describe('Profile Operations', () => {
     it('should create and update user profiles', async () => {
-      const createOrUpdateProfile = async (userId: string, profileData: any) => {
-        const profileRef = doc({} as any, 'users', userId);
+      const createOrUpdateProfile = async (userId: string, profileData: Record<string, unknown>) => {
+        const profileRef = doc({} as Record<string, never>, 'users', userId);
         const profileSnap = await getDoc(profileRef);
 
         const profile = {
@@ -382,8 +382,8 @@ describe('Firestore Operations', () => {
       };
 
       // New profile
-      (getDoc as any).mockResolvedValue({ exists: () => false });
-      (setDoc as any).mockResolvedValue(undefined);
+      vi.mocked(getDoc).mockResolvedValue({ exists: () => false });
+      vi.mocked(setDoc).mockResolvedValue(undefined);
 
       const newProfile = await createOrUpdateProfile('user-123', {
         displayName: 'John Doe',
@@ -395,8 +395,8 @@ describe('Firestore Operations', () => {
       expect(newProfile.isOnboarded).toBe(false);
 
       // Update existing profile
-      (getDoc as any).mockResolvedValue({ exists: () => true });
-      (updateDoc as any).mockResolvedValue(undefined);
+      vi.mocked(getDoc).mockResolvedValue({ exists: () => true });
+      vi.mocked(updateDoc).mockResolvedValue(undefined);
 
       const updatedProfile = await createOrUpdateProfile('user-123', {
         bio: 'Updated bio',
@@ -411,7 +411,7 @@ describe('Firestore Operations', () => {
       const claimHandle = async (userId: string, handle: string) => {
         // Check if handle is already taken
         const handleQuery = query(
-          collection({} as any, 'handles'),
+          collection({} as Record<string, never>, 'handles'),
           where('handle', '==', handle.toLowerCase())
         );
         const handleSnap = await getDocs(handleQuery);
@@ -421,7 +421,7 @@ describe('Firestore Operations', () => {
         }
 
         // Claim the handle
-        await setDoc(doc({} as any, 'handles', handle.toLowerCase()), {
+        await setDoc(doc({} as Record<string, never>, 'handles', handle.toLowerCase()), {
           userId,
           handle: handle.toLowerCase(),
           claimedAt: Timestamp.now(),
@@ -429,7 +429,7 @@ describe('Firestore Operations', () => {
         });
 
         // Update user profile
-        await updateDoc(doc({} as any, 'users', userId), {
+        await updateDoc(doc({} as Record<string, never>, 'users', userId), {
           handle: handle.toLowerCase(),
           updatedAt: Timestamp.now(),
         });
@@ -438,15 +438,15 @@ describe('Firestore Operations', () => {
       };
 
       // Handle available
-      (getDocs as any).mockResolvedValue({ empty: true });
-      (setDoc as any).mockResolvedValue(undefined);
-      (updateDoc as any).mockResolvedValue(undefined);
+      vi.mocked(getDocs).mockResolvedValue({ empty: true });
+      vi.mocked(setDoc).mockResolvedValue(undefined);
+      vi.mocked(updateDoc).mockResolvedValue(undefined);
 
       const handle = await claimHandle('user-123', 'CoolStudent');
       expect(handle).toBe('coolstudent');
 
       // Handle taken
-      (getDocs as any).mockResolvedValue({ empty: false });
+      vi.mocked(getDocs).mockResolvedValue({ empty: false });
 
       await expect(claimHandle('user-456', 'CoolStudent')).rejects.toThrow('Handle already taken');
     });
@@ -456,7 +456,7 @@ describe('Firestore Operations', () => {
     it('should handle permission denied errors', async () => {
       const secureDelete = async (collection: string, docId: string, userId: string) => {
         try {
-          const docRef = doc({} as any, collection, docId);
+          const docRef = doc({} as Record<string, never>, collection, docId);
           const docSnap = await getDoc(docRef);
 
           if (!docSnap.exists()) {
@@ -470,15 +470,15 @@ describe('Firestore Operations', () => {
 
           await deleteDoc(docRef);
           return true;
-        } catch (error: any) {
-          if (error.code === 'permission-denied') {
+        } catch (error: unknown) {
+          if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'permission-denied') {
             throw new Error('You do not have permission to perform this action');
           }
           throw error;
         }
       };
 
-      (getDoc as any).mockResolvedValue({
+      vi.mocked(getDoc).mockResolvedValue({
         exists: () => true,
         data: () => ({ createdBy: 'other-user' }),
       });
@@ -492,10 +492,10 @@ describe('Firestore Operations', () => {
       const fetchWithRetry = async (collectionName: string, retries = 3) => {
         for (let i = 0; i < retries; i++) {
           try {
-            const snapshot = await getDocs(collection({} as any, collectionName));
+            const snapshot = await getDocs(collection({} as Record<string, never>, collectionName));
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          } catch (error: any) {
-            if (error.code === 'unavailable' && i < retries - 1) {
+          } catch (error: unknown) {
+            if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'unavailable' && i < retries - 1) {
               // Wait before retry
               await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
               continue;
@@ -505,7 +505,7 @@ describe('Firestore Operations', () => {
         }
       };
 
-      (getDocs as any).mockRejectedValue({ code: 'unavailable' });
+      vi.mocked(getDocs).mockRejectedValue({ code: 'unavailable' });
 
       await expect(fetchWithRetry('spaces', 1)).rejects.toThrow('Network unavailable');
     });

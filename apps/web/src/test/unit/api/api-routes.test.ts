@@ -138,7 +138,7 @@ describe('API Routes', () => {
     it('should get user profile with validation', async () => {
       const getProfile = async (profileId: string, requesterId: string) => {
         // Mock profile data
-        const profiles: Record<string, any> = {
+        const profiles: Record<string, { id: string; handle: string; displayName: string; email: string; bio: string; isPublic: boolean; campusId: string }> = {
           'user-123': {
             id: 'user-123',
             handle: 'johndoe',
@@ -203,14 +203,14 @@ describe('API Routes', () => {
     });
 
     it('should update profile with validation', async () => {
-      const updateProfile = async (userId: string, updates: any) => {
+      const updateProfile = async (userId: string, updates: { handle?: string; interests?: string[]; [key: string]: unknown }) => {
         // Validate required fields
         const allowedFields = [
           'displayName', 'bio', 'major', 'year', 'dorm', 'interests',
           'photoURL', 'isPublic', 'socialLinks'
         ];
 
-        const filteredUpdates: any = {};
+        const filteredUpdates: Record<string, unknown> = {};
         for (const key of allowedFields) {
           if (key in updates) {
             filteredUpdates[key] = updates[key];
@@ -230,7 +230,7 @@ describe('API Routes', () => {
         }
 
         // Validate interests array
-        if (filteredUpdates.interests && filteredUpdates.interests.length > 10) {
+        if (filteredUpdates.interests && Array.isArray(filteredUpdates.interests) && filteredUpdates.interests.length > 10) {
           return NextResponse.json(
             { error: 'Maximum 10 interests allowed' },
             { status: 400 }
@@ -267,7 +267,7 @@ describe('API Routes', () => {
 
   describe('Spaces API Route', () => {
     it('should create space with proper validation', async () => {
-      const createSpace = async (spaceData: any, userId: string) => {
+      const createSpace = async (spaceData: { name?: string; type?: string; visibility?: string; description?: string; [key: string]: unknown }, userId: string) => {
         // Validate required fields
         if (!spaceData.name || !spaceData.type || !spaceData.visibility) {
           return NextResponse.json(
@@ -348,7 +348,7 @@ describe('API Routes', () => {
         userId: string
       ) => {
         // Mock space data
-        const spaces: Record<string, any> = {
+        const spaces: Record<string, { id: string; name: string; visibility: string; memberCount: number; joinApprovalRequired: boolean }> = {
           'space-1': {
             id: 'space-1',
             name: 'Public Space',
@@ -416,7 +416,7 @@ describe('API Routes', () => {
     });
 
     it('should handle post creation in spaces', async () => {
-      const createPost = async (spaceId: string, postData: any, userId: string) => {
+      const createPost = async (spaceId: string, postData: { content?: string; [key: string]: unknown }, userId: string) => {
         // Validate content
         if (!postData.content || postData.content.trim().length === 0) {
           return NextResponse.json(
@@ -560,7 +560,7 @@ describe('API Routes', () => {
     });
 
     it('should handle validation errors with details', async () => {
-      const validateRequest = (data: any) => {
+      const validateRequest = (data: { email?: string; age?: number; campusId?: string }) => {
         const errors: string[] = [];
 
         if (!data.email || !data.email.includes('@')) {

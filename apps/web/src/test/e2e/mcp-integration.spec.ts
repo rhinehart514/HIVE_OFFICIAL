@@ -3,7 +3,7 @@
  * Demonstrates how to test HIVE using the Playwright MCP server
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 test.describe('HIVE Platform MCP Tests', () => {
   test('should navigate and interact with HIVE using MCP', async ({ page }) => {
@@ -33,7 +33,7 @@ test.describe('HIVE Platform MCP Tests', () => {
   });
 });
 
-async function testNavigationFlow(page: any) {
+async function testNavigationFlow(page: Page) {
   // Click on Spaces navigation
   const spacesLink = await page.locator('a[href="/spaces"]').first();
   if (await spacesLink.isVisible()) {
@@ -56,7 +56,7 @@ async function testNavigationFlow(page: any) {
   }
 }
 
-async function testResponsiveDesign(page: any) {
+async function testResponsiveDesign(page: Page) {
   const viewports = [
     { name: 'desktop', width: 1920, height: 1080 },
     { name: 'tablet', width: 768, height: 1024 },
@@ -88,7 +88,7 @@ async function testResponsiveDesign(page: any) {
   }
 }
 
-async function testKeyboardNavigation(page: any) {
+async function testKeyboardNavigation(page: Page) {
   // Test Tab navigation
   await page.keyboard.press('Tab');
   await page.waitForTimeout(100);
@@ -129,7 +129,7 @@ async function testKeyboardNavigation(page: any) {
   await page.waitForTimeout(100);
 }
 
-async function testFormInteractions(page: any) {
+async function testFormInteractions(page: Page) {
   // Navigate to a page with forms
   await page.goto('/profile/edit');
   await page.waitForSelector('.hive-shell', { timeout: 30000 });
@@ -183,14 +183,18 @@ async function testFormInteractions(page: any) {
 }
 
 // Helper function to count tree depth
-function _countTreeDepth(node: any, depth = 0): number {
+interface AccessibilityNode {
+  children?: AccessibilityNode[];
+}
+
+function _countTreeDepth(node: AccessibilityNode | null, depth = 0): number {
   if (!node || !node.children || node.children.length === 0) {
     return depth;
   }
 
   let maxDepth = depth;
   for (const child of node.children) {
-    const childDepth = countTreeDepth(child, depth + 1);
+    const childDepth = _countTreeDepth(child, depth + 1);
     maxDepth = Math.max(maxDepth, childDepth);
   }
 
@@ -211,8 +215,8 @@ test.describe('Advanced MCP Interactions', () => {
     await page.goto('/feed');
 
     // Monitor network activity
-    const responses: any[] = [];
-    page.on('response', (response: any) => {
+    const responses: Array<{ url: string; status: number; timing: Record<string, number> }> = [];
+    page.on('response', (response) => {
       if (response.url().includes('/api/')) {
         responses.push({
           url: response.url(),
@@ -248,7 +252,7 @@ test.describe('Advanced MCP Interactions', () => {
   });
 });
 
-async function simulateUserJourney(page: any) {
+async function simulateUserJourney(page: Page) {
   // 1. User lands on homepage
   await page.screenshot({ path: 'test-results/journey-1-landing.png' });
 
@@ -282,8 +286,14 @@ async function simulateUserJourney(page: any) {
   }
 }
 
-async function runAccessibilityAudit(page: any) {
-  const violations: any[] = [];
+interface AccessibilityViolation {
+  type: string;
+  element?: string;
+  message?: string;
+}
+
+async function runAccessibilityAudit(page: Page) {
+  const violations: AccessibilityViolation[] = [];
 
   // Check for alt text on images
   const images = await page.locator('img');

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getEventStartDate, getEventEndDate } from '@/lib/events/event-time';
 import { isContentHidden } from '@/lib/content-moderation';
@@ -70,5 +71,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function EventPage({ params }: PageProps) {
   const { eventId } = await params;
-  return <EventDetailPageClient eventId={eventId} />;
+  return (
+    <>
+      <noscript>
+        <div className="bg-void p-4 text-center">
+          <Link href="/discover" className="text-[#FFD700] font-semibold">← Back to HIVE</Link>
+        </div>
+      </noscript>
+      <EventDetailPageClient eventId={eventId} />
+    </>
+  );
 }

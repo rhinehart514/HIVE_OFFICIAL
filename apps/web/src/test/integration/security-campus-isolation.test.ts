@@ -8,7 +8,7 @@ vi.mock('@/lib/structured-logger', () => ({ logger: { info: vi.fn(), warn: vi.fn
 vi.mock('server-only', () => ({}));
 
 // Mock session utilities before importing module under test
-let mockSession: any = null;
+let mockSession: { userId: string; email: string; campusId: string } | null = null;
 let mockCsrfValid = false;
 vi.mock('@/lib/session', () => ({
   getSession: async () => mockSession,

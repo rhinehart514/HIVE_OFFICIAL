@@ -43,7 +43,7 @@ describe('Authentication Flow', () => {
         handleCodeInApp: true,
       };
 
-      (sendSignInLinkToEmail as any).mockResolvedValueOnce(undefined);
+      vi.mocked(sendSignInLinkToEmail).mockResolvedValueOnce(undefined);
 
       const sendMagicLink = async (email: string) => {
         if (!email.endsWith('@buffalo.edu')) {
@@ -66,7 +66,7 @@ describe('Authentication Flow', () => {
         if (!email.endsWith('@buffalo.edu')) {
           throw new Error('Only UB emails allowed');
         }
-        await sendSignInLinkToEmail(auth, email, {} as any);
+        await sendSignInLinkToEmail(auth, email, {} as Record<string, never>);
       };
 
       await expect(sendMagicLink(email)).rejects.toThrow('Only UB emails allowed');
@@ -78,8 +78,8 @@ describe('Authentication Flow', () => {
       const magicLink = 'http://localhost:3000/auth/verify?apiKey=test&oobCode=testCode';
 
       localStorage.setItem('emailForSignIn', email);
-      (isSignInWithEmailLink as any).mockReturnValue(true);
-      (signInWithEmailLink as any).mockResolvedValueOnce({
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(true);
+      vi.mocked(signInWithEmailLink).mockResolvedValueOnce({
         user: {
           uid: 'test-uid',
           email,
@@ -112,8 +112,8 @@ describe('Authentication Flow', () => {
       const expiredLink = 'http://localhost:3000/auth/verify?expired=true';
 
       localStorage.setItem('emailForSignIn', email);
-      (isSignInWithEmailLink as any).mockReturnValue(true);
-      (signInWithEmailLink as any).mockRejectedValueOnce({
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(true);
+      vi.mocked(signInWithEmailLink).mockRejectedValueOnce({
         code: 'auth/expired-action-code',
         message: 'The action code has expired',
       });
@@ -126,8 +126,8 @@ describe('Authentication Flow', () => {
 
             return await signInWithEmailLink(auth, storedEmail, link);
           }
-        } catch (error: any) {
-          if (error.code === 'auth/expired-action-code') {
+        } catch (error: unknown) {
+          if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'auth/expired-action-code') {
             throw new Error('Magic link has expired. Please request a new one.');
           }
           throw error;
@@ -140,7 +140,7 @@ describe('Authentication Flow', () => {
     it('should handle invalid magic links', async () => {
       const invalidLink = 'http://localhost:3000/some/random/url';
 
-      (isSignInWithEmailLink as any).mockReturnValue(false);
+      vi.mocked(isSignInWithEmailLink).mockReturnValue(false);
 
       const verifyMagicLink = async (link: string) => {
         if (!isSignInWithEmailLink(auth, link)) {
@@ -163,7 +163,7 @@ describe('Authentication Flow', () => {
       };
 
       const sessionManager = {
-        user: null as any,
+        user: null as { uid: string; email: string; emailVerified: boolean } | null,
         isAuthenticated: false,
 
         async checkSession() {
@@ -176,7 +176,7 @@ describe('Authentication Flow', () => {
           return this.isAuthenticated;
         },
 
-        async saveSession(user: any) {
+        async saveSession(user: { uid: string; email: string; emailVerified: boolean }) {
           this.user = user;
           this.isAuthenticated = true;
           localStorage.setItem('user', JSON.stringify(user));
@@ -246,7 +246,7 @@ describe('Authentication Flow', () => {
     });
 
     it('should tag all user data with campus ID', () => {
-      const createUserProfile = (email: string, data: any) => {
+      const createUserProfile = (email: string, data: Record<string, unknown>) => {
         if (!email.endsWith('@buffalo.edu')) {
           throw new Error('Invalid campus email');
         }
@@ -271,16 +271,16 @@ describe('Authentication Flow', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors gracefully', async () => {
-      (sendSignInLinkToEmail as any).mockRejectedValueOnce({
+      vi.mocked(sendSignInLinkToEmail).mockRejectedValueOnce({
         code: 'auth/network-request-failed',
         message: 'Network error',
       });
 
       const sendMagicLink = async (email: string) => {
         try {
-          await sendSignInLinkToEmail(auth, email, {} as any);
-        } catch (error: any) {
-          if (error.code === 'auth/network-request-failed') {
+          await sendSignInLinkToEmail(auth, email, {} as Record<string, never>);
+        } catch (error: unknown) {
+          if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'auth/network-request-failed') {
             throw new Error('Network error. Please check your connection and try again.');
           }
           throw error;
@@ -291,16 +291,16 @@ describe('Authentication Flow', () => {
     });
 
     it('should handle rate limiting', async () => {
-      (sendSignInLinkToEmail as any).mockRejectedValueOnce({
+      vi.mocked(sendSignInLinkToEmail).mockRejectedValueOnce({
         code: 'auth/too-many-requests',
         message: 'Too many requests',
       });
 
       const sendMagicLink = async (email: string) => {
         try {
-          await sendSignInLinkToEmail(auth, email, {} as any);
-        } catch (error: any) {
-          if (error.code === 'auth/too-many-requests') {
+          await sendSignInLinkToEmail(auth, email, {} as Record<string, never>);
+        } catch (error: unknown) {
+          if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'auth/too-many-requests') {
             throw new Error('Too many attempts. Please wait a few minutes and try again.');
           }
           throw error;

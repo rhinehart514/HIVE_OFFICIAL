@@ -9,6 +9,7 @@
  */
 
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { EntryFlowV2 } from '@/components/entry/EntryFlowV2';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,7 @@ function EntryFallback() {
 export default function EnterPage() {
   return (
     <Suspense fallback={<EntryFallback />}>
+      <Link href="/" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-3 focus:bg-[#FFD700] focus:text-black focus:rounded-full focus:m-2 focus:font-semibold">Back to home</Link>
       <EntryFlowV2 />
     </Suspense>
   );

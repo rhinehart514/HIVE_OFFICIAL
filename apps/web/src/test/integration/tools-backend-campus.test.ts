@@ -40,7 +40,7 @@ describe('Tools Backend - Campus Isolation', () => {
     );
 
     const body = await (res as any).json();
-    const names = (body.data?.tools || body.tools || []).map((t: any) => t.name);
+    const names = (body.data?.tools || body.tools || []).map((t: { name: string }) => t.name);
     expect(names).toContain('UB Tool');
     expect(names).not.toContain('Other Tool');
     expect(names).not.toContain('Not Mine');

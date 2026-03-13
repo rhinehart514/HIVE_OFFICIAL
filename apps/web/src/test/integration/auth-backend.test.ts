@@ -41,7 +41,7 @@ vi.mock('@/lib/email', () => ({
 // Mock JWT signing
 vi.mock('jose', () => ({
   SignJWT: class {
-    constructor(private payload: any) {}
+    constructor(private payload: Record<string, unknown>) {}
     setProtectedHeader() { return this; }
     setIssuedAt() { return this; }
     setExpirationTime() { return this; }

@@ -219,7 +219,7 @@ describe('Spaces Components', () => {
 
       const useState = vi.fn().mockImplementation((initial) => {
         let value = initial;
-        return [value, (newValue: any) => { value = newValue; }];
+        return [value, (newValue: string) => { value = newValue; }];
       });
 
       const ValidateSpaceName = ({ name }: { name: string }) => {
@@ -265,7 +265,7 @@ describe('Spaces Components', () => {
     });
 
     it('should set space visibility', () => {
-      const SpaceVisibility = ({ visibility, onChange }: any) => (
+      const SpaceVisibility = ({ visibility, onChange }: { visibility: string; onChange: (value: string) => void }) => (
         <div>
           <label>
             <input
@@ -331,7 +331,7 @@ describe('Spaces Components', () => {
 
       const MemberList = ({ members, onRemoveMember }: { members: MockMember[]; onRemoveMember: (id: string) => void }) => (
         <div>
-          {members.map((member: any) => (
+          {members.map((member: MockMember) => (
             <div key={member.id}>
               <span>{member.name}</span>
               <button onClick={() => onRemoveMember(member.id)}>Remove</button>
@@ -353,7 +353,7 @@ describe('Spaces Components', () => {
     it('should handle space settings update', () => {
       const onUpdate = vi.fn();
 
-      const SpaceSettings = ({ settings, onUpdate }: any) => (
+      const SpaceSettings = ({ settings, onUpdate }: { settings: { joinApprovalRequired: boolean }; onUpdate: (updates: Record<string, boolean>) => void }) => (
         <form>
           <label>
             <input
@@ -398,7 +398,7 @@ describe('Spaces Components', () => {
     });
 
     it('should show member count and active users', () => {
-      const SpaceStats = ({ memberCount, activeCount }: any) => (
+      const SpaceStats = ({ memberCount, activeCount }: { memberCount: number; activeCount: number }) => (
         <div>
           <p>{memberCount} total members</p>
           <p>{activeCount} active now</p>

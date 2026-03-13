@@ -199,7 +199,7 @@ describe('Search Backend Endpoints', () => {
       expect(json.success).toBe(true);
       // Should NOT include "Other Campus Club"
       if (json.data?.spaces) {
-        const otherCampus = json.data.spaces.find((s: any) => s.campusId === 'other-campus');
+        const otherCampus = json.data.spaces.find((s: { campusId: string }) => s.campusId === 'other-campus');
         expect(otherCampus).toBeUndefined();
       }
     });
@@ -214,7 +214,7 @@ describe('Search Backend Endpoints', () => {
       expect(json.success).toBe(true);
       // Should NOT include ghost user
       if (json.data?.users) {
-        const ghostUser = json.data.users.find((u: any) => u.handle === 'ghostuser');
+        const ghostUser = json.data.users.find((u: { handle: string }) => u.handle === 'ghostuser');
         expect(ghostUser).toBeUndefined();
       }
     });
@@ -254,7 +254,7 @@ describe('Search Backend Endpoints', () => {
     it('returns 401 for unauthenticated requests', async () => {
       // Mock session to return null
       const { verifySession } = await import('@/lib/session');
-      (verifySession as any).mockImplementationOnce(async () => null);
+      vi.mocked(verifySession).mockImplementationOnce(async () => null);
 
       const res = await SearchRoute.GET(
         makeReq('http://localhost/api/search?q=test', {})

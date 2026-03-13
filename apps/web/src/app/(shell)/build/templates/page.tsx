@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-// Templates page removed — creation is now chat-first via /build
+// Templates page removed — uses redirect() to navigate to chat-first /build
 export default function TemplatesPage() {
   redirect('/build');
 }

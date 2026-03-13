@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { ProfileContextProvider } from '@/components/profile/ProfileContextProvider';
 import ProfilePageContent from './ProfilePageContent';
@@ -85,6 +86,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default function HandleProfilePage() {
   return (
     <ProfileContextProvider>
+      <Link href="/discover" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-3 focus:bg-[#FFD700] focus:text-black focus:rounded-full focus:m-2 focus:font-semibold">Back to feed</Link>
       <ProfilePageContent />
     </ProfileContextProvider>
   );
