@@ -10,7 +10,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDatabase, ref, onValue, off, set, update, type DataSnapshot } from 'firebase/database';
 import { app } from '@hive/core';
-import type { ShellState, ShellAction, PollState, BracketState, RSVPState } from '@/lib/shells/types';
+import { increment } from 'firebase/database';
+import type {
+  ShellState, ShellAction, PollState, BracketState, RSVPState,
+  HotTakesState, TierListState, ThisOrThatState, SignupListState,
+  SuperlativesState, PersonalityQuizState,
+} from '@/lib/shells/types';
 
 /**
  * Fire-and-forget call to check if this interaction crossed a social-proof threshold.
@@ -230,6 +235,174 @@ export function useShellState(shellId: string | null): UseShellStateResult {
               return { ...rsvp, attendees: rest, count: Math.max(0, (rsvp.count || 0) - 1) };
             });
             set(ref(database, `${basePath}/attendees/${userId}`), null).catch(() => {});
+            break;
+          }
+
+          case 'hottake_react': {
+            setState((prev) => {
+              if (!prev) return prev;
+              const ht = prev as HotTakesState;
+              const newReactions = { ...ht.reactions };
+              newReactions[action.statementIdx] = {
+                ...(newReactions[action.statementIdx] ?? {}),
+                [userId]: action.reaction,
+              };
+              const newAgree = [...(ht.agreeCounts || [])];
+              const newDisagree = [...(ht.disagreeCounts || [])];
+              if (action.reaction === 'agree') {
+                newAgree[action.statementIdx] = (newAgree[action.statementIdx] || 0) + 1;
+              } else {
+                newDisagree[action.statementIdx] = (newDisagree[action.statementIdx] || 0) + 1;
+              }
+              return { ...ht, reactions: newReactions, agreeCounts: newAgree, disagreeCounts: newDisagree };
+            });
+            set(ref(database, `${basePath}/reactions/${action.statementIdx}/${userId}`), action.reaction).catch(() => {});
+            const countField = action.reaction === 'agree' ? 'agreeCounts' : 'disagreeCounts';
+            update(ref(database, basePath), {
+              [`${countField}/${action.statementIdx}`]: increment(1),
+            }).catch(() => {});
+            break;
+          }
+
+          case 'tierlist_place': {
+            setState((prev) => {
+              if (!prev) return prev;
+              const tl = prev as TierListState;
+              return {
+                ...tl,
+                placements: {
+                  ...tl.placements,
+                  [userId]: { ...(tl.placements?.[userId] ?? {}), [action.item]: action.tier },
+                },
+              };
+            });
+            set(ref(database, `${basePath}/placements/${userId}/${action.item}`), action.tier).catch(() => {});
+            break;
+          }
+
+          case 'tierlist_submit': {
+            setState((prev) => {
+              if (!prev) return prev;
+              const tl = prev as TierListState;
+              return { ...tl, participantCount: (tl.participantCount || 0) + 1 };
+            });
+            update(ref(database, basePath), {
+              participantCount: increment(1),
+            }).catch(() => {});
+            break;
+          }
+
+          case 'thisorthat_vote': {
+            setState((prev) => {
+              if (!prev) return prev;
+              const tot = prev as ThisOrThatState;
+              const newVotes = { ...tot.votes };
+              newVotes[action.pairIdx] = { ...(newVotes[action.pairIdx] ?? {}), [userId]: action.choice };
+              const newCounts = [...(tot.counts || [])];
+              const pair = newCounts[action.pairIdx] || { a: 0, b: 0 };
+              newCounts[action.pairIdx] = { ...pair, [action.choice]: pair[action.choice] + 1 };
+              return { ...tot, votes: newVotes, counts: newCounts };
+            });
+            set(ref(database, `${basePath}/votes/${action.pairIdx}/${userId}`), action.choice).catch(() => {});
+            update(ref(database, basePath), {
+              [`counts/${action.pairIdx}/${action.choice}`]: increment(1),
+            }).catch(() => {});
+            break;
+          }
+
+          case 'signup_join': {
+            setState((prev) => {
+              if (!prev) return prev;
+              const sl = prev as SignupListState;
+              const slotSignups = [...(sl.signups?.[action.slotLabel] ?? [])];
+              slotSignups.push({ userId, displayName: meta?.displayName || 'Member', signedUpAt: Date.now() });
+              const newCounts = { ...sl.counts };
+              newCounts[action.slotLabel] = (newCounts[action.slotLabel] || 0) + 1;
+              return { ...sl, signups: { ...sl.signups, [action.slotLabel]: slotSignups }, counts: newCounts };
+            });
+            const pushKey = `${userId}_${Date.now()}`;
+            set(ref(database, `${basePath}/signups/${action.slotLabel}/${pushKey}`), {
+              userId,
+              displayName: meta?.displayName || 'Member',
+              signedUpAt: Date.now(),
+            }).catch(() => {});
+            update(ref(database, basePath), {
+              [`counts/${action.slotLabel}`]: increment(1),
+            }).catch(() => {});
+            break;
+          }
+
+          case 'signup_leave': {
+            setState((prev) => {
+              if (!prev) return prev;
+              const sl = prev as SignupListState;
+              const slotSignups = (sl.signups?.[action.slotLabel] ?? []).filter((s) => s.userId !== userId);
+              const newCounts = { ...sl.counts };
+              newCounts[action.slotLabel] = Math.max(0, (newCounts[action.slotLabel] || 0) - 1);
+              return { ...sl, signups: { ...sl.signups, [action.slotLabel]: slotSignups }, counts: newCounts };
+            });
+            // Remove by finding the key — read snapshot first
+            onValue(ref(database, `${basePath}/signups/${action.slotLabel}`), (snap) => {
+              const entries = snap.val();
+              if (entries && typeof entries === 'object') {
+                for (const [key, val] of Object.entries(entries)) {
+                  if ((val as { userId: string }).userId === userId) {
+                    set(ref(database, `${basePath}/signups/${action.slotLabel}/${key}`), null).catch(() => {});
+                    update(ref(database, basePath), {
+                      [`counts/${action.slotLabel}`]: increment(-1),
+                    }).catch(() => {});
+                    break;
+                  }
+                }
+              }
+            }, { onlyOnce: true });
+            break;
+          }
+
+          case 'superlative_nominate': {
+            setState((prev) => {
+              if (!prev) return prev;
+              const sup = prev as SuperlativesState;
+              const newNoms = { ...sup.nominations };
+              newNoms[action.categoryIdx] = { ...(newNoms[action.categoryIdx] ?? {}), [userId]: action.name };
+              const newTallies = { ...sup.tallies };
+              newTallies[action.categoryIdx] = { ...(newTallies[action.categoryIdx] ?? {}) };
+              newTallies[action.categoryIdx][action.name] = (newTallies[action.categoryIdx][action.name] || 0) + 1;
+              return { ...sup, nominations: newNoms, tallies: newTallies, participantCount: (sup.participantCount || 0) + 1 };
+            });
+            set(ref(database, `${basePath}/nominations/${action.categoryIdx}/${userId}`), action.name).catch(() => {});
+            update(ref(database, basePath), {
+              [`tallies/${action.categoryIdx}/${action.name}`]: increment(1),
+              participantCount: increment(1),
+            }).catch(() => {});
+            break;
+          }
+
+          case 'quiz_answer': {
+            setState((prev) => {
+              if (!prev) return prev;
+              const quiz = prev as PersonalityQuizState;
+              const myResp = quiz.responses?.[userId] ?? { answers: [], result: '' };
+              const newAnswers = [...(myResp.answers || [])];
+              newAnswers[action.questionIdx] = action.optionText;
+              return {
+                ...quiz,
+                responses: { ...quiz.responses, [userId]: { ...myResp, answers: newAnswers } },
+              };
+            });
+            set(ref(database, `${basePath}/responses/${userId}/answers/${action.questionIdx}`), action.optionText).catch(() => {});
+            break;
+          }
+
+          case 'quiz_complete': {
+            setState((prev) => {
+              if (!prev) return prev;
+              const quiz = prev as PersonalityQuizState;
+              return { ...quiz, participantCount: (quiz.participantCount || 0) + 1 };
+            });
+            update(ref(database, basePath), {
+              participantCount: increment(1),
+            }).catch(() => {});
             break;
           }
         }
